@@ -171,16 +171,20 @@ export function People() {
     }
 
     async function handleUpdateMeta(id: string, patch: Partial<DbMember>) {
+        // Close dropdown & apply optimistic update immediately — never block on the fetch
+        setOpenActions(null);
+        setEditMember(null);
+        setMembers(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m));
         try {
             await fetch(`${API}/api/members/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(patch),
             });
-            setMembers(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m));
-        } catch { }
-        setOpenActions(null);
-        setEditMember(null);
+        } catch {
+            // On failure, re-fetch to restore actual state
+            fetchMembers();
+        }
     }
 
     function resetAddForm() {
@@ -248,7 +252,7 @@ export function People() {
 
             {/* Members tab */}
             {tab === 'members' && (
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
                     {loading ? (
                         <div className="p-12 text-center text-slate-400">Loading members…</div>
                     ) : filtered.length === 0 ? (

@@ -13,6 +13,7 @@ import { Locations } from './pages/Locations';
 import { Financials } from './pages/Financials';
 import { SettingsPage } from './pages/Settings';
 import { AcceptInvite } from './pages/AcceptInvite';
+import { MemberTimeline } from './pages/MemberTimeline';
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
                   <Route path="/url-tracking" element={<UrlTracking />} />
                   <Route path="/locations" element={<Locations />} />
                   <Route path="/financials" element={<Financials />} />
+                  <Route path="/member-timeline" element={<MemberTimeline />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="*" element={
                     <div className="p-8 text-slate-500 flex flex-col items-center justify-center h-full gap-3">

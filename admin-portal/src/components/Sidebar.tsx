@@ -9,7 +9,8 @@ import {
     Users,
     CircleDollarSign,
     Settings,
-    Link2
+    Link2,
+    UserCircle
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
@@ -24,6 +25,7 @@ const navItems = [
     { name: 'Schedules', icon: CalendarDays, path: '/schedules' },
     { name: 'Reports', icon: BarChart3, path: '/reports' },
     { name: 'People', icon: Users, path: '/people' },
+    { name: 'Member Timeline', icon: UserCircle, path: '/member-timeline' },
     { name: 'Financials', icon: CircleDollarSign, path: '/financials' },
     { name: 'Settings & Policies', icon: Settings, path: '/settings' },
 ];

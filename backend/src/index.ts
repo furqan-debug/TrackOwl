@@ -27,6 +27,22 @@ const supabase = (SUPABASE_URL && SUPABASE_SERVICE_KEY)
     ? createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY)
     : null;
 
+// Validate that the service key is actually a service_role key, not an anon key
+if (SUPABASE_SERVICE_KEY) {
+    try {
+        const payload = JSON.parse(Buffer.from(SUPABASE_SERVICE_KEY.split('.')[1], 'base64').toString());
+        if (payload.role !== 'service_role') {
+            console.error('🚨 CRITICAL CONFIG ERROR 🚨');
+            console.error('   SUPABASE_SERVICE_KEY contains the wrong role: "' + payload.role + '"');
+            console.error('   It MUST be a "service_role" key to bypass RLS for DB writes.');
+            console.error('   Please copy the true "service_role" key from Supabase Dashboard -> Project Settings -> API.');
+        }
+    } catch (e) {
+        // ignore parsing errors
+        console.warn('⚠️ Could not decode SUPABASE_SERVICE_KEY to verify its role.');
+    }
+}
+
 // Anon client: for Supabase Auth operations (signInWithPassword, getUser)
 const supabaseAuth = (SUPABASE_URL && SUPABASE_ANON_KEY)
     ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
@@ -465,7 +481,7 @@ app.post('/api/screenshot', async (req, res) => {
 
         if (dbError) {
             console.error('📸 Screenshot DB insert error:', dbError.message);
-            // Don't fail — we already uploaded the file
+            return res.status(500).json({ error: 'Failed to save screenshot metadata: ' + dbError.message });
         }
 
         console.log(`📸 Screenshot saved: ${filename} → ${urlData.publicUrl}`);
@@ -537,11 +553,16 @@ app.post('/api/heartbeats', async (req, res) => {
                     .getPublicUrl(filename);
 
                 // Save screenshot metadata to DB
-                await getDb().from('screenshots').insert([{
+                const { error: dbError } = await getDb().from('screenshots').insert([{
                     session_id: snap.session_id,
                     recorded_at: snap.timestamp || new Date().toISOString(),
                     file_url: urlData.publicUrl,
                 }]);
+
+                if (dbError) {
+                    console.error('Failed to process screenshot db sync:', dbError.message);
+                    throw new Error('Screenshot DB sync failed: ' + dbError.message);
+                }
 
                 screenshotResults.push({ session_id: snap.session_id, url: urlData.publicUrl });
                 console.log(`📸 Screenshot uploaded: ${filename}`);
@@ -561,50 +582,8 @@ app.post('/api/heartbeats', async (req, res) => {
     }
 });
 
-// ─────────────────────────────────────────
-// Upload a single screenshot directly
-// POST /api/screenshot
-// Body: { session_id, timestamp, base64 }
-// ─────────────────────────────────────────
-app.post('/api/screenshot', async (req, res) => {
-    try {
-        const { session_id, timestamp, base64 } = req.body;
-        if (!session_id || !base64) {
-            return res.status(400).json({ error: 'session_id and base64 are required' });
-        }
+// The duplicate /api/screenshot block has been removed to avoid conflicting implementations.
 
-        const raw = base64.replace(/^data:image\/\w+;base64,/, '');
-        const buffer = Buffer.from(raw, 'base64');
-        const filename = `${session_id}/${Date.now()}.png`;
-
-        const { error: uploadError } = await getDb()
-            .storage
-            .from('screenshots')
-            .upload(filename, buffer, { contentType: 'image/png', upsert: false });
-
-        if (uploadError) {
-            console.error('Screenshot upload error:', uploadError.message);
-            return res.status(500).json({ error: uploadError.message });
-        }
-
-        const { data: urlData } = getDb()
-            .storage
-            .from('screenshots')
-            .getPublicUrl(filename);
-
-        await getDb().from('screenshots').insert([{
-            session_id,
-            recorded_at: timestamp || new Date().toISOString(),
-            file_url: urlData.publicUrl,
-        }]);
-
-        console.log(`📸 Screenshot saved: ${filename}`);
-        res.status(201).json({ url: urlData.publicUrl });
-    } catch (error: any) {
-        console.error('Error saving screenshot:', error);
-        res.status(500).json({ error: error.message || 'Internal server error' });
-    }
-});
 
 // ─────────────────────────────────────────
 // Get presigned upload URL for screenshot
