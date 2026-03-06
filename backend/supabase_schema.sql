@@ -60,8 +60,21 @@ CREATE TABLE IF NOT EXISTS members (
   weekly_limit     INTEGER NOT NULL DEFAULT 40,
   daily_limit      INTEGER NOT NULL DEFAULT 8,
   tracking_enabled BOOLEAN NOT NULL DEFAULT true,
-  auth_user_id     UUID,   -- matches auth.users.id from Supabase Auth
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ── Weekly Timesheet Approvals ────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS timesheet_approvals (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id    UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  week_start   DATE NOT NULL,
+  week_end     DATE NOT NULL,
+  total_hours  NUMERIC(10,2) NOT NULL DEFAULT 0,
+  status       TEXT NOT NULL DEFAULT 'Pending', -- Pending | Approved | Rejected
+  approved_by  UUID REFERENCES members(id),
+  approved_at  TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(member_id, week_start)
 );
 
 -- ── Projects ──────────────────────────────────────────────────────────────────
