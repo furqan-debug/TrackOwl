@@ -11,6 +11,8 @@ import { Schedules } from './pages/Schedules';
 import { UrlTracking } from './pages/UrlTracking';
 import { Locations } from './pages/Locations';
 import { JobSites } from './pages/JobSites';
+import { Todos } from './pages/Todos';
+import { Clients } from './pages/Clients';
 import { Financials } from './pages/Financials';
 import { Approvals } from './pages/Approvals';
 import { AppUsage } from './pages/AppUsage';
@@ -64,8 +66,8 @@ function App() {
                   <Route path="/locations" element={<Locations />} />
                   <Route path="/locations/job-sites" element={<JobSites />} />
 
-                  <Route path="/projects/todos" element={<PlaceholderPage title="To-dos" />} />
-                  <Route path="/projects/clients" element={<PlaceholderPage title="Clients" />} />
+                  <Route path="/projects/todos" element={<Todos />} />
+                  <Route path="/projects/clients" element={<Clients />} />
 
                   <Route path="/calendar/time-off" element={<PlaceholderPage title="Time Off Requests" />} />
 

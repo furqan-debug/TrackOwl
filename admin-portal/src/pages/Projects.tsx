@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { FolderKanban, Plus, Clock, Users, MoreVertical, CheckCircle2, Circle, Loader2, UserPlus, X, Check } from 'lucide-react';
+import { FolderKanban, Plus, Clock, Users, MoreVertical, CheckCircle2, Circle, Loader2, UserPlus, X, Check, Building2 } from 'lucide-react';
 
 interface Project {
     id: string;
@@ -10,6 +10,13 @@ interface Project {
     totalMinutes: number;
     status: 'active' | 'paused' | 'completed';
     color: string;
+    client_id?: string;
+    client_name?: string;
+}
+
+interface Client {
+    id: string;
+    name: string;
 }
 
 interface Member {
@@ -42,6 +49,8 @@ export function Projects() {
     const [newName, setNewName] = useState('');
     const [newDesc, setNewDesc] = useState('');
     const [newColor, setNewColor] = useState(PROJECT_CARD_COLORS[0] as string);
+    const [newClientId, setNewClientId] = useState('');
+    const [clients, setClients] = useState<Client[]>([]);
     const [creating, setCreating] = useState(false);
     const [createError, setCreateError] = useState<string | null>(null);
 
@@ -54,7 +63,13 @@ export function Projects() {
 
     useEffect(() => {
         fetchProjects();
+        fetchClients();
     }, []);
+
+    async function fetchClients() {
+        const { data } = await supabase.from('clients').select('id, name').order('name');
+        if (data) setClients(data);
+    }
 
     async function openAssign(project: Project) {
         setAssignProject(project);
@@ -134,7 +149,7 @@ export function Projects() {
         });
 
         // Merge DB projects with stats
-        const result: Project[] = dbProjects.map((p, idx) => ({
+        const result: Project[] = dbProjects.map((p: any, idx) => ({
             id: p.id,
             name: p.name,
             sessionCount: statsMap[p.id]?.sessions || 0,
@@ -142,7 +157,22 @@ export function Projects() {
             totalMinutes: statsMap[p.id]?.minutes || 0,
             status: (p.status?.toLowerCase() || 'active') as 'active' | 'paused' | 'completed',
             color: p.color || (PROJECT_CARD_COLORS[idx % PROJECT_CARD_COLORS.length] as string),
+            client_id: p.client_id,
         }));
+
+        // Fetch client names (simple implementation)
+        if (result.length > 0) {
+            const clientIds = result.map(r => r.client_id).filter(Boolean);
+            if (clientIds.length > 0) {
+                const { data: clientData } = await supabase.from('clients').select('id, name').in('id', clientIds);
+                if (clientData) {
+                    const clientMap = Object.fromEntries(clientData.map(c => [c.id, c.name]));
+                    result.forEach(r => {
+                        if (r.client_id) r.client_name = clientMap[r.client_id];
+                    });
+                }
+            }
+        }
 
         // Also add any session projects not tracked in DB yet
         Object.entries(statsMap).forEach(([pid, stats]) => {
@@ -171,7 +201,12 @@ export function Projects() {
             const res = await fetch(`${API_BASE}/api/projects`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: newName.trim(), description: newDesc.trim(), color: newColor }),
+                body: JSON.stringify({
+                    name: newName.trim(),
+                    description: newDesc.trim(),
+                    color: newColor,
+                    client_id: newClientId || null
+                }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to create project');
@@ -182,12 +217,15 @@ export function Projects() {
                 sessionCount: 0, memberCount: 0, totalMinutes: 0,
                 status: 'active',
                 color: data.color || newColor,
+                client_id: data.client_id,
+                client_name: clients.find(c => c.id === data.client_id)?.name
             };
             setProjects(p => [newProject, ...p]);
             setShowNew(false);
             setNewName('');
             setNewDesc('');
             setNewColor(PROJECT_CARD_COLORS[0] as string);
+            setNewClientId('');
         } catch (e: any) {
             setCreateError(e.message);
         } finally {
@@ -346,6 +384,19 @@ export function Projects() {
                                 />
                             </div>
                             <div>
+                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Client</label>
+                                <select
+                                    value={newClientId}
+                                    onChange={e => setNewClientId(e.target.value)}
+                                    className="w-full border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">No Client (General)</option>
+                                    {clients.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
                                 <label className="block text-xs font-semibold text-slate-500 uppercase mb-1.5">Color</label>
                                 <div className="flex gap-2">
                                     {PROJECT_CARD_COLORS.map(c => (
@@ -400,6 +451,12 @@ function ProjectCard({ project, maxMinutes, onAssign }: { project: Project; maxM
                             <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full mt-0.5 ${STATUS_COLORS[project.status]}`}>
                                 {STATUS_ICONS[project.status]} {project.status}
                             </span>
+                            {project.client_name && (
+                                <div className="text-[10px] font-bold text-slate-400 uppercase mt-1 flex items-center gap-1">
+                                    <Building2 className="w-3 h-3 text-slate-300" />
+                                    {project.client_name}
+                                </div>
+                            )}
                         </div>
                     </div>
                     <div className="relative">

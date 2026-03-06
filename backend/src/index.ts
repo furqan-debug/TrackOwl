@@ -333,9 +333,9 @@ app.get('/api/projects', async (req, res) => {
  */
 app.post('/api/projects', async (req, res) => {
     try {
-        const { name, description, color = '#3b82f6' } = req.body;
+        const { name, description, color = '#3b82f6', client_id } = req.body;
         if (!name) return res.status(400).json({ error: 'name is required' });
-        const { data, error } = await getDb().from('projects').insert([{ name, description, color }]).select().single();
+        const { data, error } = await getDb().from('projects').insert([{ name, description, color, client_id }]).select().single();
         if (error) throw error;
         res.status(201).json(data);
     } catch (e: any) {

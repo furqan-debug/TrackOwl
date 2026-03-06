@@ -84,6 +84,32 @@ CREATE TABLE IF NOT EXISTS projects (
   description TEXT,
   status      TEXT NOT NULL DEFAULT 'Active',  -- Active | Archived
   color       TEXT NOT NULL DEFAULT '#3b82f6',
+  client_id   UUID, -- Added for client linking
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- ── Clients ──────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS clients (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT NOT NULL,
+  email       TEXT,
+  company     TEXT,
+  status      TEXT NOT NULL DEFAULT 'Active',
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Update projects to reference clients
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_id UUID REFERENCES clients(id) ON DELETE SET NULL;
+
+-- ── To-dos (Tasks) ────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS todos (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id  UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  title       TEXT NOT NULL,
+  description TEXT,
+  assignee_id UUID REFERENCES members(id) ON DELETE SET NULL,
+  status      TEXT NOT NULL DEFAULT 'Todo', -- 'Todo', 'In Progress', 'Done'
+  due_date    DATE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
