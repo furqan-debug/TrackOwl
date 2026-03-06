@@ -149,8 +149,11 @@ const navStructure: NavGroup[] = [
     }
 ];
 
+import { useFavorites } from '../context/FavoritesContext';
+
 export function Sidebar() {
     const location = useLocation();
+    const { favorites } = useFavorites();
 
     // State to track which top-level groups are expanded
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
@@ -218,22 +221,33 @@ export function Sidebar() {
                     >
                         <div className="flex items-center gap-2.5">
                             <Star className="w-4 h-4 text-slate-400" />
-                            Favorites (3)
+                            Favorites ({favorites.length})
                         </div>
                         {favoritesExpanded ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
                     </button>
 
-                    {favoritesExpanded && (
+                    {favoritesExpanded && favorites.length > 0 && (
                         <div className="mt-1 ml-4 space-y-1">
-                            <Link to="/insights/performance" className="block px-4 py-2 text-[13px] text-slate-600 hover:text-slate-900 rounded-md hover:bg-slate-100 transition-colors">
-                                Performance
-                            </Link>
-                            <Link to="/projects" className="block px-4 py-2 text-[13px] text-slate-600 hover:text-slate-900 rounded-md hover:bg-slate-100 transition-colors">
-                                Projects
-                            </Link>
-                            <Link to="/people" className="block px-4 py-2 text-[13px] text-slate-600 hover:text-slate-900 rounded-md hover:bg-slate-100 transition-colors">
-                                Members
-                            </Link>
+                            {favorites.map((fav) => (
+                                <Link
+                                    key={fav.path}
+                                    to={fav.path}
+                                    className={clsx(
+                                        "block px-4 py-2 text-[13px] rounded-md transition-colors",
+                                        location.pathname === fav.path
+                                            ? "bg-slate-200/60 text-slate-900 font-medium"
+                                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                                    )}
+                                >
+                                    {fav.name}
+                                </Link>
+                            ))}
+                        </div>
+                    )}
+
+                    {favoritesExpanded && favorites.length === 0 && (
+                        <div className="mt-1 ml-4 px-4 py-2 text-[11px] text-slate-400 italic">
+                            No favorites yet.
                         </div>
                     )}
                 </div>

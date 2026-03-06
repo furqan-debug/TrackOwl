@@ -32,89 +32,93 @@ import { Calendar } from './pages/Calendar';
 import { TimeOff } from './pages/TimeOff';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 
+import { FavoritesProvider } from './context/FavoritesContext';
+
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* ── Standalone invite-acceptance page (no sidebar/header) ── */}
-        <Route path="/accept-invite" element={<AcceptInvite />} />
+    <FavoritesProvider>
+      <Router>
+        <Routes>
+          {/* ── Standalone invite-acceptance page (no sidebar/header) ── */}
+          <Route path="/accept-invite" element={<AcceptInvite />} />
 
-        {/* ── Main admin shell ── */}
-        <Route path="*" element={
-          <div className="flex h-screen bg-background overflow-hidden font-sans">
-            <Sidebar />
-            <div className="flex-1 flex flex-col h-screen overflow-hidden">
-              <Header />
-              <main className="flex-1 overflow-y-auto">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/activity" element={<Activity />} />
-                  <Route path="/timesheets" element={<Timesheets />} />
-                  <Route path="/reports" element={<Reports />} />
-                  <Route path="/people" element={<People />} />
-                  <Route path="/projects" element={<Projects />} />
-                  <Route path="/schedules" element={<Schedules />} />
-                  <Route path="/url-tracking" element={<UrlTracking />} />
-                  <Route path="/financials" element={<Financials />} />
-                  <Route path="/member-timeline" element={<MemberTimeline />} />
-                  <Route path="/settings" element={<SettingsPage />} />
+          {/* ── Main admin shell ── */}
+          <Route path="*" element={
+            <div className="flex h-screen bg-background overflow-hidden font-sans">
+              <Sidebar />
+              <div className="flex-1 flex flex-col h-screen overflow-hidden">
+                <Header />
+                <main className="flex-1 overflow-y-auto">
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/activity" element={<Activity />} />
+                    <Route path="/timesheets" element={<Timesheets />} />
+                    <Route path="/reports" element={<Reports />} />
+                    <Route path="/people" element={<People />} />
+                    <Route path="/projects" element={<Projects />} />
+                    <Route path="/schedules" element={<Schedules />} />
+                    <Route path="/url-tracking" element={<UrlTracking />} />
+                    <Route path="/financials" element={<Financials />} />
+                    <Route path="/member-timeline" element={<MemberTimeline />} />
+                    <Route path="/settings" element={<SettingsPage />} />
 
-                  {/* --- NEW FEATURES --- */}
-                  <Route path="/timesheets/approvals" element={<Approvals />} />
-                  <Route path="/activity/apps" element={<AppUsage />} />
-                  <Route path="/insights/highlights" element={<Highlights />} />
-                  <Route path="/insights/performance" element={<Performance />} />
+                    {/* --- NEW FEATURES --- */}
+                    <Route path="/timesheets/approvals" element={<Approvals />} />
+                    <Route path="/activity/apps" element={<AppUsage />} />
+                    <Route path="/insights/highlights" element={<Highlights />} />
+                    <Route path="/insights/performance" element={<Performance />} />
 
-                  {/* --- PLACEHOLDER ROUTES --- */}
+                    {/* --- PLACEHOLDER ROUTES --- */}
 
-                  <Route path="/insights/unusual" element={<PlaceholderPage title="Unusual Activity" />} />
-                  <Route path="/insights/notifications" element={<PlaceholderPage title="Smart Notifications" />} />
-                  <Route path="/insights/output" element={<PlaceholderPage title="Output" />} />
+                    <Route path="/insights/unusual" element={<PlaceholderPage title="Unusual Activity" />} />
+                    <Route path="/insights/notifications" element={<PlaceholderPage title="Smart Notifications" />} />
+                    <Route path="/insights/output" element={<PlaceholderPage title="Output" />} />
 
-                  {/* --- NEW LOCATIONS FEATURE --- */}
-                  <Route path="/locations" element={<Locations />} />
-                  <Route path="/locations/job-sites" element={<JobSites />} />
+                    {/* --- NEW LOCATIONS FEATURE --- */}
+                    <Route path="/locations" element={<Locations />} />
+                    <Route path="/locations/job-sites" element={<JobSites />} />
 
-                  <Route path="/projects/todos" element={<Todos />} />
-                  <Route path="/projects/clients" element={<Clients />} />
+                    <Route path="/projects/todos" element={<Todos />} />
+                    <Route path="/projects/clients" element={<Clients />} />
 
-                  <Route path="/calendar" element={<Calendar />} />
-                  <Route path="/calendar/requests" element={<TimeOff />} />
+                    <Route path="/calendar" element={<Calendar />} />
+                    <Route path="/calendar/requests" element={<TimeOff />} />
 
-                  <Route path="/reports" element={<Reports />} />
-                  <Route path="/reports/legacy" element={<ReportsLegacy />} />
-                  <Route path="/reports/daily" element={<DailyTotals />} />
-                  <Route path="/reports/owed" element={<AmountsOwed />} />
-                  <Route path="/reports/payments" element={<PaymentsReport />} />
-                  <Route path="/reports/all" element={<AllReports />} />
-                  <Route path="/reports/custom" element={<CustomizedReports />} />
+                    <Route path="/reports" element={<Reports />} />
+                    <Route path="/reports/legacy" element={<ReportsLegacy />} />
+                    <Route path="/reports/daily" element={<DailyTotals />} />
+                    <Route path="/reports/owed" element={<AmountsOwed />} />
+                    <Route path="/reports/payments" element={<PaymentsReport />} />
+                    <Route path="/reports/all" element={<AllReports />} />
+                    <Route path="/reports/custom" element={<CustomizedReports />} />
 
-                  <Route path="/people/teams" element={<Teams />} />
+                    <Route path="/people/teams" element={<Teams />} />
 
-                  <Route path="/financials/create" element={<PlaceholderPage title="Create Payments" />} />
-                  <Route path="/financials/past" element={<PlaceholderPage title="Past Payments" />} />
-                  <Route path="/financials/invoices" element={<PlaceholderPage title="Invoices" />} />
-                  <Route path="/financials/expenses" element={<PlaceholderPage title="Expenses" />} />
+                    <Route path="/financials/create" element={<PlaceholderPage title="Create Payments" />} />
+                    <Route path="/financials/past" element={<PlaceholderPage title="Past Payments" />} />
+                    <Route path="/financials/invoices" element={<PlaceholderPage title="Invoices" />} />
+                    <Route path="/financials/expenses" element={<PlaceholderPage title="Expenses" />} />
 
-                  <Route path="/silent/how-it-works" element={<PlaceholderPage title="Silent App: How it works" />} />
+                    <Route path="/silent/how-it-works" element={<PlaceholderPage title="Silent App: How it works" />} />
 
-                  <Route path="/settings/tracking" element={<PlaceholderPage title="Activity & Tracking Settings" />} />
-                  <Route path="/settings/integrations" element={<PlaceholderPage title="Integrations" />} />
-                  <Route path="/settings/billing" element={<PlaceholderPage title="Billing" />} />
-                  <Route path="*" element={
-                    <div className="p-8 text-slate-500 flex flex-col items-center justify-center h-full gap-3">
-                      <span className="text-4xl">🚧</span>
-                      <p className="font-medium">This page is under construction.</p>
-                      <p className="text-sm">Select a page from the sidebar to get started.</p>
-                    </div>
-                  } />
-                </Routes>
-              </main>
+                    <Route path="/settings/tracking" element={<PlaceholderPage title="Activity & Tracking Settings" />} />
+                    <Route path="/settings/integrations" element={<PlaceholderPage title="Integrations" />} />
+                    <Route path="/settings/billing" element={<PlaceholderPage title="Billing" />} />
+                    <Route path="*" element={
+                      <div className="p-8 text-slate-500 flex flex-col items-center justify-center h-full gap-3">
+                        <span className="text-4xl">🚧</span>
+                        <p className="font-medium">This page is under construction.</p>
+                        <p className="text-sm">Select a page from the sidebar to get started.</p>
+                      </div>
+                    } />
+                  </Routes>
+                </main>
+              </div>
             </div>
-          </div>
-        } />
-      </Routes>
-    </Router>
+          } />
+        </Routes>
+      </Router>
+    </FavoritesProvider>
   );
 }
 

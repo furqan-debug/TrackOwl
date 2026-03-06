@@ -33,7 +33,7 @@ export function Calendar() {
 
     async function fetchData() {
         setLoading(true);
-        // Start of range: 1st day of current month
+        // Start range; 1st day of current month
         const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).toISOString();
         // End of range: last day of current month
         const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString();
