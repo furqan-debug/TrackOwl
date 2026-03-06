@@ -85,13 +85,20 @@ CREATE TABLE IF NOT EXISTS timesheet_approvals (
 -- Projects
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS projects (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        TEXT NOT NULL,
-  description TEXT,
-  status      TEXT NOT NULL DEFAULT 'Active',  -- Active | Archived
-  color       TEXT NOT NULL DEFAULT '#3b82f6',
-  client_id   UUID, -- Added for client linking
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name                 TEXT NOT NULL,
+  description          TEXT,
+  status               TEXT NOT NULL DEFAULT 'Active',  -- Active | Archived
+  color                TEXT NOT NULL DEFAULT '#3b82f6',
+  client_id            UUID, -- Added for client linking
+  billable             BOOLEAN NOT NULL DEFAULT true,
+  disable_activity     BOOLEAN NOT NULL DEFAULT false,
+  allow_tracking       BOOLEAN NOT NULL DEFAULT true,
+  disable_idle_time    BOOLEAN NOT NULL DEFAULT false,
+  budget_type          TEXT DEFAULT 'No budget', -- 'No budget' | 'Total hours' | 'Total amount' | 'Monthly hours' | 'Monthly amount'
+  budget_limit         NUMERIC(10,2),
+  budget_notifications BOOLEAN NOT NULL DEFAULT true,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- -----------------------------------------------------------------------------
@@ -132,8 +139,18 @@ CREATE TABLE IF NOT EXISTS project_members (
   PRIMARY KEY (project_id, member_id)
 );
 
+-- -----------------------------------------------------------------------------
+-- Project / Team assignments
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS project_teams (
+  project_id  UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  team_id     UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  PRIMARY KEY (project_id, team_id)
+);
+
 -- ── Indexes ──────────────────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_project_members_member ON project_members(member_id);
+CREATE INDEX IF NOT EXISTS idx_project_teams_team ON project_teams(team_id);
 
 -- -----------------------------------------------------------------------------
 -- Job Sites

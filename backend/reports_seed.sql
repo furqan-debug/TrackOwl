@@ -19,6 +19,7 @@ BEGIN
         (m1_id, 1250.00, 'Completed', 'Bank Transfer', 'TXN-992831', now() - interval '2 days'),
         (m1_id, 800.00, 'Pending', 'PayPal', 'PP-Pending-01', NULL);
     END IF;
+    
 
     IF m2_id IS NOT NULL THEN
         INSERT INTO payments (member_id, amount, status, method, reference, paid_at)

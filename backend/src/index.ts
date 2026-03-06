@@ -323,9 +323,37 @@ app.put('/api/members/:id', async (req, res) => {
  */
 app.get('/api/projects', async (req, res) => {
     try {
-        const { data, error } = await getDb().from('projects').select('*').order('created_at', { ascending: false });
+        const { status } = req.query;
+        const db = getDb();
+
+        let query = db.from('projects').select(`
+            *,
+            clients(id, name),
+            project_members(member_id),
+            project_teams(team_id),
+            todos(id)
+        `);
+
+        if (status) {
+            query = query.eq('status', status);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
         if (error) throw error;
-        res.json(data || []);
+
+        // Map data to include counts and flat client info
+        const projects = (data || []).map((p: any) => ({
+            ...p,
+            client_name: p.clients?.name,
+            memberCount: p.project_members?.length || 0,
+            teamCount: p.project_teams?.length || 0,
+            todoCount: p.todos?.length || 0,
+            // Keep the raw arrays for detail views if needed
+            memberIds: p.project_members?.map((pm: any) => pm.member_id) || [],
+            teamIds: p.project_teams?.map((pt: any) => pt.team_id) || []
+        }));
+
+        res.json(projects);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -333,15 +361,45 @@ app.get('/api/projects', async (req, res) => {
 
 /**
  * POST /api/projects — admin creates a project
- * Body: { name, description, color }
+ * Body: { name, description, color, client_id, billable, budget_type, budget_limit, budget_notifications, member_ids, team_ids }
  */
 app.post('/api/projects', async (req, res) => {
     try {
-        const { name, description, color = '#3b82f6', client_id } = req.body;
+        const {
+            name, description, color = '#3b82f6', client_id,
+            billable = true, disable_activity = false, allow_tracking = true, disable_idle_time = false,
+            budget_type = 'No budget', budget_limit, budget_notifications = true,
+            member_ids = [], team_ids = []
+        } = req.body;
+
         if (!name) return res.status(400).json({ error: 'name is required' });
-        const { data, error } = await getDb().from('projects').insert([{ name, description, color, client_id }]).select().single();
-        if (error) throw error;
-        res.status(201).json(data);
+
+        const db = getDb();
+
+        // 1. Insert Project
+        const { data: project, error: projectError } = await db.from('projects').insert([{
+            name, description, color, client_id,
+            billable, disable_activity, allow_tracking, disable_idle_time,
+            budget_type, budget_limit, budget_notifications
+        }]).select().single();
+
+        if (projectError) throw projectError;
+
+        // 2. Insert Member Assignments
+        if (member_ids.length > 0) {
+            const memberRows = member_ids.map((mid: string) => ({ project_id: project.id, member_id: mid }));
+            const { error: mErr } = await db.from('project_members').insert(memberRows);
+            if (mErr) throw mErr;
+        }
+
+        // 3. Insert Team Assignments
+        if (team_ids.length > 0) {
+            const teamRows = team_ids.map((tid: string) => ({ project_id: project.id, team_id: tid }));
+            const { error: tErr } = await db.from('project_teams').insert(teamRows);
+            if (tErr) throw tErr;
+        }
+
+        res.status(201).json(project);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -353,9 +411,48 @@ app.post('/api/projects', async (req, res) => {
 app.put('/api/projects/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { name, description, color, status } = req.body;
-        const { data, error } = await getDb().from('projects').update({ name, description, color, status }).eq('id', id).select().single();
+        const {
+            name, description, color, status, client_id,
+            billable, disable_activity, allow_tracking, disable_idle_time,
+            budget_type, budget_limit, budget_notifications,
+            member_ids, team_ids
+        } = req.body;
+
+        const db = getDb();
+
+        const updateData: any = { name, description, color, status, client_id };
+        if (billable !== undefined) updateData.billable = billable;
+        if (disable_activity !== undefined) updateData.disable_activity = disable_activity;
+        if (allow_tracking !== undefined) updateData.allow_tracking = allow_tracking;
+        if (disable_idle_time !== undefined) updateData.disable_idle_time = disable_idle_time;
+        if (budget_type !== undefined) updateData.budget_type = budget_type;
+        if (budget_limit !== undefined) updateData.budget_limit = budget_limit;
+        if (budget_notifications !== undefined) updateData.budget_notifications = budget_notifications;
+
+        // 1. Update Project
+        const { data, error } = await db.from('projects').update(updateData).eq('id', id).select().single();
         if (error) throw error;
+
+        // 2. Update Member Assignments (if provided)
+        if (member_ids !== undefined) {
+            await db.from('project_members').delete().eq('project_id', id);
+            if (member_ids.length > 0) {
+                const rows = member_ids.map((mid: string) => ({ project_id: id, member_id: mid }));
+                const { error: mErr } = await db.from('project_members').insert(rows);
+                if (mErr) throw mErr;
+            }
+        }
+
+        // 3. Update Team Assignments (if provided)
+        if (team_ids !== undefined) {
+            await db.from('project_teams').delete().eq('project_id', id);
+            if (team_ids.length > 0) {
+                const rows = team_ids.map((tid: string) => ({ project_id: id, team_id: tid }));
+                const { error: tErr } = await db.from('project_teams').insert(rows);
+                if (tErr) throw tErr;
+            }
+        }
+
         res.json(data);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
