@@ -30,12 +30,16 @@ const supabase = (SUPABASE_URL && SUPABASE_SERVICE_KEY)
 // Validate that the service key is actually a service_role key, not an anon key
 if (SUPABASE_SERVICE_KEY) {
     try {
-        const payload = JSON.parse(Buffer.from(SUPABASE_SERVICE_KEY.split('.')[1], 'base64').toString());
-        if (payload.role !== 'service_role') {
-            console.error('🚨 CRITICAL CONFIG ERROR 🚨');
-            console.error('   SUPABASE_SERVICE_KEY contains the wrong role: "' + payload.role + '"');
-            console.error('   It MUST be a "service_role" key to bypass RLS for DB writes.');
-            console.error('   Please copy the true "service_role" key from Supabase Dashboard -> Project Settings -> API.');
+        const parts = SUPABASE_SERVICE_KEY.split('.');
+        const tokenPayload = parts[1];
+        if (tokenPayload) {
+            const payload = JSON.parse(Buffer.from(tokenPayload, 'base64').toString());
+            if (payload.role !== 'service_role') {
+                console.error('🚨 CRITICAL CONFIG ERROR 🚨');
+                console.error('   SUPABASE_SERVICE_KEY contains the wrong role: "' + payload.role + '"');
+                console.error('   It MUST be a "service_role" key to bypass RLS for DB writes.');
+                console.error('   Please copy the true "service_role" key from Supabase Dashboard -> Project Settings -> API.');
+            }
         }
     } catch (e) {
         // ignore parsing errors

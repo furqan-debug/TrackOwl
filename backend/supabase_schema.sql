@@ -47,7 +47,9 @@ ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ip_address TEXT;
 -- v1.1: Add ended_at so time calculations use real duration, not sample counts
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ended_at TIMESTAMPTZ;
 
--- ── Members (real user accounts) ──────────────────────────────────────────────
+-- -----------------------------------------------------------------------------
+-- Members (real user accounts)
+-- -----------------------------------------------------------------------------
 -- Run once. Links to Supabase Auth via auth_user_id.
 CREATE TABLE IF NOT EXISTS members (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -63,7 +65,9 @@ CREATE TABLE IF NOT EXISTS members (
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ── Weekly Timesheet Approvals ────────────────────────────────────────────────
+-- -----------------------------------------------------------------------------
+-- Weekly Timesheet Approvals
+-- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS timesheet_approvals (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   member_id    UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -77,7 +81,9 @@ CREATE TABLE IF NOT EXISTS timesheet_approvals (
   UNIQUE(member_id, week_start)
 );
 
--- ── Projects ──────────────────────────────────────────────────────────────────
+-- -----------------------------------------------------------------------------
+-- Projects
+-- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS projects (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT NOT NULL,
@@ -88,7 +94,9 @@ CREATE TABLE IF NOT EXISTS projects (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ── Clients ──────────────────────────────────────────────────────────────────
+-- -----------------------------------------------------------------------------
+-- Clients
+-- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS clients (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name        TEXT NOT NULL,
@@ -101,7 +109,9 @@ CREATE TABLE IF NOT EXISTS clients (
 -- Update projects to reference clients
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS client_id UUID REFERENCES clients(id) ON DELETE SET NULL;
 
--- ── To-dos (Tasks) ────────────────────────────────────────────────────────────
+-- -----------------------------------------------------------------------------
+-- To-dos (Tasks)
+-- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS todos (
   id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id  UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
@@ -113,7 +123,9 @@ CREATE TABLE IF NOT EXISTS todos (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ── Project ↔ Member assignments ──────────────────────────────────────────────
+-- -----------------------------------------------------------------------------
+-- Project / Member assignments
+-- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS project_members (
   project_id  UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   member_id   UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
@@ -123,7 +135,9 @@ CREATE TABLE IF NOT EXISTS project_members (
 -- ── Indexes ──────────────────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_project_members_member ON project_members(member_id);
 
--- ── Job Sites ─────────────────────────────────────────────────────────────────
+-- -----------------------------------------------------------------------------
+-- Job Sites
+-- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS job_sites (
   id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name             TEXT NOT NULL,
@@ -147,5 +161,57 @@ ALTER TABLE members ADD COLUMN IF NOT EXISTS phone TEXT;
 
 -- ── SEED: Insert a test admin (run after creating user in Supabase Auth dashboard) ──
 -- Replace the email and auth_user_id with real values after you create the auth user.
--- INSERT INTO members (email, full_name, role, auth_user_id)
--- VALUES ('admin@digireps.app', 'Admin', 'Admin', '<auth-user-uuid>');
+-- -----------------------------------------------------------------------------
+-- Payments
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS payments (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id   UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  amount      NUMERIC(10,2) NOT NULL,
+  status      TEXT NOT NULL DEFAULT 'Pending', -- Pending | Completed | Failed
+  method      TEXT NOT NULL,                    -- Bank Transfer | PayPal | Stripe | Crypto
+  reference   TEXT,
+  paid_at     TIMESTAMPTZ,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- -----------------------------------------------------------------------------
+-- Custom Reports
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS custom_reports (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT NOT NULL,
+  type        TEXT NOT NULL, -- Time | Financial | Team
+  filters     JSONB NOT NULL DEFAULT '{}'::jsonb,
+  is_favorite BOOLEAN NOT NULL DEFAULT false,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- -----------------------------------------------------------------------------
+-- Activity Samples v1.2: Add domain/window title tracking
+-- -----------------------------------------------------------------------------
+-- (Table already has these columns, just ensuring indexes exist for performance)
+CREATE INDEX IF NOT EXISTS idx_activity_samples_recorded_at ON activity_samples (recorded_at);
+CREATE INDEX IF NOT EXISTS idx_activity_samples_app_name ON activity_samples (app_name);
+
+-- -----------------------------------------------------------------------------
+-- Teams
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS teams (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT NOT NULL,
+  description TEXT,
+  manager_id  UUID REFERENCES members(id) ON DELETE SET NULL,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- -----------------------------------------------------------------------------
+-- Team Members
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS team_members (
+  team_id   UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+  member_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  PRIMARY KEY (team_id, member_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_team_members_member ON team_members(member_id);

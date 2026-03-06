@@ -5,6 +5,12 @@ import { Dashboard } from './components/Dashboard';
 import { Activity } from './pages/Activity';
 import { Timesheets } from './pages/Timesheets';
 import { Reports } from './pages/Reports';
+import { ReportsLegacy } from './pages/ReportsLegacy';
+import { DailyTotals } from './pages/DailyTotals';
+import { AmountsOwed } from './pages/AmountsOwed';
+import { PaymentsReport } from './pages/PaymentsReport';
+import { AllReports } from './pages/AllReports';
+import { CustomizedReports } from './pages/CustomizedReports';
 import { People } from './pages/People';
 import { Projects } from './pages/Projects';
 import { Schedules } from './pages/Schedules';
@@ -21,6 +27,7 @@ import { Performance } from './pages/Performance';
 import { SettingsPage } from './pages/Settings';
 import { AcceptInvite } from './pages/AcceptInvite';
 import { MemberTimeline } from './pages/MemberTimeline';
+import { Teams } from './pages/Teams';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 
 function App() {
@@ -71,14 +78,15 @@ function App() {
 
                   <Route path="/calendar/time-off" element={<PlaceholderPage title="Time Off Requests" />} />
 
-                  <Route path="/reports/legacy" element={<PlaceholderPage title="Time & Activity (Legacy)" />} />
-                  <Route path="/reports/daily" element={<PlaceholderPage title="Daily Totals (Weekly)" />} />
-                  <Route path="/reports/owed" element={<PlaceholderPage title="Amounts Owed" />} />
-                  <Route path="/reports/payments" element={<PlaceholderPage title="Payments" />} />
-                  <Route path="/reports/all" element={<PlaceholderPage title="All Reports" />} />
-                  <Route path="/reports/custom" element={<PlaceholderPage title="Customized Reports" />} />
+                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/reports/legacy" element={<ReportsLegacy />} />
+                  <Route path="/reports/daily" element={<DailyTotals />} />
+                  <Route path="/reports/owed" element={<AmountsOwed />} />
+                  <Route path="/reports/payments" element={<PaymentsReport />} />
+                  <Route path="/reports/all" element={<AllReports />} />
+                  <Route path="/reports/custom" element={<CustomizedReports />} />
 
-                  <Route path="/people/teams" element={<PlaceholderPage title="Teams" />} />
+                  <Route path="/people/teams" element={<Teams />} />
 
                   <Route path="/financials/create" element={<PlaceholderPage title="Create Payments" />} />
                   <Route path="/financials/past" element={<PlaceholderPage title="Past Payments" />} />
