@@ -1,19 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
-import fs from 'fs';
+import * as fs from 'fs';
+import * as dotenv from 'dotenv';
 dotenv.config();
 
-const SUPABASE_URL = process.env.SUPABASE_URL || '';
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!);
 
-async function run() {
-    const { data: mem } = await supabase.from('members').select('*').limit(1);
-    const { data: screens } = await supabase.from('screenshots').select('*').limit(1);
+async function main() {
+    const now = new Date();
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
 
-    fs.writeFileSync('schema_debug.json', JSON.stringify({
-        members: mem && mem.length ? Object.keys(mem[0]) : [],
-        screenshots: screens && screens.length ? Object.keys(screens[0]) : []
-    }, null, 2));
+    const { data: sessions } = await supabase.from('sessions').select('*').gte('started_at', fourteenDaysAgo);
+    const { data: samples } = await supabase.from('activity_samples').select('*').gte('recorded_at', fourteenDaysAgo);
+
+    console.log(`Found ${sessions?.length} sessions and ${samples?.length} samples in the last 14 days.`);
+
+    const out = {
+        sessions: sessions?.slice(0, 5) || [],
+        samples: samples?.slice(0, 5) || []
+    };
+    fs.writeFileSync('schema_debug.json', JSON.stringify(out, null, 2));
 }
-run();
+main();

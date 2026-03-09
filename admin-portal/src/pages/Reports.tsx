@@ -59,8 +59,10 @@ export function Reports() {
         if (selectedTeamId !== 'All') {
             const { data: tm } = await supabase.from('team_members').select('member_id').eq('team_id', selectedTeamId);
             const memberIds = tm?.map(t => t.member_id) || [];
-            const { data: m } = await supabase.from('members').select('email').in('id', memberIds);
-            emails = m?.map(x => x.email) || [];
+            if (memberIds.length > 0) {
+                const { data: m } = await supabase.from('members').select('email').in('id', memberIds);
+                emails = m?.map(x => x.email) || [];
+            }
 
             // If no members in team, we can skip or show empty
             if (emails.length === 0) {
@@ -86,49 +88,59 @@ export function Reports() {
             ssQuery = ssQuery.in('user_id', emails);
         }
 
-        const [{ data: samples }, { data: sessions }, { count: ssCount }] = await Promise.all([
-            samplesQuery,
-            sessionsQuery,
-            ssQuery,
-        ]);
+        try {
+            const [{ data: samples }, { data: sessions }, { count: ssCount }] = await Promise.all([
+                samplesQuery,
+                sessionsQuery,
+                ssQuery,
+            ]);
 
-        const allSamples = samples || [];
+            const allSamples = samples || [];
 
-        // Daily activity data
-        const dailyMap: Record<string, { total: number; active: number }> = {};
-        allSamples.forEach(s => {
-            const day = s.recorded_at.split('T')[0];
-            if (!dailyMap[day]) dailyMap[day] = { total: 0, active: 0 };
-            dailyMap[day].total++;
-            if (!s.idle) dailyMap[day].active++;
-        });
-        setDailyActivity(Object.entries(dailyMap).sort().map(([date, v]) => ({
-            date: new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-            activity: v.total > 0 ? Math.round((v.active / v.total) * 100) : 0,
-            minutes: v.total,
-        })));
+            // Daily activity data
+            const dailyMap: Record<string, { total: number; active: number }> = {};
+            allSamples.forEach(s => {
+                const day = s.recorded_at.split('T')[0];
+                if (!dailyMap[day]) dailyMap[day] = { total: 0, active: 0 };
+                dailyMap[day].total++;
+                if (!s.idle) dailyMap[day].active++;
+            });
+            setDailyActivity(Object.entries(dailyMap).sort().map(([date, v]) => ({
+                date: new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                activity: v.total > 0 ? Math.round((v.active / v.total) * 100) : 0,
+                minutes: v.total,
+            })));
 
-        // App breakdown
-        const appMap: Record<string, number> = {};
-        allSamples.forEach(s => {
-            const app = s.app_name || 'Unknown';
-            appMap[app] = (appMap[app] || 0) + 1;
-        });
-        setAppBreakdown(
-            Object.entries(appMap).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name, value]) => ({ name, value }))
-        );
+            // App breakdown
+            const appMap: Record<string, number> = {};
+            allSamples.forEach(s => {
+                const app = s.app_name || 'Unknown';
+                appMap[app] = (appMap[app] || 0) + 1;
+            });
+            setAppBreakdown(
+                Object.entries(appMap).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name, value]) => ({ name, value }))
+            );
 
-        // Totals
-        setTotalSessions((sessions || []).length);
-        setScreenshotCount(ssCount || 0);
-        setTotalMins(allSamples.length);
-        setAvgActivity(
-            allSamples.length > 0
-                ? Math.round(allSamples.reduce((a, b) => a + b.activity_percent, 0) / allSamples.length)
-                : 0
-        );
-
-        setLoading(false);
+            // Totals
+            setTotalSessions((sessions || []).length);
+            setScreenshotCount(ssCount || 0);
+            setTotalMins(allSamples.length);
+            setAvgActivity(
+                allSamples.length > 0
+                    ? Math.round(allSamples.reduce((a, b) => a + b.activity_percent, 0) / allSamples.length)
+                    : 0
+            );
+        } catch (err) {
+            console.error("fetchReports unhandled error:", err);
+            setDailyActivity([]);
+            setAppBreakdown([]);
+            setTotalSessions(0);
+            setScreenshotCount(0);
+            setTotalMins(0);
+            setAvgActivity(0);
+        } finally {
+            setLoading(false);
+        }
     }
 
     const fmtHours = (mins: number) => {

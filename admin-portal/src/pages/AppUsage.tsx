@@ -75,52 +75,57 @@ export function AppUsage() {
             sessionIds = userSessions.map(s => s.id);
         }
 
-        // Query activity samples for the day
-        let query = supabase
-            .from('activity_samples')
-            .select('app_name')
-            .gte('recorded_at', start)
-            .lte('recorded_at', end)
-            .not('app_name', 'is', null)
-            .not('app_name', 'eq', '');
+        try {
+            // Query activity samples for the day
+            let query = supabase
+                .from('activity_samples')
+                .select('app_name')
+                .gte('recorded_at', start)
+                .lte('recorded_at', end)
+                .not('app_name', 'is', null)
+                .not('app_name', 'eq', '');
 
-        if (sessionIds) {
-            query = query.in('session_id', sessionIds);
-        }
+            if (sessionIds && sessionIds.length > 0) {
+                query = query.in('session_id', sessionIds);
+            }
 
-        const { data: samples, error } = await query;
+            const { data: samples, error } = await query;
 
-        if (error || !samples) {
-            console.error(error);
+            if (error || !samples) {
+                console.error("fetchData app usage query error:", error);
+                setApps([]);
+                return;
+            }
+
+            const appCounts: Record<string, number> = {};
+            let totalValuableSamples = 0;
+
+            samples.forEach(s => {
+                const name = s.app_name?.trim() || 'Unknown';
+                // Exclude noise
+                if (name === 'Unknown' || name === '' || name.toLowerCase() === 'program manager') return;
+
+                appCounts[name] = (appCounts[name] || 0) + 1;
+                totalValuableSamples++;
+            });
+
+            // Convert to array and calculate percentages
+            const appArray: AppEntry[] = Object.entries(appCounts)
+                .map(([app, count]) => ({
+                    app,
+                    count,
+                    percent: totalValuableSamples > 0 ? (count / totalValuableSamples) * 100 : 0,
+                    category: categorizeApp(app)
+                }))
+                .sort((a, b) => b.count - a.count);
+
+            setApps(appArray);
+        } catch (err) {
+            console.error("fetchData unhandled error:", err);
             setApps([]);
+        } finally {
             setLoading(false);
-            return;
         }
-
-        const appCounts: Record<string, number> = {};
-        let totalValuableSamples = 0;
-
-        samples.forEach(s => {
-            const name = s.app_name?.trim() || 'Unknown';
-            // Exclude noise
-            if (name === 'Unknown' || name === '' || name.toLowerCase() === 'program manager') return;
-
-            appCounts[name] = (appCounts[name] || 0) + 1;
-            totalValuableSamples++;
-        });
-
-        // Convert to array and calculate percentages
-        const appArray: AppEntry[] = Object.entries(appCounts)
-            .map(([app, count]) => ({
-                app,
-                count,
-                percent: totalValuableSamples > 0 ? (count / totalValuableSamples) * 100 : 0,
-                category: categorizeApp(app)
-            }))
-            .sort((a, b) => b.count - a.count);
-
-        setApps(appArray);
-        setLoading(false);
     }
 
     const formatTime = (sampleCount: number) => {
