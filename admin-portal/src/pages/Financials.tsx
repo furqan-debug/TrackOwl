@@ -40,48 +40,57 @@ export function Financials() {
         setLoading(true);
         const { start, end } = getDateRange();
 
-        // Fetch members with real pay/bill rates from the members table
-        const [{ data: membersData }, { data: sessions }] = await Promise.all([
-            supabase.from('members').select('id, auth_user_id, full_name, pay_rate, bill_rate'),
-            supabase.from('sessions')
-                .select('id, user_id, started_at, ended_at')
-                .gte('started_at', start)
-                .lte('started_at', end),
-        ]);
+        try {
+            // Fetch members with real pay/bill rates from the members table
+            const [{ data: membersData, error: memberErr }, { data: sessions, error: sessionErr }] = await Promise.all([
+                supabase.from('members').select('id, full_name, pay_rate, bill_rate'),
+                supabase.from('sessions')
+                    .select('id, user_id, started_at, ended_at')
+                    .gte('started_at', start)
+                    .lte('started_at', end),
+            ]);
 
-        // Map sessions.user_id → member info via members.auth_user_id
-        const memberMap: Record<string, { name: string; pay_rate: number; bill_rate: number }> = {};
-        (membersData || []).forEach(m => {
-            const key = m.auth_user_id ?? m.id;
-            memberMap[key] = { name: m.full_name, pay_rate: m.pay_rate ?? 0, bill_rate: m.bill_rate ?? 0 };
-        });
+            if (memberErr) throw memberErr;
+            if (sessionErr) throw sessionErr;
 
-        const statsMap: Record<string, { minutes: number; sessions: number }> = {};
-        (sessions || []).forEach(s => {
-            const mid = s.user_id;
-            if (!mid) return;
-            if (!statsMap[mid]) statsMap[mid] = { minutes: 0, sessions: 0 };
-            statsMap[mid].sessions++;
-            const startMs = new Date(s.started_at).getTime();
-            const endMs = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
-            statsMap[mid].minutes += Math.max(0, Math.round((endMs - startMs) / 60000));
-        });
+            // Map sessions.user_id → member info
+            const memberMap: Record<string, { name: string; pay_rate: number; bill_rate: number }> = {};
+            (membersData || []).forEach(m => {
+                const key = m.id;
+                memberMap[key] = { name: m.full_name, pay_rate: m.pay_rate ?? 0, bill_rate: m.bill_rate ?? 0 };
+            });
 
-        const result: MemberFinancial[] = Object.entries(statsMap).map(([uid, data]) => {
-            const info = memberMap[uid] ?? { name: uid.slice(0, 8) + '…', pay_rate: 0, bill_rate: 0 };
-            return {
-                member_id: uid,
-                full_name: info.name,
-                pay_rate: info.pay_rate,
-                bill_rate: info.bill_rate,
-                totalMinutes: data.minutes,
-                totalCost: Math.round((data.minutes / 60) * info.pay_rate * 100) / 100,
-                sessions: data.sessions,
-            };
-        }).sort((a, b) => b.totalCost - a.totalCost);
+            const statsMap: Record<string, { minutes: number; sessions: number }> = {};
+            (sessions || []).forEach(s => {
+                const mid = s.user_id;
+                if (!mid) return;
+                if (!statsMap[mid]) statsMap[mid] = { minutes: 0, sessions: 0 };
+                statsMap[mid].sessions++;
+                const startMs = new Date(s.started_at).getTime();
+                const endMs = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
+                statsMap[mid].minutes += Math.max(0, Math.round((endMs - startMs) / 60000));
+            });
 
-        setMembers(result);
-        setLoading(false);
+            const result: MemberFinancial[] = Object.entries(statsMap).map(([uid, data]) => {
+                const info = memberMap[uid] ?? { name: uid.slice(0, 8) + '…', pay_rate: 0, bill_rate: 0 };
+                return {
+                    member_id: uid,
+                    full_name: info.name,
+                    pay_rate: info.pay_rate,
+                    bill_rate: info.bill_rate,
+                    totalMinutes: data.minutes,
+                    totalCost: Math.round((data.minutes / 60) * info.pay_rate * 100) / 100,
+                    sessions: data.sessions,
+                };
+            }).sort((a, b) => b.totalCost - a.totalCost);
+
+            setMembers(result);
+        } catch (error) {
+            console.error('Error fetching financials:', error);
+            setMembers([]);
+        } finally {
+            setLoading(false);
+        }
     }
 
     const totals = members.reduce((acc, m) => ({

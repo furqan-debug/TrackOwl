@@ -34,7 +34,7 @@ export function AmountsOwed() {
         }
 
         const [{ data: members }, { data: sessions }] = await Promise.all([
-            supabase.from('members').select('id, auth_user_id, full_name, pay_rate'),
+            supabase.from('members').select('id, full_name, pay_rate'),
             supabase.from('sessions')
                 .select('user_id, started_at, ended_at')
                 .gte('started_at', start.toISOString())
@@ -43,7 +43,7 @@ export function AmountsOwed() {
         if (members && sessions) {
             const memberMap: Record<string, { name: string; pay_rate: number }> = {};
             members.forEach(m => {
-                const key = m.auth_user_id ?? m.id;
+                const key = m.id;
                 memberMap[key] = { name: m.full_name, pay_rate: m.pay_rate ?? 0 };
             });
 

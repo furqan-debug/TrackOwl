@@ -32,7 +32,7 @@ export function DailyTotals() {
         end.setHours(23, 59, 59, 999);
 
         const [{ data: members }, { data: samples }] = await Promise.all([
-            supabase.from('members').select('id, auth_user_id, full_name'),
+            supabase.from('members').select('id, full_name'),
             supabase.from('activity_samples')
                 .select('recorded_at, sessions(user_id)')
                 .gte('recorded_at', start.toISOString())
@@ -42,7 +42,7 @@ export function DailyTotals() {
         if (members && samples) {
             const memberMap: Record<string, string> = {};
             members.forEach(m => {
-                const key = m.auth_user_id ?? m.id;
+                const key = m.id;
                 memberMap[key] = m.full_name;
             });
 
@@ -169,8 +169,8 @@ export function DailyTotals() {
                                         {row.totals.map((t, idx) => (
                                             <td key={idx} className="px-4 py-4 text-center">
                                                 <div className={`inline-flex items-center justify-center px-2 py-1 rounded-lg text-xs font-black transition-all ${t > 8 ? 'bg-orange-50 text-orange-600 ring-1 ring-orange-500/20' :
-                                                        t > 0 ? 'bg-indigo-50 text-indigo-600 ring-1 ring-indigo-500/20' :
-                                                            'text-slate-200 font-normal'
+                                                    t > 0 ? 'bg-indigo-50 text-indigo-600 ring-1 ring-indigo-500/20' :
+                                                        'text-slate-200 font-normal'
                                                     }`}>
                                                     {t > 0 ? `${t}h` : '—'}
                                                 </div>

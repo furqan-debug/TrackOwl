@@ -51,59 +51,68 @@ export function Timesheets() {
 
     async function fetchTimesheets() {
         setLoading(true);
-        let query = supabase.from('sessions')
-            .select('id, user_id, started_at, ended_at')
-            .gte('started_at', weekStart.toISOString())
-            .lte('started_at', weekEnd.toISOString())
-            .order('started_at', { ascending: true });
+        try {
+            let query = supabase.from('sessions')
+                .select('id, user_id, started_at, ended_at')
+                .gte('started_at', weekStart.toISOString())
+                .lte('started_at', weekEnd.toISOString())
+                .order('started_at', { ascending: true });
 
-        if (selectedMember !== 'all') {
-            query = query.eq('user_id', selectedMember);
+            if (selectedMember !== 'all') {
+                query = query.eq('user_id', selectedMember);
+            }
+
+            const { data: sessions, error: sessionErr } = await query;
+            if (sessionErr) throw sessionErr;
+
+            const { data: activityData, error: activityErr } = await supabase
+                .from('activity_samples')
+                .select('session_id, idle')
+                .gte('recorded_at', weekStart.toISOString())
+                .lte('recorded_at', weekEnd.toISOString());
+
+            if (activityErr) throw activityErr;
+
+            const dailyMap: Record<string, DailyEntry> = {};
+            for (let i = 0; i < 7; i++) {
+                const d = new Date(weekStart);
+                d.setDate(weekStart.getDate() + i);
+                const key = d.toISOString().split('T')[0]!;
+                dailyMap[key] = { date: key, sessions: [], totalMinutes: 0, activeMinutes: 0, activityPercent: 0 };
+            }
+
+            (sessions || []).forEach(s => {
+                const key = s.started_at.split('T')[0]!;
+                if (!dailyMap[key]) return;
+                dailyMap[key].sessions.push(s as Session);
+                const startMs = new Date(s.started_at).getTime();
+                const endMs = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
+                dailyMap[key].totalMinutes += Math.max(0, Math.round((endMs - startMs) / 60000));
+            });
+
+            const sessionDay: Record<string, string> = {};
+            (sessions || []).forEach(s => { sessionDay[s.id] = s.started_at.split('T')[0]!; });
+
+            (activityData || []).forEach(a => {
+                const day = sessionDay[a.session_id];
+                if (!day || !dailyMap[day]) return;
+                if (!a.idle) dailyMap[day].activeMinutes++;
+            });
+
+            const result = Object.values(dailyMap).map(d => ({
+                ...d,
+                activityPercent: d.totalMinutes > 0
+                    ? Math.min(100, Math.round((d.activeMinutes / d.totalMinutes) * 100))
+                    : 0,
+            }));
+
+            setEntries(result);
+        } catch (error) {
+            console.error('Error fetching timesheets:', error);
+            setEntries([]);
+        } finally {
+            setLoading(false);
         }
-
-        const { data: sessions } = await query;
-
-        const { data: activityData } = await supabase
-            .from('activity_samples')
-            .select('session_id, idle')
-            .gte('recorded_at', weekStart.toISOString())
-            .lte('recorded_at', weekEnd.toISOString());
-
-        const dailyMap: Record<string, DailyEntry> = {};
-        for (let i = 0; i < 7; i++) {
-            const d = new Date(weekStart);
-            d.setDate(weekStart.getDate() + i);
-            const key = d.toISOString().split('T')[0]!;
-            dailyMap[key] = { date: key, sessions: [], totalMinutes: 0, activeMinutes: 0, activityPercent: 0 };
-        }
-
-        (sessions || []).forEach(s => {
-            const key = s.started_at.split('T')[0]!;
-            if (!dailyMap[key]) return;
-            dailyMap[key].sessions.push(s as Session);
-            const startMs = new Date(s.started_at).getTime();
-            const endMs = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
-            dailyMap[key].totalMinutes += Math.max(0, Math.round((endMs - startMs) / 60000));
-        });
-
-        const sessionDay: Record<string, string> = {};
-        (sessions || []).forEach(s => { sessionDay[s.id] = s.started_at.split('T')[0]!; });
-
-        (activityData || []).forEach(a => {
-            const day = sessionDay[a.session_id];
-            if (!day || !dailyMap[day]) return;
-            if (!a.idle) dailyMap[day].activeMinutes++;
-        });
-
-        const result = Object.values(dailyMap).map(d => ({
-            ...d,
-            activityPercent: d.totalMinutes > 0
-                ? Math.min(100, Math.round((d.activeMinutes / d.totalMinutes) * 100))
-                : 0,
-        }));
-
-        setEntries(result);
-        setLoading(false);
     }
 
     const weekDays = Array.from({ length: 7 }, (_, i) => {

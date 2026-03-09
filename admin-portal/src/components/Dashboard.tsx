@@ -61,7 +61,7 @@ export function Dashboard() {
             supabase.from('sessions').select('id, started_at, ended_at').gte('started_at', todayStart.toISOString()),
             supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').gte('started_at', weekStart.toISOString()),
             supabase.from('projects').select('id, name, color'),
-            supabase.from('members').select('id, auth_user_id, pay_rate'),
+            supabase.from('members').select('id, pay_rate'),
             supabase.from('screenshots').select('id', { count: 'exact', head: true }).gte('recorded_at', weekStart.toISOString()),
         ]);
 
@@ -248,7 +248,7 @@ function RecentSessions() {
 
     useEffect(() => {
         supabase.from('sessions')
-            .select('id, member_id, user_id, project_id, started_at, ended_at')
+            .select('id, user_id, project_id, started_at, ended_at')
             .order('started_at', { ascending: false })
             .limit(8)
             .then(({ data }) => { setSessions(data || []); setLoading(false); });
@@ -279,7 +279,7 @@ function RecentSessions() {
                         const endMs = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
                         const mins = Math.max(0, Math.round((endMs - startMs) / 60000));
                         const isActive = !s.ended_at;
-                        const mid = s.member_id ?? s.user_id ?? '—';
+                        const mid = s.user_id ?? '—';
 
                         return (
                             <tr key={s.id} className="border-b border-slate-50 hover:bg-slate-50/40 transition-colors">

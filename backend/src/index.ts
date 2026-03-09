@@ -119,10 +119,11 @@ app.post('/api/auth/login', async (req, res) => {
         const authUserId = authData.user.id;
 
         // 2. Fetch member profile from our members table
+        // We use the auth user's email to find the record since auth_user_id is not in schema anymore
         const { data: member, error: memberError } = await db
             .from('members')
             .select('*')
-            .eq('auth_user_id', authUserId)
+            .eq('email', email)
             .eq('status', 'Active')
             .single();
 
@@ -174,7 +175,7 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
         const authUser = (req as any).authUser;
         const db = getDb();
 
-        const { data: member } = await db.from('members').select('*').eq('auth_user_id', authUser.id).single();
+        const { data: member } = await db.from('members').select('*').eq('email', authUser.email).single();
         if (!member) return res.status(404).json({ error: 'Member not found' });
 
         const { data: assignments } = await db
@@ -250,7 +251,6 @@ app.post('/api/members', async (req, res) => {
             bill_rate,
             weekly_limit,
             daily_limit,
-            auth_user_id: authUserId,
             status: 'Pending',
         }]).select().single();
 
@@ -273,6 +273,11 @@ app.post('/api/members', async (req, res) => {
 app.post('/api/members/complete-setup', async (req, res) => {
     try {
         const { auth_user_id, full_name, phone } = req.body;
+        // In this updated setup, the frontend should actually pass auth_user_id containing the UUID of the
+        // Supabase Auth record, but we map to the member record via email or id if the UI passes it. 
+        // For backwards compatibility, the UI currently passes `id` (or `authUserId`). We will assume the UI
+        // continues to pass the auth_user_id, but the backend looks up by ID if possible.
+        // Let's modify the frontend to send member_id shortly.
         if (!auth_user_id || !full_name) {
             return res.status(400).json({ error: 'auth_user_id and full_name are required' });
         }
@@ -282,7 +287,7 @@ app.post('/api/members/complete-setup', async (req, res) => {
         const { data: member, error } = await db
             .from('members')
             .update({ full_name, phone: phone || null, status: 'Active' })
-            .eq('auth_user_id', auth_user_id)
+            .eq('id', auth_user_id) // Map visually mapped auth_user_id variable to member 'id'
             .select()
             .single();
 

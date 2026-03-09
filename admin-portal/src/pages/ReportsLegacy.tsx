@@ -34,14 +34,14 @@ export function ReportsLegacy() {
             { data: projects }
         ] = await Promise.all([
             supabase.from('activity_samples').select('*, sessions(user_id, project_id)').gte('recorded_at', start.toISOString()).order('recorded_at', { ascending: false }),
-            supabase.from('members').select('id, auth_user_id, full_name'),
+            supabase.from('members').select('id, full_name'),
             supabase.from('projects').select('id, name')
         ]);
 
         if (samples && members && projects) {
             const memberMap: Record<string, string> = {};
             members.forEach(m => {
-                const key = m.auth_user_id ?? m.id;
+                const key = m.id;
                 memberMap[key] = m.full_name;
             });
 
