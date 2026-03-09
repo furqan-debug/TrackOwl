@@ -5,7 +5,7 @@ import {
     ChevronDown, CheckCircle, X,
     Pencil, Trash2,
     AlertCircle, RotateCcw,
-    Square, ExternalLink, Settings
+    Square, Settings
 } from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -46,8 +46,6 @@ export function People() {
     const [statusFilter, setStatusFilter] = useState<Status | 'All'>('All');
     const [showFilters, setShowFilters] = useState(false);
     const [showBatch, setShowBatch] = useState(false);
-    const [showBanner, setShowBanner] = useState(true);
-    const [toastMsg, setToastMsg] = useState<string | null>(null);
 
     // Selection state
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -285,22 +283,9 @@ export function People() {
 
             {/* Pricing Info Shadow (Mock) */}
             <div className="mb-4 flex items-center gap-2 text-xs text-slate-400">
-                <span>{membersCount} of 1 members count toward your pricing plan</span>
+                <span>{membersCount} of {membersCount} members count toward your pricing plan</span>
                 <AlertCircle className="w-3.5 h-3.5" />
             </div>
-            <button onClick={() => { setToastMsg('Billing settings coming soon!'); setTimeout(() => setToastMsg(null), 3000); }} className="text-[#2a85ff] text-xs font-medium hover:underline mb-8 block">Add more seats</button>
-
-            {/* Purple Info Banner */}
-            {showBanner && (
-                <div className="bg-[#f0e7ff] border border-[#d8b4fe]/50 p-4 rounded-lg flex items-center justify-between mb-8 animate-in fade-in">
-                    <p className="text-[#6b21a8] text-sm font-medium">Create teams to auto assign members to projects and delegate tasks to team leads</p>
-                    <div className="flex items-center gap-4">
-                        <button onClick={() => setShowBanner(false)} className="text-[#6b21a8] hover:underline text-xs font-semibold uppercase tracking-wider">Don't show again</button>
-                        <button onClick={() => { setToastMsg('Teams feature coming soon!'); setTimeout(() => setToastMsg(null), 3000); }} className="bg-[#9333ea] text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#7e22ce] transition-colors">Try it out now</button>
-                        <button onClick={() => setShowBanner(false)} className="text-[#6b21a8] hover:text-[#7e22ce]"><X className="w-4 h-4" /></button>
-                    </div>
-                </div>
-            )}
 
             {/* Action Bar */}
             <div className="flex flex-col lg:flex-row items-center justify-between gap-4 mb-6">
@@ -330,9 +315,6 @@ export function People() {
                 <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
                     <button onClick={handleExportCsv} className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-slate-700 text-sm font-medium">
                         <Download className="w-4 h-4" /> Export
-                    </button>
-                    <button onClick={() => { setToastMsg('Import feature coming soon!'); setTimeout(() => setToastMsg(null), 3000); }} className="px-6 py-2 bg-white border border-[#2a85ff] text-[#2a85ff] rounded-lg text-sm font-medium hover:bg-[#2a85ff]/5 transition-colors">
-                        Import members
                     </button>
                     <button onClick={() => { resetAddForm(); setShowAddModal(true); }}
                         className="px-6 py-2 bg-[#2a85ff] text-white rounded-lg text-sm font-semibold hover:bg-[#0052cc] transition-colors">
@@ -417,11 +399,6 @@ export function People() {
             {showAddModal && <InviteModal onClose={() => setShowAddModal(false)} onInvite={handleAddMember} form={{ addEmail, setAddEmail, addRole, setAddRole, addPayRate, setAddPayRate, addBillRate, setAddBillRate, addWeekly, setAddWeekly, addDaily, setAddDaily, adding, addError }} />}
             {editMember && <EditModal member={editMember} onClose={() => setEditMember(null)} onSave={(patch: any) => handleUpdateMeta(editMember.id, patch)} />}
             {inviteSentTo && <InviteSentPopup email={inviteSentTo} onClose={() => setInviteSentTo(null)} />}
-            {toastMsg && (
-                <div className="fixed bottom-6 right-6 bg-slate-800 text-white px-6 py-3 rounded-xl shadow-2xl font-medium animate-in slide-in-from-bottom-5 z-[500]">
-                    {toastMsg}
-                </div>
-            )}
         </div>
     );
 }
@@ -494,8 +471,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                         {m.status === 'Pending' && (
                             <DropItem icon={<RotateCcw className="w-3.5 h-3.5" />} label="Resend invite" onClick={() => { onResendInvite(); setOpen(false); }} />
                         )}
-                        <div className="my-1 border-t border-slate-100" />
-                        <DropItem icon={<ExternalLink className="w-3.5 h-3.5" />} label="View timeline" onClick={() => { alert('Timeline coming soon'); }} />
+
                         <DropItem icon={<Settings className="w-3.5 h-3.5" />} label="Settings" onClick={() => { setOpen(false); onEdit(); }} />
                         <div className="my-1 border-t border-slate-100" />
                         <DropItem icon={<Trash2 className="w-3.5 h-3.5 text-rose-500" />} label="Remove member" onClick={() => { setOpen(false); onDelete(); }} danger />

@@ -5,8 +5,6 @@ import {
     LayoutDashboard,
     Clock,
     Activity,
-    Lightbulb,
-    MapPin,
     FolderKanban,
     CalendarDays,
     FileText,
@@ -61,26 +59,6 @@ const navStructure: NavGroup[] = [
         ]
     },
     {
-        name: 'Insights',
-        icon: Lightbulb, // Using Lightbulb as closest match to their distinct icon
-        children: [
-            { name: 'Highlights', path: '/insights/highlights' },
-            { name: 'Performance', path: '/insights/performance' },
-            { name: 'Timeline', path: '/member-timeline', badge: 'new' },
-            { name: 'Unusual activity', path: '/insights/unusual' },
-            { name: 'Smart notifications', path: '/insights/notifications' },
-            { name: 'Output', path: '/insights/output' }
-        ]
-    },
-    {
-        name: 'Locations',
-        icon: MapPin,
-        children: [
-            { name: 'Map', path: '/locations' },
-            { name: 'Job sites', path: '/locations/job-sites' }
-        ]
-    },
-    {
         name: 'Project management',
         icon: FolderKanban,
         children: [
@@ -93,8 +71,6 @@ const navStructure: NavGroup[] = [
         name: 'Calendar',
         icon: CalendarDays,
         children: [
-            { name: 'View calendar', path: '/calendar' },
-            { name: 'Schedules', path: '/schedules' },
             { name: 'Time off requests', path: '/calendar/requests' }
         ]
     },
@@ -143,7 +119,6 @@ const navStructure: NavGroup[] = [
         children: [
             { name: 'All settings', path: '/settings' },
             { name: 'Activity & tracking', path: '/settings/tracking' },
-            { name: 'Integrations', path: '/settings/integrations' },
             { name: 'Billing', path: '/settings/billing' }
         ]
     }

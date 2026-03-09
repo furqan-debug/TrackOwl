@@ -1,10 +1,31 @@
-import { Bell, HelpCircle, Gift, Grid, Star } from 'lucide-react';
-import { useLocation } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Star, LogOut } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 import { useFavorites } from '../context/FavoritesContext';
 
 export function Header() {
     const location = useLocation();
+    const navigate = useNavigate();
     const { toggleFavorite, isFavorite } = useFavorites();
+    const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    // Close menu when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setShowProfileMenu(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        navigate('/login');
+    };
 
     // Map paths to descriptive names for favorites
     const getPageName = (path: string) => {
@@ -45,40 +66,31 @@ export function Header() {
                             }`}
                     />
                 </button>
-
-                <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full text-sm font-medium text-slate-600 ml-6">
-                    <ClockIcon />
-                    <span>02:44:15</span>
-                </div>
             </div>
 
-            <div className="flex items-center gap-4 text-slate-500">
-                <button className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                    <HelpCircle className="w-5 h-5" />
-                </button>
-                <button className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                    <Bell className="w-5 h-5" />
-                </button>
-                <button className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                    <Gift className="w-5 h-5" />
-                </button>
-                <button className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-                    <Grid className="w-5 h-5" />
-                </button>
+            <div className="flex items-center gap-4 text-slate-500" ref={menuRef}>
+                <div className="relative">
+                    <button
+                        onClick={() => setShowProfileMenu(!showProfileMenu)}
+                        title="Profile options"
+                        className="w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-600 transition-colors flex items-center justify-center text-white text-sm font-bold ml-2 shadow-sm cursor-pointer"
+                    >
+                        K
+                    </button>
 
-                <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-sm font-bold ml-2">
-                    K
+                    {showProfileMenu && (
+                        <div className="absolute right-0 top-10 w-48 bg-white border border-slate-200 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                            <button
+                                onClick={handleLogout}
+                                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+                            >
+                                <LogOut className="w-4 h-4" />
+                                Log out
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         </header>
-    );
-}
-
-function ClockIcon() {
-    return (
-        <svg className="w-4 h-4 text-primary" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-        </svg>
     );
 }
