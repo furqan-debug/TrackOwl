@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { CreditCard, Search, Download, ExternalLink, Calendar as CalendarIcon, Filter } from 'lucide-react';
+// Removed unused 'supabase' import
+import { CreditCard, Search, Calendar as CalendarIcon, Filter } from 'lucide-react'; // Removed 'Download' and 'ExternalLink'
 import { Link } from 'react-router-dom';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -135,7 +135,7 @@ export function PastPayments() {
                             ) : (
                                 filtered.map((payment) => (
                                     <tr key={payment.id} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="px-6 py-4 whitespace-nowrap text-slate-600 font-medium whitespace-nowrap">
+                                        <td className="px-6 py-4 whitespace-nowrap text-slate-600 font-medium">
                                             <div className="flex items-center gap-2">
                                                 <CalendarIcon className="w-4 h-4 text-slate-400" />
                                                 {new Date(payment.paid_at || payment.created_at).toLocaleDateString(undefined, {
@@ -157,8 +157,8 @@ export function PastPayments() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${payment.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' :
-                                                    payment.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
-                                                        'bg-rose-100 text-rose-800'
+                                                payment.status === 'Pending' ? 'bg-amber-100 text-amber-800' :
+                                                    'bg-rose-100 text-rose-800'
                                                 }`}>
                                                 {payment.status}
                                             </span>
