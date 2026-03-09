@@ -317,6 +317,20 @@ app.put('/api/members/:id', async (req, res) => {
     }
 });
 
+/**
+ * DELETE /api/members/:id — remove a member
+ */
+app.delete('/api/members/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { error } = await getDb().from('members').delete().eq('id', id);
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // PROJECTS ENDPOINTS
 // ─────────────────────────────────────────────────────────────────────────────

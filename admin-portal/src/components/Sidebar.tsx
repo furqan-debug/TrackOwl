@@ -61,13 +61,6 @@ const navStructure: NavGroup[] = [
         ]
     },
     {
-        name: 'Solutions',
-        icon: Lightbulb,
-        children: [
-            { name: 'SICA Advisory', path: '/sica-advisory' }
-        ]
-    },
-    {
         name: 'Insights',
         icon: Lightbulb, // Using Lightbulb as closest match to their distinct icon
         children: [
