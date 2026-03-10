@@ -12,6 +12,8 @@ export function DailyTotals() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<DayTotal[]>([]);
     const [weekOffset, setWeekOffset] = useState(0);
+    const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
+    const [allMembers, setAllMembers] = useState<{ id: string; full_name: string }[]>([]);
 
     const weekDates = Array.from({ length: 7 }, (_, i) => {
         const d = new Date();
@@ -22,7 +24,7 @@ export function DailyTotals() {
 
     useEffect(() => {
         fetchDailyTotals();
-    }, [weekOffset]);
+    }, [weekOffset, selectedMemberId]);
 
     async function fetchDailyTotals() {
         setLoading(true);
@@ -31,13 +33,33 @@ export function DailyTotals() {
         const end = new Date(weekDates[6]);
         end.setHours(23, 59, 59, 999);
 
+        let query = supabase.from('activity_samples')
+            .select('recorded_at, sessions(user_id)')
+            .gte('recorded_at', start.toISOString())
+            .lte('recorded_at', end.toISOString());
+
+        // If a single member is selected, we need to find their sessions first, 
+        // because we can't easily filter by nested foreign key sessions.user_id in a single supabase query without an inner join.
+        let sessionIdsFilter: string[] | null = null;
+        if (selectedMemberId !== 'all') {
+            const { data: userSessions } = await supabase.from('sessions').select('id').eq('user_id', selectedMemberId);
+            if (!userSessions || userSessions.length === 0) {
+                setData([]);
+                setLoading(false);
+                return;
+            }
+            sessionIdsFilter = userSessions.map(s => s.id);
+            query = query.in('session_id', sessionIdsFilter);
+        }
+
         const [{ data: members }, { data: samples }] = await Promise.all([
             supabase.from('members').select('id, full_name'),
-            supabase.from('activity_samples')
-                .select('recorded_at, sessions(user_id)')
-                .gte('recorded_at', start.toISOString())
-                .lte('recorded_at', end.toISOString())
+            query
         ]);
+
+        if (members && allMembers.length === 0) {
+            setAllMembers(members);
+        }
 
         if (members && samples) {
             const memberMap: Record<string, string> = {};
@@ -82,6 +104,22 @@ export function DailyTotals() {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    {/* Member Filter */}
+                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm">
+                        <Users className="w-4 h-4 text-slate-400" />
+                        <select
+                            value={selectedMemberId}
+                            onChange={(e) => setSelectedMemberId(e.target.value)}
+                            className="text-sm font-bold text-slate-700 bg-transparent outline-none cursor-pointer w-48 truncate"
+                        >
+                            <option value="all">Entire Organization</option>
+                            <option disabled>──────────</option>
+                            {allMembers.map(m => (
+                                <option key={m.id} value={m.id}>{m.full_name}</option>
+                            ))}
+                        </select>
+                    </div>
+
                     <div className="flex bg-white border border-slate-200 rounded-xl p-1 shadow-sm items-center">
                         <button
                             onClick={() => setWeekOffset(o => o - 1)}

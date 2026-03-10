@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Check, ChevronLeft, CreditCard } from 'lucide-react';
+import { Check, ChevronLeft, CreditCard } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -54,7 +54,7 @@ export function CreatePayments() {
             setLoading(false);
         }
     }
-    
+
     return (
         <div className="p-8 max-w-[800px] mx-auto w-full">
             <div className="mb-8">

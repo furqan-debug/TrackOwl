@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Globe, TrendingUp, Clock, Search, BarChart2 } from 'lucide-react';
+import { Globe, TrendingUp, Clock, Search, BarChart2, Users } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
@@ -11,6 +11,11 @@ interface DomainEntry {
     count: number;
     percent: number;
     category: string;
+}
+
+interface MemberInfo {
+    id: string;
+    full_name: string;
 }
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#14b8a6'];
@@ -37,8 +42,16 @@ export function UrlTracking() {
     const [loading, setLoading] = useState(true);
     const [range, setRange] = useState<Range>('Last 7 Days');
     const [search, setSearch] = useState('');
+    const [members, setMembers] = useState<MemberInfo[]>([]);
+    const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
 
-    useEffect(() => { fetchDomains(); }, [range]);
+    useEffect(() => {
+        supabase.from('members').select('id, full_name').eq('status', 'Active').then(({ data }) => {
+            if (data) setMembers(data);
+        });
+    }, []);
+
+    useEffect(() => { fetchDomains(); }, [range, selectedMemberId]);
 
     function getDateRange() {
         const end = new Date().toISOString();
@@ -53,13 +66,35 @@ export function UrlTracking() {
         setLoading(true);
         const { start, end } = getDateRange();
 
-        const { data } = await supabase
+        let sessionIds: string[] | null = null;
+        if (selectedMemberId !== 'all') {
+            const { data: userSessions } = await supabase
+                .from('sessions')
+                .select('id')
+                .eq('user_id', selectedMemberId);
+
+            if (!userSessions || userSessions.length === 0) {
+                setDomains([]);
+                setHourlyData(Array.from({ length: 24 }, (_, h) => ({ hour: `${h}:00`, count: 0 })));
+                setLoading(false);
+                return;
+            }
+            sessionIds = userSessions.map(s => s.id);
+        }
+
+        let query = supabase
             .from('activity_samples')
             .select('domain, recorded_at')
             .gte('recorded_at', start)
             .lte('recorded_at', end)
             .not('domain', 'is', null)
             .neq('domain', '');
+
+        if (sessionIds && sessionIds.length > 0) {
+            query = query.in('session_id', sessionIds);
+        }
+
+        const { data } = await query;
 
         const domainMap: Record<string, number> = {};
         const hourMap: Record<number, number> = {};
@@ -105,18 +140,38 @@ export function UrlTracking() {
     return (
         <div className="p-8 max-w-[1600px] mx-auto w-full">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 relative z-20">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-900">URL Tracking</h1>
                     <p className="text-slate-500 text-sm mt-1">Browser domains visited during tracked time</p>
                 </div>
-                <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1">
-                    {RANGES.map(r => (
-                        <button key={r} onClick={() => setRange(r)}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${range === r ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>
-                            {r}
-                        </button>
-                    ))}
+
+                <div className="flex items-center gap-4">
+                    {/* Member Selector */}
+                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
+                        <Users className="w-4 h-4 text-slate-400" />
+                        <select
+                            className="bg-transparent text-sm font-medium text-slate-700 outline-none w-48"
+                            value={selectedMemberId}
+                            onChange={(e) => setSelectedMemberId(e.target.value)}
+                        >
+                            <option value="all">Entire Organization</option>
+                            <option disabled>──────────</option>
+                            {members.map(m => (
+                                <option key={m.id} value={m.id}>{m.full_name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Range Selector */}
+                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
+                        {RANGES.map(r => (
+                            <button key={r} onClick={() => setRange(r)}
+                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${range === r ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>
+                                {r}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 

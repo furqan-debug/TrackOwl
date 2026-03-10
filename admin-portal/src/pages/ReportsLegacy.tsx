@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { FileText, Search, Download, Filter, User, Clock } from 'lucide-react';
+import { FileText, Search, Download, Filter, User, Clock, Users } from 'lucide-react';
 
 interface LegacyRow {
     member: string;
@@ -15,10 +15,18 @@ export function ReportsLegacy() {
     const [data, setData] = useState<LegacyRow[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [range, setRange] = useState('Last 7 Days');
+    const [members, setMembers] = useState<{ id: string; full_name: string }[]>([]);
+    const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
+
+    useEffect(() => {
+        supabase.from('members').select('id, full_name').eq('status', 'Active').then(({ data }) => {
+            if (data) setMembers(data);
+        });
+    }, []);
 
     useEffect(() => {
         fetchLegacyData();
-    }, [range]);
+    }, [range, selectedMemberId]);
 
     async function fetchLegacyData() {
         setLoading(true);
@@ -28,19 +36,35 @@ export function ReportsLegacy() {
         else if (range === 'Last 7 Days') start = new Date(Date.now() - 7 * 86400000);
         else start = new Date(Date.now() - 30 * 86400000);
 
+        let sessionIds: string[] | null = null;
+        if (selectedMemberId !== 'all') {
+            const { data: userSessions } = await supabase.from('sessions').select('id').eq('user_id', selectedMemberId);
+            if (!userSessions || userSessions.length === 0) {
+                setData([]);
+                setLoading(false);
+                return;
+            }
+            sessionIds = userSessions.map(s => s.id);
+        }
+
+        let samplesQuery = supabase.from('activity_samples').select('*, sessions(user_id, project_id)').gte('recorded_at', start.toISOString()).order('recorded_at', { ascending: false });
+        if (sessionIds && sessionIds.length > 0) {
+            samplesQuery = samplesQuery.in('session_id', sessionIds);
+        }
+
         const [
             { data: samples },
-            { data: members },
+            { data: membersList },
             { data: projects }
         ] = await Promise.all([
-            supabase.from('activity_samples').select('*, sessions(user_id, project_id)').gte('recorded_at', start.toISOString()).order('recorded_at', { ascending: false }),
+            samplesQuery,
             supabase.from('members').select('id, full_name'),
             supabase.from('projects').select('id, name')
         ]);
 
-        if (samples && members && projects) {
+        if (samples && membersList && projects) {
             const memberMap: Record<string, string> = {};
-            members.forEach(m => {
+            membersList.forEach(m => {
                 const key = m.id;
                 memberMap[key] = m.full_name;
             });
@@ -79,10 +103,26 @@ export function ReportsLegacy() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    {/* Member Filter */}
+                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
+                        <Users className="w-4 h-4 text-slate-400" />
+                        <select
+                            value={selectedMemberId}
+                            onChange={(e) => setSelectedMemberId(e.target.value)}
+                            className="text-sm font-medium text-slate-700 bg-transparent outline-none cursor-pointer w-48 truncate"
+                        >
+                            <option value="all">Entire Organization</option>
+                            <option disabled>──────────</option>
+                            {members.map(m => (
+                                <option key={m.id} value={m.id}>{m.full_name}</option>
+                            ))}
+                        </select>
+                    </div>
+
                     <select
                         value={range}
                         onChange={e => setRange(e.target.value)}
-                        className="bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-500/20"
+                        className="bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm focus:ring-2 focus:ring-blue-500/20"
                     >
                         <option>Today</option>
                         <option>Last 7 Days</option>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Monitor, Keyboard, Mouse, Camera, Clock } from 'lucide-react';
+import { Monitor, Keyboard, Mouse, Camera, Clock, Users } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface ActivitySample {
@@ -22,24 +22,58 @@ interface Screenshot {
     file_url: string;
 }
 
+interface MemberInfo {
+    id: string;
+    full_name: string;
+}
+
 export function Activity() {
     const [samples, setSamples] = useState<ActivitySample[]>([]);
     const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]!);
     const [enlarged, setEnlarged] = useState<Screenshot | null>(null);
+    const [members, setMembers] = useState<MemberInfo[]>([]);
+    const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
 
-    useEffect(() => { fetchData(); }, [selectedDate]);
+    useEffect(() => {
+        supabase.from('members').select('id, full_name').eq('status', 'Active').then(({ data }) => {
+            if (data) setMembers(data);
+        });
+    }, []);
+
+    useEffect(() => { fetchData(); }, [selectedDate, selectedMemberId]);
 
     async function fetchData() {
         setLoading(true);
         const start = `${selectedDate}T00:00:00`;
         const end = `${selectedDate}T23:59:59`;
 
-        const [{ data: actData }, { data: ssData }] = await Promise.all([
-            supabase.from('activity_samples').select('*').gte('recorded_at', start).lte('recorded_at', end).order('recorded_at', { ascending: true }),
-            supabase.from('screenshots').select('*').gte('recorded_at', start).lte('recorded_at', end).order('recorded_at', { ascending: false }).limit(24),
-        ]);
+        let sessionIds: string[] | null = null;
+        if (selectedMemberId !== 'all') {
+            const { data: userSessions } = await supabase
+                .from('sessions')
+                .select('id')
+                .eq('user_id', selectedMemberId);
+
+            if (!userSessions || userSessions.length === 0) {
+                setSamples([]);
+                setScreenshots([]);
+                setLoading(false);
+                return;
+            }
+            sessionIds = userSessions.map(s => s.id);
+        }
+
+        let actQuery = supabase.from('activity_samples').select('*').gte('recorded_at', start).lte('recorded_at', end).order('recorded_at', { ascending: true });
+        let ssQuery = supabase.from('screenshots').select('*').gte('recorded_at', start).lte('recorded_at', end).order('recorded_at', { ascending: false }).limit(24);
+
+        if (sessionIds && sessionIds.length > 0) {
+            actQuery = actQuery.in('session_id', sessionIds);
+            ssQuery = ssQuery.in('session_id', sessionIds);
+        }
+
+        const [{ data: actData }, { data: ssData }] = await Promise.all([actQuery, ssQuery]);
 
         setSamples(actData || []);
         setScreenshots(ssData || []);
@@ -65,13 +99,33 @@ export function Activity() {
     return (
         <div className="p-8 max-w-[1400px] mx-auto w-full">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 relative z-20">
                 <div>
                     <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Activity</h1>
                     <p className="text-slate-500 text-sm mt-1">{dateLabel} — keyboard, mouse & app usage</p>
                 </div>
-                <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
-                    className="border border-slate-200 bg-white rounded-lg px-4 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+
+                <div className="flex items-center gap-4">
+                    {/* Member Selector */}
+                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm">
+                        <Users className="w-4 h-4 text-slate-400" />
+                        <select
+                            className="bg-transparent text-sm font-medium text-slate-700 outline-none w-48"
+                            value={selectedMemberId}
+                            onChange={(e) => setSelectedMemberId(e.target.value)}
+                        >
+                            <option value="all">Entire Organization</option>
+                            <option disabled>──────────</option>
+                            {members.map(m => (
+                                <option key={m.id} value={m.id}>{m.full_name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Date Selector */}
+                    <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
+                        className="border border-slate-200 bg-white rounded-lg px-4 py-2 text-sm font-medium text-slate-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 hover:bg-slate-50 transition-colors" />
+                </div>
             </div>
 
             {/* Stats */}

@@ -20,21 +20,29 @@ export function Reports() {
     const [totalMins, setTotalMins] = useState(0);
     const [avgActivity, setAvgActivity] = useState(0);
 
-    // Team filtering
+    // Team & Member filtering
     const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
     const [selectedTeamId, setSelectedTeamId] = useState<string>('All');
+    const [members, setMembers] = useState<{ id: string; email: string; full_name: string }[]>([]);
+    const [selectedMemberEmail, setSelectedMemberEmail] = useState<string>('All');
 
     useEffect(() => {
         fetchTeams();
+        fetchMembers();
     }, []);
 
     useEffect(() => {
         fetchReports();
-    }, [range, selectedTeamId]);
+    }, [range, selectedTeamId, selectedMemberEmail]);
 
     async function fetchTeams() {
         const { data } = await supabase.from('teams').select('id, name');
         if (data) setTeams(data);
+    }
+
+    async function fetchMembers() {
+        const { data } = await supabase.from('members').select('id, email, full_name').eq('status', 'Active');
+        if (data) setMembers(data);
     }
 
     function getDateRange(): { start: string; end: string } {
@@ -56,25 +64,30 @@ export function Reports() {
         const { start, end } = getDateRange();
 
         let emails: string[] = [];
-        if (selectedTeamId !== 'All') {
+
+        if (selectedMemberEmail !== 'All') {
+            // A specific member is picked
+            emails = [selectedMemberEmail];
+        } else if (selectedTeamId !== 'All') {
+            // A team is picked, get all team members' emails
             const { data: tm } = await supabase.from('team_members').select('member_id').eq('team_id', selectedTeamId);
             const memberIds = tm?.map(t => t.member_id) || [];
             if (memberIds.length > 0) {
                 const { data: m } = await supabase.from('members').select('email').in('id', memberIds);
                 emails = m?.map(x => x.email) || [];
             }
+        }
 
-            // If no members in team, we can skip or show empty
-            if (emails.length === 0) {
-                setDailyActivity([]);
-                setAppBreakdown([]);
-                setTotalSessions(0);
-                setScreenshotCount(0);
-                setTotalMins(0);
-                setAvgActivity(0);
-                setLoading(false);
-                return;
-            }
+        // If a filter is active but yielded 0 valid emails, short-circuit
+        if ((selectedMemberEmail !== 'All' || selectedTeamId !== 'All') && emails.length === 0) {
+            setDailyActivity([]);
+            setAppBreakdown([]);
+            setTotalSessions(0);
+            setScreenshotCount(0);
+            setTotalMins(0);
+            setAvgActivity(0);
+            setLoading(false);
+            return;
         }
 
         // Base queries
@@ -170,12 +183,28 @@ export function Reports() {
                         <Users className="w-4 h-4 text-slate-400" />
                         <select
                             value={selectedTeamId}
-                            onChange={(e) => setSelectedTeamId(e.target.value)}
+                            onChange={(e) => { setSelectedTeamId(e.target.value); setSelectedMemberEmail('All'); }}
                             className="text-sm font-bold text-slate-700 bg-transparent outline-none cursor-pointer"
                         >
                             <option value="All">All Teams</option>
                             {teams.map(t => (
                                 <option key={t.id} value={t.id}>{t.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Member Filter */}
+                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2 shadow-sm">
+                        <Users className="w-4 h-4 text-slate-400" />
+                        <select
+                            value={selectedMemberEmail}
+                            onChange={(e) => { setSelectedMemberEmail(e.target.value); setSelectedTeamId('All'); }}
+                            className="text-sm font-bold text-slate-700 bg-transparent outline-none cursor-pointer max-w-[150px] truncate"
+                        >
+                            <option value="All">All Members</option>
+                            <option disabled>──────────</option>
+                            {members.map(m => (
+                                <option key={m.id} value={m.email}>{m.full_name}</option>
                             ))}
                         </select>
                     </div>
