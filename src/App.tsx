@@ -170,7 +170,7 @@ export default function App() {
       return;
     }
     // @ts-ignore
-    const res = await (window as any).trackerAPI.startTracking(project.id);
+    const res = await (window as any).trackerAPI.startTracking(project.id, user?.id);
     setIsTracking(true);
     setSessionId(res.session_id);
     setScreen('tracker');

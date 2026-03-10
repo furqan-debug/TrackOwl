@@ -3,7 +3,7 @@ import { contextBridge, ipcRenderer } from 'electron';
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
 contextBridge.exposeInMainWorld('trackerAPI', {
-    startTracking: (projectId: string) => ipcRenderer.invoke('start-tracking', projectId),
+    startTracking: (projectId: string, userId: string) => ipcRenderer.invoke('start-tracking', { projectId, userId }),
     stopTracking: () => ipcRenderer.invoke('stop-tracking'),
     onTrackingSample: (callback: (data: any) => void) => {
         // We can add a generic listener here for tracking events
