@@ -15,9 +15,9 @@ let currentSessionId: string | null = null;
 let onSampleCallback: ((sample: any) => void) | null = null;
 let onScreenshotCallback: ((screenshot: { session_id: string; timestamp: string; base64: string }) => void) | null = null;
 
-// Screenshot window: 10 minutes, 3 shots per window
-const SCREENSHOT_WINDOW_MS = 10 * 60 * 1000;  // 10 min
-const SCREENSHOTS_PER_WINDOW = 3;
+// Screenshot window: 2 minutes, 2 shots per window (for faster testing)
+const SCREENSHOT_WINDOW_MS = 2 * 60 * 1000;  // 2 min
+const SCREENSHOTS_PER_WINDOW = 2;
 
 export function initTracker() {
     uIOhook.on('keydown', () => {
