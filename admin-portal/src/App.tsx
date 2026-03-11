@@ -26,6 +26,8 @@ import { Highlights } from './pages/Highlights';
 import { Performance } from './pages/Performance';
 import { SettingsPage } from './pages/Settings';
 import { AcceptInvite } from './pages/AcceptInvite';
+import { ForgotPassword } from './pages/ForgotPassword';
+import { UpdatePassword } from './pages/UpdatePassword';
 import { MemberTimeline } from './pages/MemberTimeline';
 import { Teams } from './pages/Teams';
 import { Calendar } from './pages/Calendar';
@@ -43,8 +45,10 @@ function App() {
     <FavoritesProvider>
       <Router>
         <Routes>
-          {/* ── Standalone invite-acceptance page (no sidebar/header) ── */}
+          {/* ── Standalone pages (no sidebar/header) ── */}
           <Route path="/accept-invite" element={<AcceptInvite />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/update-password" element={<UpdatePassword />} />
 
           {/* ── Main admin shell ── */}
           <Route path="*" element={

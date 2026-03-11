@@ -273,6 +273,38 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // ── Forgot password state ──────────────────────────────────────────────────
+  const [forgotMode, setForgotMode] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState<string | null>(null);
+  const [forgotSent, setForgotSent] = useState(false);
+
+  async function submitForgot(e: React.FormEvent) {
+    e.preventDefault();
+    setForgotError(null);
+    setForgotLoading(true);
+    try {
+      // Create client lazily so missing env vars don't crash the app on load
+      const { createClient } = await import('@supabase/supabase-js');
+      const supabase = createClient(
+        (import.meta as any).env?.VITE_SUPABASE_URL as string,
+        (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string
+      );
+      // redirectTo points at the Admin Portal update-password page
+      const adminPortalUrl = (import.meta as any).env?.VITE_ADMIN_PORTAL_URL || 'http://localhost:5173';
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
+        redirectTo: `${adminPortalUrl}/update-password`,
+      });
+      if (error) throw new Error(error.message);
+      setForgotSent(true);
+    } catch (err: any) {
+      setForgotError(err.message);
+    } finally {
+      setForgotLoading(false);
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -298,69 +330,161 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
             <Activity strokeWidth={2.5} size={28} />
           </div>
           <div>
-            <h1 className="heading-1">Welcome back</h1>
-            <p className="text-muted">Sign in to DigiReps Tracker</p>
+            <h1 className="heading-1">{forgotMode ? 'Reset Password' : 'Welcome back'}</h1>
+            <p className="text-muted">{forgotMode ? 'Enter your email to receive a reset link' : 'Sign in to DigiReps Tracker'}</p>
           </div>
         </div>
 
-        <form onSubmit={submit} className="login-form">
-          <div className="field-group">
-            <label className="field-label">Email Address</label>
-            <div style={{ position: 'relative' }}>
-              <Mail size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-tertiary)' }} />
-              <input
-                type="email" required autoFocus
-                value={email} onChange={e => setEmail(e.target.value)}
-                placeholder="you@company.com"
-                className="field-input"
-                style={{ paddingLeft: '2.5rem' }}
-              />
-            </div>
-          </div>
+        <AnimatePresence mode="wait">
+          {forgotMode ? (
+            <motion.div
+              key="forgot"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.25 }}
+            >
+              {forgotSent ? (
+                <div style={{ textAlign: 'center', padding: '1.5rem 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ fontSize: '2.5rem' }}>📧</div>
+                  <p style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Check your email</p>
+                  <p className="text-muted" style={{ fontSize: '0.875rem' }}>
+                    A reset link has been sent to <strong>{forgotEmail}</strong>. Open the link on your phone or computer
+                    to set a new password, then sign in here.
+                  </p>
+                  <button
+                    className="btn btn-secondary"
+                    style={{ marginTop: '0.5rem', width: '100%', padding: '0.75rem' }}
+                    onClick={() => { setForgotMode(false); setForgotSent(false); setForgotEmail(''); }}
+                  >
+                    Back to Sign In
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={submitForgot} className="login-form">
+                  <div className="field-group">
+                    <label className="field-label">Your Email Address</label>
+                    <div style={{ position: 'relative' }}>
+                      <Mail size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-tertiary)' }} />
+                      <input
+                        type="email" required autoFocus
+                        value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
+                        placeholder="you@company.com"
+                        className="field-input"
+                        style={{ paddingLeft: '2.5rem' }}
+                      />
+                    </div>
+                  </div>
 
-          <div className="field-group">
-            <label className="field-label">Password</label>
-            <div style={{ position: 'relative' }}>
-              <Lock size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-tertiary)' }} />
-              <input
-                type="password" required
-                value={password} onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className="field-input"
-                style={{ paddingLeft: '2.5rem' }}
-              />
-            </div>
-          </div>
+                  <AnimatePresence>
+                    {forgotError && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="alert alert-error"
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <ShieldAlert size={16} />
+                        <span>{forgotError}</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="alert alert-error"
-                style={{ overflow: 'hidden' }}
-              >
-                <ShieldAlert size={16} />
-                <span>{error}</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                  <button type="submit" disabled={forgotLoading || !forgotEmail.trim()} className="btn btn-primary" style={{ marginTop: '0.5rem', width: '100%', padding: '0.875rem' }}>
+                    {forgotLoading ? 'Sending…' : 'Send Reset Link'}
+                    {!forgotLoading && <ArrowRight size={18} />}
+                  </button>
 
-          <label className="checkbox-wrap">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={e => setRememberMe(e.target.checked)}
-            />
-            <span>Keep me signed in</span>
-          </label>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    style={{ width: '100%', padding: '0.625rem', marginTop: '0.25rem', fontSize: '0.875rem' }}
+                    onClick={() => { setForgotMode(false); setForgotError(null); }}
+                  >
+                    ← Back to Sign In
+                  </button>
+                </form>
+              )}
+            </motion.div>
+          ) : (
+            <motion.form
+              key="login"
+              onSubmit={submit}
+              className="login-form"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: 0.25 }}
+            >
+              <div className="field-group">
+                <label className="field-label">Email Address</label>
+                <div style={{ position: 'relative' }}>
+                  <Mail size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-tertiary)' }} />
+                  <input
+                    type="email" required autoFocus
+                    value={email} onChange={e => setEmail(e.target.value)}
+                    placeholder="you@company.com"
+                    className="field-input"
+                    style={{ paddingLeft: '2.5rem' }}
+                  />
+                </div>
+              </div>
 
-          <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '0.5rem', width: '100%', padding: '0.875rem' }}>
-            {loading ? 'Signing in...' : 'Sign In'}
-            {!loading && <ArrowRight size={18} />}
-          </button>
-        </form>
+              <div className="field-group">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.375rem' }}>
+                  <label className="field-label" style={{ margin: 0 }}>Password</label>
+                  <button
+                    type="button"
+                    onClick={() => { setForgotMode(true); setForgotEmail(email); setForgotError(null); }}
+                    style={{ fontSize: '0.78rem', color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline', opacity: 0.75 }}
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={18} style={{ position: 'absolute', left: '12px', top: '12px', color: 'var(--text-tertiary)' }} />
+                  <input
+                    type="password" required
+                    value={password} onChange={e => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="field-input"
+                    style={{ paddingLeft: '2.5rem' }}
+                  />
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="alert alert-error"
+                    style={{ overflow: 'hidden' }}
+                  >
+                    <ShieldAlert size={16} />
+                    <span>{error}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <label className="checkbox-wrap">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={e => setRememberMe(e.target.checked)}
+                />
+                <span>Keep me signed in</span>
+              </label>
+
+              <button type="submit" disabled={loading} className="btn btn-primary" style={{ marginTop: '0.5rem', width: '100%', padding: '0.875rem' }}>
+                {loading ? 'Signing in...' : 'Sign In'}
+                {!loading && <ArrowRight size={18} />}
+              </button>
+            </motion.form>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );

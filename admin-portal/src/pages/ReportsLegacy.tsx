@@ -134,7 +134,6 @@ export function ReportsLegacy() {
                     </button>
                 </div>
             </div>
-
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px] flex flex-col">
                 <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                     <div className="relative w-80">
