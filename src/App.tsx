@@ -292,7 +292,7 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
         (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string
       );
       // redirectTo points at the Admin Portal update-password page
-      const adminPortalUrl = (import.meta as any).env?.VITE_ADMIN_PORTAL_URL || 'http://localhost:5173';
+      const adminPortalUrl = (import.meta as any).env?.VITE_ADMIN_PORTAL_URL || 'http://localhost:5174';
       const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail.trim(), {
         redirectTo: `${adminPortalUrl}/update-password`,
       });
