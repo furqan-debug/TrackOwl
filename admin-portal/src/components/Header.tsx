@@ -1,90 +1,119 @@
-import { useState, useRef, useEffect } from 'react';
-import { Star, LogOut } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { Star, LogOut, Menu } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useFavorites } from '../context/FavoritesContext';
+import { getLabelForPath } from '../nav/navModel';
 
-export function Header() {
+export interface HeaderProps {
+    /** Called when user taps the mobile menu button (opens sidebar overlay). */
+    onOpenMobileMenu?: () => void;
+}
+
+export function Header({ onOpenMobileMenu }: HeaderProps = {}) {
     const location = useLocation();
     const navigate = useNavigate();
     const { toggleFavorite, isFavorite } = useFavorites();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
+    const logoutButtonRef = useRef<HTMLButtonElement>(null);
 
-    // Close menu when clicking outside
+    const closeMenu = useCallback(() => setShowProfileMenu(false), []);
+
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setShowProfileMenu(false);
+                closeMenu();
             }
         }
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+    }, [closeMenu]);
+
+    useEffect(() => {
+        function handleEscape(e: KeyboardEvent) {
+            if (e.key === 'Escape') closeMenu();
+        }
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [closeMenu]);
+
+    useEffect(() => {
+        if (showProfileMenu) {
+            logoutButtonRef.current?.focus();
+        }
+    }, [showProfileMenu]);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
         navigate('/login');
     };
 
-    // Map paths to descriptive names for favorites
-    const getPageName = (path: string) => {
-        if (path === '/') return 'Dashboard';
-        if (path === '/activity') return 'Screenshots';
-        if (path.startsWith('/activity/apps')) return 'Apps';
-        if (path === '/url-tracking') return 'URLs';
-        if (path === '/timesheets') return 'Timesheets';
-        if (path === '/reports') return 'Time & activity';
-        if (path === '/people') return 'Members';
-        if (path === '/projects') return 'Projects';
-        if (path === '/calendar') return 'Calendar';
-        if (path === '/financials') return 'Financials';
-
-        // Fallback: capitalize the last part of the path
-        const parts = path.split('/').filter(Boolean);
-        if (parts.length === 0) return 'Dashboard';
-        const last = parts[parts.length - 1];
-        return last.charAt(0).toUpperCase() + last.slice(1).replace(/-/g, ' ');
-    };
-
-    const pageName = getPageName(location.pathname);
+    const pageName = getLabelForPath(location.pathname);
     const favorited = isFavorite(location.pathname);
 
     return (
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0 sticky top-0 z-10 w-full">
-            <div className="flex items-center gap-2">
-                <h2 className="text-sm font-semibold text-slate-700 ml-2">{pageName}</h2>
+        <header className="h-14 bg-surface border-b border-border flex items-center justify-between px-4 md:px-6 shrink-0 sticky top-0 z-10 w-full shadow-shell-sm">
+            <div className="flex items-center gap-2 min-w-0">
+                {onOpenMobileMenu && (
+                    <button
+                        type="button"
+                        onClick={onOpenMobileMenu}
+                        className="md:hidden p-2 -ml-2 rounded-shell-md text-text-secondary hover:text-text-primary hover:bg-surface-subtle transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                        aria-label="Open menu"
+                    >
+                        <Menu className="w-5 h-5" aria-hidden />
+                    </button>
+                )}
+                <h1 className="text-base font-semibold text-text-primary truncate">
+                    {pageName}
+                </h1>
                 <button
+                    type="button"
                     onClick={() => toggleFavorite(pageName, location.pathname)}
-                    className="p-1.5 hover:bg-slate-50 rounded-lg group transition-colors"
-                    title={favorited ? "Remove from favorites" : "Add to favorites"}
+                    className="p-2 rounded-shell-md hover:bg-surface-subtle transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface shrink-0"
+                    aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
                 >
                     <Star
-                        className={`w-4 h-4 transition-all ${favorited
-                            ? "fill-yellow-400 text-yellow-500 scale-110"
-                            : "text-slate-300 group-hover:text-slate-400"
+                        className={`w-4 h-4 transition-transform ${favorited
+                            ? 'fill-primary text-primary'
+                            : 'text-text-muted hover:text-text-secondary'
                             }`}
+                        aria-hidden
                     />
                 </button>
             </div>
 
-            <div className="flex items-center gap-4 text-slate-500" ref={menuRef}>
+            <div className="flex items-center gap-2 text-text-secondary" ref={menuRef}>
                 <div className="relative">
                     <button
-                        onClick={() => setShowProfileMenu(!showProfileMenu)}
-                        title="Profile options"
-                        className="w-8 h-8 rounded-full bg-orange-500 hover:bg-orange-600 transition-colors flex items-center justify-center text-white text-sm font-bold ml-2 shadow-sm cursor-pointer"
+                        type="button"
+                        onClick={() => setShowProfileMenu((v) => !v)}
+                        className="w-9 h-9 rounded-full bg-primary hover:bg-primary-hover transition-colors flex items-center justify-center text-white text-sm font-semibold shadow-shell-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                        aria-label="Profile options"
+                        aria-expanded={showProfileMenu}
+                        aria-haspopup="true"
                     >
                         K
                     </button>
 
                     {showProfileMenu && (
-                        <div className="absolute right-0 top-10 w-48 bg-white border border-slate-200 rounded-xl shadow-xl py-2 z-50 animate-in fade-in zoom-in-95 duration-200">
+                        <div
+                            role="menu"
+                            className="absolute right-0 top-full mt-2 w-52 bg-surface border border-border rounded-shell-lg shadow-shell-md py-1 z-50"
+                            aria-orientation="vertical"
+                        >
                             <button
-                                onClick={handleLogout}
-                                className="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-colors"
+                                ref={logoutButtonRef}
+                                type="button"
+                                role="menuitem"
+                                onClick={() => {
+                                    closeMenu();
+                                    void handleLogout();
+                                }}
+                                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-inset"
                             >
-                                <LogOut className="w-4 h-4" />
+                                <LogOut className="w-4 h-4 shrink-0" aria-hidden />
                                 Log out
                             </button>
                         </div>

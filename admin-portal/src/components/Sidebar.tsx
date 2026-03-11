@@ -1,136 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import {
-    LayoutDashboard,
-    Clock,
-    Activity,
-    FolderKanban,
-    CalendarDays,
-    FileText,
-    Users,
-    CircleDollarSign,
-    AppWindow,
-    Settings,
-    ChevronDown,
-    ChevronRight,
-    Star,
-    Zap
-} from 'lucide-react';
-
-// --- Data Structure strictly matching Hubstaff screenshots ---
-
-type BadgeType = 'new' | 'bolt' | null;
-
-interface NavChild {
-    name: string;
-    path: string;
-    badge?: BadgeType;
-}
-
-interface NavGroup {
-    name: string;
-    icon: any;
-    path?: string; // If it's a direct link (no children)
-    children?: NavChild[];
-}
-
-const navStructure: NavGroup[] = [
-    {
-        name: 'Dashboard',
-        icon: LayoutDashboard,
-        path: '/'
-    },
-    {
-        name: 'Timesheets',
-        icon: Clock,
-        children: [
-            { name: 'View & edit', path: '/timesheets' },
-            { name: 'Approvals', path: '/timesheets/approvals', badge: 'bolt' }
-        ]
-    },
-    {
-        name: 'Activity',
-        icon: Activity,
-        children: [
-            { name: 'Screenshots', path: '/activity' },
-            { name: 'Apps', path: '/activity/apps' },
-            { name: 'URLs', path: '/url-tracking' }
-        ]
-    },
-    {
-        name: 'Project management',
-        icon: FolderKanban,
-        children: [
-            { name: 'Projects', path: '/projects' },
-            { name: 'To-dos', path: '/projects/todos' },
-            { name: 'Clients', path: '/projects/clients' }
-        ]
-    },
-    {
-        name: 'Calendar',
-        icon: CalendarDays,
-        children: [
-            { name: 'Time off requests', path: '/calendar/requests' }
-        ]
-    },
-    {
-        name: 'Reports',
-        icon: FileText,
-        children: [
-            { name: 'Time & activity', path: '/reports', badge: 'new' },
-            { name: 'Time & activity (Legacy)', path: '/reports/legacy' },
-            { name: 'Daily totals (Weekly)', path: '/reports/daily' },
-            { name: 'Amounts owed', path: '/reports/owed' },
-            { name: 'Payments', path: '/reports/payments' },
-            { name: 'All reports', path: '/reports/all' },
-            { name: 'Customized reports', path: '/reports/custom', badge: 'bolt' }
-        ]
-    },
-    {
-        name: 'People',
-        icon: Users,
-        children: [
-            { name: 'Members', path: '/people' },
-            { name: 'Teams', path: '/people/teams', badge: 'bolt' }
-        ]
-    },
-    {
-        name: 'Financials',
-        icon: CircleDollarSign,
-        children: [
-            { name: 'Manage payroll', path: '/financials', badge: 'bolt' },
-            { name: 'Create payments', path: '/financials/create' },
-            { name: 'Past payments', path: '/financials/past' },
-            { name: 'Invoices', path: '/financials/invoices' },
-            { name: 'Expenses', path: '/financials/expenses' }
-        ]
-    },
-    {
-        name: 'Silent app',
-        icon: AppWindow,
-        children: [
-            { name: 'How it works', path: '/silent/how-it-works' }
-        ]
-    },
-    {
-        name: 'Settings',
-        icon: Settings,
-        children: [
-            { name: 'All settings', path: '/settings' },
-            { name: 'Activity & tracking', path: '/settings/tracking' },
-            { name: 'Billing', path: '/settings/billing' }
-        ]
-    }
-];
-
+import { ChevronDown, ChevronRight, ChevronLeft, Star, Zap } from 'lucide-react';
+import { navStructure, matchActive, type BadgeType } from '../nav/navModel';
 import { useFavorites } from '../context/FavoritesContext';
 
-export function Sidebar() {
+const SIDEBAR_WIDTH_EXPANDED = 260;
+const SIDEBAR_WIDTH_COLLAPSED = 72;
+
+export interface SidebarProps {
+    /** When true, sidebar is shown as mobile overlay (always expanded, no collapse toggle). */
+    overlay?: boolean;
+    /** Called when overlay should close (e.g. backdrop click). */
+    onOverlayClose?: () => void;
+}
+
+export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) {
     const location = useLocation();
     const { favorites } = useFavorites();
-
-    // State to track which top-level groups are expanded
+    const [collapsed, setCollapsed] = useState(false);
+    const effectiveCollapsed = overlay ? false : collapsed;
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     const [favoritesExpanded, setFavoritesExpanded] = useState(true);
 
@@ -142,7 +31,7 @@ export function Sidebar() {
 
         navStructure.forEach(group => {
             if (group.children) {
-                const isChildActive = group.children.some(child => currentPath === child.path || currentPath.startsWith(child.path + '/'));
+                const isChildActive = group.children.some(child => matchActive(currentPath, child.path));
                 if (isChildActive && !newExpanded[group.name]) {
                     newExpanded[group.name] = true;
                     changed = true;
@@ -160,142 +49,150 @@ export function Sidebar() {
     };
 
     const renderBadge = (badge?: BadgeType) => {
-        if (!badge) return null;
+        if (!badge || effectiveCollapsed) return null;
         if (badge === 'new') {
             return (
-                <span className="flex items-center gap-1 bg-purple-100 text-purple-700 text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 shrink-0">
-                    <Zap className="w-2.5 h-2.5 fill-purple-700" /> New
+                <span className="flex items-center gap-1 bg-primary/10 text-primary text-[10px] font-semibold px-2 py-0.5 rounded-full ml-2 shrink-0">
+                    New
                 </span>
             );
         }
         if (badge === 'bolt') {
-            return <Zap className="w-3.5 h-3.5 text-purple-600 ml-2 shrink-0 fill-purple-600" />;
+            return <Zap className="w-3.5 h-3.5 text-primary ml-2 shrink-0 fill-primary" aria-hidden />;
         }
         return null;
     };
 
     return (
-        <aside className="w-[260px] h-screen bg-[#f8fafc] border-r border-slate-200 flex flex-col shrink-0 sticky top-0 overflow-y-auto custom-scrollbar">
+        <aside
+            className={clsx(
+                "h-full bg-surface-subtle border-r border-border flex flex-col overflow-y-auto shell-scrollbar",
+                overlay ? "w-[260px]" : "sticky top-0 transition-[width] duration-200 ease-out"
+            )}
+            style={overlay ? undefined : { width: effectiveCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED }}
+            aria-label="Main navigation"
+        >
             {/* Logo Area */}
-            <div className="px-5 py-4 flex items-center gap-2.5 mb-2 sticky top-0 bg-[#f8fafc] z-10">
-                <div className="w-8 h-8 rounded shrink-0" style={{ background: 'conic-gradient(from 180deg at 50% 50%, #2A85FF 0deg, #0052CC 360deg)' }}>
-                    {/* Simplified Hubstaff-like logo abstraction */}
-                    <div className="w-full h-full flex items-center justify-center text-white">
-                        <div className="w-4 h-4 border-2 border-white rounded-sm rotate-45" />
-                    </div>
+            <div className={clsx("flex items-center sticky top-0 z-10 bg-surface-subtle border-b border-border-subtle", effectiveCollapsed ? "justify-center px-0 py-4" : "px-4 py-4 gap-2.5")}>
+                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-shell-sm">
+                    <div className="w-4 h-4 border-2 border-white rounded-sm rotate-45" aria-hidden />
                 </div>
-                <span className="text-xl font-bold text-slate-800 tracking-tight">DigiReps</span>
+                {!effectiveCollapsed && <span className="text-lg font-semibold text-text-primary tracking-tight truncate">DigiReps</span>}
             </div>
 
-            <div className="px-3 pb-6 flex-1">
+            <div className={clsx("flex-1 flex flex-col", effectiveCollapsed ? "px-2 pb-4" : "px-3 pb-6")}>
                 {/* Favorites Section */}
-                <div className="mb-4">
-                    <button
-                        onClick={() => setFavoritesExpanded(!favoritesExpanded)}
-                        className="w-full flex items-center justify-between px-2 py-2 text-[13px] font-medium text-slate-700 hover:text-slate-900 transition-colors"
-                    >
-                        <div className="flex items-center gap-2.5">
-                            <Star className="w-4 h-4 text-slate-400" />
-                            Favorites ({favorites.length})
-                        </div>
-                        {favoritesExpanded ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
-                    </button>
+                {!effectiveCollapsed && (
+                    <>
+                        <div className="mb-2 mt-3">
+                            <button
+                                type="button"
+                                onClick={() => setFavoritesExpanded(!favoritesExpanded)}
+                                className="w-full flex items-center justify-between px-2 py-2 rounded-shell-md text-[13px] font-medium text-text-secondary hover:text-text-primary hover:bg-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-subtle"
+                                aria-expanded={favoritesExpanded}
+                                aria-label={favoritesExpanded ? "Collapse favorites" : "Expand favorites"}
+                            >
+                                <div className="flex items-center gap-2.5">
+                                    <Star className="w-4 h-4 text-text-muted" aria-hidden />
+                                    Favorites ({favorites.length})
+                                </div>
+                                {favoritesExpanded ? <ChevronDown className="w-3.5 h-3.5 text-text-muted" aria-hidden /> : <ChevronRight className="w-3.5 h-3.5 text-text-muted" aria-hidden />}
+                            </button>
 
-                    {favoritesExpanded && favorites.length > 0 && (
-                        <div className="mt-1 ml-4 space-y-1">
-                            {favorites.map((fav) => (
-                                <Link
-                                    key={fav.path}
-                                    to={fav.path}
-                                    className={clsx(
-                                        "block px-4 py-2 text-[13px] rounded-md transition-colors",
-                                        location.pathname === fav.path
-                                            ? "bg-slate-200/60 text-slate-900 font-medium"
-                                            : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
-                                    )}
-                                >
-                                    {fav.name}
-                                </Link>
-                            ))}
-                        </div>
-                    )}
+                            {favoritesExpanded && favorites.length > 0 && (
+                                <div className="mt-0.5 ml-4 space-y-0.5">
+                                    {favorites.map((fav) => (
+                                        <Link
+                                            key={fav.path}
+                                            to={fav.path}
+                                            onClick={overlay ? () => onOverlayClose?.() : undefined}
+                                            className={clsx(
+                                                "block px-3 py-2 text-[13px] rounded-shell-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-subtle",
+                                                location.pathname === fav.path
+                                                    ? "bg-surface text-text-primary font-medium shadow-shell-sm"
+                                                    : "text-text-secondary hover:text-text-primary hover:bg-surface"
+                                            )}
+                                        >
+                                            {fav.name}
+                                        </Link>
+                                    ))}
+                                </div>
+                            )}
 
-                    {favoritesExpanded && favorites.length === 0 && (
-                        <div className="mt-1 ml-4 px-4 py-2 text-[11px] text-slate-400 italic">
-                            No favorites yet.
+                            {favoritesExpanded && favorites.length === 0 && (
+                                <div className="mt-0.5 ml-4 px-3 py-2 text-[11px] text-text-muted italic">
+                                    No favorites yet.
+                                </div>
+                            )}
                         </div>
-                    )}
-                </div>
-
-                <div className="w-full h-px bg-slate-200/60 my-2" />
+                        <div className="w-full h-px bg-border-subtle my-2" aria-hidden />
+                    </>
+                )}
 
                 {/* Main Navigation */}
-                <nav className="space-y-0.5 mt-3">
+                <nav className={clsx("space-y-0.5", !effectiveCollapsed && "mt-1")} aria-label="Primary">
                     {navStructure.map((group) => {
                         const hasChildren = group.children && group.children.length > 0;
-                        const isExpanded = expandedGroups[group.name];
+                        const isExpanded = !effectiveCollapsed && expandedGroups[group.name];
                         const isDirectlyActive = group.path && location.pathname === group.path;
-
-                        // Check if any child is active to highlight the parent slightly even if collapsed (optional UI detail)
-                        const isChildActive = hasChildren && group.children?.some(c => location.pathname === c.path);
+                        const isChildActive = hasChildren && group.children?.some(c => matchActive(location.pathname, c.path));
 
                         return (
                             <div key={group.name} className="flex flex-col">
                                 {hasChildren ? (
                                     <button
+                                        type="button"
                                         onClick={() => toggleGroup(group.name)}
                                         className={clsx(
-                                            'flex items-center justify-between px-2 py-2 rounded-md text-[13.5px] font-medium transition-colors group/btn',
-                                            isChildActive && !isExpanded ? 'text-blue-700 font-semibold' : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100/80'
+                                            'flex items-center rounded-shell-md text-[13.5px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-subtle',
+                                            effectiveCollapsed ? 'justify-center p-2 w-full' : 'justify-between px-2 py-2 w-full',
+                                            isChildActive && !isExpanded ? 'text-primary' : 'text-text-secondary hover:text-text-primary hover:bg-surface'
                                         )}
+                                        aria-expanded={isExpanded}
+                                        aria-label={effectiveCollapsed ? group.name : undefined}
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <group.icon className={clsx("w-[18px] h-[18px]", isChildActive ? "text-blue-600" : "text-slate-400 group-hover/btn:text-slate-500")} strokeWidth={2} />
-                                            {group.name}
+                                        <div className={clsx("flex items-center gap-3", effectiveCollapsed && "justify-center")}>
+                                            <group.icon className={clsx("w-[18px] h-[18px] shrink-0", isChildActive ? "text-primary" : "text-text-muted group-hover:text-text-secondary")} strokeWidth={2} aria-hidden />
+                                            {!effectiveCollapsed && group.name}
                                         </div>
-                                        {isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-slate-400" /> : <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
+                                        {!effectiveCollapsed && (isExpanded ? <ChevronDown className="w-3.5 h-3.5 text-text-muted shrink-0" aria-hidden /> : <ChevronRight className="w-3.5 h-3.5 text-text-muted shrink-0" aria-hidden />)}
                                     </button>
                                 ) : (
                                     <Link
                                         to={group.path!}
+                                        onClick={overlay ? () => onOverlayClose?.() : undefined}
                                         className={clsx(
-                                            'flex items-center px-2 py-2 rounded-md text-[13.5px] font-medium transition-colors group/link',
-                                            isDirectlyActive
-                                                ? 'bg-blue-50 text-blue-700'
-                                                : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100/80'
+                                            'flex items-center rounded-shell-md text-[13.5px] font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-subtle',
+                                            effectiveCollapsed ? 'justify-center p-2' : 'px-2 py-2 gap-3',
+                                            isDirectlyActive ? 'bg-surface text-primary shadow-shell-sm' : 'text-text-secondary hover:text-text-primary hover:bg-surface'
                                         )}
+                                        aria-current={isDirectlyActive ? 'page' : undefined}
                                     >
-                                        <div className="flex items-center gap-3">
-                                            <group.icon className={clsx("w-[18px] h-[18px]", isDirectlyActive ? "text-blue-600" : "text-slate-400 group-hover/link:text-slate-500")} strokeWidth={2} />
-                                            {group.name}
-                                        </div>
+                                        <group.icon className={clsx("w-[18px] h-[18px] shrink-0", isDirectlyActive ? "text-primary" : "text-text-muted")} strokeWidth={2} aria-hidden />
+                                        {!effectiveCollapsed && group.name}
                                     </Link>
                                 )}
 
-                                {/* Children Rendering */}
                                 {hasChildren && isExpanded && (
-                                    <div className="mt-1 pb-2 space-y-0.5 relative">
-                                        {/* Left border line connecting children */}
-                                        <div className="absolute left-[17px] top-0 bottom-2 w-px bg-slate-200" />
+                                    <div className="mt-0.5 pb-2 space-y-0.5 relative">
+                                        <div className="absolute left-[17px] top-0 bottom-2 w-px bg-border" aria-hidden />
 
                                         {group.children!.map((child) => {
-                                            const isActive = location.pathname === child.path;
+                                            const isActive = matchActive(location.pathname, child.path);
                                             return (
                                                 <Link
                                                     key={child.name}
                                                     to={child.path}
+                                                    onClick={overlay ? () => onOverlayClose?.() : undefined}
                                                     className={clsx(
-                                                        'flex items-center justify-between ml-[30px] px-3 py-[7px] text-[13px] rounded-md transition-colors relative',
-                                                        isActive
-                                                            ? 'bg-slate-200/60 text-slate-900 font-medium'
-                                                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                                        'flex items-center justify-between ml-[30px] px-3 py-2 text-[13px] rounded-shell-md transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-subtle',
+                                                        isActive ? 'bg-surface text-text-primary font-medium shadow-shell-sm' : 'text-text-secondary hover:bg-surface hover:text-text-primary'
                                                     )}
+                                                    aria-current={isActive ? 'page' : undefined}
                                                 >
-                                                    {/* Active Indicator Bar matching Hubstaff */}
                                                     {isActive && (
-                                                        <div className="absolute -left-[30px] top-0 bottom-0 w-[3px] bg-blue-600 rounded-r" />
+                                                        <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-primary rounded-r-full" aria-hidden />
                                                     )}
-
                                                     <span className="truncate">{child.name}</span>
                                                     {renderBadge(child.badge)}
                                                 </Link>
@@ -309,18 +206,19 @@ export function Sidebar() {
                 </nav>
             </div>
 
-            <style>{`
-                .custom-scrollbar::-webkit-scrollbar {
-                    width: 6px;
-                }
-                .custom-scrollbar::-webkit-scrollbar-track {
-                    background: transparent;
-                }
-                .custom-scrollbar::-webkit-scrollbar-thumb {
-                    background-color: #cbd5e1;
-                    border-radius: 20px;
-                }
-            `}</style>
+            {/* Collapse toggle (desktop only) */}
+            {!overlay && (
+                <div className="sticky bottom-0 border-t border-border-subtle bg-surface-subtle p-2">
+                    <button
+                        type="button"
+                        onClick={() => setCollapsed(c => !c)}
+                        className="w-full flex items-center justify-center p-2 rounded-shell-md text-text-muted hover:text-text-primary hover:bg-surface transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-subtle"
+                        aria-label={effectiveCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                    >
+                        <ChevronLeft className={clsx("w-4 h-4 transition-transform", effectiveCollapsed && "rotate-180")} aria-hidden />
+                    </button>
+                </div>
+            )}
         </aside>
     );
 }

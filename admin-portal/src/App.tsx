@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Sidebar } from './components/Sidebar';
-import { Header } from './components/Header';
+import { AppShell } from './components/AppShell';
 import { Dashboard } from './components/Dashboard';
 import { Activity } from './pages/Activity';
 import { Timesheets } from './pages/Timesheets';
@@ -26,6 +25,7 @@ import { Highlights } from './pages/Highlights';
 import { Performance } from './pages/Performance';
 import { SettingsPage } from './pages/Settings';
 import { AcceptInvite } from './pages/AcceptInvite';
+import { Login } from './pages/Login';
 import { ForgotPassword } from './pages/ForgotPassword';
 import { UpdatePassword } from './pages/UpdatePassword';
 import { MemberTimeline } from './pages/MemberTimeline';
@@ -46,17 +46,14 @@ function App() {
       <Router>
         <Routes>
           {/* ── Standalone pages (no sidebar/header) ── */}
+          <Route path="/login" element={<Login />} />
           <Route path="/accept-invite" element={<AcceptInvite />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/update-password" element={<UpdatePassword />} />
 
           {/* ── Main admin shell ── */}
           <Route path="*" element={
-            <div className="flex h-screen bg-background overflow-hidden font-sans">
-              <Sidebar />
-              <div className="flex-1 flex flex-col h-screen overflow-hidden">
-                <Header />
-                <main className="flex-1 overflow-y-auto">
+            <AppShell>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/activity" element={<Activity />} />
@@ -92,7 +89,6 @@ function App() {
                     <Route path="/calendar" element={<Calendar />} />
                     <Route path="/calendar/requests" element={<TimeOff />} />
 
-                    <Route path="/reports" element={<Reports />} />
                     <Route path="/reports/legacy" element={<ReportsLegacy />} />
                     <Route path="/reports/daily" element={<DailyTotals />} />
                     <Route path="/reports/owed" element={<AmountsOwed />} />
@@ -120,9 +116,7 @@ function App() {
                       </div>
                     } />
                   </Routes>
-                </main>
-              </div>
-            </div>
+            </AppShell>
           } />
         </Routes>
       </Router>
