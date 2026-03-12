@@ -27,27 +27,28 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     const [favoritesExpanded, setFavoritesExpanded] = useState(true);
 
-    // Filtered nav structure based on roles
+    // Filtered nav structure based on roles (immutably)
     const filteredNav = useMemo(() => {
-        return navStructure.filter(group => {
-            // Check group-level permissions
-            if (group.allowedRoles && !group.allowedRoles.includes(userRole)) return false;
+        return navStructure
+            .map(group => {
+                // If group has children, return a copy with filtered children
+                if (group.children) {
+                    const allowedChildren = group.children.filter(child => 
+                        !child.allowedRoles || child.allowedRoles.includes(userRole)
+                    );
+                    return { ...group, children: allowedChildren };
+                }
+                return { ...group };
+            })
+            .filter(group => {
+                // Check group-level permissions
+                if (group.allowedRoles && !group.allowedRoles.includes(userRole)) return false;
 
-            // If group has children, filter them too
-            if (group.children) {
-                const allowedChildren = group.children.filter(child => 
-                    !child.allowedRoles || child.allowedRoles.includes(userRole)
-                );
-                // If group mandatory children but none allowed, hide group? No, some groups might be mixed.
-                // But for DigiReps, if a group has children, we only show it if at least one child is allowed.
-                if (allowedChildren.length === 0) return false;
-                
-                // Update the group locally for this render (shallow copy)
-                group.children = allowedChildren;
-            }
+                // If a group should have children but none are allowed, hide the group
+                if (group.children && group.children.length === 0) return false;
 
-            return true;
-        });
+                return true;
+            }) as typeof navStructure;
     }, [userRole]);
 
     // Auto-expand groups based on the current active path
