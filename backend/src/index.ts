@@ -340,15 +340,31 @@ app.post('/api/members/complete-setup', async (req, res) => {
 
         const db = getDb();
 
+        // 1. Get the user's email from Supabase Auth to ensure we find the correct record
+        const { data: { user }, error: authError } = await db.auth.admin.getUserById(auth_user_id);
+        if (authError || !user) {
+            console.error('Supabase Auth user not found:', authError);
+            return res.status(404).json({ error: 'Auth user not found.' });
+        }
+
+        // 2. Update the member record using the email we just retrieved
         const { data: member, error } = await db
             .from('members')
-            .update({ full_name, phone: phone || null, status: 'Active' })
-            .eq('id', auth_user_id) // Map visually mapped auth_user_id variable to member 'id'
+            .update({ 
+                full_name, 
+                phone: phone || null, 
+                status: 'Active',
+                auth_user_id: user.id // Also link the auth_user_id for future RLS
+            })
+            .eq('email', user.email) 
             .select()
             .single();
 
-        if (error) throw error;
-        if (!member) return res.status(404).json({ error: 'Member record not found for this user.' });
+        if (error) {
+            console.error('Database update error:', error);
+            throw error;
+        }
+        if (!member) return res.status(404).json({ error: 'Member record not found for this email.' });
 
         console.log(`✅ Member setup complete: ${full_name} (${member.email})`);
         res.json({ member });
