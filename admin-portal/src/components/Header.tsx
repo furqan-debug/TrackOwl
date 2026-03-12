@@ -15,7 +15,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps = {}) {
     const location = useLocation();
     const navigate = useNavigate();
     const { toggleFavorite, isFavorite } = useFavorites();
-    const { profile } = useAuth();
+    const { profile, user } = useAuth();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const logoutButtonRef = useRef<HTMLButtonElement>(null);
@@ -96,7 +96,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps = {}) {
                         aria-expanded={showProfileMenu}
                         aria-haspopup="true"
                     >
-                        {profile?.full_name?.charAt(0).toUpperCase() || profile?.email?.charAt(0).toUpperCase() || '?'}
+                        {profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || '?'}
                     </button>
 
                     {showProfileMenu && (
@@ -107,7 +107,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps = {}) {
                         >
                             <div className="px-4 py-3 border-b border-border-subtle bg-surface-subtle/50">
                                 <p className="text-xs font-bold text-text-primary truncate">{profile?.full_name || 'No Name'}</p>
-                                <p className="text-[10px] text-text-muted truncate mt-0.5">{profile?.email}</p>
+                                <p className="text-[10px] text-text-muted truncate mt-0.5">{profile?.email || user?.email}</p>
                                 <div className="mt-2 inline-flex items-center px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-wider">
                                     {profile?.role || 'User'}
                                 </div>

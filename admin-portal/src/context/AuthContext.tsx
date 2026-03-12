@@ -50,13 +50,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     async function fetchProfile(email: string) {
         try {
+            // Use case-insensitive match just in case
             const { data, error } = await supabase
                 .from('members')
                 .select('*')
-                .eq('email', email)
+                .ilike('email', email)
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.warn('Profile not found for:', email, error.message);
+                throw error;
+            }
             setProfile(data);
         } catch (err) {
             console.error('Error fetching profile:', err);
@@ -76,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const { data: member } = await supabase
                 .from('members')
                 .select('*')
-                .eq('email', session.user.email)
+                .ilike('email', session.user.email)
                 .single();
             setProfile(member);
         } else {
