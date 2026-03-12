@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import { ChevronDown, ChevronRight, ChevronLeft, Star, Zap } from 'lucide-react';
-import { navStructure, matchActive, type BadgeType } from '../nav/navModel';
+import { ChevronDown, ChevronRight, ChevronLeft, Star, Zap, LogOut } from 'lucide-react';
+import { navStructure, matchActive, type BadgeType, type Role } from '../nav/navModel';
 import { useFavorites } from '../context/FavoritesContext';
+import { useAuth } from '../context/AuthContext';
 
 const SIDEBAR_WIDTH_EXPANDED = 260;
 const SIDEBAR_WIDTH_COLLAPSED = 72;
@@ -18,10 +19,36 @@ export interface SidebarProps {
 export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) {
     const location = useLocation();
     const { favorites } = useFavorites();
+    const { profile, signOut } = useAuth();
+    const userRole = (profile?.role || 'User') as Role;
+    
     const [collapsed, setCollapsed] = useState(false);
     const effectiveCollapsed = overlay ? false : collapsed;
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     const [favoritesExpanded, setFavoritesExpanded] = useState(true);
+
+    // Filtered nav structure based on roles
+    const filteredNav = useMemo(() => {
+        return navStructure.filter(group => {
+            // Check group-level permissions
+            if (group.allowedRoles && !group.allowedRoles.includes(userRole)) return false;
+
+            // If group has children, filter them too
+            if (group.children) {
+                const allowedChildren = group.children.filter(child => 
+                    !child.allowedRoles || child.allowedRoles.includes(userRole)
+                );
+                // If group mandatory children but none allowed, hide group? No, some groups might be mixed.
+                // But for DigiReps, if a group has children, we only show it if at least one child is allowed.
+                if (allowedChildren.length === 0) return false;
+                
+                // Update the group locally for this render (shallow copy)
+                group.children = allowedChildren;
+            }
+
+            return true;
+        });
+    }, [userRole]);
 
     // Auto-expand groups based on the current active path
     useEffect(() => {
@@ -29,7 +56,7 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
         const newExpanded = { ...expandedGroups };
         let changed = false;
 
-        navStructure.forEach(group => {
+        filteredNav.forEach(group => {
             if (group.children) {
                 const isChildActive = group.children.some(child => matchActive(currentPath, child.path));
                 if (isChildActive && !newExpanded[group.name]) {
@@ -42,7 +69,7 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
         if (changed) {
             setExpandedGroups(newExpanded);
         }
-    }, [location.pathname]);
+    }, [location.pathname, filteredNav]);
 
     const toggleGroup = (name: string) => {
         setExpandedGroups(prev => ({ ...prev, [name]: !prev[name] }));
@@ -131,7 +158,7 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
 
                 {/* Main Navigation */}
                 <nav className={clsx("space-y-0.5", !effectiveCollapsed && "mt-1")} aria-label="Primary">
-                    {navStructure.map((group) => {
+                    {filteredNav.map((group) => {
                         const hasChildren = group.children && group.children.length > 0;
                         const isExpanded = !effectiveCollapsed && expandedGroups[group.name];
                         const isDirectlyActive = group.path && location.pathname === group.path;
@@ -204,6 +231,34 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
                         );
                     })}
                 </nav>
+            </div>
+
+            {/* Profile & Logout Area */}
+            <div className="mt-auto border-t border-border-subtle bg-surface-subtle p-3">
+                 <div className={clsx("flex items-center gap-3", effectiveCollapsed ? "justify-center" : "px-1 mb-2")}>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs shrink-0">
+                        {profile?.full_name?.charAt(0) || '?'}
+                    </div>
+                    {!effectiveCollapsed && (
+                        <div className="min-w-0 flex-1">
+                            <p className="text-[13px] font-bold text-text-primary truncate">{profile?.full_name}</p>
+                            <p className="text-[11px] text-text-muted truncate capitalize">{profile?.role}</p>
+                        </div>
+                    )}
+                </div>
+                
+                <button
+                    type="button"
+                    onClick={() => signOut()}
+                    className={clsx(
+                        "w-full flex items-center rounded-shell-md text-[13px] text-rose-500 hover:bg-rose-50 hover:text-rose-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-400",
+                        effectiveCollapsed ? "justify-center p-2" : "px-2 py-2 gap-3"
+                    )}
+                    aria-label="Sign out"
+                >
+                    <LogOut className="w-4 h-4 shrink-0" aria-hidden />
+                    {!effectiveCollapsed && <span>Sign out</span>}
+                </button>
             </div>
 
             {/* Collapse toggle (desktop only) */}

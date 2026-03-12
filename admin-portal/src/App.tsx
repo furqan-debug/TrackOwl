@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from './components/AppShell';
 import { Dashboard } from './components/Dashboard';
 import { Activity } from './pages/Activity';
@@ -24,6 +24,9 @@ import { AppUsage } from './pages/AppUsage';
 import { Highlights } from './pages/Highlights';
 import { Performance } from './pages/Performance';
 import { SettingsPage } from './pages/Settings';
+import { Landing } from './pages/Landing';
+import { Signup } from './pages/Signup';
+import { Onboarding } from './pages/Onboarding';
 import { AcceptInvite } from './pages/AcceptInvite';
 import { Login } from './pages/Login';
 import { ForgotPassword } from './pages/ForgotPassword';
@@ -38,21 +41,28 @@ import { Invoices } from './pages/Invoices';
 import { Expenses } from './pages/Expenses';
 
 import { FavoritesProvider } from './context/FavoritesContext';
+import { AuthProvider } from './context/AuthContext';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 function App() {
   return (
-    <FavoritesProvider>
-      <Router>
-        <Routes>
-          {/* ── Standalone pages (no sidebar/header) ── */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/accept-invite" element={<AcceptInvite />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/update-password" element={<UpdatePassword />} />
+    <AuthProvider>
+      <FavoritesProvider>
+        <Router>
+          <Routes>
+            {/* ── Public pages ── */}
+            <Route path="/" element={<Landing />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/accept-invite" element={<AcceptInvite />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/update-password" element={<UpdatePassword />} />
+            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
 
-          {/* ── Main admin shell ── */}
-          <Route path="*" element={
-            <AppShell>
+            {/* ── Protected Main Admin Shell ── */}
+            <Route path="/dashboard/*" element={
+              <ProtectedRoute>
+                <AppShell>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/activity" element={<Activity />} />
@@ -106,19 +116,20 @@ function App() {
                     <Route path="/settings/tracking" element={<PlaceholderPage title="Activity & Tracking Settings" />} />
                     <Route path="/settings/integrations" element={<PlaceholderPage title="Integrations" />} />
                     <Route path="/settings/billing" element={<PlaceholderPage title="Billing" />} />
-                    <Route path="*" element={
-                      <div className="p-8 text-slate-500 flex flex-col items-center justify-center h-full gap-3">
-                        <span className="text-4xl">🚧</span>
-                        <p className="font-medium">This page is under construction.</p>
-                        <p className="text-sm">Select a page from the sidebar to get started.</p>
-                      </div>
-                    } />
+                    
+                    {/* Fallback within dashboard */}
+                    <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
-            </AppShell>
-          } />
-        </Routes>
-      </Router>
-    </FavoritesProvider>
+                </AppShell>
+              </ProtectedRoute>
+            } />
+
+            {/* Global Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </FavoritesProvider>
+    </AuthProvider>
   );
 }
 

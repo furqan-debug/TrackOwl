@@ -13,10 +13,13 @@ import {
 
 export type BadgeType = 'new' | 'bolt' | null;
 
+export type Role = 'Admin' | 'Manager' | 'User' | 'Viewer';
+
 export interface NavChild {
     name: string;
     path: string;
     badge?: BadgeType;
+    allowedRoles?: Role[];
 }
 
 export interface NavGroup {
@@ -24,80 +27,85 @@ export interface NavGroup {
     icon: LucideIcon;
     path?: string;
     children?: NavChild[];
+    allowedRoles?: Role[];
 }
 
 export const navStructure: NavGroup[] = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/' },
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     {
         name: 'Timesheets',
         icon: Clock,
         children: [
-            { name: 'View & edit', path: '/timesheets' },
-            { name: 'Approvals', path: '/timesheets/approvals', badge: 'bolt' },
+            { name: 'View & edit', path: '/dashboard/timesheets' },
+            { name: 'Approvals', path: '/dashboard/timesheets/approvals', badge: 'bolt', allowedRoles: ['Admin', 'Manager'] },
         ],
     },
     {
         name: 'Activity',
         icon: Activity,
         children: [
-            { name: 'Screenshots', path: '/activity' },
-            { name: 'Apps', path: '/activity/apps' },
-            { name: 'URLs', path: '/url-tracking' },
+            { name: 'Screenshots', path: '/dashboard/activity' },
+            { name: 'Apps', path: '/dashboard/activity/apps' },
+            { name: 'URLs', path: '/dashboard/url-tracking' },
         ],
     },
     {
         name: 'Project management',
         icon: FolderKanban,
+        allowedRoles: ['Admin', 'Manager', 'User'],
         children: [
-            { name: 'Projects', path: '/projects' },
-            { name: 'To-dos', path: '/projects/todos' },
-            { name: 'Clients', path: '/projects/clients' },
+            { name: 'Projects', path: '/dashboard/projects' },
+            { name: 'To-dos', path: '/dashboard/projects/todos' },
+            { name: 'Clients', path: '/dashboard/projects/clients', allowedRoles: ['Admin', 'Manager'] },
         ],
     },
     {
         name: 'Reports',
         icon: FileText,
         children: [
-            { name: 'Time & activity', path: '/reports', badge: 'new' },
-            { name: 'Time & activity (Legacy)', path: '/reports/legacy' },
-            { name: 'Daily totals (Weekly)', path: '/reports/daily' },
-            { name: 'Amounts owed', path: '/reports/owed' },
-            { name: 'Payments', path: '/reports/payments' },
-            { name: 'All reports', path: '/reports/all' },
-            { name: 'Customized reports', path: '/reports/custom', badge: 'bolt' },
+            { name: 'Time & activity', path: '/dashboard/reports', badge: 'new' },
+            { name: 'Time & activity (Legacy)', path: '/dashboard/reports/legacy', allowedRoles: ['Admin'] },
+            { name: 'Daily totals (Weekly)', path: '/dashboard/reports/daily' },
+            { name: 'Amounts owed', path: '/dashboard/reports/owed', allowedRoles: ['Admin', 'Manager'] },
+            { name: 'Payments', path: '/dashboard/reports/payments', allowedRoles: ['Admin', 'Manager'] },
+            { name: 'All reports', path: '/dashboard/reports/all', allowedRoles: ['Admin'] },
+            { name: 'Customized reports', path: '/dashboard/reports/custom', badge: 'bolt', allowedRoles: ['Admin'] },
         ],
     },
     {
         name: 'People',
         icon: Users,
+        allowedRoles: ['Admin', 'Manager'],
         children: [
-            { name: 'Members', path: '/people' },
-            { name: 'Teams', path: '/people/teams', badge: 'bolt' },
+            { name: 'Members', path: '/dashboard/people', allowedRoles: ['Admin'] },
+            { name: 'Teams', path: '/dashboard/people/teams', badge: 'bolt' },
         ],
     },
     {
         name: 'Financials',
         icon: CircleDollarSign,
+        allowedRoles: ['Admin'],
         children: [
-            { name: 'Manage payroll', path: '/financials', badge: 'bolt' },
-            { name: 'Create payments', path: '/financials/create' },
-            { name: 'Past payments', path: '/financials/past' },
-            { name: 'Invoices', path: '/financials/invoices' },
-            { name: 'Expenses', path: '/financials/expenses' },
+            { name: 'Manage payroll', path: '/dashboard/financials', badge: 'bolt' },
+            { name: 'Create payments', path: '/dashboard/financials/create' },
+            { name: 'Past payments', path: '/dashboard/financials/past' },
+            { name: 'Invoices', path: '/dashboard/financials/invoices' },
+            { name: 'Expenses', path: '/dashboard/financials/expenses' },
         ],
     },
     {
         name: 'Silent app',
         icon: AppWindow,
-        children: [{ name: 'How it works', path: '/silent/how-it-works' }],
+        allowedRoles: ['Admin'],
+        children: [{ name: 'How it works', path: '/dashboard/silent/how-it-works' }],
     },
     {
         name: 'Settings',
         icon: Settings,
         children: [
-            { name: 'All settings', path: '/settings' },
-            { name: 'Activity & tracking', path: '/settings/tracking' },
-            { name: 'Billing', path: '/settings/billing' },
+            { name: 'All settings', path: '/dashboard/settings', allowedRoles: ['Admin'] },
+            { name: 'Activity & tracking', path: '/dashboard/settings/tracking', allowedRoles: ['Admin', 'Manager'] },
+            { name: 'Billing', path: '/dashboard/settings/billing', allowedRoles: ['Admin'] },
         ],
     },
 ];
