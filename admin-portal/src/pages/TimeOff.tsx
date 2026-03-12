@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
     Clock, Check, X, Plus,
     Calendar as CalendarIcon,
-    AlertCircle, CheckCircle, XCircle
+    AlertCircle, CheckCircle, XCircle, Trash2
 } from 'lucide-react';
 
 interface Member {
@@ -68,11 +68,25 @@ export function TimeOff() {
         setLoading(false);
     }
 
-    async function handleStatusUpdate(id: string, status: 'Approved' | 'Rejected') {
+    async function handleStatusUpdate(id: string, status: 'Approved' | 'Rejected' | 'Pending') {
         setProcessingId(id);
         const { error } = await supabase
             .from('time_off_requests')
             .update({ status, updated_at: new Date().toISOString() })
+            .eq('id', id);
+
+        if (error) console.error(error);
+        else fetchData();
+        setProcessingId(null);
+    }
+
+    async function handleDelete(id: string) {
+        if (!confirm('Are you sure you want to delete this leave request?')) return;
+        
+        setProcessingId(id);
+        const { error } = await supabase
+            .from('time_off_requests')
+            .delete()
             .eq('id', id);
 
         if (error) console.error(error);
@@ -89,7 +103,7 @@ export function TimeOff() {
             end_date: endDate,
             type,
             reason,
-            status: 'Pending'
+            status: 'Approved' // Admin-logged entries are auto-approved
         }]);
 
         if (error) console.error(error);
@@ -120,7 +134,7 @@ export function TimeOff() {
                     <button onClick={() => setShowAddModal(true)}
                         className="flex items-center gap-2 bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-amber-500 transition-all shadow-xl shadow-slate-200 hover:shadow-amber-200 active:scale-95">
                         <Plus className="w-5 h-5" />
-                        New Request
+                        Log Time Off
                     </button>
                 </div>
             </div>
@@ -194,32 +208,52 @@ export function TimeOff() {
                                                 r.status === 'Rejected' ? <XCircle className="w-4 h-4" /> :
                                                     <Clock className="w-4 h-4" />}
                                             {r.status}
+                                            {r.status === 'Approved' && <span className="text-[8px] opacity-60 ml-1">(Auto-Log)</span>}
                                         </span>
                                     </td>
                                     <td className="px-8 py-5 font-medium text-slate-500 italic text-sm max-w-xs truncate">
                                         "{r.reason || 'No reason provided'}"
                                     </td>
                                     <td className="px-8 py-5">
-                                        {r.status === 'Pending' ? (
-                                            <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2">
+                                            {r.status === 'Pending' ? (
+                                                <>
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(r.id, 'Approved')}
+                                                        disabled={processingId === r.id}
+                                                        className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                                                        title="Approve"
+                                                    >
+                                                        <Check className="w-5 h-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleStatusUpdate(r.id, 'Rejected')}
+                                                        disabled={processingId === r.id}
+                                                        className="p-2.5 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-500 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                                                        title="Reject"
+                                                    >
+                                                        <X className="w-5 h-5" />
+                                                    </button>
+                                                </>
+                                            ) : (
                                                 <button
-                                                    onClick={() => handleStatusUpdate(r.id, 'Approved')}
+                                                    onClick={() => handleStatusUpdate(r.id, 'Pending')}
                                                     disabled={processingId === r.id}
-                                                    className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl hover:bg-emerald-500 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                                                    className="px-3 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 transition-all text-[10px] font-black uppercase tracking-widest disabled:opacity-50"
+                                                    title="Mark as Pending"
                                                 >
-                                                    <Check className="w-5 h-5" />
+                                                    Undo
                                                 </button>
-                                                <button
-                                                    onClick={() => handleStatusUpdate(r.id, 'Rejected')}
-                                                    disabled={processingId === r.id}
-                                                    className="p-2.5 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-500 hover:text-white transition-all shadow-sm disabled:opacity-50"
-                                                >
-                                                    <X className="w-5 h-5" />
-                                                </button>
-                                            </div>
-                                        ) : (
-                                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em]">Processed</span>
-                                        )}
+                                            )}
+                                            <button
+                                                onClick={() => handleDelete(r.id)}
+                                                disabled={processingId === r.id}
+                                                className="p-2.5 bg-slate-50 text-slate-400 rounded-xl hover:bg-rose-500 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                                                title="Delete Request"
+                                            >
+                                                <Trash2 className="w-5 h-5" />
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
@@ -289,7 +323,7 @@ export function TimeOff() {
                             <button onClick={() => setShowAddModal(false)} className="flex-1 px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all">Cancel</button>
                             <button onClick={handleSubmitRequest} disabled={!memberId || !startDate || !endDate}
                                 className="flex-[2] bg-amber-500 text-white px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-amber-100 disabled:opacity-50 active:scale-95">
-                                Submit Request
+                                Log Leave
                             </button>
                         </div>
                     </div>

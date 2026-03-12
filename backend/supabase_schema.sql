@@ -247,16 +247,32 @@ CREATE TABLE IF NOT EXISTS invoices (
 );
 
 -- -----------------------------------------------------------------------------
--- Expenses
+-- Holidays
 -- -----------------------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS expenses (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  member_id   UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
-  project_id  UUID REFERENCES projects(id) ON DELETE SET NULL,
-  amount      NUMERIC(10,2) NOT NULL,
-  category    TEXT NOT NULL,
-  description TEXT,
-  date        DATE NOT NULL DEFAULT CURRENT_DATE,
-  status      TEXT NOT NULL DEFAULT 'Pending', -- Pending | Approved | Rejected
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+CREATE TABLE IF NOT EXISTS holidays (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name         TEXT NOT NULL,
+  date         DATE NOT NULL,
+  is_recurring BOOLEAN NOT NULL DEFAULT false,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE(date, name)
 );
+
+-- -----------------------------------------------------------------------------
+-- Time Off Requests
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS time_off_requests (
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  member_id    UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  start_date   DATE NOT NULL,
+  end_date     DATE NOT NULL,
+  type         TEXT NOT NULL DEFAULT 'Vacation', -- Vacation | Sick | Personal | Other
+  status       TEXT NOT NULL DEFAULT 'Pending',  -- Pending | Approved | Rejected
+  reason       TEXT,
+  manager_note TEXT,
+  updated_at   TIMESTAMPTZ,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_time_off_member ON time_off_requests(member_id);
+CREATE INDEX IF NOT EXISTS idx_time_off_dates  ON time_off_requests(start_date, end_date);

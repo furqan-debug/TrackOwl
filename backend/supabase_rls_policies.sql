@@ -134,8 +134,41 @@ CREATE POLICY "anon_view_screenshots"
   USING (bucket_id = 'screenshots');
 
 -- ═══════════════════════════════════════════════════════════
--- VERIFICATION: Run these to confirm RLS is active
+-- STEP 7: Holidays and Time Off Requests
 -- ═══════════════════════════════════════════════════════════
+
+ALTER TABLE holidays ENABLE ROW LEVEL SECURITY;
+ALTER TABLE time_off_requests ENABLE ROW LEVEL SECURITY;
+
+-- Holidays are readable by everyone
+DROP POLICY IF EXISTS "anyone_read_holidays" ON holidays;
+CREATE POLICY "anyone_read_holidays" ON holidays FOR SELECT USING (true);
+
+-- Users can manage their own time off requests
+DROP POLICY IF EXISTS "users_read_own_time_off" ON time_off_requests;
+CREATE POLICY "users_read_own_time_off"
+  ON time_off_requests FOR SELECT
+  USING (member_id = auth.uid() OR auth.uid()::text IN (SELECT id::text FROM members WHERE role = 'Admin'));
+
+DROP POLICY IF EXISTS "users_insert_own_time_off" ON time_off_requests;
+CREATE POLICY "users_insert_own_time_off"
+  ON time_off_requests FOR INSERT
+  WITH CHECK (member_id = auth.uid());
+
+-- Admin/Service Role can manage all
+DROP POLICY IF EXISTS "service_role_all_time_off" ON time_off_requests;
+CREATE POLICY "service_role_all_time_off"
+  ON time_off_requests FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "anon_admin_read_time_off" ON time_off_requests;
+CREATE POLICY "anon_admin_read_time_off" ON time_off_requests FOR SELECT TO anon USING (true);
+
+-- Allow admins to update status via anon (for the current portal setup)
+DROP POLICY IF EXISTS "anon_admin_update_time_off" ON time_off_requests;
+CREATE POLICY "anon_admin_update_time_off" ON time_off_requests FOR UPDATE TO anon USING (true);
 -- SELECT schemaname, tablename, rowsecurity
 -- FROM pg_tables
 -- WHERE tablename IN ('sessions', 'activity_samples', 'screenshots');

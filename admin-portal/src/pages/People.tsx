@@ -70,56 +70,17 @@ export function People() {
 
     async function fetchMembers() {
         setLoading(true);
-        let dbMembers: DbMember[] = [];
         try {
             const r = await fetch(`${API}/api/members`);
-            if (r.ok) dbMembers = await r.json();
-        } catch { }
-
-        const { data: sessions } = await supabase
-            .from('sessions')
-            .select('id, user_id, started_at, ended_at')
-            .order('started_at', { ascending: false });
-
-        const { data: activityData } = await supabase
-            .from('activity_samples')
-            .select('session_id, idle');
-
-        const sessionToUser: Record<string, string> = {};
-        (sessions || []).forEach(s => { sessionToUser[s.id] = s.user_id; });
-
-        const statsMap: Record<string, { min: number; active: number; total: number; last: string | null; count: number }> = {};
-        (sessions || []).forEach(s => {
-            const uid = s.user_id;
-            if (!statsMap[uid]) statsMap[uid] = { min: 0, active: 0, total: 0, last: s.started_at, count: 0 };
-            statsMap[uid].count++;
-            const startMs = new Date(s.started_at).getTime();
-            const endMs = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
-            statsMap[uid].min += Math.max(0, Math.round((endMs - startMs) / 60000));
-            if (s.started_at > (statsMap[uid].last || '')) statsMap[uid].last = s.started_at;
-        });
-
-        (activityData || []).forEach(a => {
-            const uid = sessionToUser[a.session_id];
-            if (!uid || !statsMap[uid]) return;
-            statsMap[uid].total++;
-            if (!a.idle) statsMap[uid].active++;
-        });
-
-        const result: MemberRow[] = dbMembers.map(m => {
-            const stats = statsMap[m.email] || statsMap[m.full_name] || null;
-            return {
-                ...m,
-                totalMinutes: stats?.min || 0,
-                activityPercent: stats && stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0,
-                lastSeen: stats?.last || null,
-                sessionCount: stats?.count || 0,
-                projectsCount: m.status === 'Active' ? 1 : 0, // Mock for display
-            };
-        });
-
-        setMembers(result);
-        setLoading(false);
+            if (r.ok) {
+                const data = await r.json();
+                setMembers(data);
+            }
+        } catch (e) {
+            console.error('Fetch members error:', e);
+        } finally {
+            setLoading(false);
+        }
     }
 
     async function handleAddMember() {

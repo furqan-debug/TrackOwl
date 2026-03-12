@@ -196,13 +196,65 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * GET /api/members — list all members
+ * GET /api/members — list all members with project counts and stats
  */
 app.get('/api/members', async (req, res) => {
     try {
-        const { data, error } = await getDb().from('members').select('*').order('created_at', { ascending: false });
-        if (error) throw error;
-        res.json(data || []);
+        const db = getDb();
+        
+        // 1. Fetch members with project member counts
+        const { data: membersData, error: memberError } = await db.from('members')
+            .select('*, project_members(project_id)')
+            .order('created_at', { ascending: false });
+        
+        if (memberError) throw memberError;
+
+        // 2. Fetch session stats per user
+        // Note: For large datasets, this should be a DB view or more optimized RPC
+        const { data: sessionStats } = await db.rpc('get_member_stats'); 
+        // If RPC doesn't exist yet, we'll do a fallback simple aggregation or keep it as is for now
+        // but let's assume we want to solve it properly.
+        
+        // Since I can't easily create an RPC without sql tool, I'll do a slightly optimized fetch
+        const { data: sessions } = await db.from('sessions').select('id, user_id, started_at, ended_at');
+        const { data: activity } = await db.from('activity_samples').select('session_id, idle');
+
+        const statsMap: Record<string, any> = {};
+        
+        const sessionToUser: Record<string, string> = {};
+        (sessions || []).forEach(s => { sessionToUser[s.id] = s.user_id; });
+
+        (sessions || []).forEach(s => {
+            const uid = s.user_id;
+            if (!statsMap[uid]) statsMap[uid] = { min: 0, active: 0, total: 0, last: s.started_at, count: 0 };
+            statsMap[uid].count++;
+            const startMs = new Date(s.started_at).getTime();
+            const endMs = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
+            statsMap[uid].min += Math.max(0, Math.round((endMs - startMs) / 60000));
+            if (s.started_at > (statsMap[uid].last || '')) statsMap[uid].last = s.started_at;
+        });
+
+        (activity || []).forEach(a => {
+            const uid = sessionToUser[a.session_id];
+            if (!uid || !statsMap[uid]) return;
+            statsMap[uid].total++;
+            if (!a.idle) statsMap[uid].active++;
+        });
+
+        const members = (membersData || []).map((m: any) => {
+            const stats = statsMap[m.id] || statsMap[m.email] || null;
+            return {
+                ...m,
+                projectsCount: m.project_members?.length || 0,
+                totalMinutes: stats?.min || 0,
+                activityPercent: stats && stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0,
+                lastSeen: stats?.last || null,
+                sessionCount: stats?.count || 0,
+                project_members: undefined
+            };
+        });
+
+        res.json(members);
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -868,6 +920,126 @@ app.delete('/api/expenses/:id', async (req, res) => {
     }
 });
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// TEAMS ENDPOINTS
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * GET /api/teams — list all teams with counts
+ */
+app.get('/api/teams', async (req, res) => {
+    try {
+        const db = getDb();
+        const { data, error } = await db.from('teams').select(`
+            *,
+            members:team_members(member_id)
+        `).order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const teams = (data || []).map((t: any) => ({
+            ...t,
+            member_count: t.members?.length || 0,
+            memberIds: t.members?.map((m: any) => m.member_id) || []
+        }));
+
+        res.json(teams);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/**
+ * POST /api/teams — create a team
+ */
+app.post('/api/teams', async (req, res) => {
+    try {
+        const { name, description, manager_id, member_ids = [] } = req.body;
+        if (!name) return res.status(400).json({ error: 'name is required' });
+
+        const db = getDb();
+        const { data: team, error } = await db.from('teams').insert([{
+            name, description, manager_id
+        }]).select().single();
+
+        if (error) throw error;
+
+        if (member_ids.length > 0) {
+            const rows = member_ids.map((mid: string) => ({ team_id: team.id, member_id: mid }));
+            await db.from('team_members').insert(rows);
+        }
+
+        res.status(201).json(team);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/**
+ * PUT /api/teams/:id — update team
+ */
+app.put('/api/teams/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { name, description, manager_id, member_ids } = req.body;
+        const db = getDb();
+
+        const { data, error } = await db.from('teams').update({
+            name, description, manager_id
+        }).eq('id', id).select().single();
+
+        if (error) throw error;
+
+        if (member_ids !== undefined) {
+            await db.from('team_members').delete().eq('team_id', id);
+            if (member_ids.length > 0) {
+                const rows = member_ids.map((mid: string) => ({ team_id: id, member_id: mid }));
+                await db.from('team_members').insert(rows);
+            }
+        }
+
+        res.json(data);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/**
+ * DELETE /api/teams/:id — delete team
+ */
+app.delete('/api/teams/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { error } = await getDb().from('teams').delete().eq('id', id);
+        if (error) throw error;
+        res.status(204).send();
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/**
+ * PUT /api/teams/:id/members — manage team members
+ */
+app.put('/api/teams/:id/members', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { member_ids = [] } = req.body;
+        const db = getDb();
+
+        await db.from('team_members').delete().eq('team_id', id);
+        if (member_ids.length > 0) {
+            const rows = member_ids.map((mid: string) => ({ team_id: id, member_id: mid }));
+            const { error } = await db.from('team_members').insert(rows);
+            if (error) throw error;
+        }
+
+        res.json({ success: true, member_ids });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 app.listen(PORT, () => {
     console.log(`🚀 DigiReps Ingestion API running on http://localhost:${PORT}`);

@@ -65,6 +65,7 @@ export function Projects() {
     // Modals
     const [showModal, setShowModal] = useState(false);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
+    const [modalInitialTab, setModalInitialTab] = useState<'GENERAL' | 'MEMBERS' | 'BUDGET & LIMITS' | 'TEAMS'>('GENERAL');
 
     useEffect(() => {
         fetchProjects();
@@ -257,7 +258,11 @@ export function Projects() {
                                         project={p}
                                         isSelected={selectedIds.has(p.id)}
                                         onSelect={() => toggleSelect(p.id)}
-                                        onEdit={() => { setEditingProject(p); setShowModal(true); }}
+                                        onEdit={(tab) => { 
+                                            setEditingProject(p); 
+                                            setModalInitialTab(tab || 'GENERAL');
+                                            setShowModal(true); 
+                                        }}
                                         onRefresh={fetchProjects}
                                     />
                                 ))
@@ -275,6 +280,7 @@ export function Projects() {
             {showModal && (
                 <ProjectModal
                     project={editingProject}
+                    initialTab={modalInitialTab}
                     onClose={() => setShowModal(false)}
                     onSuccess={() => { setShowModal(false); fetchProjects(); }}
                 />
@@ -288,7 +294,7 @@ export function Projects() {
 function ProjectRow({
     project, isSelected, onSelect, onEdit, onRefresh
 }: {
-    project: Project; isSelected: boolean; onSelect: () => void; onEdit: () => void; onRefresh: () => void
+    project: Project; isSelected: boolean; onSelect: () => void; onEdit: (tab?: 'GENERAL' | 'MEMBERS' | 'BUDGET & LIMITS' | 'TEAMS') => void; onRefresh: () => void
 }) {
     const [showMenu, setShowMenu] = useState(false);
 
@@ -334,7 +340,7 @@ function ProjectRow({
                         {project.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                        <button onClick={onEdit} className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors truncate block max-w-[240px]">
+                        <button onClick={() => onEdit('GENERAL')} className="text-sm font-semibold text-slate-700 hover:text-blue-600 transition-colors truncate block max-w-[240px]">
                             {project.name}
                         </button>
                         <div className="flex items-center gap-1.5 mt-0.5">
@@ -391,7 +397,10 @@ function ProjectRow({
                     {project.budget_limit && (
                         <span className="text-xs text-slate-400 mt-0.5">Limit: {project.budget_limit}</span>
                     )}
-                    <button className="text-[10px] font-bold text-blue-500 uppercase mt-1 opacity-0 group-hover:opacity-100 transition-opacity text-left">
+                    <button 
+                        onClick={() => onEdit('BUDGET & LIMITS')}
+                        className="text-[10px] font-bold text-blue-500 uppercase mt-1 opacity-0 group-hover:opacity-100 transition-opacity text-left"
+                    >
                         Edit budget
                     </button>
                 </div>
@@ -412,13 +421,13 @@ function ProjectRow({
                         <>
                             <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                             <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white border border-slate-200 shadow-xl z-20 py-1.5 overflow-hidden animate-in fade-in zoom-in duration-200">
-                                <button onClick={() => { setShowMenu(false); onEdit(); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
+                                <button onClick={() => { setShowMenu(false); onEdit('GENERAL'); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
                                     <Pencil className="w-4 h-4 text-slate-400" /> Edit project
                                 </button>
-                                <button className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
+                                <button onClick={() => { setShowMenu(false); onEdit('MEMBERS'); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
                                     <Users className="w-4 h-4 text-slate-400" /> Manage members
                                 </button>
-                                <button className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
+                                <button onClick={() => { setShowMenu(false); onEdit('BUDGET & LIMITS'); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
                                     <CreditCard className="w-4 h-4 text-slate-400" /> Edit budget
                                 </button>
                                 <div className="h-px bg-slate-100 my-1" />
@@ -437,8 +446,13 @@ function ProjectRow({
     );
 }
 
-function ProjectModal({ project, onClose, onSuccess }: { project: Project | null; onClose: () => void; onSuccess: () => void }) {
-    const [activeTab, setActiveTab] = useState<'GENERAL' | 'MEMBERS' | 'BUDGET & LIMITS' | 'TEAMS'>('GENERAL');
+function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: { 
+    project: Project | null; 
+    initialTab?: 'GENERAL' | 'MEMBERS' | 'BUDGET & LIMITS' | 'TEAMS';
+    onClose: () => void; 
+    onSuccess: () => void 
+}) {
+    const [activeTab, setActiveTab] = useState<'GENERAL' | 'MEMBERS' | 'BUDGET & LIMITS' | 'TEAMS'>(initialTab);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
