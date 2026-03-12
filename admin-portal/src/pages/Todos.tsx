@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { CheckCircle2, Circle, Search, Plus, Clock, User, X, Loader2, Calendar, LayoutGrid, List, MoreHorizontal } from 'lucide-react';
+import { CheckCircle2, Circle, Search, Plus, Clock, User, X, Loader2, Calendar, LayoutGrid, List, MoreHorizontal, Trash2 } from 'lucide-react';
 
 interface Todo {
     id: string;
@@ -36,14 +36,15 @@ export function Todos() {
 
     // Modal state
     const [showModal, setShowModal] = useState(false);
+    const [editTodo, setEditTodo] = useState<Todo | null>(null);
     const [saving, setSaving] = useState(false);
-    const [newTodo, setNewTodo] = useState({
+    const [formData, setFormData] = useState({
         title: '',
         description: '',
         project_id: '',
         assignee_id: '',
         due_date: '',
-        status: 'Todo' as const
+        status: 'Todo' as 'Todo' | 'In Progress' | 'Done'
     });
 
     useEffect(() => {
@@ -82,41 +83,89 @@ export function Todos() {
         setLoading(false);
     }
 
-    async function handleCreate(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
-        if (!newTodo.project_id) return;
+        if (!formData.project_id) return;
 
         setSaving(true);
-        const { data, error } = await supabase
-            .from('todos')
-            .insert({
-                title: newTodo.title,
-                description: newTodo.description,
-                project_id: newTodo.project_id,
-                assignee_id: newTodo.assignee_id || null,
-                due_date: newTodo.due_date || null,
-                status: 'Todo'
-            })
-            .select(`
-                *,
-                projects (name, color),
-                members (full_name)
-            `)
-            .single();
+        
+        if (editTodo) {
+            const { data, error } = await supabase
+                .from('todos')
+                .update({
+                    title: formData.title,
+                    description: formData.description,
+                    project_id: formData.project_id,
+                    assignee_id: formData.assignee_id || null,
+                    due_date: formData.due_date || null,
+                })
+                .eq('id', editTodo.id)
+                .select(`
+                    *,
+                    projects (name, color),
+                    members (full_name)
+                `)
+                .single();
 
-        if (!error && data) {
-            setTodos([data, ...todos]);
-            setShowModal(false);
-            setNewTodo({
-                title: '',
-                description: '',
-                project_id: '',
-                assignee_id: '',
-                due_date: '',
-                status: 'Todo'
-            });
+            if (!error && data) {
+                setTodos(todos.map(t => t.id === data.id ? data : t));
+                handleCloseModal();
+            }
+        } else {
+            const { data, error } = await supabase
+                .from('todos')
+                .insert({
+                    title: formData.title,
+                    description: formData.description,
+                    project_id: formData.project_id,
+                    assignee_id: formData.assignee_id || null,
+                    due_date: formData.due_date || null,
+                    status: 'Todo'
+                })
+                .select(`
+                    *,
+                    projects (name, color),
+                    members (full_name)
+                `)
+                .single();
+
+            if (!error && data) {
+                setTodos([data, ...todos]);
+                handleCloseModal();
+            }
         }
         setSaving(false);
+    }
+
+    function handleOpenCreate() {
+        setEditTodo(null);
+        setFormData({
+            title: '',
+            description: '',
+            project_id: '',
+            assignee_id: '',
+            due_date: '',
+            status: 'Todo'
+        });
+        setShowModal(true);
+    }
+
+    function handleOpenEdit(todo: Todo) {
+        setEditTodo(todo);
+        setFormData({
+            title: todo.title,
+            description: todo.description || '',
+            project_id: todo.project_id,
+            assignee_id: todo.assignee_id || '',
+            due_date: todo.due_date || '',
+            status: todo.status
+        });
+        setShowModal(true);
+    }
+
+    function handleCloseModal() {
+        setShowModal(false);
+        setEditTodo(null);
     }
 
     async function toggleStatus(todo: Todo) {
@@ -128,6 +177,19 @@ export function Todos() {
 
         if (!error) {
             setTodos(todos.map(t => t.id === todo.id ? { ...t, status: nextStatus } : t));
+        }
+    }
+
+    async function handleDelete(id: string) {
+        if (!confirm('Are you sure you want to delete this task?')) return;
+        
+        const { error } = await supabase
+            .from('todos')
+            .delete()
+            .eq('id', id);
+
+        if (!error) {
+            setTodos(todos.filter(t => t.id !== id));
         }
     }
 
@@ -164,7 +226,7 @@ export function Todos() {
                         </button>
                     </div>
                     <button
-                        onClick={() => setShowModal(true)}
+                        onClick={handleOpenCreate}
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
@@ -295,7 +357,18 @@ export function Todos() {
                                     </div>
 
                                     <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
+                                        <button 
+                                            onClick={() => handleDelete(todo.id)}
+                                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Delete Task"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                        <button 
+                                            onClick={() => handleOpenEdit(todo)}
+                                            className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                            title="Edit Task"
+                                        >
                                             <MoreHorizontal className="w-4 h-4" />
                                         </button>
                                     </div>
@@ -313,12 +386,21 @@ export function Todos() {
                                         >
                                             {todo.projects?.name || 'General'}
                                         </span>
-                                        <button
-                                            onClick={() => toggleStatus(todo)}
-                                            className={`transition-colors ${todo.status === 'Done' ? 'text-emerald-500' : 'text-slate-300 hover:text-slate-400'}`}
-                                        >
-                                            {todo.status === 'Done' ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
-                                        </button>
+                                        <div className="flex items-center gap-1">
+                                            <button 
+                                                onClick={() => handleDelete(todo.id)}
+                                                className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded transition-colors opacity-0 group-hover:opacity-100"
+                                                title="Delete Task"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => toggleStatus(todo)}
+                                                className={`transition-colors ${todo.status === 'Done' ? 'text-emerald-500' : 'text-slate-300 hover:text-slate-400'}`}
+                                            >
+                                                {todo.status === 'Done' ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
+                                            </button>
+                                        </div>
                                     </div>
                                     <h4 className={`text-sm font-bold mb-1 ${todo.status === 'Done' ? 'text-slate-400 line-through' : 'text-slate-800'}`}>
                                         {todo.title}
@@ -355,23 +437,23 @@ export function Todos() {
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col scale-in">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                <Plus className="w-5 h-5 text-blue-600" />
-                                Create New To-do
+                                {editTodo ? <MoreHorizontal className="w-5 h-5 text-blue-600" /> : <Plus className="w-5 h-5 text-blue-600" />}
+                                {editTodo ? 'Edit To-do' : 'Create New To-do'}
                             </h2>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-md hover:bg-slate-100">
+                            <button onClick={handleCloseModal} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-md hover:bg-slate-100">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleCreate} className="p-6">
+                        <form onSubmit={handleSubmit} className="p-6">
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Task Title</label>
                                     <input
                                         type="text"
                                         required
-                                        value={newTodo.title}
-                                        onChange={e => setNewTodo({ ...newTodo, title: e.target.value })}
+                                        value={formData.title}
+                                        onChange={e => setFormData({ ...formData, title: e.target.value })}
                                         placeholder="What needs to be done?"
                                         className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
@@ -380,8 +462,8 @@ export function Todos() {
                                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Description</label>
                                     <textarea
                                         rows={2}
-                                        value={newTodo.description}
-                                        onChange={e => setNewTodo({ ...newTodo, description: e.target.value })}
+                                        value={formData.description}
+                                        onChange={e => setFormData({ ...formData, description: e.target.value })}
                                         placeholder="Optional details..."
                                         className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                                     />
@@ -391,8 +473,8 @@ export function Todos() {
                                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">Project</label>
                                         <select
                                             required
-                                            value={newTodo.project_id}
-                                            onChange={e => setNewTodo({ ...newTodo, project_id: e.target.value })}
+                                            value={formData.project_id}
+                                            onChange={e => setFormData({ ...formData, project_id: e.target.value })}
                                             className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         >
                                             <option value="">Select Project</option>
@@ -404,8 +486,8 @@ export function Todos() {
                                     <div>
                                         <label className="block text-sm font-semibold text-slate-700 mb-1.5">Assignee</label>
                                         <select
-                                            value={newTodo.assignee_id}
-                                            onChange={e => setNewTodo({ ...newTodo, assignee_id: e.target.value })}
+                                            value={formData.assignee_id}
+                                            onChange={e => setFormData({ ...formData, assignee_id: e.target.value })}
                                             className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         >
                                             <option value="">Unassigned</option>
@@ -419,8 +501,8 @@ export function Todos() {
                                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Due Date</label>
                                     <input
                                         type="date"
-                                        value={newTodo.due_date}
-                                        onChange={e => setNewTodo({ ...newTodo, due_date: e.target.value })}
+                                        value={formData.due_date}
+                                        onChange={e => setFormData({ ...formData, due_date: e.target.value })}
                                         className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
                                 </div>
@@ -429,18 +511,18 @@ export function Todos() {
                             <div className="mt-8 flex justify-end gap-3">
                                 <button
                                     type="button"
-                                    onClick={() => setShowModal(false)}
+                                    onClick={handleCloseModal}
                                     className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={saving || !newTodo.project_id}
+                                    disabled={saving || !formData.project_id}
                                     className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    Create Task
+                                    {editTodo ? 'Update Task' : 'Create Task'}
                                 </button>
                             </div>
                         </form>

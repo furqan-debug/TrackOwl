@@ -17,29 +17,37 @@ ALTER TABLE screenshots       ENABLE ROW LEVEL SECURITY;
 -- ═══════════════════════════════════════════════════════════
 
 -- Users can only read their own sessions (Electron tracker uses user_id = auth.uid())
+DROP POLICY IF EXISTS "users_read_own_sessions" ON sessions;
 CREATE POLICY "users_read_own_sessions"
   ON sessions FOR SELECT
   USING (user_id = auth.uid()::text);
 
 -- Users can INSERT their own sessions
+DROP POLICY IF EXISTS "users_insert_own_sessions" ON sessions;
 CREATE POLICY "users_insert_own_sessions"
   ON sessions FOR INSERT
   WITH CHECK (user_id = auth.uid()::text);
 
--- Users can UPDATE (e.g. end) their own sessions
-CREATE POLICY "users_update_own_sessions"
-  ON sessions FOR UPDATE
-  USING (user_id = auth.uid()::text);
+-- Explicitly allow service_role to bypass RLS (redundant but solves issues if FORCE RLS is on)
+DROP POLICY IF EXISTS "service_role_all_sessions" ON sessions;
+CREATE POLICY "service_role_all_sessions"
+  ON sessions FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
 
--- Service role (backend) can do everything — it bypasses RLS automatically,
--- but we add explicit admin policies for clarity.
--- (The service_role key already bypasses RLS; these are for documentation.)
+-- Allow authenticated users to insert sessions if needed (e.g. if the backend uses authenticated role)
+DROP POLICY IF EXISTS "authenticated_insert_sessions" ON sessions;
+CREATE POLICY "authenticated_insert_sessions"
+  ON sessions FOR INSERT
+  TO authenticated
+  WITH CHECK (true);
 
 -- ═══════════════════════════════════════════════════════════
 -- STEP 3: activity_samples policies
--- Users can only see samples from their own sessions
 -- ═══════════════════════════════════════════════════════════
 
+DROP POLICY IF EXISTS "users_read_own_activity" ON activity_samples;
 CREATE POLICY "users_read_own_activity"
   ON activity_samples FOR SELECT
   USING (
@@ -48,18 +56,24 @@ CREATE POLICY "users_read_own_activity"
     )
   );
 
-CREATE POLICY "users_insert_own_activity"
+DROP POLICY IF EXISTS "service_role_all_activity" ON activity_samples;
+CREATE POLICY "service_role_all_activity"
+  ON activity_samples FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "authenticated_insert_activity" ON activity_samples;
+CREATE POLICY "authenticated_insert_activity"
   ON activity_samples FOR INSERT
-  WITH CHECK (
-    session_id IN (
-      SELECT id FROM sessions WHERE user_id = auth.uid()::text
-    )
-  );
+  TO authenticated
+  WITH CHECK (true);
 
 -- ═══════════════════════════════════════════════════════════
 -- STEP 4: screenshots policies
 -- ═══════════════════════════════════════════════════════════
 
+DROP POLICY IF EXISTS "users_read_own_screenshots" ON screenshots;
 CREATE POLICY "users_read_own_screenshots"
   ON screenshots FOR SELECT
   USING (
@@ -68,59 +82,53 @@ CREATE POLICY "users_read_own_screenshots"
     )
   );
 
-CREATE POLICY "users_insert_own_screenshots"
+DROP POLICY IF EXISTS "service_role_all_screenshots" ON screenshots;
+CREATE POLICY "service_role_all_screenshots"
+  ON screenshots FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
+DROP POLICY IF EXISTS "authenticated_insert_screenshots" ON screenshots;
+CREATE POLICY "authenticated_insert_screenshots"
   ON screenshots FOR INSERT
-  WITH CHECK (
-    session_id IN (
-      SELECT id FROM sessions WHERE user_id = auth.uid()::text
-    )
-  );
+  TO authenticated
+  WITH CHECK (true);
 
 -- ═══════════════════════════════════════════════════════════
 -- STEP 5: Admin read-all policy (for admin portal anon key)
--- The admin portal reads data via the anon key.
--- Since the admin portal doesn't use auth.uid() (it's a server-side
--- admin view), we use a separate role check.
--- 
--- ⚠️  OPTION A (Recommended for now — simple):
---     Keep anon key with read-only access to all data.
---     This is safe because the anon key is read-only and the
---     admin portal is only used internally.
---
--- ⚠️  OPTION B (Production-grade):
---     Use Supabase Auth for admin login + service role for reads.
 -- ═══════════════════════════════════════════════════════════
 
--- Allow anon (admin portal) to read all sessions
-CREATE POLICY "anon_admin_read_sessions"
-  ON sessions FOR SELECT
-  TO anon
-  USING (true);
+-- Allow anon (admin portal) to read all data
+DROP POLICY IF EXISTS "anon_admin_read_sessions" ON sessions;
+CREATE POLICY "anon_admin_read_sessions" ON sessions FOR SELECT TO anon USING (true);
 
--- Allow anon (admin portal) to read all activity samples
-CREATE POLICY "anon_admin_read_activity"
-  ON activity_samples FOR SELECT
-  TO anon
-  USING (true);
+DROP POLICY IF EXISTS "anon_admin_read_activity" ON activity_samples;
+CREATE POLICY "anon_admin_read_activity" ON activity_samples FOR SELECT TO anon USING (true);
 
--- Allow anon (admin portal) to read all screenshots
-CREATE POLICY "anon_admin_read_screenshots"
-  ON screenshots FOR SELECT
-  TO anon
-  USING (true);
+DROP POLICY IF EXISTS "anon_admin_read_screenshots" ON screenshots;
+CREATE POLICY "anon_admin_read_screenshots" ON screenshots FOR SELECT TO anon USING (true);
+
+-- Allow anon to read related tables (projects, members, clients) if RLS is enabled on them
+-- (Currently RLS is not enabled on them in this script, but adding for completeness)
+-- CREATE POLICY "anon_read_members" ON members FOR SELECT TO anon USING (true);
+-- CREATE POLICY "anon_read_projects" ON projects FOR SELECT TO anon USING (true);
+-- CREATE POLICY "anon_read_clients" ON clients FOR SELECT TO anon USING (true);
 
 -- ═══════════════════════════════════════════════════════════
 -- STEP 6: Storage (screenshots bucket) policies
 -- ═══════════════════════════════════════════════════════════
-
--- Allow anyone with the service key to upload screenshots
-CREATE POLICY "service_upload_screenshots"
-  ON storage.objects FOR INSERT
+-- (Kept as is or updated to be more permissive for service role)
+DROP POLICY IF EXISTS "service_upload_screenshots" ON storage.objects;
+DROP POLICY IF EXISTS "service_managed_screenshots" ON storage.objects;
+CREATE POLICY "service_managed_screenshots"
+  ON storage.objects FOR ALL
   TO service_role
+  USING (bucket_id = 'screenshots')
   WITH CHECK (bucket_id = 'screenshots');
 
--- Allow anon to view screenshot files (admin portal image display)
-CREATE POLICY "anon_read_screenshots_bucket"
+DROP POLICY IF EXISTS "anon_view_screenshots" ON storage.objects;
+CREATE POLICY "anon_view_screenshots"
   ON storage.objects FOR SELECT
   TO anon
   USING (bucket_id = 'screenshots');

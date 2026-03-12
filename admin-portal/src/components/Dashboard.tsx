@@ -179,11 +179,11 @@ export function Dashboard() {
         <PageLayout title="Dashboard" description={weekLabel} maxWidth="full">
             {/* KPI Row */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
-                <KpiCard icon={<Clock className="w-4 h-4 text-primary" />} label="Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} />
+                <KpiCard icon={<Clock className="w-4 h-4 text-primary" />} label="Tracked Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} />
                 <KpiCard icon={<Clock className="w-4 h-4 text-primary" />} label="This Week" value={loading ? '—' : fmtTime(stats.weekMinutes)} />
-                <KpiCard icon={<CircleDollarSign className="w-4 h-4 text-primary" />} label="Week Cost" value={loading ? '—' : `$${stats.weekCost.toFixed(2)}`} />
-                <KpiCard icon={<Users className="w-4 h-4 text-primary" />} label="Active Members" value={loading ? '—' : stats.activeMembers.toString()} />
-                <KpiCard icon={<FolderOpen className="w-4 h-4 text-primary" />} label="Projects" value={loading ? '—' : stats.activeProjects.toString()} />
+                <KpiCard icon={<CircleDollarSign className="w-4 h-4 text-primary" />} label="Total Cost" value={loading ? '—' : `$${stats.weekCost.toFixed(2)}`} />
+                <KpiCard icon={<Users className="w-4 h-4 text-primary" />} label="Active People" value={loading ? '—' : stats.activeMembers.toString()} />
+                <KpiCard icon={<FolderOpen className="w-4 h-4 text-primary" />} label="Active Projects" value={loading ? '—' : stats.activeProjects.toString()} />
                 <KpiCard icon={<Camera className="w-4 h-4 text-primary" />} label="Screenshots" value={loading ? '—' : stats.screenshotCount.toString()} />
             </div>
 
@@ -264,23 +264,30 @@ export function Dashboard() {
 function RecentSessions() {
     const [sessions, setSessions] = useState<any[]>([]);
     const [memberMap, setMemberMap] = useState<Record<string, string>>({});
+    const [projectMap, setProjectMap] = useState<Record<string, any>>({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         async function load() {
             try {
-                const [{ data, error }, { data: membersData }] = await Promise.all([
+                const [{ data, error }, { data: membersData }, { data: projectsData }] = await Promise.all([
                     supabase.from('sessions')
                         .select('id, user_id, project_id, started_at, ended_at')
                         .order('started_at', { ascending: false })
                         .limit(8),
                     supabase.from('members').select('id, full_name'),
+                    supabase.from('projects').select('id, name, color'),
                 ]);
                 if (error) console.error("RecentSessions Error:", error);
                 setSessions(data || []);
-                const map: Record<string, string> = {};
-                (membersData || []).forEach(m => { map[m.id] = m.full_name; });
-                setMemberMap(map);
+                
+                const mMap: Record<string, string> = {};
+                (membersData || []).forEach(m => { mMap[m.id] = m.full_name; });
+                setMemberMap(mMap);
+
+                const pMap: Record<string, any> = {};
+                (projectsData || []).forEach(p => { pMap[p.id] = p; });
+                setProjectMap(pMap);
             } catch (err) {
                 console.error("RecentSessions unhandled error:", err);
             } finally {
@@ -305,6 +312,7 @@ function RecentSessions() {
                 <thead>
                     <tr className="border-b border-border text-left">
                         <th className="pb-3 pr-6 text-xs font-semibold text-text-muted uppercase">Member</th>
+                        <th className="pb-3 pr-6 text-xs font-semibold text-text-muted uppercase">Project</th>
                         <th className="pb-3 pr-6 text-xs font-semibold text-text-muted uppercase">Started</th>
                         <th className="pb-3 pr-6 text-xs font-semibold text-text-muted uppercase">Duration</th>
                         <th className="pb-3 text-xs font-semibold text-text-muted uppercase">Status</th>
@@ -317,11 +325,22 @@ function RecentSessions() {
                         const mins = Math.max(0, Math.round((endMs - startMs) / 60000));
                         const isActive = isLive;
                         const memberName = (s.user_id && memberMap[s.user_id]) || 'Unknown';
+                        const proj = s.project_id && projectMap[s.project_id];
 
-                        return (
+                         return (
                             <tr key={s.id} className="border-b border-border-subtle hover:bg-surface-subtle/50 transition-colors">
                                 <td className="py-3 pr-6">
                                     <span className="text-sm font-medium text-text-primary">{memberName}</span>
+                                </td>
+                                <td className="py-3 pr-6">
+                                    {proj ? (
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: proj.color }} />
+                                            <span className="text-xs text-text-secondary truncate max-w-[120px]">{proj.name}</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-xs text-text-muted">No Project</span>
+                                    )}
                                 </td>
                                 <td className="py-3 pr-6 text-text-secondary">
                                     {new Date(s.started_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}

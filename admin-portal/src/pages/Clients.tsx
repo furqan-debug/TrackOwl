@@ -19,8 +19,9 @@ export function Clients() {
 
     // Modal state
     const [showModal, setShowModal] = useState(false);
+    const [editClient, setEditClient] = useState<Client | null>(null);
     const [saving, setSaving] = useState(false);
-    const [newClient, setNewClient] = useState({ name: '', email: '', company: '' });
+    const [formData, setFormData] = useState({ name: '', email: '', company: '' });
 
     useEffect(() => {
         fetchClients();
@@ -39,26 +40,89 @@ export function Clients() {
         setLoading(false);
     }
 
-    async function handleCreate(e: React.FormEvent) {
+    async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setSaving(true);
+        
+        if (editClient) {
+            const { data, error } = await supabase
+                .from('clients')
+                .update({
+                    name: formData.name,
+                    email: formData.email,
+                    company: formData.company,
+                })
+                .eq('id', editClient.id)
+                .select()
+                .single();
+
+            if (!error && data) {
+                setClients(clients.map(c => c.id === data.id ? data : c));
+                handleCloseModal();
+            }
+        } else {
+            const { data, error } = await supabase
+                .from('clients')
+                .insert({
+                    name: formData.name,
+                    email: formData.email,
+                    company: formData.company,
+                    status: 'Active'
+                })
+                .select()
+                .single();
+
+            if (!error && data) {
+                setClients([data, ...clients]);
+                handleCloseModal();
+            }
+        }
+        setSaving(false);
+    }
+
+    async function handleDelete(id: string) {
+        if (!confirm('Are you sure you want to delete this client? This will remove all associations with projects.')) return;
+        
+        const { error } = await supabase
+            .from('clients')
+            .delete()
+            .eq('id', id);
+
+        if (!error) {
+            setClients(clients.filter(c => c.id !== id));
+        }
+    }
+
+    async function toggleStatus(client: Client) {
+        const newStatus = client.status === 'Active' ? 'Inactive' : 'Active';
         const { data, error } = await supabase
             .from('clients')
-            .insert({
-                name: newClient.name,
-                email: newClient.email,
-                company: newClient.company,
-                status: 'Active'
-            })
+            .update({ status: newStatus })
+            .eq('id', client.id)
             .select()
             .single();
 
         if (!error && data) {
-            setClients([data, ...clients]);
-            setShowModal(false);
-            setNewClient({ name: '', email: '', company: '' });
+            setClients(clients.map(c => c.id === data.id ? data : c));
         }
-        setSaving(false);
+    }
+
+    function handleOpenCreate() {
+        setEditClient(null);
+        setFormData({ name: '', email: '', company: '' });
+        setShowModal(true);
+    }
+
+    function handleOpenEdit(client: Client) {
+        setEditClient(client);
+        setFormData({ name: client.name, email: client.email, company: client.company });
+        setShowModal(true);
+    }
+
+    function handleCloseModal() {
+        setShowModal(false);
+        setEditClient(null);
+        setFormData({ name: '', email: '', company: '' });
     }
 
     const filteredClients = clients.filter(c => {
@@ -80,7 +144,7 @@ export function Clients() {
 
                 <div className="flex items-center gap-4">
                     <button
-                        onClick={() => setShowModal(true)}
+                        onClick={handleOpenCreate}
                         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
                     >
                         <Plus className="w-4 h-4" />
@@ -204,18 +268,33 @@ export function Clients() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${client.status === 'Active'
+                                            <button 
+                                                onClick={() => toggleStatus(client)}
+                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity ${client.status === 'Active'
                                                     ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20'
                                                     : 'bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-500/20'
                                                 }`}>
                                                 <CircleDot className={`w-3 h-3 ${client.status === 'Active' ? 'text-emerald-500' : 'text-slate-400'}`} />
                                                 {client.status}
-                                            </span>
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors opacity-0 group-hover:opacity-100">
-                                                <MoreHorizontal className="w-5 h-5" />
-                                            </button>
+                                            <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button 
+                                                    onClick={() => handleOpenEdit(client)}
+                                                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    title="Edit Client"
+                                                >
+                                                    <MoreHorizontal className="w-5 h-5" />
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDelete(client.id)}
+                                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Delete Client"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -231,23 +310,23 @@ export function Clients() {
                     <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden flex flex-col scale-in">
                         <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                             <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                <UserPlus className="w-5 h-5 text-blue-600" />
-                                Add New Client
+                                {editClient ? <MoreHorizontal className="w-5 h-5 text-blue-600" /> : <UserPlus className="w-5 h-5 text-blue-600" />}
+                                {editClient ? 'Edit Client' : 'Add New Client'}
                             </h2>
-                            <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-md hover:bg-slate-100">
+                            <button onClick={handleCloseModal} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-md hover:bg-slate-100">
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
-                        <form onSubmit={handleCreate} className="p-6">
+                        <form onSubmit={handleSubmit} className="p-6">
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-1.5">Full Name</label>
                                     <input
                                         type="text"
                                         required
-                                        value={newClient.name}
-                                        onChange={e => setNewClient({ ...newClient, name: e.target.value })}
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
                                         placeholder="e.g. John Doe"
                                         className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
@@ -257,8 +336,8 @@ export function Clients() {
                                     <input
                                         type="email"
                                         required
-                                        value={newClient.email}
-                                        onChange={e => setNewClient({ ...newClient, email: e.target.value })}
+                                        value={formData.email}
+                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
                                         placeholder="john@example.com"
                                         className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
@@ -268,8 +347,8 @@ export function Clients() {
                                     <input
                                         type="text"
                                         required
-                                        value={newClient.company}
-                                        onChange={e => setNewClient({ ...newClient, company: e.target.value })}
+                                        value={formData.company}
+                                        onChange={e => setFormData({ ...formData, company: e.target.value })}
                                         placeholder="e.g. Acme Corp"
                                         className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     />
@@ -279,7 +358,7 @@ export function Clients() {
                             <div className="mt-8 flex justify-end gap-3">
                                 <button
                                     type="button"
-                                    onClick={() => setShowModal(false)}
+                                    onClick={handleCloseModal}
                                     className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg transition-colors"
                                 >
                                     Cancel
@@ -290,7 +369,7 @@ export function Clients() {
                                     className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    Add Client
+                                    {editClient ? 'Update Client' : 'Add Client'}
                                 </button>
                             </div>
                         </form>
