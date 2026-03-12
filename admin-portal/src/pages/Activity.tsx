@@ -112,33 +112,6 @@ export function Activity() {
                     className="border border-border bg-surface rounded-shell-md px-4 py-2 text-sm font-medium text-text-primary shadow-shell-sm focus:outline-none focus:ring-2 focus:ring-primary" />
             </div>
         }>
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 relative z-20">
-                <div>
-                    <h1 className="text-2xl font-semibold text-text-primary tracking-tight">Activity</h1>
-                    <p className="text-text-secondary text-sm mt-1">{dateLabel} — keyboard, mouse & app usage</p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 bg-surface border border-border rounded-shell-md px-3 py-2 shadow-shell-sm">
-                        <Users className="w-4 h-4 text-text-muted" />
-                        <select
-                            className="bg-transparent text-sm font-medium text-text-primary outline-none w-48"
-                            value={selectedMemberId}
-                            onChange={(e) => setSelectedMemberId(e.target.value)}
-                        >
-                            <option value="all">Entire Organization</option>
-                            <option disabled>──────────</option>
-                            {members.map(m => (
-                                <option key={m.id} value={m.id}>{m.full_name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
-                        className="border border-border bg-surface rounded-shell-md px-4 py-2 text-sm font-medium text-text-primary shadow-shell-sm focus:outline-none focus:ring-2 focus:ring-primary hover:bg-surface-subtle transition-colors" />
-                </div>
-            </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
                 <KpiCard icon={<Mouse className="w-4 h-4 text-primary" />} label="Mouse Clicks" value={totalClicks.toLocaleString()} />
