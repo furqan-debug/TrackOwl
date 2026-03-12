@@ -181,16 +181,14 @@ export function Projects() {
                             <div className="h-4 w-px bg-slate-200 mx-1" />
 
                             <div className="flex items-center gap-2">
-                            {!isViewer && (
                                 <button
-                                    disabled={selectedIds.size === 0}
+                                    disabled={selectedIds.size === 0 || isViewer}
                                     onClick={handleBulkArchive}
-                                    className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+                                    className={`px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-2 transition-colors shadow-sm disabled:opacity-50 group ${isViewer ? 'cursor-not-allowed grayscale opacity-70' : ''}`}
                                 >
                                     <Archive className="w-4 h-4 group-hover:text-blue-500 transition-colors" />
                                     {activeTab === 'Active' ? 'Archive' : 'Restore'}
                                 </button>
-                            )}
                                 <span className="text-xs text-slate-400 font-medium ml-1">
                                     {selectedIds.size} / {filteredProjects.length} selected
                                 </span>
@@ -198,16 +196,15 @@ export function Projects() {
                         </div>
                     </div>
 
-                    {!isViewer && (
                         <div className="flex items-center gap-2">
                             <button
-                                onClick={() => { setEditingProject(null); setShowModal(true); }}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2 transition-colors shadow-sm shadow-blue-200"
+                                onClick={() => { if (!isViewer) { setEditingProject(null); setShowModal(true); } }}
+                                disabled={isViewer}
+                                className={`px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2 transition-colors shadow-sm shadow-blue-200 ${isViewer ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                             >
                                 <Plus className="w-4 h-4" /> Add project
                             </button>
                         </div>
-                    )}
                 </div>
 
                 {/* Table */}
@@ -406,14 +403,13 @@ function ProjectRow({
                     {project.budget_limit && (
                         <span className="text-xs text-slate-400 mt-0.5">Limit: {project.budget_limit}</span>
                     )}
-                    {!isViewer && (
                         <button 
                             onClick={() => onEdit('BUDGET & LIMITS')}
-                            className="text-[10px] font-bold text-blue-500 uppercase mt-1 opacity-0 group-hover:opacity-100 transition-opacity text-left"
+                            disabled={isViewer}
+                            className={`text-[10px] font-bold uppercase mt-1 opacity-0 group-hover:opacity-100 transition-opacity text-left ${isViewer ? 'text-slate-400 cursor-default' : 'text-blue-500 hover:text-blue-600'}`}
                         >
-                            Edit budget
+                            {isViewer ? 'View budget' : 'Edit budget'}
                         </button>
-                    )}
                 </div>
             </td>
             <td className="px-4 py-4">
@@ -435,23 +431,31 @@ function ProjectRow({
                                 <button onClick={() => { setShowMenu(false); onEdit('GENERAL'); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
                                     <Pencil className="w-4 h-4 text-slate-400" /> {isViewer ? 'View details' : 'Edit project'}
                                 </button>
-                                {!isViewer && (
-                                    <>
-                                        <button onClick={() => { setShowMenu(false); onEdit('MEMBERS'); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
-                                            <Users className="w-4 h-4 text-slate-400" /> Manage members
-                                        </button>
-                                        <button onClick={() => { setShowMenu(false); onEdit('BUDGET & LIMITS'); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
-                                            <CreditCard className="w-4 h-4 text-slate-400" /> Edit budget
-                                        </button>
-                                        <div className="h-px bg-slate-100 my-1" />
-                                        <button onClick={() => { setShowMenu(false); handleArchive(); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
-                                            <Archive className="w-4 h-4 text-slate-400" /> {project.status === 'Active' ? 'Archive' : 'Restore'} project
-                                        </button>
-                                        <button onClick={() => { setShowMenu(false); handleDelete(); }} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3">
-                                            <Trash2 className="w-4 h-4 text-red-400" /> Delete project
-                                        </button>
-                                    </>
-                                )}
+                                <button 
+                                    onClick={() => { if (!isViewer) { setShowMenu(false); onEdit('MEMBERS'); } }} 
+                                    className={`w-full px-4 py-2 text-left text-sm flex items-center gap-3 ${isViewer ? 'text-slate-400 cursor-not-allowed grayscale opacity-70' : 'text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    <Users className="w-4 h-4 text-slate-400" /> Manage members
+                                </button>
+                                <button 
+                                    onClick={() => { if (!isViewer) { setShowMenu(false); onEdit('BUDGET & LIMITS'); } }} 
+                                    className={`w-full px-4 py-2 text-left text-sm flex items-center gap-3 ${isViewer ? 'text-slate-400 cursor-not-allowed grayscale opacity-70' : 'text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    <CreditCard className="w-4 h-4 text-slate-400" /> Edit budget
+                                </button>
+                                <div className="h-px bg-slate-100 my-1" />
+                                <button 
+                                    onClick={() => { if (!isViewer) { setShowMenu(false); handleArchive(); } }} 
+                                    className={`w-full px-4 py-2 text-left text-sm flex items-center gap-3 ${isViewer ? 'text-slate-400 cursor-not-allowed grayscale opacity-70' : 'text-slate-600 hover:bg-slate-50'}`}
+                                >
+                                    <Archive className="w-4 h-4 text-slate-400" /> {project.status === 'Active' ? 'Archive' : 'Restore'} project
+                                </button>
+                                <button 
+                                    onClick={() => { if (!isViewer) { setShowMenu(false); handleDelete(); } }} 
+                                    className={`w-full px-4 py-2 text-left text-sm flex items-center gap-3 ${isViewer ? 'text-slate-400 cursor-not-allowed grayscale opacity-70' : 'text-red-600 hover:bg-red-50'}`}
+                                >
+                                    <Trash2 className="w-4 h-4 text-red-400" /> Delete project
+                                </button>
                             </div>
                         </>
                     )}
@@ -484,7 +488,6 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
     const [clients, setClients] = useState<Client[]>([]);
 
     // Associations
-    const { profile } = useAuth();
     const [members, setMembers] = useState<Member[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set(project?.memberIds || []));
@@ -765,16 +768,14 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                         <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition-colors">
                             Cancel
                         </button>
-                        {!isViewer && (
-                            <button
-                                onClick={handleSave}
-                                disabled={loading}
-                                className="px-8 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 flex items-center gap-2"
-                            >
-                                {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
-                                {project ? 'Save' : 'Save'}
-                            </button>
-                        )}
+                        <button
+                            onClick={handleSave}
+                            disabled={loading || isViewer}
+                            className={`px-8 py-2.5 rounded-xl text-white text-sm font-bold transition-all shadow-lg flex items-center gap-2 ${isViewer ? 'bg-slate-400 cursor-not-allowed grayscale opacity-60' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 disabled:opacity-50'}`}
+                        >
+                            {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                            {isViewer ? 'Read-only' : 'Save'}
+                        </button>
                     </div>
                 </div>
             </div>

@@ -135,20 +135,13 @@ export function CreatePayments() {
                         <Link to="/financials" className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
                             Cancel
                         </Link>
-                        {!isViewer && (
-                            <button
-                                type="submit"
-                                disabled={loading || fetching}
-                                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                            >
-                                {loading ? 'Processing...' : <><Check className="w-4 h-4" /> Issue Payment</>}
-                            </button>
-                        )}
-                        {isViewer && (
-                            <div className="text-sm font-medium text-slate-400 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
-                                Read-only access
-                            </div>
-                        )}
+                        <button
+                            type="submit"
+                            disabled={loading || fetching || isViewer}
+                            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all shadow-sm active:scale-95 ${isViewer ? 'bg-slate-300 text-slate-100 cursor-not-allowed grayscale opacity-60 shadow-none' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100'}`}
+                        >
+                            {loading ? 'Processing...' : (isViewer ? 'Read-only' : <><Check className="w-4 h-4" /> Issue Payment</>)}
+                        </button>
                     </div>
                 </form>
             </div>

@@ -264,30 +264,33 @@ export function People() {
                             className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-[#2a85ff]/20 focus:border-[#2a85ff] outline-none transition-all placeholder:text-slate-400"
                         />
                     </div>
-                    {!isViewer && (
-                        <div className="relative">
-                            <button onClick={() => setShowBatch(!showBatch)} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                                Batch actions <ChevronDown className="w-4 h-4" />
-                            </button>
-                            {showBatch && (
-                                <div className="absolute top-12 left-0 w-48 bg-white shadow-xl rounded-lg py-1 border border-slate-200 z-50">
-                                    <button onClick={handleBatchDelete} disabled={selectedIds.size === 0} className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">Remove selected ({selectedIds.size})</button>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    <div className="relative">
+                        <button 
+                            onClick={() => { if (!isViewer) setShowBatch(!showBatch); }} 
+                            disabled={isViewer}
+                            className={`flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium transition-colors ${isViewer ? 'text-slate-300 cursor-not-allowed grayscale opacity-60' : 'text-slate-700 hover:bg-slate-50'}`}
+                        >
+                            Batch actions <ChevronDown className="w-4 h-4" />
+                        </button>
+                        {showBatch && !isViewer && (
+                            <div className="absolute top-12 left-0 w-48 bg-white shadow-xl rounded-lg py-1 border border-slate-200 z-50">
+                                <button onClick={handleBatchDelete} disabled={selectedIds.size === 0} className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">Remove selected ({selectedIds.size})</button>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
                     <button onClick={handleExportCsv} className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-slate-700 text-sm font-medium">
                         <Download className="w-4 h-4" /> Export
                     </button>
-                    {!isViewer && (
-                        <button onClick={() => { resetAddForm(); setShowAddModal(true); }}
-                            className="px-6 py-2 bg-[#2a85ff] text-white rounded-lg text-sm font-semibold hover:bg-[#0052cc] transition-colors">
-                            Add members
-                        </button>
-                    )}
+                    <button 
+                        onClick={() => { if (!isViewer) { resetAddForm(); setShowAddModal(true); } }}
+                        disabled={isViewer}
+                        className={`px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${isViewer ? 'bg-slate-200 text-slate-400 cursor-not-allowed grayscale opacity-60' : 'bg-[#2a85ff] text-white hover:bg-[#0052cc]'}`}
+                    >
+                        Add members
+                    </button>
                     <div className="relative">
                         <button onClick={() => setShowFilters(!showFilters)} className="px-6 py-2 bg-white border border-[#2a85ff] text-[#2a85ff] rounded-lg text-sm font-medium hover:bg-[#2a85ff]/5 transition-colors flex items-center gap-2">
                             Filters {statusFilter !== 'All' && <span className="w-2 h-2 rounded-full bg-[#2a85ff]"></span>}
@@ -437,17 +440,26 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                 {open && (
                     <div className="absolute right-6 top-14 bg-white border border-slate-200 rounded-lg shadow-xl z-50 py-2 w-48 animate-in fade-in zoom-in duration-200">
                         <DropItem icon={<Pencil className="w-3.5 h-3.5" />} label={isViewer ? 'View details' : 'Edit member'} onClick={() => { onEdit(); setOpen(false); }} />
-                        {m.status === 'Pending' && !isViewer && (
-                            <DropItem icon={<RotateCcw className="w-3.5 h-3.5" />} label="Resend invite" onClick={() => { onResendInvite(); setOpen(false); }} />
+                        {(m.status === 'Pending') && (
+                            <DropItem 
+                                icon={<RotateCcw className="w-3.5 h-3.5" />} 
+                                label="Resend invite" 
+                                disabled={isViewer}
+                                onClick={() => { if (!isViewer) { onResendInvite(); setOpen(false); } }} 
+                                dull={isViewer}
+                            />
                         )}
 
                         <DropItem icon={<Settings className="w-3.5 h-3.5" />} label="Settings" onClick={() => { setOpen(false); onEdit(); }} />
-                        {!isViewer && (
-                            <>
-                                <div className="my-1 border-t border-slate-100" />
-                                <DropItem icon={<Trash2 className="w-3.5 h-3.5 text-rose-500" />} label="Remove member" onClick={() => { setOpen(false); onDelete(); }} danger />
-                            </>
-                        )}
+                        <div className="my-1 border-t border-slate-100" />
+                        <DropItem 
+                            icon={<Trash2 className={`w-3.5 h-3.5 ${isViewer ? 'text-slate-300' : 'text-rose-500'}`} />} 
+                            label="Remove member" 
+                            disabled={isViewer}
+                            onClick={() => { if (!isViewer) { setOpen(false); onDelete(); } }} 
+                            danger={!isViewer}
+                            dull={isViewer}
+                        />
                     </div>
                 )}
             </td>
@@ -455,10 +467,13 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
     );
 }
 
-function DropItem({ icon, label, onClick, danger }: any) {
+function DropItem({ icon, label, onClick, danger, dull, disabled }: any) {
     return (
-        <button onClick={onClick}
-            className={`w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium hover:bg-slate-50 transition-all text-left ${danger ? 'text-rose-600' : 'text-slate-700'}`}>
+        <button 
+            onClick={onClick}
+            disabled={disabled}
+            className={`w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium transition-all text-left ${danger ? 'text-rose-600 hover:bg-rose-50' : 'text-slate-700 hover:bg-slate-50'} ${dull ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
+        >
             {icon}{label}
         </button>
     );
@@ -487,12 +502,13 @@ function InviteModal({ onClose, onInvite, form, isViewer }: any) {
                 </div>
                 <div className="px-8 py-6 bg-slate-50 flex justify-end gap-3">
                     <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700">Cancel</button>
-                    {!isViewer && (
-                        <button onClick={onInvite} disabled={form.adding || !form.addEmail.trim()}
-                            className="bg-[#2a85ff] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-[#0052cc] disabled:opacity-50 transition-colors">
-                            {form.adding ? 'Sending...' : 'Add members'}
-                        </button>
-                    )}
+                    <button 
+                        onClick={onInvite} 
+                        disabled={form.adding || !form.addEmail.trim() || isViewer}
+                        className={`px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${isViewer ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-[#2a85ff] text-white hover:bg-[#0052cc] disabled:opacity-50'}`}
+                    >
+                        {form.adding ? 'Sending...' : (isViewer ? 'Read-only' : 'Add members')}
+                    </button>
                 </div>
             </div>
         </div>
@@ -539,9 +555,10 @@ function EditModal({ member, onClose, onSave, isViewer }: any) {
                             if (isViewer) { onClose(); return; }
                             onSave({ full_name: name, role, pay_rate: payRate ? parseFloat(payRate) : null, bill_rate: billRate ? parseFloat(billRate) : null, weekly_limit: parseInt(weekly) || 40, daily_limit: parseInt(daily) || 8 });
                         }}
-                        className={`bg-[#2a85ff] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-[#0052cc] transition-colors ${isViewer ? 'hidden' : ''}`}
+                        disabled={isViewer}
+                        className={`px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${isViewer ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60' : 'bg-[#2a85ff] text-white hover:bg-[#0052cc]'}`}
                     >
-                        Save changes
+                        {isViewer ? 'Read-only' : 'Save changes'}
                     </button>
                 </div>
             </div>

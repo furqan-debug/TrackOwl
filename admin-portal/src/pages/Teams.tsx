@@ -151,15 +151,14 @@ export function Teams() {
                             <List className="w-5 h-5" />
                         </button>
                     </div>
-                    {!isViewer && (
-                        <button
-                            onClick={openCreateModal}
-                            className="flex items-center gap-2 bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 hover:shadow-indigo-200 active:scale-95"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Create Team
-                        </button>
-                    )}
+                    <button
+                        onClick={openCreateModal}
+                        disabled={isViewer}
+                        className={`flex items-center gap-2 px-8 py-3.5 rounded-2xl text-sm font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${isViewer ? 'bg-slate-400 text-slate-100 cursor-not-allowed grayscale opacity-60' : 'bg-slate-900 text-white hover:bg-indigo-600 shadow-slate-200 hover:shadow-indigo-200'}`}
+                    >
+                        <Plus className="w-5 h-5" />
+                        Create Team
+                    </button>
                 </div>
             </div>
 
@@ -209,14 +208,13 @@ export function Teams() {
                         <UsersRound className="w-16 h-16 text-slate-200 mx-auto mb-6" />
                         <h3 className="text-xl font-black text-slate-800 tracking-tight">No Teams Found</h3>
                         <p className="text-slate-500 font-medium max-w-sm mx-auto mt-2">Get started by creating your first team to organize your members.</p>
-                        {!isViewer && (
-                            <button
-                                onClick={openCreateModal}
-                                className="mt-8 text-indigo-600 font-black uppercase tracking-widest text-xs hover:text-indigo-700 underline underline-offset-8"
-                            >
-                                Create standard team
-                            </button>
-                        )}
+                        <button
+                            onClick={openCreateModal}
+                            disabled={isViewer}
+                            className={`mt-8 font-black uppercase tracking-widest text-xs underline underline-offset-8 transition-colors ${isViewer ? 'text-slate-400 cursor-default' : 'text-indigo-600 hover:text-indigo-700'}`}
+                        >
+                            Create standard team
+                        </button>
                     </div>
                 ) : (
                     <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-8" : "divide-y divide-slate-100"}>
@@ -295,10 +293,10 @@ export function Teams() {
                             </button>
                             <button
                                 onClick={handleSave}
-                                disabled={!name}
-                                className={`flex-[2] bg-indigo-600 text-white px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-indigo-100 disabled:opacity-50 active:scale-95 ${isViewer ? 'hidden' : ''}`}
+                                disabled={!name || isViewer}
+                                className={`flex-[2] text-white px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 ${isViewer ? 'bg-slate-400 cursor-not-allowed grayscale opacity-60' : 'bg-indigo-600 hover:bg-slate-900 shadow-indigo-100'}`}
                             >
-                                {editingTeam ? 'Update Team' : 'Create Team'}
+                                {isViewer ? 'Read-only' : (editingTeam ? 'Update Team' : 'Create Team')}
                             </button>
                         </div>
                     </div>
@@ -420,11 +418,13 @@ function ManageMembersModal({ team, allMembers, onClose, onSuccess, isViewer }: 
                 </div>
                 <div className="px-10 py-8 bg-slate-50/50 border-t border-slate-100 flex gap-4">
                     <button onClick={onClose} className="flex-1 px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all">Cancel</button>
-                    {!isViewer && (
-                        <button onClick={handleSave} disabled={loading} className="flex-[2] bg-indigo-600 text-white px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-indigo-100 active:scale-95 disabled:opacity-50">
-                            {loading ? 'Saving...' : 'Update Members'}
-                        </button>
-                    )}
+                    <button 
+                        onClick={handleSave} 
+                        disabled={loading || isViewer} 
+                        className={`flex-[2] text-white px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest transition-all shadow-xl active:scale-95 disabled:opacity-50 ${isViewer ? 'bg-slate-400 cursor-not-allowed grayscale opacity-60 shadow-none' : 'bg-indigo-600 hover:bg-slate-900 shadow-indigo-100'}`}
+                    >
+                        {loading ? 'Saving...' : (isViewer ? 'Read-only' : 'Update Members')}
+                    </button>
                 </div>
             </div>
         </div>
@@ -467,35 +467,48 @@ function TeamItem({ team, mode, onEdit, onManage, onDelete, isViewer }: {
                         <span className="text-sm">{team.member_count}</span>
                     </div>
                 </div>
-                {!isViewer && (
-                    <div className="flex items-center gap-2 ml-auto opacity-0 group-hover:opacity-100 transition-all">
-                        <button onClick={onEdit} className="p-3 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all text-slate-400 hover:text-indigo-600 shadow-sm">
-                            <Pencil className="w-5 h-5" />
-                        </button>
-                        <button onClick={onManage} className="p-3 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all text-slate-400 hover:text-indigo-600 shadow-sm">
-                            <Users className="w-5 h-5" />
-                        </button>
-                        <button onClick={onDelete} className="p-3 hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-100 transition-all text-slate-300 hover:text-rose-500 shadow-sm">
-                            <Trash2 className="w-5 h-5" />
-                        </button>
-                    </div>
-                )}
+                <div className="flex items-center gap-2 ml-auto opacity-0 group-hover:opacity-100 transition-all">
+                    <button 
+                        onClick={() => { if (!isViewer) onEdit(); }} 
+                        className={`p-3 rounded-xl border transition-all shadow-sm ${isViewer ? 'text-slate-200 border-transparent cursor-not-allowed' : 'bg-white border-transparent hover:border-slate-200 text-slate-400 hover:text-indigo-600'}`}
+                    >
+                        <Pencil className="w-5 h-5" />
+                    </button>
+                    <button 
+                        onClick={() => { if (!isViewer) onManage(); }} 
+                        className={`p-3 rounded-xl border transition-all shadow-sm ${isViewer ? 'text-slate-200 border-transparent cursor-not-allowed' : 'bg-white border-transparent hover:border-slate-200 text-slate-400 hover:text-indigo-600'}`}
+                    >
+                        <Users className="w-5 h-5" />
+                    </button>
+                    <button 
+                        onClick={() => { if (!isViewer) onDelete(); }} 
+                        className={`p-3 rounded-xl border transition-all shadow-sm ${isViewer ? 'text-slate-100 border-transparent cursor-not-allowed' : 'hover:bg-rose-50 border-transparent hover:border-rose-100 text-slate-300 hover:text-rose-500'}`}
+                    >
+                        <Trash2 className="w-5 h-5" />
+                    </button>
+                </div>
             </div>
         );
     }
 
     return (
         <div className="bg-slate-50 border border-slate-100 rounded-[2.5rem] p-10 hover:bg-white hover:border-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-500 group relative overflow-hidden flex flex-col h-full">
-            {!isViewer && (
-                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-all flex flex-col gap-2">
-                    <button onClick={onEdit} className="p-3 bg-white hover:bg-indigo-600 hover:text-white rounded-2xl shadow-xl shadow-slate-200/50 text-slate-400 transition-all border border-slate-100">
-                        <Pencil className="w-5 h-5" />
-                    </button>
-                    <button onClick={onDelete} className="p-3 bg-white hover:bg-rose-500 hover:text-white rounded-2xl shadow-xl shadow-slate-200/50 text-slate-400 transition-all border border-slate-100">
-                        <Trash2 className="w-5 h-5" />
-                    </button>
-                </div>
-            )}
+            <div className={`absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-all flex flex-col gap-2 ${isViewer ? 'pointer-events-none' : ''}`}>
+                <button 
+                    onClick={() => { if (!isViewer) onEdit(); }} 
+                    disabled={isViewer}
+                    className={`p-3 rounded-2xl shadow-xl transition-all border ${isViewer ? 'bg-slate-50 text-slate-200 border-slate-100' : 'bg-white hover:bg-indigo-600 hover:text-white shadow-slate-200/50 text-slate-400 border-slate-100'}`}
+                >
+                    <Pencil className="w-5 h-5" />
+                </button>
+                <button 
+                    onClick={() => { if (!isViewer) onDelete(); }} 
+                    disabled={isViewer}
+                    className={`p-3 rounded-2xl shadow-xl transition-all border ${isViewer ? 'bg-slate-50 text-slate-100 border-slate-100' : 'bg-white hover:bg-rose-500 hover:text-white shadow-slate-200/50 text-slate-400 border-slate-100'}`}
+                >
+                    <Trash2 className="w-5 h-5" />
+                </button>
+            </div>
 
             <div className="mb-8">
                 <div className="w-20 h-20 rounded-[2rem] bg-indigo-600/5 border-2 border-indigo-600/10 flex items-center justify-center font-black text-indigo-600 text-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 mb-6">
@@ -536,15 +549,14 @@ function TeamItem({ team, mode, onEdit, onManage, onDelete, isViewer }: {
                         </div>
                         <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{team.member_count} Members</span>
                     </div>
-                    {!isViewer && (
                         <button 
                             onClick={onManage}
-                            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-black uppercase tracking-widest text-[10px] transition-all group/btn"
+                            disabled={isViewer}
+                            className={`flex items-center gap-2 font-black uppercase tracking-widest text-[10px] transition-all group/btn ${isViewer ? 'text-slate-300 cursor-default' : 'text-indigo-600 hover:text-indigo-800'}`}
                         >
-                            Manage
+                            {isViewer ? 'View' : 'Manage'}
                             <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                         </button>
-                    )}
                 </div>
             </div>
         </div>

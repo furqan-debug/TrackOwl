@@ -145,17 +145,16 @@ export function Clients() {
                     <p className="text-slate-500">Manage your business partners and associate them with projects.</p>
                 </div>
 
-                {!isViewer && (
-                    <div className="flex items-center gap-4">
-                        <button
-                            onClick={handleOpenCreate}
-                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
-                        >
-                            <Plus className="w-4 h-4" />
-                            Add Client
-                        </button>
-                    </div>
-                )}
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={handleOpenCreate}
+                        disabled={isViewer}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all shadow-sm ${isViewer ? 'bg-slate-300 text-slate-100 cursor-not-allowed grayscale opacity-60 shadow-none' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Client
+                    </button>
+                </div>
             </div>
 
             {/* KPI Cards */}
@@ -292,15 +291,14 @@ export function Clients() {
                                                 >
                                                     <MoreHorizontal className="w-5 h-5" />
                                                 </button>
-                                                {!isViewer && (
-                                                    <button 
-                                                        onClick={() => handleDelete(client.id)}
-                                                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                        title="Delete Client"
-                                                    >
-                                                        <X className="w-4 h-4" />
-                                                    </button>
-                                                )}
+                                                <button 
+                                                    onClick={() => { if (!isViewer) handleDelete(client.id); }}
+                                                    disabled={isViewer}
+                                                    className={`p-1.5 rounded-lg transition-colors ${isViewer ? 'text-slate-200 cursor-default' : 'text-slate-400 hover:text-red-600 hover:bg-red-50'}`}
+                                                    title={isViewer ? "Read-only" : "Delete Client"}
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -370,16 +368,14 @@ export function Clients() {
                                 >
                                     Cancel
                                 </button>
-                                    {!isViewer && (
-                                        <button
-                                            type="submit"
-                                            disabled={saving}
-                                            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                                        >
-                                            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                                            {editClient ? 'Update Client' : 'Add Client'}
-                                        </button>
-                                    )}
+                                <button
+                                    type="submit"
+                                    disabled={saving || isViewer}
+                                    className={`px-5 py-2 font-medium rounded-lg transition-all flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed ${isViewer ? 'bg-slate-400 text-slate-100 grayscale opacity-60 shadow-none' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                                >
+                                    {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    {isViewer ? 'Read-only' : (editClient ? 'Update Client' : 'Add Client')}
+                                </button>
                             </div>
                         </form>
                     </div>

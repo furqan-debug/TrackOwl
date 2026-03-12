@@ -70,20 +70,25 @@ export function SettingsPage() {
             description="Configure tracking behavior, limits, and notifications"
             maxWidth="full"
             actions={
-                !isViewer && (
-                    <div className="flex items-center gap-3">
-                        <Button variant="secondary" leftIcon={<RotateCcw className="w-4 h-4" />} onClick={handleReset}>
-                            Reset Defaults
-                        </Button>
-                        <Button
-                            leftIcon={saved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                            onClick={handleSave}
-                            className={saved ? 'bg-emerald-600 hover:bg-emerald-600' : ''}
-                        >
-                            {saved ? 'Saved!' : 'Save Changes'}
-                        </Button>
-                    </div>
-                )
+                <div className="flex items-center gap-3">
+                    <Button 
+                        variant="secondary" 
+                        leftIcon={<RotateCcw className="w-4 h-4" />} 
+                        onClick={handleReset}
+                        disabled={isViewer}
+                        className={isViewer ? 'opacity-40 grayscale cursor-not-allowed' : ''}
+                    >
+                        Reset Defaults
+                    </Button>
+                    <Button
+                        leftIcon={saved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                        onClick={handleSave}
+                        className={saved ? 'bg-emerald-600 hover:bg-emerald-600' : (isViewer ? 'opacity-40 grayscale cursor-not-allowed' : '')}
+                        disabled={isViewer}
+                    >
+                        {isViewer ? 'Read-only' : (saved ? 'Saved!' : 'Save Changes')}
+                    </Button>
+                </div>
             }
         >
             <div className="space-y-6">

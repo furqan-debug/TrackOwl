@@ -59,13 +59,14 @@ export function Invoices() {
                     <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Invoices</h1>
                     <p className="text-slate-500 text-sm mt-1">Manage bills to your clients and track payments</p>
                 </div>
-                {!isViewer && (
-                    <div className="flex items-center gap-3">
-                        <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <Plus className="w-4 h-4" /> New Invoice
-                        </button>
-                    </div>
-                )}
+                <div className="flex items-center gap-3">
+                    <button 
+                        disabled={isViewer}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-sm ${isViewer ? 'bg-slate-300 text-slate-100 cursor-not-allowed grayscale opacity-60' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
+                    >
+                        <Plus className="w-4 h-4" /> New Invoice
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -163,11 +164,12 @@ export function Invoices() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            {!isViewer && (
-                                                <button className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-slate-100 rounded-md transition-colors">
-                                                    <MoreHorizontal className="w-4 h-4" />
-                                                </button>
-                                            )}
+                                            <button 
+                                                disabled={isViewer}
+                                                className={`p-1.5 rounded-md transition-all ${isViewer ? 'text-slate-200 cursor-default' : 'text-slate-400 hover:text-indigo-600 hover:bg-slate-100'}`}
+                                            >
+                                                <MoreHorizontal className="w-4 h-4" />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))

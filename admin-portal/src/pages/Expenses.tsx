@@ -79,13 +79,14 @@ export function Expenses() {
                     <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Expenses</h1>
                     <p className="text-slate-500 text-sm mt-1">Review and approve team expenses</p>
                 </div>
-                {!isViewer && (
-                    <div className="flex items-center gap-3">
-                        <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                            <Plus className="w-4 h-4" /> Log Expense
-                        </button>
-                    </div>
-                )}
+                <div className="flex items-center gap-3">
+                    <button 
+                        disabled={isViewer}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${isViewer ? 'bg-slate-300 text-slate-100 cursor-not-allowed grayscale opacity-60' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm'}`}
+                    >
+                        <Plus className="w-4 h-4" /> Log Expense
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -186,12 +187,22 @@ export function Expenses() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            {exp.status === 'Pending' && !isViewer && (
+                                            {exp.status === 'Pending' && (
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <button onClick={() => handleStatusChange(exp.id, 'Approved')} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" title="Approve">
+                                                    <button 
+                                                        onClick={() => { if (!isViewer) handleStatusChange(exp.id, 'Approved'); }} 
+                                                        disabled={isViewer}
+                                                        className={`p-1.5 rounded-md transition-all ${isViewer ? 'text-slate-200 cursor-default' : 'text-emerald-600 hover:bg-emerald-50'}`} 
+                                                        title={isViewer ? "Read-only" : "Approve"}
+                                                    >
                                                         <Check className="w-4 h-4" />
                                                     </button>
-                                                    <button onClick={() => handleStatusChange(exp.id, 'Rejected')} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-md transition-colors" title="Reject">
+                                                    <button 
+                                                        onClick={() => { if (!isViewer) handleStatusChange(exp.id, 'Rejected'); }} 
+                                                        disabled={isViewer}
+                                                        className={`p-1.5 rounded-md transition-all ${isViewer ? 'text-slate-200 cursor-default' : 'text-rose-600 hover:bg-rose-50'}`} 
+                                                        title={isViewer ? "Read-only" : "Reject"}
+                                                    >
                                                         <X className="w-4 h-4" />
                                                     </button>
                                                 </div>
