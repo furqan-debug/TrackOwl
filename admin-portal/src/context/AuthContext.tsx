@@ -8,6 +8,7 @@ interface MemberProfile {
     full_name: string;
     role: 'Admin' | 'Manager' | 'User' | 'Viewer';
     status: 'Active' | 'Inactive' | 'Pending';
+    organization_id: string | null;
 }
 
 interface AuthContextType {

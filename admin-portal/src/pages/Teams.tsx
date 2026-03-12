@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuth } from '../context/AuthContext';
 import {
     Users, Search,
     Trash2, Shield, LayoutGrid, List, X,
@@ -24,6 +25,7 @@ interface Member {
 }
 
 export function Teams() {
+    const { profile } = useAuth();
     const [teams, setTeams] = useState<Team[]>([]);
     const [members, setMembers] = useState<Member[]>([]);
     const [loading, setLoading] = useState(true);
@@ -83,7 +85,8 @@ export function Teams() {
             name,
             description,
             manager_id: managerId || null,
-            member_ids: Array.from(selectedMemberIds)
+            member_ids: Array.from(selectedMemberIds),
+            organization_id: profile?.organization_id
         };
 
         try {

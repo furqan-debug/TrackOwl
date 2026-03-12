@@ -44,14 +44,30 @@ export function Onboarding() {
             // Simulated delay for payment processing
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // Update member profile status to Active
-            if (profile?.email) {
-                const { error } = await supabase
+            // 1. Create the organization
+            const { data: orgData, error: orgError } = await supabase
+                .from('organizations')
+                .insert({
+                    name: orgName,
+                    industry: industry,
+                    size: orgSize
+                })
+                .select()
+                .single();
+
+            if (orgError) throw orgError;
+
+            // 2. Update member profile status to Active and link to Organization
+            if (profile?.email && orgData) {
+                const { error: memberError } = await supabase
                     .from('members')
-                    .update({ status: 'Active' })
+                    .update({ 
+                        status: 'Active',
+                        organization_id: orgData.id
+                    })
                     .eq('email', profile.email);
 
-                if (error) throw error;
+                if (memberError) throw memberError;
                 await refreshProfile();
             }
 
@@ -84,7 +100,7 @@ export function Onboarding() {
                     </div>
 
                     <div className="space-y-8 flex-1">
-                        {steps.map((s, i) => (
+                        {steps.map((s) => (
                             <div key={s.id} className="flex items-center gap-4 group">
                                 <div className={clsx(
                                     "w-8 h-8 rounded-lg flex items-center justify-center border-2 transition-all",

@@ -48,6 +48,17 @@ ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ip_address TEXT;
 ALTER TABLE sessions ADD COLUMN IF NOT EXISTS ended_at TIMESTAMPTZ;
 
 -- -----------------------------------------------------------------------------
+-- Organizations
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS organizations (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        TEXT NOT NULL,
+  industry    TEXT,
+  size        TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- -----------------------------------------------------------------------------
 -- Members (real user accounts)
 -- -----------------------------------------------------------------------------
 -- Run once. Links to Supabase Auth via auth_user_id.
@@ -56,12 +67,13 @@ CREATE TABLE IF NOT EXISTS members (
   email            TEXT UNIQUE NOT NULL,
   full_name        TEXT NOT NULL,
   role             TEXT NOT NULL DEFAULT 'User',  -- Admin | Manager | User | Viewer
-  status           TEXT NOT NULL DEFAULT 'Active', -- Active | Inactive
+  status           TEXT NOT NULL DEFAULT 'Active', -- Active | Inactive | Pending
   pay_rate         NUMERIC(10,2),
   bill_rate        NUMERIC(10,2),
   weekly_limit     INTEGER NOT NULL DEFAULT 40,
   daily_limit      INTEGER NOT NULL DEFAULT 8,
   tracking_enabled BOOLEAN NOT NULL DEFAULT true,
+  organization_id  UUID REFERENCES organizations(id) ON DELETE SET NULL,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -98,6 +110,7 @@ CREATE TABLE IF NOT EXISTS projects (
   budget_type          TEXT DEFAULT 'No budget', -- 'No budget' | 'Total hours' | 'Total amount' | 'Monthly hours' | 'Monthly amount'
   budget_limit         NUMERIC(10,2),
   budget_notifications BOOLEAN NOT NULL DEFAULT true,
+  organization_id      UUID REFERENCES organizations(id) ON DELETE CASCADE,
   created_at           TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -110,6 +123,7 @@ CREATE TABLE IF NOT EXISTS clients (
   email       TEXT,
   company     TEXT,
   status      TEXT NOT NULL DEFAULT 'Active',
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -219,6 +233,7 @@ CREATE TABLE IF NOT EXISTS teams (
   name        TEXT NOT NULL,
   description TEXT,
   manager_id  UUID REFERENCES members(id) ON DELETE SET NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

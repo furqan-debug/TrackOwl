@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import {
     Search, Plus, Filter, MoreHorizontal,
     X, Check, Users, Info, CreditCard, Users2,
@@ -467,6 +469,7 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
     const [clients, setClients] = useState<Client[]>([]);
 
     // Associations
+    const { profile } = useAuth();
     const [members, setMembers] = useState<Member[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set(project?.memberIds || []));
@@ -512,7 +515,8 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
             budget_limit: budgetLimit ? parseFloat(budgetLimit) : null,
             budget_notifications: budgetNotify,
             member_ids: Array.from(selectedMemberIds),
-            team_ids: Array.from(selectedTeamIds)
+            team_ids: Array.from(selectedTeamIds),
+            organization_id: profile?.organization_id
         };
 
         try {

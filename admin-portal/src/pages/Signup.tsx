@@ -48,7 +48,7 @@ export function Signup() {
                         ...(existingMember ? { id: existingMember.id } : {}),
                         email,
                         full_name: fullName,
-                        role: existingMember?.role || 'Admin', // Keep invited role or default to Admin
+                        role: 'Admin', // Purchasers through pricing/plan always get Admin access
                         status: 'Pending'
                     });
 

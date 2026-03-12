@@ -302,6 +302,7 @@ app.post('/api/members', async (req, res) => {
             weekly_limit,
             daily_limit,
             status: 'Pending',
+            organization_id: req.body.organization_id || null,
         }]).select().single();
 
         if (memberError) throw memberError;
@@ -445,7 +446,7 @@ app.post('/api/projects', async (req, res) => {
 
         // 1. Insert Project
         const { data: project, error: projectError } = await db.from('projects').insert([{
-            name, description, color, client_id
+            name, description, color, client_id, organization_id: req.body.organization_id || null
         }]).select().single();
 
         if (projectError) throw projectError;
@@ -816,8 +817,8 @@ app.post('/api/invoices', async (req, res) => {
         const { client_id, amount, status, issue_date, due_date } = req.body;
         if (!client_id || !amount || !due_date) return res.status(400).json({ error: 'Missing required fields' });
 
-        const { data, error } = await getDb().from('invoices').insert([{
-            client_id, amount, status: status || 'Draft', issue_date, due_date
+        const { data: error } = await getDb().from('invoices').insert([{
+            client_id, amount, status: status || 'Draft', issue_date, due_date, organization_id: req.body.organization_id || null
         }]).select().single();
 
         if (error) throw error;
@@ -960,7 +961,7 @@ app.post('/api/teams', async (req, res) => {
 
         const db = getDb();
         const { data: team, error } = await db.from('teams').insert([{
-            name, description, manager_id
+            name, description, manager_id, organization_id: req.body.organization_id || null
         }]).select().single();
 
         if (error) throw error;
