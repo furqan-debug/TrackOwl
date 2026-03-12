@@ -1,0 +1,49 @@
+{
+  "auth": [
+    {
+      "email": "furqanfreelance1@gmail.com",
+      "id": "5165e0a8-180f-42ee-9e9e-353f084a394d",
+      "metadata": {
+        "email": "furqanfreelance1@gmail.com",
+        "email_verified": true,
+        "full_name": "Furqan",
+        "phone_verified": false,
+        "sub": "5165e0a8-180f-42ee-9e9e-353f084a394d"
+      }
+    }
+  ],
+  "db": [
+    {
+      "id": "0ad213e3-0c28-4b2e-b6fa-cbaeff70d9d7",
+      "email": "newtest@example.com",
+      "full_name": "newtest@example.com",
+      "role": "User",
+      "status": "Pending",
+      "pay_rate": null,
+      "bill_rate": null,
+      "weekly_limit": 40,
+      "daily_limit": 8,
+      "tracking_enabled": true,
+      "auth_user_id": null,
+      "created_at": "2026-03-09T17:00:40.152974+00:00",
+      "phone": null,
+      "organization_id": null
+    },
+    {
+      "id": "528fbca9-9e8f-4c9c-b6ad-8dcbba2170ff",
+      "email": "furqanfreelance1@gmail.com",
+      "full_name": "Furqan",
+      "role": "Admin",
+      "status": "Active",
+      "pay_rate": 25,
+      "bill_rate": 5,
+      "weekly_limit": 40,
+      "daily_limit": 8,
+      "tracking_enabled": true,
+      "auth_user_id": "21c4f32b-f3fc-46fd-bf3c-66e25a3c6199",
+      "created_at": "2026-03-06T16:34:18.685396+00:00",
+      "phone": "03160186637",
+      "organization_id": null
+    }
+  ]
+}
