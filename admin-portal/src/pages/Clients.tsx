@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { UserPlus, Search, MoreHorizontal, Building2, Mail, CircleDot, X, Loader2, Plus, Globe } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface Client {
     id: string;
@@ -12,6 +13,8 @@ interface Client {
 }
 
 export function Clients() {
+    const { profile } = useAuth();
+    const isViewer = profile?.role === 'Viewer';
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');
     const [clients, setClients] = useState<Client[]>([]);
@@ -142,15 +145,17 @@ export function Clients() {
                     <p className="text-slate-500">Manage your business partners and associate them with projects.</p>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <button
-                        onClick={handleOpenCreate}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Add Client
-                    </button>
-                </div>
+                {!isViewer && (
+                    <div className="flex items-center gap-4">
+                        <button
+                            onClick={handleOpenCreate}
+                            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-sm"
+                        >
+                            <Plus className="w-4 h-4" />
+                            Add Client
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* KPI Cards */}
@@ -269,11 +274,11 @@ export function Clients() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <button 
-                                                onClick={() => toggleStatus(client)}
-                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity ${client.status === 'Active'
+                                                onClick={() => !isViewer && toggleStatus(client)}
+                                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-opacity ${client.status === 'Active'
                                                     ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/20'
                                                     : 'bg-slate-100 text-slate-600 ring-1 ring-inset ring-slate-500/20'
-                                                }`}>
+                                                } ${isViewer ? 'cursor-default' : 'cursor-pointer hover:opacity-80'}`}>
                                                 <CircleDot className={`w-3 h-3 ${client.status === 'Active' ? 'text-emerald-500' : 'text-slate-400'}`} />
                                                 {client.status}
                                             </button>
@@ -283,17 +288,19 @@ export function Clients() {
                                                 <button 
                                                     onClick={() => handleOpenEdit(client)}
                                                     className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                    title="Edit Client"
+                                                    title={isViewer ? "View Details" : "Edit Client"}
                                                 >
                                                     <MoreHorizontal className="w-5 h-5" />
                                                 </button>
-                                                <button 
-                                                    onClick={() => handleDelete(client.id)}
-                                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Delete Client"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                </button>
+                                                {!isViewer && (
+                                                    <button 
+                                                        onClick={() => handleDelete(client.id)}
+                                                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                        title="Delete Client"
+                                                    >
+                                                        <X className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -363,14 +370,16 @@ export function Clients() {
                                 >
                                     Cancel
                                 </button>
-                                <button
-                                    type="submit"
-                                    disabled={saving}
-                                    className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-                                >
-                                    {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    {editClient ? 'Update Client' : 'Add Client'}
-                                </button>
+                                    {!isViewer && (
+                                        <button
+                                            type="submit"
+                                            disabled={saving}
+                                            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                        >
+                                            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                                            {editClient ? 'Update Client' : 'Add Client'}
+                                        </button>
+                                    )}
                             </div>
                         </form>
                     </div>

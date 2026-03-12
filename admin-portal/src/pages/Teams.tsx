@@ -26,6 +26,7 @@ interface Member {
 
 export function Teams() {
     const { profile } = useAuth();
+    const isViewer = profile?.role === 'Viewer';
     const [teams, setTeams] = useState<Team[]>([]);
     const [members, setMembers] = useState<Member[]>([]);
     const [loading, setLoading] = useState(true);
@@ -150,13 +151,15 @@ export function Teams() {
                             <List className="w-5 h-5" />
                         </button>
                     </div>
-                    <button
-                        onClick={openCreateModal}
-                        className="flex items-center gap-2 bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 hover:shadow-indigo-200 active:scale-95"
-                    >
-                        <Plus className="w-5 h-5" />
-                        Create Team
-                    </button>
+                    {!isViewer && (
+                        <button
+                            onClick={openCreateModal}
+                            className="flex items-center gap-2 bg-slate-900 text-white px-8 py-3.5 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 hover:shadow-indigo-200 active:scale-95"
+                        >
+                            <Plus className="w-5 h-5" />
+                            Create Team
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -206,12 +209,14 @@ export function Teams() {
                         <UsersRound className="w-16 h-16 text-slate-200 mx-auto mb-6" />
                         <h3 className="text-xl font-black text-slate-800 tracking-tight">No Teams Found</h3>
                         <p className="text-slate-500 font-medium max-w-sm mx-auto mt-2">Get started by creating your first team to organize your members.</p>
-                        <button
-                            onClick={openCreateModal}
-                            className="mt-8 text-indigo-600 font-black uppercase tracking-widest text-xs hover:text-indigo-700 underline underline-offset-8"
-                        >
-                            Create standard team
-                        </button>
+                        {!isViewer && (
+                            <button
+                                onClick={openCreateModal}
+                                className="mt-8 text-indigo-600 font-black uppercase tracking-widest text-xs hover:text-indigo-700 underline underline-offset-8"
+                            >
+                                Create standard team
+                            </button>
+                        )}
                     </div>
                 ) : (
                     <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-8" : "divide-y divide-slate-100"}>
@@ -223,6 +228,7 @@ export function Teams() {
                                 onEdit={() => openEditModal(team)}
                                 onManage={() => setManagingMembersTeam(team)}
                                 onDelete={() => setDeletingTeam(team)}
+                                isViewer={isViewer}
                             />
                         ))}
                     </div>
@@ -290,7 +296,7 @@ export function Teams() {
                             <button
                                 onClick={handleSave}
                                 disabled={!name}
-                                className="flex-[2] bg-indigo-600 text-white px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-indigo-100 disabled:opacity-50 active:scale-95"
+                                className={`flex-[2] bg-indigo-600 text-white px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-indigo-100 disabled:opacity-50 active:scale-95 ${isViewer ? 'hidden' : ''}`}
                             >
                                 {editingTeam ? 'Update Team' : 'Create Team'}
                             </button>
@@ -335,17 +341,19 @@ export function Teams() {
                     allMembers={members}
                     onClose={() => setManagingMembersTeam(null)}
                     onSuccess={() => { setManagingMembersTeam(null); fetchData(); }}
+                    isViewer={isViewer}
                 />
             )}
         </div>
     );
 }
 
-function ManageMembersModal({ team, allMembers, onClose, onSuccess }: {
+function ManageMembersModal({ team, allMembers, onClose, onSuccess, isViewer }: {
     team: Team;
     allMembers: Member[];
     onClose: () => void;
     onSuccess: () => void;
+    isViewer?: boolean;
 }) {
     // Note: team.memberIds is populated by our refined backend API
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set((team as any).memberIds || []));
@@ -386,12 +394,13 @@ function ManageMembersModal({ team, allMembers, onClose, onSuccess }: {
                             <button
                                 key={m.id}
                                 onClick={() => {
+                                    if (isViewer) return;
                                     const next = new Set(selectedIds);
                                     if (next.has(m.id)) next.delete(m.id);
                                     else next.add(m.id);
                                     setSelectedIds(next);
                                 }}
-                                className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${isSelected ? 'border-indigo-600 bg-indigo-50/50' : 'border-slate-100 hover:bg-slate-50'}`}
+                                className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${isSelected ? 'border-indigo-600 bg-indigo-50/50' : 'border-slate-100 hover:bg-slate-50'} ${isViewer ? 'cursor-default' : ''}`}
                             >
                                 <div className="flex items-center gap-4">
                                     <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-black text-indigo-600">
@@ -411,21 +420,24 @@ function ManageMembersModal({ team, allMembers, onClose, onSuccess }: {
                 </div>
                 <div className="px-10 py-8 bg-slate-50/50 border-t border-slate-100 flex gap-4">
                     <button onClick={onClose} className="flex-1 px-6 py-4 rounded-2xl text-sm font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-all">Cancel</button>
-                    <button onClick={handleSave} disabled={loading} className="flex-[2] bg-indigo-600 text-white px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-indigo-100 active:scale-95 disabled:opacity-50">
-                        {loading ? 'Saving...' : 'Update Members'}
-                    </button>
+                    {!isViewer && (
+                        <button onClick={handleSave} disabled={loading} className="flex-[2] bg-indigo-600 text-white px-8 py-4 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-slate-900 transition-all shadow-xl shadow-indigo-100 active:scale-95 disabled:opacity-50">
+                            {loading ? 'Saving...' : 'Update Members'}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
 
-function TeamItem({ team, mode, onEdit, onManage, onDelete }: {
+function TeamItem({ team, mode, onEdit, onManage, onDelete, isViewer }: {
     team: Team;
     mode: 'grid' | 'list';
     onEdit: () => void;
     onManage: () => void;
     onDelete: () => void;
+    isViewer: boolean;
 }) {
     const initials = team.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
 
@@ -455,31 +467,35 @@ function TeamItem({ team, mode, onEdit, onManage, onDelete }: {
                         <span className="text-sm">{team.member_count}</span>
                     </div>
                 </div>
-                <div className="flex items-center gap-2 ml-auto opacity-0 group-hover:opacity-100 transition-all">
-                    <button onClick={onEdit} className="p-3 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all text-slate-400 hover:text-indigo-600 shadow-sm">
-                        <Pencil className="w-5 h-5" />
-                    </button>
-                    <button onClick={onManage} className="p-3 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all text-slate-400 hover:text-indigo-600 shadow-sm">
-                        <Users className="w-5 h-5" />
-                    </button>
-                    <button onClick={onDelete} className="p-3 hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-100 transition-all text-slate-300 hover:text-rose-500 shadow-sm">
-                        <Trash2 className="w-5 h-5" />
-                    </button>
-                </div>
+                {!isViewer && (
+                    <div className="flex items-center gap-2 ml-auto opacity-0 group-hover:opacity-100 transition-all">
+                        <button onClick={onEdit} className="p-3 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all text-slate-400 hover:text-indigo-600 shadow-sm">
+                            <Pencil className="w-5 h-5" />
+                        </button>
+                        <button onClick={onManage} className="p-3 hover:bg-white rounded-xl border border-transparent hover:border-slate-200 transition-all text-slate-400 hover:text-indigo-600 shadow-sm">
+                            <Users className="w-5 h-5" />
+                        </button>
+                        <button onClick={onDelete} className="p-3 hover:bg-rose-50 rounded-xl border border-transparent hover:border-rose-100 transition-all text-slate-300 hover:text-rose-500 shadow-sm">
+                            <Trash2 className="w-5 h-5" />
+                        </button>
+                    </div>
+                )}
             </div>
         );
     }
 
     return (
         <div className="bg-slate-50 border border-slate-100 rounded-[2.5rem] p-10 hover:bg-white hover:border-indigo-500/20 hover:shadow-2xl hover:shadow-indigo-500/5 transition-all duration-500 group relative overflow-hidden flex flex-col h-full">
-            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-all flex flex-col gap-2">
-                <button onClick={onEdit} className="p-3 bg-white hover:bg-indigo-600 hover:text-white rounded-2xl shadow-xl shadow-slate-200/50 text-slate-400 transition-all border border-slate-100">
-                    <Pencil className="w-5 h-5" />
-                </button>
-                <button onClick={onDelete} className="p-3 bg-white hover:bg-rose-500 hover:text-white rounded-2xl shadow-xl shadow-slate-200/50 text-slate-400 transition-all border border-slate-100">
-                    <Trash2 className="w-5 h-5" />
-                </button>
-            </div>
+            {!isViewer && (
+                <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-all flex flex-col gap-2">
+                    <button onClick={onEdit} className="p-3 bg-white hover:bg-indigo-600 hover:text-white rounded-2xl shadow-xl shadow-slate-200/50 text-slate-400 transition-all border border-slate-100">
+                        <Pencil className="w-5 h-5" />
+                    </button>
+                    <button onClick={onDelete} className="p-3 bg-white hover:bg-rose-500 hover:text-white rounded-2xl shadow-xl shadow-slate-200/50 text-slate-400 transition-all border border-slate-100">
+                        <Trash2 className="w-5 h-5" />
+                    </button>
+                </div>
+            )}
 
             <div className="mb-8">
                 <div className="w-20 h-20 rounded-[2rem] bg-indigo-600/5 border-2 border-indigo-600/10 flex items-center justify-center font-black text-indigo-600 text-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 mb-6">
@@ -520,13 +536,15 @@ function TeamItem({ team, mode, onEdit, onManage, onDelete }: {
                         </div>
                         <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{team.member_count} Members</span>
                     </div>
-                    <button 
-                        onClick={onManage}
-                        className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-black uppercase tracking-widest text-[10px] transition-all group/btn"
-                    >
-                        Manage
-                        <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
-                    </button>
+                    {!isViewer && (
+                        <button 
+                            onClick={onManage}
+                            className="flex items-center gap-2 text-indigo-600 hover:text-indigo-800 font-black uppercase tracking-widest text-[10px] transition-all group/btn"
+                        >
+                            Manage
+                            <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                        </button>
+                    )}
                 </div>
             </div>
         </div>

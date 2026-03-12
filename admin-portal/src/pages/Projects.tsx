@@ -57,6 +57,9 @@ const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 // ─── Components ───────────────────────────────────────────────────────────────
 
 export function Projects() {
+    const { profile } = useAuth();
+    const isViewer = profile?.role === 'Viewer';
+
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<ProjectStatus>('Active');
@@ -178,6 +181,7 @@ export function Projects() {
                             <div className="h-4 w-px bg-slate-200 mx-1" />
 
                             <div className="flex items-center gap-2">
+                            {!isViewer && (
                                 <button
                                     disabled={selectedIds.size === 0}
                                     onClick={handleBulkArchive}
@@ -186,6 +190,7 @@ export function Projects() {
                                     <Archive className="w-4 h-4 group-hover:text-blue-500 transition-colors" />
                                     {activeTab === 'Active' ? 'Archive' : 'Restore'}
                                 </button>
+                            )}
                                 <span className="text-xs text-slate-400 font-medium ml-1">
                                     {selectedIds.size} / {filteredProjects.length} selected
                                 </span>
@@ -193,14 +198,16 @@ export function Projects() {
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => { setEditingProject(null); setShowModal(true); }}
-                            className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2 transition-colors shadow-sm shadow-blue-200"
-                        >
-                            <Plus className="w-4 h-4" /> Add project
-                        </button>
-                    </div>
+                    {!isViewer && (
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => { setEditingProject(null); setShowModal(true); }}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 flex items-center gap-2 transition-colors shadow-sm shadow-blue-200"
+                            >
+                                <Plus className="w-4 h-4" /> Add project
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Table */}
@@ -264,6 +271,7 @@ export function Projects() {
                                             setModalInitialTab(tab || 'GENERAL');
                                             setShowModal(true); 
                                         }}
+                                        isViewer={isViewer}
                                         onRefresh={fetchProjects}
                                     />
                                 ))
@@ -293,9 +301,9 @@ export function Projects() {
 // ─── Subcomponents ────────────────────────────────────────────────────────────
 
 function ProjectRow({
-    project, isSelected, onSelect, onEdit, onRefresh
+    project, isSelected, onSelect, onEdit, onRefresh, isViewer
 }: {
-    project: Project; isSelected: boolean; onSelect: () => void; onEdit: (tab?: 'GENERAL' | 'MEMBERS' | 'BUDGET & LIMITS' | 'TEAMS') => void; onRefresh: () => void
+    project: Project; isSelected: boolean; onSelect: () => void; onEdit: (tab?: 'GENERAL' | 'MEMBERS' | 'BUDGET & LIMITS' | 'TEAMS') => void; onRefresh: () => void; isViewer: boolean
 }) {
     const [showMenu, setShowMenu] = useState(false);
 
@@ -398,12 +406,14 @@ function ProjectRow({
                     {project.budget_limit && (
                         <span className="text-xs text-slate-400 mt-0.5">Limit: {project.budget_limit}</span>
                     )}
-                    <button 
-                        onClick={() => onEdit('BUDGET & LIMITS')}
-                        className="text-[10px] font-bold text-blue-500 uppercase mt-1 opacity-0 group-hover:opacity-100 transition-opacity text-left"
-                    >
-                        Edit budget
-                    </button>
+                    {!isViewer && (
+                        <button 
+                            onClick={() => onEdit('BUDGET & LIMITS')}
+                            className="text-[10px] font-bold text-blue-500 uppercase mt-1 opacity-0 group-hover:opacity-100 transition-opacity text-left"
+                        >
+                            Edit budget
+                        </button>
+                    )}
                 </div>
             </td>
             <td className="px-4 py-4">
@@ -423,21 +433,25 @@ function ProjectRow({
                             <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
                             <div className="absolute right-0 mt-2 w-48 rounded-xl bg-white border border-slate-200 shadow-xl z-20 py-1.5 overflow-hidden animate-in fade-in zoom-in duration-200">
                                 <button onClick={() => { setShowMenu(false); onEdit('GENERAL'); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
-                                    <Pencil className="w-4 h-4 text-slate-400" /> Edit project
+                                    <Pencil className="w-4 h-4 text-slate-400" /> {isViewer ? 'View details' : 'Edit project'}
                                 </button>
-                                <button onClick={() => { setShowMenu(false); onEdit('MEMBERS'); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
-                                    <Users className="w-4 h-4 text-slate-400" /> Manage members
-                                </button>
-                                <button onClick={() => { setShowMenu(false); onEdit('BUDGET & LIMITS'); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
-                                    <CreditCard className="w-4 h-4 text-slate-400" /> Edit budget
-                                </button>
-                                <div className="h-px bg-slate-100 my-1" />
-                                <button onClick={() => { setShowMenu(false); handleArchive(); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
-                                    <Archive className="w-4 h-4 text-slate-400" /> {project.status === 'Active' ? 'Archive' : 'Restore'} project
-                                </button>
-                                <button onClick={() => { setShowMenu(false); handleDelete(); }} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3">
-                                    <Trash2 className="w-4 h-4 text-red-400" /> Delete project
-                                </button>
+                                {!isViewer && (
+                                    <>
+                                        <button onClick={() => { setShowMenu(false); onEdit('MEMBERS'); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
+                                            <Users className="w-4 h-4 text-slate-400" /> Manage members
+                                        </button>
+                                        <button onClick={() => { setShowMenu(false); onEdit('BUDGET & LIMITS'); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
+                                            <CreditCard className="w-4 h-4 text-slate-400" /> Edit budget
+                                        </button>
+                                        <div className="h-px bg-slate-100 my-1" />
+                                        <button onClick={() => { setShowMenu(false); handleArchive(); }} className="w-full px-4 py-2 text-left text-sm text-slate-600 hover:bg-slate-50 flex items-center gap-3">
+                                            <Archive className="w-4 h-4 text-slate-400" /> {project.status === 'Active' ? 'Archive' : 'Restore'} project
+                                        </button>
+                                        <button onClick={() => { setShowMenu(false); handleDelete(); }} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-3">
+                                            <Trash2 className="w-4 h-4 text-red-400" /> Delete project
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </>
                     )}
@@ -453,6 +467,8 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
     onClose: () => void; 
     onSuccess: () => void 
 }) {
+    const { profile } = useAuth();
+    const isViewer = profile?.role === 'Viewer';
     const [activeTab, setActiveTab] = useState<'GENERAL' | 'MEMBERS' | 'BUDGET & LIMITS' | 'TEAMS'>(initialTab);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -749,14 +765,16 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                         <button onClick={onClose} className="px-5 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition-colors">
                             Cancel
                         </button>
-                        <button
-                            onClick={handleSave}
-                            disabled={loading}
-                            className="px-8 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 flex items-center gap-2"
-                        >
-                            {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
-                            {project ? 'Save' : 'Save'}
-                        </button>
+                        {!isViewer && (
+                            <button
+                                onClick={handleSave}
+                                disabled={loading}
+                                className="px-8 py-2.5 rounded-xl bg-blue-600 text-white text-sm font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+                                {project ? 'Save' : 'Save'}
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

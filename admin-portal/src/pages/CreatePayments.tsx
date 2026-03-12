@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Check, ChevronLeft, CreditCard } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -12,6 +13,8 @@ interface Member {
 }
 
 export function CreatePayments() {
+    const { profile } = useAuth();
+    const isViewer = profile?.role === 'Viewer';
     const navigate = useNavigate();
     const [members, setMembers] = useState<Member[]>([]);
     const [selectedMember, setSelectedMember] = useState<string>('');
@@ -132,13 +135,20 @@ export function CreatePayments() {
                         <Link to="/financials" className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
                             Cancel
                         </Link>
-                        <button
-                            type="submit"
-                            disabled={loading || fetching}
-                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
-                        >
-                            {loading ? 'Processing...' : <><Check className="w-4 h-4" /> Issue Payment</>}
-                        </button>
+                        {!isViewer && (
+                            <button
+                                type="submit"
+                                disabled={loading || fetching}
+                                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+                            >
+                                {loading ? 'Processing...' : <><Check className="w-4 h-4" /> Issue Payment</>}
+                            </button>
+                        )}
+                        {isViewer && (
+                            <div className="text-sm font-medium text-slate-400 bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
+                                Read-only access
+                            </div>
+                        )}
                     </div>
                 </form>
             </div>

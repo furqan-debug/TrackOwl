@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Camera, Clock, Monitor, Bell, Shield, Save, RotateCcw, CheckCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { PageLayout, Button } from '../components/ui';
 
 const SETTINGS_KEY = 'digireps_settings';
@@ -40,20 +41,25 @@ function loadSettings(): AppSettings {
 function saveSettings(s: AppSettings) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
 
 export function SettingsPage() {
+    const { profile } = useAuth();
+    const isViewer = profile?.role === 'Viewer';
     const [settings, setSettings] = useState<AppSettings>(loadSettings());
     const [saved, setSaved] = useState(false);
 
     function update<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
+        if (isViewer) return;
         setSettings(prev => ({ ...prev, [key]: value }));
     }
 
     function handleSave() {
+        if (isViewer) return;
         saveSettings(settings);
         setSaved(true);
         setTimeout(() => setSaved(false), 2200);
     }
 
     function handleReset() {
+        if (isViewer) return;
         setSettings(DEFAULTS);
         saveSettings(DEFAULTS);
     }
@@ -64,18 +70,20 @@ export function SettingsPage() {
             description="Configure tracking behavior, limits, and notifications"
             maxWidth="full"
             actions={
-                <div className="flex items-center gap-3">
-                    <Button variant="secondary" leftIcon={<RotateCcw className="w-4 h-4" />} onClick={handleReset}>
-                        Reset Defaults
-                    </Button>
-                    <Button
-                        leftIcon={saved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                        onClick={handleSave}
-                        className={saved ? 'bg-emerald-600 hover:bg-emerald-600' : ''}
-                    >
-                        {saved ? 'Saved!' : 'Save Changes'}
-                    </Button>
-                </div>
+                !isViewer && (
+                    <div className="flex items-center gap-3">
+                        <Button variant="secondary" leftIcon={<RotateCcw className="w-4 h-4" />} onClick={handleReset}>
+                            Reset Defaults
+                        </Button>
+                        <Button
+                            leftIcon={saved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                            onClick={handleSave}
+                            className={saved ? 'bg-emerald-600 hover:bg-emerald-600' : ''}
+                        >
+                            {saved ? 'Saved!' : 'Save Changes'}
+                        </Button>
+                    </div>
+                )
             }
         >
             <div className="space-y-6">
@@ -223,7 +231,7 @@ function NumberField({ label, description, value, min, max, step = 1, onChange }
                 <input
                     type="range" min={min} max={max} step={step} value={value}
                     onChange={e => onChange(Number(e.target.value))}
-                    className="flex-1 accent-blue-600"
+                    className={`flex-1 accent-blue-600`}
                 />
                 <span className="text-sm font-semibold text-slate-700 w-12 text-right">{value}</span>
             </div>

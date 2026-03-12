@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 import { Receipt, Search, Filter, Check, X, Plus } from 'lucide-react';
 
@@ -18,6 +19,8 @@ interface Expense {
 }
 
 export function Expenses() {
+    const { profile } = useAuth();
+    const isViewer = profile?.role === 'Viewer';
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -76,11 +79,13 @@ export function Expenses() {
                     <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Expenses</h1>
                     <p className="text-slate-500 text-sm mt-1">Review and approve team expenses</p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                        <Plus className="w-4 h-4" /> Log Expense
-                    </button>
-                </div>
+                {!isViewer && (
+                    <div className="flex items-center gap-3">
+                        <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                            <Plus className="w-4 h-4" /> Log Expense
+                        </button>
+                    </div>
+                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -181,7 +186,7 @@ export function Expenses() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            {exp.status === 'Pending' && (
+                                            {exp.status === 'Pending' && !isViewer && (
                                                 <div className="flex items-center justify-end gap-2">
                                                     <button onClick={() => handleStatusChange(exp.id, 'Approved')} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" title="Approve">
                                                         <Check className="w-4 h-4" />

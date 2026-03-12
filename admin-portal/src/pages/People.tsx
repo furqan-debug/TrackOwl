@@ -6,6 +6,7 @@ import {
     AlertCircle, RotateCcw,
     Square, Settings
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { PageLayout } from '../components/ui';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -39,6 +40,8 @@ const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function People() {
+    const { profile } = useAuth();
+    const isViewer = profile?.role === 'Viewer';
     const [members, setMembers] = useState<MemberRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -261,26 +264,30 @@ export function People() {
                             className="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 focus:ring-2 focus:ring-[#2a85ff]/20 focus:border-[#2a85ff] outline-none transition-all placeholder:text-slate-400"
                         />
                     </div>
-                    <div className="relative">
-                        <button onClick={() => setShowBatch(!showBatch)} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                            Batch actions <ChevronDown className="w-4 h-4" />
-                        </button>
-                        {showBatch && (
-                            <div className="absolute top-12 left-0 w-48 bg-white shadow-xl rounded-lg py-1 border border-slate-200 z-50">
-                                <button onClick={handleBatchDelete} disabled={selectedIds.size === 0} className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">Remove selected ({selectedIds.size})</button>
-                            </div>
-                        )}
-                    </div>
+                    {!isViewer && (
+                        <div className="relative">
+                            <button onClick={() => setShowBatch(!showBatch)} className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
+                                Batch actions <ChevronDown className="w-4 h-4" />
+                            </button>
+                            {showBatch && (
+                                <div className="absolute top-12 left-0 w-48 bg-white shadow-xl rounded-lg py-1 border border-slate-200 z-50">
+                                    <button onClick={handleBatchDelete} disabled={selectedIds.size === 0} className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">Remove selected ({selectedIds.size})</button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-3 w-full lg:w-auto justify-end">
                     <button onClick={handleExportCsv} className="flex items-center gap-2 px-4 py-2 text-slate-500 hover:text-slate-700 text-sm font-medium">
                         <Download className="w-4 h-4" /> Export
                     </button>
-                    <button onClick={() => { resetAddForm(); setShowAddModal(true); }}
-                        className="px-6 py-2 bg-[#2a85ff] text-white rounded-lg text-sm font-semibold hover:bg-[#0052cc] transition-colors">
-                        Add members
-                    </button>
+                    {!isViewer && (
+                        <button onClick={() => { resetAddForm(); setShowAddModal(true); }}
+                            className="px-6 py-2 bg-[#2a85ff] text-white rounded-lg text-sm font-semibold hover:bg-[#0052cc] transition-colors">
+                            Add members
+                        </button>
+                    )}
                     <div className="relative">
                         <button onClick={() => setShowFilters(!showFilters)} className="px-6 py-2 bg-white border border-[#2a85ff] text-[#2a85ff] rounded-lg text-sm font-medium hover:bg-[#2a85ff]/5 transition-colors flex items-center gap-2">
                             Filters {statusFilter !== 'All' && <span className="w-2 h-2 rounded-full bg-[#2a85ff]"></span>}
@@ -344,6 +351,7 @@ export function People() {
                                     onEdit={() => setEditMember(m)}
                                     onResendInvite={() => handleResendInvite(m.email)}
                                     onDelete={() => handleDelete(m.id)}
+                                    isViewer={isViewer}
                                 />
                             ))
                         )}
@@ -357,8 +365,8 @@ export function People() {
             </div>
 
             {/* MODALS */}
-            {showAddModal && <InviteModal onClose={() => setShowAddModal(false)} onInvite={handleAddMember} form={{ addEmail, setAddEmail, addRole, setAddRole, addPayRate, setAddPayRate, addBillRate, setAddBillRate, addWeekly, setAddWeekly, addDaily, setAddDaily, adding, addError }} />}
-            {editMember && <EditModal member={editMember} onClose={() => setEditMember(null)} onSave={(patch: any) => handleUpdateMeta(editMember.id, patch)} />}
+            {showAddModal && <InviteModal onClose={() => setShowAddModal(false)} onInvite={handleAddMember} form={{ addEmail, setAddEmail, addRole, setAddRole, addPayRate, setAddPayRate, addBillRate, setAddBillRate, addWeekly, setAddWeekly, addDaily, setAddDaily, adding, addError }} isViewer={isViewer} />}
+            {editMember && <EditModal member={editMember} onClose={() => setEditMember(null)} onSave={(patch: any) => handleUpdateMeta(editMember.id, patch)} isViewer={isViewer} />}
             {inviteSentTo && <InviteSentPopup email={inviteSentTo} onClose={() => setInviteSentTo(null)} />}
         </PageLayout>
     );
@@ -366,7 +374,7 @@ export function People() {
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
-function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDelete }: any) {
+function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDelete, isViewer }: any) {
     const [open, setOpen] = useState(false);
     const dropRef = useRef<HTMLTableDataCellElement>(null);
     const initials = m.full_name.split(' ').map((w: any) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -428,14 +436,18 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                 </button>
                 {open && (
                     <div className="absolute right-6 top-14 bg-white border border-slate-200 rounded-lg shadow-xl z-50 py-2 w-48 animate-in fade-in zoom-in duration-200">
-                        <DropItem icon={<Pencil className="w-3.5 h-3.5" />} label="Edit member" onClick={() => { onEdit(); setOpen(false); }} />
-                        {m.status === 'Pending' && (
+                        <DropItem icon={<Pencil className="w-3.5 h-3.5" />} label={isViewer ? 'View details' : 'Edit member'} onClick={() => { onEdit(); setOpen(false); }} />
+                        {m.status === 'Pending' && !isViewer && (
                             <DropItem icon={<RotateCcw className="w-3.5 h-3.5" />} label="Resend invite" onClick={() => { onResendInvite(); setOpen(false); }} />
                         )}
 
                         <DropItem icon={<Settings className="w-3.5 h-3.5" />} label="Settings" onClick={() => { setOpen(false); onEdit(); }} />
-                        <div className="my-1 border-t border-slate-100" />
-                        <DropItem icon={<Trash2 className="w-3.5 h-3.5 text-rose-500" />} label="Remove member" onClick={() => { setOpen(false); onDelete(); }} danger />
+                        {!isViewer && (
+                            <>
+                                <div className="my-1 border-t border-slate-100" />
+                                <DropItem icon={<Trash2 className="w-3.5 h-3.5 text-rose-500" />} label="Remove member" onClick={() => { setOpen(false); onDelete(); }} danger />
+                            </>
+                        )}
                     </div>
                 )}
             </td>
@@ -454,7 +466,7 @@ function DropItem({ icon, label, onClick, danger }: any) {
 
 // ─── Modals (Re-using/Polishing from previous) ────────────────────────────────
 
-function InviteModal({ onClose, onInvite, form }: any) {
+function InviteModal({ onClose, onInvite, form, isViewer }: any) {
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
             <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-slate-200">
@@ -475,17 +487,19 @@ function InviteModal({ onClose, onInvite, form }: any) {
                 </div>
                 <div className="px-8 py-6 bg-slate-50 flex justify-end gap-3">
                     <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700">Cancel</button>
-                    <button onClick={onInvite} disabled={form.adding || !form.addEmail.trim()}
-                        className="bg-[#2a85ff] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-[#0052cc] disabled:opacity-50 transition-colors">
-                        {form.adding ? 'Sending...' : 'Add members'}
-                    </button>
+                    {!isViewer && (
+                        <button onClick={onInvite} disabled={form.adding || !form.addEmail.trim()}
+                            className="bg-[#2a85ff] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-[#0052cc] disabled:opacity-50 transition-colors">
+                            {form.adding ? 'Sending...' : 'Add members'}
+                        </button>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
 
-function EditModal({ member, onClose, onSave }: any) {
+function EditModal({ member, onClose, onSave, isViewer }: any) {
     const [name, setName] = useState(member.full_name);
     const [role, setRole] = useState(member.role);
     const [payRate, setPayRate] = useState(member.pay_rate?.toString() || '');
@@ -521,8 +535,11 @@ function EditModal({ member, onClose, onSave }: any) {
                 <div className="px-8 py-6 bg-slate-50 flex justify-end gap-3">
                     <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700">Cancel</button>
                     <button
-                        onClick={() => onSave({ full_name: name, role, pay_rate: payRate ? parseFloat(payRate) : null, bill_rate: billRate ? parseFloat(billRate) : null, weekly_limit: parseInt(weekly) || 40, daily_limit: parseInt(daily) || 8 })}
-                        className="bg-[#2a85ff] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-[#0052cc] transition-colors"
+                        onClick={() => {
+                            if (isViewer) { onClose(); return; }
+                            onSave({ full_name: name, role, pay_rate: payRate ? parseFloat(payRate) : null, bill_rate: billRate ? parseFloat(billRate) : null, weekly_limit: parseInt(weekly) || 40, daily_limit: parseInt(daily) || 8 });
+                        }}
+                        className={`bg-[#2a85ff] text-white px-6 py-2 rounded-lg text-sm font-semibold hover:bg-[#0052cc] transition-colors ${isViewer ? 'hidden' : ''}`}
                     >
                         Save changes
                     </button>
