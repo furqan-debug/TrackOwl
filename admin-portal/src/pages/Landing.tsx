@@ -1,14 +1,12 @@
 import { useNavigate } from 'react-router-dom';
-import { 
-    ChevronRight, 
-    Check, 
-    Zap, 
-    Shield, 
-    BarChart3, 
-    Users2, 
-    Clock, 
-    Smartphone,
-    Globe
+import {
+    ChevronRight,
+    Check,
+    Zap,
+    Shield,
+    BarChart3,
+    Users2,
+    Clock
 } from 'lucide-react';
 
 export function Landing() {
@@ -27,8 +25,7 @@ export function Landing() {
                 'Up to 5 members',
                 'Email support'
             ],
-            color: 'bg-slate-100',
-            buttonLabel: 'Get Started',
+            buttonLabel: 'Select Starter',
             popular: false
         },
         {
@@ -44,8 +41,7 @@ export function Landing() {
                 'Customized reports',
                 'Payroll management'
             ],
-            color: 'bg-blue-600',
-            buttonLabel: 'Start Free Trial',
+            buttonLabel: 'Select Professional',
             popular: true
         },
         {
@@ -61,201 +57,408 @@ export function Landing() {
                 'Custom integrations',
                 'On-premise options'
             ],
-            color: 'bg-slate-900',
-            buttonLabel: 'Contact Sales',
+            buttonLabel: 'Talk to sales',
             popular: false
         }
     ];
 
     return (
-        <div className="min-h-screen bg-white font-sans text-slate-900">
-            {/* Navigation */}
-            <nav className="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6 py-4 flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                        <span className="text-white font-bold">D</span>
-                    </div>
-                    <span className="text-xl font-bold tracking-tight">DigiReps</span>
-                </div>
-                <div className="hidden md:flex items-center gap-8">
-                    <a href="#features" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">Features</a>
-                    <a href="#pricing" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">Pricing</a>
-                    <a href="#about" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors">About</a>
-                </div>
-                <div className="flex items-center gap-4">
-                    <button 
-                        onClick={() => navigate('/login')}
-                        className="text-sm font-semibold text-slate-600 hover:text-slate-900 px-4 py-2"
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900">
+            {/* Top navigation */}
+            <header className="sticky top-0 z-40 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
+                <nav className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 md:px-6">
+                    <button
+                        type="button"
+                        onClick={() => navigate('/')}
+                        className="flex items-center gap-2.5"
                     >
-                        Sign in
-                    </button>
-                    <button 
-                        onClick={() => navigate('/signup')}
-                        className="bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-full hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
-                    >
-                        Get Started
-                    </button>
-                </div>
-            </nav>
-
-            {/* Hero Section */}
-            <section className="pt-32 pb-20 px-6 max-w-7xl mx-auto text-center">
-                <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-8 border border-blue-100 animate-fade-in">
-                    <Zap className="w-4 h-4 fill-blue-700" />
-                    <span>The next generation of time tracking</span>
-                </div>
-                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 bg-gradient-to-b from-slate-900 to-slate-600 bg-clip-text text-transparent">
-                    Focus on work,<br />not tracking it.
-                </h1>
-                <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-                    DigiReps helps remote teams stay productive with automatic activity tracking, smart insights, and detailed financial reports.
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <button 
-                        onClick={() => navigate('/signup')}
-                        className="w-full sm:w-auto bg-blue-600 text-white font-bold px-8 py-4 rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-500/25 flex items-center justify-center gap-2 group"
-                    >
-                        Start your 14-day free trial
-                        <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </button>
-                    <button className="w-full sm:w-auto text-slate-600 font-bold px-8 py-4 rounded-2xl hover:bg-slate-50 transition-all border border-slate-200">
-                        View Demo
-                    </button>
-                </div>
-                
-                {/* Dashboard Preview Mockup */}
-                <div className="mt-20 relative px-4">
-                    <div className="absolute inset-0 bg-blue-600/5 blur-[120px] -z-10 rounded-full" />
-                    <div className="bg-slate-900 rounded-3xl p-2 shadow-2xl overflow-hidden border border-slate-800">
-                        <div className="bg-slate-800/50 rounded-2xl aspect-[16/9] flex items-center justify-center border border-white/5">
-                            <span className="text-slate-500 font-medium">Dashboard Preview Illustration</span>
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-slate-900 text-xs font-semibold tracking-tight text-white">
+                            DR
                         </div>
-                    </div>
-                </div>
-            </section>
+                        <div className="hidden flex-col text-left sm:flex">
+                            <span className="text-sm font-semibold tracking-tight">DigiReps</span>
+                            <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
+                                Rep Operations OS
+                            </span>
+                        </div>
+                    </button>
 
-            {/* Features Grid */}
-            <section id="features" className="py-24 bg-slate-50">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="text-center mb-16">
-                        <h2 className="text-3xl font-bold mb-4">Everything you need to manage remote teams</h2>
-                        <p className="text-slate-500">Built for modern startups, agencies, and distributed organizations.</p>
+                    <div className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
+                        <a href="#features" className="hover:text-slate-900">
+                            Product
+                        </a>
+                        <a href="#how-it-works" className="hover:text-slate-900">
+                            How it works
+                        </a>
+                        <a href="#pricing" className="hover:text-slate-900">
+                            Pricing
+                        </a>
                     </div>
-                    <div className="grid md:grid-cols-3 gap-8">
-                        {[
-                            { icon: Clock, title: 'Pulse Tracking', description: 'Automatic time tracking that stops when you do. No manual entries required.' },
-                            { icon: Shield, title: 'Screen Insights', description: 'Optional screenshots and activity levels to maintain transparency and trust.' },
-                            { icon: BarChart3, title: 'Rich Analytics', description: 'Interactive dashboards and exports for productivity and payroll.' },
-                            { icon: Users2, title: 'Team Management', description: 'Manage members, teams, and projects with granular role-based access.' },
-                            { icon: Smartphone, title: 'Mobile Companion', description: 'Track progress and stay updated on the go with our mobile-friendly dashboard.' },
-                            { icon: Globe, title: 'Global Payroll', description: 'Consolidated financial reports with multi-currency support for distributed teams.' }
-                        ].map((feature, i) => (
-                            <div key={i} className="bg-white p-8 rounded-2xl border border-slate-200 hover:shadow-xl transition-all group">
-                                <div className="w-12 h-12 bg-blue-50 rounded-xl flex items-center justify-center mb-6 group-hover:bg-blue-600 transition-colors">
-                                    <feature.icon className="w-6 h-6 text-blue-600 group-hover:text-white transition-colors" />
-                                </div>
-                                <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                                <p className="text-slate-500 text-sm leading-relaxed">{feature.description}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
 
-            {/* Pricing Section */}
-            <section id="pricing" className="py-24 px-6 max-w-7xl mx-auto">
-                <div className="text-center mb-16">
-                    <h2 className="text-4xl font-bold mb-4">Simple, transparent pricing</h2>
-                    <p className="text-slate-500">Choose the plan that fits your team's needs. No hidden fees.</p>
-                </div>
-
-                <div className="grid md:grid-cols-3 gap-8">
-                    {plans.map((plan, i) => (
-                        <div 
-                            key={i} 
-                            className={clsx(
-                                "relative flex flex-col p-8 rounded-3xl border transition-all",
-                                plan.popular ? "border-blue-600 shadow-2xl scale-105 z-10 bg-white" : "border-slate-200 bg-slate-50/50 hover:bg-white hover:border-slate-300"
-                            )}
+                    <div className="flex items-center gap-3 text-sm">
+                        <button
+                            type="button"
+                            onClick={() => navigate('/login')}
+                            className="rounded-full px-3 py-1.5 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                         >
-                            {plan.popular && (
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                                    Most Popular
-                                </div>
-                            )}
-                            <div className="mb-8">
-                                <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-4xl font-extrabold">{plan.price}</span>
-                                    <span className="text-slate-500 font-medium">{plan.period}</span>
-                                </div>
-                                <p className="text-sm text-slate-500 mt-2">{plan.description}</p>
-                            </div>
-                            <ul className="space-y-4 mb-10 flex-1">
-                                {plan.features.map((feature, j) => (
-                                    <li key={j} className="flex items-center gap-3 text-sm text-slate-600">
-                                        <div className="w-5 h-5 bg-blue-50 rounded-full flex items-center justify-center shrink-0">
-                                            <Check className="w-3 h-3 text-blue-600" />
-                                        </div>
-                                        {feature}
-                                    </li>
-                                ))}
-                            </ul>
-                            <button 
-                                onClick={() => navigate('/signup', { state: { plan: plan.name } })}
-                                className={clsx(
-                                    "w-full py-4 rounded-xl font-bold transition-all shadow-lg",
-                                    plan.popular 
-                                        ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/25" 
-                                        : "bg-white text-slate-900 border border-slate-200 hover:bg-slate-50 shadow-slate-200/50"
-                                )}
+                            Sign in
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/signup')}
+                            className="rounded-full bg-slate-900 px-4 py-1.5 font-semibold text-white shadow-sm hover:bg-slate-800"
+                        >
+                            Start trial
+                        </button>
+                    </div>
+                </nav>
+            </header>
+
+            {/* Hero */}
+            <main>
+                <section className="mx-auto flex max-w-6xl flex-col gap-12 px-4 pb-16 pt-16 md:flex-row md:items-center md:gap-16 md:px-6 lg:pt-20">
+                    <div className="flex-1">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-500">
+                            <Zap className="h-3 w-3 text-amber-500" />
+                            <span>Made for modern sales teams</span>
+                        </div>
+                        <h1 className="mt-6 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl lg:text-[3.1rem]">
+                            See how every rep<br />
+                            actually works.
+                        </h1>
+                        <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-600 sm:text-base">
+                            DigiReps combines activity, time, and outcomes into a single, honest view of your team&apos;s
+                            workday—so you can coach better, forecast with confidence, and pay teams fairly.
+                        </p>
+
+                        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+                            <button
+                                type="button"
+                                onClick={() => navigate('/signup')}
+                                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 sm:w-auto"
                             >
-                                {plan.buttonLabel}
+                                Start 14‑day free trial
+                                <ChevronRight className="h-4 w-4" />
+                            </button>
+                            <button
+                                type="button"
+                                className="w-full rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50 sm:w-auto"
+                            >
+                                Book a live walkthrough
                             </button>
                         </div>
-                    ))}
-                </div>
-            </section>
 
-            {/* CTA Section */}
-            <section className="py-20 px-6 max-w-5xl mx-auto">
-                <div className="bg-slate-900 rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/30 blur-[100px] -z-0" />
-                    <div className="absolute bottom-0 left-0 w-64 h-64 bg-slate-600/20 blur-[100px] -z-0" />
-                    <h2 className="text-3xl md:text-5xl font-bold text-white mb-6 relative z-10">
-                        Ready to transform how<br />your team works?
-                    </h2>
-                    <p className="text-slate-400 mb-10 text-lg relative z-10">Join 1,000+ companies using DigiReps to scale with confidence.</p>
-                    <button 
-                        onClick={() => navigate('/signup')}
-                        className="bg-white text-slate-900 font-bold px-10 py-5 rounded-2xl hover:scale-105 transition-all shadow-2xl relative z-10"
-                    >
-                        Get Started Now
-                    </button>
-                </div>
-            </section>
+                        <p className="mt-4 text-xs text-slate-500">
+                            No credit card required. Get your first workspace set up in under 5 minutes.
+                        </p>
 
-            {/* Footer */}
-            <footer className="py-12 px-6 border-t border-slate-100 max-w-7xl mx-auto">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="flex items-center gap-2.5">
-                        <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
-                            <span className="text-white font-bold text-xs">D</span>
+                        <div className="mt-8 flex flex-col gap-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:gap-6">
+                            <div className="flex items-center gap-2">
+                                <div className="flex -space-x-2">
+                                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-[10px] font-semibold text-white">
+                                        NL
+                                    </span>
+                                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-[10px] font-semibold text-white ring-2 ring-slate-50">
+                                        BA
+                                    </span>
+                                </div>
+                                <span>Trusted by distributed teams across SaaS, agencies, and support.</span>
+                            </div>
                         </div>
-                        <span className="font-bold tracking-tight">DigiReps</span>
                     </div>
-                    <div className="flex gap-8 text-sm text-slate-500">
-                        <a href="#" className="hover:text-slate-900">Terms</a>
-                        <a href="#" className="hover:text-slate-900">Privacy</a>
-                        <a href="#" className="hover:text-slate-900">Support</a>
+
+                    <div className="flex-1">
+                        <div className="relative mx-auto max-w-md">
+                            <div className="absolute inset-x-6 -top-8 h-40 rounded-3xl bg-gradient-to-b from-slate-200/80 to-slate-50 blur-2xl" />
+                            <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_60px_rgba(15,23,42,0.16)]">
+                                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3 text-xs text-slate-500">
+                                    <span className="font-medium text-slate-700">Team overview</span>
+                                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+                                        Sample workspace
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-3 gap-3 border-b border-slate-100 px-4 py-3 text-xs">
+                                    <Metric label="Tracked today" value="132h" />
+                                    <Metric label="Active reps" value="18" />
+                                    <Metric label="At risk" value="3" tone="warning" />
+                                </div>
+                                <div className="grid grid-cols-1 gap-0 divide-y divide-slate-100 text-xs">
+                                    {[
+                                        { name: 'Outbound pod', status: 'Focus time', activity: 'High', color: 'bg-emerald-500' },
+                                        { name: 'Expansion pod', status: 'Coaching', activity: 'Medium', color: 'bg-sky-500' },
+                                        { name: 'Support pod', status: 'Idle', activity: 'Low', color: 'bg-amber-500' }
+                                    ].map((team) => (
+                                        <div key={team.name} className="flex items-center gap-3 px-4 py-3">
+                                            <div className={`h-7 w-7 rounded-lg ${team.color} text-[11px] font-semibold text-white flex items-center justify-center`}>
+                                                {team.name.charAt(0)}
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="truncate text-[13px] font-medium text-slate-800">
+                                                        {team.name}
+                                                    </span>
+                                                    <span className="text-[11px] text-slate-500">{team.status}</span>
+                                                </div>
+                                                <div className="mt-1 h-1.5 w-full rounded-full bg-slate-100">
+                                                    <div className="h-1.5 rounded-full bg-slate-900/80" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <p className="text-sm text-slate-400">© 2026 DigiReps Tracker. All rights reserved.</p>
-                </div>
-            </footer>
+                </section>
+
+                {/* Product pillars */}
+                <section id="features" className="border-t border-slate-200 bg-white">
+                    <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
+                        <div className="mb-10 max-w-2xl">
+                            <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                                One admin portal for reps, managers, and finance.
+                            </h2>
+                            <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                                DigiReps connects time, activity, and outcomes across your organization so every team can work
+                                from the same source of truth.
+                            </p>
+                        </div>
+
+                        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                            <FeatureCard
+                                icon={Clock}
+                                title="Activity & time"
+                                body="Automatic tracking across apps, URLs, and devices—no manual timesheets, no guesswork."
+                            />
+                            <FeatureCard
+                                icon={Users2}
+                                title="Reps & teams"
+                                body="Model pods, territories, and roles so coaching and reporting match how you actually work."
+                            />
+                            <FeatureCard
+                                icon={BarChart3}
+                                title="Analytics & reports"
+                                body="Instant overviews of focus time, output, and utilization with export-ready reports."
+                            />
+                            <FeatureCard
+                                icon={Shield}
+                                title="Controls & governance"
+                                body="Granular privacy controls, activity policies, and billing guardrails baked into the admin portal."
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                {/* How it works strip */}
+                <section
+                    id="how-it-works"
+                    className="border-t border-slate-200 bg-slate-50"
+                >
+                    <div className="mx-auto max-w-6xl px-4 py-14 md:px-6">
+                        <div className="flex flex-col justify-between gap-8 md:flex-row md:items-start">
+                            <div className="max-w-sm">
+                                <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
+                                    How DigiReps fits in
+                                </h3>
+                                <p className="mt-3 text-xl font-semibold tracking-tight text-slate-900">
+                                    From sign‑up to real coaching in four steps.
+                                </p>
+                            </div>
+                            <ol className="grid flex-1 gap-4 text-sm text-slate-700 sm:grid-cols-2 md:grid-cols-4">
+                                <Step label="Connect your team" description="Invite managers and reps, or import from your HR/identity provider." index={1} />
+                                <Step label="Map your work" description="Create teams, clients, and projects that mirror how you sell and support." index={2} />
+                                <Step label="Track the day" description="Capture time and activity with our desktop tracker and admin policies." index={3} />
+                                <Step label="Coach with clarity" description="Use dashboards and timelines to run reviews, 1:1s, and planning sessions." index={4} />
+                            </ol>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Pricing */}
+                <section
+                    id="pricing"
+                    className="border-t border-slate-200 bg-white"
+                >
+                    <div className="mx-auto max-w-6xl px-4 py-16 md:px-6 md:py-20">
+                        <div className="mb-10 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                            <div>
+                                <h2 className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
+                                    Simple pricing, predictable value.
+                                </h2>
+                                <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-600">
+                                    Start on any plan with a 14‑day free trial. Upgrade or downgrade as your team grows—no
+                                    long‑term contracts.
+                                </p>
+                            </div>
+                            <p className="text-xs text-slate-500">
+                                Billed monthly per active member. Cancel anytime from the admin portal.
+                            </p>
+                        </div>
+
+                        <div className="grid gap-6 md:grid-cols-3">
+                            {plans.map((plan) => (
+                                <div
+                                    key={plan.name}
+                                    className={`flex h-full flex-col rounded-2xl border bg-slate-50/60 p-6 text-sm shadow-sm ${
+                                        plan.popular ? 'border-slate-900 bg-slate-900 text-slate-50 shadow-lg' : 'border-slate-200'
+                                    }`}
+                                >
+                                    {plan.popular && (
+                                        <span className="mb-3 inline-flex items-center rounded-full bg-slate-800 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-200">
+                                            Most popular
+                                        </span>
+                                    )}
+                                    <div className="mb-6">
+                                        <h3 className="text-base font-semibold tracking-tight">
+                                            {plan.name}
+                                        </h3>
+                                        <div className="mt-2 flex items-baseline gap-1">
+                                            <span className="text-3xl font-semibold">
+                                                {plan.price}
+                                            </span>
+                                            <span className={plan.popular ? 'text-slate-300' : 'text-slate-500'}>
+                                                {plan.period}
+                                            </span>
+                                        </div>
+                                        <p className={`mt-2 text-xs ${plan.popular ? 'text-slate-200/80' : 'text-slate-600'}`}>
+                                            {plan.description}
+                                        </p>
+                                    </div>
+
+                                    <ul className="mb-6 flex-1 space-y-2.5">
+                                        {plan.features.map((feature) => (
+                                            <li key={feature} className="flex items-start gap-2 text-xs">
+                                                <span
+                                                    className={`mt-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full ${
+                                                        plan.popular ? 'bg-slate-800 text-slate-100' : 'bg-slate-100 text-slate-700'
+                                                    }`}
+                                                >
+                                                    <Check className="h-2.5 w-2.5" />
+                                                </span>
+                                                <span className={plan.popular ? 'text-slate-100/90' : 'text-slate-700'}>
+                                                    {feature}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate('/signup', { state: { plan: plan.name } })}
+                                        className={`mt-auto w-full rounded-xl px-4 py-2.5 text-sm font-semibold ${
+                                            plan.popular
+                                                ? 'bg-white text-slate-900 hover:bg-slate-100'
+                                                : 'bg-slate-900 text-white hover:bg-slate-800'
+                                        }`}
+                                    >
+                                        {plan.buttonLabel}
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="mt-10 flex flex-col gap-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+                            <p>
+                                Have 50+ reps or specific compliance requirements?{' '}
+                                <button
+                                    type="button"
+                                    className="font-semibold text-slate-900 underline-offset-2 hover:underline"
+                                >
+                                    Talk to sales
+                                </button>
+                            </p>
+                            <p>Admin portal includes centralized billing, permissions, and workspace controls on all plans.</p>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Footer */}
+                <footer className="border-t border-slate-200 bg-slate-50">
+                    <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-8 text-xs text-slate-500 md:flex-row md:items-center md:justify-between md:px-6">
+                        <div className="flex items-center gap-2">
+                            <div className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-slate-900 text-[10px] font-semibold text-white">
+                                DR
+                            </div>
+                            <span className="font-medium text-slate-700">DigiReps</span>
+                        </div>
+                        <div className="flex flex-wrap gap-4">
+                            <a href="#" className="hover:text-slate-800">
+                                Privacy
+                            </a>
+                            <a href="#" className="hover:text-slate-800">
+                                Terms
+                            </a>
+                            <a href="#" className="hover:text-slate-800">
+                                Support
+                            </a>
+                        </div>
+                        <p>© {new Date().getFullYear()} DigiReps Tracker. All rights reserved.</p>
+                    </div>
+                </footer>
+            </main>
         </div>
     );
 }
 
-function clsx(...classes: any[]) {
-    return classes.filter(Boolean).join(' ');
+interface MetricProps {
+    label: string;
+    value: string;
+    tone?: 'default' | 'warning';
+}
+
+function Metric({ label, value, tone = 'default' }: MetricProps) {
+    const valueClass =
+        tone === 'warning' ? 'text-amber-600' : 'text-slate-900';
+    return (
+        <div>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">
+                {label}
+            </p>
+            <p className={`mt-1 text-sm font-semibold ${valueClass}`}>
+                {value}
+            </p>
+        </div>
+    );
+}
+
+interface FeatureCardProps {
+    icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+    title: string;
+    body: string;
+}
+
+function FeatureCard({ icon: Icon, title, body }: FeatureCardProps) {
+    return (
+        <div className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-5 text-sm text-slate-700">
+            <div className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/90 text-slate-50">
+                <Icon className="h-4 w-4" />
+            </div>
+            <h3 className="text-sm font-semibold tracking-tight text-slate-900">
+                {title}
+            </h3>
+            <p className="text-xs leading-relaxed text-slate-600">{body}</p>
+        </div>
+    );
+}
+
+interface StepProps {
+    index: number;
+    label: string;
+    description: string;
+}
+
+function Step({ index, label, description }: StepProps) {
+    return (
+        <li className="flex flex-col gap-2 rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="inline-flex h-6 w-6 items-center justify-center rounded-full border border-slate-300 bg-slate-50 text-[11px] font-semibold text-slate-700">
+                {index}
+            </div>
+            <p className="text-xs font-semibold text-slate-900">
+                {label}
+            </p>
+            <p className="text-xs leading-relaxed text-slate-600">
+                {description}
+            </p>
+        </li>
+    );
 }
