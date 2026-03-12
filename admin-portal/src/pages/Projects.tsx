@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 import {
     Search, Plus, Filter, MoreHorizontal,
     X, Check, Users, Info, CreditCard, Users2,

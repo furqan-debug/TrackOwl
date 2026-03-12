@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS sessions (
   project_id  TEXT,
   started_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   ended_at    TIMESTAMPTZ,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -203,6 +204,7 @@ CREATE TABLE IF NOT EXISTS payments (
   method      TEXT NOT NULL,                    -- Bank Transfer | PayPal | Stripe | Crypto
   reference   TEXT,
   paid_at     TIMESTAMPTZ,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -258,6 +260,7 @@ CREATE TABLE IF NOT EXISTS invoices (
   status      TEXT NOT NULL DEFAULT 'Draft', -- Draft | Sent | Paid | Overdue
   issue_date  DATE NOT NULL DEFAULT CURRENT_DATE,
   due_date    DATE NOT NULL,
+  organization_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 

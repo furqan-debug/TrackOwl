@@ -42,7 +42,6 @@ export function Teams() {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [managerId, setManagerId] = useState('');
-    const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
 
     useEffect(() => {
         fetchData();
@@ -85,7 +84,7 @@ export function Teams() {
             name,
             description,
             manager_id: managerId || null,
-            member_ids: Array.from(selectedMemberIds),
+            member_ids: [],
             organization_id: profile?.organization_id
         };
 

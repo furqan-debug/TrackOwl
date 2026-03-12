@@ -20,7 +20,10 @@ ALTER TABLE screenshots       ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "users_read_own_sessions" ON sessions;
 CREATE POLICY "users_read_own_sessions"
   ON sessions FOR SELECT
-  USING (user_id = auth.uid()::text);
+  USING (
+    user_id = auth.uid()::text 
+    OR organization_id IN (SELECT organization_id FROM members WHERE id = auth.uid() AND role = 'Admin')
+  );
 
 -- Users can INSERT their own sessions
 DROP POLICY IF EXISTS "users_insert_own_sessions" ON sessions;
@@ -148,7 +151,7 @@ CREATE POLICY "anyone_read_holidays" ON holidays FOR SELECT USING (true);
 DROP POLICY IF EXISTS "users_read_own_time_off" ON time_off_requests;
 CREATE POLICY "users_read_own_time_off"
   ON time_off_requests FOR SELECT
-  USING (member_id = auth.uid() OR auth.uid()::text IN (SELECT id::text FROM members WHERE role = 'Admin'));
+  USING (member_id = auth.uid() OR auth.uid() IN (SELECT id FROM members WHERE role = 'Admin'));
 
 DROP POLICY IF EXISTS "users_insert_own_time_off" ON time_off_requests;
 CREATE POLICY "users_insert_own_time_off"
@@ -163,16 +166,64 @@ CREATE POLICY "service_role_all_time_off"
   USING (true)
   WITH CHECK (true);
 
-DROP POLICY IF EXISTS "anon_admin_read_time_off" ON time_off_requests;
-CREATE POLICY "anon_admin_read_time_off" ON time_off_requests FOR SELECT TO anon USING (true);
+-- ═══════════════════════════════════════════════════════════
+-- STEP 8: Organization-scoped access (Multitenancy)
+-- ═══════════════════════════════════════════════════════════
 
--- Allow admins to update status via anon (for the current portal setup)
-DROP POLICY IF EXISTS "anon_admin_update_time_off" ON time_off_requests;
-CREATE POLICY "anon_admin_update_time_off" ON time_off_requests FOR UPDATE TO anon USING (true);
--- SELECT schemaname, tablename, rowsecurity
--- FROM pg_tables
--- WHERE tablename IN ('sessions', 'activity_samples', 'screenshots');
--- Expected: rowsecurity = true for all three tables
+ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE members       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE projects      ENABLE ROW LEVEL SECURITY;
+ALTER TABLE teams         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clients       ENABLE ROW LEVEL SECURITY;
 
--- SELECT * FROM pg_policies WHERE tablename IN ('sessions', 'activity_samples', 'screenshots');
--- Expected: All policies listed above appear
+-- 1. Organizations: Users can ONLY see their own organization
+DROP POLICY IF EXISTS "users_read_own_organization" ON organizations;
+CREATE POLICY "users_read_own_organization" ON organizations FOR SELECT
+  USING (id IN (SELECT organization_id FROM members WHERE id = auth.uid()));
+
+-- 2. Members: Users can see members in the same organization
+DROP POLICY IF EXISTS "users_read_org_members" ON members;
+CREATE POLICY "users_read_org_members" ON members FOR SELECT
+  USING (organization_id IN (SELECT organization_id FROM members WHERE id = auth.uid()));
+
+-- 3. Projects: Organization-scoped read/write
+DROP POLICY IF EXISTS "users_manage_org_projects" ON projects;
+CREATE POLICY "users_manage_org_projects" ON projects FOR ALL
+  USING (organization_id IN (SELECT organization_id FROM members WHERE id = auth.uid()))
+  WITH CHECK (organization_id IN (SELECT organization_id FROM members WHERE id = auth.uid()));
+
+-- 4. Teams: Organization-scoped read/write
+DROP POLICY IF EXISTS "users_manage_org_teams" ON teams;
+CREATE POLICY "users_manage_org_teams" ON teams FOR ALL
+  USING (organization_id IN (SELECT organization_id FROM members WHERE id = auth.uid()))
+  WITH CHECK (organization_id IN (SELECT organization_id FROM members WHERE id = auth.uid()));
+
+-- 5. Clients: Organization-scoped read/write
+DROP POLICY IF EXISTS "users_manage_org_clients" ON clients;
+CREATE POLICY "users_manage_org_clients" ON clients FOR ALL
+  USING (organization_id IN (SELECT organization_id FROM members WHERE id = auth.uid()))
+  WITH CHECK (organization_id IN (SELECT organization_id FROM members WHERE id = auth.uid()));
+
+-- Service Role Bypass (Essential for backend operations)
+DROP POLICY IF EXISTS "service_role_organizations" ON organizations;
+CREATE POLICY "service_role_organizations" ON organizations FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_members" ON members;
+CREATE POLICY "service_role_members" ON members FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_projects" ON projects;
+CREATE POLICY "service_role_projects" ON projects FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_teams" ON teams;
+CREATE POLICY "service_role_teams" ON teams FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "service_role_clients" ON clients;
+CREATE POLICY "service_role_clients" ON clients FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+-- Allow Anon (Portal) to read for now (as per existing pattern, but restricted by service_role usage in backend)
+DROP POLICY IF EXISTS "anon_read_all_org_data" ON organizations;
+CREATE POLICY "anon_read_all_org_data" ON organizations FOR SELECT TO anon USING (true);
+
+-- Explicitly allow any authenticated user to read all organizations/members for portal fetching
+-- (Alternative to deep subqueries if complexity limits are hit)
+-- CREATE POLICY "authenticated_read_orgs" ON organizations FOR SELECT TO authenticated USING (true);
