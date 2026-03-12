@@ -355,6 +355,7 @@ export function People() {
                                     onResendInvite={() => handleResendInvite(m.email)}
                                     onDelete={() => handleDelete(m.id)}
                                     isViewer={isViewer}
+                                    currentUserRole={profile?.role}
                                 />
                             ))
                         )}
@@ -368,8 +369,8 @@ export function People() {
             </div>
 
             {/* MODALS */}
-            {showAddModal && <InviteModal onClose={() => setShowAddModal(false)} onInvite={handleAddMember} form={{ addEmail, setAddEmail, addRole, setAddRole, addPayRate, setAddPayRate, addBillRate, setAddBillRate, addWeekly, setAddWeekly, addDaily, setAddDaily, adding, addError }} isViewer={isViewer} />}
-            {editMember && <EditModal member={editMember} onClose={() => setEditMember(null)} onSave={(patch: any) => handleUpdateMeta(editMember.id, patch)} isViewer={isViewer} />}
+            {showAddModal && <InviteModal onClose={() => setShowAddModal(false)} onInvite={handleAddMember} form={{ addEmail, setAddEmail, addRole, setAddRole, addPayRate, setAddPayRate, addBillRate, setAddBillRate, addWeekly, setAddWeekly, addDaily, setAddDaily, adding, addError }} isViewer={isViewer} currentUserRole={profile?.role} />}
+            {editMember && <EditModal member={editMember} onClose={() => setEditMember(null)} onSave={(patch: any) => handleUpdateMeta(editMember.id, patch)} isViewer={isViewer} currentUserRole={profile?.role} />}
             {inviteSentTo && <InviteSentPopup email={inviteSentTo} onClose={() => setInviteSentTo(null)} />}
         </PageLayout>
     );
@@ -377,7 +378,8 @@ export function People() {
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
-function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDelete, isViewer }: any) {
+function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDelete, isViewer, currentUserRole }: any) {
+    const isRestricted = isViewer || (currentUserRole === 'Manager' && m.role === 'Admin');
     const [open, setOpen] = useState(false);
     const dropRef = useRef<HTMLTableDataCellElement>(null);
     const initials = m.full_name.split(' ').map((w: any) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -439,26 +441,30 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                 </button>
                 {open && (
                     <div className="absolute right-6 top-14 bg-white border border-slate-200 rounded-lg shadow-xl z-50 py-2 w-48 animate-in fade-in zoom-in duration-200">
-                        <DropItem icon={<Pencil className="w-3.5 h-3.5" />} label={isViewer ? 'View details' : 'Edit member'} onClick={() => { onEdit(); setOpen(false); }} />
+                        <DropItem 
+                            icon={<Pencil className="w-3.5 h-3.5" />} 
+                            label={isRestricted ? 'View details' : 'Edit member'} 
+                            onClick={() => { onEdit(); setOpen(false); }} 
+                        />
                         {(m.status === 'Pending') && (
                             <DropItem 
                                 icon={<RotateCcw className="w-3.5 h-3.5" />} 
                                 label="Resend invite" 
-                                disabled={isViewer}
-                                onClick={() => { if (!isViewer) { onResendInvite(); setOpen(false); } }} 
-                                dull={isViewer}
+                                disabled={isRestricted}
+                                onClick={() => { if (!isRestricted) { onResendInvite(); setOpen(false); } }} 
+                                dull={isRestricted}
                             />
                         )}
 
                         <DropItem icon={<Settings className="w-3.5 h-3.5" />} label="Settings" onClick={() => { setOpen(false); onEdit(); }} />
                         <div className="my-1 border-t border-slate-100" />
                         <DropItem 
-                            icon={<Trash2 className={`w-3.5 h-3.5 ${isViewer ? 'text-slate-300' : 'text-rose-500'}`} />} 
+                            icon={<Trash2 className={`w-3.5 h-3.5 ${isRestricted ? 'text-slate-200' : 'text-rose-500'}`} />} 
                             label="Remove member" 
-                            disabled={isViewer}
-                            onClick={() => { if (!isViewer) { setOpen(false); onDelete(); } }} 
-                            danger={!isViewer}
-                            dull={isViewer}
+                            disabled={isRestricted}
+                            onClick={() => { if (!isRestricted) { setOpen(false); onDelete(); } }} 
+                            danger={!isRestricted}
+                            dull={isRestricted}
                         />
                     </div>
                 )}
@@ -481,7 +487,8 @@ function DropItem({ icon, label, onClick, danger, dull, disabled }: any) {
 
 // ─── Modals (Re-using/Polishing from previous) ────────────────────────────────
 
-function InviteModal({ onClose, onInvite, form, isViewer }: any) {
+function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any) {
+    const rolesAvailable = currentUserRole === 'Admin' ? ['User', 'Viewer', 'Manager', 'Admin'] : ['User', 'Viewer', 'Manager'];
     return (
         <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
             <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden border border-slate-200">
@@ -495,7 +502,7 @@ function InviteModal({ onClose, onInvite, form, isViewer }: any) {
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Role</label>
                         <select value={form.addRole} onChange={e => form.setAddRole(e.target.value)}
                             className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-800 outline-none focus:ring-2 focus:ring-[#2a85ff]/20 focus:border-[#2a85ff] transition-all">
-                            {['User', 'Viewer', 'Manager', 'Admin'].map(r => <option key={r} value={r}>{r}</option>)}
+                            {rolesAvailable.map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
                     </div>
                     {form.addError && <div className="bg-rose-50 border border-rose-100 text-rose-600 text-xs font-medium p-3 rounded-lg">{form.addError}</div>}
@@ -515,7 +522,10 @@ function InviteModal({ onClose, onInvite, form, isViewer }: any) {
     );
 }
 
-function EditModal({ member, onClose, onSave, isViewer }: any) {
+function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) {
+    const isRestricted = isViewer || (currentUserRole === 'Manager' && member.role === 'Admin');
+    const rolesAvailable = currentUserRole === 'Admin' ? ['User', 'Viewer', 'Manager', 'Admin'] : ['User', 'Viewer', 'Manager'];
+
     const [name, setName] = useState(member.full_name);
     const [role, setRole] = useState(member.role);
     const [payRate, setPayRate] = useState(member.pay_rate?.toString() || '');
@@ -535,8 +545,9 @@ function EditModal({ member, onClose, onSave, isViewer }: any) {
                     <div className="space-y-2">
                         <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Role</label>
                         <select value={role} onChange={e => setRole(e.target.value)}
-                            className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-800 outline-none focus:ring-2 focus:ring-[#2a85ff]/20 focus:border-[#2a85ff] transition-all">
-                            {['User', 'Viewer', 'Manager', 'Admin'].map(r => <option key={r} value={r}>{r}</option>)}
+                            disabled={isRestricted}
+                            className={`w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-800 outline-none focus:ring-2 focus:ring-[#2a85ff]/20 focus:border-[#2a85ff] transition-all ${isRestricted ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                            {rolesAvailable.map(r => <option key={r} value={r}>{r}</option>)}
                         </select>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -552,13 +563,13 @@ function EditModal({ member, onClose, onSave, isViewer }: any) {
                     <button onClick={onClose} className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700">Cancel</button>
                     <button
                         onClick={() => {
-                            if (isViewer) { onClose(); return; }
+                            if (isRestricted) { onClose(); return; }
                             onSave({ full_name: name, role, pay_rate: payRate ? parseFloat(payRate) : null, bill_rate: billRate ? parseFloat(billRate) : null, weekly_limit: parseInt(weekly) || 40, daily_limit: parseInt(daily) || 8 });
                         }}
-                        disabled={isViewer}
-                        className={`px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${isViewer ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60' : 'bg-[#2a85ff] text-white hover:bg-[#0052cc]'}`}
+                        disabled={isRestricted}
+                        className={`px-6 py-2 rounded-lg text-sm font-semibold transition-colors ${isRestricted ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60' : 'bg-[#2a85ff] text-white hover:bg-[#0052cc]'}`}
                     >
-                        {isViewer ? 'Read-only' : 'Save changes'}
+                        {isRestricted ? 'Read-only' : 'Save changes'}
                     </button>
                 </div>
             </div>
