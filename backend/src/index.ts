@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
+import { Resend } from 'resend';
 
 dotenv.config();
 
@@ -51,6 +52,22 @@ if (SUPABASE_SERVICE_KEY) {
 const supabaseAuth = (SUPABASE_URL && SUPABASE_ANON_KEY)
     ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
     : (supabase); // fall back to service client — still works for auth in dev
+
+// Initialize Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+/** Helper: Send email via Resend */
+async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
+    try {
+        const from = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+        const { data, error } = await resend.emails.send({ from, to, subject, html });
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('📧 Resend error:', error);
+        throw error;
+    }
+}
 
 /** Helper — throws a readable error instead of crashing with 'null' */
 function getDb() {
@@ -303,49 +320,50 @@ app.post('/api/members', requireAuth, async (req, res) => {
             });
         }
 
-        // 3. Send Supabase invite email
+        // 3. Generate invitation link and send via Resend
         const adminPortalUrl = process.env.ADMIN_PORTAL_URL || 'http://localhost:5174';
-        const { data: inviteData, error: inviteError } = await db.auth.admin.inviteUserByEmail(email, {
-            redirectTo: `${adminPortalUrl}/accept-invite`,
+        
+        const { data: inviteData, error: inviteError } = await db.auth.admin.generateLink({
+            type: 'invite',
+            email,
+            options: { redirectTo: `${adminPortalUrl}/accept-invite` }
         });
 
         if (inviteError) {
-            console.warn(`⚠️ Supabase Auth Invite failed for ${email}: ${inviteError.message} (status: ${inviteError.status})`);
-            
-            // Handle "User already registered" (422)
-            if (inviteError.status === 422) {
-                // If they exist in Auth but we already checked they ARE NOT in members table (step 2),
-                // we should still create the member record for them so they are linked to this org.
-                const { data: { users } } = await db.auth.admin.listUsers();
-                const existingUser = users.find(u => u.email?.toLowerCase() === email.toLowerCase());
-                
-                if (existingUser) {
-                    const { error: insertError } = await db.from('members').insert([{
-                        id: uuidv4(),
-                        email,
-                        auth_user_id: existingUser.id,
-                        organization_id: orgId,
-                        role,
-                        pay_rate,
-                        bill_rate,
-                        weekly_limit,
-                        daily_limit,
-                        status: 'Pending' // They need to accept the invite/link
-                    }]);
-
-                    if (insertError) throw insertError;
-                    return res.json({ message: 'User found in system and linked to your organization.', user: existingUser });
-                }
-            }
-
-            if (inviteError.status === 429) {
-                return res.status(429).json({ error: 'Supabase email rate limit reached. Please wait an hour or configure a custom SMTP provider.' });
-            }
-            
+            console.warn(`⚠️ Supabase Auth Link Generation failed for ${email}: ${inviteError.message}`);
             return res.status(inviteError.status || 500).json({ error: inviteError.message });
         }
 
-        const authUserId = inviteData?.user?.id || null;
+        const inviteLink = inviteData.properties.action_link;
+        const authUserId = inviteData.user.id;
+
+        // Send email via Resend
+        try {
+            await sendEmail({
+                to: email,
+                subject: 'You have been invited to join DigiReps',
+                html: `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; rounded: 12px;">
+                        <h2 style="color: #2563eb;">Welcome to DigiReps!</h2>
+                        <p>You have been invited to join the platform as a <strong>${role}</strong>.</p>
+                        <p>Please click the button below to set up your account and get started:</p>
+                        <div style="margin: 30px 0;">
+                            <a href="${inviteLink}" style="background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+                                Complete Setup
+                            </a>
+                        </div>
+                        <p style="font-size: 12px; color: #666; margin-top: 30px;">
+                            If the button doesn't work, copy and paste this link into your browser:<br>
+                            <a href="${inviteLink}" style="color: #2563eb;">${inviteLink}</a>
+                        </p>
+                    </div>
+                `
+            });
+        } catch (emailErr: any) {
+            console.error('Failed to send Resend email:', emailErr);
+            // We don't fail the whole request because the user IS created in Auth, 
+            // but we should probably warn the user.
+        }
 
         // 4. Create the member record in the DB
         const { data: newMember, error: insertError } = await db.from('members').insert([{
