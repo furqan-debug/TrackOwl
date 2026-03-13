@@ -697,9 +697,29 @@ app.post('/api/sessions', async (req, res) => {
         const session_id = uuidv4();
         const started_at = new Date().toISOString();
 
+        // Fetch the member's organization_id so admins can see their activity
+        const { data: member, error: memberErr } = await getDb()
+            .from('members')
+            .select('organization_id')
+            .eq('id', user_id)
+            .single();
+
+        if (memberErr) {
+            console.warn(`⚠️ Could not find organization for user ${user_id} during session creation: ${memberErr.message}`);
+        }
+
+        const organization_id = member?.organization_id || null;
+
         const { error } = await getDb()
             .from('sessions')
-            .insert([{ id: session_id, user_id, project_id, started_at, ip_address }]);
+            .insert([{ 
+                id: session_id, 
+                user_id, 
+                project_id, 
+                started_at, 
+                ip_address,
+                organization_id 
+            }]);
 
         if (error) throw error;
 
