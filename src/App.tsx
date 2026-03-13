@@ -36,6 +36,11 @@ interface Project {
   name: string;
   description: string;
   color: string;
+  stats?: {
+    todaySeconds: number;
+    weeklySeconds: number;
+    activityPercent: number;
+  };
 }
 
 interface Todo {
@@ -89,6 +94,15 @@ function hasConsented(): boolean {
 }
 function saveConsent() {
   localStorage.setItem(CONSENT_KEY, 'true');
+}
+
+// ─── Formatting ─────────────────────────────────────────────────────────────
+function formatTime(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (h > 0) return `${h}h ${m}m`;
+  return `${m}m`;
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
@@ -741,7 +755,33 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, trackingError, tod
       <div className="projects-content">
         <div className="projects-header">
           <h2 className="heading-1">Select a Project</h2>
-          <p className="text-muted" style={{ marginTop: '0.5rem' }}>Choose the active project to begin tracking your time.</p>
+          <p className="text-muted" style={{ marginTop: '0.4rem' }}>Choose the active project to begin tracking your time.</p>
+        </div>
+
+        {/* Global Stats Summary */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem',
+          margin: '0 0 1.5rem', padding: '1rem',
+          background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '1rem'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Worked Today</p>
+            <p style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--accent)' }}>
+              {formatTime(projects.reduce((sum, p) => sum + (p.stats?.todaySeconds || 0), 0))}
+            </p>
+          </div>
+          <div style={{ textAlign: 'center', borderLeft: '1px solid var(--border)', borderRight: '1px solid var(--border)' }}>
+            <p style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>This Week</p>
+            <p style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+              {formatTime(projects.reduce((sum, p) => sum + (p.stats?.weeklySeconds || 0), 0))}
+            </p>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <p style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Avg Activity</p>
+            <p style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
+              {projects.length > 0 ? Math.round(projects.reduce((sum, p) => sum + (p.stats?.activityPercent || 0), 0) / projects.length) : 0}%
+            </p>
+          </div>
         </div>
 
         {trackingError && (
@@ -773,9 +813,26 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, trackingError, tod
                   style={{ '--project-color': p.color } as any}
                 >
                   <div className="project-card-header">
-                    <div>
+                    <div style={{ flex: 1 }}>
                       <h3 className="project-card-title">{p.name}</h3>
                       {p.description && <p className="project-card-desc">{p.description}</p>}
+                    </div>
+                    {p.stats && (
+                      <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)' }}>{formatTime(p.stats.todaySeconds)}</div>
+                        <div style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase' }}>Today</div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem', padding: '0.75rem', background: 'rgba(0,0,0,0.02)', borderRadius: '0.75rem' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>{formatTime(p.stats?.weeklySeconds || 0)}</div>
+                      <div style={{ fontSize: '9px', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>This Week</div>
+                    </div>
+                    <div style={{ flex: 1, textAlign: 'right' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 700, color: (p.stats?.activityPercent || 0) < 50 ? '#ef4444' : 'var(--text-secondary)' }}>{p.stats?.activityPercent || 0}%</div>
+                      <div style={{ fontSize: '9px', color: 'var(--text-tertiary)', textTransform: 'uppercase' }}>Activity</div>
                     </div>
                   </div>
 

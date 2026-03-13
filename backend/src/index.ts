@@ -98,6 +98,88 @@ async function requireAuth(req: express.Request, res: express.Response, next: ex
     }
 }
 
+/** Helper: Fetch per-project stats for a member */
+async function getMemberProjectStats(memberId: string, projectIds: string[]) {
+    if (projectIds.length === 0) return {};
+    const db = getDb();
+    const stats: Record<string, any> = {};
+
+    const now = new Date();
+    const nowMs = now.getTime();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    
+    // Start of week (Monday)
+    const day = now.getDay();
+    const diff = (day === 0 ? -6 : 1) - day;
+    const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
+    const weekStartMs = weekStart.getTime();
+
+    // 1. Fetch sessions for these projects in the last week
+    const { data: sessions } = await db
+        .from('sessions')
+        .select('id, project_id, started_at, ended_at')
+        .eq('user_id', memberId)
+        .in('project_id', projectIds)
+        .gte('started_at', weekStart.toISOString());
+
+    // 2. Aggregate time
+    const projectSessions: Record<string, string[]> = {};
+    
+    (sessions || []).forEach(s => {
+        if (!s.project_id) return;
+        if (!stats[s.project_id]) {
+            stats[s.project_id] = { todaySeconds: 0, weeklySeconds: 0, activityPercent: 0, sampleCount: 0, totalActivity: 0 };
+        }
+        
+        const sessStart = new Date(s.started_at).getTime();
+        const sessEnd = s.ended_at ? new Date(s.ended_at).getTime() : nowMs;
+
+        // Clip to current time (no future sessions)
+        const cappedEnd = Math.min(sessEnd, nowMs);
+
+        // Weekly duration: Intersection of [sessStart, cappedEnd] and [weekStartMs, nowMs]
+        const weekDur = Math.max(0, cappedEnd - Math.max(sessStart, weekStartMs));
+        stats[s.project_id].weeklySeconds += Math.round(weekDur / 1000);
+
+        // Today's duration: Intersection of [sessStart, cappedEnd] and [todayStart, nowMs]
+        const todayDur = Math.max(0, cappedEnd - Math.max(sessStart, todayStart));
+        stats[s.project_id].todaySeconds += Math.round(todayDur / 1000);
+    });
+
+    // 3. Fetch activity samples for these sessions to get activity %
+    const sessionIds = (sessions || []).map(s => s.id);
+    if (sessionIds.length > 0) {
+        const { data: activity } = await db
+            .from('activity_samples')
+            .select('session_id, idle, activity_percent')
+            .in('session_id', sessionIds);
+
+        (activity || []).forEach(a => {
+            const sess = sessions?.find(s => s.id === a.session_id);
+            if (!sess?.project_id) return;
+            
+            // Explicitly initialize if missing to appease TS
+            if (!stats[sess.project_id]) {
+                stats[sess.project_id] = { todaySeconds: 0, weeklySeconds: 0, activityPercent: 0, sampleCount: 0, totalActivity: 0 };
+            }
+
+            const pStats = stats[sess.project_id];
+            pStats.sampleCount = (pStats.sampleCount || 0) + 1;
+            pStats.totalActivity = (pStats.totalActivity || 0) + (a.activity_percent || (a.idle ? 0 : 100));
+        });
+    }
+
+    // 4. Finalize averages
+    Object.keys(stats).forEach(pid => {
+        const p = stats[pid];
+        p.activityPercent = p.sampleCount > 0 ? Math.round(p.totalActivity / p.sampleCount) : 0;
+        delete p.sampleCount;
+        delete p.totalActivity;
+    });
+
+    return stats;
+}
+
 app.get('/', (req, res) => {
     res.json({ status: 'ok', service: 'DigiReps Ingestion API', version: '1.0.0', time: new Date().toISOString() });
 });
@@ -162,6 +244,15 @@ app.post('/api/auth/login', async (req, res) => {
             .map((a: any) => a.projects)
             .filter((p: any) => p && p.status === 'Active');
 
+        // 4. Fetch stats for these projects
+        const projectIds = projects.map((p: any) => p.id);
+        const projectStats = await getMemberProjectStats(member.id, projectIds);
+
+        const projectsWithStats = projects.map((p: any) => ({
+            ...p,
+            stats: projectStats[p.id] || { todaySeconds: 0, weeklySeconds: 0, activityPercent: 0 }
+        }));
+
         console.log(`✅ Login: ${email} — ${projects.length} project(s)`);
 
         res.json({
@@ -175,7 +266,7 @@ app.post('/api/auth/login', async (req, res) => {
                 weekly_limit: member.weekly_limit,
                 daily_limit: member.daily_limit,
             },
-            projects,
+            projects: projectsWithStats,
         });
     } catch (e: any) {
         console.error('Login error:', e);
@@ -202,7 +293,16 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 
         const projects = (assignments || []).map((a: any) => a.projects).filter((p: any) => p?.status === 'Active');
 
-        res.json({ user: member, projects });
+        // Fetch stats
+        const projectIds = projects.map((p: any) => p.id);
+        const projectStats = await getMemberProjectStats(member.id, projectIds);
+
+        const projectsWithStats = projects.map((p: any) => ({
+            ...p,
+            stats: projectStats[p.id] || { todaySeconds: 0, weeklySeconds: 0, activityPercent: 0 }
+        }));
+
+        res.json({ user: member, projects: projectsWithStats });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
     }
@@ -971,8 +1071,9 @@ app.post('/api/screenshots/presign', async (req, res) => {
 // ─────────────────────────────────────────
 function calculateActivity(mouseCount: number = 0, keyboardCount: number = 0): number {
     const total = mouseCount + keyboardCount;
-    // Cap at 100 — 100 total events = 100% active (arbitrary scale)
-    return Math.min(100, Math.round((total / 100) * 100));
+    // Cap at 100 — 50 total events (mouse + keyboard) per minute = 100% active
+    // This is more realistic for mixed browsing/coding work
+    return Math.min(100, Math.round((total / 50) * 100));
 }
 
 // ─────────────────────────────────────────
