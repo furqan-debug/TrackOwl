@@ -2,19 +2,14 @@ import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_KEY);
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+async function check() {
+    const { data: members, error: mErr } = await supabase.from('members').select('*');
+    console.log('Members:', JSON.stringify(members, null, 2));
 
-async function checkOrg() {
-    const { data: members, error } = await supabase
-        .from('members')
-        .select('email, organization_id')
-        .eq('email', 'furqanfreelance1@gmail.com');
-    
-    if (error) console.error(error);
-    else console.log(JSON.stringify(members, null, 2));
+    const { data: orgs, error: oErr } = await supabase.from('organizations').select('*');
+    console.log('Organizations:', JSON.stringify(orgs, null, 2));
 }
 
-checkOrg();
+check();
