@@ -105,45 +105,86 @@ export function AcceptInvite() {
     if (step === 'success') {
         return (
             <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-                    <div className="bg-emerald-50 px-8 py-8 flex flex-col items-center text-center gap-3">
-                        <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center">
-                            <span className="text-3xl">✅</span>
+                <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-white/20">
+                    <div className="bg-blue-600 px-8 py-10 flex flex-col items-center text-center gap-4 text-white">
+                        <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-inner">
+                            <span className="text-4xl">🚀</span>
                         </div>
-                        <h1 className="text-2xl font-bold text-emerald-900">You're all set!</h1>
-                        <p className="text-sm text-emerald-700">
-                            Your <strong>{role}</strong> account has been activated successfully.
-                        </p>
+                        <div>
+                            <h1 className="text-3xl font-bold tracking-tight">Account Activated!</h1>
+                            <p className="text-blue-100 mt-2 font-medium">
+                                Welcome to the team, {fullName.split(' ')[0]}!
+                            </p>
+                        </div>
                     </div>
-                    <div className="px-8 py-6 space-y-3 text-sm text-slate-600">
-                        <p className="font-semibold text-slate-800">Next steps:</p>
 
+                    <div className="p-8 space-y-8">
                         {role === 'User' ? (
-                            <ol className="list-decimal list-inside space-y-1.5">
-                                <li>Download and open the <strong>DigiReps Tracker</strong> app</li>
-                                <li>Sign in with your email and the password you just set</li>
-                                <li>Start tracking — your projects are already assigned</li>
-                            </ol>
+                            <div className="space-y-6">
+                                <div className="space-y-4">
+                                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                        <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
+                                        Next Steps to Start Working
+                                    </h2>
+                                    <div className="grid gap-4">
+                                        <div className="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0">1</div>
+                                            <div>
+                                                <p className="font-bold text-slate-800">Download the Tracker</p>
+                                                <p className="text-sm text-slate-500">Install the DigiReps Tracker app on your computer.</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0">2</div>
+                                            <div>
+                                                <p className="font-bold text-slate-800">Sign In</p>
+                                                <p className="text-sm text-slate-500">Use your email and the password you just created.</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0">3</div>
+                                            <div>
+                                                <p className="font-bold text-slate-800">Start Tracking</p>
+                                                <p className="text-sm text-slate-500">Select your project and click 'Start' to begin your shift.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="pt-2">
+                                    <button 
+                                        onClick={() => window.alert('The download will start in a moment...')}
+                                        className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-slate-200 flex items-center justify-center gap-2"
+                                    >
+                                        <span>Download Tracker App</span>
+                                        <span className="text-xs opacity-50 font-normal">(Windows/MacOS)</span>
+                                    </button>
+                                </div>
+                            </div>
                         ) : (
-                            <ol className="list-decimal list-inside space-y-1.5">
-                                <li>Log in to the <strong>Admin Portal</strong> below</li>
-                                <li>Complete your profile settings</li>
-                                <li>Start managing teams and viewing reports</li>
-                            </ol>
+                            <div className="space-y-6">
+                                <div className="space-y-4">
+                                    <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                        <div className="w-1.5 h-6 bg-blue-500 rounded-full"></div>
+                                        Management Portal
+                                    </h2>
+                                    <p className="text-slate-600 leading-relaxed">
+                                        As a <strong>{role}</strong>, you can manage teams, review activity, and view reports from the admin dashboard.
+                                    </p>
+                                </div>
+                                <a
+                                    href="/login"
+                                    className="inline-flex w-full items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl transition-all shadow-xl shadow-blue-200"
+                                >
+                                    Go to Dashboard
+                                </a>
+                            </div>
                         )}
 
-                        <div className="mt-8 pt-6 border-t border-slate-100/50">
-                            <p className="text-slate-500 mb-4">
-                                {role === 'User'
-                                    ? "If you're also an Admin/Viewer, you can log in below:"
-                                    : "Access your dashboard directly here:"}
+                        <div className="pt-6 border-t border-slate-100 text-center">
+                            <p className="text-xs text-slate-400">
+                                Need help? Contact your manager or support at support@digireps.com
                             </p>
-                            <a
-                                href="/login"
-                                className="inline-flex w-full items-center justify-center bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl transition-all shadow-lg shadow-blue-200"
-                            >
-                                Go to Portal
-                            </a>
                         </div>
                     </div>
                 </div>
