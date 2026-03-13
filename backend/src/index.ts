@@ -201,26 +201,26 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 app.get('/api/members', requireAuth, async (req, res) => {
     try {
         const db = getDb();
-        
+
         // 1. Fetch members with project member counts
         const { data: membersData, error: memberError } = await db.from('members')
             .select('*, project_members(project_id)')
             .order('created_at', { ascending: false });
-        
+
         if (memberError) throw memberError;
 
         // 2. Fetch session stats per user
         // Note: For large datasets, this should be a DB view or more optimized RPC
-        const { data: sessionStats } = await db.rpc('get_member_stats'); 
+        const { data: sessionStats } = await db.rpc('get_member_stats');
         // If RPC doesn't exist yet, we'll do a fallback simple aggregation or keep it as is for now
         // but let's assume we want to solve it properly.
-        
+
         // Since I can't easily create an RPC without sql tool, I'll do a slightly optimized fetch
         const { data: sessions } = await db.from('sessions').select('id, user_id, started_at, ended_at');
         const { data: activity } = await db.from('activity_samples').select('session_id, idle');
 
         const statsMap: Record<string, any> = {};
-        
+
         const sessionToUser: Record<string, string> = {};
         (sessions || []).forEach(s => { sessionToUser[s.id] = s.user_id; });
 
@@ -371,13 +371,13 @@ app.post('/api/members/complete-setup', async (req, res) => {
         // 2. Update the member record using the email we just retrieved
         const { data: member, error } = await db
             .from('members')
-            .update({ 
-                full_name, 
-                phone: phone || null, 
+            .update({
+                full_name,
+                phone: phone || null,
                 status: 'Active',
                 auth_user_id: user.id // Also link the auth_user_id for future RLS
             })
-            .eq('email', user.email) 
+            .eq('email', user.email)
             .select()
             .single();
 
