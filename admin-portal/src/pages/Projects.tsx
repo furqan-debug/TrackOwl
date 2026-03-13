@@ -307,6 +307,7 @@ function ProjectRow({
 }: {
     project: Project; isSelected: boolean; onSelect: () => void; onEdit: (tab?: 'GENERAL' | 'MEMBERS' | 'BUDGET & LIMITS' | 'TEAMS') => void; onRefresh: () => void; isViewer: boolean
 }) {
+    const { session } = useAuth();
     const [showMenu, setShowMenu] = useState(false);
 
     async function handleArchive() {
@@ -314,7 +315,10 @@ function ProjectRow({
             const newStatus = project.status === 'Active' ? 'Archived' : 'Active';
             await fetch(`${API}/api/projects/${project.id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                },
                 body: JSON.stringify({ status: newStatus })
             });
             onRefresh();
@@ -325,7 +329,10 @@ function ProjectRow({
         if (!confirm('Are you sure you want to delete this project? This cannot be undone.')) return;
         try {
             await fetch(`${API}/api/projects/${project.id}`, {
-                method: 'DELETE'
+                method: 'DELETE',
+                headers: { 
+                    'Authorization': `Bearer ${session?.access_token}`
+                }
             });
             onRefresh();
         } catch { }
@@ -476,7 +483,7 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
     onClose: () => void; 
     onSuccess: () => void 
 }) {
-    const { profile } = useAuth();
+    const { profile, session } = useAuth();
     const isViewer = profile?.role === 'Viewer';
     const [activeTab, setActiveTab] = useState<'GENERAL' | 'MEMBERS' | 'BUDGET & LIMITS' | 'TEAMS'>(initialTab);
     const [loading, setLoading] = useState(false);
@@ -511,7 +518,9 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
         try {
             const [cRes, mRes, tRes] = await Promise.all([
                 supabase.from('clients').select('id, name').eq('status', 'Active'),
-                fetch(`${API}/api/members`),
+                fetch(`${API}/api/members`, {
+                    headers: { 'Authorization': `Bearer ${session?.access_token}` }
+                }),
                 supabase.from('teams').select('id, name')
             ]);
 
@@ -545,7 +554,10 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
         try {
             const res = await fetch(`${API}/api/projects${project ? `/${project.id}` : ''}`, {
                 method: project ? 'PUT' : 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                },
                 body: JSON.stringify(payload)
             });
             if (!res.ok) throw new Error((await res.json()).error || 'Failed to save project');

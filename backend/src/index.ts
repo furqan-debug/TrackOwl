@@ -584,20 +584,50 @@ app.post('/api/projects', requireAuth, async (req, res) => {
 app.put('/api/projects/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
+        const authUser = (req as any).authUser;
         const {
             name, description, color, status, client_id,
+            billable, disable_activity, allow_tracking, disable_idle_time,
+            budget_type, budget_limit, budget_notifications,
             member_ids, team_ids
         } = req.body;
 
         const db = getDb();
 
-        const updateData: any = { name, description, color, status, client_id };
+        // 1. Fetch the admin's profile to get their organization_id
+        const { data: adminProfile, error: adminErr } = await db
+            .from('members')
+            .select('organization_id')
+            .eq('email', authUser.email)
+            .single();
 
-        // 1. Update Project
-        const { data, error } = await db.from('projects').update(updateData).eq('id', id).select().single();
+        if (adminErr || !adminProfile?.organization_id) {
+            return res.status(403).json({ error: 'You do not have permission to update projects.' });
+        }
+
+        const orgId = adminProfile.organization_id;
+
+        const updateData: any = { 
+            name, description, color, status, client_id,
+            billable, disable_activity, allow_tracking, disable_idle_time,
+            budget_type, budget_limit, budget_notifications
+        };
+
+        // Remove undefined keys so they don't overwrite with nulls
+        Object.keys(updateData).forEach(key => updateData[key] === undefined && delete updateData[key]);
+
+        // 2. Update Project (ensure it belongs to the same org)
+        const { data, error } = await db
+            .from('projects')
+            .update(updateData)
+            .eq('id', id)
+            .eq('organization_id', orgId)
+            .select()
+            .single();
+
         if (error) throw error;
 
-        // 2. Update Member Assignments (if provided)
+        // 3. Update Member Assignments (if provided)
         if (member_ids !== undefined) {
             await db.from('project_members').delete().eq('project_id', id);
             if (member_ids.length > 0) {
