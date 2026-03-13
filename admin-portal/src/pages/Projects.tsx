@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
     Search, Plus, Filter, MoreHorizontal,
-    X, Check, Users, Info, CreditCard, Users2,
+    X, Check, Users, Info, CreditCard,
     ChevronDown, Trash2, Archive, Pencil,
     Building2, Square, AlertCircle
 } from 'lucide-react';
@@ -85,7 +85,7 @@ export function Projects() {
             });
             if (res.ok) {
                 const data = await res.json();
-                setProjects(data);
+                setProjects(Array.isArray(data) ? data : []);
             }
         } catch (err) {
             console.error('Fetch projects error:', err);
@@ -95,8 +95,8 @@ export function Projects() {
     }
 
     const filteredProjects = projects.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.client_name?.toLowerCase().includes(searchQuery.toLowerCase())
+        (p.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.client_name || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     function toggleSelectAll() {
@@ -378,7 +378,7 @@ function ProjectRow({
                             color: project.color 
                         }}
                     >
-                        {project.name.charAt(0).toUpperCase()}
+                        {(project.name || 'P').charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
                         <button onClick={() => onEdit('GENERAL')} className="text-sm font-bold text-slate-800 hover:text-blue-600 transition-colors truncate block max-w-[280px]">
@@ -449,7 +449,9 @@ function ProjectRow({
             <td className="px-4 py-5">
                 <div className="flex flex-col gap-1.5 min-w-[120px]">
                     <div className="flex justify-between items-end">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase">{project.budget_type === 'No budget' ? 'No budget' : project.budget_type.replace('Total ', '')}</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase">
+                            {(project.budget_type || 'No budget') === 'No budget' ? 'No budget' : (project.budget_type || '').replace('Total ', '')}
+                        </span>
                         {project.budget_limit && (
                             <span className={`text-[10px] font-bold ${isOverBudget ? 'text-red-600' : 'text-slate-700'}`}>
                                 {trackedHours.toFixed(1)} / {project.budget_limit}
@@ -865,18 +867,26 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
     );
 }
 
-function ToggleItem({ label, active, onToggle, icon }: { label: string; active: boolean; onToggle: () => void; icon?: React.ReactNode }) {
+function ToggleItem({
+    label, active, onToggle, icon
+}: {
+    label: string, active: boolean, onToggle: () => void, icon?: React.ReactNode
+}) {
     return (
-        <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-slate-600 flex items-center gap-1.5">
-                {label} {icon}
-            </span>
+        <div className="flex items-center justify-between py-1">
+            <div className="flex items-center gap-2">
+                <span className="text-sm font-semibold text-slate-700">{label}</span>
+                {icon}
+            </div>
             <button
                 onClick={onToggle}
-                className={`w-10 h-5 rounded-full transition-colors relative ${active ? 'bg-blue-600' : 'bg-slate-200'}`}
+                className={`w-11 h-6 rounded-full transition-all duration-300 relative ${active ? 'bg-blue-600 shadow-inner shadow-blue-800/20' : 'bg-slate-200 shadow-inner'
+                    }`}
             >
-                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white transition-all ${active ? 'left-6' : 'left-1'}`} />
+                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 shadow-md ${active ? 'left-6' : 'left-1'}`} />
             </button>
         </div>
     );
 }
+
+export default Projects;
