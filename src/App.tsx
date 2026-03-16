@@ -251,7 +251,8 @@ export default function App() {
 
   // ── Start tracking ────────────────────────────────────────────────────────
   async function startTracking(project: Project) {
-    setElapsed(0);
+    // Start the timer from today's already-tracked seconds so it accumulates correctly
+    setElapsed(project.stats?.todaySeconds || 0);
     setIsPaused(false);
     setTrackingError(null);
 
@@ -779,7 +780,12 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, trackingError, tod
           <div style={{ textAlign: 'center' }}>
             <p style={{ fontSize: '10px', color: 'var(--text-tertiary)', fontWeight: 700, textTransform: 'uppercase', marginBottom: '4px' }}>Avg Activity</p>
             <p style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)' }}>
-              {projects.length > 0 ? Math.round(projects.reduce((sum, p) => sum + (p.stats?.activityPercent || 0), 0) / projects.length) : 0}%
+              {(() => {
+                const tracked = projects.filter(p => (p.stats?.weeklySeconds || 0) > 0);
+                return tracked.length > 0
+                  ? Math.round(tracked.reduce((sum, p) => sum + (p.stats?.activityPercent || 0), 0) / tracked.length)
+                  : 0;
+              })()}%
             </p>
           </div>
         </div>

@@ -165,7 +165,7 @@ async function getMemberProjectStats(memberId: string, projectIds: string[]) {
 
             const pStats = stats[sess.project_id];
             pStats.sampleCount = (pStats.sampleCount || 0) + 1;
-            pStats.totalActivity = (pStats.totalActivity || 0) + (a.activity_percent || (a.idle ? 0 : 100));
+            pStats.totalActivity = (pStats.totalActivity || 0) + (a.activity_percent ?? (a.idle ? 0 : 100));
         });
     }
 

@@ -44,7 +44,7 @@ export async function syncTrackerData() {
             app_name: s.app_name,
             window_title: s.window_title,
             domain: s.domain || '',
-            idle_flag: Number(s.idle_flag) === 1,
+            idle_flag: !!s.idle_flag,
             // We pass the screenshot base64 directly to our API for now
             file_url: s.file_url
         }));

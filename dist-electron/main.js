@@ -332,7 +332,7 @@ async function syncTrackerData() {
       app_name: s.app_name,
       window_title: s.window_title,
       domain: s.domain || "",
-      idle_flag: Number(s.idle_flag) === 1,
+      idle_flag: !!s.idle_flag,
       // We pass the screenshot base64 directly to our API for now
       file_url: s.file_url
     }));
@@ -443,7 +443,7 @@ ipcMain.handle("start-tracking", async (event, { projectId, userId }) => {
     } catch (err) {
       console.error("Screenshot upload error (will retry next session):", err);
     }
-  }, 5e3);
+  }, 6e4);
   return { status: "running", session_id: sessionId };
 });
 ipcMain.handle("stop-tracking", async () => {

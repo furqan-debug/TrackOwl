@@ -117,7 +117,7 @@ ipcMain.handle('start-tracking', async (event, { projectId, userId }) => {
         } catch (err) {
             console.error('Screenshot upload error (will retry next session):', err);
         }
-    }, 5000); // 5s interval for testing — use 60000 in production
+    }, 60000); // 60s interval for production
 
     return { status: 'running', session_id: sessionId };
 });
