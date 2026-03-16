@@ -19,7 +19,7 @@
   },
   "build": {
     "appId": "com.digireps.tracker",
-    "productName": "DigiReps Tracker",
+    "productName": "Trackora (by DigiReps)",
     "directories": {
       "output": "release"
     },

@@ -444,7 +444,7 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
           </div>
           <div>
             <h1 className="heading-1">{forgotMode ? 'Reset Password' : 'Welcome back'}</h1>
-            <p className="text-muted">{forgotMode ? 'Enter your email to receive a reset link' : 'Sign in to DigiReps Tracker'}</p>
+            <p className="text-muted">{forgotMode ? 'Enter your email to receive a reset link' : 'Sign in to Trackora (by DigiReps)'}</p>
           </div>
         </div>
 

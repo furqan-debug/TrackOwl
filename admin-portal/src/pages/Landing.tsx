@@ -392,7 +392,7 @@ export function Landing() {
                                 Support
                             </a>
                         </div>
-                        <p>© {new Date().getFullYear()} DigiReps Tracker. All rights reserved.</p>
+                        <p>© {new Date().getFullYear()} Trackora (by DigiReps). All rights reserved.</p>
                     </div>
                 </footer>
             </main>

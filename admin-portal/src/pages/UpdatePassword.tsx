@@ -100,7 +100,7 @@ export function UpdatePassword() {
                         <h1 className="text-xl font-bold text-white">Password updated!</h1>
                         <p className="text-sm text-blue-200/70">
                             Your password has been changed successfully. You can now sign in to the
-                            DigiReps Tracker desktop app with your new password.
+                            Trackora (by DigiReps) desktop app with your new password.
                         </p>
                     </div>
                 </div>

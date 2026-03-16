@@ -1,6 +1,6 @@
-# DigiReps Tracker
+# Trackora (by DigiReps)
 
-DigiReps Tracker is a comprehensive time and productivity tracking solution designed for modern teams. It combines a powerful desktop monitoring client, a feature-rich admin portal, and a robust backend integration with Supabase.
+Trackora (by DigiReps) is a comprehensive time and productivity tracking solution designed for modern teams. It combines a powerful desktop monitoring client, a feature-rich admin portal, and a robust backend integration with Supabase.
 
 ## 🏗️ Architecture
 

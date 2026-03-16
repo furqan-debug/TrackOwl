@@ -131,7 +131,7 @@ export function AcceptInvite() {
                                             <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold shrink-0">1</div>
                                             <div>
                                                 <p className="font-bold text-slate-800">Download the Tracker</p>
-                                                <p className="text-sm text-slate-500">Install the DigiReps Tracker app on your computer.</p>
+                                                <p className="text-sm text-slate-500">Install the Trackora (by DigiReps) app on your computer.</p>
                                             </div>
                                         </div>
                                         <div className="flex gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
