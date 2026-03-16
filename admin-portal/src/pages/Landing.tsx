@@ -76,7 +76,7 @@ export function Landing() {
                             DR
                         </div>
                         <div className="hidden flex-col text-left sm:flex">
-                            <span className="text-sm font-semibold tracking-tight">DigiReps</span>
+                            <span className="text-sm font-semibold tracking-tight">Trackora</span>
                             <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
                                 Rep Operations OS
                             </span>
@@ -127,7 +127,7 @@ export function Landing() {
                             actually works.
                         </h1>
                         <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-600 sm:text-base">
-                            DigiReps combines activity, time, and outcomes into a single, honest view of your team&apos;s
+                            Trackora combines activity, time, and outcomes into a single, honest view of your team&apos;s
                             workday—so you can coach better, forecast with confidence, and pay teams fairly.
                         </p>
 
@@ -219,7 +219,7 @@ export function Landing() {
                                 One admin portal for reps, managers, and finance.
                             </h2>
                             <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                                DigiReps connects time, activity, and outcomes across your organization so every team can work
+                                Trackora connects time, activity, and outcomes across your organization so every team can work
                                 from the same source of truth.
                             </p>
                         </div>
@@ -258,7 +258,7 @@ export function Landing() {
                         <div className="flex flex-col justify-between gap-8 md:flex-row md:items-start">
                             <div className="max-w-sm">
                                 <h3 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-                                    How DigiReps fits in
+                                    How Trackora fits in
                                 </h3>
                                 <p className="mt-3 text-xl font-semibold tracking-tight text-slate-900">
                                     From sign‑up to real coaching in four steps.
@@ -379,7 +379,7 @@ export function Landing() {
                             <div className="flex h-6 w-6 items-center justify-center rounded-md border border-slate-300 bg-slate-900 text-[10px] font-semibold text-white">
                                 DR
                             </div>
-                            <span className="font-medium text-slate-700">DigiReps</span>
+                            <span className="font-medium text-slate-700">Trackora</span>
                         </div>
                         <div className="flex flex-wrap gap-4">
                             <a href="#" className="hover:text-slate-800">

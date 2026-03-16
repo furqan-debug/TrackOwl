@@ -34,7 +34,7 @@ export function ForgotPassword() {
             <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-lg">D</span>
             </div>
-            <span className="text-white text-xl font-bold tracking-tight">DigiReps</span>
+            <span className="text-white text-xl font-bold tracking-tight">Trackora</span>
         </div>
     );
 

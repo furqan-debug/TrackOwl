@@ -79,11 +79,11 @@ export function Signup() {
                         <div className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-900 text-[10px] font-semibold text-white">
                             DR
                         </div>
-                        <span>DigiReps workspace setup</span>
+                        <span>Trackora workspace setup</span>
                     </button>
 
                     <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-900 sm:text-[2.15rem]">
-                        Create your DigiReps admin account.
+                        Create your Trackora admin account.
                     </h1>
                     <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-600">
                         You&apos;ll use this account to invite reps, configure tracking policies, and access reports across your organization.
@@ -130,7 +130,7 @@ export function Signup() {
                             Create your account
                         </h2>
                         <p className="mt-1 text-xs text-slate-500">
-                            We’ll use these details to personalize your DigiReps workspace.
+                            We’ll use these details to personalize your Trackora workspace.
                         </p>
 
                         <form onSubmit={handleSignup} className="mt-6 space-y-4">

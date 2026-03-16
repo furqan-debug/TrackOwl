@@ -614,7 +614,7 @@ function Topbar({ user, onLogout, todoBadge }: { user?: User; onLogout?: () => v
         <div className="topbar-logo">
           <Activity size={20} />
         </div>
-        <span className="topbar-title">DigiReps</span>
+        <span className="topbar-title">Trackora</span>
       </div>
       {user && onLogout && (
         <div className="topbar-actions">
