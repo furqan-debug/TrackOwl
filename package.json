@@ -1,18 +1,82 @@
 {
   "name": "digireps-tracker",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "main": "dist-electron/main.js",
+  "description": "DigiReps Time Tracker — Desktop App",
+  "author": {
+    "name": "DigiReps",
+    "email": "support@yourapp.com"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "build:electron": "tsc -b && vite build && electron-builder --publish=never",
+    "release": "tsc -b && vite build && electron-builder --publish=always"
+  },
+  "build": {
+    "appId": "com.digireps.tracker",
+    "productName": "DigiReps Tracker",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/icon.ico"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "public/icon.icns"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "YOUR_GITHUB_USERNAME",
+      "repo": "DigiReps-Tracker"
+    }
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
     "active-win": "^8.2.1",
+    "electron-updater": "^6.8.3",
     "framer-motion": "^12.35.2",
     "lucide-react": "^0.577.0",
     "react": "^19.2.0",
@@ -26,7 +90,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.1",
     "concurrently": "^9.2.1",
-    "cross-env": "^10.1.0",
+    "cross-env": "^10.0.0",
     "electron": "^40.6.1",
     "electron-builder": "^26.8.1",
     "electron-rebuild": "^3.2.9",

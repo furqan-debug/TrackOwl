@@ -10,7 +10,31 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-app.use(cors());
+// ── CORS ─────────────────────────────────────────────────────────────────────
+// In development, allow everything. In production, restrict to your actual domains.
+const allowedOrigins = [
+    'http://localhost:5173',   // Electron renderer (dev)
+    'http://localhost:5174',   // Admin portal (dev)
+    // ⬇ Add your production domains here once deployed:
+    // 'https://admin.yourapp.com',
+    // 'https://yourapp.com',
+    process.env.ADMIN_PORTAL_URL,
+    process.env.LANDING_URL,
+].filter(Boolean) as string[];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        // Allow requests with no origin (Electron, mobile apps, curl)
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.some(o => origin.startsWith(o))) {
+            callback(null, true);
+        } else {
+            console.warn(`CORS blocked: ${origin}`);
+            callback(new Error(`CORS policy: origin ${origin} not allowed`));
+        }
+    },
+    credentials: true,
+}));
 app.use(express.json({ limit: '50mb' })); // Large limit for base64 screenshot payloads
 
 // Initialize Supabase client lazily (won't crash if env vars are missing at startup)

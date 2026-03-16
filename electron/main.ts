@@ -1,6 +1,7 @@
 import { app, BrowserWindow, ipcMain, Notification } from 'electron';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { autoUpdater } from 'electron-updater';
 import { initTracker, startTrackingSession, stopTrackingSession, teardownTracker, pauseTrackingSession, resumeTrackingSession } from './tracker';
 import { initCache } from './cache';
 import { initApi, teardownApi, uploadSample } from './api';
@@ -49,7 +50,7 @@ app.on('window-all-closed', () => {
     }
 });
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
     createWindow();
 
     app.on('activate', () => {
@@ -59,6 +60,24 @@ app.whenReady().then(() => {
     initCache();
     initApi();
     initTracker();
+
+    // ── Auto-updater (only runs in packaged production builds) ──────────────
+    if (app.isPackaged) {
+        autoUpdater.checkForUpdatesAndNotify();
+
+        autoUpdater.on('update-downloaded', () => {
+            if (Notification.isSupported()) {
+                const notif = new Notification({
+                    title: '🔄 DigiReps Update Ready',
+                    body: 'A new version has been downloaded. Restart the app to apply it.',
+                });
+                notif.show();
+                notif.on('click', () => {
+                    autoUpdater.quitAndInstall();
+                });
+            }
+        });
+    }
 });
 
 app.on('will-quit', () => {
