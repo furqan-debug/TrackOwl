@@ -52,7 +52,7 @@
         "https://github.com/furqan-digireps/DigiReps-Tracker/releases/latest/download/latest.json"
       ],
       "dialog": true,
-      "pubkey": ""
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI1OEFCMEVCM0Q1QjQyRTQKUldUa1Fsczk2N0NLdFkzeERHMXJGUk1KNkt0b0FsY3VTeVIyaFd1Vy9hM2xndVdzdEdTSFFHRHgK"
     },
     "notification": {
       "all": true
