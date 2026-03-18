@@ -2,7 +2,7 @@
 
 Trackora (by DigiReps) is a comprehensive time and productivity tracking solution designed for modern teams. It combines a powerful desktop monitoring client, a feature-rich admin portal, and a robust backend integration with Supabase.
 
-## 🏗️ Architecture
+## Architecture
 
 The project is divided into three main components:
 
@@ -12,7 +12,7 @@ The project is divided into three main components:
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 - **Activity Tracking**: Real-time monitoring of active windows, URLs, and screenshots.
 - **Project Management**: Detailed project configurations including budgets, billable hours, and team assignments.
@@ -23,7 +23,7 @@ The project is divided into three main components:
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Frontend**: React, TypeScript, Vite, Tailwind CSS, Lucide Icons.
 - **Desktop**: Electron.
@@ -33,7 +33,7 @@ The project is divided into three main components:
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -61,7 +61,7 @@ The project is divided into three main components:
 
 ---
 
-## 📝 Database Schema
+## Database Schema
 
 The database schema is managed via Supabase. Key tables include:
 - `projects`: Project details and budget settings.
