@@ -35,27 +35,7 @@ export function Signup() {
             if (authError) throw authError;
 
             if (authData.user) {
-                // 2. detecting if user was already invited (pre-registered in members)
-                const { data: existingMember } = await supabase
-                    .from('members')
-                    .select('id, role')
-                    .eq('email', email)
-                    .single();
-
-                const { error: profileError } = await supabase
-                    .from('members')
-                    .upsert({
-                        id: existingMember ? existingMember.id : authData.user.id,
-                        email,
-                        full_name: fullName,
-                        role: 'Admin', // Purchasers through pricing/plan always get Admin access
-                        status: 'Pending'
-                    });
-
-                if (profileError) {
-                    console.error('Profile update error:', profileError);
-                }
-
+                // Member row creation is now handled automatically by a Postgres Trigger in Supabase
                 // 3. Move to onboarding
                 navigate('/onboarding', { state: { plan: selectedPlan } });
             }
