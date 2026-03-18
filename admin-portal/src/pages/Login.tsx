@@ -68,14 +68,14 @@ export function Login() {
                         <div className="flex h-6 w-6 items-center justify-center rounded-md bg-slate-900 text-[10px] font-semibold text-white">
                             DR
                         </div>
-                        <span>DigiReps admin portal</span>
+                        <span>Trackora admin portal</span>
                     </button>
 
                     <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-900 sm:text-[2.15rem]">
                         Sign in to manage your team.
                     </h1>
                     <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-600">
-                        Use your DigiReps admin account to review activity, coach reps, and manage billing—all from a single, minimal workspace.
+                        Use your Trackora admin account to review activity, coach reps, and manage billing—all from a single, minimal workspace.
                     </p>
 
                     <div className="mt-8 grid gap-4 text-xs text-slate-600 sm:grid-cols-2">
@@ -94,7 +94,7 @@ export function Login() {
                             </p>
                             <p className="mt-2 text-sm font-semibold text-slate-900">Role‑aware access out of the box.</p>
                             <p className="mt-1 text-[11px] leading-relaxed text-slate-500">
-                                Your permissions and views are tailored to your role in DigiReps.
+                                Your permissions and views are tailored to your role in Trackora.
                             </p>
                         </div>
                     </div>
@@ -178,7 +178,7 @@ export function Login() {
                         </form>
 
                         <p className="mt-4 text-[11px] text-slate-500">
-                            New to DigiReps?{' '}
+                            New to Trackora?{' '}
                             <button
                                 type="button"
                                 onClick={() => navigate('/signup')}
@@ -190,7 +190,7 @@ export function Login() {
                     </div>
 
                     <p className="mt-4 text-[11px] text-slate-400">
-                        For security, make sure you&apos;re signing in on the official DigiReps domain.
+                        For security, make sure you&apos;re signing in on the official Trackora domain.
                     </p>
                 </section>
             </div>

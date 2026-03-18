@@ -96,7 +96,7 @@ export function Onboarding() {
                         <div className="w-6 h-6 bg-blue-600 rounded-md flex items-center justify-center">
                             <span className="text-white font-bold text-[10px]">D</span>
                         </div>
-                        <span className="font-bold tracking-tight text-sm">DigiReps Setup</span>
+                        <span className="font-bold tracking-tight text-sm">Trackora Setup</span>
                     </div>
 
                     <div className="space-y-8 flex-1">
@@ -143,7 +143,7 @@ export function Onboarding() {
                                             required
                                             value={orgName}
                                             onChange={e => setOrgName(e.target.value)}
-                                            placeholder="DigiReps Inc."
+                                            placeholder="Trackora Inc."
                                             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-10 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 transition-all font-medium"
                                         />
                                     </div>
@@ -226,7 +226,7 @@ export function Onboarding() {
                                     )}
                                 </button>
                                 <p className="text-[10px] text-slate-400 text-center px-4">
-                                    By clicking "Pay & Launch", you authorize DigiReps to charge your card after the 14-day trial period.
+                                    By clicking "Pay & Launch", you authorize Trackora to charge your card after the 14-day trial period.
                                 </p>
                             </form>
                         </div>

@@ -183,7 +183,7 @@ export function AcceptInvite() {
 
                         <div className="pt-6 border-t border-slate-100 text-center">
                             <p className="text-xs text-slate-400">
-                                Need help? Contact your manager or support at support@digireps.com
+                                Need help? Contact your manager or support at support@trackora.ai
                             </p>
                         </div>
                     </div>
@@ -202,9 +202,9 @@ export function AcceptInvite() {
                         <div className="w-9 h-9 bg-blue-500 rounded-xl flex items-center justify-center shadow-lg">
                             <span className="text-white font-bold text-lg">D</span>
                         </div>
-                        <span className="text-white text-xl font-bold tracking-tight">DigiReps</span>
+                        <span className="text-white text-xl font-bold tracking-tight">Trackora</span>
                     </div>
-                    <h1 className="text-2xl font-bold text-white">Welcome to DigiReps</h1>
+                    <h1 className="text-2xl font-bold text-white">Welcome to Trackora</h1>
                     <p className="text-blue-200/70 text-sm mt-1">Set up your account to get started</p>
                 </div>
 

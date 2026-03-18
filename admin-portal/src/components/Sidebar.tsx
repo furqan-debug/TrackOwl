@@ -105,7 +105,7 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
                 <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center shrink-0 shadow-shell-sm">
                     <div className="w-4 h-4 border-2 border-white rounded-sm rotate-45" aria-hidden />
                 </div>
-                {!effectiveCollapsed && <span className="text-lg font-semibold text-text-primary tracking-tight truncate">DigiReps</span>}
+                {!effectiveCollapsed && <span className="text-lg font-semibold text-text-primary tracking-tight truncate">Trackora</span>}
             </div>
 
             <div className={clsx("flex-1 flex flex-col", effectiveCollapsed ? "px-2 pb-4" : "px-3 pb-6")}>
