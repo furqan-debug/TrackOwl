@@ -95,7 +95,6 @@ function formatTime(seconds: number): string {
 }
 
 // ─── App ──────────────────────────────────────────────────────────────────────
-const API = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3001';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('login');
@@ -130,23 +129,30 @@ export default function App() {
         if (ev.payload === 100) setUpdateInstalling(false);
       });
     }
-
     const saved = loadSession();
     if (!saved) return;
 
-    fetch(`${API}/api/auth/me`, { headers: { Authorization: `Bearer ${saved.token}` } })
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data?.user) {
-          setUser(saved.user);
-          setProjects(data.projects || []);
-          setScreen('projects');
-          fetchAndSubscribeTodos(saved.user.id);
-        } else {
-          clearSession();
-        }
-      })
-      .catch(() => clearSession());
+    // Direct Supabase session restoration
+    getSupabase().then(async (sb: any) => {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        clearSession();
+        return;
+      }
+
+      // Fetch user profile and projects
+      const { data: member } = await sb.from('members').select('*').eq('id', session.user.id).single();
+      if (member) {
+        const userObj = { id: member.id, email: member.email, full_name: member.full_name, role: member.role };
+        setUser(userObj);
+        const { data: projs } = await sb.from('projects').select('*');
+        setProjects(projs || []);
+        setScreen('projects');
+        fetchAndSubscribeTodos(userObj.id);
+      } else {
+        clearSession();
+      }
+    });
   }, []);
 
   // Fetch open todos for the logged-in member and subscribe for new ones
@@ -209,22 +215,42 @@ export default function App() {
   // ── Auth ──────────────────────────────────────────────────────────────────
   async function handleLogin(email: string, password: string): Promise<string | null> {
     try {
-      const res = await fetch(`${API}/api/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) return data.error || 'Login failed';
+      const sb = await getSupabase();
+      
+      // 1. Authenticate with Supabase
+      const { data: authData, error: authError } = await sb.auth.signInWithPassword({ email, password });
+      if (authError || !authData.user) return authError?.message || 'Login failed';
 
-      if (rememberMe) saveSession(data.token, data.user);
-      setUser(data.user);
-      setProjects(data.projects || []);
+      // 2. Fetch User Profile
+      const { data: member, error: memberError } = await sb
+        .from('members')
+        .select('*')
+        .eq('id', authData.user.id)
+        .single();
+      
+      if (memberError || !member) return 'User profile not found in your organization.';
+
+      const userObj = {
+        id: member.id,
+        email: member.email,
+        full_name: member.full_name,
+        role: member.role,
+      };
+
+      // 3. Fetch Projects
+      const { data: projectsData } = await sb.from('projects').select('*');
+
+      const token = authData.session.access_token;
+      
+      if (rememberMe) saveSession(token, userObj);
+      setUser(userObj);
+      setProjects(projectsData || []);
       setScreen('projects');
-      fetchAndSubscribeTodos(data.user.id);
+      fetchAndSubscribeTodos(userObj.id);
+      
       return null;
-    } catch {
-      return 'Network error — is the backend running?';
+    } catch (err: any) {
+      return err.message || 'Login encountered an unexpected error.';
     }
   }
 
