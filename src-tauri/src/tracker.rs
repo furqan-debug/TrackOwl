@@ -363,11 +363,14 @@ pub fn start_screenshot_loop(
                     // Upload to Supabase Storage as a PNG file
                     let filename = format!("{}_{}.png", session_id, payload.timestamp.replace(':', "-"));
                     let url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
-                    if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
-                        let _ = ureq::put(&url)
-                            .set("apikey", &cfg.anon_key)
-                            .set("Content-Type", "image/png")
-                            .send_bytes(&png_bytes);
+                    {
+                        use base64::Engine;
+                        if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
+                            let _ = ureq::put(&url)
+                                .set("apikey", &cfg.anon_key)
+                                .set("Content-Type", "image/png")
+                                .send_bytes(png_bytes.as_slice());
+                        }
                     }
                 }
             }
