@@ -43,14 +43,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // 2. Verify the requester is an Admin or Manager
-        const { data: profile } = await supabaseAdmin
+        // Note: Using email for lookup as some legacy members might have mismatched IDs
+        const { data: profile, error: profileError } = await supabaseAdmin
             .from('members')
             .select('role')
-            .eq('id', user.id)
-            .single();
+            .ilike('email', user.email || '')
+            .maybeSingle();
 
-        if (!profile || (profile.role !== 'Admin' && profile.role !== 'Manager')) {
-            return res.status(403).json({ error: 'Forbidden: Only Admins and Managers can invite users' });
+        if (profileError || !profile || (profile.role !== 'Admin' && profile.role !== 'Manager')) {
+            return res.status(403).json({ 
+                error: `Forbidden: Only Admins and Managers can invite users. Your detected role is: ${profile?.role || 'Guest'}` 
+            });
         }
 
         const { email, role, pay_rate, bill_rate, weekly_limit, daily_limit } = req.body;
