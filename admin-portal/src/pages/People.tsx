@@ -409,7 +409,10 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     <div className="w-8 h-8 rounded-full bg-[#2a85ff] flex items-center justify-center text-white text-[10px] font-bold">
                         {initials || <Users className="w-3 h-3" />}
                     </div>
-                    <span className="text-sm font-medium text-[#2a85ff] hover:underline cursor-pointer">{m.full_name}</span>
+                    <div>
+                        <span className="text-sm font-medium text-[#2a85ff] hover:underline cursor-pointer block">{m.full_name}</span>
+                        <span className="text-[11px] text-slate-400">{m.email}</span>
+                    </div>
                 </div>
             </td>
             <td className="px-4 py-4 text-xs text-slate-600 font-medium">{m.status}</td>
