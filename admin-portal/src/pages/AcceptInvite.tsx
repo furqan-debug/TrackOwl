@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 
 type Step = 'loading' | 'form' | 'success' | 'error';
 
@@ -24,19 +23,31 @@ export function AcceptInvite() {
 
     useEffect(() => {
         // Supabase puts the session in the URL hash after the user clicks the invite link.
-        // Calling getSession() picks it up automatically from the hash.
-        supabase.auth.getSession().then(({ data: { session }, error }) => {
-            if (error || !session) {
-                setErrorMsg(
-                    error?.message ||
-                    'This invite link is invalid or has expired. Please ask your admin to resend the invite.'
-                );
-                setStep('error');
-                return;
+        // onAuthStateChange fires with SIGNED_IN when the token is consumed from the URL hash.
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+                if (session) {
+                    setUserId(session.user.id);
+                    setStep('form');
+                }
+            } else if (event === 'INITIAL_SESSION' && session) {
+                setUserId(session.user.id);
+                setStep('form');
+            } else if (!session && step === 'loading') {
+                // Wait a moment for hash to be processed
+                setTimeout(async () => {
+                    const { data: { session: s } } = await supabase.auth.getSession();
+                    if (s) {
+                        setUserId(s.user.id);
+                        setStep('form');
+                    } else {
+                        setErrorMsg('This invite link is invalid or has expired. Please ask your admin to resend the invite.');
+                        setStep('error');
+                    }
+                }, 500);
             }
-            setUserId(session.user.id);
-            setStep('form');
         });
+        return () => subscription.unsubscribe();
     }, []);
 
     async function handleSubmit(e: React.FormEvent) {
@@ -50,15 +61,22 @@ export function AcceptInvite() {
 
         setSubmitting(true);
         try {
-            // 1. Update password in Supabase Auth
+            // 1. Get the current session token
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error('Session expired. Please use the invite link again.');
+
+            // 2. Update password in Supabase Auth
             const { error: pwError } = await supabase.auth.updateUser({ password });
             if (pwError) throw new Error(pwError.message);
 
-            // 2. Complete member profile via backend
-            const res = await fetch(`${API}/api/members/complete-setup`, {
+            // 3. Complete member profile via Vercel serverless function
+            const res = await fetch('/api/complete-setup', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ auth_user_id: userId, full_name: fullName.trim(), phone: phone.trim() || null }),
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
+                },
+                body: JSON.stringify({ full_name: fullName.trim(), phone: phone.trim() || null }),
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Failed to complete setup.');
