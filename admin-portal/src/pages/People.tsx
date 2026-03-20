@@ -85,10 +85,16 @@ export function People() {
 
     async function handleAddMember() {
         if (!addEmail.trim()) return;
-        setAdding(true);
-        setAddError(null);
         try {
             const { data: { session } } = await supabase.auth.getSession();
+            
+            // Debug logs
+            console.log('--- EDGE FUNCTION DEBUG ---');
+            console.log('URL:', import.meta.env.VITE_SUPABASE_URL);
+            console.log('Anon Key (start):', import.meta.env.VITE_SUPABASE_ANON_KEY?.substring(0, 10));
+            console.log('Has Session:', !!session);
+            console.log('Token (start):', session?.access_token?.substring(0, 10));
+
             const { data, error } = await supabase.functions.invoke('send-invite-email', {
                 headers: {
                     'Authorization': `Bearer ${session?.access_token}`,
