@@ -420,99 +420,120 @@ function DownloadTabs() {
         windows: {
             title: 'Trackora for Windows',
             desc: 'Available as .exe (universal installer) for Windows 10/11. Supports both x64 and ARM64 systems.',
-            v: 'v1.4.2',
+            v: 'v1.0.0',
             os: 'Windows 10/11',
             arch: 'x64 / ARM64',
             primary: 'Download .exe',
-            secondary: 'Download .msi (Enterprise)'
+            primaryLink: 'https://github.com/furqan-debug/Trackora/releases/download/v1.0.0/Trackora_1.0.0_x64-setup.exe',
+            secondary: 'Download .msi (Enterprise)',
+            secondaryLink: 'https://github.com/furqan-debug/Trackora/releases/download/v1.0.0/Trackora_1.0.0_x64_en-US.msi'
         },
         macos: {
             title: 'Trackora for macOS',
-            desc: 'Available as .dmg (universal) for Intel and Apple Silicon Macs. Requires macOS 11.0 or later.',
-            v: 'v1.4.2',
+            desc: 'Universal build for Intel and Apple Silicon Macs. Requires macOS 11.0 or later. Optimized for battery life.',
+            v: 'Coming Soon',
             os: 'macOS 11.0+',
             arch: 'Universal',
-            primary: 'Download .dmg',
-            secondary: 'Direct Download (.zip)'
+            primary: 'Notify Me',
+            primaryLink: '#',
+            secondary: 'View Changelog',
+            secondaryLink: 'https://github.com/furqan-debug/Trackora/releases'
         },
         linux: {
             title: 'Trackora for Linux',
-            desc: 'Available as AppImage (universal) or .deb for Debian/Ubuntu. Supports x64 systems.',
-            v: 'v1.4.2',
+            desc: 'AppImage and .deb packages for major distributions. Supports hardware acceleration.',
+            v: 'Coming Soon',
             os: 'Linux (any)',
             arch: 'x86_64',
-            primary: 'Download .AppImage',
-            secondary: 'Download .deb (Debian / Ubuntu)'
+            primary: 'Notify Me',
+            primaryLink: '#',
+            secondary: 'View Source',
+            secondaryLink: 'https://github.com/furqan-debug/Trackora'
         }
     };
 
     const current = platforms[activeTab];
 
     return (
-        <div className="max-w-4xl mx-auto animate-in stagger-3">
-            {/* Tab Switcher */}
-            <div className="flex justify-center gap-6 mb-24 p-2 glass rounded-[32px] w-fit mx-auto border-white/40 shadow-glow">
-                {(['windows', 'macos', 'linux'] as const).map((p) => (
-                    <button
-                        key={p}
-                        onClick={() => setActiveTab(p)}
-                        className={`px-10 py-4 rounded-[24px] text-[11px] font-bold uppercase tracking-[0.25em] transition-all duration-500 ${
-                            activeTab === p 
-                                ? 'bg-primary text-white shadow-glow-primary scale-105' 
-                                : 'text-text-secondary hover:text-text-primary hover:bg-white/40'
-                        }`}
-                    >
-                        {p}
-                    </button>
-                ))}
+        <div className="max-w-5xl mx-auto animate-in stagger-3">
+            {/* Tab Switcher - Premium Pill Style */}
+            <div className="flex justify-center mb-24 relative">
+                <div className="flex p-2 bg-white/40 backdrop-blur-3xl rounded-[32px] border border-white/60 shadow-glow relative z-10 overflow-hidden">
+                    {(['windows', 'macos', 'linux'] as const).map((p) => (
+                        <button
+                            key={p}
+                            onClick={() => setActiveTab(p)}
+                            className={`relative z-20 px-12 py-4 rounded-[24px] text-[11px] font-bold uppercase tracking-[0.25em] transition-all duration-500 min-w-[160px] ${
+                                activeTab === p 
+                                    ? 'text-white' 
+                                    : 'text-text-secondary hover:text-text-primary'
+                            }`}
+                        >
+                            {activeTab === p && (
+                                <div className="absolute inset-0 bg-primary rounded-[24px] z-[-1] shadow-glow-primary animate-in fade-in scale-100" />
+                            )}
+                            {p}
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            {/* Platform Content */}
-            <div className="glass rounded-[64px] p-16 md:p-24 flex flex-col md:flex-row items-center gap-16 md:gap-24 relative overflow-hidden group shadow-glow border-white/60">
-                {/* Background Ambient Glow */}
-                <div className="absolute -top-24 -right-24 w-64 h-64 bg-primary/10 blur-[80px] rounded-full group-hover:bg-primary/20 transition-colors duration-700" />
+            {/* Platform Content - Minimalist & Rich Card */}
+            <div className="glass rounded-[64px] p-12 md:p-20 flex flex-col md:flex-row items-center gap-12 md:gap-24 relative overflow-hidden group shadow-glow border-white/60 bg-white/50">
+                {/* Refined Ambient Glow */}
+                <div className="absolute -top-32 -right-32 w-80 h-80 bg-primary/10 blur-[100px] rounded-full group-hover:bg-primary/20 transition-all duration-1000" />
+                <div className="absolute -bottom-32 -left-32 w-80 h-80 bg-violet-400/5 blur-[100px] rounded-full pointer-events-none" />
                 
                 <div className="flex-shrink-0 relative">
-                    <div className="w-32 h-32 md:w-48 md:h-48 rounded-[40px] bg-gradient-to-tr from-primary/20 to-primary/5 flex items-center justify-center text-primary relative z-10 shadow-glow">
-                        {activeTab === 'windows' && <Monitor className="w-16 h-16 md:w-24 md:h-24" />}
-                        {activeTab === 'macos' && <Layout className="w-16 h-16 md:w-24 md:h-24" />}
-                        {activeTab === 'linux' && <Zap className="w-16 h-16 md:w-24 md:h-24" />}
+                    <div className="w-40 h-40 md:w-56 md:h-56 rounded-[56px] glass flex items-center justify-center text-primary relative z-10 shadow-glow group-hover:scale-105 transition-transform duration-700 bg-white/80 border-white/80">
+                        {activeTab === 'windows' && <Monitor className="w-16 h-16 md:w-24 md:h-24 stroke-[1.5]" />}
+                        {activeTab === 'macos' && <Layout className="w-16 h-16 md:w-24 md:h-24 stroke-[1.5]" />}
+                        {activeTab === 'linux' && <Zap className="w-16 h-16 md:w-24 md:h-24 stroke-[1.5]" />}
+                        
+                        {/* Decorative internal glow */}
+                        <div className="absolute inset-4 rounded-[40px] bg-primary/5 blur-xl pointer-events-none" />
                     </div>
                 </div>
 
-                <div className="flex-1 text-left space-y-10 relative z-10">
-                    <div className="space-y-4">
-                        <div className="flex items-center gap-4">
-                            <h3 className="text-4xl font-extrabold tracking-tight text-text-primary">{current.title}</h3>
-                            <span className="px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest">{current.v}</span>
+                <div className="flex-1 text-left space-y-12 relative z-10">
+                    <div className="space-y-6">
+                        <div className="flex flex-wrap items-center gap-6">
+                            <h3 className="text-4xl md:text-5xl font-extrabold tracking-tight text-text-primary">{current.title}</h3>
+                            <span className="px-5 py-2 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-[0.2em] shadow-sm border border-primary/10">{current.v}</span>
                         </div>
-                        <p className="text-lg text-text-secondary font-medium leading-relaxed opacity-70 max-w-xl">
+                        <p className="text-lg md:text-xl text-text-secondary font-medium leading-relaxed opacity-60 max-w-xl">
                             {current.desc}
                         </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-5">
-                        <div className="px-5 py-2.5 rounded-2xl bg-black/[0.03] border border-black/[0.05] text-[11px] font-bold text-text-muted uppercase tracking-widest">
+                    <div className="flex flex-wrap gap-4">
+                        <div className="px-6 py-3 rounded-2xl bg-white/60 border border-black/[0.03] text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] shadow-sm">
                             {current.os}
                         </div>
-                        <div className="px-5 py-2.5 rounded-2xl bg-black/[0.03] border border-black/[0.05] text-[11px] font-bold text-text-muted uppercase tracking-widest">
+                        <div className="px-6 py-3 rounded-2xl bg-white/60 border border-black/[0.03] text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] shadow-sm">
                             {current.arch}
                         </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-6 pt-6">
-                        <button className="bg-primary hover:bg-primary-hover text-white px-12 py-5 rounded-2xl text-[13px] font-bold uppercase tracking-[0.2em] shadow-glow-primary transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-3">
-                            <ArrowDown className="w-4 h-4" />
+                    <div className="flex flex-col sm:flex-row gap-6 pt-4">
+                        <a 
+                            href={current.primaryLink}
+                            className="bg-primary hover:bg-primary-hover text-white px-14 py-6 rounded-3xl text-[14px] font-bold uppercase tracking-[0.2em] shadow-glow-primary transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-4 group/btn"
+                        >
+                            <ArrowDown className="w-5 h-5 group-hover/btn:translate-y-1 transition-transform" />
                             {current.primary}
-                        </button>
-                        <button className="px-12 py-5 rounded-2xl text-[13px] font-bold uppercase tracking-[0.2em] text-text-secondary border border-black/[0.05] hover:bg-black/[0.02] transition-all hover:scale-105 active:scale-95">
+                        </a>
+                        <a 
+                            href={current.secondaryLink}
+                            className="px-14 py-6 rounded-3xl text-[14px] font-bold uppercase tracking-[0.2em] text-text-secondary border border-black/[0.06] hover:bg-white transition-all hover:scale-105 active:scale-95 flex items-center justify-center shadow-lg shadow-black/5"
+                        >
                             {current.secondary}
-                        </button>
+                        </a>
                     </div>
                 </div>
             </div>
 
-            <p className="mt-12 text-[11px] font-medium text-text-muted opacity-50 flex items-center justify-center gap-2">
+            <p className="mt-16 text-[11px] font-medium text-text-muted opacity-40 flex items-center justify-center gap-2 tracking-wide">
                 Auto-updates are delivered silently in the background. <a href="#" className="text-primary hover:underline font-bold">View all releases on GitHub →</a>
             </p>
         </div>
