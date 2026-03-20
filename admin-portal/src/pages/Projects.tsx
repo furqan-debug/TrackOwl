@@ -822,7 +822,7 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                     value={name} 
                                     onChange={e => setName(e.target.value)} 
                                     placeholder="DESIGNATE PROJECT NAME..."
-                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase" 
+                                    className="w-full bg-white border border-black/[0.08] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase" 
                                 />
                             </div>
                             <div>
