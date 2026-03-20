@@ -28,12 +28,12 @@ export function PageLayout({
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                         <div>
                             {title && (
-                                <h1 className="text-3xl md:text-4xl font-black text-text-primary tracking-tighter mb-4 leading-none">
+                                <h1 className="text-3xl md:text-4xl font-bold text-text-primary tracking-tighter mb-4 leading-none">
                                     {title}
                                 </h1>
                             )}
                             {description && (
-                                <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] max-w-2xl font-mono opacity-80">
+                                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] max-w-2xl font-mono opacity-80">
                                     {description}
                                 </p>
                             )}

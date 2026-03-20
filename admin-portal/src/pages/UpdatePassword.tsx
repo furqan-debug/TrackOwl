@@ -56,9 +56,9 @@ export function UpdatePassword() {
         return (
         <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center p-8">
             <div className="absolute inset-0 bg-gradient-mesh opacity-40 z-0" />
-            <div className="flex flex-col items-center gap-6 text-text-primary">
-                <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                <p className="text-[11px] font-black tracking-[0.4em] uppercase opacity-40 font-mono animate-pulse">Synchronizing Security Matrix...</p>
+            <div className="flex flex-col items-center gap-6 text-text-primary animate-in fade-in duration-700">
+                <div className="w-12 h-12 border-4 border-primary/10 border-t-primary rounded-full animate-spin" />
+                <p className="text-[11px] font-bold tracking-[0.3em] uppercase opacity-40 font-mono">Verifying recovery link...</p>
             </div>
         </div>
         );
@@ -69,19 +69,19 @@ export function UpdatePassword() {
         <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center p-8">
             <div className="absolute inset-0 bg-gradient-mesh opacity-40 z-0" />
             <div className="relative z-10 w-full max-w-[480px] text-center">
-                <Card className="p-12 shadow-[0_40px_100px_rgba(0,0,0,0.08)] bg-white/80 backdrop-blur-3xl border-black/[0.03] rounded-[64px] space-y-10">
-                    <div className="w-24 h-24 bg-rose-500/[0.05] border border-rose-500/10 rounded-[32px] flex items-center justify-center mx-auto shadow-xl shadow-rose-500/10 rotate-3">
-                        <AlertCircle className="w-12 h-12 text-rose-500" strokeWidth={3} />
+                <Card className="p-12 shadow-glow bg-white/60 backdrop-blur-3xl border-black/[0.02] rounded-[56px] space-y-10 animate-in stagger-1">
+                    <div className="w-24 h-24 bg-rose-500/[0.03] border border-rose-500/10 rounded-[40px] flex items-center justify-center mx-auto shadow-glow rotate-3">
+                        <AlertCircle className="w-12 h-12 text-rose-500" strokeWidth={2} />
                     </div>
                     <div className="space-y-4">
-                        <h1 className="text-4xl font-black text-text-primary uppercase italic tracking-tight">Sequence Expired</h1>
-                        <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em] font-mono leading-relaxed opacity-60">{errorMsg}</p>
+                        <h1 className="text-4xl font-extrabold text-text-primary tracking-tight">Link Expired</h1>
+                        <p className="text-[11px] font-bold text-text-secondary uppercase tracking-[0.2em] font-mono leading-relaxed opacity-50">{errorMsg}</p>
                     </div>
                     <button
-                        className="w-full py-5 rounded-[28px] bg-primary text-white text-[12px] font-black uppercase tracking-[0.4em] shadow-xl hover:shadow-primary/30 active:scale-95 transition-all"
+                        className="w-full py-5 rounded-[24px] bg-primary text-white text-[12px] font-bold uppercase tracking-[0.3em] shadow-glow-primary hover:scale-[1.02] active:scale-95 transition-all"
                         onClick={() => navigate('/forgot-password')}
                     >
-                        Request New Sequence
+                        Request New Link
                     </button>
                 </Card>
             </div>
@@ -94,21 +94,21 @@ export function UpdatePassword() {
         <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center p-8">
             <div className="absolute inset-0 bg-gradient-mesh opacity-40 z-0" />
             <div className="relative z-10 w-full max-w-[480px] text-center">
-                <Card className="p-12 shadow-[0_40px_100px_rgba(0,0,0,0.08)] bg-white/80 backdrop-blur-3xl border-black/[0.03] rounded-[64px] space-y-10">
-                    <div className="w-24 h-24 bg-primary/[0.05] border border-primary/10 rounded-[32px] flex items-center justify-center mx-auto shadow-xl shadow-primary/10 rotate-3 animate-in zoom-in duration-700">
-                        <CheckCircle2 className="w-12 h-12 text-primary" strokeWidth={3} />
+                <Card className="p-12 shadow-glow bg-white/60 backdrop-blur-3xl border-black/[0.02] rounded-[56px] space-y-10 animate-in stagger-1">
+                    <div className="w-24 h-24 bg-primary/[0.03] border border-primary/10 rounded-[40px] flex items-center justify-center mx-auto shadow-glow rotate-3">
+                        <CheckCircle2 className="w-12 h-12 text-primary" strokeWidth={2} />
                     </div>
                     <div className="space-y-4">
-                        <h1 className="text-4xl font-black text-text-primary uppercase italic tracking-tight">Access Restored</h1>
-                        <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em] font-mono leading-relaxed opacity-60">
-                            Your security credentials have been successfully updated. Your account is now fortified.
+                        <h1 className="text-4xl font-extrabold text-text-primary tracking-tight">Password Updated</h1>
+                        <p className="text-[11px] font-bold text-text-secondary uppercase tracking-[0.2em] font-mono leading-relaxed opacity-50">
+                            Your security credentials have been successfully updated. Your account is now secure.
                         </p>
                     </div>
                     <button
-                        className="w-full py-5 rounded-[28px] bg-primary text-white text-[12px] font-black uppercase tracking-[0.4em] shadow-xl hover:shadow-primary/30 active:scale-95 transition-all"
+                        className="w-full py-5 rounded-[24px] bg-primary text-white text-[12px] font-bold uppercase tracking-[0.3em] shadow-glow-primary hover:scale-[1.02] active:scale-95 transition-all"
                         onClick={() => navigate('/login')}
                     >
-                        Authorize Login
+                        Back to Login
                     </button>
                 </Card>
             </div>
@@ -123,54 +123,54 @@ export function UpdatePassword() {
             
             <div className="relative z-10 w-full max-w-[480px]">
                 <div className="mb-12 text-center">
-                    <div className="inline-flex items-center gap-4 px-5 py-2.5 rounded-[24px] bg-white border border-black/[0.05] shadow-xl mb-10 group">
-                        <ShieldCheck className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" strokeWidth={2.5} />
-                        <span className="text-[11px] font-black uppercase tracking-[0.3em] text-text-primary font-mono italic">Security Protocol</span>
+                    <div className="inline-flex items-center gap-4 px-6 py-2.5 rounded-[24px] bg-white border border-black/[0.05] shadow-glow mb-10 group">
+                        <ShieldCheck className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" strokeWidth={2} />
+                        <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-text-primary font-mono">Security Protocol</span>
                     </div>
                     
-                    <h1 className="text-5xl font-black tracking-tight text-text-primary mb-5 uppercase italic leading-none">
-                        New <span className="text-primary underline underline-offset-8 decoration-primary/20">Identity</span>
+                    <h1 className="text-5xl font-extrabold tracking-tighter text-text-primary mb-6">
+                        New <span className="text-primary">Password</span>
                     </h1>
-                    <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] font-mono leading-relaxed opacity-60">
-                        Establish a high-entropy security key
+                    <p className="text-[11px] font-bold text-text-secondary uppercase tracking-[0.3em] font-mono leading-relaxed opacity-50">
+                        Choose a strong password for your account
                     </p>
                 </div>
 
-                <Card className="p-12 shadow-[0_40px_100px_rgba(0,0,0,0.08)] bg-white/80 backdrop-blur-3xl border-black/[0.03] rounded-[64px]">
+                <Card className="p-12 shadow-glow bg-white/60 backdrop-blur-3xl border-black/[0.02] rounded-[56px] animate-in stagger-1">
                     <form onSubmit={handleSubmit} className="space-y-10">
                         <div className="relative">
                             <Input
-                                label="Primary Key (New Password)"
+                                label="New Password"
                                 type={showPw ? 'text' : 'password'}
                                 value={password}
                                 onChange={e => setPassword(e.target.value)}
                                 placeholder="••••••••"
                                 required
                                 autoFocus
-                                leftIcon={<Lock className="w-5 h-5 text-primary" strokeWidth={2.5} />}
+                                leftIcon={<Lock className="w-5 h-5 text-primary" strokeWidth={2} />}
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowPw(!showPw)}
-                                className="absolute right-5 top-[52px] text-text-muted hover:text-primary transition-all"
+                                className="absolute right-6 top-[52px] text-text-muted hover:text-primary transition-all"
                             >
-                                {showPw ? <EyeOff className="w-5 h-5" strokeWidth={2.5} /> : <Eye className="w-5 h-5" strokeWidth={2.5} />}
+                                {showPw ? <EyeOff className="w-5 h-5" strokeWidth={2} /> : <Eye className="w-5 h-5" strokeWidth={2} />}
                             </button>
                         </div>
 
                         <Input
-                            label="Verification Sequence (Confirm)"
+                            label="Confirm Password"
                             type={showPw ? 'text' : 'password'}
                             value={confirmPassword}
                             onChange={e => setConfirmPassword(e.target.value)}
                             placeholder="Repeat password"
                             required
-                            leftIcon={<Lock className="w-5 h-5 text-primary" strokeWidth={2.5} />}
-                            error={confirmPassword && password !== confirmPassword ? "Sequences do not match" : undefined}
+                            leftIcon={<Lock className="w-5 h-5 text-primary" strokeWidth={2} />}
+                            error={confirmPassword && password !== confirmPassword ? "Passwords do not match" : undefined}
                         />
 
                         {formError && (
-                            <div className="p-5 rounded-[28px] bg-rose-500/[0.05] border border-rose-500/10 text-rose-600 text-xs font-black uppercase tracking-wider font-mono">
+                            <div className="p-5 rounded-[24px] bg-rose-500/[0.03] border border-rose-500/10 text-rose-600 text-xs font-bold uppercase tracking-wider font-mono">
                                 {formError}
                             </div>
                         )}
@@ -178,10 +178,10 @@ export function UpdatePassword() {
                         <Button
                             type="submit"
                             disabled={submitting || password.length < 8 || password !== confirmPassword}
-                            className="w-full py-5 rounded-[28px] text-[12px] font-black uppercase tracking-[0.4em] shadow-xl hover:shadow-primary/30 active:scale-95 transition-all"
-                            rightIcon={!submitting && <ArrowRight className="w-5 h-5 stroke-[3]" />}
+                            className="w-full py-5 rounded-[24px] text-[12px] font-bold uppercase tracking-[0.3em] shadow-glow-primary hover:scale-[1.02] active:scale-95 transition-all"
+                            rightIcon={!submitting && <ArrowRight className="w-5 h-5 stroke-[2]" />}
                         >
-                            {submitting ? 'ENCRYPTING...' : 'FINALIZE KEY'}
+                            {submitting ? 'Updating...' : 'Update Password'}
                         </Button>
                     </form>
                 </Card>

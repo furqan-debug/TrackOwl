@@ -50,7 +50,7 @@ export function CustomizedReports() {
         <div className="p-8 max-w-[1400px] mx-auto w-full fade-in">
             <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-4">
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-4">
                         <div className="bg-orange-500 p-2 rounded-2xl shadow-lg shadow-orange-100">
                             <Settings className="w-8 h-8 text-white" />
                         </div>
@@ -59,7 +59,7 @@ export function CustomizedReports() {
                     <p className="text-slate-500 mt-2 font-medium">Manage and run your saved report configurations.</p>
                 </div>
 
-                <button className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl text-sm font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
+                <button className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl text-sm font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
                     <Plus className="w-5 h-5" />
                     Create New Report
                 </button>
@@ -78,7 +78,7 @@ export function CustomizedReports() {
                         />
                     </div>
                     <div className="flex items-center gap-3">
-                        <button className="flex items-center gap-2 px-4 py-2 text-xs font-black text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">
+                        <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors">
                             <Filter className="w-4 h-4" />
                             Filter by Type
                         </button>
@@ -103,10 +103,10 @@ export function CustomizedReports() {
 
                                 <div className="flex items-start justify-between mb-4">
                                     <div>
-                                        <span className="text-[10px] font-black text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100 uppercase tracking-widest mb-3 inline-block">
+                                        <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2.5 py-1 rounded-full border border-orange-100 uppercase tracking-widest mb-3 inline-block">
                                             {report.type}
                                         </span>
-                                        <h3 className="text-xl font-black text-slate-800 tracking-tighter mb-1">{report.name}</h3>
+                                        <h3 className="text-xl font-bold text-slate-800 tracking-tighter mb-1">{report.name}</h3>
                                         <p className="text-xs text-slate-400 font-bold flex items-center gap-1.5 uppercase tracking-tight">
                                             <Calendar className="w-3.5 h-3.5" />
                                             Last run: {report.lastGenerated}
@@ -129,7 +129,7 @@ export function CustomizedReports() {
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <button className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
+                                    <button className="flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold uppercase tracking-widest hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200">
                                         <Play className="w-3.5 h-3.5 fill-white" />
                                         Run Report
                                     </button>
@@ -167,7 +167,7 @@ function InsightCard({ icon, title, description }: { icon: any; title: string; d
             <div className="p-3 rounded-2xl bg-slate-50 w-fit mb-4 border border-slate-100">
                 {icon}
             </div>
-            <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight mb-2">{title}</h4>
+            <h4 className="text-sm font-bold text-slate-800 uppercase tracking-tight mb-2">{title}</h4>
             <p className="text-xs text-slate-500 font-medium leading-relaxed tracking-tight">{description}</p>
         </div>
     );

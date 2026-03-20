@@ -140,8 +140,8 @@ export function Timesheets() {
 
     return (
         <PageLayout 
-            title="Efficiency Timeline" 
-            description={`Detailed breakdown of productivity across the organization • ${weekLabel}`} 
+            title="Timesheets" 
+            description={`Daily and weekly breakdown of team activity sessions • ${weekLabel}`} 
             maxWidth="full"
             actions={
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
@@ -149,7 +149,7 @@ export function Timesheets() {
                         icon={<Users className="w-4 h-4" />}
                         value={selectedMember}
                         onChange={setSelectedMember}
-                        options={[{ id: 'all', name: 'Universal Matrix' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
+                        options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
                     />
                     
                     <div className="flex items-center gap-1 glass border border-black/[0.05] rounded-2xl p-1.5 shadow-xl">
@@ -157,7 +157,7 @@ export function Timesheets() {
                             <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" strokeWidth={3} />
                         </button>
                         <div className="px-8 flex items-center justify-center min-w-[220px]">
-                            <span className="text-[11px] font-black text-text-primary uppercase tracking-[0.2em] font-mono">
+                            <span className="text-[11px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono">
                                 {weekLabel}
                             </span>
                         </div>
@@ -169,7 +169,7 @@ export function Timesheets() {
                     {weekOffset !== 0 && (
                         <button 
                             onClick={() => setWeekOffset(0)}
-                            className="px-8 py-4 glass border border-primary/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.3em] text-primary hover:bg-primary/5 transition-all active:scale-95 shadow-lg border-primary/20 font-mono"
+                            className="px-8 py-4 glass border border-primary/10 rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] text-primary hover:bg-primary/5 transition-all active:scale-95 shadow-lg border-primary/20 font-mono"
                         >
                             SYNC TO PRESENT
                         </button>
@@ -178,18 +178,18 @@ export function Timesheets() {
             }
         >
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
-                <KpiCard icon={<Timer className="w-6 h-6" />} label="Total Registry Duration" value={loading ? '—' : fmtHours(totalMins)} trend="+15%" trendVariant="positive" />
-                <KpiCard icon={<BarChart3 className="w-6 h-6" />} label="Engagement Intensity" value={loading ? '—' : `${avgActivity}%`} trend="+2%" trendVariant="positive" />
-                <KpiCard icon={<CheckCircle2 className="w-6 h-6" />} label="Operational Capacity" value={loading ? '—' : entries.filter(e => e.totalMinutes > 0).length + ' / 7 days'} />
-                <KpiCard icon={<Activity className="w-6 h-6" />} label="Validated Intervals" value={loading ? '—' : entries.reduce((a, e) => a + e.sessions.length, 0).toString()} trend="+42" trendVariant="positive" />
+                <KpiCard icon={<Timer className="w-6 h-6" />} label="Total Time Tracked" value={loading ? '—' : fmtHours(totalMins)} trend="+15%" trendVariant="positive" />
+                <KpiCard icon={<BarChart3 className="w-6 h-6" />} label="Average Activity" value={loading ? '—' : `${avgActivity}%`} trend="+2%" trendVariant="positive" />
+                <KpiCard icon={<CheckCircle2 className="w-6 h-6" />} label="Active Days" value={loading ? '—' : entries.filter(e => e.totalMinutes > 0).length + ' / 7 days'} />
+                <KpiCard icon={<Activity className="w-6 h-6" />} label="Total Sessions" value={loading ? '—' : entries.reduce((a, e) => a + e.sessions.length, 0).toString()} trend="+42" trendVariant="positive" />
             </div>
 
-            <Card title="Productivity Timeline Grid" noPadding className="overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            <Card title="Weekly Activity Summary" noPadding className="overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
                 {loading ? (
                     <div className="py-56 flex items-center justify-center">
                         <div className="flex flex-col items-center gap-6">
                             <div className="w-16 h-16 border-[5px] border-primary/10 border-t-primary rounded-full animate-spin shadow-lg" />
-                            <span className="text-[11px] font-black text-text-muted uppercase tracking-[0.4em] animate-pulse font-mono">Synchronizing Intelligence Registry...</span>
+                            <span className="text-[11px] font-bold text-text-muted uppercase tracking-[0.4em] animate-pulse font-mono">Loading timesheet data...</span>
                         </div>
                     </div>
                 ) : (
@@ -207,13 +207,13 @@ export function Timesheets() {
                                 )}>
                                     <div className="mb-12 relative z-10">
                                         <span className={clsx(
-                                            "text-[10px] font-black uppercase tracking-[0.3em] mb-3 block font-mono transition-colors",
+                                            "text-[10px] font-bold uppercase tracking-[0.3em] mb-3 block font-mono transition-colors",
                                             isToday ? "text-primary" : "text-text-muted group-hover:text-text-primary"
                                         )}>
                                             {DAYS_SHORT[d.getDay()]}
                                         </span>
                                         <div className={clsx(
-                                            "text-5xl font-black font-head tracking-tighter transition-all duration-500 group-hover:scale-110 group-hover:translate-x-2 origin-left",
+                                            "text-5xl font-bold font-head tracking-tighter transition-all duration-500 group-hover:scale-110 group-hover:translate-x-2 origin-left",
                                             isToday ? "text-text-primary" : "text-text-secondary group-hover:text-text-primary"
                                         )}>
                                             {d.getDate()}
@@ -223,23 +223,23 @@ export function Timesheets() {
                                     {isFuture ? (
                                         <div className="mt-auto opacity-20 flex flex-col gap-5">
                                             <div className="h-1.5 bg-black/10 rounded-full w-28" />
-                                            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-muted font-mono">No Projection</span>
+                                            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-text-muted font-mono">No Scheduled Activity</span>
                                         </div>
                                     ) : !hasData ? (
                                         <div className="mt-auto opacity-30 group-hover:opacity-70 transition-opacity">
                                             <div className="flex items-center gap-4 mb-5">
                                                 <AlertCircle className="w-5 h-5 text-text-muted" strokeWidth={2.5} />
-                                                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-text-muted font-mono">Matrix Idle</span>
+                                                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-text-muted font-mono">No Activity Recorded</span>
                                             </div>
                                             <div className="h-1.5 bg-black/5 rounded-full w-full" />
                                         </div>
                                     ) : (
                                         <div className="flex flex-col gap-3 flex-1 relative z-10">
-                                            <div className="text-4xl font-black text-text-primary font-mono tracking-tighter mb-1.5 group-hover:text-primary transition-colors">
+                                            <div className="text-4xl font-bold text-text-primary font-mono tracking-tighter mb-1.5 group-hover:text-primary transition-colors">
                                                 {fmtHours(entry.totalMinutes)}
                                             </div>
-                                            <div className="text-[10px] font-black text-text-secondary mb-10 uppercase tracking-[0.2em] font-mono group-hover:text-text-primary transition-colors opacity-70">
-                                                {entry.sessions.length} Protocol Sequence{entry.sessions.length !== 1 ? 's' : ''}
+                                            <div className="text-[10px] font-bold text-text-secondary mb-10 uppercase tracking-[0.2em] font-mono group-hover:text-text-primary transition-colors opacity-70">
+                                                {entry.sessions.length} Activity Session{entry.sessions.length !== 1 ? 's' : ''}
                                             </div>
                                             
                                             <div className="mt-auto space-y-6">
@@ -259,9 +259,9 @@ export function Timesheets() {
                                                             "w-4 h-4",
                                                             entry.activityPercent > 70 ? "text-emerald-500" : entry.activityPercent > 40 ? "text-amber-500" : "text-rose-500"
                                                         )} strokeWidth={3} />
-                                                        <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Intensity</span>
+                                                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Activity Level</span>
                                                     </div>
-                                                    <span className="text-[11px] font-black text-text-primary uppercase tracking-widest leading-none bg-black/[0.03] px-3 py-1.5 rounded-lg border border-black/[0.03] font-mono">{entry.activityPercent}%</span>
+                                                    <span className="text-[11px] font-bold text-text-primary uppercase tracking-widest leading-none bg-black/[0.03] px-3 py-1.5 rounded-lg border border-black/[0.03] font-mono">{entry.activityPercent}%</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -286,7 +286,7 @@ function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNod
         <div className="relative group/select">
             <div className="flex items-center gap-3.5 glass border border-black/[0.05] rounded-2xl px-6 py-4 shadow-xl transition-all group-hover/select:border-primary/50 cursor-pointer shadow-black/[0.02]">
                 <div className="text-primary group-hover/select:scale-110 transition-transform">{icon}</div>
-                <span className="text-[10px] font-black text-text-primary uppercase tracking-[0.2em] min-w-[150px] font-mono">{activeLabel}</span>
+                <span className="text-[10px] font-bold text-text-primary uppercase tracking-[0.2em] min-w-[150px] font-mono">{activeLabel}</span>
                 <ChevronDown className="w-4.5 h-4.5 text-text-muted group-hover/select:text-text-primary transition-all group-hover/select:rotate-180" strokeWidth={3} />
             </div>
             

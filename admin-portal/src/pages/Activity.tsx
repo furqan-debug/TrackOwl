@@ -104,8 +104,8 @@ export function Activity() {
 
     return (
         <PageLayout 
-            title="Behavioral Matrix" 
-            description={`${dateLabel} • Granular engagement analysis & app usage`} 
+            title="Activity Report" 
+            description={`${dateLabel} • Comprehensive activity analysis & app usage`} 
             maxWidth="full" 
             actions={
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
@@ -113,12 +113,12 @@ export function Activity() {
                         icon={<Users className="w-4 h-4" />}
                         value={selectedMemberId}
                         onChange={setSelectedMemberId}
-                        options={[{ id: 'all', name: 'Global Units' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
+                        options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
                     />
                     <div className="relative group/date">
                         <div className="flex items-center gap-3 glass border border-black/[0.05] rounded-2xl px-5 py-3 shadow-xl transition-all group-hover/date:border-primary/50 cursor-pointer">
                             <Calendar className="w-4 h-4 text-primary" strokeWidth={2.5} />
-                            <span className="text-[10px] font-black text-text-primary uppercase tracking-[0.2em] min-w-[120px] font-mono">{selectedDate}</span>
+                            <span className="text-[10px] font-bold text-text-primary uppercase tracking-[0.2em] min-w-[120px] font-mono">{selectedDate}</span>
                         </div>
                         <input 
                             type="date" 
@@ -131,15 +131,15 @@ export function Activity() {
             }
         >
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
-                <KpiCard icon={<Mouse className="w-6 h-6" />} label="Mouse Interactions" value={totalClicks.toLocaleString()} trend="+12%" trendVariant="positive" />
-                <KpiCard icon={<Keyboard className="w-6 h-6" />} label="Keystroke Volume" value={totalKeys.toLocaleString()} trend="+5%" trendVariant="positive" />
-                <KpiCard icon={<ActivityIcon className="w-6 h-6" />} label="Active Sequences" value={activeTime.toString()} sub="Verified activity slots" />
-                <KpiCard icon={<Zap className="w-6 h-6" />} label="Engagement Ratio" value={`${avgActivity}%`} trend="+2%" trendVariant="positive" />
+                <KpiCard icon={<Mouse className="w-6 h-6" />} label="Mouse Clicks" value={totalClicks.toLocaleString()} />
+                <KpiCard icon={<Keyboard className="w-6 h-6" />} label="Keyboard Hits" value={totalKeys.toLocaleString()} />
+                <KpiCard icon={<ActivityIcon className="w-6 h-6" />} label="Active Time" value={activeTime.toString()} sub="Minutes of activity" />
+                <KpiCard icon={<Zap className="w-6 h-6" />} label="Activity Rate" value={`${avgActivity}%`} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-10">
                 <div className="lg:col-span-2">
-                    <Card title="Activity Intensity Registry">
+                    <Card title="Activity Timeline">
                         {loading ? (
                             <div className="h-[400px] flex items-center justify-center">
                                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -147,7 +147,7 @@ export function Activity() {
                         ) : samples.length === 0 ? (
                             <div className="h-[400px] flex flex-col items-center justify-center text-text-muted opacity-30">
                                 <ActivityIcon className="w-16 h-16 mb-4" />
-                                <p className="text-[10px] font-black uppercase tracking-[0.3em] font-mono">No activity data recovered</p>
+                                <p className="text-[10px] font-bold uppercase tracking-[0.3em] font-mono">No activity data available</p>
                             </div>
                         ) : (
                             <div className="h-[400px] w-full mt-6">
@@ -193,19 +193,19 @@ export function Activity() {
                 </div>
 
                 <div className="lg:col-span-1">
-                    <Card title="Environment Analysis">
+                    <Card title="App Usage">
                         <div className="space-y-6 mt-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
                             {groupByApp(samples).length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-text-muted py-24 opacity-30">
                                     <Monitor className="w-12 h-12 mb-4" />
-                                    <p className="text-[10px] font-black uppercase tracking-[0.3em] font-mono">Registry Void</p>
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] font-mono">No stats recorded</p>
                                 </div>
                             ) : (
                                 groupByApp(samples).map(({ app, percent }) => (
                                     <div key={app} className="group cursor-default">
                                         <div className="flex items-center justify-between mb-2.5">
-                                            <span className="text-sm font-black text-text-primary tracking-tight group-hover:text-primary transition-colors truncate max-w-[180px] leading-none">{app || 'System Kernel'}</span>
-                                            <span className="text-[9px] font-black text-text-secondary bg-black/[0.03] px-3 py-1 rounded-xl uppercase tracking-widest font-mono border border-black/[0.03] group-hover:bg-primary/5 group-hover:text-primary transition-all">
+                                            <span className="text-sm font-bold text-text-primary tracking-tight group-hover:text-primary transition-colors truncate max-w-[180px] leading-none">{app || 'System'}</span>
+                                            <span className="text-[9px] font-bold text-text-secondary bg-black/[0.03] px-3 py-1 rounded-xl uppercase tracking-widest font-mono border border-black/[0.03] group-hover:bg-primary/5 group-hover:text-primary transition-all">
                                                 {percent}%
                                             </span>
                                         </div>
@@ -223,12 +223,12 @@ export function Activity() {
                 </div>
             </div>
 
-            <Card title="Visual Surveillance Manifest">
+            <Card title="Screenshots">
                 {screenshots.length === 0 ? (
                     <div className="py-32 flex flex-col items-center justify-center text-text-muted opacity-40">
                         <Camera className="w-16 h-16 mb-6" />
-                        <h3 className="text-2xl font-black text-text-primary tracking-tighter mb-2">No Visual Artifacts</h3>
-                        <p className="text-[10px] font-black uppercase tracking-[0.3em] font-mono">Registry is void of captured evidence for this period</p>
+                        <h3 className="text-2xl font-bold text-text-primary tracking-tighter mb-2">No Screenshots</h3>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.3em] font-mono">No screenshots recorded for this period</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
@@ -244,12 +244,12 @@ export function Activity() {
                                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-5">
-                                    <p className="text-[10px] font-black text-white tracking-[0.2em] uppercase mb-1.5 font-mono">
+                                    <p className="text-[10px] font-bold text-white tracking-[0.2em] uppercase mb-1.5 font-mono">
                                         {new Date(ss.recorded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </p>
                                     <div className="flex items-center gap-2.5 text-primary">
                                         <Maximize2 className="w-3.5 h-3.5" strokeWidth={3} />
-                                        <span className="text-[9px] font-black uppercase tracking-[0.3em]">ANALYZE</span>
+                                        <span className="text-[9px] font-bold uppercase tracking-[0.3em]">VIEW</span>
                                     </div>
                                 </div>
                                 <div className="absolute top-4 right-4 w-7 h-7 rounded-xl bg-white/40 backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -270,8 +270,8 @@ export function Activity() {
                     <div className="max-w-7xl w-full relative group" onClick={e => e.stopPropagation()}>
                         <div className="absolute -top-20 left-0 right-0 flex justify-between items-center animate-in slide-in-from-bottom-4 duration-700">
                             <div>
-                                <h2 className="text-3xl font-black text-text-primary tracking-tighter leading-none mb-2">Visual Evidence Analysis</h2>
-                                <p className="text-[11px] font-black uppercase tracking-[0.3em] text-primary font-mono bg-primary/5 px-3 py-1 rounded-lg border border-primary/10 inline-block">Registry: {enlarged.id} • Auth Code: {enlarged.session_id.slice(0, 8)}</p>
+                                <h2 className="text-3xl font-bold text-text-primary tracking-tighter leading-none mb-2">Screenshot Viewer</h2>
+                                <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-primary font-mono bg-primary/5 px-3 py-1 rounded-lg border border-primary/10 inline-block">ID: {enlarged.id} • Session: {enlarged.session_id.slice(0, 8)}</p>
                             </div>
                             <button onClick={() => setEnlarged(null)} className="p-5 bg-white/40 border border-white/20 hover:bg-white rounded-[24px] shadow-xl transition-all group/close">
                                 <X className="w-7 h-7 text-text-primary group-hover/close:rotate-90 transition-transform" strokeWidth={3} />
@@ -279,22 +279,22 @@ export function Activity() {
                         </div>
                         
                         <div className="relative rounded-[48px] overflow-hidden border border-white/40 shadow-2xl animate-in zoom-in-95 duration-500">
-                            <img src={enlarged.file_url} alt="Full Registry Evidence" className="w-full h-auto" />
+                            <img src={enlarged.file_url} alt="Full Screenshot" className="w-full h-auto" />
                             <div className="absolute bottom-12 left-12 p-8 glass border border-white/40 rounded-[36px] backdrop-blur-3xl animate-in slide-in-from-left-8 duration-1000 delay-300 shadow-xl">
                                 <div className="flex items-center gap-5">
                                     <div className="w-12 h-12 rounded-[20px] bg-primary/10 flex items-center justify-center border border-primary/20 shadow-inner">
                                         <Clock className="w-6 h-6 text-primary" strokeWidth={2.5} />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-1.5 font-mono">Capture Timestamp</p>
-                                        <p className="text-2xl font-black text-text-primary tracking-tighter leading-none">{new Date(enlarged.recorded_at).toLocaleString()}</p>
+                                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] mb-1.5 font-mono">Capture Timestamp</p>
+                                        <p className="text-2xl font-bold text-text-primary tracking-tighter leading-none">{new Date(enlarged.recorded_at).toLocaleString()}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <p className="text-text-primary/10 text-[11px] font-black uppercase tracking-[1em] text-center mt-12 animate-pulse font-mono">
-                            NEURAL REGISTRY SYNC: ACTIVE
+                        <p className="text-text-primary/10 text-[11px] font-bold uppercase tracking-[1em] text-center mt-12 animate-pulse font-mono">
+                            ENCRYPTED SYNC: ACTIVE
                         </p>
                     </div>
                 </div>
@@ -310,7 +310,7 @@ function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNod
         <div className="relative group/select">
             <div className="flex items-center gap-3.5 glass border border-black/[0.05] rounded-2xl px-5 py-3 shadow-xl transition-all group-hover/select:border-primary/50 cursor-pointer shadow-black/[0.02]">
                 <div className="text-primary group-hover/select:scale-110 transition-transform">{icon}</div>
-                <span className="text-[10px] font-black text-text-primary uppercase tracking-[0.2em] min-w-[140px] font-mono">{activeLabel}</span>
+                <span className="text-[10px] font-bold text-text-primary uppercase tracking-[0.2em] min-w-[140px] font-mono">{activeLabel}</span>
                 <ChevronDown className="w-4 h-4 text-text-muted group-hover/select:text-text-primary transition-all group-hover/select:rotate-180" strokeWidth={3} />
             </div>
             
@@ -331,12 +331,12 @@ function CustomTooltip({ active, payload, label }: any) {
     if (active && payload && payload.length) {
         return (
             <div className="glass border border-primary/10 p-6 rounded-[32px] shadow-xl animate-in zoom-in-95 duration-200">
-                <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-4 border-b border-black/[0.03] pb-3 font-mono">{label}</p>
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] mb-4 border-b border-black/[0.03] pb-3 font-mono">{label}</p>
                 <div className="flex items-baseline gap-2.5">
-                    <span className="text-4xl font-black text-text-primary tracking-tighter font-head">
+                    <span className="text-4xl font-bold text-text-primary tracking-tighter font-head">
                         {payload[0].value}%
                     </span>
-                    <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em] font-mono">Sequence Impact</span>
+                    <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] font-mono">Activity Rate</span>
                 </div>
             </div>
         );
@@ -346,7 +346,7 @@ function CustomTooltip({ active, payload, label }: any) {
 
 function groupByApp(samples: ActivitySample[]) {
     const map: Record<string, number> = {};
-    samples.forEach(s => { const app = s.app_name || 'System Kernel'; map[app] = (map[app] || 0) + 1; });
+    samples.forEach(s => { const app = s.app_name || 'System'; map[app] = (map[app] || 0) + 1; });
     const total = samples.length;
     return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 10)
         .map(([app, count]) => ({ app, count, percent: Math.round((count / total) * 100) }));

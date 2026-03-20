@@ -87,7 +87,7 @@ export function SettingsPage() {
                         onClick={handleReset}
                         disabled={isViewer}
                         className={clsx(
-                            "flex items-center gap-3 px-8 py-4 rounded-[20px] text-[11px] font-black uppercase tracking-[0.2em] transition-all border border-black/[0.1] shadow-sm font-mono",
+                            "flex items-center gap-3 px-8 py-4 rounded-[20px] text-[11px] font-bold uppercase tracking-[0.2em] transition-all border border-black/[0.1] shadow-sm font-mono",
                             isViewer ? "opacity-30 cursor-not-allowed" : "text-text-muted hover:text-text-primary hover:bg-white active:scale-95"
                         )}
                     >
@@ -98,7 +98,7 @@ export function SettingsPage() {
                         onClick={handleSave}
                         disabled={isViewer}
                         className={clsx(
-                            "flex items-center gap-3 px-10 py-4 rounded-[24px] text-[11px] font-black uppercase tracking-[0.3em] transition-all shadow-xl active:scale-95 font-mono",
+                            "flex items-center gap-3 px-10 py-4 rounded-[24px] text-[11px] font-bold uppercase tracking-[0.3em] transition-all shadow-xl active:scale-95 font-mono",
                             isViewer ? "bg-black/10 text-text-muted cursor-not-allowed" : 
                             (saved ? "bg-emerald-500 text-white shadow-emerald-500/20" : "bg-primary text-white hover:shadow-primary/30 hover:scale-[1.02]")
                         )}
@@ -126,8 +126,8 @@ export function SettingsPage() {
                             <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shrink-0 border border-primary/20 shadow-sm rotate-3">
                                 <Info className="w-5 h-5 text-primary" strokeWidth={2.5} />
                             </div>
-                            <p className="leading-relaxed font-black uppercase tracking-wider text-[11px] font-mono opacity-80">
-                                Screenshots are currently initialized <span className="text-primary font-black underline underline-offset-4 decoration-primary/30">3 times at random intervals</span> within every 10-minute operational window.
+                            <p className="leading-relaxed font-bold uppercase tracking-wider text-[11px] font-mono opacity-80">
+                                Screenshots are currently initialized <span className="text-primary font-bold underline underline-offset-4 decoration-primary/30">3 times at random intervals</span> within every 10-minute operational window.
                             </p>
                         </div>
                     </SettingsSection>
@@ -228,8 +228,8 @@ export function SettingsPage() {
                                     <Zap className="w-6 h-6" />
                                 </div>
                                 <div>
-                                    <h3 className="text-xl font-black text-text-primary tracking-tighter uppercase leading-none">Active Matrix</h3>
-                                    <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] font-mono mt-2">Core Kernel Directives</p>
+                                    <h3 className="text-xl font-bold text-text-primary tracking-tighter uppercase leading-none">Active Matrix</h3>
+                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono mt-2">Core Kernel Directives</p>
                                 </div>
                             </div>
                             <div className="space-y-6 font-mono">
@@ -272,14 +272,14 @@ export function SettingsPage() {
                         <div className="w-20 h-20 rounded-[32px] bg-rose-500/5 flex items-center justify-center mb-8 shadow-inner border border-rose-500/10 group-hover:scale-110 group-hover:-rotate-3 transition-all duration-700">
                             <ShieldAlert className="w-10 h-10 text-rose-600" strokeWidth={2.5} />
                         </div>
-                        <h4 className="text-2xl font-black text-text-primary tracking-tighter mb-4 uppercase leading-none">Legacy Override</h4>
-                        <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em] leading-relaxed mb-10 font-mono opacity-60">
+                        <h4 className="text-2xl font-bold text-text-primary tracking-tighter mb-4 uppercase leading-none">Legacy Override</h4>
+                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] leading-relaxed mb-10 font-mono opacity-60">
                             Permanent dissolution of configuration will reset system to factory default state protocols.
                         </p>
                         <button 
                             disabled={isViewer}
                             onClick={handleReset}
-                            className="w-full py-5 border border-rose-500/20 text-rose-600 text-[11px] font-black uppercase tracking-[0.3em] rounded-[24px] hover:bg-rose-600 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 font-mono shadow-sm"
+                            className="w-full py-5 border border-rose-500/20 text-rose-600 text-[11px] font-bold uppercase tracking-[0.3em] rounded-[24px] hover:bg-rose-600 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 font-mono shadow-sm"
                         >
                             Execute Global Reset
                         </button>
@@ -298,8 +298,8 @@ function SettingsSection({ icon, title, subtitle, children }: { icon: React.Reac
                     {icon}
                 </div>
                 <div>
-                    <h2 className="text-2xl font-black text-text-primary tracking-tighter leading-none mb-2 uppercase">{title}</h2>
-                    <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em] font-mono italic opacity-60">{subtitle}</p>
+                    <h2 className="text-2xl font-bold text-text-primary tracking-tighter leading-none mb-2 uppercase">{title}</h2>
+                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono italic opacity-60">{subtitle}</p>
                 </div>
             </div>
             <div className="p-12">{children}</div>
@@ -323,12 +323,12 @@ function RangeField({ label, description, value, unit, min, max, step = 1, onCha
         <div className="space-y-8">
             <div className="flex justify-between items-start pr-4">
                 <div className="space-y-2">
-                    <p className="text-lg font-black text-text-primary tracking-tighter leading-none uppercase">{label}</p>
-                    <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.1em] font-mono italic opacity-60">{description}</p>
+                    <p className="text-lg font-bold text-text-primary tracking-tighter leading-none uppercase">{label}</p>
+                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.1em] font-mono italic opacity-60">{description}</p>
                 </div>
                 <div className="flex items-baseline gap-2 bg-black/[0.02] px-6 py-3 rounded-2xl border border-black/[0.05] shadow-inner">
-                    <span className="text-3xl font-black text-text-primary tracking-tighter italic">{value}</span>
-                    <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] font-mono">{unit}</span>
+                    <span className="text-3xl font-bold text-text-primary tracking-tighter italic">{value}</span>
+                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">{unit}</span>
                 </div>
             </div>
             <div className="px-2">
@@ -338,7 +338,7 @@ function RangeField({ label, description, value, unit, min, max, step = 1, onCha
                     className={clsx("w-full h-2 rounded-full appearance-none cursor-pointer bg-black/[0.05] shadow-inner transition-all", accColors[color])}
                 />
             </div>
-            <div className="flex justify-between px-2 text-[10px] font-black text-text-muted/30 uppercase tracking-[0.4em] font-mono">
+            <div className="flex justify-between px-2 text-[10px] font-bold text-text-muted/30 uppercase tracking-[0.4em] font-mono">
                 <span>{min}{unit}</span>
                 <span>{max}{unit}</span>
             </div>
@@ -350,8 +350,8 @@ function ToggleField({ label, description, value, onChange }: { label: string; d
     return (
         <div className="flex items-center justify-between group/toggle p-2">
             <div className="space-y-2 flex-1 pr-12">
-                <p className="text-lg font-black text-text-primary tracking-tighter leading-none uppercase">{label}</p>
-                <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.15em] font-mono italic opacity-60">{description}</p>
+                <p className="text-lg font-bold text-text-primary tracking-tighter leading-none uppercase">{label}</p>
+                <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.15em] font-mono italic opacity-60">{description}</p>
             </div>
             <button
                 type="button"
@@ -381,8 +381,8 @@ function ConfigValue({ label, value, color = 'indigo' }: { label: string; value:
     
     return (
         <div className="flex justify-between items-center text-[11px] group/item">
-            <span className="text-text-muted font-black tracking-[0.2em] group-hover/item:text-text-primary transition-colors uppercase">{label}</span>
-            <span className={clsx("font-black tracking-widest uppercase", textColors[color])}>{value}</span>
+            <span className="text-text-muted font-bold tracking-[0.2em] group-hover/item:text-text-primary transition-colors uppercase">{label}</span>
+            <span className={clsx("font-bold tracking-widest uppercase", textColors[color])}>{value}</span>
         </div>
     );
 }

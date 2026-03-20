@@ -145,8 +145,8 @@ export function Projects() {
             <div className="px-10 py-10 border-b border-black/[0.03] bg-white/[0.01]">
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-black text-text-primary tracking-tighter leading-none">Project Matrix</h1>
-                        <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] mt-2 font-mono">Global strategic initiatives and resource allocation</p>
+                        <h1 className="text-3xl font-bold text-text-primary tracking-tighter leading-none">Project Matrix</h1>
+                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] mt-2 font-mono">Global strategic initiatives and resource allocation</p>
                     </div>
                 </div>
 
@@ -157,11 +157,11 @@ export function Projects() {
                             key={tab}
                             onClick={() => { setActiveTab(tab); setSelectedIds(new Set()); }}
                             className={clsx(
-                                "pb-5 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative font-mono",
+                                "pb-5 text-[11px] font-bold uppercase tracking-[0.2em] transition-all relative font-mono",
                                 activeTab === tab ? "text-text-primary" : "text-text-muted hover:text-text-primary"
                             )}
                         >
-                            {tab.toUpperCase()} REGISTRY ({projects.filter(p => p.status === tab).length || (activeTab === tab ? projects.length : 0)})
+                            {tab.toUpperCase()} PROJECTS ({projects.filter(p => p.status === tab).length || (activeTab === tab ? projects.length : 0)})
                             {activeTab === tab && (
                                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_12px_rgba(80,110,248,0.4)]" />
                             )}
@@ -179,19 +179,19 @@ export function Projects() {
                             <Search className="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted group-focus-within:text-primary transition-all duration-300" strokeWidth={2.5} />
                             <input
                                 type="text"
-                                placeholder="Identify protocol by name or client..."
+                                placeholder="Search projects by name or client..."
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-6 py-3.5 bg-black/[0.02] border border-black/[0.05] rounded-2xl text-[13px] font-black text-text-primary placeholder:text-text-muted outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all shadow-sm font-mono"
+                                className="w-full pl-12 pr-6 py-3.5 bg-black/[0.02] border border-black/[0.05] rounded-2xl text-[13px] font-bold text-text-primary placeholder:text-text-muted outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all shadow-sm font-mono"
                             />
                         </div>
 
                         <div className="flex items-center gap-4">
                             <button
-                                className="px-6 py-3.5 glass border border-black/[0.05] rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-text-primary hover:bg-black/[0.02] flex items-center gap-3.5 transition-all shadow-sm active:scale-95 disabled:opacity-30 font-mono"
+                                className="px-6 py-3.5 glass border border-black/[0.05] rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] text-text-primary hover:bg-black/[0.02] flex items-center gap-3.5 transition-all shadow-sm active:scale-95 disabled:opacity-30 font-mono"
                                 onClick={() => { }}
                             >
-                                <Filter className="w-4 h-4 text-primary" strokeWidth={3} /> FILTER MATRIX
+                                <Filter className="w-4 h-4 text-primary" strokeWidth={3} /> FILTERS
                             </button>
 
                             <div className="h-10 w-px bg-black/[0.03] mx-1" />
@@ -201,7 +201,7 @@ export function Projects() {
                                     disabled={selectedIds.size === 0 || isViewer}
                                     onClick={handleBulkArchive}
                                     className={clsx(
-                                        "px-6 py-3.5 glass border border-black/[0.05] rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-sm active:scale-95 group font-mono",
+                                        "px-6 py-3.5 glass border border-black/[0.05] rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all shadow-sm active:scale-95 group font-mono",
                                         (selectedIds.size === 0 || isViewer) ? "opacity-30 cursor-not-allowed text-text-muted" : "text-text-primary hover:bg-black/[0.02]"
                                     )}
                                 >
@@ -209,8 +209,8 @@ export function Projects() {
                                     {activeTab === 'Active' ? 'BULK DE-ACTIVATE' : 'BULK ACTIVATE'}
                                 </button>
                                 {selectedIds.size > 0 && (
-                                    <span className="text-[10px] font-black text-primary bg-primary/5 px-4 py-2 rounded-full border border-primary/10 uppercase tracking-[0.2em] animate-in fade-in slide-in-from-left-2 transition-all font-mono">
-                                        {selectedIds.size} NODES SELECTED
+                                    <span className="text-[10px] font-bold text-primary bg-primary/5 px-4 py-2 rounded-full border border-primary/10 uppercase tracking-[0.2em] animate-in fade-in slide-in-from-left-2 transition-all font-mono">
+                                        {selectedIds.size} SELECTED
                                     </span>
                                 )}
                             </div>
@@ -222,7 +222,7 @@ export function Projects() {
                             onClick={() => { if (!isViewer) { setEditingProject(null); setShowModal(true); } }}
                             disabled={isViewer}
                             className={clsx(
-                                "px-10 py-3.5 rounded-[20px] text-[10px] font-black uppercase tracking-[0.3em] transition-all shadow-lg font-mono flex items-center gap-3",
+                                "px-10 py-3.5 rounded-[20px] text-[10px] font-bold uppercase tracking-[0.3em] transition-all shadow-lg font-mono flex items-center gap-3",
                                 isViewer ? "bg-black/5 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-primary/20 hover:scale-[1.02] active:scale-95"
                             )}
                         >
@@ -250,12 +250,12 @@ export function Projects() {
                                             {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 && <Check className="w-4 h-4 stroke-[4]" />}
                                         </button>
                                     </th>
-                                    <th className="px-8 py-7 text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Initiative Protocol</th>
-                                    <th className="px-8 py-7 text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Resource Clusters</th>
-                                    <th className="px-8 py-7 text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono text-center">Unit Count</th>
-                                    <th className="px-8 py-7 text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Operational Queue</th>
-                                    <th className="px-8 py-7 text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Fiscal Consumption</th>
-                                    <th className="px-8 py-7 text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Thresholds</th>
+                                    <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Initiative Protocol</th>
+                                    <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Resource Clusters</th>
+                                    <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono text-center">Unit Count</th>
+                                    <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Operational Queue</th>
+                                    <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Fiscal Consumption</th>
+                                    <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Thresholds</th>
                                     <th className="pr-10 py-7 w-20"></th>
                                 </tr>
                             </thead>
@@ -277,12 +277,12 @@ export function Projects() {
                                                     <AlertCircle className="w-16 h-16 text-primary" strokeWidth={1} />
                                                 </div>
                                                 <div>
-                                                    <p className="font-black text-text-primary text-2xl tracking-tighter">No protocols detected</p>
-                                                    <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.4em] mt-3 font-mono">Registry is currently void of active projects</p>
+                                                    <p className="font-bold text-text-primary text-2xl tracking-tighter">No protocols detected</p>
+                                                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.4em] mt-3 font-mono">Registry is currently void of active projects</p>
                                                 </div>
                                                 <button 
                                                     onClick={() => { setSearchQuery(''); setShowModal(true); }}
-                                                    className="text-primary font-black text-xs uppercase tracking-[0.3em] hover:text-primary/70 transition-colors font-mono"
+                                                    className="text-primary font-bold text-xs uppercase tracking-[0.3em] hover:text-primary/70 transition-colors font-mono"
                                                 >
                                                     INITIALIZE FIRST PROTOCOL
                                                 </button>
@@ -312,11 +312,11 @@ export function Projects() {
                 </div>
 
                 <div className="mt-10 flex items-center justify-between px-6">
-                    <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">
+                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">
                         REGISTRY MATRIX • {filteredProjects.length} NODE{filteredProjects.length !== 1 ? 'S' : ''} DETECTED
                     </p>
                     <div className="flex items-center gap-4">
-                        <button className="px-6 py-2.5 glass border border-black/[0.05] rounded-xl text-[10px] font-black uppercase tracking-[0.2em] opacity-30 cursor-not-allowed font-mono">SECTOR ARC 1</button>
+                        <button className="px-6 py-2.5 glass border border-black/[0.05] rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] opacity-30 cursor-not-allowed font-mono">SECTOR ARC 1</button>
                     </div>
                 </div>
             </div>
@@ -405,7 +405,7 @@ function ProjectRow({
             <td className="px-8 py-8">
                 <div className="flex items-center gap-6">
                     <div
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-xl shrink-0 shadow-lg border border-black/[0.05] group-hover/row:scale-110 transition-transform duration-500 font-mono"
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl shrink-0 shadow-lg border border-black/[0.05] group-hover/row:scale-110 transition-transform duration-500 font-mono"
                         style={{ 
                             background: `linear-gradient(135deg, ${project.color}15 0%, ${project.color}35 100%)`, 
                             color: project.color,
@@ -415,19 +415,19 @@ function ProjectRow({
                         {(project.name || 'P').charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                        <button onClick={() => onEdit('GENERAL')} className="text-base font-black text-text-primary hover:text-primary transition-colors truncate block max-w-[350px] tracking-tight leading-none mb-2">
+                        <button onClick={() => onEdit('GENERAL')} className="text-base font-bold text-text-primary hover:text-primary transition-colors truncate block max-w-[350px] tracking-tight leading-none mb-2">
                             {project.name}
                         </button>
                         <div className="flex items-center gap-3 mt-1">
                             {project.client_name ? (
-                                <span className="text-[10px] font-black text-text-muted uppercase flex items-center gap-2 bg-black/[0.03] px-3 py-1 rounded-lg border border-black/[0.05] font-mono">
+                                <span className="text-[10px] font-bold text-text-muted uppercase flex items-center gap-2 bg-black/[0.03] px-3 py-1 rounded-lg border border-black/[0.05] font-mono">
                                     <Building2 className="w-3.5 h-3.5 text-primary" strokeWidth={2.5} /> {project.client_name}
                                 </span>
                             ) : (
-                                <span className="text-[10px] font-black text-text-muted/40 uppercase italic tracking-[0.2em] font-mono">NO ORIGIN NODE</span>
+                                <span className="text-[10px] font-bold text-text-muted/40 uppercase italic tracking-[0.2em] font-mono">NO ORIGIN NODE</span>
                             )}
                             {project.billable && (
-                                <span className="text-[10px] font-black text-emerald-600 uppercase bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20 tracking-[0.2em] font-mono">BILLABLE</span>
+                                <span className="text-[10px] font-bold text-emerald-600 uppercase bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20 tracking-[0.2em] font-mono">BILLABLE</span>
                             )}
                         </div>
                     </div>
@@ -438,10 +438,10 @@ function ProjectRow({
                     {project.teamCount > 0 ? (
                         <div className="flex items-center gap-3 bg-primary/5 px-4 py-1.5 rounded-xl border border-primary/10 shadow-sm">
                             <Building2 className="w-4 h-4 text-primary" strokeWidth={2.5} />
-                            <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">{project.teamCount} UNIT{project.teamCount !== 1 ? 'S' : ''}</span>
+                            <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">{project.teamCount} UNIT{project.teamCount !== 1 ? 'S' : ''}</span>
                         </div>
                     ) : (
-                        <span className="text-[10px] font-black text-text-muted/30 uppercase italic tracking-[0.3em]">STANDALONE</span>
+                        <span className="text-[10px] font-bold text-text-muted/30 uppercase italic tracking-[0.3em]">STANDALONE</span>
                     )}
                 </div>
             </td>
@@ -451,12 +451,12 @@ function ProjectRow({
                         {project.memberCount > 0 ? (
                             <>
                                 {Array.from({ length: Math.min(3, project.memberCount) }).map((_, i) => (
-                                    <div key={i} className="w-10 h-10 rounded-2xl border-[3px] border-white bg-primary/5 flex items-center justify-center text-[11px] font-black text-primary shadow-md group-hover/row:translate-y-[-4px] transition-transform duration-300 font-mono">
+                                    <div key={i} className="w-10 h-10 rounded-2xl border-[3px] border-white bg-primary/5 flex items-center justify-center text-[11px] font-bold text-primary shadow-md group-hover/row:translate-y-[-4px] transition-transform duration-300 font-mono">
                                         <Users className="w-5 h-5" strokeWidth={2.5} />
                                     </div>
                                 ))}
                                 {project.memberCount > 3 && (
-                                    <div className="w-10 h-10 rounded-2xl border-[3px] border-white bg-primary flex items-center justify-center text-[10px] font-black text-white shadow-lg shadow-primary/20 scale-110 font-mono">
+                                    <div className="w-10 h-10 rounded-2xl border-[3px] border-white bg-primary flex items-center justify-center text-[10px] font-bold text-white shadow-lg shadow-primary/20 scale-110 font-mono">
                                         +{project.memberCount - 3}
                                     </div>
                                 )}
@@ -478,20 +478,20 @@ function ProjectRow({
                         <Check className="w-5 h-5" strokeWidth={3} />
                     </div>
                     <div>
-                        <p className="text-base font-black text-text-primary leading-none mb-1">{project.todoCount}</p>
-                        <p className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">PENDING</p>
+                        <p className="text-base font-bold text-text-primary leading-none mb-1">{project.todoCount}</p>
+                        <p className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em]">PENDING</p>
                     </div>
                 </div>
             </td>
             <td className="px-8 py-8 font-mono">
                 <div className="flex flex-col gap-3.5 min-w-[160px]">
                     <div className="flex justify-between items-end">
-                        <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em] font-mono">
+                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">
                             {(project.budget_type || 'No budget') === 'No budget' ? 'ORGANIC' : (project.budget_type || '').replace('Total ', '').toUpperCase()}
                         </span>
                         {project.budget_limit && (
                             <span className={clsx(
-                                "text-[11px] font-black",
+                                "text-[11px] font-bold",
                                 isOverBudget ? "text-rose-500" : "text-text-primary"
                             )}>
                                 {trackedHours.toFixed(1)} <span className="text-text-muted opacity-50">/</span> {project.budget_limit}H
@@ -509,19 +509,19 @@ function ProjectRow({
                             />
                         </div>
                     ) : (
-                        <span className="text-[10px] font-black text-text-muted/30 uppercase italic tracking-[0.2em] font-mono">UNCONSTRAINED</span>
+                        <span className="text-[10px] font-bold text-text-muted/30 uppercase italic tracking-[0.2em] font-mono">UNCONSTRAINED</span>
                     )}
                 </div>
             </td>
             <td className="px-8 py-8 font-mono">
                 {project.member_limit ? (
                     <div className="flex items-center gap-2">
-                        <div className="px-4 py-1.5 bg-amber-500/5 rounded-xl border border-amber-500/10 text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] shadow-sm">
+                        <div className="px-4 py-1.5 bg-amber-500/5 rounded-xl border border-amber-500/10 text-[10px] font-bold text-amber-600 uppercase tracking-[0.2em] shadow-sm">
                             MAX: {project.member_limit}
                         </div>
                     </div>
                 ) : (
-                    <span className="text-[10px] font-black text-text-muted/30 uppercase italic tracking-[0.3em] font-mono">UNLIMITED</span>
+                    <span className="text-[10px] font-bold text-text-muted/30 uppercase italic tracking-[0.3em] font-mono">UNLIMITED</span>
                 )}
             </td>
             <td className="pr-10 py-8 text-right relative" ref={dropRef}>
@@ -534,13 +534,13 @@ function ProjectRow({
 
                 {showMenu && (
                     <div className="absolute right-10 top-20 w-64 glass border border-black/[0.08] shadow-2xl z-20 py-3 rounded-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        <button onClick={() => { setShowMenu(false); onEdit('GENERAL'); }} className="w-full px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] text-text-muted hover:text-text-primary hover:bg-black/[0.02] flex items-center gap-4 transition-colors font-mono">
+                        <button onClick={() => { setShowMenu(false); onEdit('GENERAL'); }} className="w-full px-6 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] text-text-muted hover:text-text-primary hover:bg-black/[0.02] flex items-center gap-4 transition-colors font-mono">
                             <Pencil className="w-4.5 h-4.5 text-primary" strokeWidth={2.5} /> {isViewer ? 'INSPECT PROTOCOL' : 'ADJUST SETTINGS'}
                         </button>
                         <button 
                             onClick={() => { if (!isViewer) { setShowMenu(false); onEdit('MEMBERS'); } }} 
                             className={clsx(
-                                "w-full px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-4 transition-colors font-mono",
+                                "w-full px-6 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-4 transition-colors font-mono",
                                 isViewer ? "opacity-30 cursor-not-allowed" : "text-text-muted hover:text-text-primary hover:bg-black/[0.02]"
                             )}
                         >
@@ -549,7 +549,7 @@ function ProjectRow({
                         <button 
                             onClick={() => { if (!isViewer) { setShowMenu(false); onEdit('BUDGET & LIMITS'); } }} 
                             className={clsx(
-                                "w-full px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-4 transition-colors font-mono",
+                                "w-full px-6 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-4 transition-colors font-mono",
                                 isViewer ? "opacity-30 cursor-not-allowed" : "text-text-muted hover:text-text-primary hover:bg-black/[0.02]"
                             )}
                         >
@@ -559,7 +559,7 @@ function ProjectRow({
                         <button 
                             onClick={() => { if (!isViewer) { setShowMenu(false); handleArchive(); } }} 
                             className={clsx(
-                                "w-full px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-4 transition-colors font-mono",
+                                "w-full px-6 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-4 transition-colors font-mono",
                                 isViewer ? "opacity-30 cursor-not-allowed" : "text-text-muted hover:text-text-primary hover:bg-black/[0.02]"
                             )}
                         >
@@ -568,7 +568,7 @@ function ProjectRow({
                         <button 
                             onClick={() => { if (!isViewer) { setShowMenu(false); handleDelete(); } }} 
                             className={clsx(
-                                "w-full px-6 py-4 text-left text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-4 transition-colors font-mono",
+                                "w-full px-6 py-4 text-left text-[11px] font-bold uppercase tracking-[0.2em] flex items-center gap-4 transition-colors font-mono",
                                 isViewer ? "opacity-30 cursor-not-allowed" : "text-rose-500 hover:bg-rose-500/10"
                             )}
                         >
@@ -588,8 +588,8 @@ function ToggleItem({ label, active, onToggle, hint }: { label: string; active: 
     return (
         <div className="flex items-center justify-between py-4 px-2">
             <div className="flex-1">
-                <span className="text-[13px] font-black text-text-primary tracking-tight leading-none block mb-1">{label}</span>
-                {hint && <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mt-1 font-mono">{hint}</p>}
+                <span className="text-[13px] font-bold text-text-primary tracking-tight leading-none block mb-1">{label}</span>
+                {hint && <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mt-1 font-mono">{hint}</p>}
             </div>
             <button 
                 type="button" 
@@ -619,15 +619,15 @@ function ToggleItem({ label, active, onToggle, hint }: { label: string; active: 
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <div>
-                    <h4 className={clsx("text-[10px] font-black uppercase tracking-[0.2em] font-mono", color)}>{label}</h4>
-                    <p className="text-[10px] font-black text-text-muted uppercase tracking-widest mt-1 font-mono">{description}</p>
+                    <h4 className={clsx("text-[10px] font-bold uppercase tracking-[0.2em] font-mono", color)}>{label}</h4>
+                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mt-1 font-mono">{description}</p>
                 </div>
-                <span className="text-[10px] font-black text-text-muted opacity-50 font-mono">{filtered.length} NODES</span>
+                <span className="text-[10px] font-bold text-text-muted opacity-50 font-mono">{filtered.length} NODES</span>
             </div>
             <div className="glass border border-black/[0.05] rounded-2xl overflow-hidden shadow-sm">
                 {filtered.length === 0 ? (
                     <div className="py-12 text-center">
-                        <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono italic">Registry void in this sector</p>
+                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono italic">Registry void in this sector</p>
                     </div>
                 ) : (
                     <div className="divide-y divide-black/[0.03] max-h-[220px] overflow-y-auto custom-scrollbar">
@@ -646,14 +646,14 @@ function ToggleItem({ label, active, onToggle, hint }: { label: string; active: 
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className={clsx(
-                                            "w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-black shrink-0 shadow-sm border border-black/[0.03] transition-all group-hover/member:scale-110",
+                                            "w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-bold shrink-0 shadow-sm border border-black/[0.03] transition-all group-hover/member:scale-110",
                                             isSelected ? "bg-primary text-white" : "bg-black/[0.03] text-text-primary"
                                         )}>
                                             {initials}
                                         </div>
                                         <div className="text-left min-w-0">
-                                            <p className="text-[13px] font-black text-text-primary leading-none truncate mb-1">{m.full_name}</p>
-                                            <p className="text-[10px] font-black text-text-muted uppercase tracking-tight font-mono truncate">{m.email}</p>
+                                            <p className="text-[13px] font-bold text-text-primary leading-none truncate mb-1">{m.full_name}</p>
+                                            <p className="text-[10px] font-bold text-text-muted uppercase tracking-tight font-mono truncate">{m.email}</p>
                                         </div>
                                     </div>
                                     <div className={clsx(
@@ -785,11 +785,11 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                         <div className="flex items-center gap-5">
                             <div className="w-14 h-14 rounded-2xl flex items-center justify-center border border-black/[0.05] shadow-sm transform -rotate-3 hover:rotate-0 transition-transform duration-500"
                                 style={{ background: `linear-gradient(135deg, ${color}15 0%, ${color}35 100%)`, color }}>
-                                <span className="font-black text-2xl font-mono">{(name || 'P').charAt(0).toUpperCase()}</span>
+                                <span className="font-bold text-2xl font-mono">{(name || 'P').charAt(0).toUpperCase()}</span>
                             </div>
                             <div>
-                                <h2 className="text-2xl font-black text-text-primary tracking-tighter leading-none mb-2">{project ? 'Edit Protocol' : 'New Protocol'}</h2>
-                                <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Project configuration and resource mapping</p>
+                                <h2 className="text-2xl font-bold text-text-primary tracking-tighter leading-none mb-2">{project ? 'Edit Protocol' : 'New Protocol'}</h2>
+                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Project configuration and resource mapping</p>
                             </div>
                         </div>
                         <button onClick={onClose} className="p-3 bg-black/[0.03] hover:bg-black/[0.08] rounded-2xl transition-all text-text-muted hover:text-text-primary shadow-sm hover:scale-110 active:scale-90"><X className="w-5 h-5" strokeWidth={3} /></button>
@@ -800,7 +800,7 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                         {modalTabs.map(tab => (
                             <button key={tab} onClick={() => setActiveTab(tab)}
                                 className={clsx(
-                                    "px-6 py-4 text-[10px] font-black tracking-[0.2em] relative transition-all rounded-t-2xl font-mono overflow-hidden",
+                                    "px-6 py-4 text-[10px] font-bold tracking-[0.2em] relative transition-all rounded-t-2xl font-mono overflow-hidden",
                                     activeTab === tab 
                                         ? "text-primary bg-white shadow-[0_-8px_20px_rgba(0,0,0,0.02)] border-t border-l border-r border-black/[0.03]" 
                                         : "text-text-muted hover:text-text-primary hover:bg-black/[0.02]"
@@ -817,16 +817,16 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                     {activeTab === 'GENERAL' && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div>
-                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono mb-3">Initiative Identity *</label>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-3">Initiative Identity *</label>
                                 <input 
                                     value={name} 
                                     onChange={e => setName(e.target.value)} 
                                     placeholder="DESIGNATE PROJECT NAME..."
-                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-black text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase" 
+                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase" 
                                 />
                             </div>
                             <div>
-                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono mb-4">Color Signature</label>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-4">Color Signature</label>
                                 <div className="flex gap-3.5 flex-wrap">
                                     {COLORS.map(c => (
                                         <button key={c} type="button" onClick={() => setColor(c)}
@@ -847,7 +847,7 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                             </div>
                             
                             <div className="space-y-2">
-                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Operational Parameters</label>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Operational Parameters</label>
                                 <div className="glass border border-black/[0.03] rounded-3xl px-3 py-2 divide-y divide-black/[0.03] overflow-hidden shadow-sm">
                                     <ToggleItem label="Billable Output" active={billable} onToggle={() => setBillable(!billable)} hint="FINANCIAL RECOGNITION ENABLED" />
                                     <ToggleItem label="Active Forensics" active={!disableActivity} onToggle={() => setDisableActivity(!disableActivity)} hint="KEYBOARD + MOUSE TELEMETRY" />
@@ -857,12 +857,12 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                             </div>
 
                             <div>
-                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono mb-3">Client Affiliation</label>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-3">Client Affiliation</label>
                                 <div className="relative group">
                                     <select 
                                         value={clientId} 
                                         onChange={e => setClientId(e.target.value)}
-                                        className="w-full pl-6 pr-12 py-4 bg-black/[0.02] border border-black/[0.05] rounded-2xl text-[13px] font-black text-text-primary appearance-none focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono uppercase cursor-pointer"
+                                        className="w-full pl-6 pr-12 py-4 bg-black/[0.02] border border-black/[0.05] rounded-2xl text-[13px] font-bold text-text-primary appearance-none focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono uppercase cursor-pointer"
                                     >
                                         <option value="" className="bg-white">NO CLIENT ASSIGNMENT</option>
                                         {clients.map(c => <option key={c.id} value={c.id} className="bg-white">{c.name.toUpperCase()}</option>)}
@@ -881,7 +881,7 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                     value={memberSearch} 
                                     onChange={e => setMemberSearch(e.target.value)} 
                                     placeholder="QUERY PERSONNEL NODES..."
-                                    className="w-full pl-13 pr-6 py-4 bg-black/[0.02] border border-black/[0.05] rounded-[20px] text-[12px] font-black text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono placeholder:text-text-muted/40 uppercase" 
+                                    className="w-full pl-13 pr-6 py-4 bg-black/[0.02] border border-black/[0.05] rounded-[20px] text-[12px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono placeholder:text-text-muted/40 uppercase" 
                                 />
                             </div>
                             <div className="space-y-10">
@@ -901,7 +901,7 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                 {(['project','member'] as const).map(s => (
                                     <button key={s} onClick={() => setBudgetSubTab(s)}
                                         className={clsx(
-                                            "flex-1 py-3 rounded-[14px] text-[10px] font-black uppercase tracking-[0.2em] transition-all font-mono",
+                                            "flex-1 py-3 rounded-[14px] text-[10px] font-bold uppercase tracking-[0.2em] transition-all font-mono",
                                             budgetSubTab===s ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-primary"
                                         )}
                                     >
@@ -914,12 +914,12 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                 <div className="space-y-8">
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                         <div className="space-y-3">
-                                            <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Metric Type</label>
+                                            <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Metric Type</label>
                                             <div className="relative">
                                                 <select 
                                                     value={budgetType} 
                                                     onChange={e => setBudgetType(e.target.value as BudgetType)}
-                                                    className="w-full pl-4 pr-10 py-3.5 bg-black/[0.02] border border-black/[0.05] rounded-2xl text-[12px] font-black text-text-primary appearance-none focus:outline-none transition-all font-mono uppercase"
+                                                    className="w-full pl-4 pr-10 py-3.5 bg-black/[0.02] border border-black/[0.05] rounded-2xl text-[12px] font-bold text-text-primary appearance-none focus:outline-none transition-all font-mono uppercase"
                                                 >
                                                     {['No budget','Total hours','Total amount','Monthly hours','Monthly amount'].map(t => <option key={t} value={t} className="bg-white">{t.toUpperCase()}</option>)}
                                                 </select>
@@ -927,12 +927,12 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                             </div>
                                         </div>
                                         <div className="space-y-3">
-                                            <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Reference Hub</label>
+                                            <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Reference Hub</label>
                                             <div className="relative">
                                                 <select 
                                                     value={basedOn} 
                                                     onChange={e => setBasedOn(e.target.value)}
-                                                    className="w-full pl-4 pr-10 py-3.5 bg-black/[0.02] border border-black/[0.05] rounded-2xl text-[12px] font-black text-text-primary appearance-none focus:outline-none transition-all font-mono uppercase"
+                                                    className="w-full pl-4 pr-10 py-3.5 bg-black/[0.02] border border-black/[0.05] rounded-2xl text-[12px] font-bold text-text-primary appearance-none focus:outline-none transition-all font-mono uppercase"
                                                 >
                                                     {['Pay rate','Bill rate','Custom'].map(r => <option key={r} value={r} className="bg-white">{r.toUpperCase()}</option>)}
                                                 </select>
@@ -940,15 +940,15 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                             </div>
                                         </div>
                                         <div className="space-y-3">
-                                            <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Threshold *</label>
+                                            <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Threshold *</label>
                                             <div className="flex bg-black/[0.02] border border-black/[0.05] rounded-2xl overflow-hidden focus-within:ring-4 focus-within:ring-primary/10 transition-all group">
-                                                <span className="px-4 py-3.5 bg-black/[0.03] text-[11px] font-black text-primary border-r border-black/[0.05] font-mono">$</span>
+                                                <span className="px-4 py-3.5 bg-black/[0.03] text-[11px] font-bold text-primary border-r border-black/[0.05] font-mono">$</span>
                                                 <input 
                                                     type="number" 
                                                     value={budgetCost} 
                                                     onChange={e => setBudgetCost(e.target.value)} 
                                                     placeholder="0.00" 
-                                                    className="flex-1 min-w-0 bg-transparent px-4 py-3.5 text-[13px] font-black text-text-primary focus:outline-none font-mono placeholder:text-text-muted/30" 
+                                                    className="flex-1 min-w-0 bg-transparent px-4 py-3.5 text-[13px] font-bold text-text-primary focus:outline-none font-mono placeholder:text-text-muted/30" 
                                                 />
                                             </div>
                                         </div>
@@ -960,17 +960,17 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                             <div className="p-6 bg-black/[0.01] border-t border-black/[0.03] animate-in slide-in-from-top-4 duration-300">
                                                 <div className="grid grid-cols-2 gap-6">
                                                     <div className="space-y-3">
-                                                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Trigger Point</label>
+                                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Trigger Point</label>
                                                         <div className="flex bg-white border border-black/[0.1] rounded-xl overflow-hidden shadow-sm">
-                                                            <input type="number" value={notifyAt} onChange={e => setNotifyAt(e.target.value)} placeholder="80" className="flex-1 min-w-0 px-4 py-3 text-[13px] font-black font-mono focus:outline-none" />
-                                                            <span className="px-4 py-3 bg-black/[0.03] text-[9px] font-black text-text-muted border-l border-black/[0.05] font-mono uppercase">% LOAD</span>
+                                                            <input type="number" value={notifyAt} onChange={e => setNotifyAt(e.target.value)} placeholder="80" className="flex-1 min-w-0 px-4 py-3 text-[13px] font-bold font-mono focus:outline-none" />
+                                                            <span className="px-4 py-3 bg-black/[0.03] text-[9px] font-bold text-text-muted border-l border-black/[0.05] font-mono uppercase">% LOAD</span>
                                                         </div>
                                                     </div>
                                                     <div className="space-y-3">
-                                                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Transmission Target</label>
+                                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Transmission Target</label>
                                                         <div className="relative">
                                                             <select value={notifyWho} onChange={e => setNotifyWho(e.target.value)}
-                                                                className="w-full pl-4 pr-10 py-3 bg-white border border-black/[0.1] rounded-xl text-[12px] font-black text-text-primary appearance-none focus:outline-none font-mono uppercase shadow-sm">
+                                                                className="w-full pl-4 pr-10 py-3 bg-white border border-black/[0.1] rounded-xl text-[12px] font-bold text-text-primary appearance-none focus:outline-none font-mono uppercase shadow-sm">
                                                                 {['Project members','Managers only','Admins only'].map(t => <option key={t} value={t}>{t.toUpperCase()}</option>)}
                                                             </select>
                                                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" strokeWidth={3} />
@@ -984,10 +984,10 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                             {stopTimers && (
                                                 <div className="p-6 bg-black/[0.01] border-t border-black/[0.03] animate-in slide-in-from-top-4 duration-300">
                                                     <div className="space-y-3">
-                                                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Kill switch at</label>
+                                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Kill switch at</label>
                                                         <div className="flex bg-white border border-black/[0.1] rounded-xl overflow-hidden max-w-xs shadow-sm">
-                                                            <input type="number" value={stopAt} onChange={e => setStopAt(e.target.value)} placeholder="100" className="flex-1 min-w-0 px-4 py-3 text-[13px] font-black font-mono focus:outline-none" />
-                                                            <span className="px-4 py-3 bg-black/[0.03] text-[9px] font-black text-text-muted border-l border-black/[0.05] font-mono uppercase">% LOAD</span>
+                                                            <input type="number" value={stopAt} onChange={e => setStopAt(e.target.value)} placeholder="100" className="flex-1 min-w-0 px-4 py-3 text-[13px] font-bold font-mono focus:outline-none" />
+                                                            <span className="px-4 py-3 bg-black/[0.03] text-[9px] font-bold text-text-muted border-l border-black/[0.05] font-mono uppercase">% LOAD</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -997,12 +997,12 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                         <div className="space-y-3">
-                                            <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Refresh Protocol</label>
+                                            <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Refresh Protocol</label>
                                             <div className="relative">
                                                 <select 
                                                     value={resets} 
                                                     onChange={e => setResets(e.target.value)}
-                                                    className="w-full pl-6 pr-12 py-4 bg-black/[0.02] border border-black/[0.05] rounded-[20px] text-[12px] font-black text-text-primary appearance-none focus:outline-none font-mono uppercase"
+                                                    className="w-full pl-6 pr-12 py-4 bg-black/[0.02] border border-black/[0.05] rounded-[20px] text-[12px] font-bold text-text-primary appearance-none focus:outline-none font-mono uppercase"
                                                 >
                                                     {['Never','Weekly','Monthly','Yearly'].map(r => <option key={r} value={r} className="bg-white">{r.toUpperCase()}</option>)}
                                                 </select>
@@ -1010,12 +1010,12 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                             </div>
                                         </div>
                                         <div className="space-y-3">
-                                            <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Initiation Pulse</label>
+                                            <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Initiation Pulse</label>
                                             <input 
                                                 type="date" 
                                                 value={startDate} 
                                                 onChange={e => setStartDate(e.target.value)}
-                                                className="w-full px-6 py-4 bg-black/[0.02] border border-black/[0.05] rounded-[20px] text-[12px] font-black text-text-primary focus:outline-none font-mono text-center" 
+                                                className="w-full px-6 py-4 bg-black/[0.02] border border-black/[0.05] rounded-[20px] text-[12px] font-bold text-text-primary focus:outline-none font-mono text-center" 
                                             />
                                         </div>
                                     </div>
@@ -1029,19 +1029,19 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                     <div className="flex gap-4 p-6 bg-primary/5 border border-primary/10 rounded-3xl">
                                         <AlertCircle className="w-6 h-6 text-primary shrink-0" strokeWidth={2.5} />
-                                        <p className="text-[12px] font-black text-primary uppercase tracking-wider font-mono leading-relaxed">System-wide constraint: Set a weekly temporal threshold for all units assigned to this node.</p>
+                                        <p className="text-[12px] font-bold text-primary uppercase tracking-wider font-mono leading-relaxed">System-wide constraint: Set a weekly temporal threshold for all units assigned to this node.</p>
                                     </div>
                                     <div className="space-y-4">
-                                        <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Weekly Hour Ceiling</label>
+                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Weekly Hour Ceiling</label>
                                         <div className="relative group">
                                             <input 
                                                 type="number" 
                                                 value={memberLimit} 
                                                 onChange={e => setMemberLimit(e.target.value)} 
                                                 placeholder="ZERO FOR UNCONSTRAINED"
-                                                className="w-full bg-black/[0.02] border border-black/[0.05] rounded-3xl px-8 py-6 text-xl font-black text-primary placeholder:text-text-muted/20 outline-none focus:ring-8 focus:ring-primary/5 focus:border-primary/30 transition-all font-mono text-center tracking-tighter" 
+                                                className="w-full bg-black/[0.02] border border-black/[0.05] rounded-3xl px-8 py-6 text-xl font-bold text-primary placeholder:text-text-muted/20 outline-none focus:ring-8 focus:ring-primary/5 focus:border-primary/30 transition-all font-mono text-center tracking-tighter" 
                                             />
-                                            <div className="absolute right-8 top-1/2 -translate-y-1/2 text-[10px] font-black text-text-muted uppercase tracking-[0.2em] pointer-events-none group-focus-within:text-primary opacity-50 font-mono">
+                                            <div className="absolute right-8 top-1/2 -translate-y-1/2 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] pointer-events-none group-focus-within:text-primary opacity-50 font-mono">
                                                 HOURS / WEEK
                                             </div>
                                         </div>
@@ -1060,13 +1060,13 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                         value={teamSearch} 
                                         onChange={e => setTeamSearch(e.target.value)} 
                                         placeholder="QUERY TEAM CLUSTERS..."
-                                        className="w-full pl-13 pr-6 py-4 bg-black/[0.02] border border-black/[0.05] rounded-[20px] text-[12px] font-black text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono placeholder:text-text-muted/40 uppercase" 
+                                        className="w-full pl-13 pr-6 py-4 bg-black/[0.02] border border-black/[0.05] rounded-[20px] text-[12px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono placeholder:text-text-muted/40 uppercase" 
                                     />
                                 </div>
                                 {filteredTeams.length > 0 && (
                                     <button 
                                         onClick={() => setSelectedTeamIds(selectedTeamIds.size===filteredTeams.length ? new Set() : new Set(filteredTeams.map(t => t.id)))}
-                                        className="text-[10px] font-black text-primary hover:text-primary/70 uppercase tracking-[0.2em] font-mono whitespace-nowrap px-4 py-2 bg-primary/5 rounded-xl border border-primary/10 transition-all active:scale-95"
+                                        className="text-[10px] font-bold text-primary hover:text-primary/70 uppercase tracking-[0.2em] font-mono whitespace-nowrap px-4 py-2 bg-primary/5 rounded-xl border border-primary/10 transition-all active:scale-95"
                                     >
                                         {selectedTeamIds.size===filteredTeams.length ? 'PURGE SELECTION' : 'SELECT ALL NODES'}
                                     </button>
@@ -1077,7 +1077,7 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                     <div className="w-20 h-20 bg-black/[0.02] border border-black/[0.05] rounded-[40px] flex items-center justify-center mx-auto mb-6">
                                         <Users className="w-8 h-8 text-text-muted/30" />
                                     </div>
-                                    <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">No cluster matches detected</p>
+                                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">No cluster matches detected</p>
                                 </div>
                             ) : (
                                 <div className="glass border border-black/[0.08] rounded-[32px] overflow-hidden divide-y divide-black/[0.03] shadow-lg">
@@ -1092,14 +1092,14 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                                             >
                                                 <div className="flex items-center gap-6">
                                                     <div className={clsx(
-                                                        "w-12 h-12 rounded-[18px] flex items-center justify-center font-black text-[13px] shadow-sm transform transition-all group-hover/team:scale-110 group-hover/team:-rotate-3 font-mono border border-black/[0.03]",
+                                                        "w-12 h-12 rounded-[18px] flex items-center justify-center font-bold text-[13px] shadow-sm transform transition-all group-hover/team:scale-110 group-hover/team:-rotate-3 font-mono border border-black/[0.03]",
                                                         isSel ? "bg-primary text-white" : "bg-purple-50 text-purple-600"
                                                     )}>
                                                         {t.name.slice(0,2).toUpperCase()}
                                                     </div>
                                                     <div className="text-left">
-                                                        <span className="text-base font-black text-text-primary tracking-tight leading-none block mb-1">{t.name}</span>
-                                                        <span className="text-[10px] font-black text-text-muted uppercase tracking-widest font-mono">OPERATIONAL CLUSTER</span>
+                                                        <span className="text-base font-bold text-text-primary tracking-tight leading-none block mb-1">{t.name}</span>
+                                                        <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest font-mono">OPERATIONAL CLUSTER</span>
                                                     </div>
                                                 </div>
                                                 <div className={clsx(
@@ -1120,16 +1120,16 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                 <div className="px-10 py-8 border-t border-black/[0.05] bg-black/[0.01] flex items-center justify-between gap-10">
                     <div className="flex-1 min-w-0">
                         {error && (
-                            <div className="flex items-center gap-3 text-rose-600 text-[11px] font-black uppercase tracking-widest font-mono p-4 bg-rose-50 border border-rose-100 rounded-2xl animate-shake">
+                            <div className="flex items-center gap-3 text-rose-600 text-[11px] font-bold uppercase tracking-widest font-mono p-4 bg-rose-50 border border-rose-100 rounded-2xl animate-shake">
                                 <AlertCircle className="w-5 h-5 shrink-0" strokeWidth={2.5} /><span className="truncate">{error}</span>
                             </div>
                         )}
                     </div>
                     <div className="flex gap-4 shrink-0">
-                        <button onClick={onClose} className="px-8 py-4 rounded-2xl border border-black/[0.1] text-[11px] font-black text-text-muted hover:text-text-primary hover:bg-white hover:border-black/[0.2] transition-all uppercase tracking-[0.2em] font-mono active:scale-95 shadow-sm">DISMISS</button>
+                        <button onClick={onClose} className="px-8 py-4 rounded-2xl border border-black/[0.1] text-[11px] font-bold text-text-muted hover:text-text-primary hover:bg-white hover:border-black/[0.2] transition-all uppercase tracking-[0.2em] font-mono active:scale-95 shadow-sm">DISMISS</button>
                         <button onClick={handleSave} disabled={loading || isViewer}
                             className={clsx(
-                                "px-12 py-4 rounded-2xl text-[11px] font-black transition-all shadow-xl flex items-center gap-3 uppercase tracking-[0.3em] font-mono active:scale-95",
+                                "px-12 py-4 rounded-2xl text-[11px] font-bold transition-all shadow-xl flex items-center gap-3 uppercase tracking-[0.3em] font-mono active:scale-95",
                                 isViewer ? "bg-black/20 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-primary/30 hover:scale-[1.02] disabled:opacity-50"
                             )}
                         >

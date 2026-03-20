@@ -143,9 +143,9 @@ export function Teams() {
                             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
                                 <UsersRound className="w-6 h-6 text-primary" strokeWidth={2.5} />
                             </div>
-                            <h1 className="text-3xl font-black text-text-primary tracking-tighter">Resource Clusters</h1>
+                            <h1 className="text-3xl font-bold text-text-primary tracking-tighter">Teams</h1>
                         </div>
-                        <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] font-mono leading-relaxed">Strategic workforce units and operational hierarchy matrix</p>
+                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono leading-relaxed">Organize and manage your team and departments</p>
                     </div>
 
                     <div className="flex items-center gap-5">
@@ -173,12 +173,12 @@ export function Teams() {
                             onClick={openCreateModal}
                             disabled={isViewer}
                             className={clsx(
-                                "flex items-center gap-3 px-10 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 font-mono",
+                                "flex items-center gap-3 px-10 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 font-mono",
                                 isViewer ? "bg-black/5 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-primary/30 hover:scale-[1.02]"
                             )}
                         >
                             <Plus className="w-4 h-4 stroke-[4]" />
-                            Initialize Cluster
+                            Create Team
                         </button>
                     </div>
                 </div>
@@ -187,19 +187,19 @@ export function Teams() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="glass p-8 rounded-[32px] border border-black/[0.03] hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-1000" />
-                        <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3 font-mono">Total Units</p>
-                        <h2 className="text-5xl font-black text-text-primary tracking-tighter leading-none">{teams.length}</h2>
+                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-3 font-mono">Total Teams</p>
+                        <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">{teams.length}</h2>
                     </div>
                     <div className="glass p-8 rounded-[32px] border border-black/[0.03] hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-1000" />
-                        <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3 font-mono">Active Workforce</p>
-                        <h2 className="text-5xl font-black text-text-primary tracking-tighter leading-none">{teams.reduce((acc, t) => acc + (t.member_count || 0), 0)}</h2>
+                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-3 font-mono">Total Members</p>
+                        <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">{teams.reduce((acc, t) => acc + (t.member_count || 0), 0)}</h2>
                         <Users className="absolute bottom-6 right-8 w-12 h-12 text-black/[0.02] group-hover:text-primary/5 transition-colors duration-500" />
                     </div>
                     <div className="glass p-8 rounded-[32px] border border-black/[0.03] hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-1000" />
-                        <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3 font-mono">Cluster Density</p>
-                        <h2 className="text-5xl font-black text-text-primary tracking-tighter leading-none">
+                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-3 font-mono">Avg. Team Size</p>
+                        <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">
                             {teams.length > 0 ? (teams.reduce((acc, t) => acc + (t.member_count || 0), 0) / teams.length).toFixed(1) : '0'}
                         </h2>
                         <Shield className="absolute bottom-6 right-8 w-12 h-12 text-black/[0.02] group-hover:text-primary/5 transition-colors duration-500" />
@@ -213,10 +213,10 @@ export function Teams() {
                     <Search className="w-5 h-5 text-text-muted absolute left-6 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" strokeWidth={2.5} />
                     <input
                         type="text"
-                        placeholder="QUERY CLUSTER REGISTRY OR FACILITATOR..."
+                        placeholder="Search teams or managers..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full pl-15 pr-8 py-5 bg-white border border-black/[0.05] rounded-[24px] text-[13px] font-black text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-8 focus:ring-primary/5 focus:border-primary/20 transition-all shadow-sm font-mono uppercase"
+                        className="w-full pl-15 pr-8 py-5 bg-white border border-black/[0.05] rounded-[24px] text-[13px] font-bold text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-8 focus:ring-primary/5 focus:border-primary/20 transition-all shadow-sm font-mono uppercase"
                     />
                 </div>
 
@@ -224,7 +224,7 @@ export function Teams() {
                     <div className="p-40 text-center">
                         <div className="flex flex-col items-center gap-6">
                             <div className="w-16 h-16 border-[6px] border-primary/10 border-t-primary rounded-full animate-spin shadow-inner" />
-                            <span className="text-[11px] font-black text-text-muted uppercase tracking-[0.5em] animate-pulse font-mono">Syncing Matrix Core...</span>
+                            <span className="text-[11px] font-bold text-text-muted uppercase tracking-[0.5em] animate-pulse font-mono">Loading teams...</span>
                         </div>
                     </div>
                 ) : filtered.length === 0 ? (
@@ -234,14 +234,14 @@ export function Teams() {
                                 <UsersRound className="w-16 h-16 text-text-muted/20" strokeWidth={1.5} />
                             </div>
                             <div className="space-y-4">
-                                <h3 className="text-2xl font-black text-text-primary tracking-tighter">No Cluster Detected</h3>
-                                <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] font-mono italic">Operational sector remains void of workforce units</p>
+                                <h3 className="text-2xl font-bold text-text-primary tracking-tighter">No Teams Found</h3>
+                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono italic">You haven't created any teams yet.</p>
                             </div>
                             <button
                                 onClick={openCreateModal}
                                 disabled={isViewer}
                                 className={clsx(
-                                    "font-black uppercase tracking-[0.3em] text-[10px] transition-all px-10 py-4 rounded-2xl font-mono",
+                                    "font-bold uppercase tracking-[0.3em] text-[10px] transition-all px-10 py-4 rounded-2xl font-mono",
                                     isViewer ? "text-text-muted cursor-default" : "bg-primary text-white hover:shadow-primary/30 hover:scale-105 active:scale-95 shadow-xl"
                                 )}
                             >
@@ -279,8 +279,8 @@ export function Teams() {
                                         <UsersRound className="w-7 h-7 text-primary" strokeWidth={2.5} />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl font-black text-text-primary tracking-tighter leading-none mb-2">{editingTeam ? 'Reconfigure Cluster' : 'Initialize Cluster'}</h2>
-                                        <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Resource unit metadata and authorization</p>
+                                        <h2 className="text-2xl font-bold text-text-primary tracking-tighter leading-none mb-2">{editingTeam ? 'Edit Team' : 'Create Team'}</h2>
+                                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Manage team details and department head</p>
                                     </div>
                                 </div>
                                 <button onClick={() => setShowModal(false)} className="p-3 bg-black/[0.03] hover:bg-black/[0.08] rounded-2xl transition-all text-text-muted hover:text-text-primary shadow-sm hover:scale-110 active:scale-90"><X className="w-5 h-5" strokeWidth={3} /></button>
@@ -289,37 +289,37 @@ export function Teams() {
 
                         <div className="px-10 py-10 space-y-8 bg-white">
                             <div className="space-y-3">
-                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Cluster Identifier *</label>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Team Name *</label>
                                 <input
                                     type="text"
                                     value={name}
                                     onChange={e => setName(e.target.value)}
-                                    placeholder="DESIGNATE CLUSTER NAME..."
-                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-black text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase"
+                                    placeholder="e.g. Engineering, Marketing..."
+                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase"
                                 />
                             </div>
                             <div className="space-y-3">
-                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Operational Protocol</label>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Description</label>
                                 <textarea
                                     value={description}
                                     onChange={e => setDescription(e.target.value)}
-                                    placeholder="DEFINE PRIMARY CLUSTER OBJECTIVES..."
+                                    placeholder="Brief description of the team's purpose..."
                                     rows={3}
-                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-black text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase resize-none custom-scrollbar"
+                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase resize-none custom-scrollbar"
                                 />
                             </div>
                             <div className="space-y-3">
-                                <label className="block text-[10px] font-black text-primary uppercase tracking-[0.3em] font-mono mb-1 flex items-center gap-2">
+                                <label className="block text-[10px] font-bold text-primary uppercase tracking-[0.3em] font-mono mb-1 flex items-center gap-2">
                                     <Shield className="w-3.5 h-3.5" strokeWidth={3} />
-                                    Cluster Authority
+                                    Team Manager
                                 </label>
                                 <div className="relative group">
                                     <select
                                         value={managerId}
                                         onChange={e => setManagerId(e.target.value)}
-                                        className="w-full pl-6 pr-12 py-4 bg-black/[0.02] border border-black/[0.05] rounded-2xl text-[13px] font-black text-text-primary appearance-none focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono uppercase cursor-pointer"
+                                        className="w-full pl-6 pr-12 py-4 bg-black/[0.02] border border-black/[0.05] rounded-2xl text-[13px] font-bold text-text-primary appearance-none focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono uppercase cursor-pointer"
                                     >
-                                        <option value="" className="bg-white">NO AUTHORITY ASSIGNED</option>
+                                        <option value="" className="bg-white">NO MANAGER ASSIGNED</option>
                                         {members.map(m => (
                                             <option key={m.id} value={m.id} className="bg-white">{m.full_name.toUpperCase()}</option>
                                         ))}
@@ -332,19 +332,19 @@ export function Teams() {
                         <div className="px-10 py-8 border-t border-black/[0.05] bg-black/[0.01] flex items-center justify-end gap-4">
                             <button
                                 onClick={() => setShowModal(false)}
-                                className="px-8 py-4 rounded-2xl border border-black/[0.1] text-[11px] font-black text-text-muted hover:text-text-primary hover:bg-white transition-all uppercase tracking-[0.2em] font-mono active:scale-95 shadow-sm"
+                                className="px-8 py-4 rounded-2xl border border-black/[0.1] text-[11px] font-bold text-text-muted hover:text-text-primary hover:bg-white transition-all uppercase tracking-[0.2em] font-mono active:scale-95 shadow-sm"
                             >
-                                ABORT
+                                CANCEL
                             </button>
                             <button
                                 onClick={handleSave}
                                 disabled={!name || isViewer}
                                 className={clsx(
-                                    "px-10 py-4 rounded-2xl text-[11px] font-black transition-all shadow-xl flex items-center gap-3 uppercase tracking-[0.3em] font-mono active:scale-95",
+                                    "px-10 py-4 rounded-2xl text-[11px] font-bold transition-all shadow-xl flex items-center gap-3 uppercase tracking-[0.3em] font-mono active:scale-95",
                                     isViewer || !name ? "bg-black/20 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-primary/30 hover:scale-[1.02]"
                                 )}
                             >
-                                {editingTeam ? 'SYNCHRONIZE UNIT' : 'INITIALIZE UNIT'}
+                                {editingTeam ? 'SAVE CHANGES' : 'CREATE TEAM'}
                             </button>
                         </div>
                     </div>
@@ -358,23 +358,23 @@ export function Teams() {
                         <div className="w-28 h-28 bg-rose-500/5 rounded-[40px] flex items-center justify-center mx-auto mb-10 shadow-inner border border-rose-500/10 rotate-6 group-hover:rotate-0 transition-transform duration-700">
                             <Trash2 className="w-12 h-12 text-rose-600" strokeWidth={2.5} />
                         </div>
-                        <h2 className="text-3xl font-black text-text-primary tracking-tighter mb-4 uppercase">Purge Cluster?</h2>
-                        <p className="text-text-muted font-black uppercase tracking-widest leading-relaxed mb-12 text-[11px] font-mono opacity-60">
-                            Operation will permanently decommission <span className="text-rose-600">"{deletingTeam.name.toUpperCase()}"</span>.
-                            Personnel assignments will be reset to standalone status.
+                         <h2 className="text-3xl font-bold text-text-primary tracking-tighter mb-4 uppercase">Delete Team?</h2>
+                        <p className="text-text-muted font-bold uppercase tracking-widest leading-relaxed mb-12 text-[11px] font-mono opacity-60">
+                            This will permanently delete <span className="text-rose-600">"{deletingTeam.name.toUpperCase()}"</span>.
+                            Team members will be unassigned from this team.
                         </p>
                         <div className="flex gap-4">
                             <button
                                 onClick={() => setDeletingTeam(null)}
-                                className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-text-muted hover:text-text-primary transition-all font-mono"
+                                className="flex-1 py-5 text-[11px] font-bold uppercase tracking-widest text-text-muted hover:text-text-primary transition-all font-mono"
                             >
-                                ABORT
+                                CANCEL
                             </button>
                             <button
                                 onClick={handleDelete}
-                                className="flex-[1.8] bg-rose-600 hover:bg-rose-700 text-white py-5 rounded-[24px] text-[11px] font-black uppercase tracking-[0.3em] transition-all shadow-xl shadow-rose-900/10 active:scale-95 font-mono"
+                                className="flex-[1.8] bg-rose-600 hover:bg-rose-700 text-white py-5 rounded-[24px] text-[11px] font-bold uppercase tracking-[0.3em] transition-all shadow-xl shadow-rose-900/10 active:scale-95 font-mono"
                             >
-                                CONFIRM PURGE
+                                CONFIRM DELETE
                             </button>
                         </div>
                     </div>
@@ -432,8 +432,8 @@ function ManageMembersModal({ team, allMembers, onClose, onSuccess, isViewer }: 
                                 <Users className="w-8 h-8 text-primary" strokeWidth={2.5} />
                             </div>
                             <div>
-                                <h2 className="text-3xl font-black text-text-primary tracking-tighter leading-none mb-2 uppercase">Personnel Registry</h2>
-                                <p className="text-[11px] font-black text-primary uppercase tracking-[0.3em] font-mono">{team.name.toUpperCase()} UNIT ROSTER</p>
+                                <h2 className="text-3xl font-bold text-text-primary tracking-tighter leading-none mb-2 uppercase">Team Members</h2>
+                                <p className="text-[11px] font-bold text-primary uppercase tracking-[0.3em] font-mono">{team.name.toUpperCase()} MEMBERS</p>
                             </div>
                         </div>
                         <button onClick={onClose} className="p-4 bg-black/[0.03] hover:bg-black/[0.08] rounded-2xl transition-all text-text-muted hover:text-text-primary shadow-sm hover:scale-110 active:scale-90"><X className="w-6 h-6" strokeWidth={3} /></button>
@@ -442,7 +442,7 @@ function ManageMembersModal({ team, allMembers, onClose, onSuccess, isViewer }: 
 
                 <div className="px-12 py-10 max-h-[55vh] overflow-y-auto space-y-4 custom-scrollbar bg-white">
                     <div className="space-y-4 mb-8">
-                        <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono px-2">Sector Intelligence Mapping ({allMembers.length} Total Nodes)</p>
+                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono px-2">Team Member Assignment ({allMembers.length} Registered)</p>
                         <div className="space-y-3">
                             {allMembers.map(m => {
                                 const isSelected = selectedIds.has(m.id);
@@ -466,14 +466,14 @@ function ManageMembersModal({ team, allMembers, onClose, onSuccess, isViewer }: 
                                     >
                                         <div className="flex items-center gap-6">
                                             <div className={clsx(
-                                                "w-14 h-14 rounded-[18px] flex items-center justify-center text-[13px] font-black transition-all shadow-sm border border-black/[0.03] group-hover/item:scale-110",
+                                                "w-14 h-14 rounded-[18px] flex items-center justify-center text-[13px] font-bold transition-all shadow-sm border border-black/[0.03] group-hover/item:scale-110",
                                                 isSelected ? "bg-primary text-white shadow-primary/20" : "bg-black/[0.03] text-text-primary"
                                             )}>
                                                 {m.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
                                             </div>
                                             <div className="text-left">
-                                                <p className="text-base font-black text-text-primary tracking-tight leading-none mb-2">{m.full_name.toUpperCase()}</p>
-                                                <p className="text-[10px] text-text-muted font-black uppercase tracking-[0.1em] font-mono opacity-60 truncate max-w-[240px]">{m.email}</p>
+                                                <p className="text-base font-bold text-text-primary tracking-tight leading-none mb-2">{m.full_name.toUpperCase()}</p>
+                                                <p className="text-[10px] text-text-muted font-bold uppercase tracking-[0.1em] font-mono opacity-60 truncate max-w-[240px]">{m.email}</p>
                                             </div>
                                         </div>
                                         <div className={clsx(
@@ -490,16 +490,16 @@ function ManageMembersModal({ team, allMembers, onClose, onSuccess, isViewer }: 
                 </div>
 
                 <div className="px-12 py-10 bg-black/[0.01] border-t border-black/[0.05] flex gap-6">
-                    <button onClick={onClose} className="flex-1 px-8 py-5 rounded-[20px] text-[11px] font-black uppercase tracking-[0.3em] text-text-muted hover:text-text-primary hover:bg-white transition-all font-mono active:scale-95 shadow-sm">ABORT MISSION</button>
+                    <button onClick={onClose} className="flex-1 px-8 py-5 rounded-[20px] text-[11px] font-bold uppercase tracking-[0.3em] text-text-muted hover:text-text-primary hover:bg-white transition-all font-mono active:scale-95 shadow-sm">CANCEL</button>
                     <button 
                         onClick={handleSave} 
                         disabled={loading || isViewer} 
                         className={clsx(
-                            "flex-[2.2] px-10 py-5 rounded-[24px] text-[11px] font-black uppercase tracking-[0.4em] transition-all shadow-2xl active:scale-95 disabled:opacity-30 font-mono",
+                            "flex-[2.2] px-10 py-5 rounded-[24px] text-[11px] font-bold uppercase tracking-[0.4em] transition-all shadow-2xl active:scale-95 disabled:opacity-30 font-mono",
                             isViewer ? "bg-black/10 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-primary/30 hover:scale-[1.02]"
                         )}
                     >
-                        {loading ? 'SYNCHRONIZING...' : (isViewer ? 'REGISTRY LOCKED' : 'COMMIT ROSTER')}
+                        {loading ? 'SAVING...' : (isViewer ? 'LOCKED' : 'SAVE CHANGES')}
                     </button>
                 </div>
             </div>
@@ -520,29 +520,29 @@ function TeamItem({ team, mode, onEdit, onManage, onDelete, isViewer }: {
     if (mode === 'list') {
         return (
             <div className="px-10 py-8 flex items-center group/row hover:bg-black/[0.01] transition-all duration-500">
-                <div className="w-16 h-16 rounded-[24px] bg-primary/5 border border-primary/20 flex items-center justify-center text-primary font-black text-base mr-10 group-hover/row:scale-110 transition-transform duration-700 shadow-sm font-mono">
+                <div className="w-16 h-16 rounded-[24px] bg-primary/5 border border-primary/20 flex items-center justify-center text-primary font-bold text-base mr-10 group-hover/row:scale-110 transition-transform duration-700 shadow-sm font-mono">
                     {initials}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h3 className="font-black text-text-primary tracking-tight text-xl leading-tight group-hover/row:text-primary transition-colors duration-500 mb-1">{team.name}</h3>
-                    <p className="text-[10px] text-text-muted font-black uppercase tracking-[0.2em] font-mono truncate max-w-md">{team.description || 'GLOBAL PROTOCOL UNDEFINED'}</p>
+                    <h3 className="font-bold text-text-primary tracking-tight text-xl leading-tight group-hover/row:text-primary transition-colors duration-500 mb-1">{team.name}</h3>
+                    <p className="text-[10px] text-text-muted font-bold uppercase tracking-[0.2em] font-mono truncate max-w-md">{team.description || 'GLOBAL PROTOCOL UNDEFINED'}</p>
                 </div>
                 <div className="px-12 shrink-0">
-                    <p className="text-[9px] font-black text-text-muted/40 uppercase tracking-[0.3em] mb-3 font-mono">Authority</p>
+                    <p className="text-[9px] font-bold text-text-muted/40 uppercase tracking-[0.3em] mb-3 font-mono">Authority</p>
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
                             <Shield className="w-4 h-4 text-primary" strokeWidth={2.5} />
                         </div>
-                        <span className="text-[13px] font-black text-text-primary tracking-tight uppercase font-mono">{team.manager_name || 'AUTONOMOUS'}</span>
+                        <span className="text-[13px] font-bold text-text-primary tracking-tight uppercase font-mono">{team.manager_name || 'AUTONOMOUS'}</span>
                     </div>
                 </div>
                 <div className="px-12 shrink-0 border-x border-black/[0.03]">
-                    <p className="text-[9px] font-black text-text-muted/40 uppercase tracking-[0.3em] mb-3 font-mono">Registry Size</p>
-                    <div className="flex items-center gap-3 text-primary font-black">
+                    <p className="text-[9px] font-bold text-text-muted/40 uppercase tracking-[0.3em] mb-3 font-mono">Member Count</p>
+                    <div className="flex items-center gap-3 text-primary font-bold">
                         <div className="w-8 h-8 rounded-xl bg-black/[0.03] flex items-center justify-center border border-black/[0.05] shadow-sm">
                             <UsersRound className="w-4 h-4 text-primary" strokeWidth={2.5} />
                         </div>
-                        <span className="text-[13px] font-black font-mono tracking-tighter">{team.member_count} UNITS</span>
+                        <span className="text-[13px] font-bold font-mono tracking-tighter">{team.member_count} MEMBERS</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-3 ml-auto opacity-0 group-hover/row:opacity-100 transition-all duration-500 pr-4">
@@ -600,11 +600,11 @@ function TeamItem({ team, mode, onEdit, onManage, onDelete, isViewer }: {
             </div>
 
             <div className="mb-12 relative">
-                <div className="w-24 h-24 rounded-[32px] bg-primary/5 border border-primary/10 flex items-center justify-center font-black text-primary text-3xl group-hover/card:scale-110 group-hover/card:rotate-6 transition-all duration-1000 mb-10 shadow-inner font-mono">
+                <div className="w-24 h-24 rounded-[32px] bg-primary/5 border border-primary/10 flex items-center justify-center font-bold text-primary text-3xl group-hover/card:scale-110 group-hover/card:rotate-6 transition-all duration-1000 mb-10 shadow-inner font-mono">
                     {initials}
                 </div>
-                <h3 className="text-3xl font-black text-text-primary tracking-tighter mb-4 group-hover/card:text-primary transition-colors duration-500">{team.name}</h3>
-                <p className="text-[13px] text-text-muted font-black uppercase tracking-widest leading-relaxed line-clamp-2 min-h-[48px] font-mono opacity-60">
+                <h3 className="text-3xl font-bold text-text-primary tracking-tighter mb-4 group-hover/card:text-primary transition-colors duration-500">{team.name}</h3>
+                <p className="text-[13px] text-text-muted font-bold uppercase tracking-widest leading-relaxed line-clamp-2 min-h-[48px] font-mono opacity-60">
                     {team.description || "Operational protocol for this unit remains undefined."}
                 </p>
             </div>
@@ -616,8 +616,8 @@ function TeamItem({ team, mode, onEdit, onManage, onDelete, isViewer }: {
                             <Shield className="w-6 h-6 stroke-[3]" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] leading-none mb-2 font-mono">Authority Node</p>
-                            <p className="text-base font-black text-text-primary tracking-tight uppercase font-mono">{team.manager_name || 'Autonomous'}</p>
+                            <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] leading-none mb-2 font-mono">Team Lead</p>
+                            <p className="text-base font-bold text-text-primary tracking-tight uppercase font-mono">{team.manager_name || 'No Manager'}</p>
                         </div>
                     </div>
                 </div>
@@ -626,26 +626,26 @@ function TeamItem({ team, mode, onEdit, onManage, onDelete, isViewer }: {
                     <div className="flex items-center gap-6">
                         <div className="flex -space-x-4">
                             {[...Array(Math.min(3, team.member_count))].map((_, i) => (
-                                <div key={i} className="w-12 h-12 rounded-[18px] bg-white border-2 border-primary/20 flex items-center justify-center text-[11px] font-black text-primary shadow-xl transition-transform hover:scale-110 hover:z-10 group-hover/card:animate-pulse" style={{ animationDelay: `${i * 200}ms` }}>
+                                <div key={i} className="w-12 h-12 rounded-[18px] bg-white border-2 border-primary/20 flex items-center justify-center text-[11px] font-bold text-primary shadow-xl transition-transform hover:scale-110 hover:z-10 group-hover/card:animate-pulse" style={{ animationDelay: `${i * 200}ms` }}>
                                     <UsersRound className="w-5 h-5" strokeWidth={2.5} />
                                 </div>
                             ))}
                             {team.member_count > 3 && (
-                                <div className="w-12 h-12 rounded-[18px] bg-primary border-2 border-white flex items-center justify-center text-[11px] font-black text-white shadow-xl scale-110 z-10">
+                                <div className="w-12 h-12 rounded-[18px] bg-primary border-2 border-white flex items-center justify-center text-[11px] font-bold text-white shadow-xl scale-110 z-10">
                                     +{team.member_count - 3}
                                 </div>
                             )}
                         </div>
                         <div>
-                            <span className="block text-[10px] font-black text-text-muted uppercase tracking-[0.2em] font-mono leading-none mb-1">Registry Units</span>
-                            <span className="text-[15px] font-black text-text-primary font-mono tracking-tighter">{team.member_count} ACTIVE</span>
+                            <span className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono leading-none mb-1">Members</span>
+                            <span className="text-[15px] font-bold text-text-primary font-mono tracking-tighter">{team.member_count} ACTIVE</span>
                         </div>
                     </div>
                     <button 
                         onClick={onManage}
                         disabled={isViewer}
                         className={clsx(
-                            "flex items-center gap-2 font-black uppercase tracking-[0.3em] text-[10px] transition-all group/btn font-mono p-4 rounded-xl",
+                            "flex items-center gap-2 font-bold uppercase tracking-[0.3em] text-[10px] transition-all group/btn font-mono p-4 rounded-xl",
                             isViewer ? "text-text-muted cursor-default" : "text-primary hover:bg-primary/5 active:scale-95"
                         )}
                     >

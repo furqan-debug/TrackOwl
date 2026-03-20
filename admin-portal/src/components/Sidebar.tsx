@@ -74,7 +74,7 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
         if (!badge || effectiveCollapsed) return null;
         if (badge === 'new') {
             return (
-                <span className="flex items-center gap-1 bg-primary/10 text-primary text-[10px] font-black uppercase px-2 py-0.5 rounded-full ml-2 shrink-0 tracking-widest">
+                <span className="flex items-center gap-1 bg-primary/10 text-primary text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ml-2 shrink-0 tracking-widest">
                     New
                 </span>
             );
@@ -101,8 +101,8 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
                 </div>
                 {!effectiveCollapsed && (
                     <div className="flex flex-col">
-                        <span className="text-xl font-black text-text-primary tracking-tighter truncate font-head leading-none">Trackora</span>
-                        <span className="text-[9px] font-black text-primary uppercase tracking-[0.2em] mt-1 opacity-80">Enterprise</span>
+                        <span className="text-xl font-bold text-text-primary tracking-tighter truncate font-head leading-none">Trackora</span>
+                        <span className="text-[9px] font-bold text-primary uppercase tracking-[0.2em] mt-1 opacity-80">Enterprise</span>
                     </div>
                 )}
             </div>
@@ -114,7 +114,7 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
                         <button
                             type="button"
                             onClick={() => setFavoritesExpanded(!favoritesExpanded)}
-                            className="w-full flex items-center justify-between py-2 text-[10px] font-black text-text-muted uppercase tracking-[0.2em] hover:text-text-primary transition-colors group"
+                            className="w-full flex items-center justify-between py-2 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] hover:text-text-primary transition-colors group"
                             aria-expanded={favoritesExpanded}
                         >
                             <div className="flex items-center gap-2.5">
@@ -138,7 +138,7 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
                                         className={clsx(
                                             "flex items-center gap-3 px-3 py-2.5 text-[13px] rounded-xl transition-all group",
                                             location.pathname === fav.path
-                                                ? "bg-primary/5 text-primary font-black shadow-sm border border-primary/10"
+                                                ? "bg-primary/5 text-primary font-bold shadow-sm border border-primary/10"
                                                 : "text-text-secondary hover:text-text-primary hover:bg-black/[0.02]"
                                         )}
                                     >
@@ -156,7 +156,7 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
                 {/* Main Navigation */}
                 <nav className="space-y-2" aria-label="Primary">
                     {!effectiveCollapsed && (
-                        <p className="px-4 text-[10px] font-black text-text-muted uppercase tracking-[0.3em] mb-4 opacity-40">Operational Matrix</p>
+                        <p className="px-4 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] mb-4 opacity-40">Operational Matrix</p>
                     )}
                     {filteredNav.map((group) => {
                         const hasChildren = group.children && group.children.length > 0;
@@ -222,7 +222,7 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
                                                     className={clsx(
                                                         'flex items-center justify-between px-3 py-2.5 text-[13px] rounded-xl transition-all group',
                                                         isActive 
-                                                            ? 'text-primary font-black bg-primary/5' 
+                                                            ? 'text-primary font-bold bg-primary/5' 
                                                             : 'text-text-secondary hover:bg-black/[0.01] hover:text-text-primary'
                                                     )}
                                                 >
@@ -243,15 +243,15 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
             <div className="mt-auto border-t border-black/[0.05] bg-white/40 p-5 relative z-20">
                  <div className={clsx("flex items-center gap-3.5 p-2 rounded-2xl transition-all hover:bg-black/[0.02] cursor-pointer group mb-3", effectiveCollapsed ? "justify-center" : "")}>
                     <div className="relative shrink-0">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#506ef8] to-[#3d59e0] flex items-center justify-center text-white font-black text-sm shadow-lg shadow-primary/20 uppercase font-head">
+                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#506ef8] to-[#3d59e0] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20 uppercase font-head">
                             {profile?.full_name?.charAt(0) || '?'}
                         </div>
                         <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 border-2 border-white rounded-full shadow-sm" />
                     </div>
                     {!effectiveCollapsed && (
                         <div className="min-w-0 flex-1">
-                            <p className="text-[14px] font-black text-text-primary truncate font-head leading-none mb-1">{profile?.full_name}</p>
-                            <p className="text-[10px] text-primary font-black uppercase tracking-widest opacity-80 font-mono">Role: {profile?.role}</p>
+                            <p className="text-[14px] font-bold text-text-primary truncate font-head leading-none mb-1">{profile?.full_name}</p>
+                            <p className="text-[10px] text-primary font-bold uppercase tracking-widest opacity-80 font-mono">Role: {profile?.role}</p>
                         </div>
                     )}
                 </div>
@@ -260,7 +260,7 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
                     type="button"
                     onClick={() => signOut()}
                     className={clsx(
-                        "w-full flex items-center rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] text-rose-500 hover:bg-rose-500/10 transition-all group py-1",
+                        "w-full flex items-center rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em] text-rose-500 hover:bg-rose-500/10 transition-all group py-1",
                         effectiveCollapsed ? "justify-center p-3.5" : "px-4 py-3 gap-3.5"
                     )}
                 >

@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { 
-    Clock, Users, FolderOpen, CircleDollarSign, 
-    Camera, Zap, 
+import {
+    Clock, Users, FolderOpen, CircleDollarSign,
+    Camera, Zap,
     ArrowUpRight, BarChart3, Globe
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
@@ -164,21 +164,21 @@ export function Dashboard() {
     const weekLabel = `${new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay() + 6).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
     return (
-        <PageLayout title="Command Center" description={`Global operational metrics • ${weekLabel}`} maxWidth="full">
+        <PageLayout title="Dashboard" description={`Overview of your team's activity • ${weekLabel}`} maxWidth="full">
             {/* KPI Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-10 animate-in slide-in-from-top-4 duration-700">
                 <KpiCard icon={<Clock className="w-5 h-5" />} label="Tracked Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} trend="+14%" trendVariant="positive" />
-                <KpiCard icon={<BarChart3 className="w-5 h-5" />} label="Weekly Volume" value={loading ? '—' : fmtTime(stats.weekMinutes)} trend="+8%" trendVariant="positive" />
-                <KpiCard icon={<CircleDollarSign className="w-5 h-5" />} label="Cost Projection" value={loading ? '—' : `$${stats.weekCost.toLocaleString()}`} trend="-2%" trendVariant="negative" />
-                <KpiCard icon={<Users className="w-5 h-5" />} label="Active Units" value={loading ? '—' : stats.activeMembers.toString()} sub="Total personnel" />
-                <KpiCard icon={<Globe className="w-5 h-5" />} label="Active Clusters" value={loading ? '—' : stats.activeProjects.toString()} sub="Project nodes" />
-                <KpiCard icon={<Camera className="w-5 h-5" />} label="Visual Validation" value={loading ? '—' : stats.screenshotCount.toString()} trend="+124" trendVariant="positive" />
+                <KpiCard icon={<BarChart3 className="w-5 h-5" />} label="Weekly Activity" value={loading ? '—' : fmtTime(stats.weekMinutes)} trend="+8%" trendVariant="positive" />
+                <KpiCard icon={<CircleDollarSign className="w-5 h-5" />} label="Estimated Cost" value={loading ? '—' : `$${stats.weekCost.toLocaleString()}`} trend="-2%" trendVariant="negative" />
+                <KpiCard icon={<Users className="w-5 h-5" />} label="Active Members" value={loading ? '—' : stats.activeMembers.toString()} sub="Total personnel" />
+                <KpiCard icon={<Globe className="w-5 h-5" />} label="Active Projects" value={loading ? '—' : stats.activeProjects.toString()} sub="Project tracking" />
+                <KpiCard icon={<Camera className="w-5 h-5" />} label="Total Screenshots" value={loading ? '—' : stats.screenshotCount.toString()} trend="+124" trendVariant="positive" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
                 {/* Weekly Trends */}
                 <div className="lg:col-span-8">
-                    <Card title="Engagement Velocity Trend">
+                    <Card title="Activity Trends">
                         {loading ? (
                             <LoadingState className="h-[300px]" />
                         ) : (
@@ -192,22 +192,22 @@ export function Dashboard() {
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(41, 61, 99, 0.05)" />
-                                        <XAxis 
-                                            dataKey="day" 
-                                            axisLine={false} 
-                                            tickLine={false} 
-                                            tick={{ fill: '#5c6b8a', fontSize: 10, fontWeight: 900 }}
+                                        <XAxis
+                                            dataKey="day"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fill: '#5c6b8a', fontSize: 10, fontWeight: 700 }}
                                             dy={15}
                                         />
                                         <YAxis hide />
-                                        <Tooltip 
+                                        <Tooltip
                                             cursor={{ fill: 'rgba(80, 110, 248, 0.02)' }}
                                             content={({ active, payload }) => {
                                                 if (active && payload && payload.length) {
                                                     return (
                                                         <div className="glass border border-primary/10 rounded-2xl px-5 py-4 shadow-xl">
-                                                            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-1.5 font-mono">{payload[0].payload.day}</p>
-                                                            <p className="text-xl font-black text-text-primary tracking-tighter leading-none">{fmtTime(payload[0].value as number)}</p>
+                                                            <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1.5 font-mono">{payload[0].payload.day}</p>
+                                                            <p className="text-xl font-bold text-text-primary tracking-tighter leading-tight">{fmtTime(payload[0].value as number)}</p>
                                                         </div>
                                                     );
                                                 }
@@ -219,9 +219,9 @@ export function Dashboard() {
                                 </ResponsiveContainer>
                             </div>
                         )}
-                        <div className="flex items-center justify-center gap-8 mt-10 pt-10 border-t border-black/[0.03] font-mono text-[9px] uppercase tracking-[0.3em] font-black text-text-muted/60">
-                            <div className="flex items-center gap-2.5"><div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" /> Pulse Velocity</div>
-                            <div className="flex items-center gap-2.5"><div className="w-2.5 h-2.5 rounded-full bg-black/5" /> Target Baseline</div>
+                        <div className="flex items-center justify-center gap-8 mt-10 pt-10 border-t border-black/[0.03] font-mono text-[9px] uppercase tracking-[0.3em] font-bold text-text-muted/60">
+                            <div className="flex items-center gap-2.5"><div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" /> Activity Volume</div>
+                            <div className="flex items-center gap-2.5"><div className="w-2.5 h-2.5 rounded-full bg-black/5" /> Weekly Average</div>
                         </div>
                     </Card>
                 </div>
@@ -232,39 +232,39 @@ export function Dashboard() {
                         {loading ? (
                             <LoadingState className="h-[300px]" />
                         ) : projects.length === 0 ? (
-                            <EmptyState icon={<FolderOpen className="w-10 h-10 opacity-20" />} title="No Data" description="Registry is void of activity" />
+                            <EmptyState icon={<FolderOpen className="w-10 h-10 opacity-20" />} title="No Data" description="No project activity recorded yet" />
                         ) : (
                             <div className="space-y-8 mt-4">
                                 {projects.map((p) => (
                                     <div key={p.id} className="group cursor-default">
                                         <div className="flex items-center justify-between mb-3.5">
                                             <div className="flex items-center gap-3.5">
-                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[11px] font-black shadow-lg shadow-black/5 group-hover:scale-110 transition-transform"
+                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[11px] font-bold shadow-lg shadow-black/5 group-hover:scale-110 transition-transform"
                                                     style={{ backgroundColor: p.color }}>
                                                     {p.name.charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="text-sm font-black text-text-primary tracking-tight group-hover:text-primary transition-colors leading-none">{p.name}</span>
+                                                <span className="text-sm font-bold text-text-primary tracking-tight group-hover:text-primary transition-colors leading-tight">{p.name}</span>
                                             </div>
-                                            <span className="text-[10px] font-black text-text-secondary bg-black/[0.03] px-3.5 py-1.5 rounded-xl uppercase tracking-widest font-mono border border-black/[0.03]">
+                                            <span className="text-[10px] font-bold text-text-secondary bg-black/[0.03] px-3.5 py-1.5 rounded-xl uppercase tracking-widest font-mono border border-black/[0.03]">
                                                 {fmtTime(p.minutes)}
                                             </span>
                                         </div>
                                         <div className="h-2 bg-black/[0.03] rounded-full overflow-hidden w-full p-[1px]">
-                                            <div 
+                                            <div
                                                 className="h-full rounded-full transition-all duration-1000 ease-out"
-                                                style={{ 
-                                                    width: `${Math.round((p.minutes / maxProjectMins) * 100)}%`, 
+                                                style={{
+                                                    width: `${Math.round((p.minutes / maxProjectMins) * 100)}%`,
                                                     backgroundColor: p.color,
                                                     boxShadow: `0 0 12px ${p.color}20`
-                                                }} 
+                                                }}
                                             />
                                         </div>
                                     </div>
                                 ))}
                             </div>
                         )}
-                        <button className="w-full mt-10 py-4 glass border border-primary/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-text-muted hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-3 group shadow-sm font-mono">
-                            CLUSTER ANALYSIS
+                        <button className="w-full mt-10 py-4 glass border border-primary/10 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] text-text-muted hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-3 group shadow-sm font-mono">
+                            VIEW DETAILS
                             <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" strokeWidth={2.5} />
                         </button>
                     </Card>
@@ -272,16 +272,16 @@ export function Dashboard() {
             </div>
 
             {/* Recent Sessions */}
-            <Card title="Operational Pulse" noPadding>
+            <Card title="Recent Activity" noPadding>
                 <div className="divide-y divide-black/[0.03] overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead>
                             <tr className="bg-black/[0.01]">
-                                <th className="px-10 py-7 text-[10px] font-black text-text-muted uppercase tracking-[0.3em]">Designated Member</th>
-                                <th className="px-10 py-7 text-[10px] font-black text-text-muted uppercase tracking-[0.3em]">Active Cluster</th>
-                                <th className="px-10 py-7 text-[10px] font-black text-text-muted uppercase tracking-[0.3em]">Protocol Start</th>
-                                <th className="px-10 py-7 text-[10px] font-black text-text-muted uppercase tracking-[0.3em]">Session Intensity</th>
-                                <th className="px-10 py-7 text-[10px] font-black text-text-muted uppercase tracking-[0.3em] text-right">Status</th>
+                                <th className="px-10 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em]">Team Member</th>
+                                <th className="px-10 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em]">Project</th>
+                                <th className="px-10 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em]">Started At</th>
+                                <th className="px-10 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em]">Duration</th>
+                                <th className="px-10 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] text-right">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-black/[0.03]">
@@ -325,7 +325,7 @@ function RecentSessionsRows() {
     }, []);
 
     if (loading) return <tr><td colSpan={5} className="py-24 text-center"><LoadingState /></td></tr>;
-    if (sessions.length === 0) return <tr><td colSpan={5} className="py-24 text-center opacity-40"><EmptyState icon={<Zap className="w-10 h-10" />} title="No Sessions" description="Operational matrix is currently idle" /></td></tr>;
+    if (sessions.length === 0) return <tr><td colSpan={5} className="py-24 text-center opacity-40"><EmptyState icon={<Zap className="w-10 h-10" />} title="No Sessions" description="No activity recorded yet" /></td></tr>;
 
     return (
         <>
@@ -333,19 +333,19 @@ function RecentSessionsRows() {
                 const startMs = new Date(s.started_at).getTime();
                 const { endMs, isLive, isStale } = effectiveEnd(s.started_at, s.ended_at);
                 const mins = Math.max(0, Math.round((endMs - startMs) / 60000));
-                const memberName = (s.user_id && memberMap[s.user_id]) || 'System Entity';
+                const memberName = (s.user_id && memberMap[s.user_id]) || 'Unknown User';
                 const proj = s.project_id && projectMap[s.project_id];
 
                 return (
                     <tr key={s.id} className="group hover:bg-black/[0.01] transition-all">
                         <td className="px-10 py-7">
                             <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary font-black text-[12px] group-hover:scale-110 transition-transform shadow-sm">
+                                <div className="w-11 h-11 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary font-bold text-[12px] group-hover:scale-110 transition-transform shadow-sm">
                                     {memberName.charAt(0)}
                                 </div>
                                 <div>
-                                    <div className="font-black text-text-primary text-[15px] tracking-tight leading-none group-hover:text-primary transition-colors mb-1.5">{memberName}</div>
-                                    <div className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em] font-mono opacity-70">UID: {s.user_id?.slice(0, 8) || 'SYSTEM'}</div>
+                                    <div className="font-bold text-text-primary text-[15px] tracking-tight leading-tight group-hover:text-primary transition-colors mb-1.5">{memberName}</div>
+                                    <div className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-70">ID: {s.user_id?.slice(0, 8) || 'SYSTEM'}</div>
                                 </div>
                             </div>
                         </td>
@@ -353,32 +353,32 @@ function RecentSessionsRows() {
                             {proj ? (
                                 <div className="flex items-center gap-3">
                                     <div className="w-2.5 h-2.5 rounded-full shadow-lg" style={{ backgroundColor: proj.color, boxShadow: `0 0 10px ${proj.color}40` }} />
-                                    <span className="text-[11px] font-black text-text-secondary uppercase tracking-[0.2em] font-mono">{proj.name}</span>
+                                    <span className="text-[11px] font-bold text-text-secondary uppercase tracking-[0.2em] font-mono">{proj.name}</span>
                                 </div>
                             ) : (
-                                <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] opacity-40 font-mono">Unassigned Node</span>
+                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] opacity-40 font-mono">Unassigned</span>
                             )}
                         </td>
-                        <td className="px-10 py-7 text-[11px] font-black text-text-muted uppercase tracking-[0.2em] font-mono group-hover:text-text-primary transition-colors">
+                        <td className="px-10 py-7 text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono group-hover:text-text-primary transition-colors">
                             {new Date(s.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </td>
                         <td className="px-10 py-7">
-                            <span className="text-base font-black text-text-primary font-mono tracking-tighter">
+                            <span className="text-base font-bold text-text-primary font-mono tracking-tighter">
                                 {isStale ? '0h 00m' : fmtTime(mins)}
                             </span>
                         </td>
                         <td className="px-10 py-7 text-right">
                             {isLive ? (
-                                <span className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600 bg-emerald-500/5 border border-emerald-500/10 shadow-sm font-mono">
+                                <span className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-600 bg-emerald-500/5 border border-emerald-500/10 shadow-sm font-mono">
                                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                    Active Stream
+                                    Tracking Active
                                 </span>
                             ) : isStale ? (
-                                <span className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] text-amber-600 bg-amber-500/5 border border-amber-500/10 font-mono">
+                                <span className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-[9px] font-bold uppercase tracking-[0.2em] text-amber-600 bg-amber-500/5 border border-amber-500/10 font-mono">
                                     Sync Lost
                                 </span>
                             ) : (
-                                <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] opacity-40 font-mono">Recorded</span>
+                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] opacity-40 font-mono">Recorded</span>
                             )}
                         </td>
                     </tr>

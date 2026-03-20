@@ -152,9 +152,9 @@ export function Clients() {
                             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
                                 <Building2 className="w-6 h-6 text-primary" strokeWidth={2.5} />
                             </div>
-                            <h1 className="text-3xl font-black text-text-primary tracking-tighter">Partner Ecosystem</h1>
+                            <h1 className="text-3xl font-bold text-text-primary tracking-tighter">Partner Ecosystem</h1>
                         </div>
-                        <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] font-mono leading-relaxed">Strategic business alliances and jurisdictional entity registries</p>
+                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono leading-relaxed">Strategic business alliances and jurisdictional entity registries</p>
                     </div>
 
                     <div className="flex items-center gap-5">
@@ -162,7 +162,7 @@ export function Clients() {
                             onClick={handleOpenCreate}
                             disabled={isViewer}
                             className={clsx(
-                                "flex items-center gap-3 px-10 py-4 rounded-2xl text-[11px] font-black uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 font-mono",
+                                "flex items-center gap-3 px-10 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 font-mono",
                                 isViewer ? "bg-black/5 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-primary/30 hover:scale-[1.02]"
                             )}
                         >
@@ -210,7 +210,7 @@ export function Clients() {
                             placeholder="QUERY PARTNER REGISTRY OR CORPORATE ID..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-15 pr-8 py-5 bg-white border border-black/[0.05] rounded-[24px] text-[13px] font-black text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-8 focus:ring-primary/5 focus:border-primary/20 transition-all shadow-sm font-mono uppercase"
+                            className="w-full pl-15 pr-8 py-5 bg-white border border-black/[0.05] rounded-[24px] text-[13px] font-bold text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-8 focus:ring-primary/5 focus:border-primary/20 transition-all shadow-sm font-mono uppercase"
                         />
                     </div>
                     <div className="flex items-center bg-black/[0.02] border border-black/[0.05] rounded-[24px] p-1.5 shadow-inner">
@@ -219,7 +219,7 @@ export function Clients() {
                                 key={s}
                                 onClick={() => setStatusFilter(s)}
                                 className={clsx(
-                                    "px-8 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] transition-all duration-300 font-mono",
+                                    "px-8 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 font-mono",
                                     statusFilter === s ? "bg-white text-primary shadow-lg ring-1 ring-black/[0.05]" : "text-text-muted hover:text-text-primary hover:bg-black/[0.02]"
                                 )}
                             >
@@ -233,9 +233,9 @@ export function Clients() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-black/[0.03] bg-black/[0.01]">
-                                <th className="px-10 py-8 text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Affiliate / Corporation</th>
-                                <th className="px-10 py-8 text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Secure Contact</th>
-                                <th className="px-10 py-8 text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Status Status</th>
+                                <th className="px-10 py-8 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Affiliate / Corporation</th>
+                                <th className="px-10 py-8 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Secure Contact</th>
+                                <th className="px-10 py-8 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Status Status</th>
                                 <th className="px-10 py-8 w-20"></th>
                             </tr>
                         </thead>
@@ -245,7 +245,7 @@ export function Clients() {
                                     <td colSpan={4} className="py-40 text-center">
                                         <div className="flex flex-col items-center gap-6">
                                             <Loader2 className="w-12 h-12 text-primary animate-spin" strokeWidth={3} />
-                                            <span className="text-[11px] font-black text-text-muted uppercase tracking-[0.5em] animate-pulse font-mono">Syncing Matrix Core...</span>
+                                            <span className="text-[11px] font-bold text-text-muted uppercase tracking-[0.5em] animate-pulse font-mono">Syncing Matrix Core...</span>
                                         </div>
                                     </td>
                                 </tr>
@@ -257,8 +257,8 @@ export function Clients() {
                                                 <Building2 className="w-16 h-16 text-text-muted/20" strokeWidth={1.5} />
                                             </div>
                                             <div className="space-y-4">
-                                                <h3 className="text-2xl font-black text-text-primary tracking-tighter">No Entities Found</h3>
-                                                <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] font-mono italic">Strategic registry remains void of affiliate data</p>
+                                                <h3 className="text-2xl font-bold text-text-primary tracking-tighter">No Entities Found</h3>
+                                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono italic">Strategic registry remains void of affiliate data</p>
                                             </div>
                                         </div>
                                     </td>
@@ -272,13 +272,13 @@ export function Clients() {
                                                     <Building2 className="w-7 h-7 text-primary" strokeWidth={2.5} />
                                                 </div>
                                                 <div>
-                                                    <div className="font-black text-text-primary text-xl tracking-tighter group-hover/row:text-primary transition-colors duration-500 mb-1">{client.name}</div>
-                                                    <div className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] font-mono opacity-60">{client.company.toUpperCase()}</div>
+                                                    <div className="font-bold text-text-primary text-xl tracking-tighter group-hover/row:text-primary transition-colors duration-500 mb-1">{client.name}</div>
+                                                    <div className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-60">{client.company.toUpperCase()}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-10 py-8">
-                                            <div className="flex items-center gap-4 text-[13px] font-black text-text-muted group-hover/row:text-text-primary transition-colors duration-500 font-mono uppercase">
+                                            <div className="flex items-center gap-4 text-[13px] font-bold text-text-muted group-hover/row:text-text-primary transition-colors duration-500 font-mono uppercase">
                                                 <div className="w-10 h-10 rounded-[14px] bg-black/[0.03] flex items-center justify-center border border-black/[0.05] shadow-sm">
                                                     <Mail className="w-4 h-4" strokeWidth={2.5} />
                                                 </div>
@@ -290,7 +290,7 @@ export function Clients() {
                                                 onClick={() => toggleStatus(client)}
                                                 disabled={isViewer}
                                                 className={clsx(
-                                                    "inline-flex items-center gap-4 px-6 py-3 rounded-[18px] text-[10px] font-black uppercase tracking-[0.3em] transition-all duration-500 font-mono shadow-sm",
+                                                    "inline-flex items-center gap-4 px-6 py-3 rounded-[18px] text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-500 font-mono shadow-sm",
                                                     client.status === 'Active'
                                                         ? "bg-emerald-50 text-emerald-600 border border-emerald-500/20"
                                                         : "bg-black/[0.03] text-text-muted border border-black/[0.05]",
@@ -345,8 +345,8 @@ export function Clients() {
                                         <Building2 className="w-7 h-7 text-primary" strokeWidth={2.5} />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl font-black text-text-primary tracking-tighter leading-none mb-2">{editClient ? 'Reconfigure Alliance' : 'Establish Alliance'}</h2>
-                                        <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">Affiliate entity metadata and protocols</p>
+                                        <h2 className="text-2xl font-bold text-text-primary tracking-tighter leading-none mb-2">{editClient ? 'Reconfigure Alliance' : 'Establish Alliance'}</h2>
+                                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Affiliate entity metadata and protocols</p>
                                     </div>
                                 </div>
                                 <button onClick={handleCloseModal} className="p-3 bg-black/[0.03] hover:bg-black/[0.08] rounded-2xl transition-all text-text-muted hover:text-text-primary shadow-sm hover:scale-110 active:scale-90"><X className="w-5 h-5" strokeWidth={3} /></button>
@@ -355,36 +355,36 @@ export function Clients() {
 
                         <form onSubmit={handleSubmit} className="px-10 py-10 space-y-8 bg-white">
                             <div className="space-y-3">
-                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Entity Head Representative *</label>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Entity Head Representative *</label>
                                 <input
                                     type="text"
                                     required
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="DESIGNATE FULL NAME..."
-                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-black text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase"
+                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase"
                                 />
                             </div>
                             <div className="space-y-3">
-                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Secure Communication Hub (Email) *</label>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Secure Communication Hub (Email) *</label>
                                 <input
                                     type="email"
                                     required
                                     value={formData.email}
                                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                                     placeholder="SECURE@ENTITY.DOMAIN..."
-                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-black text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase"
+                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase"
                                 />
                             </div>
                             <div className="space-y-3">
-                                <label className="block text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Corporation / Parent Entity *</label>
+                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Corporation / Parent Entity *</label>
                                 <input
                                     type="text"
                                     required
                                     value={formData.company}
                                     onChange={e => setFormData({ ...formData, company: e.target.value })}
                                     placeholder="PARENT ORGANIZATION IDENTIFIER..."
-                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-black text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase"
+                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase"
                                 />
                             </div>
 
@@ -392,7 +392,7 @@ export function Clients() {
                                 <button
                                     type="button"
                                     onClick={handleCloseModal}
-                                    className="flex-1 px-8 py-5 rounded-2xl border border-black/[0.1] text-[11px] font-black text-text-muted hover:text-text-primary hover:bg-white transition-all uppercase tracking-[0.2em] font-mono active:scale-95 shadow-sm"
+                                    className="flex-1 px-8 py-5 rounded-2xl border border-black/[0.1] text-[11px] font-bold text-text-muted hover:text-text-primary hover:bg-white transition-all uppercase tracking-[0.2em] font-mono active:scale-95 shadow-sm"
                                 >
                                     ABORT
                                 </button>
@@ -400,7 +400,7 @@ export function Clients() {
                                     type="submit"
                                     disabled={saving || isViewer}
                                     className={clsx(
-                                        "flex-[2.2] px-8 py-5 rounded-[24px] text-[11px] font-black transition-all shadow-xl flex items-center justify-center gap-3 uppercase tracking-[0.3em] font-mono active:scale-95",
+                                        "flex-[2.2] px-8 py-5 rounded-[24px] text-[11px] font-bold transition-all shadow-xl flex items-center justify-center gap-3 uppercase tracking-[0.3em] font-mono active:scale-95",
                                         isViewer ? "bg-black/20 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-primary/30 hover:scale-[1.02]"
                                     )}
                                 >
@@ -422,21 +422,21 @@ export function Clients() {
                         <div className="w-28 h-28 bg-rose-500/5 rounded-[40px] flex items-center justify-center mx-auto mb-10 shadow-inner border border-rose-500/10 rotate-6 group-hover:rotate-0 transition-transform duration-700">
                             <Trash2 className="w-12 h-12 text-rose-600" strokeWidth={2.5} />
                         </div>
-                        <h2 className="text-3xl font-black text-text-primary tracking-tighter mb-4 uppercase">Purge Entity?</h2>
-                        <p className="text-text-muted font-black uppercase tracking-widest leading-relaxed mb-12 text-[11px] font-mono opacity-60">
+                        <h2 className="text-3xl font-bold text-text-primary tracking-tighter mb-4 uppercase">Purge Entity?</h2>
+                        <p className="text-text-muted font-bold uppercase tracking-widest leading-relaxed mb-12 text-[11px] font-mono opacity-60">
                             Operation will permanently dissolve alliance with <span className="text-rose-600">"{deletingClient.name.toUpperCase()}"</span>. 
                             Project associations will be terminated.
                         </p>
                         <div className="flex gap-4">
                             <button
                                 onClick={() => setDeletingClient(null)}
-                                className="flex-1 py-5 text-[11px] font-black uppercase tracking-widest text-text-muted hover:text-text-primary transition-all font-mono"
+                                className="flex-1 py-5 text-[11px] font-bold uppercase tracking-widest text-text-muted hover:text-text-primary transition-all font-mono"
                             >
                                 ABORT
                             </button>
                             <button
                                 onClick={handleDelete}
-                                className="flex-[1.8] bg-rose-600 hover:bg-rose-700 text-white py-5 rounded-[24px] text-[11px] font-black uppercase tracking-[0.3em] transition-all shadow-xl shadow-rose-900/10 active:scale-95 font-mono"
+                                className="flex-[1.8] bg-rose-600 hover:bg-rose-700 text-white py-5 rounded-[24px] text-[11px] font-bold uppercase tracking-[0.3em] transition-all shadow-xl shadow-rose-900/10 active:scale-95 font-mono"
                             >
                                 CONFIRM PURGE
                             </button>
@@ -462,9 +462,9 @@ function StatsCard({ label, value, icon, color }: { label: string; value: number
                 <div className={clsx("w-12 h-12 rounded-[18px] flex items-center justify-center border shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-all duration-700", colorClasses[color].bg, colorClasses[color].border, colorClasses[color].text)}>
                     {icon}
                 </div>
-                <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono">{label}</p>
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">{label}</p>
             </div>
-            <h2 className="text-5xl font-black text-text-primary tracking-tighter leading-none">{value}</h2>
+            <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">{value}</h2>
         </div>
     );
 }

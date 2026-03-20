@@ -94,9 +94,9 @@ export function Schedules() {
                             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
                                 <Activity className="w-6 h-6 text-primary" strokeWidth={2.5} />
                             </div>
-                            <h1 className="text-3xl font-black text-text-primary tracking-tighter leading-none">Operational Velocity</h1>
+                            <h1 className="text-3xl font-bold text-text-primary tracking-tighter leading-none">Weekly Activity</h1>
                         </div>
-                        <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] font-mono leading-relaxed">Real-time workforce distribution and activity saturation analytics</p>
+                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono leading-relaxed">Insights into team productivity and peak activity hours</p>
                     </div>
 
                     <div className="flex items-center gap-6">
@@ -108,7 +108,7 @@ export function Schedules() {
                                 <ChevronLeft className="w-5 h-5" strokeWidth={3} />
                             </button>
                             <div className="px-8 min-w-[280px] text-center">
-                                <span className="text-[11px] font-black text-text-primary uppercase tracking-[0.2em] font-mono whitespace-nowrap">
+                                <span className="text-[11px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono whitespace-nowrap">
                                     {formatHeader()}
                                 </span>
                             </div>
@@ -121,7 +121,7 @@ export function Schedules() {
                         </div>
                         <button
                             onClick={() => setWeekOffset(0)}
-                            className="px-8 py-5 rounded-[20px] bg-white border border-black/[0.1] text-[10px] font-black text-text-muted hover:text-text-primary hover:border-text-primary transition-all active:scale-95 shadow-sm uppercase tracking-[0.2em] font-mono"
+                            className="px-8 py-5 rounded-[20px] bg-white border border-black/[0.1] text-[10px] font-bold text-text-muted hover:text-text-primary hover:border-text-primary transition-all active:scale-95 shadow-sm uppercase tracking-[0.2em] font-mono"
                         >
                             Sync to Present
                         </button>
@@ -131,24 +131,24 @@ export function Schedules() {
                 {/* KPI Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <StatsCard 
-                        label="Active Samples" 
+                        label="Total Activity" 
                         value={totalActiveHours.toLocaleString()} 
                         icon={<Activity className="w-5 h-5" strokeWidth={2.5} />} 
-                        subtitle="Current week volume"
+                        subtitle="This week's volume"
                         color="indigo" 
                     />
                     <StatsCard 
-                        label="Peak Distribution" 
+                        label="Peak Activity" 
                         value={peakDay ? DAYS_SHORT[peakDay.getDay()] + ', ' + peakDay.getDate() : '—'} 
                         icon={<TrendingUp className="w-5 h-5" strokeWidth={2.5} />} 
-                        subtitle="Max reach capacity"
+                        subtitle="Most active day"
                         color="violet" 
                     />
                     <StatsCard 
-                        label="Coverage Index" 
+                        label="Daily Coverage" 
                         value={`${new Set(blocks.map(b => b.hour)).size} hr`} 
                         icon={<ShieldCheck className="w-5 h-5" strokeWidth={2.5} />} 
-                        subtitle="Operational width"
+                        subtitle="Active hours"
                         color="emerald" 
                     />
                 </div>
@@ -159,11 +159,11 @@ export function Schedules() {
                 <div className="glass border border-black/[0.05] rounded-[48px] shadow-2xl overflow-hidden relative group bg-white mb-20 transition-all duration-700 hover:shadow-primary/5">
                     <div className="px-10 py-10 border-b border-black/[0.03] bg-black/[0.01] flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div>
-                            <h2 className="text-2xl font-black text-text-primary tracking-tighter leading-none mb-3 uppercase">Activity Saturation Matrix</h2>
-                            <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em] font-mono leading-relaxed">Cross-jurisdictional intensity mapping by hour and node registry</p>
+                            <h2 className="text-2xl font-bold text-text-primary tracking-tighter leading-none mb-3 uppercase">Activity Heatmap</h2>
+                            <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono leading-relaxed">Hourly breakdown of team activity across the week</p>
                         </div>
                         <div className="flex items-center gap-6 bg-black/[0.03] border border-black/[0.05] rounded-[24px] px-6 py-4 shadow-inner">
-                            <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] font-mono italic opacity-60">Saturation Index:</span>
+                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono italic opacity-60">Activity Intensity:</span>
                             <div className="flex items-center gap-2">
                                 {[0.2, 0.4, 0.6, 0.8, 1].map(o => (
                                     <div 
@@ -180,7 +180,7 @@ export function Schedules() {
                         <div className="h-[600px] flex items-center justify-center">
                             <div className="flex flex-col items-center gap-6">
                                 <RefreshCw className="w-12 h-12 text-primary animate-spin" strokeWidth={3} />
-                                <span className="text-[11px] font-black text-text-muted uppercase tracking-[0.5em] animate-pulse font-mono">Reconstructing Matrix Core...</span>
+                                <span className="text-[11px] font-bold text-text-muted uppercase tracking-[0.5em] animate-pulse font-mono">Loading activity data...</span>
                             </div>
                         </div>
                     ) : (
@@ -188,7 +188,7 @@ export function Schedules() {
                             <table className="w-full border-separate border-spacing-3">
                                 <thead>
                                     <tr>
-                                        <th className="w-32 pb-8 text-right pr-10 text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono italic opacity-60">Node Registry</th>
+                                        <th className="w-32 pb-8 text-right pr-10 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono italic opacity-60">Time</th>
                                         {weekDays.map((d, i) => {
                                             const isToday = d.toDateString() === today.toDateString();
                                             return (
@@ -200,12 +200,12 @@ export function Schedules() {
                                                             : "bg-black/[0.02] border-black/[0.05] hover:bg-black/[0.04]"
                                                     )}>
                                                         <span className={clsx(
-                                                            "text-[10px] font-black uppercase tracking-[0.2em] mb-2",
+                                                            "text-[10px] font-bold uppercase tracking-[0.2em] mb-2",
                                                             isToday ? "text-white/70" : "text-text-muted"
                                                         )}>
                                                             {DAYS_SHORT[d.getDay()]}
                                                         </span>
-                                                        <span className="text-2xl font-black tracking-tighter">
+                                                        <span className="text-2xl font-bold tracking-tighter">
                                                             {d.getDate()}
                                                         </span>
                                                     </div>
@@ -217,7 +217,7 @@ export function Schedules() {
                                 <tbody>
                                     {HOURS.map(hour => (
                                         <tr key={hour} className="group/row">
-                                            <td className="py-4 text-right pr-10 font-mono text-[12px] font-black text-text-muted group-hover/row:text-text-primary transition-all duration-500 uppercase tracking-tighter italic">
+                                            <td className="py-4 text-right pr-10 font-mono text-[12px] font-bold text-text-muted group-hover/row:text-text-primary transition-all duration-500 uppercase tracking-tighter italic">
                                                 {hour < 12 ? `${hour}:00 AM` : hour === 12 ? '12:00 PM' : `${hour - 12}:00 PM`}
                                             </td>
                                             {weekDays.map((d, di) => {
@@ -234,7 +234,7 @@ export function Schedules() {
                                                                 }}
                                                             >
                                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-all duration-500 bg-primary rounded-[18px] shadow-inner ring-1 ring-white/20">
-                                                                    <span className="text-[12px] font-black text-white">{block.count}</span>
+                                                                    <span className="text-[12px] font-bold text-white">{block.count}</span>
                                                                 </div>
                                                             </div>
                                                         ) : (
@@ -273,11 +273,11 @@ function StatsCard({ label, value, icon, subtitle, color }: { label: string; val
                     {icon}
                 </div>
                 <div>
-                    <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono leading-none mb-2">{label}</p>
-                    <p className="text-[9px] font-black text-text-muted/40 uppercase tracking-[0.2em] font-mono leading-none">{subtitle}</p>
+                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono leading-none mb-2">{label}</p>
+                    <p className="text-[9px] font-bold text-text-muted/40 uppercase tracking-[0.2em] font-mono leading-none">{subtitle}</p>
                 </div>
             </div>
-            <h2 className="text-5xl font-black text-text-primary tracking-tighter leading-none">{value}</h2>
+            <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">{value}</h2>
         </div>
     );
 }

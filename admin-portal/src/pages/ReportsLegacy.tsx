@@ -156,11 +156,11 @@ export function ReportsLegacy() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-slate-100 bg-white sticky top-0 z-10">
-                                <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Member</th>
-                                <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Project</th>
-                                <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Date & Time</th>
-                                <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Duration</th>
-                                <th className="px-6 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Activity %</th>
+                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Member</th>
+                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Project</th>
+                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Date & Time</th>
+                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Duration</th>
+                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Activity %</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -196,7 +196,7 @@ export function ReportsLegacy() {
                                                 <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                                     <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${row.activity}%` }} />
                                                 </div>
-                                                <span className="text-xs font-black text-slate-800 min-w-[30px]">{row.activity}%</span>
+                                                <span className="text-xs font-bold text-slate-800 min-w-[30px]">{row.activity}%</span>
                                             </div>
                                         </td>
                                     </tr>

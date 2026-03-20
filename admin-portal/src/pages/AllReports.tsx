@@ -26,7 +26,7 @@ export function AllReports() {
     return (
         <div className="p-8 max-w-[1200px] mx-auto w-full fade-in">
             <div className="mb-12">
-                <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Reports Directory</h1>
+                <h1 className="text-3xl font-bold text-slate-900 tracking-tight mb-2">Reports Directory</h1>
                 <p className="text-slate-500 font-medium">Select a specialized report to view detailed metrics.</p>
             </div>
 
@@ -41,19 +41,19 @@ export function AllReports() {
                             <div className={`p-3 rounded-2xl bg-${report.color}-50 text-${report.color}-600 group-hover:scale-110 transition-transform duration-300`}>
                                 <report.icon className="w-6 h-6" />
                             </div>
-                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest group-hover:text-blue-500 transition-colors">
+                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest group-hover:text-blue-500 transition-colors">
                                 {report.category}
                             </span>
                         </div>
 
-                        <h3 className="text-lg font-black text-slate-800 tracking-tighter mb-2 group-hover:text-blue-600 transition-colors">
+                        <h3 className="text-lg font-bold text-slate-800 tracking-tighter mb-2 group-hover:text-blue-600 transition-colors">
                             {report.title}
                         </h3>
                         <p className="text-sm text-slate-500 font-medium leading-relaxed mb-8 flex-1">
                             {report.description}
                         </p>
 
-                        <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest pt-4 border-t border-slate-50 group-hover:text-slate-600 transition-colors">
+                        <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest pt-4 border-t border-slate-50 group-hover:text-slate-600 transition-colors">
                             View Report
                             <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
                         </div>
@@ -66,14 +66,14 @@ export function AllReports() {
                 <div className="relative z-10 text-center md:text-left">
                     <div className="flex items-center gap-2 mb-4 justify-center md:justify-start">
                         <Star className="w-5 h-5 text-amber-400 fill-amber-400" />
-                        <span className="text-xs font-black tracking-widest uppercase text-white/60">New Feature</span>
+                        <span className="text-xs font-bold tracking-widest uppercase text-white/60">New Feature</span>
                     </div>
-                    <h2 className="text-3xl font-black tracking-tight mb-2">Automated Insights</h2>
+                    <h2 className="text-3xl font-bold tracking-tight mb-2">Automated Insights</h2>
                     <p className="text-white/60 font-medium max-w-md">
                         Get weekly productivity summaries delivered directly to your inbox. Stay informed without logging in.
                     </p>
                 </div>
-                <button className="relative z-10 bg-white text-slate-900 px-8 py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-white/90 transition-all shadow-xl shadow-black/20">
+                <button className="relative z-10 bg-white text-slate-900 px-8 py-4 rounded-2xl font-bold uppercase tracking-widest text-xs hover:bg-white/90 transition-all shadow-xl shadow-black/20">
                     Enable Notifications
                 </button>
             </div>

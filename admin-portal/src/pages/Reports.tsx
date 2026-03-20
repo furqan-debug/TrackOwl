@@ -157,8 +157,8 @@ export function Reports() {
 
     return (
         <PageLayout
-            title="Intelligence Matrix"
-            description="Predictive productivity insights and workforce engagement analytics."
+            title="Activity Reports"
+            description="Track team productivity and engagement analytics."
             maxWidth="full"
             actions={
                 <div className="flex flex-wrap items-center gap-6">
@@ -168,7 +168,7 @@ export function Reports() {
                                 key={r}
                                 onClick={() => setRange(r)}
                                 className={clsx(
-                                    "px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all font-mono",
+                                    "px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all font-mono",
                                     range === r ? "bg-white text-primary shadow-sm ring-1 ring-black/[0.05]" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
@@ -182,13 +182,13 @@ export function Reports() {
                             icon={<Users className="w-4 h-4" strokeWidth={3} />}
                             value={selectedTeamId}
                             onChange={(val) => { setSelectedTeamId(val); setSelectedMemberEmail('All'); }}
-                            options={[{ id: 'All', name: 'Global Units' }, ...teams]}
+                            options={[{ id: 'All', name: 'All Teams' }, ...teams]}
                         />
                         <FilterSelect 
                             icon={<ActivityIcon className="w-4 h-4" strokeWidth={3} />}
                             value={selectedMemberEmail}
                             onChange={(val) => { setSelectedMemberEmail(val); setSelectedTeamId('All'); }}
-                            options={[{ id: 'All', email: 'All', full_name: 'Universal Nodes' }, ...members].map(m => ({ id: (m as any).email || m.id, name: (m as any).full_name || (m as any).name }))}
+                            options={[{ id: 'All', email: 'All', full_name: 'All Members' }, ...members].map(m => ({ id: (m as any).email || m.id, name: (m as any).full_name || (m as any).name }))}
                         />
                         <button className="p-4 bg-white border border-black/[0.1] rounded-[20px] text-text-muted hover:text-primary hover:border-primary transition-all active:scale-95 shadow-sm group">
                             <Download className="w-5 h-5 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
@@ -201,33 +201,33 @@ export function Reports() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
                 <KpiCard
                     icon={<Clock className="w-7 h-7" strokeWidth={2.5} />}
-                    label="Tracked Capacity"
+                    label="Total Time Tracked"
                     value={fmtHours(totalMins)}
-                    sub="Cumulative operational time"
+                    sub="Total duration of active sessions"
                     trend="+12%"
                     trendVariant="positive"
                 />
                 <KpiCard
                     icon={<ActivityIcon className="w-7 h-7" strokeWidth={2.5} />}
-                    label="Performance Index"
+                    label="Activity Rating"
                     value={`${avgActivity}%`}
-                    sub="Effective output ratio"
+                    sub="Average movement and engagement"
                     trend="+4%"
                     trendVariant="positive"
                 />
                 <KpiCard
                     icon={<Monitor className="w-7 h-7" strokeWidth={2.5} />}
-                    label="Active Sessions"
+                    label="Total Sessions"
                     value={totalSessions.toString()}
-                    sub="Unique pulse initiations"
+                    sub="Number of recorded activity blocks"
                     trend="+2"
                     trendVariant="positive"
                 />
                 <KpiCard
                     icon={<Camera className="w-7 h-7" strokeWidth={2.5} />}
-                    label="Proof of Work"
+                    label="Screenshots"
                     value={screenshotCount.toString()}
-                    sub="Visual validation count"
+                    sub="Total automated screen captures"
                     trend="+45"
                     trendVariant="positive"
                 />
@@ -237,13 +237,13 @@ export function Reports() {
                 <div className="h-[600px] flex items-center justify-center">
                     <div className="flex flex-col items-center gap-6">
                         <RefreshCw className="w-12 h-12 text-primary animate-spin" strokeWidth={3} />
-                        <span className="text-[11px] font-black text-text-muted uppercase tracking-[0.5em] animate-pulse font-mono">Aggregating Intelligence Matrix...</span>
+                        <span className="text-[11px] font-bold text-text-muted uppercase tracking-[0.5em] animate-pulse font-mono">Generating activity reports...</span>
                     </div>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                     <div className="lg:col-span-2 space-y-10">
-                        <Card title="Productivity Trajectory">
+                        <Card title="Activity Trends">
                             <div className="h-[400px] w-full mt-8">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={dailyActivity} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
@@ -258,14 +258,14 @@ export function Reports() {
                                             dataKey="date" 
                                             axisLine={false} 
                                             tickLine={false} 
-                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 900, fontFamily: 'monospace' }}
+                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 700, fontFamily: 'monospace' }}
                                             dy={15}
                                         />
                                         <YAxis 
                                             domain={[0, 100]} 
                                             axisLine={false} 
                                             tickLine={false} 
-                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 900, fontFamily: 'monospace' }}
+                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 700, fontFamily: 'monospace' }}
                                             unit="%"
                                         />
                                         <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(80,110,248,0.2)', strokeWidth: 2 }} />
@@ -283,7 +283,7 @@ export function Reports() {
                             </div>
                         </Card>
 
-                        <Card title="Operational Intensity">
+                        <Card title="Time Distribution">
                             <div className="h-[350px] w-full mt-8">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={dailyActivity} barSize={36}>
@@ -292,13 +292,13 @@ export function Reports() {
                                             dataKey="date" 
                                             axisLine={false} 
                                             tickLine={false} 
-                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 900, fontFamily: 'monospace' }}
+                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 700, fontFamily: 'monospace' }}
                                             dy={15}
                                         />
                                         <YAxis 
                                             axisLine={false} 
                                             tickLine={false} 
-                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 900, fontFamily: 'monospace' }}
+                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 700, fontFamily: 'monospace' }}
                                         />
                                         <Tooltip content={<CustomTooltip unit="min" />} cursor={{ fill: 'rgba(80,110,248,0.03)' }} />
                                         <Bar 
@@ -320,7 +320,7 @@ export function Reports() {
                     </div>
 
                     <div className="space-y-10">
-                        <Card title="App Ecosystem Map" className="flex flex-col h-full">
+                        <Card title="Top Applications" className="flex flex-col h-full">
                             <div className="flex-1 min-h-[450px] flex flex-col items-center justify-center py-12">
                                 <div className="h-[300px] w-full relative">
                                     <ResponsiveContainer width="100%" height="100%">
@@ -343,8 +343,8 @@ export function Reports() {
                                         </PieChart>
                                     </ResponsiveContainer>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <span className="text-5xl font-black text-text-primary tracking-tighter leading-none">{appBreakdown.length}</span>
-                                        <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono mt-1">Prime Nodes</span>
+                                        <span className="text-5xl font-bold text-text-primary tracking-tighter leading-none">{appBreakdown.length}</span>
+                                        <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mt-1">Top Apps</span>
                                     </div>
                                 </div>
 
@@ -353,10 +353,10 @@ export function Reports() {
                                         <div key={i} className="flex items-center justify-between group cursor-default p-2 rounded-xl hover:bg-black/[0.01] transition-all">
                                             <div className="flex items-center gap-5">
                                                 <div className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                                                <span className="text-[12px] font-black text-text-primary tracking-tight truncate max-w-[180px] uppercase font-mono italic">{item.name}</span>
+                                                <span className="text-[12px] font-bold text-text-primary tracking-tight truncate max-w-[180px] uppercase font-mono italic">{item.name}</span>
                                             </div>
-                                            <span className="text-[9px] font-black text-text-muted bg-black/[0.03] px-3 py-1.5 rounded-lg uppercase tracking-widest font-mono border border-black/[0.03]">
-                                                {item.value} Pulse
+                                            <span className="text-[9px] font-bold text-text-muted bg-black/[0.03] px-3 py-1.5 rounded-lg uppercase tracking-widest font-mono border border-black/[0.03]">
+                                                {item.value} Sessions
                                             </span>
                                         </div>
                                     ))}
@@ -370,17 +370,17 @@ export function Reports() {
                                     <div className="bg-primary/10 p-4 rounded-[24px] border border-primary/20 shadow-sm rotate-3 group-hover:rotate-0 transition-transform duration-700">
                                         <Zap className="w-8 h-8 text-primary" strokeWidth={2.5} />
                                     </div>
-                                    <span className="text-[10px] font-black bg-black/[0.03] px-4 py-2 rounded-full tracking-[0.2em] uppercase border border-black/[0.05] font-mono italic">
-                                        Active Matrix
+                                    <span className="text-[10px] font-bold bg-black/[0.03] px-4 py-2 rounded-full tracking-[0.2em] uppercase border border-black/[0.05] font-mono italic">
+                                        Member Status
                                     </span>
                                 </div>
-                                <h4 className="text-text-muted font-black uppercase tracking-[0.4em] text-[11px] mb-3 font-mono opacity-60">Efficiency Rating</h4>
+                                <h4 className="text-text-muted font-bold uppercase tracking-[0.4em] text-[11px] mb-3 font-mono opacity-60">Activity Score</h4>
                                 <div className="flex items-baseline gap-4 mb-8">
-                                    <span className="text-7xl font-black tracking-tighter text-text-primary leading-none italic">{avgActivity}</span>
-                                    <span className="text-3xl font-black text-text-muted/30 tracking-tight font-mono">/ 100</span>
+                                    <span className="text-7xl font-bold tracking-tighter text-text-primary leading-none italic">{avgActivity}</span>
+                                    <span className="text-3xl font-bold text-text-muted/30 tracking-tight font-mono">/ 100</span>
                                 </div>
-                                <p className="text-sm font-black text-text-primary leading-relaxed mb-10 opacity-80 uppercase tracking-tight">
-                                    {selectedTeamId === 'All' ? 'Global operations' : 'Targeted unit'} efficiency is currently <span className="text-primary underline underline-offset-4 decoration-primary/30">optimal</span>. 
+                                <p className="text-sm font-bold text-text-primary leading-relaxed mb-10 opacity-80 uppercase tracking-tight">
+                                    {selectedTeamId === 'All' ? 'Organization-wide' : 'Team'} efficiency is currently <span className="text-primary underline underline-offset-4 decoration-primary/30">optimal</span>. 
                                 </p>
                                 <div className="w-full h-4 bg-black/[0.05] rounded-full overflow-hidden border border-black/[0.03] shadow-inner">
                                     <div
@@ -406,7 +406,7 @@ function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNod
         <div className="relative group/select">
             <div className="flex items-center gap-4 bg-white border border-black/[0.1] rounded-[20px] px-6 py-4 shadow-sm transition-all group-hover/select:border-primary/40 group-hover/select:shadow-md cursor-pointer">
                 <div className="text-primary group-hover/select:scale-110 group-hover/select:rotate-12 transition-all duration-500">{icon}</div>
-                <span className="text-[11px] font-black text-text-primary uppercase tracking-[0.2em] font-mono min-w-[140px] truncate">{activeLabel}</span>
+                <span className="text-[11px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono min-w-[140px] truncate">{activeLabel}</span>
                 <ChevronDown className="w-4 h-4 text-text-muted group-hover/select:text-primary transition-all group-hover/select:rotate-180" strokeWidth={3} />
             </div>
             
@@ -427,14 +427,14 @@ function CustomTooltip({ active, payload, label, unit }: any) {
     if (active && payload && payload.length) {
         return (
             <div className="bg-white border border-black/[0.08] p-8 rounded-[32px] shadow-[0_32px_80px_rgba(0,0,0,0.12)] animate-in zoom-in-95 duration-300">
-                <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.3em] font-mono mb-4 border-b border-black/[0.03] pb-3 italic opacity-60 text-right">{label}</p>
+                <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-4 border-b border-black/[0.03] pb-3 italic opacity-60 text-right">{label}</p>
                 <div className="flex items-center gap-6">
                     <div className="w-4 h-4 rounded-full bg-primary shadow-xl shadow-primary/40" />
                     <div className="flex items-baseline gap-2">
-                        <span className="text-4xl font-black text-text-primary tracking-tighter italic">
+                        <span className="text-4xl font-bold text-text-primary tracking-tighter italic">
                             {payload[0].value}
                         </span>
-                        <span className="text-[11px] font-black text-primary uppercase tracking-[0.3em] font-mono">
+                        <span className="text-[11px] font-bold text-primary uppercase tracking-[0.3em] font-mono">
                             {unit === 'min' ? 'Minutes' : 'Percent'}
                         </span>
                     </div>

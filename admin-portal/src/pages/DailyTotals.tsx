@@ -166,14 +166,14 @@ export function DailyTotals() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="border-b border-slate-100 bg-white sticky top-0 z-10">
-                                <th className="pl-8 pr-6 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest min-w-[220px]">Team Member</th>
+                                <th className="pl-8 pr-6 py-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest min-w-[220px]">Team Member</th>
                                 {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day, i) => (
-                                    <th key={day} className="px-4 py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">
+                                    <th key={day} className="px-4 py-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-center">
                                         <span className="block mb-1">{day}</span>
                                         <span className="text-[10px] text-slate-300 font-bold">{fmtDate(weekDates[i])}</span>
                                     </th>
                                 ))}
-                                <th className="px-8 py-5 text-[11px] font-black text-indigo-600 uppercase tracking-widest text-right min-w-[120px]">TOTAL</th>
+                                <th className="px-8 py-5 text-[11px] font-bold text-indigo-600 uppercase tracking-widest text-right min-w-[120px]">TOTAL</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50">
@@ -201,12 +201,12 @@ export function DailyTotals() {
                                                 <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center font-bold text-indigo-600 text-sm">
                                                     {row.member.charAt(0)}
                                                 </div>
-                                                <span className="text-sm font-black text-slate-800 tracking-tight">{row.member}</span>
+                                                <span className="text-sm font-bold text-slate-800 tracking-tight">{row.member}</span>
                                             </div>
                                         </td>
                                         {row.totals.map((t, idx) => (
                                             <td key={idx} className="px-4 py-4 text-center">
-                                                <div className={`inline-flex items-center justify-center px-2 py-1 rounded-lg text-xs font-black transition-all ${t > 8 ? 'bg-orange-50 text-orange-600 ring-1 ring-orange-500/20' :
+                                                <div className={`inline-flex items-center justify-center px-2 py-1 rounded-lg text-xs font-bold transition-all ${t > 8 ? 'bg-orange-50 text-orange-600 ring-1 ring-orange-500/20' :
                                                     t > 0 ? 'bg-indigo-50 text-indigo-600 ring-1 ring-indigo-500/20' :
                                                         'text-slate-200 font-normal'
                                                     }`}>
@@ -215,7 +215,7 @@ export function DailyTotals() {
                                             </td>
                                         ))}
                                         <td className="px-8 py-4 text-right">
-                                            <span className="text-sm font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100/50">
+                                            <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-100/50">
                                                 {row.weeklyTotal.toFixed(1)}h
                                             </span>
                                         </td>
@@ -227,7 +227,7 @@ export function DailyTotals() {
                 </div>
 
                 <div className="p-6 border-t border-slate-100 bg-slate-50/30 flex justify-center">
-                    <div className="flex items-center gap-8 text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                    <div className="flex items-center gap-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                         <div className="flex items-center gap-2">
                             <div className="w-2 h-2 rounded-full bg-indigo-600" /> Tracked
                         </div>

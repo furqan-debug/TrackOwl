@@ -88,7 +88,7 @@ export function AmountsOwed() {
         <div className="p-8 max-w-[1400px] mx-auto w-full fade-in">
             <div className="flex justify-between items-end mb-10">
                 <div>
-                    <h1 className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-4">
+                    <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-4">
                         <div className="bg-emerald-600 p-2 rounded-2xl shadow-lg shadow-emerald-200">
                             <CircleDollarSign className="w-8 h-8 text-white" />
                         </div>
@@ -120,31 +120,31 @@ export function AmountsOwed() {
             <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-[2.5rem] p-10 text-white mb-10 shadow-2xl shadow-emerald-200 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32 blur-3xl opacity-50" />
                 <div className="relative z-10 text-center md:text-left">
-                    <p className="text-emerald-100 font-black text-xs uppercase tracking-widest mb-2 opacity-80">Total Outstanding Payouts</p>
+                    <p className="text-emerald-100 font-bold text-xs uppercase tracking-widest mb-2 opacity-80">Total Outstanding Payouts</p>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-6xl font-black tracking-tighter">${totalOwed.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                        <span className="text-6xl font-bold tracking-tighter">${totalOwed.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                         <span className="text-xl font-bold text-emerald-200/60 uppercase">USD</span>
                     </div>
                 </div>
                 <div className="flex gap-4 relative z-10 w-full md:w-auto">
                     <div className="bg-white/10 backdrop-blur-xl border border-white/20 px-6 py-4 rounded-3xl flex-1 text-center">
-                        <p className="text-[10px] font-black text-emerald-100/60 uppercase tracking-widest mb-1">Members Owed</p>
-                        <p className="text-2xl font-black">{data.length}</p>
+                        <p className="text-[10px] font-bold text-emerald-100/60 uppercase tracking-widest mb-1">Members Owed</p>
+                        <p className="text-2xl font-bold">{data.length}</p>
                     </div>
                     <div className="bg-white/10 backdrop-blur-xl border border-white/20 px-6 py-4 rounded-3xl flex-1 text-center">
-                        <p className="text-[10px] font-black text-emerald-100/60 uppercase tracking-widest mb-1">Avg. Payout</p>
-                        <p className="text-2xl font-black">${(totalOwed / (data.length || 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                        <p className="text-[10px] font-bold text-emerald-100/60 uppercase tracking-widest mb-1">Avg. Payout</p>
+                        <p className="text-2xl font-bold">${(totalOwed / (data.length || 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                     </div>
                 </div>
             </div>
 
             <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden min-h-[400px]">
                 <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                    <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Detail Breakdown</h3>
+                    <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Detail Breakdown</h3>
                     <div className="flex items-center gap-4">
                         <div className="relative">
                             <Filter className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                            <select className="pl-9 pr-6 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-black text-slate-500 uppercase tracking-widest outline-none shadow-sm cursor-pointer">
+                            <select className="pl-9 pr-6 py-1.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-500 uppercase tracking-widest outline-none shadow-sm cursor-pointer">
                                 <option>Sort: Highest Amount</option>
                                 <option>Sort: Member Name</option>
                                 <option>Sort: Pending Hours</option>
@@ -157,11 +157,11 @@ export function AmountsOwed() {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="border-b border-slate-50">
-                                <th className="pl-10 pr-6 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Team Member</th>
-                                <th className="px-6 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Rate</th>
-                                <th className="px-6 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Hours Owed</th>
-                                <th className="px-6 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest">Last Tracker Activity</th>
-                                <th className="pl-6 pr-10 py-6 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Total Owed</th>
+                                <th className="pl-10 pr-6 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Team Member</th>
+                                <th className="px-6 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Rate</th>
+                                <th className="px-6 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Hours Owed</th>
+                                <th className="px-6 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Last Tracker Activity</th>
+                                <th className="pl-6 pr-10 py-6 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Total Owed</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-50/60">
@@ -181,21 +181,21 @@ export function AmountsOwed() {
                                     <tr key={row.member_id} className="hover:bg-slate-50/50 transition-all group">
                                         <td className="pl-10 pr-6 py-5">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center font-black text-white text-sm shadow-md">
+                                                <div className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center font-bold text-white text-sm shadow-md">
                                                     {row.full_name.charAt(0)}
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-black text-slate-800 tracking-tighter">{row.full_name}</p>
+                                                    <p className="text-sm font-bold text-slate-800 tracking-tighter">{row.full_name}</p>
                                                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight">Active Member</p>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-5">
-                                            <span className="text-xs font-black text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                                            <span className="text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
                                                 ${row.pay_rate}<span className="text-[10px] text-slate-400 font-bold">/HR</span>
                                             </span>
                                         </td>
-                                        <td className="px-6 py-5 font-black text-slate-700 text-sm tracking-tight">
+                                        <td className="px-6 py-5 font-bold text-slate-700 text-sm tracking-tight">
                                             {row.totalHours} <span className="text-xs text-slate-400">HRS</span>
                                         </td>
                                         <td className="px-6 py-5 text-xs text-slate-500 font-bold uppercase">
@@ -203,10 +203,10 @@ export function AmountsOwed() {
                                         </td>
                                         <td className="pl-6 pr-10 py-5 text-right">
                                             <div className="flex flex-col items-end">
-                                                <span className="text-lg font-black text-emerald-600 tracking-tighter cursor-pointer hover:scale-105 transition-transform">
+                                                <span className="text-lg font-bold text-emerald-600 tracking-tighter cursor-pointer hover:scale-105 transition-transform">
                                                     ${row.amountOwed.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </span>
-                                                <button className="text-[9px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1 hover:text-indigo-700 mt-1">
+                                                <button className="text-[9px] font-bold text-indigo-500 uppercase tracking-widest flex items-center gap-1 hover:text-indigo-700 mt-1">
                                                     Pay Now <MoreHorizontal className="w-3 h-3" />
                                                 </button>
                                             </div>
@@ -219,10 +219,10 @@ export function AmountsOwed() {
                 </div>
 
                 <div className="p-8 bg-slate-50/50 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest max-w-sm text-center md:text-left leading-relaxed">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest max-w-sm text-center md:text-left leading-relaxed">
                         Values are estimated based on tracked hours and member pay rates. Actual payments may vary by tax and deductions.
                     </p>
-                    <button className="w-full md:w-auto bg-slate-900 text-white px-8 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
+                    <button className="w-full md:w-auto bg-slate-900 text-white px-8 py-3 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
                         Process All Payments
                     </button>
                 </div>
