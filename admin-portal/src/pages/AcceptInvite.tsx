@@ -6,8 +6,6 @@ import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import { useNavigate } from 'react-router-dom';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-
 type Step = 'loading' | 'form' | 'success' | 'error';
 
 export function AcceptInvite() {
@@ -71,16 +69,12 @@ export function AcceptInvite() {
             const { error: pwError } = await supabase.auth.updateUser({ password });
             if (pwError) throw new Error(pwError.message);
 
-            const res = await fetch(`${API}/api/members/complete-setup`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session.access_token}`
-                },
-                body: JSON.stringify({ full_name: fullName.trim(), phone: phone.trim() || null }),
+            const { data, error: invokeErr } = await supabase.functions.invoke('complete-onboarding', {
+                body: { full_name: fullName.trim(), phone: phone.trim() || null }
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to complete setup.');
+
+            if (invokeErr) throw invokeErr;
+            if (!data?.ok) throw new Error(data?.error || 'Failed to complete setup.');
 
             if (data.member?.role) {
                 setRole(data.member.role);

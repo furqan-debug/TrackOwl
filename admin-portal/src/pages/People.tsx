@@ -12,8 +12,6 @@ import { useAuth } from '../context/AuthContext';
 import { PageLayout, Button } from '../components/ui';
 import { supabase } from '../lib/supabase';
 
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
-
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Role = 'Admin' | 'Manager' | 'User' | 'Viewer';
 type Status = 'Active' | 'Inactive' | 'Pending';
@@ -42,7 +40,7 @@ interface MemberRow extends DbMember {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function People() {
-    const { profile, session } = useAuth();
+    const { profile } = useAuth();
     const isViewer = profile?.role === 'Viewer';
     const [members, setMembers] = useState<MemberRow[]>([]);
     const [loading, setLoading] = useState(true);
@@ -90,23 +88,20 @@ export function People() {
         setAdding(true);
         setAddError(null);
         try {
-            const res = await fetch(`${API}/api/members`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session?.access_token}`
-                },
-                body: JSON.stringify({
+            const { data, error } = await supabase.functions.invoke('send-invite-email', {
+                body: {
                     email: addEmail.trim().toLowerCase(),
                     role: addRole,
                     pay_rate: addPayRate ? parseFloat(addPayRate) : null,
                     bill_rate: addBillRate ? parseFloat(addBillRate) : null,
                     weekly_limit: parseInt(addWeekly) || 40,
                     daily_limit: parseInt(addDaily) || 8,
-                }),
+                    admin_portal_url: window.location.origin
+                }
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to send invite');
+
+            if (error) throw error;
+            if (!data?.ok) throw new Error(data?.error || 'Failed to send invite');
 
             setInviteSentTo(data.member.email);
             setShowAddModal(false);
@@ -123,16 +118,12 @@ export function People() {
         setAdding(true);
         setAddError(null);
         try {
-            const res = await fetch(`${API}/api/members`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session?.access_token}`
-                },
-                body: JSON.stringify({ email }),
+            const { data, error } = await supabase.functions.invoke('send-invite-email', {
+                body: { email, admin_portal_url: window.location.origin }
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Failed to resend invite');
+
+            if (error) throw error;
+            if (!data?.ok) throw new Error(data?.error || 'Failed to resend invite');
 
             setInviteSentTo(email);
         } catch (e: any) {
