@@ -34,9 +34,9 @@ impl Default for AppState {
             active_session_id: None,
             auth_token: Arc::new(Mutex::new(None)),
             supabase_url: std::env::var("VITE_SUPABASE_URL")
-                .unwrap_or_else(|_| "https://your-project.supabase.co".to_string()),
+                .unwrap_or_else(|_| "https://lgmggbnaoyoapxqsfgzv.supabase.co".to_string()),
             supabase_anon_key: std::env::var("VITE_SUPABASE_ANON_KEY")
-                .unwrap_or_default(),
+                .unwrap_or_else(|_| "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnbWdnYm5hb3lvYXB4cXNmZ3p2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NTMxNDIsImV4cCI6MjA4ODEyOTE0Mn0.GkzsADYd-kpJYTgY9EZGwgy5kvN6nyYmfVoLUHRJQI4".to_string()),
             tracking_running: Arc::new(Mutex::new(false)),
             counts: Arc::new(Mutex::new(tracker::TrackerCounts::default())),
             db: Arc::new(Mutex::new(db)),
