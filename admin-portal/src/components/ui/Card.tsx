@@ -25,10 +25,10 @@ export function Card({
         >
             {title && (
                 <div className="flex items-center justify-between mb-8">
-                    <h2 className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-head opacity-80">
+                    <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-widest">
                         {title}
                     </h2>
-                    <div className="h-px flex-1 bg-black/5 ml-6" aria-hidden />
+                    <div className="h-px flex-1 bg-black/5 dark:bg-white/10 ml-6" aria-hidden />
                 </div>
             )}
             <div className="relative z-10">

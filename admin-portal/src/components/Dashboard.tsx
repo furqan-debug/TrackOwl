@@ -166,7 +166,7 @@ export function Dashboard() {
     return (
         <PageLayout title="Dashboard" description={`Overview of your team's activity • ${weekLabel}`} maxWidth="full">
             {/* KPI Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-10 animate-in slide-in-from-top-4 duration-700">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 lg:gap-8 mb-12 animate-in slide-in-from-top-4 duration-700">
                 <KpiCard icon={<Clock className="w-5 h-5" />} label="Tracked Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} trend="+14%" trendVariant="positive" />
                 <KpiCard icon={<BarChart3 className="w-5 h-5" />} label="Weekly Activity" value={loading ? '—' : fmtTime(stats.weekMinutes)} trend="+8%" trendVariant="positive" />
                 <KpiCard icon={<CircleDollarSign className="w-5 h-5" />} label="Estimated Cost" value={loading ? '—' : `$${stats.weekCost.toLocaleString()}`} trend="-2%" trendVariant="negative" />
@@ -263,7 +263,7 @@ export function Dashboard() {
                                 ))}
                             </div>
                         )}
-                        <button className="w-full mt-10 py-4 glass border border-primary/10 rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] text-text-muted hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-3 group shadow-sm font-mono">
+                        <button className="w-full mt-10 py-4 glass border border-primary/10 rounded-2xl text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-3 group shadow-sm font-mono">
                             VIEW DETAILS
                             <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" strokeWidth={2.5} />
                         </button>
@@ -277,11 +277,11 @@ export function Dashboard() {
                     <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead>
                             <tr className="bg-black/[0.01]">
-                                <th className="px-10 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em]">Team Member</th>
-                                <th className="px-10 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em]">Project</th>
-                                <th className="px-10 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em]">Started At</th>
-                                <th className="px-10 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em]">Duration</th>
-                                <th className="px-10 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] text-right">Status</th>
+                                <th className="px-10 py-7 text-xs font-semibold text-slate-500 uppercase tracking-wider">Team Member</th>
+                                <th className="px-10 py-7 text-xs font-semibold text-slate-500 uppercase tracking-wider">Project</th>
+                                <th className="px-10 py-7 text-xs font-semibold text-slate-500 uppercase tracking-wider">Started At</th>
+                                <th className="px-10 py-7 text-xs font-semibold text-slate-500 uppercase tracking-wider">Duration</th>
+                                <th className="px-10 py-7 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-black/[0.03]">
@@ -344,8 +344,8 @@ function RecentSessionsRows() {
                                     {memberName.charAt(0)}
                                 </div>
                                 <div>
-                                    <div className="font-bold text-text-primary text-[15px] tracking-tight leading-tight group-hover:text-primary transition-colors mb-1.5">{memberName}</div>
-                                    <div className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-70">ID: {s.user_id?.slice(0, 8) || 'SYSTEM'}</div>
+                                    <div className="font-bold text-slate-800 dark:text-slate-200 text-[15px] tracking-tight leading-tight group-hover:text-primary transition-colors mb-1.5">{memberName}</div>
+                                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">ID: {s.user_id?.slice(0, 8) || 'SYSTEM'}</div>
                                 </div>
                             </div>
                         </td>
@@ -353,32 +353,32 @@ function RecentSessionsRows() {
                             {proj ? (
                                 <div className="flex items-center gap-3">
                                     <div className="w-2.5 h-2.5 rounded-full shadow-lg" style={{ backgroundColor: proj.color, boxShadow: `0 0 10px ${proj.color}40` }} />
-                                    <span className="text-[11px] font-bold text-text-secondary uppercase tracking-[0.2em] font-mono">{proj.name}</span>
+                                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider font-mono">{proj.name}</span>
                                 </div>
                             ) : (
-                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] opacity-40 font-mono">Unassigned</span>
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">Unassigned</span>
                             )}
                         </td>
-                        <td className="px-10 py-7 text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono group-hover:text-text-primary transition-colors">
+                        <td className="px-10 py-7 text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors">
                             {new Date(s.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </td>
                         <td className="px-10 py-7">
-                            <span className="text-base font-bold text-text-primary font-mono tracking-tighter">
+                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono tracking-wide">
                                 {isStale ? '0h 00m' : fmtTime(mins)}
                             </span>
                         </td>
                         <td className="px-10 py-7 text-right">
                             {isLive ? (
-                                <span className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-[9px] font-bold uppercase tracking-[0.2em] text-emerald-600 bg-emerald-500/5 border border-emerald-500/10 shadow-sm font-mono">
+                                <span className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-xs font-semibold uppercase tracking-wider text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 shadow-sm font-mono">
                                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                                     Tracking Active
                                 </span>
                             ) : isStale ? (
-                                <span className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-[9px] font-bold uppercase tracking-[0.2em] text-amber-600 bg-amber-500/5 border border-amber-500/10 font-mono">
+                                <span className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-xs font-semibold uppercase tracking-wider text-amber-600 bg-amber-500/10 border border-amber-500/20 font-mono">
                                     Sync Lost
                                 </span>
                             ) : (
-                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] opacity-40 font-mono">Recorded</span>
+                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">Recorded</span>
                             )}
                         </td>
                     </tr>

@@ -49,16 +49,16 @@ export function KpiCard({
             </div>
             
             <div className="relative z-10">
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1.5 opacity-80">
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                     {label}
                 </p>
-                <h3 className="text-3xl font-bold text-text-primary tracking-tighter leading-none font-head">
+                <h3 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight leading-none font-head">
                     {value}
                 </h3>
                 {sub && (
-                    <div className="flex items-center gap-1.5 mt-3 opacity-80">
+                    <div className="flex items-center gap-1.5 mt-3">
                         <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">{sub}</p>
+                        <p className="text-xs font-medium tracking-wide text-slate-500 dark:text-slate-400">{sub}</p>
                     </div>
                 )}
             </div>
