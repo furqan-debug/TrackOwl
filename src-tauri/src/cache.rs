@@ -41,6 +41,32 @@ pub fn init_db() -> rusqlite::Result<Connection> {
         let _ = std::fs::create_dir_all(parent);
     }
     let conn = Connection::open(&path)?;
+
+    // --- Migration: Rename timestamp to recorded_at, add activity_percent ---
+    let table_info: Vec<String> = {
+        let mut stmt = conn.prepare("PRAGMA table_info(activity_samples)")?;
+        let rows = stmt.query_map([], |row| row.get::<_, String>(1))?;
+        rows.map(|r| r.unwrap_or_default()).collect()
+    };
+
+    if !table_info.is_empty() {
+        if table_info.contains(&"timestamp".to_string()) && !table_info.contains(&"recorded_at".to_string()) {
+            let _ = conn.execute("ALTER TABLE activity_samples RENAME COLUMN timestamp TO recorded_at", []);
+        }
+        if !table_info.contains(&"activity_percent".to_string()) {
+            let _ = conn.execute("ALTER TABLE activity_samples ADD COLUMN activity_percent INTEGER NOT NULL DEFAULT 0", []);
+        }
+        if !table_info.contains(&"mouse_clicks".to_string()) && table_info.contains(&"mouse_count".to_string()) {
+            let _ = conn.execute("ALTER TABLE activity_samples RENAME COLUMN mouse_count TO mouse_clicks", []);
+        }
+        if !table_info.contains(&"key_presses".to_string()) && table_info.contains(&"keyboard_count".to_string()) {
+            let _ = conn.execute("ALTER TABLE activity_samples RENAME COLUMN keyboard_count TO key_presses", []);
+        }
+        if !table_info.contains(&"idle".to_string()) && table_info.contains(&"idle_flag".to_string()) {
+            let _ = conn.execute("ALTER TABLE activity_samples RENAME COLUMN idle_flag TO idle", []);
+        }
+    }
+
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS activity_samples (
             id               INTEGER PRIMARY KEY AUTOINCREMENT,

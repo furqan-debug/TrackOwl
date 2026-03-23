@@ -340,7 +340,45 @@ pub fn start_screenshot_loop(
     auth_token: Arc<Mutex<Option<String>>>,
 ) {
     thread::spawn(move || {
+        // --- 1. Capture one screenshot immediately on start ---
+        if let Some(base64_data) = capture_screenshot() {
+            let captured_at = chrono::Utc::now();
+            let recorded_at = captured_at.to_rfc3339();
+            
+            // Sanitize filename for URL safety
+            let safe_timestamp = recorded_at
+                .replace(':', "-")
+                .replace('+', "Z")
+                .replace('.', "-");
+            let filename = format!("{}_{}.png", session_id, safe_timestamp);
+            let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
+            let public_url = format!("{}/storage/v1/object/public/screenshots/{}", cfg.url, filename);
+
+            use base64::Engine;
+            if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
+                let s_token = auth_token.lock().unwrap().clone();
+                let mut req = ureq::put(&storage_url)
+                    .set("apikey", &cfg.anon_key)
+                    .set("Content-Type", "image/png");
+                
+                if let Some(token) = &s_token {
+                    req = req.set("Authorization", &format!("Bearer {}", token));
+                }
+
+                if let Ok(_) = req.send_bytes(png_bytes.as_slice()) {
+                    let body = serde_json::json!({
+                        "session_id": session_id,
+                        "recorded_at": recorded_at,
+                        "file_url": public_url,
+                    }).to_string();
+                    let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
+                }
+            }
+        }
+
+        // --- 2. Enter random capture loop ---
         loop {
+            if !*running.lock().unwrap() { break; }
             let window_start = std::time::Instant::now();
 
             if !*running.lock().unwrap() { break; }
