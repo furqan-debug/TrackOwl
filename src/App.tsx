@@ -28,6 +28,8 @@ interface User {
   email: string;
   full_name: string;
   role: string;
+  weekly_limit?: number;
+  daily_limit?: number;
 }
 
 interface Project {
@@ -127,7 +129,7 @@ export default function App() {
 
       const { data: member } = await sb.from('members').select('*').eq('id', session.user.id).single();
       if (member) {
-        const userObj = { id: member.id, email: member.email, full_name: member.full_name, role: member.role };
+        const userObj = { id: member.id, email: member.email, full_name: member.full_name, role: member.role, weekly_limit: member.weekly_limit, daily_limit: member.daily_limit };
         setUser(userObj);
         const { data: projs } = await sb.from('projects').select('*');
         setProjects(projs || []);
@@ -182,6 +184,28 @@ export default function App() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [isTracking, isPaused]);
 
+  useEffect(() => {
+    if (isTracking && !isPaused && user) {
+      // Calculate how many seconds we've added since the session started
+      const sessionSeconds = activeProject ? Math.max(0, elapsed - (activeProject.stats?.todaySeconds || 0)) : 0;
+      
+      const initialToday = projects.reduce((s, p) => s + (p.stats?.todaySeconds || 0), 0);
+      const initialWeek = projects.reduce((s, p) => s + (p.stats?.weeklySeconds || 0), 0);
+      
+      const currentToday = initialToday + sessionSeconds;
+      const currentWeek = initialWeek + sessionSeconds;
+      
+      const weeklyLimitSecs = (user.weekly_limit || 40) * 3600;
+      const dailyLimitSecs = (user.daily_limit || 8) * 3600;
+      
+      if (currentToday >= dailyLimitSecs || currentWeek >= weeklyLimitSecs) {
+        trackerAPI.showNotification('Tracking Limit Reached', 'Your session has been automatically stopped because you reached your daily or weekly time limit.');
+        handleStop();
+        setTrackingError('Session stopped due to reaching tracking limit.');
+      }
+    }
+  }, [elapsed, isTracking, isPaused, user, projects, activeProject]);
+
   async function handleLogin(email: string, password: string): Promise<string | null> {
     try {
       const sb = await getSupabase();
@@ -192,7 +216,7 @@ export default function App() {
         .from('members').select('*').eq('id', authData.user.id).single();
       if (memberError || !member) return 'User profile not found in your organization.';
 
-      const userObj = { id: member.id, email: member.email, full_name: member.full_name, role: member.role };
+      const userObj = { id: member.id, email: member.email, full_name: member.full_name, role: member.role, weekly_limit: member.weekly_limit, daily_limit: member.daily_limit };
       const { data: projectsData } = await sb.from('projects').select('*');
       const token = authData.session.access_token;
 
@@ -602,6 +626,12 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, trackingError, tod
     ? Math.round(tracked.reduce((s, p) => s + (p.stats?.activityPercent || 0), 0) / tracked.length)
     : 0;
 
+  const weeklyLimitSecs = (user.weekly_limit || 40) * 3600;
+  const dailyLimitSecs = (user.daily_limit || 8) * 3600;
+
+  const isWeeklyLimitReached = totalWeek >= weeklyLimitSecs;
+  const isDailyLimitReached = totalToday >= dailyLimitSecs;
+
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
     show:   { opacity: 1,  y: 0 },
@@ -649,7 +679,17 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, trackingError, tod
           <motion.div className="project-list" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }} initial="hidden" animate="show">
             {projects.map(p => (
               <motion.div key={p.id} variants={itemVariants}>
-                <div className="project-card" onClick={() => onSelect(p)} style={{ '--project-color': p.color } as any}>
+                <div className="project-card" onClick={() => {
+                  if (isWeeklyLimitReached) {
+                    alert(`Weekly limit (${user.weekly_limit}h) reached.`);
+                    return;
+                  }
+                  if (isDailyLimitReached) {
+                    alert(`Daily limit (${user.daily_limit}h) reached.`);
+                    return;
+                  }
+                  onSelect(p);
+                }} style={{ '--project-color': p.color } as any}>
                   <div className="project-card-body">
                     <div className="project-card-title">{p.name}</div>
                     {p.description && <div className="project-card-desc">{p.description}</div>}

@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { 
     Monitor, Camera, Download, 
     Clock, Activity as ActivityIcon, Users,
-    ChevronDown, Zap, RefreshCw
+    ChevronDown, Zap, RefreshCw, DollarSign
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -25,11 +25,13 @@ export function Reports() {
     const [totalSessions, setTotalSessions] = useState(0);
     const [totalMins, setTotalMins] = useState(0);
     const [avgActivity, setAvgActivity] = useState(0);
+    const [totalCosts, setTotalCosts] = useState(0);
+    const [totalBilled, setTotalBilled] = useState(0);
 
     // Team & Member filtering
     const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
     const [selectedTeamId, setSelectedTeamId] = useState<string>('All');
-    const [members, setMembers] = useState<{ id: string; email: string; full_name: string }[]>([]);
+    const [members, setMembers] = useState<{ id: string; email: string; full_name: string; pay_rate?: number; bill_rate?: number }[]>([]);
     const [selectedMemberEmail, setSelectedMemberEmail] = useState<string>('All');
 
     useEffect(() => {
@@ -47,7 +49,7 @@ export function Reports() {
     }
 
     async function fetchMembers() {
-        const { data } = await supabase.from('members').select('id, email, full_name').eq('status', 'Active');
+        const { data } = await supabase.from('members').select('id, email, full_name, pay_rate, bill_rate').eq('status', 'Active');
         if (data) setMembers(data);
     }
 
@@ -89,6 +91,8 @@ export function Reports() {
             setScreenshotCount(0);
             setTotalMins(0);
             setAvgActivity(0);
+            setTotalCosts(0);
+            setTotalBilled(0);
             setLoading(false);
             return;
         }
@@ -112,12 +116,31 @@ export function Reports() {
 
             const allSamples = samples || [];
 
+            const memberMap = new Map();
+            members.forEach(m => memberMap.set(m.email, m));
+
+            const sessionToUserEmail = new Map();
+            (sessions || []).forEach(s => sessionToUserEmail.set(s.id, s.user_id));
+
+            let costs = 0;
+            let billed = 0;
+
             const dailyMap: Record<string, { total: number; active: number }> = {};
             allSamples.forEach(s => {
                 const day = s.recorded_at.split('T')[0];
                 if (!dailyMap[day]) dailyMap[day] = { total: 0, active: 0 };
                 dailyMap[day].total++;
                 if (!s.idle) dailyMap[day].active++;
+
+                // Sample represents ~1 minute. 1/60th of hourly rate
+                const sEmail = sessionToUserEmail.get(s.session_id);
+                if (sEmail) {
+                    const m = memberMap.get(sEmail);
+                    if (m) {
+                        costs += (m.pay_rate || 0) / 60;
+                        billed += (m.bill_rate || 0) / 60;
+                    }
+                }
             });
             setDailyActivity(Object.entries(dailyMap).sort().map(([date, v]) => ({
                 date: new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
@@ -137,6 +160,8 @@ export function Reports() {
             setTotalSessions((sessions || []).length);
             setScreenshotCount(ssCount || 0);
             setTotalMins(allSamples.length);
+            setTotalCosts(Math.round(costs));
+            setTotalBilled(Math.round(billed));
             setAvgActivity(
                 allSamples.length > 0
                     ? Math.round(allSamples.reduce((a, b) => a + b.activity_percent, 0) / allSamples.length)
@@ -198,7 +223,7 @@ export function Reports() {
             }
         >
             {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                 <KpiCard
                     icon={<Clock className="w-7 h-7" strokeWidth={2.5} />}
                     label="Total Time Tracked"
@@ -216,6 +241,14 @@ export function Reports() {
                     trendVariant="positive"
                 />
                 <KpiCard
+                    icon={<DollarSign className="w-7 h-7" strokeWidth={2.5} />}
+                    label="Total Billed"
+                    value={`$${totalBilled.toLocaleString()}`}
+                    sub="Gross client billables"
+                    trend="+15%"
+                    trendVariant="positive"
+                />
+                <KpiCard
                     icon={<Monitor className="w-7 h-7" strokeWidth={2.5} />}
                     label="Total Sessions"
                     value={totalSessions.toString()}
@@ -230,6 +263,14 @@ export function Reports() {
                     sub="Total automated screen captures"
                     trend="+45"
                     trendVariant="positive"
+                />
+                <KpiCard
+                    icon={<DollarSign className="w-7 h-7" strokeWidth={2.5} />}
+                    label="Total Costs"
+                    value={`$${totalCosts.toLocaleString()}`}
+                    sub="Member pay rate expenses"
+                    trend="+8%"
+                    trendVariant="negative"
                 />
             </div>
 
