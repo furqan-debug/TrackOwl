@@ -116,9 +116,9 @@ export function Activity() {
                         options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
                     />
                     <div className="relative group/date">
-                        <div className="flex items-center gap-3 glass border border-black/[0.05] rounded-2xl px-5 py-3 shadow-xl transition-all group-hover/date:border-primary/50 cursor-pointer">
+                        <div className="flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 shadow-sm hover:border-primary/50 cursor-pointer transition-colors">
                             <Calendar className="w-4 h-4 text-primary" strokeWidth={2.5} />
-                            <span className="text-[10px] font-bold text-text-primary uppercase tracking-[0.2em] min-w-[120px] font-mono">{selectedDate}</span>
+                            <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 min-w-[100px] text-center">{selectedDate}</span>
                         </div>
                         <input 
                             type="date" 
@@ -145,9 +145,9 @@ export function Activity() {
                                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
                             </div>
                         ) : samples.length === 0 ? (
-                            <div className="h-[400px] flex flex-col items-center justify-center text-text-muted opacity-30">
-                                <ActivityIcon className="w-16 h-16 mb-4" />
-                                <p className="text-[10px] font-bold uppercase tracking-[0.3em] font-mono">No activity data available</p>
+                            <div className="h-[400px] flex flex-col items-center justify-center text-slate-400">
+                                <ActivityIcon className="w-12 h-12 mb-4 opacity-50" />
+                                <p className="text-sm font-medium">No activity data available</p>
                             </div>
                         ) : (
                             <div className="h-[400px] w-full mt-6">
@@ -196,16 +196,16 @@ export function Activity() {
                     <Card title="App Usage">
                         <div className="space-y-6 mt-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
                             {groupByApp(samples).length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-text-muted py-24 opacity-30">
-                                    <Monitor className="w-12 h-12 mb-4" />
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.3em] font-mono">No stats recorded</p>
+                                <div className="h-full flex flex-col items-center justify-center text-slate-400 py-24">
+                                    <Monitor className="w-10 h-10 mb-4 opacity-50" />
+                                    <p className="text-sm font-medium">No stats recorded</p>
                                 </div>
                             ) : (
                                 groupByApp(samples).map(({ app, percent }) => (
                                     <div key={app} className="group cursor-default">
-                                        <div className="flex items-center justify-between mb-2.5">
-                                            <span className="text-sm font-bold text-text-primary tracking-tight group-hover:text-primary transition-colors truncate max-w-[180px] leading-none">{app || 'System'}</span>
-                                            <span className="text-[9px] font-bold text-text-secondary bg-black/[0.03] px-3 py-1 rounded-xl uppercase tracking-widest font-mono border border-black/[0.03] group-hover:bg-primary/5 group-hover:text-primary transition-all">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px] leading-tight">{app || 'System'}</span>
+                                            <span className="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md transition-colors">
                                                 {percent}%
                                             </span>
                                         </div>
@@ -236,7 +236,7 @@ export function Activity() {
                             <div 
                                 key={ss.id}
                                 onClick={() => setEnlarged(ss)}
-                                className="group relative rounded-[32px] overflow-hidden glass border border-black/[0.05] hover:border-primary/50 transition-all aspect-video cursor-pointer shadow-xl hover:shadow-primary/10"
+                                className="group relative rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary/50 transition-all aspect-video cursor-pointer shadow-sm hover:shadow-md"
                             >
                                 <img 
                                     src={ss.file_url} 
@@ -244,12 +244,12 @@ export function Activity() {
                                     className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
                                 />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-5">
-                                    <p className="text-[10px] font-bold text-white tracking-[0.2em] uppercase mb-1.5 font-mono">
+                                    <p className="text-xs font-semibold text-white tracking-wider uppercase mb-1 drop-shadow-md">
                                         {new Date(ss.recorded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </p>
-                                    <div className="flex items-center gap-2.5 text-primary">
-                                        <Maximize2 className="w-3.5 h-3.5" strokeWidth={3} />
-                                        <span className="text-[9px] font-bold uppercase tracking-[0.3em]">VIEW</span>
+                                    <div className="flex items-center gap-1.5 text-white/90">
+                                        <Maximize2 className="w-4 h-4" strokeWidth={2.5} />
+                                        <span className="text-[10px] font-bold uppercase tracking-wider">VIEW</span>
                                     </div>
                                 </div>
                                 <div className="absolute top-4 right-4 w-7 h-7 rounded-xl bg-white/40 backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -270,24 +270,24 @@ export function Activity() {
                     <div className="max-w-7xl w-full relative group" onClick={e => e.stopPropagation()}>
                         <div className="absolute -top-20 left-0 right-0 flex justify-between items-center animate-in slide-in-from-bottom-4 duration-700">
                             <div>
-                                <h2 className="text-3xl font-bold text-text-primary tracking-tighter leading-none mb-2">Screenshot Viewer</h2>
-                                <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-primary font-mono bg-primary/5 px-3 py-1 rounded-lg border border-primary/10 inline-block">ID: {enlarged.id} • Session: {enlarged.session_id.slice(0, 8)}</p>
+                                <h2 className="text-3xl font-bold text-white tracking-tight leading-none mb-2">Screenshot Viewer</h2>
+                                <p className="text-xs font-semibold uppercase tracking-wider text-primary font-mono bg-primary/10 px-3 py-1 rounded-lg border border-primary/20 inline-block">ID: {enlarged.id} • Session: {enlarged.session_id.slice(0, 8)}</p>
                             </div>
-                            <button onClick={() => setEnlarged(null)} className="p-5 bg-white/40 border border-white/20 hover:bg-white rounded-[24px] shadow-xl transition-all group/close">
-                                <X className="w-7 h-7 text-text-primary group-hover/close:rotate-90 transition-transform" strokeWidth={3} />
+                            <button onClick={() => setEnlarged(null)} className="p-4 bg-white/10 border border-white/20 hover:bg-white/20 rounded-2xl shadow-lg transition-all group/close">
+                                <X className="w-6 h-6 text-white group-hover/close:rotate-90 transition-transform" strokeWidth={2.5} />
                             </button>
                         </div>
                         
-                        <div className="relative rounded-[48px] overflow-hidden border border-white/40 shadow-2xl animate-in zoom-in-95 duration-500">
+                        <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-2xl animate-in zoom-in-95 duration-500">
                             <img src={enlarged.file_url} alt="Full Screenshot" className="w-full h-auto" />
-                            <div className="absolute bottom-12 left-12 p-8 glass border border-white/40 rounded-[36px] backdrop-blur-3xl animate-in slide-in-from-left-8 duration-1000 delay-300 shadow-xl">
+                            <div className="absolute bottom-8 left-8 p-6 bg-black/60 border border-white/10 rounded-2xl backdrop-blur-xl animate-in slide-in-from-left-8 duration-1000 delay-300 shadow-xl">
                                 <div className="flex items-center gap-5">
-                                    <div className="w-12 h-12 rounded-[20px] bg-primary/10 flex items-center justify-center border border-primary/20 shadow-inner">
+                                    <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30 shadow-inner">
                                         <Clock className="w-6 h-6 text-primary" strokeWidth={2.5} />
                                     </div>
                                     <div>
-                                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] mb-1.5 font-mono">Capture Timestamp</p>
-                                        <p className="text-2xl font-bold text-text-primary tracking-tighter leading-none">{new Date(enlarged.recorded_at).toLocaleString()}</p>
+                                        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-1 font-mono">Capture Timestamp</p>
+                                        <p className="text-2xl font-bold text-white tracking-tight leading-none">{new Date(enlarged.recorded_at).toLocaleString()}</p>
                                     </div>
                                 </div>
                             </div>
@@ -308,10 +308,10 @@ function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNod
     
     return (
         <div className="relative group/select">
-            <div className="flex items-center gap-3.5 glass border border-black/[0.05] rounded-2xl px-5 py-3 shadow-xl transition-all group-hover/select:border-primary/50 cursor-pointer shadow-black/[0.02]">
-                <div className="text-primary group-hover/select:scale-110 transition-transform">{icon}</div>
-                <span className="text-[10px] font-bold text-text-primary uppercase tracking-[0.2em] min-w-[140px] font-mono">{activeLabel}</span>
-                <ChevronDown className="w-4 h-4 text-text-muted group-hover/select:text-text-primary transition-all group-hover/select:rotate-180" strokeWidth={3} />
+            <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 shadow-sm hover:border-primary/50 cursor-pointer transition-colors">
+                <div className="text-primary">{icon}</div>
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 min-w-[120px]">{activeLabel}</span>
+                <ChevronDown className="w-4 h-4 text-slate-400 group-hover/select:text-slate-600 transition-colors" strokeWidth={2.5} />
             </div>
             
             <select
@@ -330,13 +330,13 @@ function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNod
 function CustomTooltip({ active, payload, label }: any) {
     if (active && payload && payload.length) {
         return (
-            <div className="glass border border-primary/10 p-6 rounded-[32px] shadow-xl animate-in zoom-in-95 duration-200">
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] mb-4 border-b border-black/[0.03] pb-3 font-mono">{label}</p>
-                <div className="flex items-baseline gap-2.5">
-                    <span className="text-4xl font-bold text-text-primary tracking-tighter font-head">
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-lg animate-in zoom-in-95 duration-200">
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 border-b border-slate-100 dark:border-slate-800 pb-2">{label}</p>
+                <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                         {payload[0].value}%
                     </span>
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] font-mono">Activity Rate</span>
+                    <span className="text-xs font-medium text-primary uppercase tracking-wide">Activity Rate</span>
                 </div>
             </div>
         );
