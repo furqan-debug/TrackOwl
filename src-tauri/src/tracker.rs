@@ -13,7 +13,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, Instant};
 use rdev::{listen, Event, EventType};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 use serde::{Deserialize, Serialize};
 
 // ─── Shared counts (accessed from rdev listener thread) ───────────────────────
@@ -376,11 +376,7 @@ pub fn start_screenshot_loop(
                     {
                         use base64::Engine;
                         if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
-                            let s_token = {
-                                let app_state = app.state::<Mutex<crate::AppState>>();
-                                let locked_state = app_state.lock().unwrap();
-                                locked_state.auth_token.lock().unwrap().clone()
-                            };
+                            let s_token = app.state::<Mutex<crate::AppState>>().lock().unwrap().auth_token.lock().unwrap().clone();
 
                             let mut req = ureq::put(&storage_url)
                                 .set("apikey", &cfg.anon_key)
