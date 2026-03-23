@@ -754,11 +754,11 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
         try {
             const allMemberIds = [...new Set([...managerIds, ...userIds, ...viewerIds])];
             const payload = {
-                name: name.trim(), color, client_id: clientId || null, billable,
-                disable_activity: disableActivity, allow_tracking: allowTracking, disable_idle_time: disableIdle,
-                budget_type: budgetType, budget_limit: budgetCost ? parseFloat(budgetCost) : null,
-                budget_notifications: budgetNotify,
-                organization_id: profile?.organization_id ?? null, status: 'Active',
+                name: name.trim(), 
+                color, 
+                client_id: clientId || null, 
+                organization_id: profile?.organization_id ?? null, 
+                status: 'Active',
             };
             let projectId = project?.id;
             if (project) {
