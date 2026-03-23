@@ -6,8 +6,7 @@ import {
     ChevronRight, UsersRound, Plus, Pencil, Check
 } from 'lucide-react';
 import clsx from 'clsx';
-
-const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
+import { supabase } from '../lib/supabase';
 
 interface Team {
     id: string;
@@ -26,7 +25,7 @@ interface Member {
 }
 
 export function Teams() {
-    const { profile, session } = useAuth();
+    const { profile } = useAuth();
     const isViewer = profile?.role === 'Viewer';
     const [teams, setTeams] = useState<Team[]>([]);
     const [members, setMembers] = useState<Member[]>([]);
@@ -52,16 +51,22 @@ export function Teams() {
     async function fetchData() {
         setLoading(true);
         try {
-            const [tRes, mRes] = await Promise.all([
-                fetch(`${API}/api/teams`, {
-                    headers: { 'Authorization': `Bearer ${session?.access_token}` }
-                }),
-                fetch(`${API}/api/members`, {
-                    headers: { 'Authorization': `Bearer ${session?.access_token}` }
-                })
+            const [{ data: teamsData, error: tErr }, { data: membersData, error: mErr }] = await Promise.all([
+                supabase.from('teams').select('*, members!teams_manager_id_fkey(full_name), team_members(member_id)').order('created_at', { ascending: false }),
+                supabase.from('members').select('id, full_name, email').eq('status', 'Active')
             ]);
-            if (tRes.ok) setTeams(await tRes.json());
-            if (mRes.ok) setMembers(await mRes.json());
+            if (tErr) throw tErr;
+            if (mErr) throw mErr;
+
+            const formattedTeams = (teamsData || []).map(t => ({
+                ...t,
+                manager_name: t.members?.full_name,
+                member_count: t.team_members?.length || 0,
+                memberIds: t.team_members?.map((tm: any) => tm.member_id) || []
+            }));
+
+            setTeams(formattedTeams);
+            setMembers(membersData || []);
         } catch (e) {
             console.error('Fetch teams error:', e);
         } finally {
@@ -90,23 +95,19 @@ export function Teams() {
             name,
             description,
             manager_id: managerId || null,
-            member_ids: [],
             organization_id: profile?.organization_id
         };
 
         try {
-            const res = await fetch(`${API}/api/teams${editingTeam ? `/${editingTeam.id}` : ''}`, {
-                method: editingTeam ? 'PUT' : 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session?.access_token}`
-                },
-                body: JSON.stringify(payload)
-            });
-            if (res.ok) {
-                setShowModal(false);
-                fetchData();
+            if (editingTeam) {
+                const { error } = await supabase.from('teams').update(payload).eq('id', editingTeam.id);
+                if (error) throw error;
+            } else {
+                const { error } = await supabase.from('teams').insert(payload);
+                if (error) throw error;
             }
+            setShowModal(false);
+            fetchData();
         } catch (e) {
             console.error('Save team error:', e);
         }
@@ -115,14 +116,10 @@ export function Teams() {
     async function handleDelete() {
         if (!deletingTeam) return;
         try {
-            const res = await fetch(`${API}/api/teams/${deletingTeam.id}`, { 
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${session?.access_token}` }
-            });
-            if (res.ok) {
-                setDeletingTeam(null);
-                fetchData();
-            }
+            const { error } = await supabase.from('teams').delete().eq('id', deletingTeam.id);
+            if (error) throw error;
+            setDeletingTeam(null);
+            fetchData();
         } catch (e) {
             console.error('Delete team error:', e);
         }
@@ -402,19 +399,20 @@ function ManageMembersModal({ team, allMembers, onClose, onSuccess, isViewer }: 
     onSuccess: () => void;
     isViewer?: boolean;
 }) {
-    // Note: team.memberIds is populated by our refined backend API
+    // Note: team.memberIds is populated by our refined data fetch
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set((team as any).memberIds || []));
     const [loading, setLoading] = useState(false);
 
     async function handleSave() {
         setLoading(true);
         try {
-            const res = await fetch(`${API}/api/teams/${team.id}/members`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ member_ids: Array.from(selectedIds) })
-            });
-            if (res.ok) onSuccess();
+            await supabase.from('team_members').delete().eq('team_id', team.id);
+            if (selectedIds.size > 0) {
+               const inserts = Array.from(selectedIds).map(mid => ({ team_id: team.id, member_id: mid }));
+               const { error } = await supabase.from('team_members').insert(inserts);
+               if (error) throw error;
+            }
+            onSuccess();
         } catch (e) {
             console.error('Update members error:', e);
         } finally {

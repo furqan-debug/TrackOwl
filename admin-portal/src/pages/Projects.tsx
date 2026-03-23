@@ -61,7 +61,7 @@ const API = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001';
 // ─── Components ───────────────────────────────────────────────────────────────
 
 export function Projects() {
-    const { profile, session } = useAuth();
+    const { profile } = useAuth();
     const isViewer = profile?.role === 'Viewer';
 
     const [projects, setProjects] = useState<Project[]>([]);
@@ -82,13 +82,31 @@ export function Projects() {
     async function fetchProjects() {
         setLoading(true);
         try {
-            const res = await fetch(`${API}/api/projects?status=${activeTab}`, {
-                headers: { 'Authorization': `Bearer ${session?.access_token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setProjects(Array.isArray(data) ? data : []);
-            }
+            const { data, error } = await supabase
+                .from('projects')
+                .select(`
+                    *,
+                    clients (name),
+                    project_members (member_id),
+                    project_teams (team_id),
+                    todos (id)
+                `)
+                .eq('status', activeTab)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            const formatted = (data || []).map((p: any) => ({
+                ...p,
+                client_name: p.clients?.name,
+                memberCount: p.project_members?.length || 0,
+                teamCount: p.project_teams?.length || 0,
+                todoCount: p.todos?.length || 0,
+                memberIds: p.project_members?.map((m: any) => m.member_id) || [],
+                teamIds: p.project_teams?.map((t: any) => t.team_id) || []
+            }));
+
+            setProjects(formatted);
         } catch (err) {
             console.error('Fetch projects error:', err);
         } finally {
@@ -121,16 +139,12 @@ export function Projects() {
         const newStatus = activeTab === 'Active' ? 'Archived' : 'Active';
         setLoading(true);
         try {
-            await Promise.all(Array.from(selectedIds).map(id =>
-                fetch(`${API}/api/projects/${id}`, {
-                    method: 'PUT',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session?.access_token}`
-                    },
-                    body: JSON.stringify({ status: newStatus })
-                })
-            ));
+            const { error } = await supabase
+                .from('projects')
+                .update({ status: newStatus })
+                .in('id', Array.from(selectedIds));
+                
+            if (error) throw error;
             setSelectedIds(new Set());
             await fetchProjects();
         } catch (err) {
@@ -743,7 +757,7 @@ function ProjectModal({ project, initialTab = 'GENERAL', onClose, onSuccess }: {
                 name: name.trim(), color, client_id: clientId || null, billable,
                 disable_activity: disableActivity, allow_tracking: allowTracking, disable_idle_time: disableIdle,
                 budget_type: budgetType, budget_limit: budgetCost ? parseFloat(budgetCost) : null,
-                budget_notifications: budgetNotify, member_limit: memberLimit ? parseInt(memberLimit) : null,
+                budget_notifications: budgetNotify,
                 organization_id: profile?.organization_id ?? null, status: 'Active',
             };
             let projectId = project?.id;
