@@ -73,12 +73,11 @@ export function AcceptInvite() {
             // 3. Update profile via Edge Function
             console.log('--- ACTIVATING ACCOUNT ---');
             
-            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/complete-onboarding`, {
+            const response = await fetch(`/api/complete-setup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${session?.access_token}`,
-                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
                 },
                 body: JSON.stringify({
                     full_name: fullName.trim(),
