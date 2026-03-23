@@ -255,15 +255,26 @@ export default function App() {
     setIsPaused(false);
     setTrackingError(null);
 
-    const res: any = await trackerAPI.startTracking(project.id, user?.id ?? '', undefined);
-    if (res?.status === 'error') {
-      setTrackingError(res.error || 'Failed to start tracking. Is the backend running?');
+    try {
+      const sb = await getSupabase();
+      const { data: { session } } = await sb.auth.getSession();
+      const token = session?.access_token;
+
+      const res: any = await trackerAPI.startTracking(project.id, user?.id ?? '', token);
+      if (res?.status === 'error') {
+        setTrackingError(res.error || 'Failed to start tracking. Is the backend running?');
+        setActiveProject(null);
+        setScreen('projects');
+        return;
+      }
+      setIsTracking(true);
+      setSessionId(res?.session_id ?? null);
+      setScreen('tracker');
+    } catch (err: any) {
+      setTrackingError(err.toString());
       setActiveProject(null);
-      return;
+      setScreen('projects');
     }
-    setIsTracking(true);
-    setSessionId(res?.session_id ?? null);
-    setScreen('tracker');
   }
 
   async function handleStop() {
