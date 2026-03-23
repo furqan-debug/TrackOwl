@@ -175,7 +175,7 @@ fn start_tracking(
                         Arc::clone(&db_arc), Arc::clone(&auth_arc),
                     );
                     tracker::start_screenshot_loop(
-                        app.clone(), session_id.clone(), cfg.clone(), Arc::clone(&running),
+                        app.clone(), session_id.clone(), cfg.clone(), Arc::clone(&running), Arc::clone(&auth_arc)
                     );
 
                     // 30s offline sync loop
@@ -253,7 +253,7 @@ fn resume_tracking(
         app.clone(), Arc::clone(&counts), sid.clone(),
         cfg.clone(), Arc::clone(&running), 60_000, Arc::clone(&db_arc), Arc::clone(&auth_arc),
     );
-    tracker::start_screenshot_loop(app.clone(), sid.clone(), cfg.clone(), Arc::clone(&running));
+    tracker::start_screenshot_loop(app.clone(), sid.clone(), cfg.clone(), Arc::clone(&running), Arc::clone(&auth_arc));
     cache::start_sync_loop(cfg.clone(), Arc::clone(&auth_arc), Arc::clone(&running));
 
     TrackingResult { status: "running".to_string(), session_id: Some(sid), error: None }

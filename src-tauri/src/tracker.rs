@@ -337,67 +337,56 @@ pub fn start_screenshot_loop(
     session_id: String,
     cfg: crate::SupabaseConfig,
     running: Arc<Mutex<bool>>,
+    auth_token: Arc<Mutex<Option<String>>>,
 ) {
     thread::spawn(move || {
         loop {
+            let window_start = std::time::Instant::now();
+
             if !*running.lock().unwrap() { break; }
 
-            // Pick random offsets within the 2-minute window
-            let mut offsets: Vec<u64> = Vec::new();
-            while offsets.len() < SCREENSHOTS_PER_WINDOW {
-                let t = rand_ms(SCREENSHOT_WINDOW_MS);
-                if !offsets.contains(&t) { offsets.push(t); }
-            }
-            offsets.sort_unstable();
+            // Randomly capture every 0-120s
+            let next_secs = rand_ms(120_000);
+            thread::sleep(Duration::from_millis(next_secs));
+            
+            if !*running.lock().unwrap() { break; }
 
-            let window_start = Instant::now();
-            for offset in &offsets {
-                if !*running.lock().unwrap() { return; }
-                let elapsed = window_start.elapsed().as_millis() as u64;
-                let wait = offset.saturating_sub(elapsed);
-                thread::sleep(Duration::from_millis(wait));
+            if let Some(base64_data) = capture_screenshot() {
+                let recorded_at = chrono::Utc::now().to_rfc3339();
+                
+                // Sanitize filename for URL safety: remove :, +, and extra dots
+                let safe_timestamp = recorded_at
+                    .replace(':', "-")
+                    .replace('+', "Z")
+                    .replace('.', "-");
+                let filename = format!("{}_{}.png", session_id, safe_timestamp);
+                let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
+                let public_url = format!("{}/storage/v1/object/public/screenshots/{}", cfg.url, filename);
 
-                if !*running.lock().unwrap() { return; }
+                {
+                    use base64::Engine;
+                    if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
+                        let s_token = auth_token.lock().unwrap().clone();
 
-                if let Some(base64_data) = capture_screenshot() {
-                    let payload = ScreenshotPayload {
-                        session_id: session_id.clone(),
-                        timestamp: chrono::Utc::now().to_rfc3339(),
-                        base64: base64_data.clone(),
-                    };
-                    let _ = app.emit("tracking-screenshot", &payload);
+                        let mut req = ureq::put(&storage_url)
+                            .set("apikey", &cfg.anon_key)
+                            .set("Content-Type", "image/png");
+                        
+                        if let Some(token) = &s_token {
+                            req = req.set("Authorization", &format!("Bearer {}", token));
+                        }
 
-                    // Upload to Supabase Storage as a PNG file
-                    let recorded_at = payload.timestamp.clone();
-                    let filename = format!("{}_{}.png", session_id, recorded_at.replace(':', "-"));
-                    let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
-                    let public_url = format!("{}/storage/v1/object/public/screenshots/{}", cfg.url, filename);
+                        let upload_res = req.send_bytes(png_bytes.as_slice());
 
-                    {
-                        use base64::Engine;
-                        if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
-                            let s_token = app.state::<Mutex<crate::AppState>>().lock().unwrap().auth_token.lock().unwrap().clone();
-
-                            let mut req = ureq::put(&storage_url)
-                                .set("apikey", &cfg.anon_key)
-                                .set("Content-Type", "image/png");
+                        if upload_res.is_ok() {
+                            let body = serde_json::json!({
+                                "session_id": session_id,
+                                "recorded_at": recorded_at,
+                                "file_url": public_url,
+                            }).to_string();
                             
-                            if let Some(token) = &s_token {
-                                req = req.set("Authorization", &format!("Bearer {}", token));
-                            }
-
-                            let upload_res = req.send_bytes(png_bytes.as_slice());
-
-                            if upload_res.is_ok() {
-                                // Successfully uploaded to storage, now insert into the screenshots table
-                                let body = serde_json::json!({
-                                    "session_id": session_id,
-                                    "recorded_at": recorded_at,
-                                    "file_url": public_url,
-                                }).to_string();
                                 
-                                let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
-                            }
+                            let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
                         }
                     }
                 }
