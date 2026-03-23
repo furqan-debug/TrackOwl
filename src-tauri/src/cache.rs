@@ -15,13 +15,14 @@ use crate::SupabaseConfig;
 pub struct CachedSample {
     pub id: i64,
     pub session_id: String,
-    pub timestamp: String,
-    pub mouse_count: u32,
-    pub keyboard_count: u32,
+    pub recorded_at: String,
+    pub mouse_clicks: u32,
+    pub key_presses: u32,
     pub app_name: String,
     pub window_title: String,
     pub domain: String,
-    pub idle_flag: bool,
+    pub idle: bool,
+    pub activity_percent: i32,
     pub synced: bool,
 }
 
@@ -42,16 +43,17 @@ pub fn init_db() -> rusqlite::Result<Connection> {
     let conn = Connection::open(&path)?;
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS activity_samples (
-            id             INTEGER PRIMARY KEY AUTOINCREMENT,
-            session_id     TEXT    NOT NULL,
-            timestamp      TEXT    NOT NULL,
-            mouse_count    INTEGER NOT NULL DEFAULT 0,
-            keyboard_count INTEGER NOT NULL DEFAULT 0,
-            app_name       TEXT    NOT NULL DEFAULT '',
-            window_title   TEXT    NOT NULL DEFAULT '',
-            domain         TEXT    NOT NULL DEFAULT '',
-            idle_flag      INTEGER NOT NULL DEFAULT 0,
-            synced         INTEGER NOT NULL DEFAULT 0
+            id               INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id       TEXT    NOT NULL,
+            recorded_at      TEXT    NOT NULL,
+            mouse_clicks     INTEGER NOT NULL DEFAULT 0,
+            key_presses      INTEGER NOT NULL DEFAULT 0,
+            app_name         TEXT    NOT NULL DEFAULT '',
+            window_title     TEXT    NOT NULL DEFAULT '',
+            domain           TEXT    NOT NULL DEFAULT '',
+            idle             INTEGER NOT NULL DEFAULT 0,
+            activity_percent INTEGER NOT NULL DEFAULT 0,
+            synced           INTEGER NOT NULL DEFAULT 0
         );
         CREATE INDEX IF NOT EXISTS idx_synced ON activity_samples(synced);",
     )?;
@@ -62,12 +64,12 @@ pub fn init_db() -> rusqlite::Result<Connection> {
 pub fn cache_sample(conn: &Connection, sample: &ActivitySample) -> rusqlite::Result<()> {
     conn.execute(
         "INSERT INTO activity_samples
-             (session_id, timestamp, mouse_count, keyboard_count, app_name, window_title, domain, idle_flag, synced)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 0)",
+             (session_id, recorded_at, mouse_clicks, key_presses, app_name, window_title, domain, idle, activity_percent, synced)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 0)",
         params![
-            sample.session_id, sample.timestamp, sample.mouse_count,
-            sample.keyboard_count, sample.app_name, sample.window_title,
-            sample.domain, sample.idle_flag as i32,
+            sample.session_id, sample.recorded_at, sample.mouse_clicks,
+            sample.key_presses, sample.app_name, sample.window_title,
+            sample.domain, sample.idle as i32, sample.activity_percent,
         ],
     )?;
     Ok(())
@@ -75,22 +77,23 @@ pub fn cache_sample(conn: &Connection, sample: &ActivitySample) -> rusqlite::Res
 
 pub fn get_unsynced_samples(conn: &Connection) -> rusqlite::Result<Vec<CachedSample>> {
     let mut stmt = conn.prepare(
-        "SELECT id, session_id, timestamp, mouse_count, keyboard_count,
-                app_name, window_title, domain, idle_flag, synced
+        "SELECT id, session_id, recorded_at, mouse_clicks, key_presses,
+                app_name, window_title, domain, idle, activity_percent, synced
          FROM activity_samples WHERE synced = 0 ORDER BY id ASC LIMIT 50"
     )?;
     let rows = stmt.query_map([], |row| {
         Ok(CachedSample {
             id: row.get(0)?,
             session_id: row.get(1)?,
-            timestamp: row.get(2)?,
-            mouse_count: row.get::<_, u32>(3)?,
-            keyboard_count: row.get::<_, u32>(4)?,
+            recorded_at: row.get(2)?,
+            mouse_clicks: row.get::<_, u32>(3)?,
+            key_presses: row.get::<_, u32>(4)?,
             app_name: row.get(5)?,
             window_title: row.get(6)?,
             domain: row.get(7)?,
-            idle_flag: row.get::<_, i32>(8)? != 0,
-            synced: row.get::<_, i32>(9)? != 0,
+            idle: row.get::<_, i32>(8)? != 0,
+            activity_percent: row.get(9)?,
+            synced: row.get::<_, i32>(10)? != 0,
         })
     })?;
     rows.collect()
@@ -152,13 +155,14 @@ pub fn sync_once(
     let payload: Vec<serde_json::Value> = samples.iter().map(|s| {
         serde_json::json!({
             "session_id":      s.session_id,
-            "timestamp":       s.timestamp,
-            "mouse_count":     s.mouse_count,
-            "keyboard_count":  s.keyboard_count,
+            "recorded_at":     s.recorded_at,
+            "mouse_clicks":    s.mouse_clicks,
+            "key_presses":     s.key_presses,
             "app_name":        s.app_name,
             "window_title":    s.window_title,
             "domain":          s.domain,
-            "idle_flag":       s.idle_flag,
+            "idle":            s.idle,
+            "activity_percent": s.activity_percent,
         })
     }).collect();
 

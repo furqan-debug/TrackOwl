@@ -27,13 +27,14 @@ pub struct TrackerCounts {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct ActivitySample {
     pub session_id: String,
-    pub timestamp: String,
-    pub mouse_count: u32,
-    pub keyboard_count: u32,
+    pub recorded_at: String,
+    pub mouse_clicks: u32,
+    pub key_presses: u32,
     pub app_name: String,
     pub window_title: String,
     pub domain: String,
-    pub idle_flag: bool,
+    pub idle: bool,
+    pub activity_percent: i32,
 }
 
 // ─── Screenshot payload ───────────────────────────────────────────────────────
@@ -278,17 +279,22 @@ pub fn start_sample_loop(
 
             let (app_name, window_title) = get_active_window();
             let domain = get_browser_domain(&app_name, &window_title);
-            let idle_flag = mouse == 0 && keyboard == 0;
+            let idle = mouse == 0 && keyboard == 0;
+
+            // Simple activity percentage calculation:
+            // 60-second window, 1 point for any activity
+            let activity_percent = if !idle { 100 } else { 0 };
 
             let sample = ActivitySample {
                 session_id: session_id.clone(),
-                timestamp: chrono::Utc::now().to_rfc3339(),
-                mouse_count: mouse,
-                keyboard_count: keyboard,
+                recorded_at: chrono::Utc::now().to_rfc3339(),
+                mouse_clicks: mouse,
+                key_presses: keyboard,
                 app_name,
                 window_title,
                 domain,
-                idle_flag,
+                idle,
+                activity_percent,
             };
 
             // Emit to React UI
@@ -305,14 +311,15 @@ pub fn start_sample_loop(
             } else {
                 // No DB — post the single sample directly
                 let body = serde_json::json!([{
-                    "session_id": sample.session_id,
-                    "timestamp":  sample.timestamp,
-                    "mouse_count": sample.mouse_count,
-                    "keyboard_count": sample.keyboard_count,
-                    "app_name":   sample.app_name,
-                    "window_title": sample.window_title,
-                    "domain":     sample.domain,
-                    "idle_flag":  sample.idle_flag,
+                    "session_id":      sample.session_id,
+                    "recorded_at":     sample.recorded_at,
+                    "mouse_clicks":    sample.mouse_clicks,
+                    "key_presses":     sample.key_presses,
+                    "app_name":        sample.app_name,
+                    "window_title":    sample.window_title,
+                    "domain":          sample.domain,
+                    "idle":            sample.idle,
+                    "activity_percent": sample.activity_percent,
                 }]).to_string();
                 let token = auth_token.lock().unwrap().clone();
                 let _ = crate::supabase_post(&cfg, "activity_samples", &body, token.as_deref(), None);
@@ -361,15 +368,40 @@ pub fn start_screenshot_loop(
                     let _ = app.emit("tracking-screenshot", &payload);
 
                     // Upload to Supabase Storage as a PNG file
-                    let filename = format!("{}_{}.png", session_id, payload.timestamp.replace(':', "-"));
-                    let url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
+                    let recorded_at = payload.timestamp.clone();
+                    let filename = format!("{}_{}.png", session_id, recorded_at.replace(':', "-"));
+                    let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
+                    let public_url = format!("{}/storage/v1/object/public/screenshots/{}", cfg.url, filename);
+
                     {
                         use base64::Engine;
                         if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
-                            let _ = ureq::put(&url)
+                            let s_token = {
+                                let app_state = app.state::<Mutex<crate::AppState>>();
+                                let locked_state = app_state.lock().unwrap();
+                                locked_state.auth_token.lock().unwrap().clone()
+                            };
+
+                            let mut req = ureq::put(&storage_url)
                                 .set("apikey", &cfg.anon_key)
-                                .set("Content-Type", "image/png")
-                                .send_bytes(png_bytes.as_slice());
+                                .set("Content-Type", "image/png");
+                            
+                            if let Some(token) = &s_token {
+                                req = req.set("Authorization", &format!("Bearer {}", token));
+                            }
+
+                            let upload_res = req.send_bytes(png_bytes.as_slice());
+
+                            if upload_res.is_ok() {
+                                // Successfully uploaded to storage, now insert into the screenshots table
+                                let body = serde_json::json!({
+                                    "session_id": session_id,
+                                    "recorded_at": recorded_at,
+                                    "file_url": public_url,
+                                }).to_string();
+                                
+                                let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
+                            }
                         }
                     }
                 }
