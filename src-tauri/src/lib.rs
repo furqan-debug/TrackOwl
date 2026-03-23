@@ -120,6 +120,27 @@ pub fn supabase_patch(
         .and_then(|resp| resp.into_string().map_err(|e| e.to_string()))
 }
 
+/// GET from a Supabase PostgREST endpoint.
+pub fn supabase_get(
+    cfg: &SupabaseConfig,
+    table: &str,
+    filter: &str,
+    auth_token: Option<&str>,
+) -> Result<String, String> {
+    let url = format!("{}/rest/v1/{}?{}", cfg.url, table, filter);
+
+    let mut req = ureq::get(&url)
+        .set("apikey", &cfg.anon_key);
+
+    if let Some(token) = auth_token {
+        req = req.set("Authorization", &format!("Bearer {}", token));
+    }
+
+    req.call()
+        .map_err(|e| format!("Supabase GET error: {}", e))
+        .and_then(|resp| resp.into_string().map_err(|e| e.to_string()))
+}
+
 // ─── IPC Commands ─────────────────────────────────────────────────────────────
 
 /// invoke('start_tracking', { projectId, userId, token })
@@ -144,12 +165,27 @@ fn start_tracking(
         )
     };
 
+    // Fetch organization_id for the user
+    let org_id: Option<String> = match crate::supabase_get(
+        &cfg,
+        "members",
+        &format!("id=eq.{}&select=organization_id", user_id),
+        Some(&token),
+    ) {
+        Ok(resp_body) => {
+            let json_rows: serde_json::Value = serde_json::from_str(&resp_body).unwrap_or(serde_json::json!([]));
+            json_rows.get(0).and_then(|r| r.get("organization_id")).and_then(|v| v.as_str()).map(|s| s.to_string())
+        }
+        Err(_) => None,
+    };
+
     // Insert session row — PostgREST returns array with Prefer: return=representation
     let now = chrono::Utc::now().to_rfc3339();
     let body = serde_json::json!({
         "user_id": user_id,
         "project_id": project_id,
         "started_at": now,
+        "organization_id": org_id,
     }).to_string();
 
     match supabase_post(&cfg, "sessions", &body, Some(&token), Some("return=representation")) {
