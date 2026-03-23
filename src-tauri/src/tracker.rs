@@ -357,7 +357,7 @@ pub fn start_screenshot_loop(
             use base64::Engine;
             if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
                 let s_token = auth_token.lock().unwrap().clone();
-                let mut req = ureq::put(&storage_url)
+                let mut req = ureq::post(&storage_url)
                     .set("apikey", &cfg.anon_key)
                     .set("Content-Type", "image/png");
                 
@@ -406,7 +406,7 @@ pub fn start_screenshot_loop(
                     if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
                         let s_token = auth_token.lock().unwrap().clone();
 
-                        let mut req = ureq::put(&storage_url)
+                        let mut req = ureq::post(&storage_url)
                             .set("apikey", &cfg.anon_key)
                             .set("Content-Type", "image/png");
                         
