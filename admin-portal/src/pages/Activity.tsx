@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { 
-    Monitor, Keyboard, Mouse, Camera, Clock, 
-    Users, Activity as ActivityIcon, Zap, 
-    Maximize2, ShieldCheck, Calendar,
-    ChevronDown, X, Loader2
-} from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { PageLayout, KpiCard, Card } from '../components/ui';
+import { Mouse, Keyboard, Activity as ActivityIcon, Zap, Users, Calendar } from 'lucide-react';
+import { PageLayout, KpiCard, FilterSelect } from '../components/ui';
+
+import { ActivityChart } from '../components/activity/ActivityChart';
+import { AppUsageList } from '../components/activity/AppUsageList';
+import { ScreenshotGallery } from '../components/activity/ScreenshotGallery';
+import { ScreenshotLightbox } from '../components/activity/ScreenshotLightbox';
 
 interface ActivitySample {
     id: number;
@@ -86,14 +85,6 @@ export function Activity() {
         setLoading(false);
     }
 
-    const chartData = Array.from({ length: 24 }, (_, hour) => {
-        const hourSamples = samples.filter(s => new Date(s.recorded_at).getHours() === hour);
-        const avg = hourSamples.length
-            ? Math.round(hourSamples.reduce((a, b) => a + b.activity_percent, 0) / hourSamples.length)
-            : 0;
-        return { hour: `${hour}:00`, activity: avg };
-    });
-
     const totalClicks = samples.reduce((a, b) => a + b.mouse_clicks, 0);
     const totalKeys = samples.reduce((a, b) => a + b.key_presses, 0);
     const avgActivity = samples.length ? Math.round(samples.reduce((a, b) => a + b.activity_percent, 0) / samples.length) : 0;
@@ -130,7 +121,7 @@ export function Activity() {
                 </div>
             }
         >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8 mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
                 <KpiCard icon={<Mouse className="w-6 h-6" />} label="Mouse Clicks" value={totalClicks.toLocaleString()} />
                 <KpiCard icon={<Keyboard className="w-6 h-6" />} label="Keyboard Hits" value={totalKeys.toLocaleString()} />
                 <KpiCard icon={<ActivityIcon className="w-6 h-6" />} label="Active Time" value={activeTime.toString()} sub="Minutes of activity" />
@@ -139,215 +130,16 @@ export function Activity() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-10">
                 <div className="lg:col-span-2">
-                    <Card title="Activity Timeline">
-                        {loading ? (
-                            <div className="h-[400px] flex items-center justify-center">
-                                <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                            </div>
-                        ) : samples.length === 0 ? (
-                            <div className="h-[400px] flex flex-col items-center justify-center text-slate-400">
-                                <ActivityIcon className="w-12 h-12 mb-4 opacity-50" />
-                                <p className="text-sm font-medium">No activity data available</p>
-                            </div>
-                        ) : (
-                            <div className="h-[400px] w-full mt-6">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={chartData}>
-                                        <defs>
-                                            <linearGradient id="actGrad" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#506ef8" stopOpacity={0.2} />
-                                                <stop offset="95%" stopColor="#506ef8" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(41, 61, 99, 0.05)" />
-                                        <XAxis 
-                                            dataKey="hour" 
-                                            axisLine={false} 
-                                            tickLine={false} 
-                                            tick={{ fill: '#5c6b8a', fontSize: 10, fontWeight: 900 }}
-                                            dy={15}
-                                            interval={2}
-                                        />
-                                        <YAxis 
-                                            domain={[0, 100]} 
-                                            axisLine={false} 
-                                            tickLine={false} 
-                                            tick={{ fill: '#5c6b8a', fontSize: 10, fontWeight: 900 }}
-                                            unit="%"
-                                            dx={-10}
-                                        />
-                                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(80, 110, 248, 0.1)', strokeWidth: 2 }} />
-                                        <Area 
-                                            type="monotone" 
-                                            dataKey="activity" 
-                                            stroke="#506ef8" 
-                                            strokeWidth={4} 
-                                            fill="url(#actGrad)" 
-                                            animationDuration={2000} 
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        )}
-                    </Card>
+                    <ActivityChart loading={loading} samples={samples} />
                 </div>
-
                 <div className="lg:col-span-1">
-                    <Card title="App Usage">
-                        <div className="space-y-6 mt-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
-                            {groupByApp(samples).length === 0 ? (
-                                <div className="h-full flex flex-col items-center justify-center text-slate-400 py-24">
-                                    <Monitor className="w-10 h-10 mb-4 opacity-50" />
-                                    <p className="text-sm font-medium">No stats recorded</p>
-                                </div>
-                            ) : (
-                                groupByApp(samples).map(({ app, percent }) => (
-                                    <div key={app} className="group cursor-default">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px] leading-tight">{app || 'System'}</span>
-                                            <span className="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md transition-colors">
-                                                {percent}%
-                                            </span>
-                                        </div>
-                                        <div className="h-2 bg-black/[0.03] rounded-full overflow-hidden w-full p-[1px]">
-                                            <div 
-                                                className="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-[1500ms] ease-out shadow-sm shadow-primary/10"
-                                                style={{ width: `${percent}%` }} 
-                                            />
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </Card>
+                    <AppUsageList samples={samples} />
                 </div>
             </div>
 
-            <Card title="Screenshots">
-                {screenshots.length === 0 ? (
-                    <div className="py-32 flex flex-col items-center justify-center text-text-muted opacity-40">
-                        <Camera className="w-16 h-16 mb-6" />
-                        <h3 className="text-2xl font-bold text-text-primary tracking-tighter mb-2">No Screenshots</h3>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.3em] font-mono">No screenshots recorded for this period</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8">
-                        {screenshots.map(ss => (
-                            <div 
-                                key={ss.id}
-                                onClick={() => setEnlarged(ss)}
-                                className="group relative rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary/50 transition-all aspect-video cursor-pointer shadow-sm hover:shadow-md"
-                            >
-                                <img 
-                                    src={ss.file_url} 
-                                    alt="Surveillance Capture" 
-                                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-5">
-                                    <p className="text-xs font-semibold text-white tracking-wider uppercase mb-1 drop-shadow-md">
-                                        {new Date(ss.recorded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </p>
-                                    <div className="flex items-center gap-1.5 text-white/90">
-                                        <Maximize2 className="w-4 h-4" strokeWidth={2.5} />
-                                        <span className="text-[10px] font-bold uppercase tracking-wider">VIEW</span>
-                                    </div>
-                                </div>
-                                <div className="absolute top-4 right-4 w-7 h-7 rounded-xl bg-white/40 backdrop-blur-md border border-white/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <ShieldCheck className="w-4 h-4 text-emerald-500" strokeWidth={2.5} />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </Card>
-
-            {/* Lightbox / Neural Analysis */}
-            {enlarged && (
-                <div 
-                    className="fixed inset-0 bg-black/40 z-[100] flex items-center justify-center p-8 backdrop-blur-3xl animate-in fade-in duration-500 cursor-zoom-out" 
-                    onClick={() => setEnlarged(null)}
-                >
-                    <div className="max-w-7xl w-full relative group" onClick={e => e.stopPropagation()}>
-                        <div className="absolute -top-20 left-0 right-0 flex justify-between items-center animate-in slide-in-from-bottom-4 duration-700">
-                            <div>
-                                <h2 className="text-3xl font-bold text-white tracking-tight leading-none mb-2">Screenshot Viewer</h2>
-                                <p className="text-xs font-semibold uppercase tracking-wider text-primary font-mono bg-primary/10 px-3 py-1 rounded-lg border border-primary/20 inline-block">ID: {enlarged.id} • Session: {enlarged.session_id.slice(0, 8)}</p>
-                            </div>
-                            <button onClick={() => setEnlarged(null)} className="p-4 bg-white/10 border border-white/20 hover:bg-white/20 rounded-2xl shadow-lg transition-all group/close">
-                                <X className="w-6 h-6 text-white group-hover/close:rotate-90 transition-transform" strokeWidth={2.5} />
-                            </button>
-                        </div>
-                        
-                        <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-2xl animate-in zoom-in-95 duration-500">
-                            <img src={enlarged.file_url} alt="Full Screenshot" className="w-full h-auto" />
-                            <div className="absolute bottom-8 left-8 p-6 bg-black/60 border border-white/10 rounded-2xl backdrop-blur-xl animate-in slide-in-from-left-8 duration-1000 delay-300 shadow-xl">
-                                <div className="flex items-center gap-5">
-                                    <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30 shadow-inner">
-                                        <Clock className="w-6 h-6 text-primary" strokeWidth={2.5} />
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-1 font-mono">Capture Timestamp</p>
-                                        <p className="text-2xl font-bold text-white tracking-tight leading-none">{new Date(enlarged.recorded_at).toLocaleString()}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <p className="text-text-primary/10 text-[11px] font-bold uppercase tracking-[1em] text-center mt-12 animate-pulse font-mono">
-                            ENCRYPTED SYNC: ACTIVE
-                        </p>
-                    </div>
-                </div>
-            )}
+            <ScreenshotGallery screenshots={screenshots} onSelectImage={setEnlarged} />
+            <ScreenshotLightbox enlarged={enlarged} setEnlarged={setEnlarged} />
         </PageLayout>
     );
 }
 
-function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNode; value: string; onChange: (val: string) => void; options: { id: string; name: string }[] }) {
-    const activeLabel = options.find(o => o.id === value)?.name || value;
-    
-    return (
-        <div className="relative group/select">
-            <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 shadow-sm hover:border-primary/50 cursor-pointer transition-colors">
-                <div className="text-primary">{icon}</div>
-                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 min-w-[120px]">{activeLabel}</span>
-                <ChevronDown className="w-4 h-4 text-slate-400 group-hover/select:text-slate-600 transition-colors" strokeWidth={2.5} />
-            </div>
-            
-            <select
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-            >
-                {options.map(o => (
-                    <option key={o.id} value={o.id} className="bg-white text-text-primary">{o.name}</option>
-                ))}
-            </select>
-        </div>
-    );
-}
-
-function CustomTooltip({ active, payload, label }: any) {
-    if (active && payload && payload.length) {
-        return (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-lg animate-in zoom-in-95 duration-200">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 border-b border-slate-100 dark:border-slate-800 pb-2">{label}</p>
-                <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                        {payload[0].value}%
-                    </span>
-                    <span className="text-xs font-medium text-primary uppercase tracking-wide">Activity Rate</span>
-                </div>
-            </div>
-        );
-    }
-    return null;
-}
-
-function groupByApp(samples: ActivitySample[]) {
-    const map: Record<string, number> = {};
-    samples.forEach(s => { const app = s.app_name || 'System'; map[app] = (map[app] || 0) + 1; });
-    const total = samples.length;
-    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 10)
-        .map(([app, count]) => ({ app, count, percent: Math.round((count / total) * 100) }));
-}
