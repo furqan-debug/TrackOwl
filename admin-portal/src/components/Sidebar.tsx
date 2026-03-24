@@ -102,9 +102,9 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 </div>
                 {!effectiveCollapsed && (
                     <div className="flex flex-col">
-                        <span className="text-xl font-bold text-text-primary tracking-tighter truncate font-head leading-none">Trackora</span>
-                        <span className="text-[9px] font-bold text-primary uppercase tracking-[0.2em] mt-1 opacity-80">Enterprise</span>
-                    </div>
+                    <span className="text-xl font-bold text-text-primary tracking-tight leading-none mb-1">Trackora</span>
+                    <span className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] opacity-60">Admin Portal</span>
+                </div>
                 )}
             </div>
 
@@ -120,7 +120,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                         >
                             <div className="flex items-center gap-2.5">
                                 <Star className={clsx("w-4 h-4 transition-colors", favorites.length > 0 ? "text-primary fill-primary/10" : "text-text-muted group-hover:text-text-secondary")} aria-hidden />
-                                Registry Hub
+                                Favorites
                                 <span className="bg-black/5 px-2 py-0.5 rounded-lg text-[10px] text-text-muted font-mono">{favorites.length}</span>
                             </div>
                             <ChevronDown className={clsx("w-3.5 h-3.5 text-text-muted transition-transform duration-300", !favoritesExpanded && "-rotate-90")} />
@@ -157,7 +157,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 {/* Main Navigation */}
                 <nav className="space-y-2" aria-label="Primary">
                     {!effectiveCollapsed && (
-                        <p className="px-4 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] mb-4 opacity-40">Operational Matrix</p>
+                        <p className="px-4 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-4 opacity-40 text-left">Navigation</p>
                     )}
                     {filteredNav.map((group) => {
                         const hasChildren = group.children && group.children.length > 0;
@@ -241,7 +241,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
             </div>
 
             {/* Profile Area */}
-            <div className="mt-auto border-t border-black/[0.05] bg-white/40 p-5 relative z-20">
+            <div className="mt-auto border-t border-black/[0.05] bg-white p-5 relative z-20">
                  <div className={clsx("flex items-center gap-3.5 p-2 rounded-2xl transition-all hover:bg-black/[0.02] cursor-pointer group mb-3", effectiveCollapsed ? "justify-center" : "")}>
                     <div className="relative shrink-0">
                         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#506ef8] to-[#3d59e0] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20 uppercase font-head">

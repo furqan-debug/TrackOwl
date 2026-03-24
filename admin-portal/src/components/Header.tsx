@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Star, LogOut, Menu, ChevronRight, ChevronDown, User as UserIcon, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
+import { Star, LogOut, Menu, ChevronDown, User as UserIcon, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 import clsx from 'clsx';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -85,13 +85,11 @@ export function Header({ onOpenMobileMenu, isSidebarCollapsed, onToggleSidebar }
                 </button>
                 
                 <div className="flex flex-col">
-                    <h1 className="text-xl font-bold text-text-primary truncate font-head leading-none mb-1.5 tracking-tighter">
+                    <h1 className="text-xl font-bold text-text-primary truncate leading-none mb-1 tracking-tight">
                         {pageName}
                     </h1>
-                     <div className="flex items-center gap-2 opacity-80">
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] font-mono">Matrix Node</span>
-                        <ChevronRight className="w-3 h-3 text-text-muted" strokeWidth={3} />
-                        <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] truncate">{pageName || 'System Root'}</span>
+                      <div className="flex items-center gap-2 opacity-60">
+                        <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{pageName || 'System Root'}</span>
                     </div>
                 </div>
 
@@ -112,10 +110,7 @@ export function Header({ onOpenMobileMenu, isSidebarCollapsed, onToggleSidebar }
             </div>
 
             <div className="flex items-center gap-6 text-text-secondary" ref={menuRef}>
-                <div className="hidden lg:flex items-center bg-black/[0.03] border border-black/[0.05] rounded-2xl px-5 py-2 mr-2 shadow-inner shadow-black/[0.02]">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 mr-3 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.4)]" />
-                    <span className="text-[10px] font-bold text-text-secondary uppercase tracking-[0.2em] font-mono">Deployment: Stable</span>
-                </div>
+                <div className="flex-1" />
 
                 <div className="relative">
                     <button
@@ -166,7 +161,7 @@ export function Header({ onOpenMobileMenu, isSidebarCollapsed, onToggleSidebar }
                                     <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
                                         <UserIcon className="w-4.5 h-4.5 shrink-0 transition-transform group-hover:scale-110 text-primary" strokeWidth={2.5} />
                                     </div>
-                                    My Profile
+                                    Profile
                                 </button>
 
                                 <button
@@ -182,7 +177,7 @@ export function Header({ onOpenMobileMenu, isSidebarCollapsed, onToggleSidebar }
                                     <div className="w-9 h-9 rounded-xl bg-rose-500/5 flex items-center justify-center group-hover:bg-rose-500/10 transition-colors">
                                         <LogOut className="w-4.5 h-4.5 shrink-0 transition-transform group-hover:-translate-x-0.5" strokeWidth={2.5} />
                                     </div>
-                                    Sync Exit
+                                    Sign Out
                                 </button>
                             </div>
                         </div>

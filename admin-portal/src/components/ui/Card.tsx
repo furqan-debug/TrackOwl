@@ -18,7 +18,7 @@ export function Card({
     return (
         <div
             className={clsx(
-                'glass rounded-[32px] overflow-hidden relative group transition-all duration-700 hover:shadow-xl hover:shadow-[#293d63]/5 hover:border-[#506ef8]/20',
+                'bg-white border border-slate-200 rounded-[32px] overflow-hidden relative group transition-all duration-300 hover:shadow-lg',
                 !noPadding && 'p-8 md:p-10',
                 className
             )}

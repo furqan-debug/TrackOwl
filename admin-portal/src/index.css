@@ -57,20 +57,11 @@
 }
 
 @utility bg-grid-premium {
-  background-size: 50px 50px;
-  background-image: 
-    linear-gradient(to right, rgba(80, 110, 248, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(80, 110, 248, 0.04) 1px, transparent 1px);
+  display: none;
 }
 
 @utility bg-gradient-mesh {
   background-color: #f8fafc;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(80, 110, 248, 0.12) 0, transparent 50%), 
-    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.1) 0, transparent 50%), 
-    radial-gradient(at 100% 100%, rgba(80, 110, 248, 0.12) 0, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.1) 0, transparent 50%),
-    radial-gradient(at 50% 50%, rgba(255, 255, 255, 0.9) 0, transparent 80%);
 }
 
 @utility bg-noise {
@@ -124,7 +115,7 @@
 body {
   background-color: var(--color-background);
   color: var(--color-text-secondary);
-  font-family: 'Poppins', 'Helvetica', 'Arial', sans-serif;
+  font-family: 'Poppins', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
   -webkit-font-smoothing: antialiased;
   letter-spacing: -0.01em;
 }
@@ -132,9 +123,17 @@ body {
 h1, h2, h3, h4, .font-head {
   font-family: 'Poppins', sans-serif;
   font-weight: 700;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
   color: var(--color-text-primary);
   line-height: 1.1;
+}
+
+.font-sans {
+  font-family: 'Poppins', sans-serif;
+}
+
+.font-helvetica {
+  font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
 }
 
 /* High-End Interactive Elements */

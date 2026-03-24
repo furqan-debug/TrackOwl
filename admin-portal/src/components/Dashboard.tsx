@@ -164,7 +164,7 @@ export function Dashboard() {
     const weekLabel = `${new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay() + 6).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
     return (
-        <PageLayout title="Dashboard" description={`Overview of your team's activity • ${weekLabel}`} maxWidth="full">
+        <PageLayout title="Dashboard" description={`Overview of team activity for ${weekLabel}`} maxWidth="full">
             {/* KPI Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 lg:gap-8 mb-12 animate-in slide-in-from-top-4 duration-700">
                 <KpiCard icon={<Clock className="w-5 h-5" />} label="Tracked Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} trend="+14%" trendVariant="positive" />
@@ -185,12 +185,6 @@ export function Dashboard() {
                             <div className="h-[300px] w-full mt-6">
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={weekBars} barSize={32}>
-                                        <defs>
-                                            <linearGradient id="dashBarGrad" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#506ef8" />
-                                                <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0.4} />
-                                            </linearGradient>
-                                        </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(41, 61, 99, 0.05)" />
                                         <XAxis
                                             dataKey="day"

@@ -29,17 +29,15 @@ export function KpiCard({
               : 'bg-black/5 text-text-muted border-black/5';
 
     return (
-        <div className="glass rounded-3xl p-6 flex flex-col relative overflow-hidden group hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 border border-black/[0.03]">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 blur-2xl rounded-full -mr-12 -mt-12 group-hover:bg-primary/10 transition-colors" />
-            
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 flex flex-col relative overflow-hidden group hover:shadow-lg transition-all duration-300">
             <div className="flex items-start justify-between mb-5 relative z-10">
-                <div className="w-12 h-12 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shrink-0 group-hover:scale-110 group-hover:bg-primary/10 transition-all duration-500 shadow-sm">
+                <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-600 shrink-0 shadow-sm transition-all duration-300 group-hover:bg-slate-100">
                     {icon}
                 </div>
                 {trend && (
                     <span
                         className={clsx(
-                            'text-[10px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-xl border backdrop-blur-md transition-transform duration-500 group-hover:-translate-x-1 font-mono',
+                            'text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg border transition-all duration-300',
                             trendClass
                         )}
                     >
@@ -49,16 +47,15 @@ export function KpiCard({
             </div>
             
             <div className="relative z-10">
-                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2 opacity-70">
                     {label}
                 </p>
-                <h3 className="text-4xl font-bold text-slate-900 dark:text-white tracking-tight leading-none font-head">
+                <h3 className="text-4xl font-extrabold text-slate-950 tracking-tight leading-none">
                     {value}
                 </h3>
                 {sub && (
                     <div className="flex items-center gap-1.5 mt-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        <p className="text-xs font-medium tracking-wide text-slate-500 dark:text-slate-400">{sub}</p>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{sub}</p>
                     </div>
                 )}
             </div>
