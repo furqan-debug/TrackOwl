@@ -142,7 +142,7 @@ export function Teams() {
                             </div>
                             <h1 className="text-3xl font-bold text-text-primary tracking-tighter">Teams</h1>
                         </div>
-                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono leading-relaxed">Organize and manage your team and departments</p>
+                        <p className="text-sm font-medium text-slate-500 mt-2">Organize and manage your team and departments</p>
                     </div>
 
                     <div className="flex items-center gap-5">
@@ -184,18 +184,18 @@ export function Teams() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                     <div className="glass p-8 rounded-[32px] border border-black/[0.03] hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-1000" />
-                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-3 font-mono">Total Teams</p>
+                        <p className="text-xs font-semibold text-slate-500 mb-3">Total Teams</p>
                         <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">{teams.length}</h2>
                     </div>
                     <div className="glass p-8 rounded-[32px] border border-black/[0.03] hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-1000" />
-                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-3 font-mono">Total Members</p>
+                        <p className="text-xs font-semibold text-slate-500 mb-3">Total Members</p>
                         <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">{teams.reduce((acc, t) => acc + (t.member_count || 0), 0)}</h2>
                         <Users className="absolute bottom-6 right-8 w-12 h-12 text-black/[0.02] group-hover:text-primary/5 transition-colors duration-500" />
                     </div>
                     <div className="glass p-8 rounded-[32px] border border-black/[0.03] hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-1000" />
-                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-3 font-mono">Avg. Team Size</p>
+                        <p className="text-xs font-semibold text-slate-500 mb-3">Avg. Team Size</p>
                         <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">
                             {teams.length > 0 ? (teams.reduce((acc, t) => acc + (t.member_count || 0), 0) / teams.length).toFixed(1) : '0'}
                         </h2>
@@ -213,7 +213,7 @@ export function Teams() {
                         placeholder="Search teams or managers..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full pl-15 pr-8 py-5 bg-white border border-black/[0.05] rounded-[24px] text-[13px] font-bold text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-8 focus:ring-primary/5 focus:border-primary/20 transition-all shadow-sm font-mono uppercase"
+                        className="w-full pl-15 pr-8 py-5 bg-white border border-slate-200 rounded-[24px] text-[13px] font-bold text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-8 focus:ring-primary/5 focus:border-primary/20 transition-all shadow-sm font-mono"
                     />
                 </div>
 
@@ -531,7 +531,7 @@ function TeamItem({ team, mode, onEdit, onManage, onDelete, isViewer }: {
                         <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
                             <Shield className="w-4 h-4 text-primary" strokeWidth={2.5} />
                         </div>
-                        <span className="text-[13px] font-bold text-text-primary tracking-tight uppercase font-mono">{team.manager_name || 'AUTONOMOUS'}</span>
+                        <span className="text-xs font-semibold text-slate-400">Autonomous</span>
                     </div>
                 </div>
                 <div className="px-12 shrink-0 border-x border-black/[0.03]">
@@ -602,7 +602,7 @@ function TeamItem({ team, mode, onEdit, onManage, onDelete, isViewer }: {
                     {initials}
                 </div>
                 <h3 className="text-3xl font-bold text-text-primary tracking-tighter mb-4 group-hover/card:text-primary transition-colors duration-500">{team.name}</h3>
-                <p className="text-[13px] text-text-muted font-bold uppercase tracking-widest leading-relaxed line-clamp-2 min-h-[48px] font-mono opacity-60">
+                <p className="text-sm text-slate-600 leading-relaxed line-clamp-2 min-h-[48px]">
                     {team.description || "No description available for this team."}
                 </p>
             </div>

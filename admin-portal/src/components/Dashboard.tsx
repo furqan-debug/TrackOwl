@@ -257,8 +257,8 @@ export function Dashboard() {
                                 ))}
                             </div>
                         )}
-                        <button className="w-full mt-10 py-4 glass border border-primary/10 rounded-2xl text-xs font-semibold uppercase tracking-widest text-slate-600 dark:text-slate-400 hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-3 group shadow-sm font-mono">
-                            VIEW DETAILS
+                        <button className="w-full mt-10 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-3 group shadow-sm">
+                            View Detailed Reports
                             <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" strokeWidth={2.5} />
                         </button>
                     </Card>
@@ -270,12 +270,12 @@ export function Dashboard() {
                 <div className="divide-y divide-black/[0.03] overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse min-w-[800px]">
                         <thead>
-                            <tr className="bg-black/[0.01]">
-                                <th className="px-10 py-7 text-xs font-semibold text-slate-500 uppercase tracking-wider">Team Member</th>
-                                <th className="px-10 py-7 text-xs font-semibold text-slate-500 uppercase tracking-wider">Project</th>
-                                <th className="px-10 py-7 text-xs font-semibold text-slate-500 uppercase tracking-wider">Started At</th>
-                                <th className="px-10 py-7 text-xs font-semibold text-slate-500 uppercase tracking-wider">Duration</th>
-                                <th className="px-10 py-7 text-xs font-semibold text-slate-500 uppercase tracking-wider text-right">Status</th>
+                            <tr className="bg-slate-50/50">
+                                <th className="px-10 py-6 text-sm font-semibold text-slate-700">Team Member</th>
+                                <th className="px-10 py-6 text-sm font-semibold text-slate-700">Project</th>
+                                <th className="px-10 py-6 text-sm font-semibold text-slate-700">Started At</th>
+                                <th className="px-10 py-6 text-sm font-semibold text-slate-700">Duration</th>
+                                <th className="px-10 py-6 text-sm font-semibold text-slate-700 text-right">Status</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-black/[0.03]">
@@ -339,15 +339,15 @@ function RecentSessionsRows() {
                                 </div>
                                 <div>
                                     <div className="font-bold text-slate-800 dark:text-slate-200 text-[15px] tracking-tight leading-tight group-hover:text-primary transition-colors mb-1.5">{memberName}</div>
-                                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">ID: {s.user_id?.slice(0, 8) || 'SYSTEM'}</div>
+                                    <div className="text-[10px] font-medium text-slate-400">ID: {s.user_id?.slice(0, 8) || 'SYSTEM'}</div>
                                 </div>
                             </div>
                         </td>
                         <td className="px-10 py-7">
                             {proj ? (
                                 <div className="flex items-center gap-3">
-                                    <div className="w-2.5 h-2.5 rounded-full shadow-lg" style={{ backgroundColor: proj.color, boxShadow: `0 0 10px ${proj.color}40` }} />
-                                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider font-mono">{proj.name}</span>
+                                    <div className="w-2.5 h-2.5 rounded-full shadow-lg" style={{ backgroundColor: proj.color }} />
+                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{proj.name}</span>
                                 </div>
                             ) : (
                                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">Unassigned</span>

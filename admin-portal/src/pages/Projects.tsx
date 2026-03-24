@@ -160,24 +160,24 @@ export function Projects() {
                 <div className="flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-bold text-text-primary tracking-tighter leading-none">Projects</h1>
-                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] mt-2 font-mono">Manage active projects and resource allocation</p>
+                        <p className="text-sm font-medium text-slate-500 mt-2">Manage active projects and resource allocation</p>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="flex gap-12 mt-10">
+                <div className="flex gap-10 mt-10">
                     {(['Active', 'Archived'] as const).map(tab => (
                         <button
                             key={tab}
                             onClick={() => { setActiveTab(tab); setSelectedIds(new Set()); }}
                             className={clsx(
-                                "pb-5 text-[11px] font-bold uppercase tracking-[0.2em] transition-all relative font-mono",
-                                activeTab === tab ? "text-text-primary" : "text-text-muted hover:text-text-primary"
+                                "pb-5 text-sm font-semibold transition-all relative",
+                                activeTab === tab ? "text-primary" : "text-slate-500 hover:text-text-primary"
                             )}
                         >
-                            {tab.toUpperCase()} PROJECTS ({projects.filter(p => p.status === tab).length || (activeTab === tab ? projects.length : 0)})
+                            {tab} Projects ({projects.filter(p => p.status === tab).length || (activeTab === tab ? projects.length : 0)})
                             {activeTab === tab && (
-                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_12px_rgba(80,110,248,0.4)]" />
+                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_12px_rgba(80,110,248,0.3)]" />
                             )}
                         </button>
                     ))}
@@ -264,12 +264,12 @@ export function Projects() {
                                             {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 && <Check className="w-4 h-4 stroke-[4]" />}
                                         </button>
                                     </th>
-                                    <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Project Name</th>
-                                    <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Teams</th>
-                                    <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono text-center">Members</th>
-                                    <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Tasks</th>
-                                    <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Budget</th>
-                                    <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Member Limits</th>
+                                    <th className="px-8 py-6 text-sm font-semibold text-slate-700">Project Name</th>
+                                    <th className="px-8 py-6 text-sm font-semibold text-slate-700">Teams</th>
+                                    <th className="px-8 py-6 text-sm font-semibold text-slate-700 text-center">Members</th>
+                                    <th className="px-8 py-6 text-sm font-semibold text-slate-700">Tasks</th>
+                                    <th className="px-8 py-6 text-sm font-semibold text-slate-700">Budget</th>
+                                    <th className="px-8 py-6 text-sm font-semibold text-slate-700">Member Limits</th>
                                     <th className="pr-10 py-7 w-20"></th>
                                 </tr>
                             </thead>
@@ -455,7 +455,7 @@ function ProjectRow({
                             <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em]">{project.teamCount} TEAMS</span>
                         </div>
                     ) : (
-                        <span className="text-[10px] font-bold text-text-muted/30 uppercase italic tracking-[0.3em]">STANDALONE</span>
+                        <span className="text-xs font-semibold text-slate-400">Standalone</span>
                     )}
                 </div>
             </td>
@@ -523,7 +523,7 @@ function ProjectRow({
                             />
                         </div>
                     ) : (
-                        <span className="text-[10px] font-bold text-text-muted/30 uppercase italic tracking-[0.2em] font-mono">NO BUDGET LIMIT</span>
+                        <span className="text-xs text-slate-400">No budget limit</span>
                     )}
                 </div>
             </td>
@@ -535,15 +535,15 @@ function ProjectRow({
                         </div>
                     </div>
                 ) : (
-                    <span className="text-[10px] font-bold text-text-muted/30 uppercase italic tracking-[0.3em] font-mono">NO LIMIT</span>
+                    <span className="text-xs text-slate-400">No limit</span>
                 )}
             </td>
             <td className="pr-10 py-8 text-right relative" ref={dropRef}>
                 <button
                     onClick={() => setShowMenu(!showMenu)}
-                    className="p-3.5 bg-white/50 border border-black/[0.05] rounded-[18px] text-text-muted hover:text-text-primary transition-all shadow-sm active:scale-90 group-hover/row:border-primary/20"
+                    className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-primary hover:border-primary/30 transition-all shadow-sm active:scale-90"
                 >
-                    <MoreHorizontal className="w-6 h-6" strokeWidth={2.5} />
+                    <MoreHorizontal className="w-5 h-5" strokeWidth={2.5} />
                 </button>
 
                 {showMenu && (
