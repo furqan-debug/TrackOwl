@@ -96,17 +96,23 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
             aria-label="Main navigation"
         >
             {/* Logo Area */}
-            <div className={clsx("flex items-center sticky top-0 z-20 backdrop-blur-3xl bg-white/40 border-b border-black/[0.05]", effectiveCollapsed ? "justify-center px-0 py-5" : "px-6 py-5 gap-3.5")}>
+            <Link 
+                to="/dashboard"
+                className={clsx(
+                    "flex items-center sticky top-0 z-20 backdrop-blur-3xl bg-white/40 border-b border-black/[0.05] hover:opacity-80 transition-opacity", 
+                    effectiveCollapsed ? "justify-center px-0 py-5" : "px-6 py-5 gap-3.5"
+                )}
+            >
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#506ef8] to-[#3d59e0] flex items-center justify-center shrink-0 shadow-lg shadow-primary/20">
                      <div className="w-4.5 h-4.5 border-[2.5px] border-white rounded-[2px] rotate-45" aria-hidden />
                 </div>
                 {!effectiveCollapsed && (
-                    <div className="flex flex-col">
-                    <span className="text-xl font-bold text-text-primary tracking-tight leading-none mb-1">Trackora</span>
-                    <span className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] opacity-60">Admin Portal</span>
-                </div>
+                    <div className="flex flex-col text-left">
+                        <span className="text-xl font-bold text-text-primary tracking-tight leading-none mb-1">Trackora</span>
+                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] opacity-60">Admin Portal</span>
+                    </div>
                 )}
-            </div>
+            </Link>
 
             <div className={clsx("flex-1 flex flex-col pt-8", effectiveCollapsed ? "px-2 pb-4" : "px-4 pb-8")}>
                 {/* Favorites Section */}
