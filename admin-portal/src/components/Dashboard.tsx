@@ -164,61 +164,95 @@ export function Dashboard() {
     const maxProjectMins = projects[0]?.minutes || 1;
 
     return (
-        <PageLayout title="Dashboard" description="Weekly overview" maxWidth="full">
-
-            {/* KPI */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-10">
+        <PageLayout title="Dashboard" description="System activity and resource distribution overview" maxWidth="full">
+            
+            {/* KPI Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
                 <KpiCard icon={<Clock />} label="Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} />
-                <KpiCard icon={<BarChart3 />} label="Week" value={loading ? '—' : fmtTime(stats.weekMinutes)} />
-                <KpiCard icon={<CircleDollarSign />} label="Cost" value={loading ? '—' : `$${stats.weekCost}`} />
+                <KpiCard icon={<BarChart3 />} label="Weekly Total" value={loading ? '—' : fmtTime(stats.weekMinutes)} />
+                <KpiCard icon={<CircleDollarSign />} label="Weekly Cost" value={loading ? '—' : `$${stats.weekCost.toLocaleString()}`} />
                 <KpiCard icon={<Users />} label="Members" value={loading ? '—' : stats.activeMembers.toString()} />
                 <KpiCard icon={<Globe />} label="Projects" value={loading ? '—' : stats.activeProjects.toString()} />
                 <KpiCard icon={<Camera />} label="Screenshots" value={loading ? '—' : stats.screenshotCount.toString()} />
             </div>
 
-            {/* Chart */}
-            <Card title="Activity">
-                <div className="h-[280px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={weekBars}>
-                            <CartesianGrid stroke="#eee" vertical={false} />
-                            <XAxis dataKey="day" tick={{ fill: '#111', fontSize: 12 }} />
-                            <YAxis hide />
-                            <Tooltip />
-                            <Bar dataKey="minutes" fill="#4f46e5" radius={[6, 6, 0, 0]} />
-                        </BarChart>
-                    </ResponsiveContainer>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
+                {/* Activity Trends */}
+                <div className="lg:col-span-8">
+                    <Card title="Activity Trends">
+                        <div className="h-[320px] w-full mt-4">
+                            {loading ? (
+                                <LoadingState className="h-full" />
+                            ) : (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={weekBars} barSize={36}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                        <XAxis 
+                                            dataKey="day" 
+                                            axisLine={false} 
+                                            tickLine={false} 
+                                            tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }}
+                                            dy={10}
+                                        />
+                                        <YAxis hide />
+                                        <Tooltip 
+                                            cursor={{ fill: 'rgba(79, 70, 229, 0.03)' }}
+                                            content={({ active, payload }) => {
+                                                if (active && payload && payload.length) {
+                                                    return (
+                                                        <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-xl">
+                                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{payload[0].payload.day}</p>
+                                                            <p className="text-lg font-bold text-slate-900">{fmtTime(payload[0].value as number)}</p>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            }}
+                                        />
+                                        <Bar dataKey="minutes" fill="#4f46e5" radius={[8, 8, 0, 0]} />
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+                    </Card>
                 </div>
-            </Card>
 
-            {/* Projects */}
-            <Card title="Projects">
-                {projects.length === 0 ? (
-                    <EmptyState icon={<FolderOpen />} title="No data" description="No activity yet" />
-                ) : (
-                    <div className="space-y-4">
-                        {projects.map(p => (
-                            <div key={p.id}>
-                                <div className="flex justify-between text-sm font-medium text-black">
-                                    <span>{p.name}</span>
-                                    <span>{fmtTime(p.minutes)}</span>
-                                </div>
-                                <div className="h-2 bg-gray-200 rounded mt-1">
-                                    <div
-                                        className="h-2 rounded"
-                                        style={{
-                                            width: `${(p.minutes / maxProjectMins) * 100}%`,
-                                            backgroundColor: p.color
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </Card>
+                {/* Project Breakdown */}
+                <div className="lg:col-span-4">
+                    <Card title="Project Distribution">
+                        <div className="mt-4 space-y-6">
+                            {loading ? (
+                                <LoadingState className="h-[320px]" />
+                            ) : projects.length === 0 ? (
+                                <EmptyState icon={<FolderOpen className="opacity-20" />} title="No data" description="No project activity yet" />
+                            ) : (
+                                projects.map(p => (
+                                    <div key={p.id} className="group">
+                                        <div className="flex justify-between items-center mb-2">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
+                                                <span className="text-sm font-semibold text-slate-700 group-hover:text-primary transition-colors">{p.name}</span>
+                                            </div>
+                                            <span className="text-xs font-bold text-slate-400">{fmtTime(p.minutes)}</span>
+                                        </div>
+                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full rounded-full transition-all duration-1000 ease-out"
+                                                style={{
+                                                    width: `${(p.minutes / maxProjectMins) * 100}%`,
+                                                    backgroundColor: p.color
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </Card>
+                </div>
+            </div>
 
-            {/* Table */}
+            {/* Recent Activity Table */}
             <Card title="Recent Activity" noPadding>
                 <RecentSessionsRows />
             </Card>
@@ -237,7 +271,7 @@ function RecentSessionsRows() {
         async function load() {
             try {
                 const [{ data }, { data: mData }, { data: pData }] = await Promise.all([
-                    supabase.from('sessions').select('*').order('started_at', { ascending: false }).limit(6),
+                    supabase.from('sessions').select('*').order('started_at', { ascending: false }).limit(8),
                     supabase.from('members').select('id, full_name'),
                     supabase.from('projects').select('id, name, color'),
                 ]);
@@ -260,48 +294,66 @@ function RecentSessionsRows() {
         load();
     }, []);
 
-    if (loading) return <div className="p-12 text-center"><LoadingState /></div>;
-    if (!sessions.length) return <EmptyState icon={<Zap />} title="No sessions" description="No activity yet" />;
+    if (loading) return <div className="p-20"><LoadingState /></div>;
+    if (!sessions.length) return <div className="p-20"><EmptyState icon={<Zap />} title="No sessions" description="No activity recorded yet" /></div>;
 
     return (
         <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
+            <table className="w-full text-left border-collapse">
                 <thead>
                     <tr className="bg-slate-50/50">
-                        <th className="p-4 font-semibold text-slate-700">Member</th>
-                        <th className="p-4 font-semibold text-slate-700">Project</th>
-                        <th className="p-4 font-semibold text-slate-700">Duration</th>
-                        <th className="p-4 font-semibold text-slate-700 text-right">Status</th>
+                        <th className="px-8 py-5 text-sm font-semibold text-slate-700">Team Member</th>
+                        <th className="px-8 py-5 text-sm font-semibold text-slate-700">Project</th>
+                        <th className="px-8 py-5 text-sm font-semibold text-slate-700">Starting Time</th>
+                        <th className="px-8 py-5 text-sm font-semibold text-slate-700">Duration</th>
+                        <th className="px-8 py-5 text-sm font-semibold text-slate-700 text-right">Status</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                     {sessions.map(s => {
                         const { endMs, isLive, isStale } = effectiveEnd(s.started_at, s.ended_at);
                         const dur = Math.max(0, Math.round((endMs - new Date(s.started_at).getTime()) / 60000));
-                        const mName = memberMap[s.user_id] || 'Unknown';
+                        const mName = memberMap[s.user_id] || 'Unknown User';
                         const proj = projectMap[s.project_id];
 
                         return (
-                            <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="p-4 font-medium text-slate-900">{mName}</td>
-                                <td className="p-4">
+                            <tr key={s.id} className="hover:bg-slate-50/30 transition-colors group">
+                                <td className="px-8 py-5">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                            {mName.charAt(0)}
+                                        </div>
+                                        <span className="font-semibold text-slate-800">{mName}</span>
+                                    </div>
+                                </td>
+                                <td className="px-8 py-5">
                                     {proj ? (
                                         <div className="flex items-center gap-2">
                                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: proj.color }} />
-                                            <span className="text-slate-600">{proj.name}</span>
+                                            <span className="text-slate-600 font-medium">{proj.name}</span>
                                         </div>
                                     ) : (
-                                        <span className="text-slate-400">Unassigned</span>
+                                        <span className="text-slate-400 italic">No Project</span>
                                     )}
                                 </td>
-                                <td className="p-4 font-medium text-slate-700">{fmtTime(dur)}</td>
-                                <td className="p-4 text-right">
+                                <td className="px-8 py-5 text-slate-500 font-medium">
+                                    {new Date(s.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </td>
+                                <td className="px-8 py-5 font-bold text-slate-700">
+                                    {fmtTime(dur)}
+                                </td>
+                                <td className="px-8 py-5 text-right">
                                     {isLive ? (
-                                        <span className="text-emerald-600 font-bold text-[10px] uppercase tracking-wider">Active</span>
+                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-100">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                            Active
+                                        </span>
                                     ) : isStale ? (
-                                        <span className="text-amber-600 font-bold text-[10px] uppercase tracking-wider">Stale</span>
+                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 border border-amber-100">
+                                            Stale
+                                        </span>
                                     ) : (
-                                        <span className="text-slate-400 text-[10px] uppercase tracking-wider">Recorded</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recorded</span>
                                     )}
                                 </td>
                             </tr>
@@ -311,4 +363,4 @@ function RecentSessionsRows() {
             </table>
         </div>
     );
-}
+}
