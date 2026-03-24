@@ -143,7 +143,7 @@ export function Header({ onOpenMobileMenu, isSidebarCollapsed, onToggleSidebar }
                     {showProfileMenu && (
                         <div
                             role="menu"
-                            className="absolute right-0 top-full mt-4 w-72 glass border border-black/[0.08] rounded-3xl shadow-xl py-2 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right backdrop-blur-3xl"
+                            className="absolute right-0 top-full mt-4 w-72 glass border border-black/[0.08] rounded-3xl shadow-xl py-2 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right backdrop-blur-3xl bg-white/90"
                         >
                             <div className="px-6 py-5 border-b border-black/[0.05] bg-black/[0.01]">
                                 <p className="text-[15px] font-bold text-text-primary truncate font-head tracking-tight leading-none mb-1.5">{profile?.full_name || 'No Name'}</p>

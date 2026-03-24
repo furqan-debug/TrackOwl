@@ -24,7 +24,7 @@ export function Card({
             )}
         >
             {title && (
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-8 px-8 md:px-10">
                     <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200 uppercase tracking-widest">
                         {title}
                     </h2>
