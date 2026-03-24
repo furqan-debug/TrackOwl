@@ -8,8 +8,6 @@ import { ReportsLegacy } from './pages/ReportsLegacy';
 import { DailyTotals } from './pages/DailyTotals';
 import { AmountsOwed } from './pages/AmountsOwed';
 import { PaymentsReport } from './pages/PaymentsReport';
-import { AllReports } from './pages/AllReports';
-import { CustomizedReports } from './pages/CustomizedReports';
 import { People } from './pages/People';
 import { Projects } from './pages/Projects';
 import { Schedules } from './pages/Schedules';
@@ -18,7 +16,6 @@ import { Locations } from './pages/Locations';
 import { JobSites } from './pages/JobSites';
 import { Todos } from './pages/Todos';
 import { Clients } from './pages/Clients';
-import { Financials } from './pages/Financials';
 import { Approvals } from './pages/Approvals';
 import { AppUsage } from './pages/AppUsage';
 import { Highlights } from './pages/Highlights';
@@ -36,10 +33,6 @@ import { MemberTimeline } from './pages/MemberTimeline';
 import { Teams } from './pages/Teams';
 import { Calendar } from './pages/Calendar';
 import { PlaceholderPage } from './pages/PlaceholderPage';
-import { CreatePayments } from './pages/CreatePayments';
-import { PastPayments } from './pages/PastPayments';
-import { Invoices } from './pages/Invoices';
-import { Expenses } from './pages/Expenses';
 
 import { FavoritesProvider } from './context/FavoritesContext';
 import { AuthProvider } from './context/AuthContext';
@@ -114,7 +107,7 @@ function App() {
                     <Route path="/projects" element={<Projects />} />
                     <Route path="/schedules" element={<Schedules />} />
                     <Route path="/url-tracking" element={<UrlTracking />} />
-                    <Route path="/financials" element={<Financials />} />
+                    <Route path="/financials" element={<PlaceholderPage title="Financials" />} />
                     <Route path="/member-timeline" element={<MemberTimeline />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
@@ -144,15 +137,15 @@ function App() {
                     <Route path="/reports/daily" element={<DailyTotals />} />
                     <Route path="/reports/owed" element={<AmountsOwed />} />
                     <Route path="/reports/payments" element={<PaymentsReport />} />
-                    <Route path="/reports/all" element={<AllReports />} />
-                    <Route path="/reports/custom" element={<CustomizedReports />} />
+                    <Route path="/reports/all" element={<PlaceholderPage title="All Reports" />} />
+                    <Route path="/reports/custom" element={<PlaceholderPage title="Customized Reports" />} />
 
                     <Route path="/people/teams" element={<Teams />} />
 
-                    <Route path="/financials/create" element={<CreatePayments />} />
-                    <Route path="/financials/past" element={<PastPayments />} />
-                    <Route path="/financials/invoices" element={<Invoices />} />
-                    <Route path="/financials/expenses" element={<Expenses />} />
+                    <Route path="/financials/create" element={<PlaceholderPage title="Create Payments" />} />
+                    <Route path="/financials/past" element={<PlaceholderPage title="Past Payments" />} />
+                    <Route path="/financials/invoices" element={<PlaceholderPage title="Invoices" />} />
+                    <Route path="/financials/expenses" element={<PlaceholderPage title="Expenses" />} />
 
                     <Route path="/silent/how-it-works" element={<PlaceholderPage title="Silent App: How it works" />} />
 

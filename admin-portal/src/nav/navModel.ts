@@ -68,8 +68,8 @@ export const navStructure: NavGroup[] = [
             { name: 'Daily totals (Weekly)', path: '/dashboard/reports/daily' },
             { name: 'Amounts owed', path: '/dashboard/reports/owed', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
             { name: 'Payments', path: '/dashboard/reports/payments', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
-            { name: 'All reports', path: '/dashboard/reports/all', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
-            { name: 'Customized reports', path: '/dashboard/reports/custom', badge: 'bolt', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
+            { name: 'All reports (Under Construction)', path: '/dashboard/reports/all', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
+            { name: 'Customized reports (Under Construction)', path: '/dashboard/reports/custom', badge: 'bolt', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
         ],
     },
     {
@@ -82,15 +82,15 @@ export const navStructure: NavGroup[] = [
         ],
     },
     {
-        name: 'Financials',
+        name: 'Financials (Under Construction)',
         icon: CircleDollarSign,
         allowedRoles: ['Admin', 'Manager', 'Viewer'],
         children: [
-            { name: 'Manage payroll', path: '/dashboard/financials', badge: 'bolt' },
-            { name: 'Create payments', path: '/dashboard/financials/create' },
-            { name: 'Past payments', path: '/dashboard/financials/past' },
-            { name: 'Invoices', path: '/dashboard/financials/invoices' },
-            { name: 'Expenses', path: '/dashboard/financials/expenses' },
+            { name: 'Manage payroll (WIP)', path: '/dashboard/financials', badge: 'bolt' },
+            { name: 'Create payments (WIP)', path: '/dashboard/financials/create' },
+            { name: 'Past payments (WIP)', path: '/dashboard/financials/past' },
+            { name: 'Invoices (WIP)', path: '/dashboard/financials/invoices' },
+            { name: 'Expenses (WIP)', path: '/dashboard/financials/expenses' },
         ],
     },
     {
