@@ -10,6 +10,18 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
     const location = useLocation();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    
+    // Sidebar collapse state with persistence
+    const savedCollapsed = localStorage.getItem('sidebar-collapsed');
+    const [isCollapsed, setIsCollapsed] = useState(savedCollapsed ? JSON.parse(savedCollapsed) : false);
+
+    const toggleSidebar = () => {
+        setIsCollapsed((prev: boolean) => {
+            const newState = !prev;
+            localStorage.setItem('sidebar-collapsed', JSON.stringify(newState));
+            return newState;
+        });
+    };
 
     useEffect(() => {
         setMobileMenuOpen(false);
@@ -34,7 +46,7 @@ export function AppShell({ children }: AppShellProps) {
             
             {/* Desktop sidebar: visible from md up */}
             <div className="hidden md:block shrink-0 relative z-10 h-full">
-                <Sidebar />
+                <Sidebar isCollapsed={isCollapsed} onToggle={toggleSidebar} />
             </div>
 
             {/* Mobile overlay: sidebar + backdrop when menu open */}
@@ -53,7 +65,7 @@ export function AppShell({ children }: AppShellProps) {
             )}
 
             <div className="flex-1 flex flex-col h-screen overflow-hidden min-w-0 relative z-10">
-                <Header onOpenMobileMenu={() => setMobileMenuOpen(true)} />
+                <Header isSidebarCollapsed={isCollapsed} onToggleSidebar={toggleSidebar} onOpenMobileMenu={() => setMobileMenuOpen(true)} />
                 <main className="flex-1 overflow-y-auto shell-scrollbar">
                     {children}
                 </main>

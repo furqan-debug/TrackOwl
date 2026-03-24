@@ -24,6 +24,7 @@ import { AppUsage } from './pages/AppUsage';
 import { Highlights } from './pages/Highlights';
 import { Performance } from './pages/Performance';
 import { SettingsPage } from './pages/Settings';
+import { ProfilePage } from './pages/Profile';
 import { Landing } from './pages/Landing';
 import { Signup } from './pages/Signup';
 import { Onboarding } from './pages/Onboarding';
@@ -115,6 +116,7 @@ function App() {
                     <Route path="/url-tracking" element={<UrlTracking />} />
                     <Route path="/financials" element={<Financials />} />
                     <Route path="/member-timeline" element={<MemberTimeline />} />
+                    <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
 
                     {/* --- NEW FEATURES --- */}

@@ -14,16 +14,17 @@ export interface SidebarProps {
     overlay?: boolean;
     /** Called when overlay should close (e.g. backdrop click or link click). */
     onOverlayClose?: () => void;
+    isCollapsed?: boolean;
+    onToggle?: () => void;
 }
 
-export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) {
+export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, onToggle }: SidebarProps) {
     const location = useLocation();
     const { favorites } = useFavorites();
     const { profile, signOut } = useAuth();
     const userRole = (profile?.role || 'User') as Role;
     
-    const [collapsed, setCollapsed] = useState(false);
-    const effectiveCollapsed = overlay ? false : collapsed;
+    const effectiveCollapsed = overlay ? false : isCollapsed;
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     const [favoritesExpanded, setFavoritesExpanded] = useState(true);
 
@@ -274,7 +275,7 @@ export function Sidebar({ overlay = false, onOverlayClose }: SidebarProps = {}) 
                  <div className="border-t border-black/[0.05] bg-white/40 px-4 py-3 shrink-0">
                     <button
                         type="button"
-                        onClick={() => setCollapsed(c => !c)}
+                        onClick={() => onToggle?.()}
                         className="w-full flex items-center justify-center p-2.5 rounded-xl text-text-muted hover:text-text-primary hover:bg-black/[0.02] transition-all border border-transparent"
                     >
                         <ChevronLeft className={clsx("w-4 h-4 transition-transform duration-500", effectiveCollapsed && "rotate-180")} strokeWidth={2.5} />

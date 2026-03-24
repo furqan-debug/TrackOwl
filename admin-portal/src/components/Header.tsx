@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Star, LogOut, Menu, ChevronRight, ChevronDown } from 'lucide-react';
+import { Star, LogOut, Menu, ChevronRight, ChevronDown, User as UserIcon, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 import clsx from 'clsx';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
@@ -10,9 +10,11 @@ import { useAuth } from '../context/AuthContext';
 export interface HeaderProps {
     /** Called when user taps the mobile menu button (opens sidebar overlay). */
     onOpenMobileMenu?: () => void;
+    isSidebarCollapsed?: boolean;
+    onToggleSidebar?: () => void;
 }
 
-export function Header({ onOpenMobileMenu }: HeaderProps = {}) {
+export function Header({ onOpenMobileMenu, isSidebarCollapsed, onToggleSidebar }: HeaderProps) {
     const location = useLocation();
     const navigate = useNavigate();
     const { toggleFavorite, isFavorite } = useFavorites();
@@ -68,6 +70,19 @@ export function Header({ onOpenMobileMenu }: HeaderProps = {}) {
                         <Menu className="w-5.5 h-5.5" strokeWidth={2.5} />
                     </button>
                 )}
+
+                <button
+                    type="button"
+                    onClick={onToggleSidebar}
+                    className="hidden md:flex p-2.5 -ml-2 rounded-2xl text-text-secondary hover:text-text-primary hover:bg-black/[0.03] transition-all focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+                >
+                    {isSidebarCollapsed ? (
+                        <PanelLeftOpen className="w-5.5 h-5.5 text-primary" strokeWidth={2.5} />
+                    ) : (
+                        <PanelLeftClose className="w-5.5 h-5.5" strokeWidth={2.5} />
+                    )}
+                </button>
                 
                 <div className="flex flex-col">
                     <h1 className="text-xl font-bold text-text-primary truncate font-head leading-none mb-1.5 tracking-tighter">
@@ -105,12 +120,16 @@ export function Header({ onOpenMobileMenu }: HeaderProps = {}) {
                 <div className="relative">
                     <button
                         type="button"
-                        onClick={() => setShowProfileMenu((v) => !v)}
+                        onClick={() => setShowProfileMenu((v: boolean) => !v)}
                         className="group flex items-center gap-3.5 p-1.5 pr-4 rounded-2xl bg-black/[0.03] border border-black/[0.05] hover:border-primary/30 hover:bg-white transition-all focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm"
                         aria-expanded={showProfileMenu}
                     >
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#506ef8] to-[#3d59e0] flex items-center justify-center text-white text-[13px] font-bold shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform uppercase font-head">
-                            {profile?.full_name?.charAt(0) || user?.email?.charAt(0) || '?'}
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#506ef8] to-[#3d59e0] flex items-center justify-center text-white text-[13px] font-bold shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform uppercase font-head overflow-hidden">
+                            {profile?.avatar_url ? (
+                                <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                                profile?.full_name?.charAt(0) || user?.email?.charAt(0) || '?'
+                            )}
                         </div>
                         <div className="hidden sm:block text-left">
                            <p className="text-[13px] font-bold text-text-primary leading-none mb-1 tracking-tight">{profile?.full_name?.split(' ')[0] || 'User'}</p>
@@ -134,7 +153,22 @@ export function Header({ onOpenMobileMenu }: HeaderProps = {}) {
                                 </div>
                             </div>
                             
-                            <div className="p-2">
+                            <div className="p-2 space-y-1">
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                        closeMenu();
+                                        navigate('/dashboard/profile');
+                                    }}
+                                    className="w-full flex items-center gap-4 px-4 py-3 text-[12px] font-bold text-text-primary hover:bg-black/[0.03] rounded-2xl transition-all group focus:outline-none uppercase tracking-[0.2em]"
+                                >
+                                    <div className="w-9 h-9 rounded-xl bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors">
+                                        <UserIcon className="w-4.5 h-4.5 shrink-0 transition-transform group-hover:scale-110 text-primary" strokeWidth={2.5} />
+                                    </div>
+                                    My Profile
+                                </button>
+
                                 <button
                                     ref={logoutButtonRef}
                                     type="button"
