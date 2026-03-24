@@ -239,11 +239,25 @@ export default function App() {
         .gte('started_at', weekStart);
 
       const statsMap: Record<string, any> = {};
-      (sessions || []).forEach((s: any) => {
+      const openSessionsFound: Record<string, boolean> = {};
+
+      // Sort sessions by started_at descending so we process the latest ones first
+      const sortedSessions = (sessions || []).sort((a: any, b: any) => 
+        new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+      );
+
+      sortedSessions.forEach((s: any) => {
         if (!s.project_id) return;
         if (!statsMap[s.project_id]) {
           statsMap[s.project_id] = { todaySeconds: 0, weeklySeconds: 0, totalActivity: 0, sampleCount: 0 };
         }
+
+        const isOpen = !s.ended_at;
+        
+        // If this is an open session and we already found one for this project, ignore it (it's orphaned)
+        if (isOpen && openSessionsFound[s.project_id]) return;
+        if (isOpen) openSessionsFound[s.project_id] = true;
+
         const start = new Date(s.started_at).getTime();
         const end = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
         const duration = Math.max(0, Math.round((end - start) / 1000));
@@ -591,7 +605,7 @@ export default function App() {
         )}
         {screen === 'projects' && (
           <motion.div key="projects" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
-            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} trackingError={trackingError} todos={todos} onTodoDone={handleTodoDone} />
+            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} trackingError={trackingError} setTrackingError={setTrackingError} todos={todos} onTodoDone={handleTodoDone} />
           </motion.div>
         )}
         {screen === 'consent' && (
@@ -867,6 +881,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   onLogout: () => void;
   onSettings: () => void;
   trackingError?: string | null;
+  setTrackingError: (err: string | null) => void;
   todos: Todo[];
   onTodoDone: (id: string) => void;
 }) {
@@ -932,11 +947,11 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
               <motion.div key={p.id} variants={itemVariants}>
                 <div className="project-card" onClick={() => {
                   if (isWeeklyLimitReached) {
-                    alert(`Weekly limit (${user.weekly_limit}h) reached.`);
+                    setTrackingError(`Weekly limit (${user.weekly_limit}h) reached. Please contact your manager.`);
                     return;
                   }
                   if (isDailyLimitReached) {
-                    alert(`Daily limit (${user.daily_limit}h) reached.`);
+                    setTrackingError(`Daily limit (${user.daily_limit}h) reached. Please contact your manager.`);
                     return;
                   }
                   onSelect(p);

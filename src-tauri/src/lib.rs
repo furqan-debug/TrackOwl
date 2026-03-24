@@ -164,6 +164,17 @@ fn start_tracking(
             Arc::clone(&s.db),
         )
     };
+    
+    // Self-healing: Close any other open sessions for this user before starting a new one.
+    // PostgREST: filter is user_id=eq.X&ended_at=is.null
+    let cleanup_body = serde_json::json!({ "ended_at": chrono::Utc::now().to_rfc3339() }).to_string();
+    let _ = crate::supabase_patch(
+        &cfg, 
+        "sessions", 
+        &format!("user_id=eq.{}&ended_at=is.null", user_id), 
+        &cleanup_body, 
+        Some(&token)
+    );
 
     // Fetch organization_id for the user
     let org_id: Option<String> = match crate::supabase_get(
@@ -352,6 +363,25 @@ pub fn run() {
             install_update,
             set_auth_token,
         ])
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                // When 'X' is clicked, try to stop tracking
+                let state_handle = window.state::<Mutex<AppState>>();
+                let (cfg, token, session_id, running) = {
+                    let mut s = state_handle.lock().unwrap();
+                    let token = s.auth_token.lock().unwrap().clone();
+                    let cfg = SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() };
+                    (cfg, token, s.active_session_id.take(), Arc::clone(&s.tracking_running))
+                };
+                
+                *running.lock().unwrap() = false;
+                if let Some(sid) = session_id {
+                    let ended = chrono::Utc::now().to_rfc3339();
+                    let body = serde_json::json!({ "ended_at": ended }).to_string();
+                    let _ = supabase_patch(&cfg, "sessions", &format!("id=eq.{}", sid), &body, token.as_deref());
+                }
+            }
+        })
         .run(tauri::generate_context!())
         .expect("error while running Trackora");
 }
