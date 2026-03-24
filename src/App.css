@@ -800,6 +800,134 @@ html, body, #root { height: 100%; }
   50%       { opacity: 0.5; transform: scale(1.4); }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   SETTINGS SCREEN
+   ═══════════════════════════════════════════════════════════════════════════ */
+.settings-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-app);
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1.125rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-back-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: var(--r-sm);
+  transition: background 0.15s;
+}
+
+.settings-back-btn:hover {
+  background: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.settings-content {
+  flex: 1;
+  padding: 1.5rem 1.25rem;
+  overflow-y: auto;
+}
+
+.avatar-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.avatar-preview-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.avatar-preview-large, .avatar-placeholder-large {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.avatar-placeholder-large {
+  background: var(--accent-light);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-avatar-edit {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 28px;
+  height: 28px;
+  background: var(--accent);
+  color: white;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.15s;
+}
+
+.btn-avatar-edit:hover {
+  transform: scale(1.1);
+  background: var(--accent-hover);
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.field-input-wrap .field-icon {
+  position: absolute;
+  left: 0.875rem;
+  color: var(--text-tertiary);
+}
+
+.field-input-wrap .field-input {
+  padding-left: 2.5rem;
+}
+
+.field-input-wrap.disabled {
+  opacity: 0.7;
+}
+
+.field-input-wrap.disabled .field-input {
+  background: var(--bg-app);
+  cursor: not-allowed;
+}
+
+
 /* Project pill */
 .tracker-project-pill {
   display: inline-flex;

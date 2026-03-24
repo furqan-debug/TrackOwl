@@ -4,7 +4,8 @@ import {
   Lock, Mail, ArrowRight, Play, Square, Pause,
   ChevronRight, LogOut, CheckCircle2,
   ShieldAlert, Eye, MapPin, MonitorPlay, MousePointerClick,
-  ClipboardList, Calendar, Circle, ChevronDown, ChevronUp
+  ClipboardList, Calendar, Circle, ChevronDown, ChevronUp,
+  User as UserIcon, Camera, Save, ArrowLeft
 } from 'lucide-react';
 import { trackerAPI } from './tauri-ipc';
 import './App.css';
@@ -21,7 +22,7 @@ async function getSupabase() {
   return _supabase;
 }
 
-type Screen = 'login' | 'projects' | 'consent' | 'tracker';
+type Screen = 'login' | 'projects' | 'consent' | 'tracker' | 'settings';
 
 interface User {
   id: string;
@@ -30,6 +31,8 @@ interface User {
   role: string;
   weekly_limit?: number;
   daily_limit?: number;
+  avatar_url?: string;
+  phone?: string;
 }
 
 interface Project {
@@ -89,6 +92,117 @@ function formatTime(seconds: number): string {
   const m = Math.floor((seconds % 3600) / 60);
   if (h > 0) return `${h}h ${m}m`;
   return `${m}m`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Screen: Settings
+// ─────────────────────────────────────────────────────────────────────────────
+function SettingsScreen({ user, onSave, onBack }: {
+  user: User;
+  onSave: (updated: Partial<User>) => Promise<void>;
+  onBack: () => void;
+}) {
+  const [fullName, setFullName] = useState(user.full_name);
+  const [phone, setPhone] = useState(user.phone || '');
+  const [avatarUrl, setAvatarUrl] = useState(user.avatar_url || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const sb = await getSupabase();
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${user.id}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { error: uploadError } = await sb.storage
+        .from('avatars')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = sb.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      setAvatarUrl(publicUrl);
+    } catch (err: any) {
+      alert('Error uploading file: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function save() {
+    setIsSaving(true);
+    await onSave({ full_name: fullName, phone, avatar_url: avatarUrl });
+    setIsSaving(false);
+  }
+
+  return (
+    <div className="settings-screen">
+      <header className="settings-header">
+        <button onClick={onBack} className="settings-back-btn"><ArrowLeft size={18} /></button>
+        <h2 className="heading-2">Profile Settings</h2>
+      </header>
+
+      <div className="settings-content">
+        <div className="avatar-section">
+          <div className="avatar-preview-container">
+            {avatarUrl ? (
+              <img src={avatarUrl} alt="Avatar" className="avatar-preview-large" />
+            ) : (
+              <div className="avatar-placeholder-large">
+                <UserIcon size={32} />
+              </div>
+            )}
+            <button className="btn-avatar-edit" onClick={() => fileInputRef.current?.click()}>
+              {uploading ? '...' : <Camera size={14} />}
+            </button>
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
+          </div>
+          <p className="text-muted" style={{ fontSize: '0.75rem', marginTop: '0.5rem' }}>Click to change profile photo</p>
+        </div>
+
+        <div className="settings-form">
+          <div className="field-group">
+            <label className="field-label">Full Name</label>
+            <div className="field-input-wrap">
+              <UserIcon size={14} className="field-icon" />
+              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="field-input" placeholder="John Doe" />
+            </div>
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">Phone Number</label>
+            <div className="field-input-wrap">
+              <span className="field-icon" style={{ fontSize: '14px' }}>📞</span>
+              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="field-input" placeholder="+1 (555) 000-0000" />
+            </div>
+          </div>
+
+          <div className="field-group">
+            <label className="field-label">Email Address</label>
+            <div className="field-input-wrap disabled">
+              <Mail size={14} className="field-icon" />
+              <input type="email" value={user.email} disabled className="field-input" />
+            </div>
+            <p className="text-muted" style={{ fontSize: '0.6875rem', marginTop: '0.25rem' }}>Email cannot be changed from the desktop app.</p>
+          </div>
+
+          <button onClick={save} disabled={isSaving || uploading} className="btn btn-primary" style={{ width: '100%', marginTop: '1rem' }}>
+            <Save size={16} />
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function App() {
@@ -396,6 +510,22 @@ export default function App() {
     await sb.from('todos').update({ status: 'Done' }).eq('id', todoId);
   }, []);
 
+  async function handleUpdateProfile(updated: Partial<User>) {
+    if (!user) return;
+    try {
+      const sb = await getSupabase();
+      const { error } = await sb.from('members').update(updated).eq('id', user.id);
+      if (error) throw error;
+
+      const newUser = { ...user, ...updated };
+      setUser(newUser);
+      localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+      setScreen('projects');
+    } catch (err: any) {
+      alert('Error updating profile: ' + err.message);
+    }
+  }
+
   const pageVariants = {
     initial: { opacity: 0, y: 8 },
     in:      { opacity: 1, y: 0 },
@@ -438,7 +568,7 @@ export default function App() {
         )}
         {screen === 'projects' && (
           <motion.div key="projects" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
-            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} trackingError={trackingError} todos={todos} onTodoDone={handleTodoDone} />
+            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} trackingError={trackingError} todos={todos} onTodoDone={handleTodoDone} />
           </motion.div>
         )}
         {screen === 'consent' && (
@@ -448,7 +578,12 @@ export default function App() {
         )}
         {screen === 'tracker' && (
           <motion.div key="tracker" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
-            <TrackerScreen user={user!} project={activeProject!} sessionId={sessionId} isPaused={isPaused} elapsed={elapsed} onStop={handleStop} onPause={handlePause} onResume={handleResume} todos={todos} onTodoDone={handleTodoDone} />
+            <TrackerScreen user={user!} project={activeProject!} sessionId={sessionId} isPaused={isPaused} elapsed={elapsed} onStop={handleStop} onPause={handlePause} onResume={handleResume} onSettings={() => setScreen('settings')} todos={todos} onTodoDone={handleTodoDone} />
+          </motion.div>
+        )}
+        {screen === 'settings' && user && (
+          <motion.div key="settings" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+            <SettingsScreen user={user} onSave={handleUpdateProfile} onBack={() => setScreen('projects')} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -615,7 +750,7 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // Topbar
 // ─────────────────────────────────────────────────────────────────────────────
-function Topbar({ user, onLogout, todoBadge }: { user?: User; onLogout?: () => void; todoBadge?: number }) {
+function Topbar({ user, onLogout, onSettings, todoBadge }: { user?: User; onLogout?: () => void; onSettings?: () => void; todoBadge?: number }) {
   const initials = user?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'U';
   return (
     <header className="app-topbar">
@@ -638,7 +773,9 @@ function Topbar({ user, onLogout, todoBadge }: { user?: User; onLogout?: () => v
               }}>{todoBadge > 9 ? '9+' : todoBadge}</span>
             </div>
           )}
-          <div className="user-avatar">{initials}</div>
+          <div className="user-avatar" onClick={onSettings} style={{ cursor: onSettings ? 'pointer' : 'default', overflow: 'hidden' }}>
+            {user.avatar_url ? <img src={user.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
+          </div>
           <button onClick={onLogout} className="btn btn-ghost" title="Sign out" style={{ padding: '0.3rem' }}>
             <LogOut size={16} />
           </button>
@@ -700,11 +837,12 @@ function MyTasksPanel({ todos, onDone }: { todos: Todo[]; onDone: (id: string) =
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Projects
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsScreen({ user, projects, onSelect, onLogout, trackingError, todos, onTodoDone }: {
+function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, todos, onTodoDone }: {
   user: User;
   projects: Project[];
   onSelect: (p: Project) => void;
   onLogout: () => void;
+  onSettings: () => void;
   trackingError?: string | null;
   todos: Todo[];
   onTodoDone: (id: string) => void;
@@ -729,7 +867,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, trackingError, tod
 
   return (
     <div className="projects-layout">
-      <Topbar user={user} onLogout={onLogout} todoBadge={todos.length} />
+      <Topbar user={user} onLogout={onLogout} onSettings={onSettings} todoBadge={todos.length} />
 
       <div className="projects-scroll">
         {/* Stats bar */}
@@ -881,7 +1019,7 @@ function ConsentItem({ icon, title, desc }: { icon: React.ReactNode; title: stri
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Tracker
 // ─────────────────────────────────────────────────────────────────────────────
-function TrackerScreen({ user, project, isPaused = false, elapsed, onStop, onPause, onResume, todos, onTodoDone }: {
+function TrackerScreen({ user, project, isPaused = false, elapsed, onStop, onPause, onResume, onSettings, todos, onTodoDone }: {
   user: User;
   project: Project;
   sessionId?: string | null;
@@ -890,6 +1028,7 @@ function TrackerScreen({ user, project, isPaused = false, elapsed, onStop, onPau
   onStop: () => void;
   onPause: () => void;
   onResume: () => void;
+  onSettings: () => void;
   todos: Todo[];
   onTodoDone: (id: string) => void;
 }) {
@@ -900,7 +1039,7 @@ function TrackerScreen({ user, project, isPaused = false, elapsed, onStop, onPau
 
   return (
     <div className="tracker-layout">
-      <Topbar user={user} />
+      <Topbar user={user} onLogout={onStop} onSettings={onSettings} todoBadge={todos.length} />
 
       <div className="tracker-body">
         <motion.div className="tracker-widget" initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.35 }}>
@@ -948,3 +1087,4 @@ function TrackerScreen({ user, project, isPaused = false, elapsed, onStop, onPau
     </div>
   );
 }
+
