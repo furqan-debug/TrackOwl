@@ -34,9 +34,6 @@ export function Card({
             <div className="relative z-10">
                 {children}
             </div>
-            {/* Subtle background glow for light mode */}
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[#506ef8]/5 blur-[100px] rounded-full -mr-32 -mt-32 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-            <div className="absolute bottom-0 left-0 w-64 h-64 bg-[#8b5cf6]/5 blur-[100px] rounded-full -ml-32 -mb-32 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-150" />
         </div>
     );
 }

@@ -36,14 +36,7 @@ export function AppShell({ children }: AppShellProps) {
     }, []);
 
     return (
-        <div className="flex h-screen bg-background text-text-secondary overflow-hidden font-sans relative">
-            {/* Ambient Background Accents */}
-            <div className="absolute inset-0 bg-grid-premium pointer-events-none z-0 opacity-[0.3]" />
-            <div className="absolute inset-0 bg-gradient-mesh pointer-events-none z-0" />
-            <div className="absolute inset-0 bg-noise pointer-events-none z-0" />
-            <div className="absolute top-[-5%] left-[-5%] w-[50%] h-[50%] bg-primary/12 blur-[140px] rounded-full pointer-events-none z-0 animate-pulse" />
-            <div className="absolute bottom-[-5%] right-[-5%] w-[50%] h-[50%] bg-purple-500/12 blur-[130px] rounded-full pointer-events-none z-0 animate-pulse" />
-            
+        <div className="flex h-screen bg-[#f8fafc] text-text-secondary overflow-hidden font-sans relative">
             {/* Desktop sidebar: visible from md up */}
             <div className="hidden md:block shrink-0 relative z-10 h-full">
                 <Sidebar isCollapsed={isCollapsed} onToggle={toggleSidebar} />

@@ -272,7 +272,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
 
             {/* Collapse toggle */}
             {!overlay && (
-                 <div className="border-t border-black/[0.05] bg-white/40 px-4 py-3 shrink-0">
+                 <div className="border-t border-black/[0.05] bg-white px-4 py-3 shrink-0">
                     <button
                         type="button"
                         onClick={() => onToggle?.()}
