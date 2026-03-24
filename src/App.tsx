@@ -108,6 +108,70 @@ export default function App() {
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [updateInstalling, setUpdateInstalling] = useState(false);
 
+  async function fetchDashboardStats(userId: string, currentProjects: Project[]) {
+    try {
+      const sb = await getSupabase();
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+      
+      const day = now.getDay();
+      const diff = (day === 0 ? -6 : 1) - day;
+      const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff).toISOString();
+
+      const { data: sessions } = await sb
+        .from('sessions')
+        .select('id, project_id, started_at, ended_at')
+        .eq('user_id', userId)
+        .gte('started_at', weekStart);
+
+      const statsMap: Record<string, any> = {};
+      (sessions || []).forEach((s: any) => {
+        if (!s.project_id) return;
+        if (!statsMap[s.project_id]) {
+          statsMap[s.project_id] = { todaySeconds: 0, weeklySeconds: 0, totalActivity: 0, sampleCount: 0 };
+        }
+        const start = new Date(s.started_at).getTime();
+        const end = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
+        const duration = Math.max(0, Math.round((end - start) / 1000));
+        
+        statsMap[s.project_id].weeklySeconds += duration;
+        if (new Date(s.started_at) >= new Date(todayStart)) {
+          statsMap[s.project_id].todaySeconds += duration;
+        }
+      });
+
+      const sessionIds = (sessions || []).map((s: any) => s.id);
+      if (sessionIds.length > 0) {
+        const { data: samples } = await sb
+          .from('activity_samples')
+          .select('session_id, activity_percent')
+          .in('session_id', sessionIds);
+
+        (samples || []).forEach((samp: any) => {
+          const sess = sessions?.find((s: any) => s.id === samp.session_id);
+          if (sess?.project_id && statsMap[sess.project_id]) {
+            statsMap[sess.project_id].totalActivity += (samp.activity_percent ?? 0);
+            statsMap[sess.project_id].sampleCount++;
+          }
+        });
+      }
+
+      const updatedProjects = currentProjects.map(p => ({
+        ...p,
+        stats: statsMap[p.id] ? {
+          todaySeconds: statsMap[p.id].todaySeconds,
+          weeklySeconds: statsMap[p.id].weeklySeconds,
+          activityPercent: statsMap[p.id].sampleCount > 0 
+            ? Math.round(statsMap[p.id].totalActivity / statsMap[p.id].sampleCount) 
+            : 0
+        } : { todaySeconds: 0, weeklySeconds: 0, activityPercent: 0 }
+      }));
+      setProjects(updatedProjects);
+    } catch (err) {
+      console.error('fetchStats error:', err);
+    }
+  }
+
   useEffect(() => {
     trackerAPI.onTrackingSample((_sample: unknown) => { });
 
@@ -127,19 +191,31 @@ export default function App() {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { clearSession(); return; }
 
-      const { data: member } = await sb.from('members').select('*').eq('id', session.user.id).single();
+      const { data: member } = await sb.from('members').select('*').eq('auth_user_id', session.user.id).single();
       if (member) {
         const userObj = { id: member.id, email: member.email, full_name: member.full_name, role: member.role, weekly_limit: member.weekly_limit, daily_limit: member.daily_limit };
         setUser(userObj);
         const { data: projs } = await sb.from('projects').select('*');
-        setProjects(projs || []);
+        const projectsList = projs || [];
+        setProjects(projectsList);
         setScreen('projects');
         fetchAndSubscribeTodos(userObj.id);
+        fetchDashboardStats(userObj.id, projectsList);
       } else {
         clearSession();
       }
     });
   }, []);
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    if (user && (screen === 'projects' || screen === 'tracker')) {
+      interval = setInterval(() => {
+        fetchDashboardStats(user.id, projects);
+      }, 60000); // refresh every minute
+    }
+    return () => { if (interval) clearInterval(interval); };
+  }, [user?.id, screen]);
 
   async function fetchAndSubscribeTodos(userId: string) {
     const sb = await getSupabase();
@@ -213,7 +289,7 @@ export default function App() {
       if (authError || !authData.user) return authError?.message || 'Login failed';
 
       const { data: member, error: memberError } = await sb
-        .from('members').select('*').eq('id', authData.user.id).single();
+        .from('members').select('*').eq('auth_user_id', authData.user.id).single();
       if (memberError || !member) return 'User profile not found in your organization.';
 
       const userObj = { id: member.id, email: member.email, full_name: member.full_name, role: member.role, weekly_limit: member.weekly_limit, daily_limit: member.daily_limit };
@@ -222,9 +298,11 @@ export default function App() {
 
       if (rememberMe) saveSession(token, userObj);
       setUser(userObj);
-      setProjects(projectsData || []);
+      const projectList = projectsData || [];
+      setProjects(projectList);
       setScreen('projects');
       fetchAndSubscribeTodos(userObj.id);
+      fetchDashboardStats(userObj.id, projectList);
       return null;
     } catch (err: any) {
       return err.message || 'Login encountered an unexpected error.';
@@ -285,6 +363,7 @@ export default function App() {
     setActiveProject(null);
     setElapsed(0);
     setScreen('projects');
+    if (user) fetchDashboardStats(user.id, projects);
   }
 
   async function handlePause() {
