@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
     Clock, Users, FolderOpen, CircleDollarSign,
     Camera, Zap,
-    ArrowUpRight, BarChart3, Globe
+    BarChart3, Globe
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
 import { PageLayout, Card, KpiCard, EmptyState, LoadingState } from './ui';
@@ -29,14 +29,14 @@ interface DayBar {
     minutes: number;
 }
 
-// Light-friendly vibrant palette
-const PROJECT_COLORS = ['#506ef8', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4'];
+const PROJECT_COLORS = ['#4f46e5', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2'];
 const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000;
 
-function effectiveEnd(startedAt: string, endedAt: string | null): { endMs: number; isLive: boolean; isStale: boolean } {
+function effectiveEnd(startedAt: string, endedAt: string | null) {
     const startMs = new Date(startedAt).getTime();
     if (endedAt) return { endMs: new Date(endedAt).getTime(), isLive: false, isStale: false };
+
     const now = Date.now();
     if (now - startMs > STALE_THRESHOLD_MS) {
         return { endMs: startMs, isLive: false, isStale: true };
@@ -74,7 +74,7 @@ export function Dashboard() {
                 { data: membersData },
                 { count: ssCount },
             ] = await Promise.all([
-                supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').gte('started_at', new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString()),
+                supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at'),
                 supabase.from('projects').select('id, name, color'),
                 supabase.from('members').select('id, pay_rate'),
                 supabase.from('screenshots').select('id', { count: 'exact', head: true }).gte('recorded_at', weekStart.toISOString()),
@@ -83,7 +83,7 @@ export function Dashboard() {
             const todaySessions = (rawSessions || []).filter(s => new Date(s.started_at) >= todayStart);
             const weekSessions = (rawSessions || []).filter(s => new Date(s.started_at) >= weekStart);
 
-            const todayMins = (todaySessions || []).reduce((acc, s) => {
+            const todayMins = todaySessions.reduce((acc, s) => {
                 const start = new Date(s.started_at).getTime();
                 const { endMs } = effectiveEnd(s.started_at, s.ended_at);
                 return acc + Math.max(0, Math.round((endMs - start) / 60000));
@@ -99,10 +99,11 @@ export function Dashboard() {
             const uniqueMembers = new Set<string>();
             const uniqueProjects = new Set<string>();
 
-            (weekSessions || []).forEach(s => {
+            weekSessions.forEach(s => {
                 const start = new Date(s.started_at).getTime();
                 const { endMs } = effectiveEnd(s.started_at, s.ended_at);
                 const mins = Math.max(0, Math.round((endMs - start) / 60000));
+
                 weekMins += mins;
 
                 if (s.user_id) {
@@ -117,27 +118,27 @@ export function Dashboard() {
                 }
 
                 const dayIdx = new Date(s.started_at).getDay();
-                dayMinMap[dayIdx] = (dayMinMap[dayIdx] || 0) + mins;
+                dayMinMap[dayIdx] += mins;
             });
 
             const projectMap: Record<string, string> = {};
             const projectColorMap: Record<string, string> = {};
             (projectsData || []).forEach((p, i) => {
                 projectMap[p.id] = p.name;
-                projectColorMap[p.id] = p.color || PROJECT_COLORS[i % PROJECT_COLORS.length]!;
+                projectColorMap[p.id] = p.color || PROJECT_COLORS[i % PROJECT_COLORS.length];
             });
 
-            const projectStats: ProjectStat[] = Object.entries(projectMinMap)
+            const projectStats = Object.entries(projectMinMap)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 5)
                 .map(([id, minutes], i) => ({
                     id,
                     name: projectMap[id] || 'Unknown',
                     minutes,
-                    color: projectColorMap[id] || PROJECT_COLORS[i % PROJECT_COLORS.length]!,
+                    color: projectColorMap[id] || PROJECT_COLORS[i % PROJECT_COLORS.length],
                 }));
 
-            const bars: DayBar[] = DAYS_SHORT.map((day, i) => ({
+            const bars = DAYS_SHORT.map((day, i) => ({
                 day,
                 minutes: dayMinMap[i] || 0,
             }));
@@ -150,140 +151,78 @@ export function Dashboard() {
                 activeProjects: uniqueProjects.size,
                 screenshotCount: ssCount || 0,
             });
+
             setProjects(projectStats);
             setWeekBars(bars);
         } catch (error) {
-            console.error("fetchDashboard unhandled error:", error);
+            console.error(error);
         } finally {
             setLoading(false);
         }
     }
 
     const maxProjectMins = projects[0]?.minutes || 1;
-    const today = new Date();
-    const weekLabel = `${new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay()).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${new Date(today.getFullYear(), today.getMonth(), today.getDate() - today.getDay() + 6).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
 
     return (
-        <PageLayout title="Dashboard" description={`Overview of team activity for ${weekLabel}`} maxWidth="full">
-            {/* KPI Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 lg:gap-8 mb-12 animate-in slide-in-from-top-4 duration-700">
-                <KpiCard icon={<Clock className="w-5 h-5" />} label="Tracked Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} trend="+14%" trendVariant="positive" />
-                <KpiCard icon={<BarChart3 className="w-5 h-5" />} label="Weekly Activity" value={loading ? '—' : fmtTime(stats.weekMinutes)} trend="+8%" trendVariant="positive" />
-                <KpiCard icon={<CircleDollarSign className="w-5 h-5" />} label="Estimated Cost" value={loading ? '—' : `$${stats.weekCost.toLocaleString()}`} trend="-2%" trendVariant="negative" />
-                <KpiCard icon={<Users className="w-5 h-5" />} label="Active Members" value={loading ? '—' : stats.activeMembers.toString()} sub="Total personnel" />
-                <KpiCard icon={<Globe className="w-5 h-5" />} label="Active Projects" value={loading ? '—' : stats.activeProjects.toString()} sub="Project tracking" />
-                <KpiCard icon={<Camera className="w-5 h-5" />} label="Total Screenshots" value={loading ? '—' : stats.screenshotCount.toString()} trend="+124" trendVariant="positive" />
+        <PageLayout title="Dashboard" description="Weekly overview" maxWidth="full">
+
+            {/* KPI */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-10">
+                <KpiCard icon={<Clock />} label="Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} />
+                <KpiCard icon={<BarChart3 />} label="Week" value={loading ? '—' : fmtTime(stats.weekMinutes)} />
+                <KpiCard icon={<CircleDollarSign />} label="Cost" value={loading ? '—' : `$${stats.weekCost}`} />
+                <KpiCard icon={<Users />} label="Members" value={loading ? '—' : stats.activeMembers.toString()} />
+                <KpiCard icon={<Globe />} label="Projects" value={loading ? '—' : stats.activeProjects.toString()} />
+                <KpiCard icon={<Camera />} label="Screenshots" value={loading ? '—' : stats.screenshotCount.toString()} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
-                {/* Weekly Trends */}
-                <div className="lg:col-span-8">
-                    <Card title="Activity Trends">
-                        {loading ? (
-                            <LoadingState className="h-[300px]" />
-                        ) : (
-                            <div className="h-[300px] w-full mt-6">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={weekBars} barSize={32}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(41, 61, 99, 0.05)" />
-                                        <XAxis
-                                            dataKey="day"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: '#5c6b8a', fontSize: 10, fontWeight: 700 }}
-                                            dy={15}
-                                        />
-                                        <YAxis hide />
-                                        <Tooltip
-                                            cursor={{ fill: 'rgba(80, 110, 248, 0.02)' }}
-                                            content={({ active, payload }) => {
-                                                if (active && payload && payload.length) {
-                                                    return (
-                                                        <div className="glass border border-primary/10 rounded-2xl px-5 py-4 shadow-xl">
-                                                            <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-1.5 font-mono">{payload[0].payload.day}</p>
-                                                            <p className="text-xl font-bold text-text-primary tracking-tighter leading-tight">{fmtTime(payload[0].value as number)}</p>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            }}
-                                        />
-                                        <Bar dataKey="minutes" fill="url(#dashBarGrad)" radius={[10, 10, 0, 0]} animationDuration={2000} />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        )}
-                        <div className="flex items-center justify-center gap-8 mt-10 pt-10 border-t border-black/[0.03] font-mono text-[9px] uppercase tracking-[0.3em] font-bold text-text-muted/60">
-                            <div className="flex items-center gap-2.5"><div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" /> Activity Volume</div>
-                            <div className="flex items-center gap-2.5"><div className="w-2.5 h-2.5 rounded-full bg-black/5" /> Weekly Average</div>
-                        </div>
-                    </Card>
-                </div>
-
-                {/* Projects Allocation */}
-                <div className="lg:col-span-4">
-                    <Card title="Project Distribution">
-                        {loading ? (
-                            <LoadingState className="h-[300px]" />
-                        ) : projects.length === 0 ? (
-                            <EmptyState icon={<FolderOpen className="w-10 h-10 opacity-20" />} title="No Data" description="No project activity recorded yet" />
-                        ) : (
-                            <div className="space-y-8 mt-4">
-                                {projects.map((p) => (
-                                    <div key={p.id} className="group cursor-default">
-                                        <div className="flex items-center justify-between mb-3.5">
-                                            <div className="flex items-center gap-3.5">
-                                                <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[11px] font-bold shadow-lg shadow-black/5 group-hover:scale-110 transition-transform"
-                                                    style={{ backgroundColor: p.color }}>
-                                                    {p.name.charAt(0).toUpperCase()}
-                                                </div>
-                                                <span className="text-sm font-bold text-text-primary tracking-tight group-hover:text-primary transition-colors leading-tight">{p.name}</span>
-                                            </div>
-                                            <span className="text-[10px] font-bold text-text-secondary bg-black/[0.03] px-3.5 py-1.5 rounded-xl uppercase tracking-widest font-mono border border-black/[0.03]">
-                                                {fmtTime(p.minutes)}
-                                            </span>
-                                        </div>
-                                        <div className="h-2 bg-black/[0.03] rounded-full overflow-hidden w-full p-[1px]">
-                                            <div
-                                                className="h-full rounded-full transition-all duration-1000 ease-out"
-                                                style={{
-                                                    width: `${Math.round((p.minutes / maxProjectMins) * 100)}%`,
-                                                    backgroundColor: p.color,
-                                                    boxShadow: `0 0 12px ${p.color}20`
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        <button className="w-full mt-10 py-4 bg-white border border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-3 group shadow-sm">
-                            View Detailed Reports
-                            <ArrowUpRight className="w-4 h-4 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" strokeWidth={2.5} />
-                        </button>
-                    </Card>
-                </div>
-            </div>
-
-            {/* Recent Sessions */}
-            <Card title="Recent Activity" noPadding>
-                <div className="divide-y divide-black/[0.03] overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left border-collapse min-w-[800px]">
-                        <thead>
-                            <tr className="bg-slate-50/50">
-                                <th className="px-10 py-6 text-sm font-semibold text-slate-700">Team Member</th>
-                                <th className="px-10 py-6 text-sm font-semibold text-slate-700">Project</th>
-                                <th className="px-10 py-6 text-sm font-semibold text-slate-700">Started At</th>
-                                <th className="px-10 py-6 text-sm font-semibold text-slate-700">Duration</th>
-                                <th className="px-10 py-6 text-sm font-semibold text-slate-700 text-right">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-black/[0.03]">
-                            <RecentSessionsRows />
-                        </tbody>
-                    </table>
+            {/* Chart */}
+            <Card title="Activity">
+                <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={weekBars}>
+                            <CartesianGrid stroke="#eee" vertical={false} />
+                            <XAxis dataKey="day" tick={{ fill: '#111', fontSize: 12 }} />
+                            <YAxis hide />
+                            <Tooltip />
+                            <Bar dataKey="minutes" fill="#4f46e5" radius={[6, 6, 0, 0]} />
+                        </BarChart>
+                    </ResponsiveContainer>
                 </div>
             </Card>
+
+            {/* Projects */}
+            <Card title="Projects">
+                {projects.length === 0 ? (
+                    <EmptyState icon={<FolderOpen />} title="No data" description="No activity yet" />
+                ) : (
+                    <div className="space-y-4">
+                        {projects.map(p => (
+                            <div key={p.id}>
+                                <div className="flex justify-between text-sm font-medium text-black">
+                                    <span>{p.name}</span>
+                                    <span>{fmtTime(p.minutes)}</span>
+                                </div>
+                                <div className="h-2 bg-gray-200 rounded mt-1">
+                                    <div
+                                        className="h-2 rounded"
+                                        style={{
+                                            width: `${(p.minutes / maxProjectMins) * 100}%`,
+                                            backgroundColor: p.color
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </Card>
+
+            {/* Table */}
+            <Card title="Recent Activity" noPadding>
+                <RecentSessionsRows />
+            </Card>
+
         </PageLayout>
     );
 }
@@ -297,20 +236,23 @@ function RecentSessionsRows() {
     useEffect(() => {
         async function load() {
             try {
-                const [{ data }, { data: membersData }, { data: projectsData }] = await Promise.all([
-                    supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').order('started_at', { ascending: false }).limit(6),
+                const [{ data }, { data: mData }, { data: pData }] = await Promise.all([
+                    supabase.from('sessions').select('*').order('started_at', { ascending: false }).limit(6),
                     supabase.from('members').select('id, full_name'),
                     supabase.from('projects').select('id, name, color'),
                 ]);
-                setSessions(data || []);
+                
                 const mMap: Record<string, string> = {};
-                (membersData || []).forEach(m => { mMap[m.id] = m.full_name; });
+                (mData || []).forEach(m => { mMap[m.id] = m.full_name; });
                 setMemberMap(mMap);
+
                 const pMap: Record<string, any> = {};
-                (projectsData || []).forEach(p => { pMap[p.id] = p; });
+                (pData || []).forEach(p => { pMap[p.id] = p; });
                 setProjectMap(pMap);
+
+                setSessions(data || []);
             } catch (err) {
-                console.error("RecentSessions Error:", err);
+                console.error(err);
             } finally {
                 setLoading(false);
             }
@@ -318,66 +260,55 @@ function RecentSessionsRows() {
         load();
     }, []);
 
-    if (loading) return <tr><td colSpan={5} className="py-24 text-center"><LoadingState /></td></tr>;
-    if (sessions.length === 0) return <tr><td colSpan={5} className="py-24 text-center opacity-40"><EmptyState icon={<Zap className="w-10 h-10" />} title="No Sessions" description="No activity recorded yet" /></td></tr>;
+    if (loading) return <div className="p-12 text-center"><LoadingState /></div>;
+    if (!sessions.length) return <EmptyState icon={<Zap />} title="No sessions" description="No activity yet" />;
 
     return (
-        <>
-            {sessions.map(s => {
-                const startMs = new Date(s.started_at).getTime();
-                const { endMs, isLive, isStale } = effectiveEnd(s.started_at, s.ended_at);
-                const mins = Math.max(0, Math.round((endMs - startMs) / 60000));
-                const memberName = (s.user_id && memberMap[s.user_id]) || 'Unknown User';
-                const proj = s.project_id && projectMap[s.project_id];
-
-                return (
-                    <tr key={s.id} className="group hover:bg-black/[0.01] transition-all">
-                        <td className="px-10 py-7">
-                            <div className="flex items-center gap-4">
-                                <div className="w-11 h-11 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary font-bold text-[12px] group-hover:scale-110 transition-transform shadow-sm">
-                                    {memberName.charAt(0)}
-                                </div>
-                                <div>
-                                    <div className="font-bold text-slate-800 dark:text-slate-200 text-[15px] tracking-tight leading-tight group-hover:text-primary transition-colors mb-1.5">{memberName}</div>
-                                    <div className="text-[10px] font-medium text-slate-400">ID: {s.user_id?.slice(0, 8) || 'SYSTEM'}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td className="px-10 py-7">
-                            {proj ? (
-                                <div className="flex items-center gap-3">
-                                    <div className="w-2.5 h-2.5 rounded-full shadow-lg" style={{ backgroundColor: proj.color }} />
-                                    <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{proj.name}</span>
-                                </div>
-                            ) : (
-                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">Unassigned</span>
-                            )}
-                        </td>
-                        <td className="px-10 py-7 text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono group-hover:text-slate-800 dark:group-hover:text-slate-200 transition-colors">
-                            {new Date(s.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </td>
-                        <td className="px-10 py-7">
-                            <span className="text-sm font-bold text-slate-800 dark:text-slate-200 font-mono tracking-wide">
-                                {isStale ? '0h 00m' : fmtTime(mins)}
-                            </span>
-                        </td>
-                        <td className="px-10 py-7 text-right">
-                            {isLive ? (
-                                <span className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-xs font-semibold uppercase tracking-wider text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 shadow-sm font-mono">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                    Tracking Active
-                                </span>
-                            ) : isStale ? (
-                                <span className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-xs font-semibold uppercase tracking-wider text-amber-600 bg-amber-500/10 border border-amber-500/20 font-mono">
-                                    Sync Lost
-                                </span>
-                            ) : (
-                                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">Recorded</span>
-                            )}
-                        </td>
+        <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+                <thead>
+                    <tr className="bg-slate-50/50">
+                        <th className="p-4 font-semibold text-slate-700">Member</th>
+                        <th className="p-4 font-semibold text-slate-700">Project</th>
+                        <th className="p-4 font-semibold text-slate-700">Duration</th>
+                        <th className="p-4 font-semibold text-slate-700 text-right">Status</th>
                     </tr>
-                );
-            })}
-        </>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                    {sessions.map(s => {
+                        const { endMs, isLive, isStale } = effectiveEnd(s.started_at, s.ended_at);
+                        const dur = Math.max(0, Math.round((endMs - new Date(s.started_at).getTime()) / 60000));
+                        const mName = memberMap[s.user_id] || 'Unknown';
+                        const proj = projectMap[s.project_id];
+
+                        return (
+                            <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="p-4 font-medium text-slate-900">{mName}</td>
+                                <td className="p-4">
+                                    {proj ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: proj.color }} />
+                                            <span className="text-slate-600">{proj.name}</span>
+                                        </div>
+                                    ) : (
+                                        <span className="text-slate-400">Unassigned</span>
+                                    )}
+                                </td>
+                                <td className="p-4 font-medium text-slate-700">{fmtTime(dur)}</td>
+                                <td className="p-4 text-right">
+                                    {isLive ? (
+                                        <span className="text-emerald-600 font-bold text-[10px] uppercase tracking-wider">Active</span>
+                                    ) : isStale ? (
+                                        <span className="text-amber-600 font-bold text-[10px] uppercase tracking-wider">Stale</span>
+                                    ) : (
+                                        <span className="text-slate-400 text-[10px] uppercase tracking-wider">Recorded</span>
+                                    )}
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
     );
 }
