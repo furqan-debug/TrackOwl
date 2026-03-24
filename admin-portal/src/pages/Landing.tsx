@@ -420,13 +420,13 @@ function DownloadTabs() {
         windows: {
             title: 'Trackora for Windows',
             desc: 'Available as .exe (universal installer) for Windows 10/11. Supports both x64 and ARM64 systems.',
-            v: 'v1.0.0',
+            v: 'v1.0.2',
             os: 'Windows 10/11',
             arch: 'x64 / ARM64',
             primary: 'Download .exe',
-            primaryLink: 'https://github.com/furqan-debug/Trackora/releases/download/v1.0.0/Trackora_1.0.0_x64-setup.exe',
+            primaryLink: 'https://github.com/furqan-debug/Trackora/releases/download/v1.0.2/Trackora_1.0.2_x64-setup.exe',
             secondary: 'Download .msi (Enterprise)',
-            secondaryLink: 'https://github.com/furqan-debug/Trackora/releases/download/v1.0.0/Trackora_1.0.0_x64_en-US.msi'
+            secondaryLink: 'https://github.com/furqan-debug/Trackora/releases/download/v1.0.2/Trackora_1.0.2_x64_en-US.msi'
         },
         macos: {
             title: 'Trackora for macOS',
