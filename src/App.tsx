@@ -305,7 +305,17 @@ export default function App() {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { clearSession(); return; }
 
-      const { data: member } = await sb.from('members').select('*').eq('auth_user_id', session.user.id).single();
+      let { data: member } = await sb.from('members').select('*').eq('auth_user_id', session.user.id).single();
+      
+      // Fallback: lookup by email if auth_user_id is not yet linked
+      if (!member && session.user.email) {
+        const { data: byEmail } = await sb.from('members').select('*').eq('email', session.user.email).single();
+        if (byEmail && !byEmail.auth_user_id) {
+          await sb.from('members').update({ auth_user_id: session.user.id }).eq('id', byEmail.id);
+          member = { ...byEmail, auth_user_id: session.user.id };
+        }
+      }
+
       if (member) {
         const userObj = { id: member.id, email: member.email, full_name: member.full_name, role: member.role, weekly_limit: member.weekly_limit, daily_limit: member.daily_limit };
         setUser(userObj);
@@ -402,8 +412,21 @@ export default function App() {
       const { data: authData, error: authError } = await sb.auth.signInWithPassword({ email, password });
       if (authError || !authData.user) return authError?.message || 'Login failed';
 
-      const { data: member, error: memberError } = await sb
+      let { data: member, error: memberError } = await sb
         .from('members').select('*').eq('auth_user_id', authData.user.id).single();
+      
+      // Fallback: lookup by email if auth_user_id is not yet linked
+      if ((memberError || !member) && authData.user.email) {
+        const { data: byEmail } = await sb.from('members').select('*').eq('email', authData.user.email).single();
+        if (byEmail && !byEmail.auth_user_id) {
+          const { error: updateError } = await sb.from('members').update({ auth_user_id: authData.user.id }).eq('id', byEmail.id);
+          if (!updateError) {
+            member = { ...byEmail, auth_user_id: authData.user.id };
+            memberError = null;
+          }
+        }
+      }
+
       if (memberError || !member) return 'User profile not found in your organization.';
 
       const userObj = { id: member.id, email: member.email, full_name: member.full_name, role: member.role, weekly_limit: member.weekly_limit, daily_limit: member.daily_limit };
