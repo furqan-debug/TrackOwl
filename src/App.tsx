@@ -226,6 +226,7 @@ export default function App() {
   const realtimeRef = useRef<any>(null);
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [updateInstalling, setUpdateInstalling] = useState(false);
+  const memberSubscriptionRef = useRef<any>(null);
 
   async function fetchDashboardStats(userId: string, currentProjects: Project[]) {
     try {
@@ -410,7 +411,6 @@ export default function App() {
         projectColor: t.projects?.color,
       })));
     }
-
     if (realtimeRef.current) sb.removeChannel(realtimeRef.current);
     realtimeRef.current = sb
       .channel('my-todos-' + userId)
@@ -427,6 +427,43 @@ export default function App() {
       )
       .subscribe();
   }
+
+  // Real-time Member Profile Subscription (Enforce tracking_enabled)
+  useEffect(() => {
+    if (!user?.id) return;
+
+    let sub: any = null;
+    getSupabase().then((sb: any) => {
+      sub = sb
+        .channel(`member-${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'members', filter: `id=eq.${user.id}` },
+          (payload: any) => {
+            const updated = payload.new;
+            console.log('Member profile updated (real-time):', updated);
+            
+            // Update local state
+            setUser(prev => prev ? { ...prev, ...updated } : null);
+
+            // Enforce tracking_enabled
+            if (updated.tracking_enabled === false && isTracking) {
+              handleStop();
+              trackerAPI.showNotification('Tracking Disabled', 'Your tracking permission has been removed by an administrator.');
+              setTrackingError('Your tracking permission has been removed by an administrator.');
+            }
+          }
+        )
+        .subscribe();
+      memberSubscriptionRef.current = sub;
+    });
+
+    return () => {
+      if (sub) {
+        getSupabase().then((sb: any) => sb.removeChannel(sub));
+      }
+    };
+  }, [user?.id, isTracking]); // Re-subscribe if user ID changes; check isTracking for enforcement
 
   useEffect(() => {
     if (isTracking && !isPaused) {
