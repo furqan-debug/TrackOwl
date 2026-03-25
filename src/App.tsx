@@ -32,6 +32,7 @@ interface User {
   weekly_limit?: number;
   daily_limit?: number;
   idle_limit?: number;
+  idle_enabled?: boolean;
   avatar_url?: string;
   phone?: string;
 }
@@ -338,7 +339,8 @@ export default function App() {
           role: member.role, 
           weekly_limit: member.weekly_limit, 
           daily_limit: member.daily_limit,
-          idle_limit: member.idle_limit 
+          idle_limit: member.idle_limit,
+          idle_enabled: member.idle_enabled
         };
         setUser(userObj);
         const { data: projs } = await sb.from('projects').select('*');
@@ -354,7 +356,7 @@ export default function App() {
   }, []); // Run once on mount
 
   useEffect(() => {
-    if (!isTracking) return;
+    if (!isTracking || (user && user.idle_enabled === false)) return;
 
     const unlistenPromise = trackerAPI.onTrackingSample((sample: any) => {
       if (sample.idle) {
@@ -488,7 +490,8 @@ export default function App() {
         role: member.role, 
         weekly_limit: member.weekly_limit, 
         daily_limit: member.daily_limit,
-        idle_limit: member.idle_limit
+        idle_limit: member.idle_limit,
+        idle_enabled: member.idle_enabled
       };
       const { data: projectsData } = await sb.from('projects').select('*');
       const token = authData.session.access_token;
@@ -1206,4 +1209,3 @@ function TrackerScreen({ user, project, isPaused = false, idlePaused = false, on
     </div>
   );
 }
-

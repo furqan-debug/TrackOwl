@@ -26,7 +26,8 @@ interface DbMember {
     bill_rate: number | null;
     weekly_limit: number;
     daily_limit: number;
-    idle_limit: number;
+    idle_limit: number | null;
+    idle_enabled: boolean;
     tracking_enabled: boolean;
     created_at: string;
 }
@@ -608,6 +609,7 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
     const [weekly, setWeekly] = useState(member.weekly_limit.toString());
     const [daily, setDaily] = useState(member.daily_limit.toString());
     const [idle, setIdle] = useState(member.idle_limit?.toString() || '10');
+    const [idleEnabled, setIdleEnabled] = useState(member.idle_enabled ?? true);
 
     return (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-500">
@@ -645,6 +647,26 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                     </div>
                     <div className="grid grid-cols-2 gap-8">
                         <FormField label="IDLE LIMIT (MINUTES)" value={idle} onChange={setIdle} type="number" />
+                        <div className="flex items-center gap-4 bg-black/[0.03] p-6 rounded-2xl border border-black/[0.05]">
+                            <div className="flex-1">
+                                <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-1">IDLE TRACKING</label>
+                                <p className="text-[12px] text-text-muted font-bold tracking-tight">Pause tracker when inactive</p>
+                            </div>
+                            <button
+                                onClick={() => setIdleEnabled(!idleEnabled)}
+                                disabled={isRestricted}
+                                className={clsx(
+                                    "w-14 h-8 rounded-full p-1 transition-all duration-300",
+                                    idleEnabled ? "bg-primary" : "bg-black/10",
+                                    isRestricted && "opacity-50 cursor-not-allowed"
+                                )}
+                            >
+                                <div className={clsx(
+                                    "w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300",
+                                    idleEnabled ? "translate-x-6" : "translate-x-0"
+                                )} />
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div className="px-12 py-10 bg-black/[0.01] border-t border-black/[0.03] flex justify-end gap-6">
@@ -652,7 +674,7 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                     <button
                         onClick={() => {
                             if (isRestricted) { onClose(); return; }
-                            onSave({ full_name: name, role, pay_rate: payRate ? parseFloat(payRate) : null, bill_rate: billRate ? parseFloat(billRate) : null, weekly_limit: parseInt(weekly) || 40, daily_limit: parseInt(daily) || 8, idle_limit: parseInt(idle) || 10 });
+                            onSave({ full_name: name, role, pay_rate: payRate ? parseFloat(payRate) : null, bill_rate: billRate ? parseFloat(billRate) : null, weekly_limit: parseInt(weekly) || 40, daily_limit: parseInt(daily) || 8, idle_limit: parseInt(idle) || 10, idle_enabled: idleEnabled });
                         }}
                         disabled={isRestricted}
                         className={clsx(

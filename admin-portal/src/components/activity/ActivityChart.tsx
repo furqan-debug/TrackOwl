@@ -38,30 +38,30 @@ export function ActivityChart({ loading, samples }: ActivityChartProps) {
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(41, 61, 99, 0.05)" />
-                            <XAxis 
-                                dataKey="hour" 
-                                axisLine={false} 
-                                tickLine={false} 
+                            <XAxis
+                                dataKey="hour"
+                                axisLine={false}
+                                tickLine={false}
                                 tick={{ fill: '#5c6b8a', fontSize: 10, fontWeight: 900 }}
                                 dy={15}
                                 interval={2}
                             />
-                            <YAxis 
-                                domain={[0, 100]} 
-                                axisLine={false} 
-                                tickLine={false} 
+                            <YAxis
+                                domain={[0, 100]}
+                                axisLine={false}
+                                tickLine={false}
                                 tick={{ fill: '#5c6b8a', fontSize: 10, fontWeight: 900 }}
                                 unit="%"
                                 dx={-10}
                             />
                             <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(80, 110, 248, 0.1)', strokeWidth: 2 }} />
-                            <Area 
-                                type="monotone" 
-                                dataKey="activity" 
-                                stroke="#506ef8" 
-                                strokeWidth={4} 
-                                fill="url(#actGrad)" 
-                                animationDuration={2000} 
+                            <Area
+                                type="monotone"
+                                dataKey="activity"
+                                stroke="#506ef8"
+                                strokeWidth={4}
+                                fill="url(#actGrad)"
+                                animationDuration={2000}
                             />
                         </AreaChart>
                     </ResponsiveContainer>
