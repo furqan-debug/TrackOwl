@@ -304,24 +304,6 @@ export default function App() {
   }
 
   useEffect(() => {
-    const unlisten = trackerAPI.onTrackingSample((sample: any) => {
-      if (sample.idle) {
-        setIdleMinutes(prev => {
-          const next = prev + 1;
-          const limit = user?.idle_limit || 10;
-          if (next >= limit && isTracking && !isPaused) {
-            setIdlePaused(true);
-            handlePause();
-            setElapsed(current => Math.max(0, current - (limit * 60)));
-            return 0;
-          }
-          return next;
-        });
-      } else {
-        setIdleMinutes(0);
-      }
-    });
-
     const tauri = (window as any).__TAURI__;
     if (tauri?.event) {
       tauri.event.listen('update-available', (ev: any) => {
@@ -331,16 +313,15 @@ export default function App() {
         if (ev.payload === 100) setUpdateInstalling(false);
       });
     }
-    const saved = loadSession();
-    if (!saved) return () => { unlisten.then((f: any) => f()); };
 
+    const saved = loadSession();
+    if (!saved) return;
+    
     getSupabase().then(async (sb: any) => {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { clearSession(); return; }
-
-      let { data: member } = await sb.from('members').select('*').eq('auth_user_id', session.user.id).single();
       
-      // Fallback: lookup by email if auth_user_id is not yet linked
+      let { data: member } = await sb.from('members').select('*').eq('auth_user_id', session.user.id).single();
       if (!member && session.user.email) {
         const { data: byEmail } = await sb.from('members').select('*').eq('email', session.user.email).single();
         if (byEmail && !byEmail.auth_user_id) {
@@ -348,7 +329,7 @@ export default function App() {
           member = { ...byEmail, auth_user_id: session.user.id };
         }
       }
-
+      
       if (member) {
         const userObj: User = { 
           id: member.id, 
@@ -370,15 +351,37 @@ export default function App() {
         clearSession();
       }
     });
+  }, []); // Run once on mount
 
-    console.log('Idle tracking state:', { idleMinutes, isTracking, isPaused });
+  useEffect(() => {
+    if (!isTracking) return;
+
+    const unlistenPromise = trackerAPI.onTrackingSample((sample: any) => {
+      if (sample.idle) {
+        setIdleMinutes(prev => {
+          const next = prev + 1;
+          const limit = user?.idle_limit || 10;
+          if (next >= limit && !isPaused) {
+            setIdlePaused(true);
+            handlePause();
+            setElapsed(current => Math.max(0, current - (limit * 60)));
+            return 0;
+          }
+          return next;
+        });
+      } else {
+        setIdleMinutes(0);
+      }
+    });
+
+    console.log('Tracking listener active:', { isPaused, idlePaused });
 
     return () => {
-      if (typeof unlisten?.then === 'function') {
-        unlisten.then((f: any) => { if (typeof f === 'function') f(); });
+      if (typeof unlistenPromise?.then === 'function') {
+        unlistenPromise.then((f: any) => { if (typeof f === 'function') f(); });
       }
     };
-  }, [user?.idle_limit, isTracking, isPaused]);
+  }, [isTracking, isPaused, user?.idle_limit]); // Re-subscribe when tracking state or limits change
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
