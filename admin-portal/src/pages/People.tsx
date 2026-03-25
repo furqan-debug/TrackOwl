@@ -650,6 +650,58 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
 
     const [activeTab, setActiveTab] = useState('INFO');
     const [showActions, setShowActions] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+    const handleSaveInternal = async () => {
+        if (isRestricted) {
+            onClose();
+            return;
+        }
+
+        setSaving(true);
+        setSaveStatus('idle');
+
+        const patch: any = {
+            full_name: name,
+            role,
+            pay_rate: payRate ? parseFloat(payRate) : null,
+            bill_rate: billRate ? parseFloat(billRate) : null,
+            weekly_limit: parseInt(weekly) || 40,
+            daily_limit: parseInt(daily) || 8,
+            idle_limit: parseInt(idle) || 10,
+            idle_enabled: idleEnabled,
+            os_username: osUsername,
+            employee_id: employeeId,
+            birthday: birthday,
+            work_address: workAddress,
+            work_phone: workPhone,
+            home_address: homeAddress,
+            personal_email: personalEmail,
+            personal_phone: personalPhone,
+            hire_date: hireDate,
+            department: dept,
+            employee_type: empType,
+            timezone: timezone,
+            termination_date: terminationDate || null,
+            custom_fields: customFields,
+            tracking_enabled: trackingEnabled
+        };
+
+        try {
+            console.log('--- ATTEMPTING SAVE ---', patch);
+            await onSave(patch);
+            setSaveStatus('success');
+            setTimeout(() => {
+                setSaveStatus('idle');
+                onClose();
+            }, 1000);
+        } catch (err) {
+            console.error('SAVE FAILED:', err);
+            setSaveStatus('error');
+            setSaving(false);
+        }
+    };
     const tabs = ['INFO', 'EMPLOYMENT', 'ROLES', 'PAY / BILL', 'WORK TIME & LIMITS', 'SETTINGS'];
 
     return (
@@ -690,43 +742,21 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                             </div>
                         )}
                     </div>
-                       <button
-                        onClick={() => {
-                            console.log('SAVE BUTTON CLICKED. trackingEnabled state:', trackingEnabled);
-                            if (isRestricted) { 
-                                console.warn('SAVE BLOCKED: Restricted access');
-                                onClose(); 
-                                return; 
-                            }
-                            const patch = {
-                                full_name: name, role, pay_rate: payRate ? parseFloat(payRate) : null,
-                                bill_rate: billRate ? parseFloat(billRate) : null,
-                                weekly_limit: parseInt(weekly) || 40,
-                                daily_limit: parseInt(daily) || 8,
-                                idle_limit: parseInt(idle) || 10,
-                                idle_enabled: idleEnabled,
-                                os_username: osUsername,
-                                employee_id: employeeId,
-                                birthday: birthday,
-                                work_address: workAddress,
-                                work_phone: workPhone,
-                                home_address: homeAddress,
-                                personal_email: personalEmail,
-                                personal_phone: personalPhone,
-                                hire_date: hireDate,
-                                department: dept,
-                                employee_type: empType,
-                                timezone: timezone,
-                                termination_date: terminationDate || null,
-                                custom_fields: customFields,
-                                tracking_enabled: trackingEnabled
-                            };
-                            console.log('PREPARING PATCH IN MODAL:', patch);
-                            onSave(patch);
-                        }}
-                        className="px-10 py-4 bg-primary text-white rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:shadow-xl transition-all active:scale-95 font-mono"
+                    <button
+                        onClick={handleSaveInternal}
+                        disabled={saving || isRestricted}
+                        className={clsx(
+                            "px-10 py-4 rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em] transition-all active:scale-95 font-mono shadow-lg",
+                            saveStatus === 'success' ? "bg-emerald-500 text-white shadow-emerald-500/20" :
+                            saveStatus === 'error' ? "bg-red-500 text-white shadow-red-500/20" :
+                            "bg-primary text-white shadow-primary/20 hover:shadow-xl",
+                            (saving || isRestricted) && "opacity-50 cursor-not-allowed"
+                        )}
                     >
-                        {isRestricted ? 'READ ONLY' : 'SAVE CHANGES'}
+                        {saving ? 'SAVING...' : 
+                         saveStatus === 'success' ? 'SAVED!' : 
+                         saveStatus === 'error' ? 'ERROR!' :
+                         isRestricted ? 'READ ONLY' : 'SAVE CHANGES'}
                     </button>
                     <button onClick={onClose} className="p-3 hover:bg-black/5 rounded-2xl transition-all text-text-muted ml-4">
                         <X className="w-7 h-7" strokeWidth={3} />
