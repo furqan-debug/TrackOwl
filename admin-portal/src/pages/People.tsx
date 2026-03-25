@@ -624,6 +624,7 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
     const [daily, setDaily] = useState(member.daily_limit.toString());
     const [idle, setIdle] = useState(member.idle_limit?.toString() || '10');
     const [idleEnabled, setIdleEnabled] = useState(member.idle_enabled ?? true);
+    const [trackingEnabled, setTrackingEnabled] = useState(member.tracking_enabled ?? true);
     
     // New Fields
     const [osUsername, setOsUsername] = useState(member.os_username || '');
@@ -638,9 +639,11 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
     const [dept, setDept] = useState(member.department || '');
     const [empType, setEmpType] = useState(member.employee_type || 'Full-time');
     const [timezone, setTimezone] = useState(member.timezone || 'Asia/Kolkata');
+    const [terminationDate, setTerminationDate] = useState(member.termination_date || '');
     const [customFields, setCustomFields] = useState<any>(member.custom_fields || {});
 
     const [activeTab, setActiveTab] = useState('INFO');
+    const [showActions, setShowActions] = useState(false);
     const tabs = ['INFO', 'EMPLOYMENT', 'ROLES', 'PAY / BILL', 'WORK TIME & LIMITS', 'SETTINGS'];
 
     return (
@@ -649,7 +652,7 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
             <div className="px-12 py-8 border-b border-black/[0.05] flex items-center justify-between bg-white shrink-0">
                 <div className="flex items-center gap-6">
                     <button onClick={onClose} className="p-3 hover:bg-black/5 rounded-2xl transition-all text-text-muted">
-                        <ChevronDown className="w-6 h-6 rotate-90" strokeWidth={3} />
+                        <ChevronDown className="w-6 h-6 -rotate-90" strokeWidth={3} />
                     </button>
                     <div>
                         <div className="flex items-center gap-3 text-[11px] font-bold text-text-muted mb-2 font-mono uppercase tracking-[0.2em]">
@@ -659,10 +662,27 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="relative group">
-                        <button className="px-6 py-4 bg-black/[0.03] border border-black/[0.05] rounded-2xl text-[12px] font-bold text-text-primary flex items-center gap-3 hover:bg-black/[0.06] transition-all font-mono tracking-widest uppercase">
+                    <div className="relative">
+                        <button 
+                            onClick={() => setShowActions(!showActions)}
+                            className="px-6 py-4 bg-black/[0.03] border border-black/[0.05] rounded-2xl text-[12px] font-bold text-text-primary flex items-center gap-3 hover:bg-black/[0.06] transition-all font-mono tracking-widest uppercase"
+                        >
                             ACTIONS <ChevronDown className="w-4 h-4 text-primary" strokeWidth={3} />
                         </button>
+                        {showActions && (
+                            <div className="absolute right-0 mt-4 w-64 bg-white rounded-3xl shadow-2xl border border-black/[0.05] py-4 z-10 animate-in fade-in zoom-in-95 duration-200">
+                                <button className="w-full px-8 py-4 text-left text-[11px] font-bold text-text-primary hover:bg-black/[0.03] transition-all uppercase tracking-widest font-mono flex items-center gap-4">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500" /> DEACTIVATE USER
+                                </button>
+                                <button className="w-full px-8 py-4 text-left text-[11px] font-bold text-text-primary hover:bg-black/[0.03] transition-all uppercase tracking-widest font-mono flex items-center gap-4">
+                                    <div className="w-2 h-2 rounded-full bg-primary" /> RESET PASSWORD
+                                </button>
+                                <div className="h-[1px] bg-black/[0.05] my-2" />
+                                <button className="w-full px-8 py-4 text-left text-[11px] font-bold text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest font-mono flex items-center gap-4">
+                                    <X className="w-4 h-4" strokeWidth={3} /> DELETE MEMBER
+                                </button>
+                            </div>
+                        )}
                     </div>
                     <button
                         onClick={() => {
@@ -686,7 +706,9 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                                 department: dept,
                                 employee_type: empType,
                                 timezone: timezone,
-                                custom_fields: customFields
+                                termination_date: terminationDate || null,
+                                custom_fields: customFields,
+                                tracking_enabled: trackingEnabled
                             });
                         }}
                         className="px-10 py-4 bg-primary text-white rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:shadow-xl transition-all active:scale-95 font-mono"
@@ -738,7 +760,7 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                                     </div>
                                     <div className="flex items-center gap-4 text-text-primary font-bold">
                                         <div className="w-8 h-8 rounded-xl bg-black/[0.03] flex items-center justify-center"><Settings className="w-4 h-4 text-text-muted" /></div>
-                                        <span className="text-[14px]">(GMT+05:30) {timezone}</span>
+                                        <span className="text-[14px]">{timezone}</span>
                                     </div>
                                     <div className="flex items-center gap-4 text-text-muted font-bold opacity-60">
                                         <div className="w-8 h-8 rounded-xl bg-black/[0.03] flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-text-muted" /></div>
@@ -845,6 +867,11 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                                     <input type="date" value={hireDate} onChange={e => setHireDate(e.target.value)}
                                         className="w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all font-mono" />
                                 </div>
+                                <div className="space-y-4">
+                                    <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">TERMINATION DATE</label>
+                                    <input type="date" value={terminationDate} onChange={e => setTerminationDate(e.target.value)}
+                                        className="w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all font-mono" />
+                                </div>
                            </div>
                         </div>
                     )}
@@ -916,9 +943,18 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                                         <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-1">TRACKING ENABLED</label>
                                         <p className="text-[13px] text-text-primary font-bold tracking-tight">Allow this user to record time</p>
                                     </div>
-                                    <button onClick={() => {}} disabled={isRestricted}
-                                        className="w-14 h-8 rounded-full p-1 transition-all duration-300 bg-emerald-500">
-                                        <div className="w-6 h-6 bg-white rounded-full shadow-sm translate-x-6" />
+                                    <button 
+                                        onClick={() => setTrackingEnabled(!trackingEnabled)} 
+                                        disabled={isRestricted}
+                                        className={clsx(
+                                            "w-14 h-8 rounded-full p-1 transition-all duration-300 shadow-inner",
+                                            trackingEnabled ? "bg-emerald-500" : "bg-black/10"
+                                        )}
+                                    >
+                                        <div className={clsx(
+                                            "w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300",
+                                            trackingEnabled ? "translate-x-6" : "translate-x-0"
+                                        )} />
                                     </button>
                                 </div>
                            </div>
