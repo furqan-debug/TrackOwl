@@ -662,31 +662,44 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
         setSaving(true);
         setSaveStatus('idle');
 
-        const patch: any = {
+        const fullPatch: any = {
             full_name: name,
             role,
-            pay_rate: payRate ? parseFloat(payRate) : null,
-            bill_rate: billRate ? parseFloat(billRate) : null,
+            pay_rate: payRate.trim() === '' ? null : parseFloat(payRate),
+            bill_rate: billRate.trim() === '' ? null : parseFloat(billRate),
             weekly_limit: parseInt(weekly) || 40,
             daily_limit: parseInt(daily) || 8,
-            idle_limit: parseInt(idle) || 10,
+            idle_limit: idle.trim() === '' ? null : parseInt(idle),
             idle_enabled: idleEnabled,
-            os_username: osUsername,
-            employee_id: employeeId,
-            birthday: birthday,
-            work_address: workAddress,
-            work_phone: workPhone,
-            home_address: homeAddress,
-            personal_email: personalEmail,
-            personal_phone: personalPhone,
-            hire_date: hireDate,
-            department: dept,
+            os_username: osUsername.trim() || null,
+            employee_id: employeeId.trim() || null,
+            birthday: birthday.trim() || null,
+            work_address: workAddress.trim() || null,
+            work_phone: workPhone.trim() || null,
+            home_address: homeAddress.trim() || null,
+            personal_email: personalEmail.trim() || null,
+            personal_phone: personalPhone.trim() || null,
+            hire_date: hireDate.trim() || null,
+            department: dept.trim() || null,
             employee_type: empType,
             timezone: timezone,
-            termination_date: terminationDate || null,
+            termination_date: terminationDate.trim() || null,
             custom_fields: customFields,
             tracking_enabled: trackingEnabled
         };
+
+        // Surgical Update: Only send what changed
+        const patch: any = {};
+        Object.keys(fullPatch).forEach(key => {
+            if (fullPatch[key] !== (member as any)[key]) {
+                patch[key] = fullPatch[key];
+            }
+        });
+
+        if (Object.keys(patch).length === 0) {
+            onClose();
+            return;
+        }
 
         try {
             console.log('--- ATTEMPTING SAVE ---', patch);
