@@ -31,6 +31,7 @@ interface User {
   role: string;
   weekly_limit?: number;
   daily_limit?: number;
+  idle_limit?: number;
   avatar_url?: string;
   phone?: string;
 }
@@ -217,6 +218,7 @@ export default function App() {
   const [rememberMe, setRememberMe] = useState(true);
   const [trackingError, setTrackingError] = useState<string | null>(null);
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [idleMinutes, setIdleMinutes] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const realtimeRef = useRef<any>(null);
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
@@ -301,7 +303,23 @@ export default function App() {
   }
 
   useEffect(() => {
-    trackerAPI.onTrackingSample((_sample: unknown) => { });
+    const unlisten = trackerAPI.onTrackingSample((sample: any) => {
+      if (sample.idle) {
+        setIdleMinutes(prev => {
+          const next = prev + 1;
+          const limit = user?.idle_limit || 10;
+          if (next >= limit && isTracking && !isPaused) {
+            handlePause();
+            trackerAPI.showNotification('Tracking Paused', `Your ${limit} minutes of inactivity has been added to idle.`);
+            setElapsed(current => Math.max(0, current - (limit * 60)));
+            return 0;
+          }
+          return next;
+        });
+      } else {
+        setIdleMinutes(0);
+      }
+    });
 
     const tauri = (window as any).__TAURI__;
     if (tauri?.event) {
@@ -313,7 +331,7 @@ export default function App() {
       });
     }
     const saved = loadSession();
-    if (!saved) return;
+    if (!saved) return () => { unlisten.then((f: any) => f()); };
 
     getSupabase().then(async (sb: any) => {
       const { data: { session } } = await sb.auth.getSession();
@@ -331,7 +349,15 @@ export default function App() {
       }
 
       if (member) {
-        const userObj = { id: member.id, email: member.email, full_name: member.full_name, role: member.role, weekly_limit: member.weekly_limit, daily_limit: member.daily_limit };
+        const userObj: User = { 
+          id: member.id, 
+          email: member.email, 
+          full_name: member.full_name, 
+          role: member.role, 
+          weekly_limit: member.weekly_limit, 
+          daily_limit: member.daily_limit,
+          idle_limit: member.idle_limit 
+        };
         setUser(userObj);
         const { data: projs } = await sb.from('projects').select('*');
         const projectsList = projs || [];
@@ -343,7 +369,15 @@ export default function App() {
         clearSession();
       }
     });
-  }, []);
+
+    console.log('Idle tracking state:', { idleMinutes, isTracking, isPaused });
+
+    return () => {
+      if (typeof unlisten?.then === 'function') {
+        unlisten.then((f: any) => { if (typeof f === 'function') f(); });
+      }
+    };
+  }, [user?.idle_limit, isTracking, isPaused]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -443,7 +477,15 @@ export default function App() {
 
       if (memberError || !member) return 'User profile not found in your organization.';
 
-      const userObj = { id: member.id, email: member.email, full_name: member.full_name, role: member.role, weekly_limit: member.weekly_limit, daily_limit: member.daily_limit };
+      const userObj: User = { 
+        id: member.id, 
+        email: member.email, 
+        full_name: member.full_name, 
+        role: member.role, 
+        weekly_limit: member.weekly_limit, 
+        daily_limit: member.daily_limit,
+        idle_limit: member.idle_limit
+      };
       const { data: projectsData } = await sb.from('projects').select('*');
       const token = authData.session.access_token;
 

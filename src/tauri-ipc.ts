@@ -58,8 +58,12 @@ export const trackerAPI = {
   },
 
   /** Phase 3 — stub for now; Phase 3 native hooks will emit events from Rust */
-  onTrackingSample: (_cb: (data: unknown) => void) => {
-    // Phase 3: Tauri will emit events from Rust instead of Electron IPC
+  onTrackingSample: (cb: (data: unknown) => void) => {
+    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+      return (window as any).__TAURI__.event.listen('tracking-sample', (ev: any) => {
+        cb(ev.payload);
+      });
+    }
   },
 
   /** Install the pending auto-update (downloads + restarts app) */

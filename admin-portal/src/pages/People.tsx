@@ -26,6 +26,7 @@ interface DbMember {
     bill_rate: number | null;
     weekly_limit: number;
     daily_limit: number;
+    idle_limit: number;
     tracking_enabled: boolean;
     created_at: string;
 }
@@ -606,6 +607,7 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
     const [billRate, setBillRate] = useState(member.bill_rate?.toString() || '');
     const [weekly, setWeekly] = useState(member.weekly_limit.toString());
     const [daily, setDaily] = useState(member.daily_limit.toString());
+    const [idle, setIdle] = useState(member.idle_limit?.toString() || '10');
 
     return (
         <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-500">
@@ -641,13 +643,16 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                         <FormField label="WEEKLY LIMIT (HOURS)" value={weekly} onChange={setWeekly} type="number" />
                         <FormField label="DAILY LIMIT (HOURS)" value={daily} onChange={setDaily} type="number" />
                     </div>
+                    <div className="grid grid-cols-2 gap-8">
+                        <FormField label="IDLE LIMIT (MINUTES)" value={idle} onChange={setIdle} type="number" />
+                    </div>
                 </div>
                 <div className="px-12 py-10 bg-black/[0.01] border-t border-black/[0.03] flex justify-end gap-6">
                     <button onClick={onClose} className="px-8 py-3.5 text-[11px] font-bold text-text-muted hover:text-text-primary uppercase tracking-[0.3em] transition-colors font-mono">CANCEL</button>
                     <button
                         onClick={() => {
                             if (isRestricted) { onClose(); return; }
-                            onSave({ full_name: name, role, pay_rate: payRate ? parseFloat(payRate) : null, bill_rate: billRate ? parseFloat(billRate) : null, weekly_limit: parseInt(weekly) || 40, daily_limit: parseInt(daily) || 8 });
+                            onSave({ full_name: name, role, pay_rate: payRate ? parseFloat(payRate) : null, bill_rate: billRate ? parseFloat(billRate) : null, weekly_limit: parseInt(weekly) || 40, daily_limit: parseInt(daily) || 8, idle_limit: parseInt(idle) || 10 });
                         }}
                         disabled={isRestricted}
                         className={clsx(
