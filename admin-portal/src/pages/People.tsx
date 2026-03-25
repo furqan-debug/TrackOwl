@@ -167,11 +167,17 @@ export function People() {
     }
 
     async function handleUpdateMeta(id: string, patch: Partial<DbMember>) {
+        console.log('UPDATING MEMBER:', id, patch);
         setEditMember(null);
         setMembers(prev => prev.map(m => m.id === id ? { ...m, ...patch } : m));
         try {
-            await supabase.from('members').update(patch).eq('id', id);
-        } catch {
+            const { error } = await supabase.from('members').update(patch).eq('id', id);
+            if (error) {
+                console.error('DATABASE UPDATE ERROR:', error);
+                fetchMembers();
+            }
+        } catch (e) {
+            console.error('UPDATE EXCEPTION:', e);
             fetchMembers();
         }
     }

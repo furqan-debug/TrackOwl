@@ -345,6 +345,7 @@ export default function App() {
           idle_enabled: member.idle_enabled,
           tracking_enabled: member.tracking_enabled
         };
+        console.log('USER LOADED (Session):', userObj);
         setUser(userObj);
         const { data: projs } = await sb.from('projects').select('*');
         const projectsList = projs || [];
@@ -574,11 +575,13 @@ export default function App() {
       const sb = await getSupabase();
 
       if (user?.tracking_enabled === false) {
+        console.log('TRACKING BLOCKED: tracking_enabled is false', user);
         setTrackingError('Tracking has been disabled for your account by an administrator.');
         setActiveProject(null);
         setScreen('projects');
         return;
       }
+      console.log('TRACKING ALLOWED: tracking_enabled is', user?.tracking_enabled);
 
       const { data: { session } } = await sb.auth.getSession();
       const token = session?.access_token;
