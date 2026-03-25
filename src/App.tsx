@@ -874,7 +874,7 @@ function MyTasksPanel({ todos, onDone }: { todos: Todo[]; onDone: (id: string) =
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Projects
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, todos, onTodoDone }: {
+function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone }: {
   user: User;
   projects: Project[];
   onSelect: (p: Project) => void;

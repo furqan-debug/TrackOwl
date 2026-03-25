@@ -165,7 +165,7 @@ export function Dashboard() {
 
     return (
         <PageLayout title="Dashboard" description="System activity and resource distribution overview" maxWidth="full">
-            
+
             {/* KPI Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
                 <KpiCard icon={<Clock />} label="Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} />
@@ -187,15 +187,15 @@ export function Dashboard() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={weekBars} barSize={36}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                                        <XAxis 
-                                            dataKey="day" 
-                                            axisLine={false} 
-                                            tickLine={false} 
+                                        <XAxis
+                                            dataKey="day"
+                                            axisLine={false}
+                                            tickLine={false}
                                             tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }}
                                             dy={10}
                                         />
                                         <YAxis hide />
-                                        <Tooltip 
+                                        <Tooltip
                                             cursor={{ fill: 'rgba(79, 70, 229, 0.03)' }}
                                             content={({ active, payload }) => {
                                                 if (active && payload && payload.length) {
@@ -275,7 +275,7 @@ function RecentSessionsRows() {
                     supabase.from('members').select('id, full_name'),
                     supabase.from('projects').select('id, name, color'),
                 ]);
-                
+
                 const mMap: Record<string, string> = {};
                 (mData || []).forEach(m => { mMap[m.id] = m.full_name; });
                 setMemberMap(mMap);
@@ -363,4 +363,4 @@ function RecentSessionsRows() {
             </table>
         </div>
     );
-}
+}
