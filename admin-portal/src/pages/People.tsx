@@ -690,10 +690,15 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                             </div>
                         )}
                     </div>
-                    <button
+                       <button
                         onClick={() => {
-                            if (isRestricted) { onClose(); return; }
-                            onSave({
+                            console.log('SAVE BUTTON CLICKED. trackingEnabled state:', trackingEnabled);
+                            if (isRestricted) { 
+                                console.warn('SAVE BLOCKED: Restricted access');
+                                onClose(); 
+                                return; 
+                            }
+                            const patch = {
                                 full_name: name, role, pay_rate: payRate ? parseFloat(payRate) : null,
                                 bill_rate: billRate ? parseFloat(billRate) : null,
                                 weekly_limit: parseInt(weekly) || 40,
@@ -715,7 +720,9 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                                 termination_date: terminationDate || null,
                                 custom_fields: customFields,
                                 tracking_enabled: trackingEnabled
-                            });
+                            };
+                            console.log('PREPARING PATCH IN MODAL:', patch);
+                            onSave(patch);
                         }}
                         className="px-10 py-4 bg-primary text-white rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:shadow-xl transition-all active:scale-95 font-mono"
                     >
