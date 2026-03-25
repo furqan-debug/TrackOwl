@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { Mouse, Keyboard, Activity as ActivityIcon, Zap, Users, Calendar } from 'lucide-react';
 import { PageLayout, KpiCard, FilterSelect } from '../components/ui';
@@ -40,6 +40,7 @@ export function Activity() {
     const [enlarged, setEnlarged] = useState<Screenshot | null>(null);
     const [members, setMembers] = useState<MemberInfo[]>([]);
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
+    const dateInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         supabase.from('members').select('id, full_name').eq('status', 'Active').then(({ data }) => {
@@ -106,16 +107,20 @@ export function Activity() {
                         onChange={setSelectedMemberId}
                         options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
                     />
-                    <div className="relative group/date">
-                        <div className="flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 shadow-sm hover:border-primary/50 cursor-pointer transition-colors">
+                    <div 
+                        className="relative group/date" 
+                        onClick={() => dateInputRef.current?.showPicker()}
+                    >
+                        <div className="flex items-center gap-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 shadow-sm hover:border-primary/50 cursor-pointer transition-colors group-hover/date:border-primary/50">
                             <Calendar className="w-4 h-4 text-primary" strokeWidth={2.5} />
                             <span className="text-sm font-semibold text-slate-700 dark:text-slate-300 min-w-[100px] text-center">{selectedDate}</span>
                         </div>
                         <input 
+                            ref={dateInputRef}
                             type="date" 
                             value={selectedDate} 
                             onChange={e => setSelectedDate(e.target.value)}
-                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+                            className="absolute inset-0 w-full h-full opacity-0 pointer-events-none" 
                         />
                     </div>
                 </div>
