@@ -33,6 +33,7 @@ interface User {
   daily_limit?: number;
   idle_limit?: number;
   idle_enabled?: boolean;
+  tracking_enabled?: boolean;
   avatar_url?: string;
   phone?: string;
 }
@@ -340,7 +341,8 @@ export default function App() {
           weekly_limit: member.weekly_limit, 
           daily_limit: member.daily_limit,
           idle_limit: member.idle_limit,
-          idle_enabled: member.idle_enabled
+          idle_enabled: member.idle_enabled,
+          tracking_enabled: member.tracking_enabled
         };
         setUser(userObj);
         const { data: projs } = await sb.from('projects').select('*');
@@ -488,7 +490,8 @@ export default function App() {
         weekly_limit: member.weekly_limit, 
         daily_limit: member.daily_limit,
         idle_limit: member.idle_limit,
-        idle_enabled: member.idle_enabled
+        idle_enabled: member.idle_enabled,
+        tracking_enabled: member.tracking_enabled
       };
       const { data: projectsData } = await sb.from('projects').select('*');
       const token = authData.session.access_token;
@@ -532,6 +535,14 @@ export default function App() {
 
     try {
       const sb = await getSupabase();
+
+      if (user?.tracking_enabled === false) {
+        setTrackingError('Tracking has been disabled for your account by an administrator.');
+        setActiveProject(null);
+        setScreen('projects');
+        return;
+      }
+
       const { data: { session } } = await sb.auth.getSession();
       const token = session?.access_token;
 
@@ -990,6 +1001,13 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
           </div>
         )}
 
+        {user.tracking_enabled === false && (
+          <div className="alert alert-error" style={{ marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.2)' }}>
+            <Lock size={14} style={{ color: 'var(--danger)' }} />
+            <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Tracking is currently disabled for your account.</span>
+          </div>
+        )}
+
         <div className="section-header">
           <span className="section-title">Projects</span>
           <span className="section-count">{projects.length} available</span>
@@ -1006,6 +1024,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
             {projects.map(p => (
               <motion.div key={p.id} variants={itemVariants}>
                 <div className="project-card" onClick={() => {
+                  if (user.tracking_enabled === false) return;
                   if (isWeeklyLimitReached) {
                     setTrackingError(`Weekly limit (${user.weekly_limit}h) reached. Please contact your manager.`);
                     return;
