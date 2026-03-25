@@ -452,6 +452,8 @@ export default function App() {
               handleStop();
               trackerAPI.showNotification('Tracking Disabled', 'Your tracking permission has been removed by an administrator.');
               setTrackingError('Your tracking permission has been removed by an administrator.');
+            } else if (updated.tracking_enabled === true) {
+              setTrackingError(null);
             }
           }
         )
