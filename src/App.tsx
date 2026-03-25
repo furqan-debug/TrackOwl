@@ -219,6 +219,7 @@ export default function App() {
   const [trackingError, setTrackingError] = useState<string | null>(null);
   const [todos, setTodos] = useState<Todo[]>([]);
   const [idleMinutes, setIdleMinutes] = useState(0);
+  const [idlePaused, setIdlePaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const realtimeRef = useRef<any>(null);
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
@@ -309,8 +310,8 @@ export default function App() {
           const next = prev + 1;
           const limit = user?.idle_limit || 10;
           if (next >= limit && isTracking && !isPaused) {
+            setIdlePaused(true);
             handlePause();
-            trackerAPI.showNotification('Tracking Paused', `Your ${limit} minutes of inactivity has been added to idle.`);
             setElapsed(current => Math.max(0, current - (limit * 60)));
             return 0;
           }
@@ -657,7 +658,21 @@ export default function App() {
         )}
         {screen === 'tracker' && (
           <motion.div key="tracker" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
-            <TrackerScreen user={user!} project={activeProject!} sessionId={sessionId} isPaused={isPaused} elapsed={elapsed} onStop={handleStop} onPause={handlePause} onResume={handleResume} onSettings={() => setScreen('settings')} todos={todos} onTodoDone={handleTodoDone} />
+            <TrackerScreen 
+              user={user!} 
+              project={activeProject!} 
+              sessionId={sessionId} 
+              isPaused={isPaused} 
+              idlePaused={idlePaused}
+              onResumeFromIdle={() => { setIdlePaused(false); handleResume(); }}
+              elapsed={elapsed} 
+              onStop={handleStop} 
+              onPause={handlePause} 
+              onResume={handleResume} 
+              onSettings={() => setScreen('settings')} 
+              todos={todos} 
+              onTodoDone={handleTodoDone} 
+            />
           </motion.div>
         )}
         {screen === 'settings' && user && (
@@ -1099,11 +1114,13 @@ function ConsentItem({ icon, title, desc }: { icon: React.ReactNode; title: stri
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Tracker
 // ─────────────────────────────────────────────────────────────────────────────
-function TrackerScreen({ user, project, isPaused = false, elapsed, onStop, onPause, onResume, onSettings, todos, onTodoDone }: {
+function TrackerScreen({ user, project, isPaused = false, idlePaused = false, onResumeFromIdle, elapsed, onStop, onPause, onResume, onSettings, todos, onTodoDone }: {
   user: User;
   project: Project;
   sessionId?: string | null;
   isPaused?: boolean;
+  idlePaused?: boolean;
+  onResumeFromIdle?: () => void;
   elapsed: number;
   onStop: () => void;
   onPause: () => void;
@@ -1123,6 +1140,25 @@ function TrackerScreen({ user, project, isPaused = false, elapsed, onStop, onPau
 
       <div className="tracker-body">
         <motion.div className="tracker-widget" initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.35 }}>
+          {idlePaused && (
+            <div className="idle-overlay" style={{
+              position: 'absolute', inset: 0, zIndex: 100,
+              background: 'rgba(255, 255, 255, 0.95)', backdropFilter: 'blur(8px)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              padding: '1.5rem', textAlign: 'center', borderRadius: 'inherit'
+            }}>
+              <div style={{ background: 'var(--primary-light)', padding: '0.75rem', borderRadius: '1rem', color: 'var(--primary)', marginBottom: '1rem' }}>
+                <ShieldAlert size={28} />
+              </div>
+              <h3 className="heading-3" style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>Inactivity Detected</h3>
+              <p className="text-muted" style={{ marginBottom: '1.5rem', fontSize: '0.8125rem', lineHeight: 1.5 }}>
+                Your {user.idle_limit || 10} minutes of inactivity has been added to idle. Tracking is paused.
+              </p>
+              <button className="btn btn-primary" onClick={onResumeFromIdle} style={{ width: '100%', fontWeight: 600 }}>
+                I'm Back — Resume
+              </button>
+            </div>
+          )}
           <div className={`status-pill ${isPaused ? 'status-paused' : 'status-live'}`}>
             <div className="status-dot" />
             {isPaused ? 'Paused' : 'Tracking Live'}
