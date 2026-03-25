@@ -219,7 +219,7 @@ export default function App() {
   const [rememberMe, setRememberMe] = useState(true);
   const [trackingError, setTrackingError] = useState<string | null>(null);
   const [todos, setTodos] = useState<Todo[]>([]);
-  const [idleMinutes, setIdleMinutes] = useState(0);
+  const idleMinutesRef = useRef(0);
   const [idlePaused, setIdlePaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const realtimeRef = useRef<any>(null);
@@ -360,19 +360,16 @@ export default function App() {
 
     const unlistenPromise = trackerAPI.onTrackingSample((sample: any) => {
       if (sample.idle) {
-        setIdleMinutes(prev => {
-          const next = prev + 1;
-          const limit = user?.idle_limit || 10;
-          if (next >= limit && !isPaused) {
-            setIdlePaused(true);
-            handlePause();
-            setElapsed(current => Math.max(0, current - (limit * 60)));
-            return 0;
-          }
-          return next;
-        });
+        idleMinutesRef.current += 1;
+        const limit = user?.idle_limit || 10;
+        if (idleMinutesRef.current >= limit && !isPaused) {
+          setIdlePaused(true);
+          handlePause();
+          setElapsed(current => Math.max(0, current - (limit * 60)));
+          idleMinutesRef.current = 0;
+        }
       } else {
-        setIdleMinutes(0);
+        idleMinutesRef.current = 0;
       }
     });
 
