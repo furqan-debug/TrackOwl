@@ -29,6 +29,20 @@ interface DbMember {
     idle_limit: number | null;
     idle_enabled: boolean;
     tracking_enabled: boolean;
+    os_username: string | null;
+    employee_id: string | null;
+    birthday: string | null;
+    work_address: string | null;
+    work_phone: string | null;
+    home_address: string | null;
+    personal_email: string | null;
+    personal_phone: string | null;
+    custom_fields: any;
+    hire_date: string | null;
+    termination_date: string | null;
+    department: string | null;
+    employee_type: string | null;
+    timezone: string | null;
     created_at: string;
 }
 
@@ -610,96 +624,326 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
     const [daily, setDaily] = useState(member.daily_limit.toString());
     const [idle, setIdle] = useState(member.idle_limit?.toString() || '10');
     const [idleEnabled, setIdleEnabled] = useState(member.idle_enabled ?? true);
+    
+    // New Fields
+    const [osUsername, setOsUsername] = useState(member.os_username || '');
+    const [employeeId, setEmployeeId] = useState(member.employee_id || '');
+    const [birthday, setBirthday] = useState(member.birthday || '');
+    const [workAddress, setWorkAddress] = useState(member.work_address || '');
+    const [workPhone, setWorkPhone] = useState(member.work_phone || '');
+    const [homeAddress, setHomeAddress] = useState(member.home_address || '');
+    const [personalEmail, setPersonalEmail] = useState(member.personal_email || '');
+    const [personalPhone, setPersonalPhone] = useState(member.personal_phone || '');
+    const [hireDate, setHireDate] = useState(member.hire_date || '');
+    const [dept, setDept] = useState(member.department || '');
+    const [empType, setEmpType] = useState(member.employee_type || 'Full-time');
+    const [timezone, setTimezone] = useState(member.timezone || 'Asia/Kolkata');
+    const [customFields, setCustomFields] = useState<any>(member.custom_fields || {});
+
+    const [activeTab, setActiveTab] = useState('INFO');
+    const tabs = ['INFO', 'EMPLOYMENT', 'ROLES', 'PAY / BILL', 'WORK TIME & LIMITS', 'SETTINGS'];
 
     return (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-500">
-            <div className="bg-white/95 backdrop-blur-3xl rounded-[48px] w-full max-w-2xl shadow-2xl border border-black/[0.05] overflow-hidden animate-in zoom-in-95 duration-300">
-                <div className="px-12 py-10 border-b border-black/[0.03] flex items-center justify-between bg-black/[0.01]">
+        <div className="fixed inset-0 bg-white z-[100] flex flex-col animate-in fade-in duration-300 overflow-hidden font-sans">
+            {/* Top Header */}
+            <div className="px-12 py-8 border-b border-black/[0.05] flex items-center justify-between bg-white shrink-0">
+                <div className="flex items-center gap-6">
+                    <button onClick={onClose} className="p-3 hover:bg-black/5 rounded-2xl transition-all text-text-muted">
+                        <ChevronDown className="w-6 h-6 rotate-90" strokeWidth={3} />
+                    </button>
                     <div>
-                        <h2 className="text-3xl font-bold text-text-primary tracking-tighter leading-none mb-2">Edit Member</h2>
-                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Update member settings and roles</p>
-                    </div>
-                    <button onClick={onClose} className="p-4 hover:bg-black/5 rounded-3xl transition-all shadow-sm"><X className="w-7 h-7 text-text-muted hover:text-text-primary" strokeWidth={3} /></button>
-                </div>
-                <div className="p-12 space-y-10 max-h-[65vh] overflow-y-auto custom-scrollbar">
-                    <FormField label="FULL NAME" value={name} onChange={setName} />
-                    <div className="space-y-4">
-                        <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">USER ROLE</label>
-                        <div className="relative">
-                            <select value={role} onChange={e => setRole(e.target.value)}
-                                disabled={isRestricted}
-                                className={clsx(
-                                    "w-full px-6 py-4 bg-black/[0.03] border border-black/[0.05] rounded-2xl text-[15px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all appearance-none cursor-pointer font-mono tracking-tight",
-                                    isRestricted && "opacity-60 cursor-not-allowed"
-                                )}>
-                                {rolesAvailable.map(r => <option key={r} value={r} className="bg-white text-text-primary">{r}</option>)}
-                            </select>
-                            <ChevronDown className="w-5 h-5 text-primary absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={3} />
+                        <div className="flex items-center gap-3 text-[11px] font-bold text-text-muted mb-2 font-mono uppercase tracking-[0.2em]">
+                            <Users className="w-4 h-4" /> MEMBERS
                         </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-8">
-                        <FormField label="PAY RATE ($/HR)" value={payRate} onChange={setPayRate} type="number" />
-                        <FormField label="BILL RATE ($/HR)" value={billRate} onChange={setBillRate} type="number" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-8">
-                        <FormField label="WEEKLY LIMIT (HOURS)" value={weekly} onChange={setWeekly} type="number" />
-                        <FormField label="DAILY LIMIT (HOURS)" value={daily} onChange={setDaily} type="number" />
-                    </div>
-                    <div className="grid grid-cols-2 gap-8">
-                        <FormField label="IDLE LIMIT (MINUTES)" value={idle} onChange={setIdle} type="number" />
-                        <div className="flex items-center gap-4 bg-black/[0.03] p-6 rounded-2xl border border-black/[0.05]">
-                            <div className="flex-1">
-                                <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-1">IDLE TRACKING</label>
-                                <p className="text-[12px] text-text-muted font-bold tracking-tight">Pause tracker when inactive</p>
-                            </div>
-                            <button
-                                onClick={() => setIdleEnabled(!idleEnabled)}
-                                disabled={isRestricted}
-                                className={clsx(
-                                    "w-14 h-8 rounded-full p-1 transition-all duration-300",
-                                    idleEnabled ? "bg-primary" : "bg-black/10",
-                                    isRestricted && "opacity-50 cursor-not-allowed"
-                                )}
-                            >
-                                <div className={clsx(
-                                    "w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300",
-                                    idleEnabled ? "translate-x-6" : "translate-x-0"
-                                )} />
-                            </button>
-                        </div>
+                        <h2 className="text-4xl font-bold text-text-primary tracking-tighter leading-none">{name}</h2>
                     </div>
                 </div>
-                <div className="px-12 py-10 bg-black/[0.01] border-t border-black/[0.03] flex justify-end gap-6">
-                    <button onClick={onClose} className="px-8 py-3.5 text-[11px] font-bold text-text-muted hover:text-text-primary uppercase tracking-[0.3em] transition-colors font-mono">CANCEL</button>
+                <div className="flex items-center gap-4">
+                    <div className="relative group">
+                        <button className="px-6 py-4 bg-black/[0.03] border border-black/[0.05] rounded-2xl text-[12px] font-bold text-text-primary flex items-center gap-3 hover:bg-black/[0.06] transition-all font-mono tracking-widest uppercase">
+                            ACTIONS <ChevronDown className="w-4 h-4 text-primary" strokeWidth={3} />
+                        </button>
+                    </div>
                     <button
                         onClick={() => {
                             if (isRestricted) { onClose(); return; }
-                            onSave({ full_name: name, role, pay_rate: payRate ? parseFloat(payRate) : null, bill_rate: billRate ? parseFloat(billRate) : null, weekly_limit: parseInt(weekly) || 40, daily_limit: parseInt(daily) || 8, idle_limit: parseInt(idle) || 10, idle_enabled: idleEnabled });
+                            onSave({
+                                full_name: name, role, pay_rate: payRate ? parseFloat(payRate) : null,
+                                bill_rate: billRate ? parseFloat(billRate) : null,
+                                weekly_limit: parseInt(weekly) || 40,
+                                daily_limit: parseInt(daily) || 8,
+                                idle_limit: parseInt(idle) || 10,
+                                idle_enabled: idleEnabled,
+                                os_username: osUsername,
+                                employee_id: employeeId,
+                                birthday: birthday,
+                                work_address: workAddress,
+                                work_phone: workPhone,
+                                home_address: homeAddress,
+                                personal_email: personalEmail,
+                                personal_phone: personalPhone,
+                                hire_date: hireDate,
+                                department: dept,
+                                employee_type: empType,
+                                timezone: timezone,
+                                custom_fields: customFields
+                            });
                         }}
-                        disabled={isRestricted}
-                        className={clsx(
-                            "px-10 py-4 rounded-[20px] text-[11px] font-bold uppercase tracking-[0.3em] transition-all font-mono",
-                            isRestricted ? "bg-black/5 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-xl hover:shadow-primary/20 shadow-lg active:scale-95"
-                        )}
+                        className="px-10 py-4 bg-primary text-white rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em] shadow-lg shadow-primary/20 hover:shadow-xl transition-all active:scale-95 font-mono"
                     >
                         {isRestricted ? 'READ ONLY' : 'SAVE CHANGES'}
                     </button>
+                    <button onClick={onClose} className="p-3 hover:bg-black/5 rounded-2xl transition-all text-text-muted ml-4">
+                        <X className="w-7 h-7" strokeWidth={3} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="px-12 border-b border-black/[0.03] flex items-center gap-10 bg-white shrink-0">
+                {tabs.map(t => (
+                    <button
+                        key={t}
+                        onClick={() => setActiveTab(t)}
+                        className={clsx(
+                            "py-6 text-[11px] font-bold uppercase tracking-[0.2em] transition-all border-b-[3px] font-mono",
+                            activeTab === t ? "border-primary text-text-primary" : "border-transparent text-text-muted hover:text-text-primary"
+                        )}
+                    >
+                        {t}
+                    </button>
+                ))}
+            </div>
+
+            {/* Tab Content */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#FAFAFB]">
+                <div className="p-12 max-w-7xl mx-auto space-y-12 pb-32">
+                    {activeTab === 'INFO' && (
+                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            {/* Profile Summary */}
+                            <div className="flex items-start gap-10">
+                                <div className="relative">
+                                    <div className="w-32 h-32 rounded-[40px] bg-primary/5 border-2 border-primary/10 flex items-center justify-center text-primary text-4xl font-bold font-mono overflow-hidden shadow-sm">
+                                        {member.full_name.split(' ').map((n:any)=>n[0]).join('')}
+                                    </div>
+                                    <div className="text-center mt-4">
+                                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">Joined</p>
+                                        <p className="text-[12px] font-bold text-text-primary font-mono">{new Date(member.created_at).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'})}</p>
+                                    </div>
+                                </div>
+                                <div className="space-y-4 pt-4">
+                                    <div className="flex items-center gap-4 text-text-primary font-bold">
+                                        <div className="w-8 h-8 rounded-xl bg-black/[0.03] flex items-center justify-center"><X className="w-4 h-4 text-text-muted rotate-45" /></div>
+                                        <span className="text-[14px]">{member.email}</span>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-text-primary font-bold">
+                                        <div className="w-8 h-8 rounded-xl bg-black/[0.03] flex items-center justify-center"><Settings className="w-4 h-4 text-text-muted" /></div>
+                                        <span className="text-[14px]">(GMT+05:30) {timezone}</span>
+                                    </div>
+                                    <div className="flex items-center gap-4 text-text-muted font-bold opacity-60">
+                                        <div className="w-8 h-8 rounded-xl bg-black/[0.03] flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-text-muted" /></div>
+                                        <span className="text-[14px]">Last tracked time {member.lastSeen || 'never'}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Identity Section */}
+                            <section className="space-y-8">
+                                <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Identity</h3>
+                                <div className="grid grid-cols-2 gap-12">
+                                    <div className="space-y-8">
+                                        <FormField label="FULL NAME" value={name} onChange={setName} />
+                                        <FormField label="TIMEZONE" value={timezone} onChange={setTimezone} />
+                                        <FormField label="OS USERNAME" value={osUsername} onChange={setOsUsername} placeholder="No OS username" />
+                                        <FormField label="EMPLOYEE ID" value={employeeId} onChange={setEmployeeId} />
+                                        <div className="space-y-4">
+                                            <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">BIRTHDAY</label>
+                                            <input type="date" value={birthday} onChange={e => setBirthday(e.target.value)}
+                                                className="w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all shadow-sm font-mono" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-8">
+                                        <div className="p-8 bg-black/[0.03] border border-black/[0.05] rounded-[32px] space-y-6">
+                                            <div>
+                                                <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-2">IP ADDRESS</label>
+                                                <p className="text-xl font-bold text-text-primary font-mono">120.29.78.176</p>
+                                            </div>
+                                            <div>
+                                                <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-2">LAST RECORDED</label>
+                                                <p className="text-[14px] font-bold text-text-primary font-mono">{new Date().toDateString()}</p>
+                                            </div>
+                                            <div className="pt-4 border-t border-black/[0.05]">
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <span className="px-3 py-1 bg-primary/10 text-primary text-[9px] font-bold uppercase rounded-lg tracking-widest">BETA</span>
+                                                    <span className="text-[12px] font-bold text-primary hover:underline cursor-pointer font-mono">Trackora People</span>
+                                                </div>
+                                                <p className="text-[12px] text-text-muted leading-relaxed font-bold">Try these new features for free while Trackora People is in BETA:</p>
+                                                <ul className="text-[11px] text-text-muted list-disc pl-5 mt-4 space-y-2 font-bold opacity-80">
+                                                    <li>View IP addresses history</li>
+                                                    <li>Create and manage custom fields</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Contact Section */}
+                            <section className="space-y-8 pt-6">
+                                <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Contact</h3>
+                                <div className="grid grid-cols-2 gap-12">
+                                    <div className="space-y-8">
+                                        <FormField label="WORK ADDRESS" value={workAddress} onChange={setWorkAddress} />
+                                        <FormField label="WORK EMAIL" value={member.email} disabled={true} />
+                                        <FormField label="WORK PHONE" value={workPhone} onChange={setWorkPhone} />
+                                    </div>
+                                    <div className="space-y-8">
+                                        <FormField label="HOME ADDRESS" value={homeAddress} onChange={setHomeAddress} />
+                                        <FormField label="PERSONAL EMAIL" value={personalEmail} onChange={setPersonalEmail} />
+                                        <FormField label="PERSONAL PHONE" value={personalPhone} onChange={setPersonalPhone} />
+                                    </div>
+                                </div>
+                            </section>
+
+                            {/* Custom Fields Section */}
+                            <section className="space-y-8 pt-6">
+                                <div className="flex items-center justify-between">
+                                    <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Custom Fields</h3>
+                                    <button className="text-[12px] font-bold text-primary hover:underline font-mono">Manage custom fields</button>
+                                </div>
+                                <div className="grid grid-cols-2 gap-12">
+                                    <div className="space-y-8">
+                                        <FormField label="SOCIAL SECURITY NUMBER" value={customFields.ssn || ''} onChange={(v:any) => setCustomFields({...customFields, ssn: v})} />
+                                        <FormField label="EMPLOYEE ID (CUSTOM)" value={customFields.customId || ''} onChange={(v:any) => setCustomFields({...customFields, customId: v})} />
+                                        <FormField label="EMERGENCY CONTACT" value={customFields.emergency || ''} onChange={(v:any) => setCustomFields({...customFields, emergency: v})} />
+                                    </div>
+                                    <div className="space-y-8">
+                                        <FormField label="SPECIALIZATION" value={customFields.spec || ''} onChange={(v:any) => setCustomFields({...customFields, spec: v})} />
+                                        <FormField label="ALIAS" value={customFields.alias || ''} onChange={(v:any) => setCustomFields({...customFields, alias: v})} />
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    )}
+
+                    {activeTab === 'EMPLOYMENT' && (
+                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                           <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Employment Details</h3>
+                           <div className="grid grid-cols-2 gap-12">
+                                <FormField label="JOB ROLE" value={dept} onChange={setDept} placeholder="Marketing Director" />
+                                <div className="space-y-4">
+                                    <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">EMPLOYEE TYPE</label>
+                                    <select value={empType} onChange={e => setEmpType(e.target.value)}
+                                        className="w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all font-mono">
+                                        <option value="Full-time">Full-time</option>
+                                        <option value="Part-time">Part-time</option>
+                                        <option value="Contractor">Contractor</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">HIRE DATE</label>
+                                    <input type="date" value={hireDate} onChange={e => setHireDate(e.target.value)}
+                                        className="w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all font-mono" />
+                                </div>
+                           </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'ROLES' && (
+                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                           <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Permissions & Access</h3>
+                           <div className="max-w-md space-y-4">
+                               <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">USER ROLE</label>
+                               <div className="relative">
+                                   <select value={role} onChange={e => setRole(e.target.value)}
+                                       disabled={isRestricted}
+                                       className={clsx(
+                                           "w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[15px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all appearance-none cursor-pointer font-mono tracking-tight",
+                                           isRestricted && "opacity-60 cursor-not-allowed"
+                                       )}>
+                                       {rolesAvailable.map((r:any) => <option key={r} value={r} className="bg-white text-text-primary">{r}</option>)}
+                                   </select>
+                                   <ChevronDown className="w-5 h-5 text-primary absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={3} />
+                               </div>
+                               <p className="text-[11px] text-text-muted font-bold leading-relaxed pt-2">
+                                   Admins have full control, Managers can handle teams and projects, Users can track time, Viewers can only see reports.
+                               </p>
+                           </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'PAY / BILL' && (
+                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                           <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Compensation & Billing</h3>
+                           <div className="grid grid-cols-2 gap-12">
+                                <FormField label="PAY RATE ($/HR)" value={payRate} onChange={setPayRate} type="number" />
+                                <FormField label="BILL RATE ($/HR)" value={billRate} onChange={setBillRate} type="number" />
+                           </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'WORK TIME & LIMITS' && (
+                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                           <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Tracking Rules & Limits</h3>
+                           <div className="grid grid-cols-2 gap-12">
+                                <div className="space-y-10">
+                                    <FormField label="WEEKLY LIMIT (HOURS)" value={weekly} onChange={setWeekly} type="number" />
+                                    <FormField label="DAILY LIMIT (HOURS)" value={daily} onChange={setDaily} type="number" />
+                                </div>
+                                <div className="space-y-10">
+                                    <div className="flex items-center gap-4 bg-white p-8 rounded-[32px] border border-black/[0.1] shadow-sm">
+                                        <div className="flex-1">
+                                            <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-1">IDLE TRACKING</label>
+                                            <p className="text-[13px] text-text-primary font-bold tracking-tight">Pause tracker when inactive</p>
+                                        </div>
+                                        <button onClick={() => setIdleEnabled(!idleEnabled)} disabled={isRestricted}
+                                            className={clsx("w-14 h-8 rounded-full p-1 transition-all duration-300 shadow-inner", idleEnabled ? "bg-primary" : "bg-black/10")}>
+                                            <div className={clsx("w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300", idleEnabled ? "translate-x-6" : "translate-x-0")} />
+                                        </button>
+                                    </div>
+                                    {idleEnabled && <FormField label="IDLE LIMIT (MINUTES)" value={idle} onChange={setIdle} type="number" />}
+                                </div>
+                           </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'SETTINGS' && (
+                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                           <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">User Configurations</h3>
+                           <div className="max-w-xl space-y-10">
+                                <div className="flex items-center justify-between p-8 bg-white rounded-[32px] border border-black/[0.1] shadow-sm">
+                                    <div className="flex-1">
+                                        <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-1">TRACKING ENABLED</label>
+                                        <p className="text-[13px] text-text-primary font-bold tracking-tight">Allow this user to record time</p>
+                                    </div>
+                                    <button onClick={() => {}} disabled={isRestricted}
+                                        className="w-14 h-8 rounded-full p-1 transition-all duration-300 bg-emerald-500">
+                                        <div className="w-6 h-6 bg-white rounded-full shadow-sm translate-x-6" />
+                                    </button>
+                                </div>
+                           </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
     );
 }
 
-function FormField({ label, value, onChange, type = 'text', placeholder }: any) {
+function FormField({ label, value, onChange, type = 'text', placeholder, disabled }: any) {
     return (
         <div className="space-y-4">
-            <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">{label}</label>
+            <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono leading-none">{label}</label>
             <input
                 type={type}
                 value={value}
                 onChange={e => onChange(e.target.value)}
                 placeholder={placeholder}
-                className="w-full px-6 py-4 bg-black/[0.03] border border-black/[0.05] rounded-2xl text-[15px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all shadow-sm placeholder:text-text-muted font-mono tracking-tight"
+                disabled={disabled}
+                className={clsx(
+                    "w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all shadow-sm placeholder:text-text-muted font-mono tracking-tight",
+                    disabled && "bg-black/[0.02] cursor-not-allowed opacity-60"
+                )}
             />
         </div>
     );
