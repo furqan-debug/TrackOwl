@@ -22,14 +22,19 @@ export function Card({
     return (
         <div
             className={clsx(
-                'bg-surface-solid rounded-xl overflow-hidden relative group transition-all duration-300 border border-border shadow-sm',
+                'bg-white rounded-xl overflow-hidden relative group transition-all duration-300 border border-slate-200 shadow-sm',
                 !noPadding && 'p-6 md:p-8',
                 className
             )}
         >
             {(title || actions) && (
-                <div className="flex items-center justify-between mb-6 border-b border-border/10 pb-4">
-                    <div className="space-y-1">
+                <div className={clsx(
+                    "flex items-center justify-between border-b border-slate-100",
+                    noPadding
+                        ? "px-6 py-4 mb-4"
+                        : "mb-6 pb-4"
+                )}>
+                    <div className="space-y-0.5">
                         {title && (
                             <h2 className="text-xs font-bold text-text-primary uppercase tracking-wider">
                                 {title}
@@ -44,11 +49,11 @@ export function Card({
                     {actions ? (
                         <div className="ml-4 flex items-center gap-3">{actions}</div>
                     ) : (
-                        <div className="flex-1 h-px bg-border/5 ml-4" aria-hidden />
+                        <div className="flex-1 h-px bg-slate-100 ml-4" aria-hidden />
                     )}
                 </div>
             )}
-            <div className="relative z-10">
+            <div className={clsx("relative z-10", noPadding && (title || actions) && "")}>
                 {children}
             </div>
         </div>

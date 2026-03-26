@@ -10,6 +10,7 @@
   
   --color-background: #f1f4f9; /* Solid, slightly cooler background */
   --color-surface: #ffffff;
+  --color-surface-solid: #ffffff;  /* Alias — makes bg-surface-solid valid */
   --color-surface-subtle: #f8fafc;
   --color-surface-hover: #f1f5f9;
 
