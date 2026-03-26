@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react';
 import { 
-    User, Mail, Phone, Shield, 
+    User, Mail, Shield,
     Camera, Save, CheckCircle, 
     ShieldAlert, Loader2, Diamond,
-    Smartphone, Hash
+    Smartphone
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PageLayout, Card } from '../components/ui';
