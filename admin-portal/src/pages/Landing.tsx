@@ -424,9 +424,9 @@ function DownloadTabs() {
             os: 'Windows 10/11',
             arch: 'x64 / ARM64',
             primary: 'Download .exe',
-            primaryLink: 'https://github.com/furqan-debug/Trackora/releases/download/1.0.3/Trackora_1.0.3_x64-setup.exe',
+            primaryLink: 'https://github.com/furqan-debug/Trackora/releases/download/v1.0.3/Trackora_1.0.3_x64-setup.exe',
             secondary: 'Download .msi (Enterprise)',
-            secondaryLink: 'https://github.com/furqan-debug/Trackora/releases/download/1.0.3/Trackora_1.0.3_x64_en-US.msi'
+            secondaryLink: 'https://github.com/furqan-debug/Trackora/releases/download/v1.0.3/Trackora_1.0.3_x64_en-US.msi'
         },
         macos: {
             title: 'Trackora for macOS',

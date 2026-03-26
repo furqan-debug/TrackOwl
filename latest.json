@@ -5,7 +5,7 @@
   "platforms": {
     "windows-x86_64": {
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVRVGVYWWE5dG13Zm8zeW42Mm1NVkcvMDlQc1d2RjNkcXNkS0hkNm1WOTV4Ti9jbnF3VjEvOC9UTS82YzRJQzhZekRQZGduSkptQWh5dWdHVWFRSC9VcTZEOUhHUzhMVkFjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc0NTUzNzUyCWZpbGU6VHJhY2tvcmFfMS4wLjNfeDY0LXNldHVwLmV4ZQp1WURnSlVncGVYOXdVVnl4N016cW9Pcng5UmczTGhOdXc1ZzE2aFlhRjU5VDkwSHRZUDNGREc2eHR0YURzcDliNjJTVUF4TGtsSDZaQ29QRnMrZmVCdz09Cg==",
-      "url": "https://github.com/furqan-debug/Trackora/releases/latest/download/Trackora_1.0.3_x64-setup.exe"
+      "url": "https://github.com/furqan-debug/Trackora/releases/download/v1.0.3/Trackora_1.0.3_x64-setup.exe"
     }
   }
 }
