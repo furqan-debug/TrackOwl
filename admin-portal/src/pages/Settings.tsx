@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { 
     Camera, Clock, Monitor, Bell, Shield, 
-    Save, RotateCcw, CheckCircle, ShieldAlert,
+    Save, CheckCircle,
     Info, Zap
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
