@@ -47,7 +47,12 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
         );
     }
 
-    // 4. Handle cases where profile is missing/null (Identity failure)
+    // 4. Force onboarding if organization is missing for Admins
+    if (profile && !profile.organization_id && (profile.role === 'Admin' || profile.role === 'Manager') && location.pathname !== '/onboarding') {
+        return <Navigate to="/onboarding" replace />;
+    }
+
+    // 5. Handle cases where profile is missing/null (Identity failure)
     if (!profile && !loading) {
         return (
             <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
