@@ -433,7 +433,7 @@ export function People() {
 
             {/* MODALS */}
             {showAddModal && <InviteModal onClose={() => setShowAddModal(false)} onInvite={handleAddMember} form={{ addEmail, setAddEmail, addRole, setAddRole, addPayRate, setAddPayRate, addBillRate, setAddBillRate, addWeekly, setAddWeekly, addDaily, setAddDaily, adding, addError }} isViewer={isViewer} currentUserRole={profile?.role} />}
-            {editMember && <EditModal member={editMember} onClose={() => setEditMember(null)} onSave={(patch: any) => handleUpdateMeta(editMember.id, patch)} isViewer={isViewer} currentUserRole={profile?.role} />}
+            {editMember && <EditModal member={editMember} onClose={() => setEditMember(null)} onSave={(patch: any) => handleUpdateMeta(editMember.id, patch)} isViewer={isViewer} currentUserRole={profile?.role} onRefresh={fetchMembers} />}
             {inviteSentTo && <InviteSentPopup email={inviteSentTo} onClose={() => setInviteSentTo(null)} />}
         </PageLayout>
     );
@@ -618,7 +618,52 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
     );
 }
 
-function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) {
+// Geo lookup using ipapi.co (free, no key for public IPs, 1000 req/day limit)
+async function lookupIp(ip?: string): Promise<{ city: string; country: string; countryCode: string; lat: number; lon: number }> {
+    const url = ip ? `https://ipapi.co/${ip}/json/` : 'https://ipapi.co/json/';
+    try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const d = await res.json();
+        if (d.error) throw new Error(d.reason || 'Rate limited');
+        return {
+            city: d.city || 'Unknown',
+            country: d.country_name || 'Unknown',
+            countryCode: d.country || '??',
+            lat: d.latitude || 0,
+            lon: d.longitude || 0,
+        };
+    } catch {
+        // Fallback to ipinfo.io
+        try {
+            const path = ip ? `/${ip}/json` : '/json';
+            const res2 = await fetch(`https://ipinfo.io${path}`, { signal: AbortSignal.timeout(4000) });
+            const d2 = await res2.json();
+            const [lat, lon] = (d2.loc || '0,0').split(',').map(Number);
+            return {
+                city: d2.city || 'Unknown',
+                country: d2.country || 'Unknown',
+                countryCode: d2.country || '??',
+                lat: lat || 0,
+                lon: lon || 0,
+            };
+        } catch {
+            return { city: 'Unknown', country: 'Unknown', countryCode: '??', lat: 0, lon: 0 };
+        }
+    }
+}
+
+function timeAgo(dateStr: string): string {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs}h ago`;
+    return `${Math.floor(hrs / 24)}d ago`;
+}
+
+function EditModal({ member, onClose, onSave, isViewer, currentUserRole, onRefresh }: any) {
     const isRestricted = isViewer || (currentUserRole === 'Manager' && member.role === 'Admin');
     const rolesAvailable = currentUserRole === 'Admin' ? ['User', 'Viewer', 'Manager', 'Admin'] : ['User', 'Viewer', 'Manager'];
 
@@ -632,6 +677,10 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
     const [idleEnabled, setIdleEnabled] = useState(member.idle_enabled ?? true);
     const [trackingEnabled, setTrackingEnabled] = useState(member.tracking_enabled ?? true);
     
+    // Tracking Info
+    const [lastSession, setLastSession] = useState<{started_at: string, ip_address: string} | null>(null);
+    const [location, setLocation] = useState<{city: string, country: string} | null>(null);
+
     // New Fields
     const [osUsername, setOsUsername] = useState(member.os_username || '');
     const [employeeId, setEmployeeId] = useState(member.employee_id || '');
@@ -652,6 +701,71 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
     const [showActions, setShowActions] = useState(false);
     const [saving, setSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+    useEffect(() => {
+        fetchLastSession();
+    }, [member.id]);
+
+    async function fetchLastSession() {
+        try {
+            const { data, error } = await supabase
+                .from('sessions')
+                .select('started_at, ip_address')
+                .eq('user_id', member.id)
+                .order('started_at', { ascending: false })
+                .limit(1);
+            
+            if (error) throw error;
+            if (data && data[0]) {
+                setLastSession(data[0] as any);
+                if (data[0].ip_address) {
+                    const geo = await lookupIp(data[0].ip_address);
+                    setLocation({ city: geo.city, country: geo.country });
+                }
+            }
+        } catch (e) {
+            console.error('Fetch session error:', e);
+        }
+    }
+
+    const handleDeactivate = async () => {
+        if (!confirm('Deactivate this user? They will no longer be able to log in.')) return;
+        try {
+            const { error } = await supabase.from('members').update({ status: 'Inactive' }).eq('id', member.id);
+            if (error) throw error;
+            alert('User deactivated');
+            onRefresh?.();
+            onClose();
+        } catch (e: any) {
+            alert(e.message);
+        }
+    };
+
+    const handleResetPassword = async () => {
+        if (!confirm(`Send password reset link to ${member.email}?`)) return;
+        try {
+            const { error } = await supabase.auth.resetPasswordForEmail(member.email, {
+                redirectTo: `${window.location.origin}/reset-password`
+            });
+            if (error) throw error;
+            alert('Password reset email sent');
+        } catch (e: any) {
+            alert(e.message);
+        }
+    };
+
+    const handleDeleteInternal = async () => {
+        if (!confirm('PERMANENTLY DELETE this member? This cannot be undone.')) return;
+        try {
+            const { error } = await supabase.from('members').delete().eq('id', member.id);
+            if (error) throw error;
+            alert('Member deleted');
+            onRefresh?.();
+            onClose();
+        } catch (e: any) {
+            alert(e.message);
+        }
+    };
 
     const handleSaveInternal = async () => {
         if (isRestricted) {
@@ -742,14 +856,23 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                         </button>
                         {showActions && (
                             <div className="absolute right-0 mt-4 w-64 bg-white rounded-3xl shadow-2xl border border-black/[0.05] py-4 z-10 animate-in fade-in zoom-in-95 duration-200">
-                                <button className="w-full px-8 py-4 text-left text-[11px] font-bold text-text-primary hover:bg-black/[0.03] transition-all uppercase tracking-widest font-mono flex items-center gap-4">
+                                <button 
+                                    onClick={handleDeactivate}
+                                    className="w-full px-8 py-4 text-left text-[11px] font-bold text-text-primary hover:bg-black/[0.03] transition-all uppercase tracking-widest font-mono flex items-center gap-4"
+                                >
                                     <div className="w-2 h-2 rounded-full bg-emerald-500" /> DEACTIVATE USER
                                 </button>
-                                <button className="w-full px-8 py-4 text-left text-[11px] font-bold text-text-primary hover:bg-black/[0.03] transition-all uppercase tracking-widest font-mono flex items-center gap-4">
+                                <button 
+                                    onClick={handleResetPassword}
+                                    className="w-full px-8 py-4 text-left text-[11px] font-bold text-text-primary hover:bg-black/[0.03] transition-all uppercase tracking-widest font-mono flex items-center gap-4"
+                                >
                                     <div className="w-2 h-2 rounded-full bg-primary" /> RESET PASSWORD
                                 </button>
                                 <div className="h-[1px] bg-black/[0.05] my-2" />
-                                <button className="w-full px-8 py-4 text-left text-[11px] font-bold text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest font-mono flex items-center gap-4">
+                                <button 
+                                    onClick={handleDeleteInternal}
+                                    className="w-full px-8 py-4 text-left text-[11px] font-bold text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest font-mono flex items-center gap-4"
+                                >
                                     <X className="w-4 h-4" strokeWidth={3} /> DELETE MEMBER
                                 </button>
                             </div>
@@ -816,11 +939,11 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                                     </div>
                                     <div className="flex items-center gap-4 text-text-primary font-bold">
                                         <div className="w-8 h-8 rounded-xl bg-black/[0.03] flex items-center justify-center"><Settings className="w-4 h-4 text-text-muted" /></div>
-                                        <span className="text-[14px]">{timezone}</span>
+                                        <span className="text-[14px]">{location ? `${location.city}, ${location.country}` : timezone}</span>
                                     </div>
                                     <div className="flex items-center gap-4 text-text-muted font-bold opacity-60">
                                         <div className="w-8 h-8 rounded-xl bg-black/[0.03] flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-text-muted" /></div>
-                                        <span className="text-[14px]">Last tracked time {member.lastSeen || 'never'}</span>
+                                        <span className="text-[14px]">Last tracked {lastSession ? timeAgo(lastSession.started_at) : 'never'}</span>
                                     </div>
                                 </div>
                             </div>
@@ -843,23 +966,23 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole }: any) 
                                     <div className="space-y-8">
                                         <div className="p-8 bg-black/[0.03] border border-black/[0.05] rounded-[32px] space-y-6">
                                             <div>
-                                                <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-2">IP ADDRESS</label>
-                                                <p className="text-xl font-bold text-text-primary font-mono">120.29.78.176</p>
+                                                <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-2">NETWORK IP</label>
+                                                <p className="text-xl font-bold text-text-primary font-mono">{lastSession?.ip_address || 'Not available'}</p>
                                             </div>
                                             <div>
-                                                <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-2">LAST RECORDED</label>
-                                                <p className="text-[14px] font-bold text-text-primary font-mono">{new Date().toDateString()}</p>
+                                                <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-2">LAST ACTIVITY</label>
+                                                <p className="text-[14px] font-bold text-text-primary font-mono">{lastSession ? new Date(lastSession.started_at).toLocaleString() : 'Never'}</p>
                                             </div>
                                             <div className="pt-4 border-t border-black/[0.05]">
-                                                <div className="flex items-center justify-between mb-4">
-                                                    <span className="px-3 py-1 bg-primary/10 text-primary text-[9px] font-bold uppercase rounded-lg tracking-widest">BETA</span>
-                                                    <span className="text-[12px] font-bold text-primary hover:underline cursor-pointer font-mono">Trackora People</span>
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                                        <CheckCircle className="w-5 h-5 text-primary" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[12px] font-bold text-text-primary font-mono">Identity Verified</p>
+                                                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest font-mono">Secured by Trackora</p>
+                                                    </div>
                                                 </div>
-                                                <p className="text-[12px] text-text-muted leading-relaxed font-bold">Try these new features for free while Trackora People is in BETA:</p>
-                                                <ul className="text-[11px] text-text-muted list-disc pl-5 mt-4 space-y-2 font-bold opacity-80">
-                                                    <li>View IP addresses history</li>
-                                                    <li>Create and manage custom fields</li>
-                                                </ul>
                                             </div>
                                         </div>
                                     </div>

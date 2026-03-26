@@ -190,6 +190,12 @@ fn start_tracking(
         Err(_) => None,
     };
 
+    // Get public IP
+    let ip_address: Option<String> = ureq::get("https://api.ipify.org")
+        .call()
+        .ok()
+        .and_then(|r| r.into_string().ok());
+
     // Insert session row — PostgREST returns array with Prefer: return=representation
     let now = chrono::Utc::now().to_rfc3339();
     let body = serde_json::json!({
@@ -197,6 +203,7 @@ fn start_tracking(
         "project_id": project_id,
         "started_at": now,
         "organization_id": org_id,
+        "ip_address": ip_address,
     }).to_string();
 
     match supabase_post(&cfg, "sessions", &body, Some(&token), Some("return=representation")) {
