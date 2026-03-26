@@ -10,7 +10,7 @@ import {
     PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 import { 
-    PageHeader, Card, KpiCard, Button, 
+    PageLayout, Card, KpiCard, Button, 
     LoadingState, EmptyState 
 } from '../components/ui';
 import clsx from 'clsx';
@@ -184,51 +184,50 @@ export function Reports() {
     };
 
     return (
-        <div className="space-y-10 max-w-full mx-auto animate-in fade-in duration-700">
-            <PageHeader
-                title="Reports"
-                description="Analyze team activity, productivity, and project costs."
-                actions={
-                    <div className="flex flex-wrap items-center gap-6">
-                        <div className="flex items-center gap-1 bg-surface-solid border border-border p-1 rounded-lg shadow-sm">
-                            {RANGES.map(r => (
-                                <button
-                                    key={r}
-                                    onClick={() => setRange(r)}
-                                    className={clsx(
-                                        "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
-                                        range === r ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text-primary"
-                                    )}
-                                >
-                                    {r}
-                                </button>
-                            ))}
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                            <FilterSelect 
-                                icon={<Users className="w-4 h-4" />}
-                                value={selectedTeamId}
-                                onChange={(val) => { setSelectedTeamId(val); setSelectedMemberEmail('All'); }}
-                                options={[{ id: 'All', name: 'All Teams' }, ...teams]}
-                            />
-                            <FilterSelect 
-                                icon={<ActivityIcon className="w-4 h-4" />}
-                                value={selectedMemberEmail}
-                                onChange={(val) => { setSelectedMemberEmail(val); setSelectedTeamId('All'); }}
-                                options={[{ id: 'All', email: 'All', full_name: 'All Members' }, ...members].map(m => ({ id: (m as any).email || m.id, name: (m as any).full_name || (m as any).name }))}
-                            />
-                            <Button 
-                                variant="secondary" 
-                                className="p-2.5 rounded-lg"
-                                onClick={() => {/* export logic */}}
+        <PageLayout
+            title="Reports"
+            description="Analyze team activity, productivity, and project costs."
+            actions={
+                <div className="flex flex-wrap items-center gap-6">
+                    <div className="flex items-center gap-1 bg-surface-solid border border-border p-1 rounded-lg shadow-sm">
+                        {RANGES.map(r => (
+                            <button
+                                key={r}
+                                onClick={() => setRange(r)}
+                                className={clsx(
+                                    "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
+                                    range === r ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text-primary"
+                                )}
                             >
-                                <Download className="w-4 h-4" />
-                            </Button>
-                        </div>
+                                {r}
+                            </button>
+                        ))}
                     </div>
-                }
-            />
+                    
+                    <div className="flex items-center gap-3">
+                        <FilterSelect 
+                            icon={<Users className="w-4 h-4" />}
+                            value={selectedTeamId}
+                            onChange={(val) => { setSelectedTeamId(val); setSelectedMemberEmail('All'); }}
+                            options={[{ id: 'All', name: 'All Teams' }, ...teams]}
+                        />
+                        <FilterSelect 
+                            icon={<ActivityIcon className="w-4 h-4" />}
+                            value={selectedMemberEmail}
+                            onChange={(val) => { setSelectedMemberEmail(val); setSelectedTeamId('All'); }}
+                            options={[{ id: 'All', email: 'All', full_name: 'All Members' }, ...members].map(m => ({ id: (m as any).email || m.id, name: (m as any).full_name || (m as any).name }))}
+                        />
+                        <Button 
+                            variant="secondary" 
+                            className="p-2.5 rounded-lg"
+                            onClick={() => {/* export logic */}}
+                        >
+                            <Download className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </div>
+            }
+        >
 
             {/* KPI Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
@@ -415,16 +414,15 @@ export function Reports() {
                                         <Zap className="w-6 h-6 text-primary" />
                                     </div>
                                     <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
-                                        Performance Status
+                                        Organization Activity
                                     </span>
                                 </div>
-                                <h4 className="text-text-muted font-semibold uppercase tracking-wider text-[10px] mb-2 opacity-60">Activity Score</h4>
+                                <h4 className="text-text-muted font-semibold uppercase tracking-wider text-[10px] mb-2 opacity-60">Avg. Activity Score</h4>
                                 <div className="flex items-baseline gap-2 mb-6">
-                                    <span className="text-5xl font-bold text-text-primary">{avgActivity}</span>
-                                    <span className="text-xl font-medium text-text-muted/40">/ 100</span>
+                                    <span className="text-5xl font-bold text-text-primary">{avgActivity}%</span>
                                 </div>
                                 <p className="text-sm text-text-primary leading-relaxed mb-6">
-                                    Efficiency for {selectedTeamId === 'All' ? 'the organization' : 'this team'} is currently <span className="font-semibold text-primary">optimal</span>. 
+                                    This activity baseline reflects active mouse/keyboard usage of the team during their recorded work hours.
                                 </p>
                                 <div className="w-full h-2.5 bg-surface-subtle rounded-full overflow-hidden border border-border">
                                     <div
@@ -437,7 +435,7 @@ export function Reports() {
                     </div>
                 </div>
             )}
-        </div>
+        </PageLayout>
     );
 }
 

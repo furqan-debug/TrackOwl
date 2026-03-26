@@ -29,11 +29,11 @@ export function PageHeader({
                             </div>
                         )}
                         <div>
-                            <h1 className="text-3xl font-bold text-text-primary tracking-tight leading-none mb-2">
+                            <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-2 text-balance">
                                 {title}
                             </h1>
                             {description && (
-                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-80 max-w-2xl">
+                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider opacity-80 max-w-2xl">
                                     {description}
                                 </p>
                             )}

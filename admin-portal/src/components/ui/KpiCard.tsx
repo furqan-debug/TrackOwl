@@ -40,7 +40,7 @@ export function KpiCard({
                 {trend && (
                     <span
                         className={clsx(
-                            'text-[10px] font-bold px-2 py-1 rounded-lg border transition-all duration-300 font-mono tracking-widest uppercase',
+                            'text-[10px] font-bold px-2 py-1 rounded-lg border transition-all duration-300 tracking-wider uppercase',
                             trendClass
                         )}
                     >
@@ -50,15 +50,15 @@ export function KpiCard({
             </div>
             
             <div className="relative z-10">
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.15em] mb-2 font-mono">
+                <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-2">
                     {label}
                 </p>
-                <h3 className="text-3xl font-bold text-text-primary tracking-tight leading-none font-mono">
+                <h3 className="text-3xl font-bold text-text-primary tracking-tight">
                     {loading ? '—' : value}
                 </h3>
                 {sub && (
                     <div className="flex items-center gap-1.5 mt-3">
-                        <p className="text-[10px] font-medium text-text-muted italic">{sub}</p>
+                        <p className="text-[11px] font-medium text-text-muted">{sub}</p>
                     </div>
                 )}
             </div>

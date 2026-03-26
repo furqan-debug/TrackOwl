@@ -8,7 +8,7 @@ import {
     CheckSquare, ClipboardList, Timer
 } from 'lucide-react';
 import { 
-    PageHeader, Card, Button, StatusBadge, 
+    PageLayout, Card, Button, StatusBadge, 
     LoadingState, EmptyState, Modal, Input,
     KpiCard 
 } from '../components/ui';
@@ -214,44 +214,43 @@ export function Todos() {
     });
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-700">
-            <PageHeader
-                title="Tasks"
-                description="Manage project tasks, track progress, and organize team priorities."
-                actions={
-                    <div className="flex items-center gap-4">
-                        <div className="flex bg-surface-subtle border border-border p-1 rounded-xl shadow-inner">
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={clsx(
-                                    "p-2 rounded-lg transition-all",
-                                    viewMode === 'list' ? "bg-surface-solid text-primary shadow-sm border border-border" : "text-text-muted hover:text-text-primary"
-                                )}
-                            >
-                                <List className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={clsx(
-                                    "p-2 rounded-lg transition-all",
-                                    viewMode === 'grid' ? "bg-surface-solid text-primary shadow-sm border border-border" : "text-text-muted hover:text-text-primary"
-                                )}
-                            >
-                                <LayoutGrid className="w-4 h-4" />
-                            </button>
-                        </div>
-                        <Button
-                            onClick={handleOpenCreate}
-                            disabled={isViewer}
-                            variant="primary"
-                            className="shadow-sm"
+        <PageLayout
+            title="Tasks"
+            description="Manage project tasks, track progress, and organize team priorities."
+            actions={
+                <div className="flex items-center gap-4">
+                    <div className="flex bg-surface-subtle border border-border p-1 rounded-xl shadow-inner">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={clsx(
+                                "p-2 rounded-lg transition-all",
+                                viewMode === 'list' ? "bg-surface-solid text-primary shadow-sm border border-border" : "text-text-muted hover:text-text-primary"
+                            )}
                         >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Task
-                        </Button>
+                            <List className="w-4 h-4" />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={clsx(
+                                "p-2 rounded-lg transition-all",
+                                viewMode === 'grid' ? "bg-surface-solid text-primary shadow-sm border border-border" : "text-text-muted hover:text-text-primary"
+                            )}
+                        >
+                            <LayoutGrid className="w-4 h-4" />
+                        </button>
                     </div>
-                }
-            />
+                    <Button
+                        onClick={handleOpenCreate}
+                        disabled={isViewer}
+                        variant="primary"
+                        className="shadow-sm"
+                    >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Task
+                    </Button>
+                </div>
+            }
+        >
 
             {/* KPI Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -505,7 +504,7 @@ export function Todos() {
                     </div>
                 </Modal>
             )}
-        </div>
+        </PageLayout>
     );
 }
 

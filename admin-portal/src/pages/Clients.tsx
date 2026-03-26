@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { 
-    PageHeader, Card, Button, StatusBadge, 
+    PageLayout, Card, Button, StatusBadge, 
     LoadingState, EmptyState, Modal, Input 
 } from '../components/ui';
 import clsx from 'clsx';
@@ -147,22 +147,21 @@ export function Clients() {
     });
 
     return (
-        <div className="space-y-10 max-w-full mx-auto animate-in fade-in duration-700">
-            <PageHeader
-                title="Clients"
-                description="Manage your client database and business relationships."
-                actions={
-                    <Button
-                        onClick={handleOpenCreate}
-                        disabled={isViewer}
-                        variant="primary"
-                        className="shadow-sm"
-                    >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Client
-                    </Button>
-                }
-            />
+        <PageLayout
+            title="Clients"
+            description="Manage your client database and business relationships."
+            actions={
+                <Button
+                    onClick={handleOpenCreate}
+                    disabled={isViewer}
+                    variant="primary"
+                    className="shadow-sm"
+                >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Client
+                </Button>
+            }
+        >
 
             {/* KPI Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -428,7 +427,7 @@ export function Clients() {
                     </div>
                 </Modal>
             )}
-        </div>
+        </PageLayout>
     );
 }
 

@@ -83,22 +83,11 @@ export function SettingsPage() {
             maxWidth="full"
             actions={
                 <div className="flex items-center gap-3">
-                    <button 
-                        onClick={handleReset}
-                        disabled={isViewer}
-                        className={clsx(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold transition-all border border-border bg-surface-solid shadow-sm",
-                            isViewer ? "opacity-30 cursor-not-allowed" : "text-text-muted hover:text-text-primary hover:bg-surface-subtle active:scale-95"
-                        )}
-                    >
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        Restore Defaults
-                    </button>
                     <button
                         onClick={handleSave}
                         disabled={isViewer}
                         className={clsx(
-                            "flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-semibold transition-all shadow-sm active:scale-95",
+                            "flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm active:scale-95",
                             isViewer ? "bg-black/10 text-text-muted cursor-not-allowed" : 
                             (saved ? "bg-emerald-600 text-white" : "bg-primary text-white hover:bg-primary/90")
                         )}
@@ -226,8 +215,8 @@ export function SettingsPage() {
                                     <Zap className="w-6 h-6" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <h3 className="text-lg font-bold text-text-primary tracking-tight uppercase">Current Configuration</h3>
-                                    <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mt-1">Status: <span className="text-emerald-600 font-bold">Active</span></p>
+                                    <h3 className="text-lg font-bold text-text-primary tracking-tight">Active Configuration</h3>
+                                    <p className="text-xs font-medium text-text-muted mt-1">Status: <span className="text-emerald-600 font-semibold text-[10px] uppercase ml-1">Live</span></p>
                                 </div>
                             </div>
                             
@@ -267,17 +256,14 @@ export function SettingsPage() {
                     </SettingsSection>
                     
                     <div className="bg-surface-solid border border-rose-500/10 rounded-xl p-8 flex flex-col items-center text-center group transition-all hover:bg-rose-500/[0.02] shadow-sm relative overflow-hidden">
-                        <div className="w-14 h-14 rounded-xl bg-rose-500/5 flex items-center justify-center mb-6 border border-rose-500/10 group-hover:scale-105 transition-all duration-500">
-                            <ShieldAlert className="w-7 h-7 text-rose-600" />
-                        </div>
-                        <h4 className="text-lg font-bold text-text-primary tracking-tight mb-2 uppercase">Reset Settings</h4>
-                        <p className="text-xs font-medium text-text-muted leading-relaxed mb-8">
-                            Reverting to defaults will erase all custom configurations.
+                        <h4 className="text-lg font-bold text-text-primary tracking-tight mb-2">Reset Settings</h4>
+                        <p className="text-xs font-medium text-text-muted leading-relaxed mb-8 px-4">
+                            Reverting to default values will clear all your custom configurations.
                         </p>
                         <button 
                             disabled={isViewer}
                             onClick={handleReset}
-                            className="w-full py-3 border border-rose-500/30 text-rose-600 text-[10px] font-bold uppercase tracking-widest rounded-lg hover:bg-rose-600 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95 shadow-sm"
+                            className="w-full py-3 border border-rose-500/20 text-rose-600 text-[11px] font-bold uppercase tracking-wider rounded-lg hover:bg-rose-600 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
                         >
                             Reset All Settings
                         </button>
@@ -296,8 +282,8 @@ function SettingsSection({ icon, title, subtitle, children }: { icon: React.Reac
                     {icon}
                 </div>
                 <div>
-                    <h2 className="text-lg font-bold text-text-primary tracking-tight leading-none mb-1 uppercase">{title}</h2>
-                    <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider opacity-60 leading-none">{subtitle}</p>
+                    <h2 className="text-lg font-bold text-text-primary tracking-tight mb-1">{title}</h2>
+                    <p className="text-[11px] font-medium text-text-muted opacity-70 leading-none">{subtitle}</p>
                 </div>
             </div>
             <div className="p-8">{children}</div>
@@ -321,8 +307,8 @@ function RangeField({ label, description, value, unit, min, max, step = 1, onCha
         <div className="space-y-6">
             <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                    <p className="text-base font-bold text-text-primary tracking-tight uppercase">{label}</p>
-                    <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider opacity-60">{description}</p>
+                    <p className="text-sm font-bold text-text-primary tracking-tight">{label}</p>
+                    <p className="text-xs font-medium text-text-muted opacity-70 leading-relaxed">{description}</p>
                 </div>
                 <div className="flex items-baseline gap-1.5 bg-surface-subtle px-4 py-2 rounded-lg border border-border shadow-sm">
                     <span className="text-xl font-bold text-primary">{value}</span>
@@ -348,8 +334,8 @@ function ToggleField({ label, description, value, onChange }: { label: string; d
     return (
         <div className="flex items-center justify-between group/toggle">
             <div className="space-y-1 flex-1 pr-8">
-                <p className="text-base font-bold text-text-primary tracking-tight uppercase">{label}</p>
-                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider opacity-60 leading-relaxed">{description}</p>
+                <p className="text-sm font-bold text-text-primary tracking-tight">{label}</p>
+                <p className="text-xs font-medium text-text-muted opacity-70 leading-relaxed">{description}</p>
             </div>
             <button
                 type="button"

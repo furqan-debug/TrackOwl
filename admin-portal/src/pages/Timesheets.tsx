@@ -7,7 +7,7 @@ import {
     CheckCircle2, AlertCircle,
     Clock, ChevronDown
 } from 'lucide-react';
-import { PageHeader, Card, KpiCard } from '../components/ui';
+import { PageHeader, Card, KpiCard, LoadingState } from '../components/ui';
 import clsx from 'clsx';
 
 interface Session {
@@ -142,10 +142,10 @@ export function Timesheets() {
         <div className="min-h-screen bg-background pb-20">
             <PageHeader 
                 title="Timesheets" 
-                description={`Daily and weekly breakdown of team activity sessions • ${weekLabel}`} 
-                icon={<Clock className="w-8 h-8" />}
+                description={`Daily and weekly breakdown of team work sessions • ${weekLabel}`} 
+                icon={<Clock className="w-8 h-8 text-primary" />}
             actions={
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <FilterSelect 
                         icon={<Users className="w-4 h-4" />}
                         value={selectedMember}
@@ -154,47 +154,44 @@ export function Timesheets() {
                     />
                     
                     <div className="flex items-center gap-1 bg-surface-solid border border-border rounded-xl p-1 shadow-sm">
-                        <button onClick={() => setWeekOffset(w => w - 1)} className="p-2 hover:bg-black/[0.03] rounded-lg transition-all text-text-muted hover:text-primary group">
-                            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" strokeWidth={3} />
+                        <button onClick={() => setWeekOffset(w => w - 1)} className="p-2 hover:bg-black/[0.03] rounded-lg transition-colors text-text-muted hover:text-primary">
+                            <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <div className="px-6 flex items-center justify-center min-w-[200px]">
-                            <span className="text-[11px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono">
+                        <div className="px-4 flex items-center justify-center min-w-[180px]">
+                            <span className="text-[10px] font-bold text-text-primary uppercase tracking-wider">
                                 {weekLabel}
                             </span>
                         </div>
-                        <button onClick={() => setWeekOffset(w => w + 1)} className="p-2 hover:bg-black/[0.03] rounded-lg transition-all text-text-muted hover:text-primary group">
-                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" strokeWidth={3} />
+                        <button onClick={() => setWeekOffset(w => w + 1)} className="p-2 hover:bg-black/[0.03] rounded-lg transition-colors text-text-muted hover:text-primary">
+                            <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
 
                     {weekOffset !== 0 && (
                         <button 
                             onClick={() => setWeekOffset(0)}
-                            className="px-6 py-3 bg-surface-solid border border-border rounded-xl text-[10px] font-bold uppercase tracking-[0.3em] text-primary hover:border-primary/30 transition-all active:scale-95 shadow-sm font-mono"
+                            className="px-4 py-2.5 bg-surface-solid border border-border rounded-xl text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary/5 transition-colors shadow-sm"
                         >
-                            SYNC TO PRESENT
+                            Go to Today
                         </button>
                     )}
                 </div>
             } />
-            <div className="px-10 space-y-10">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
-                <KpiCard icon={<Timer className="w-6 h-6" />} label="Total Time Tracked" value={loading ? '—' : fmtHours(totalMins)} trend="+15%" trendVariant="positive" />
-                <KpiCard icon={<BarChart3 className="w-6 h-6" />} label="Average Activity" value={loading ? '—' : `${avgActivity}%`} trend="+2%" trendVariant="positive" />
-                <KpiCard icon={<CheckCircle2 className="w-6 h-6" />} label="Active Days" value={loading ? '—' : entries.filter(e => e.totalMinutes > 0).length + ' / 7 days'} />
-                <KpiCard icon={<Activity className="w-6 h-6" />} label="Total Sessions" value={loading ? '—' : entries.reduce((a, e) => a + e.sessions.length, 0).toString()} trend="+42" trendVariant="positive" />
+            <div className="px-10 space-y-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-in fade-in duration-500">
+                <KpiCard icon={<Timer className="w-5 h-5" />} label="Total Hours" value={loading ? '—' : fmtHours(totalMins)} />
+                <KpiCard icon={<BarChart3 className="w-5 h-5" />} label="Avg Activity" value={loading ? '—' : `${avgActivity}%`} />
+                <KpiCard icon={<CheckCircle2 className="w-5 h-5" />} label="Active Days" value={loading ? '—' : entries.filter(e => e.totalMinutes > 0).length + ' / 7 days'} />
+                <KpiCard icon={<Activity className="w-5 h-5" />} label="Total Sessions" value={loading ? '—' : entries.reduce((a, e) => a + e.sessions.length, 0).toString()} />
             </div>
 
-            <Card title="Weekly Activity Summary" noPadding className="overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
+            <Card title="Weekly Summary" noPadding className="overflow-hidden shadow-sm">
                 {loading ? (
-                    <div className="py-56 flex items-center justify-center">
-                        <div className="flex flex-col items-center gap-6">
-                            <div className="w-16 h-16 border-[5px] border-primary/10 border-t-primary rounded-full animate-spin shadow-lg" />
-                            <span className="text-[11px] font-bold text-text-muted uppercase tracking-[0.4em] animate-pulse font-mono">Loading timesheet data...</span>
-                        </div>
+                    <div className="py-40 flex items-center justify-center">
+                        <LoadingState message="Loading timesheet data..." />
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x divide-border bg-surface-solid border-t border-border">
+                    <div className="grid grid-cols-1 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x divide-border bg-surface-solid">
                         {entries.map((entry, i) => {
                             const d = new Date(entry.date + 'T12:00:00');
                             const isToday = d.toDateString() === today.toDateString();
@@ -203,18 +200,18 @@ export function Timesheets() {
 
                             return (
                                 <div key={i} className={clsx(
-                                    "p-10 flex flex-col min-h-[380px] transition-all duration-700 relative group overflow-hidden",
-                                    isToday ? "bg-primary/[0.03] border-b-[6px] md:border-b-0 md:border-b-primary/40 border-primary/40 md:border-r-[6px]" : "hover:bg-border/5"
+                                    "p-8 flex flex-col min-h-[320px] transition-colors relative group",
+                                    isToday ? "bg-primary/[0.02]" : "hover:bg-border/5"
                                 )}>
-                                    <div className="mb-12 relative z-10">
+                                    <div className="mb-8 relative z-10">
                                         <span className={clsx(
-                                            "text-[10px] font-bold uppercase tracking-[0.3em] mb-3 block font-mono transition-colors",
-                                            isToday ? "text-primary" : "text-text-muted group-hover:text-text-primary"
+                                            "text-[10px] font-bold uppercase tracking-wider mb-2 block transition-colors",
+                                            isToday ? "text-primary" : "text-text-muted"
                                         )}>
                                             {DAYS_SHORT[d.getDay()]}
                                         </span>
                                         <div className={clsx(
-                                            "text-5xl font-bold font-head tracking-tighter transition-all duration-500 group-hover:scale-110 group-hover:translate-x-2 origin-left",
+                                            "text-4xl font-bold tracking-tight transition-colors",
                                             isToday ? "text-text-primary" : "text-text-secondary group-hover:text-text-primary"
                                         )}>
                                             {d.getDate()}
@@ -222,54 +219,50 @@ export function Timesheets() {
                                     </div>
 
                                     {isFuture ? (
-                                        <div className="mt-auto opacity-20 flex flex-col gap-5">
-                                            <div className="h-1.5 bg-black/10 rounded-full w-28" />
-                                            <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-text-muted font-mono">No Scheduled Activity</span>
+                                        <div className="mt-auto opacity-30 flex flex-col gap-3">
+                                            <div className="h-1 bg-border rounded-full w-20" />
+                                            <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted">No sessions</span>
                                         </div>
                                     ) : !hasData ? (
-                                        <div className="mt-auto opacity-30 group-hover:opacity-70 transition-opacity">
-                                            <div className="flex items-center gap-4 mb-5">
-                                                <AlertCircle className="w-5 h-5 text-text-muted" strokeWidth={2.5} />
-                                                <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-text-muted font-mono">No Activity Recorded</span>
+                                        <div className="mt-auto opacity-40">
+                                            <div className="flex items-center gap-2 mb-3">
+                                                <AlertCircle className="w-4 h-4 text-text-muted" />
+                                                <span className="text-[9px] font-bold uppercase tracking-wider text-text-muted">No activity</span>
                                             </div>
-                                            <div className="h-1.5 bg-black/5 rounded-full w-full" />
+                                            <div className="h-1 bg-border rounded-full w-full" />
                                         </div>
                                     ) : (
-                                        <div className="flex flex-col gap-3 flex-1 relative z-10">
-                                            <div className="text-4xl font-bold text-text-primary font-mono tracking-tighter mb-1.5 group-hover:text-primary transition-colors">
+                                        <div className="flex flex-col gap-2 flex-1 relative z-10">
+                                            <div className="text-3xl font-bold text-text-primary tracking-tight mb-1 group-hover:text-primary transition-colors">
                                                 {fmtHours(entry.totalMinutes)}
                                             </div>
-                                            <div className="text-[10px] font-bold text-text-secondary mb-10 uppercase tracking-[0.2em] font-mono group-hover:text-text-primary transition-colors opacity-70">
-                                                {entry.sessions.length} Activity Session{entry.sessions.length !== 1 ? 's' : ''}
+                                            <div className="text-[9px] font-bold text-text-muted mb-6 uppercase tracking-wider opacity-70">
+                                                {entry.sessions.length} Work Session{entry.sessions.length !== 1 ? 's' : ''}
                                             </div>
                                             
-                                            <div className="mt-auto space-y-6">
-                                                <div className="h-2.5 bg-black/[0.03] rounded-full overflow-hidden p-[1px] shadow-inner">
+                                            <div className="mt-auto space-y-4">
+                                                <div className="h-2 bg-surface-subtle rounded-full overflow-hidden border border-border p-[1px]">
                                                     <div
-                                                        className="h-full rounded-full transition-all duration-[2000ms] ease-out shadow-sm"
+                                                        className="h-full rounded-full transition-all duration-1000 ease-out"
                                                         style={{
                                                             width: `${entry.activityPercent}%`,
-                                                            backgroundColor: entry.activityPercent > 70 ? '#10b981' : entry.activityPercent > 40 ? '#f59e0b' : '#ef4444',
-                                                            boxShadow: `0 0 15px ${entry.activityPercent > 70 ? '#10b98140' : entry.activityPercent > 40 ? '#f59e0ba0' : '#ef4444a0'}`
+                                                            backgroundColor: entry.activityPercent > 70 ? '#10b981' : entry.activityPercent > 40 ? '#f59e0b' : '#ef4444'
                                                         }}
                                                     />
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
+                                                    <div className="flex items-center gap-2">
                                                         <Activity className={clsx(
-                                                            "w-4 h-4",
+                                                            "w-3.5 h-3.5",
                                                             entry.activityPercent > 70 ? "text-emerald-500" : entry.activityPercent > 40 ? "text-amber-500" : "text-rose-500"
-                                                        )} strokeWidth={3} />
-                                                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Activity Level</span>
+                                                        )} />
+                                                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider">Activity</span>
                                                     </div>
-                                                    <span className="text-[11px] font-bold text-text-primary uppercase tracking-widest leading-none bg-black/[0.03] px-3 py-1.5 rounded-lg border border-black/[0.03] font-mono">{entry.activityPercent}%</span>
+                                                    <span className="text-[10px] font-bold text-text-primary bg-surface-subtle px-2 py-1 rounded-md border border-border">{entry.activityPercent}%</span>
                                                 </div>
                                             </div>
                                         </div>
                                     )}
-                                    
-                                    {/* Subtle background glow on hover */}
-                                    <div className="absolute top-0 right-0 w-48 h-48 bg-primary/5 blur-[100px] rounded-full -mr-24 -mt-24 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
                                 </div>
                             );
                         })}
@@ -286,10 +279,10 @@ function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNod
     
     return (
         <div className="relative group/select">
-            <div className="flex items-center gap-3.5 bg-surface-solid border border-border rounded-xl px-5 py-3 shadow-sm transition-all group-hover/select:border-primary/50 cursor-pointer">
-                <div className="text-primary group-hover/select:scale-110 transition-transform">{icon}</div>
-                <span className="text-[10px] font-bold text-text-primary uppercase tracking-[0.2em] min-w-[150px] font-mono">{activeLabel}</span>
-                <ChevronDown className="w-4 h-4 text-text-muted group-hover/select:text-text-primary transition-all group-hover/select:rotate-180" strokeWidth={3} />
+            <div className="flex items-center gap-3 bg-surface-solid border border-border rounded-xl px-4 py-2.5 shadow-sm transition-all group-hover/select:border-primary/50 cursor-pointer">
+                <div className="text-primary">{icon}</div>
+                <span className="text-[10px] font-bold text-text-primary uppercase tracking-wider min-w-[140px]">{activeLabel}</span>
+                <ChevronDown className="w-4 h-4 text-text-muted group-hover/select:text-text-primary transition-transform group-hover/select:rotate-180" />
             </div>
             
             <select

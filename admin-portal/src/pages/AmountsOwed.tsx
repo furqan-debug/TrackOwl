@@ -6,7 +6,7 @@ import {
     ChevronDown, Calendar, Shield
 } from 'lucide-react';
 import { 
-    PageHeader, Card, Button, StatusBadge, 
+    PageLayout, Card, Button, StatusBadge, 
     LoadingState, EmptyState 
 } from '../components/ui';
 import clsx from 'clsx';
@@ -94,32 +94,31 @@ export function AmountsOwed() {
     const totalOwed = data.reduce((acc, row) => acc + row.amountOwed, 0);
 
     return (
-        <div className="space-y-10 max-w-full mx-auto animate-in fade-in duration-700">
-            <PageHeader
-                title="Payments Due"
-                description="Review and manage outstanding payments for team members."
-                actions={
-                    <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-1 bg-surface-solid border border-border p-1 rounded-lg shadow-sm">
-                            {(['This Week', 'This Month', 'All Time'] as const).map(r => (
-                                <button
-                                    key={r}
-                                    onClick={() => setRange(r)}
-                                    className={clsx(
-                                        "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
-                                        range === r ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text-primary"
-                                    )}
-                                >
-                                    {r}
-                                </button>
-                            ))}
-                        </div>
-                        <Button variant="secondary" className="p-3 rounded-xl group transition-all">
-                            <Download className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                        </Button>
+        <PageLayout
+            title="Payments Due"
+            description="Review and manage outstanding payments for team members."
+            actions={
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-1 bg-surface-solid border border-border p-1 rounded-lg shadow-sm">
+                        {(['This Week', 'This Month', 'All Time'] as const).map(r => (
+                            <button
+                                key={r}
+                                onClick={() => setRange(r)}
+                                className={clsx(
+                                    "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
+                                    range === r ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text-primary"
+                                )}
+                            >
+                                {r}
+                            </button>
+                        ))}
                     </div>
-                }
-            />
+                    <Button variant="secondary" className="p-3 rounded-xl group transition-all">
+                        <Download className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    </Button>
+                </div>
+            }
+        >
 
             {/* Total Highlight */}
             <div className="bg-surface-solid border border-border rounded-xl p-8 mb-10 shadow-sm relative overflow-hidden">
@@ -268,6 +267,6 @@ export function AmountsOwed() {
                     </Button>
                 </div>
             </Card>
-        </div>
+        </PageLayout>
     );
 }

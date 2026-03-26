@@ -6,7 +6,7 @@ import {
     BarChart3, Globe
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
-import { PageHeader, Card, KpiCard, EmptyState, LoadingState } from './ui';
+import { PageLayout, Card, KpiCard, EmptyState, LoadingState } from './ui';
 
 interface DashStats {
     todayMinutes: number;
@@ -164,12 +164,10 @@ export function Dashboard() {
     const maxProjectMins = projects[0]?.minutes || 1;
 
     return (
-        <div className="space-y-10 animate-in fade-in duration-700">
-            <PageHeader 
-                title="System Overview" 
-                description="Real-time telemetry and resource distribution analytics"
-                icon={<BarChart3 className="w-10 h-10 text-primary" strokeWidth={2.5} />}
-            />
+        <PageLayout
+            title="Dashboard" 
+            description="View team performance, project distribution, and recent activity."
+        >
 
             {/* KPI Row */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
@@ -184,20 +182,20 @@ export function Dashboard() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 {/* Activity Trends */}
                 <div className="lg:col-span-8">
-                    <Card title="Productivity Trends" subtitle="Weekly engagement distribution">
-                        <div className="h-[420px] w-full mt-8">
+                    <Card title="Activity Trends" subtitle="Work session distribution for the week">
+                        <div className="h-[400px] w-full mt-6">
                             {loading ? (
                                 <LoadingState className="h-full" />
                             ) : (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={weekBars} barSize={42}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
+                                    <BarChart data={weekBars} barSize={40}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
                                         <XAxis
                                             dataKey="day"
                                             axisLine={false}
                                             tickLine={false}
-                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 11, fontWeight: 700, fontFamily: 'monospace' }}
-                                            dy={15}
+                                            tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11, fontWeight: 600 }}
+                                            dy={10}
                                         />
                                         <YAxis hide />
                                         <Tooltip
@@ -205,11 +203,11 @@ export function Dashboard() {
                                             content={({ active, payload }) => {
                                                 if (active && payload && payload.length) {
                                                     return (
-                                                        <div className="bg-surface-solid border border-border rounded-2xl px-5 py-4 shadow-2xl animate-in zoom-in-95 duration-200">
-                                                            <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-2 border-b border-border pb-2 italic opacity-60">{payload[0].payload.day}</p>
+                                                        <div className="bg-surface-solid border border-border rounded-xl px-4 py-3 shadow-lg">
+                                                            <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-2 border-b border-border pb-2 opacity-60">{payload[0].payload.day}</p>
                                                             <div className="flex items-baseline gap-2">
-                                                                <span className="text-2xl font-bold text-text-primary tracking-tighter italic">{fmtTime(payload[0].value as number)}</span>
-                                                                <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Telemetry</span>
+                                                                <span className="text-xl font-bold text-text-primary tracking-tight">{fmtTime(payload[0].value as number)}</span>
+                                                                <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Total</span>
                                                             </div>
                                                         </div>
                                                     );
@@ -217,7 +215,7 @@ export function Dashboard() {
                                                 return null;
                                             }}
                                         />
-                                        <Bar dataKey="minutes" fill="url(#dashGradient)" radius={[12, 12, 0, 0]} animationDuration={2000} />
+                                        <Bar dataKey="minutes" fill="url(#dashGradient)" radius={[8, 8, 0, 0]} />
                                         <defs>
                                             <linearGradient id="dashGradient" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="0%" stopColor="#506ef8" />
@@ -233,25 +231,25 @@ export function Dashboard() {
 
                 {/* Project Breakdown */}
                 <div className="lg:col-span-4">
-                    <Card title="Allocation" subtitle="Top 5 project distributions">
-                        <div className="mt-8 space-y-8">
+                    <Card title="Project Allocation" subtitle="Distribution of time across projects">
+                        <div className="mt-6 space-y-6">
                             {loading ? (
-                                <LoadingState className="h-[420px]" />
+                                <LoadingState className="h-[400px]" />
                             ) : projects.length === 0 ? (
                                 <EmptyState icon={<FolderOpen className="opacity-20" />} title="No data" description="No project activity yet" />
                             ) : (
                                 projects.map(p => (
                                     <div key={p.id} className="group">
-                                        <div className="flex justify-between items-center mb-3">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: p.color }} />
-                                                <span className="text-sm font-bold text-text-primary tracking-tight group-hover:text-primary transition-colors duration-300 uppercase font-mono italic">{p.name}</span>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
+                                                <span className="text-sm font-semibold text-text-primary tracking-tight group-hover:text-primary transition-colors">{p.name}</span>
                                             </div>
-                                            <span className="text-[11px] font-bold text-text-muted bg-surface-subtle px-3 py-1.5 rounded-lg border border-border font-mono tracking-tighter">{fmtTime(p.minutes)}</span>
+                                            <span className="text-[10px] font-bold text-text-muted bg-surface-subtle px-2 py-1 rounded-lg border border-border">{fmtTime(p.minutes)}</span>
                                         </div>
-                                        <div className="h-2.5 bg-surface-subtle rounded-full overflow-hidden border border-border p-[1px] shadow-inner">
+                                        <div className="h-2 bg-surface-subtle rounded-full overflow-hidden border border-border p-[1px]">
                                             <div
-                                                className="h-full rounded-full transition-all duration-[2000ms] ease-out shadow-sm"
+                                                className="h-full rounded-full transition-all duration-1000 ease-out"
                                                 style={{
                                                     width: `${(p.minutes / maxProjectMins) * 100}%`,
                                                     backgroundColor: p.color
@@ -267,11 +265,11 @@ export function Dashboard() {
             </div>
 
             {/* Recent Activity Table */}
-            <Card title="Live Feed" subtitle="Latest system activity clusters" noPadding className="overflow-hidden">
+            <Card title="Recent Activity" subtitle="Latest work sessions from your team" noPadding className="overflow-hidden">
                 <RecentSessionsRows />
             </Card>
 
-        </div>
+        </PageLayout>
     );
 }
 
@@ -316,11 +314,11 @@ function RecentSessionsRows() {
             <table className="w-full text-left border-collapse">
                 <thead>
                     <tr className="bg-surface-subtle/30 border-b border-border">
-                        <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Team Member</th>
-                        <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Project</th>
-                        <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Starting Time</th>
-                        <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Duration</th>
-                        <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono text-right">Status</th>
+                        <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Team Member</th>
+                        <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Project</th>
+                        <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Started</th>
+                        <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Duration</th>
+                        <th className="px-6 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider text-right">Status</th>
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-border/40">
@@ -331,43 +329,43 @@ function RecentSessionsRows() {
                         const proj = projectMap[s.project_id];
 
                         return (
-                            <tr key={s.id} className="hover:bg-primary/[0.01] transition-all group duration-500">
-                                <td className="px-10 py-8">
-                                    <div className="flex items-center gap-5">
-                                        <div className="w-12 h-12 rounded-2xl bg-surface-subtle border border-border flex items-center justify-center text-text-primary font-bold text-[12px] group-hover:bg-primary group-hover:text-white group-hover:border-primary/20 transition-all duration-500 font-mono shadow-sm">
+                            <tr key={s.id} className="hover:bg-primary/[0.01] transition-colors group">
+                                <td className="px-6 py-5">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-lg bg-surface-subtle border border-border flex items-center justify-center text-text-primary font-bold text-[13px] group-hover:bg-primary group-hover:text-white transition-colors">
                                             {mName.charAt(0).toUpperCase()}
                                         </div>
-                                        <span className="font-bold text-text-primary text-[15px] tracking-tight group-hover:text-primary transition-colors duration-500">{mName}</span>
+                                        <span className="font-semibold text-text-primary text-sm tracking-tight group-hover:text-primary transition-colors">{mName}</span>
                                     </div>
                                 </td>
-                                <td className="px-10 py-8">
+                                <td className="px-6 py-5">
                                     {proj ? (
-                                        <div className="inline-flex items-center gap-3 px-4 py-2 bg-surface-subtle border border-border rounded-xl shadow-sm">
-                                            <div className="w-2.5 h-2.5 rounded-full shadow-inner" style={{ backgroundColor: proj.color }} />
-                                            <span className="text-text-primary font-bold text-[11px] uppercase font-mono italic tracking-tight">{proj.name}</span>
+                                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-surface-subtle border border-border rounded-lg">
+                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: proj.color }} />
+                                            <span className="text-text-primary font-bold text-[10px] uppercase tracking-tight">{proj.name}</span>
                                         </div>
                                     ) : (
-                                        <span className="text-text-muted/30 italic font-mono text-[11px] uppercase tracking-widest">Unassigned</span>
+                                        <span className="text-text-muted/40 text-[10px] uppercase font-bold tracking-widest">Unassigned</span>
                                     )}
                                 </td>
-                                <td className="px-10 py-8 text-text-primary font-bold text-[13px] font-mono tracking-tighter opacity-70">
+                                <td className="px-6 py-5 text-text-primary font-semibold text-sm opacity-70">
                                     {new Date(s.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </td>
-                                <td className="px-10 py-8 font-bold text-text-primary text-[14px] italic font-mono tracking-tighter">
+                                <td className="px-6 py-5 font-semibold text-text-primary text-sm">
                                     {fmtTime(dur)}
                                 </td>
-                                <td className="px-10 py-8 text-right">
+                                <td className="px-6 py-5 text-right">
                                     {isLive ? (
-                                        <span className="inline-flex items-center gap-3 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 shadow-sm font-mono italic">
-                                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                                            Operational
+                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-500/10 border border-emerald-500/20">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                            Active
                                         </span>
                                     ) : isStale ? (
-                                        <span className="inline-flex items-center gap-3 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] text-amber-600 bg-amber-500/10 border border-amber-500/20 shadow-sm font-mono italic">
-                                            Stale
+                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/10 border border-amber-500/20">
+                                            Idle
                                         </span>
                                     ) : (
-                                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-text-muted font-mono opacity-40">Archived</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted opacity-40">Completed</span>
                                     )}
                                 </td>
                             </tr>

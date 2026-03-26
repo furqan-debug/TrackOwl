@@ -12,7 +12,7 @@ import clsx from 'clsx';
 import { 
     Button, 
     Card, 
-    PageHeader, 
+    PageLayout, 
     EmptyState, 
     LoadingState, 
     StatusBadge
@@ -165,41 +165,38 @@ export function Projects() {
     const archivedCount = projects.filter(p => p.status === 'Archived').length;
 
     return (
-        <div className="flex flex-col h-full bg-surface-solid/30 min-h-screen">
-            <PageHeader
-                title="Projects"
-                description="Manage active projects and resource allocation"
-                icon={<Briefcase className="w-8 h-8" />}
-                actions={
-                    <Button
-                        variant="primary"
-                        leftIcon={<Plus className="w-5 h-5" />}
-                        onClick={() => { if (!isViewer) { setEditingProject(null); setShowModal(true); } }}
-                        disabled={isViewer}
-                    >
-                        Create Project
-                    </Button>
-                }
-                stats={
-                    <div className="flex gap-10">
-                        {(['Active', 'Archived'] as const).map(tab => (
+        <PageLayout
+            title="Projects"
+            description="Manage client projects, track budgets, and assign team resources."
+            actions={
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex bg-surface-subtle p-1 rounded-lg border border-border shrink-0">
+                        {(['Active', 'Archived'] as ProjectStatus[]).map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => { setActiveTab(tab); setSelectedIds(new Set()); }}
                                 className={clsx(
-                                    "pb-5 text-[11px] font-bold uppercase tracking-[0.2em] transition-all relative font-mono",
-                                    activeTab === tab ? "text-primary" : "text-text-muted hover:text-text-primary"
+                                    "px-4 py-1.5 rounded-md text-xs font-semibold transition-all",
+                                    activeTab === tab ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
-                                {tab} Projects ({tab === 'Active' ? activeCount : archivedCount})
-                                {activeTab === tab && (
-                                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_12px_rgba(80,110,248,0.4)]" />
-                                )}
+                                {tab} ({tab === 'Active' ? activeCount : archivedCount})
                             </button>
                         ))}
                     </div>
-                }
-            />
+                    {!isViewer && (
+                        <Button 
+                            onClick={() => { setEditingProject(null); setShowModal(true); }} 
+                            variant="primary" 
+                            className="shadow-sm active:scale-95"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Create Project
+                        </Button>
+                    )}
+                </div>
+            }
+        >
 
             <div className="px-10 pb-10 flex-1 overflow-auto custom-scrollbar">
                 <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6 mb-8">
@@ -211,7 +208,7 @@ export function Projects() {
                                 placeholder="Search by name or client..."
                                 value={searchQuery}
                                 onChange={e => setSearchQuery(e.target.value)}
-                                className="w-full pl-12 pr-6 py-3.5 bg-surface-solid border border-border rounded-2xl text-[13px] font-bold text-text-primary placeholder:text-text-muted outline-none focus:border-primary transition-all font-mono"
+                                className="w-full pl-12 pr-6 py-3.5 bg-surface-solid border border-border rounded-2xl text-[13px] font-semibold text-text-primary placeholder:text-text-muted outline-none focus:border-primary transition-all"
                             />
                         </div>
 
@@ -219,7 +216,7 @@ export function Projects() {
                             <Button
                                 variant="secondary"
                                 leftIcon={<Filter className="w-4 h-4" />}
-                                className="text-[10px] uppercase tracking-widest px-6"
+                                className="text-[11px] font-bold uppercase tracking-widest px-6"
                             >
                                 Filters
                             </Button>
@@ -264,12 +261,12 @@ export function Projects() {
                                             {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 && <Check className="w-4 h-4 stroke-[4]" />}
                                         </button>
                                     </th>
-                                    <th className="px-8 py-6 text-[11px] font-bold uppercase tracking-widest text-text-muted font-mono">Project Detail</th>
-                                    <th className="px-8 py-6 text-[11px] font-bold uppercase tracking-widest text-text-muted font-mono">Teams</th>
-                                    <th className="px-8 py-6 text-[11px] font-bold uppercase tracking-widest text-text-muted font-mono text-center">Members</th>
-                                    <th className="px-8 py-6 text-[11px] font-bold uppercase tracking-widest text-text-muted font-mono">Tasks</th>
-                                    <th className="px-8 py-6 text-[11px] font-bold uppercase tracking-widest text-text-muted font-mono">Budget Progress</th>
-                                    <th className="px-8 py-6 text-[11px] font-bold uppercase tracking-widest text-text-muted font-mono">Limits</th>
+                                    <th className="px-8 py-6 text-[11px] font-bold uppercase tracking-widest text-text-muted">Project Detail</th>
+                                    <th className="px-8 py-6 text-[11px] font-bold uppercase tracking-widest text-text-muted">Teams</th>
+                                    <th className="px-8 py-6 text-[11px] font-bold uppercase tracking-widest text-text-muted text-center">Members</th>
+                                    <th className="px-8 py-6 text-[11px] font-bold uppercase tracking-widest text-text-muted">Tasks</th>
+                                    <th className="px-8 py-6 text-[11px] font-bold uppercase tracking-widest text-text-muted">Budget Progress</th>
+                                    <th className="px-8 py-6 text-[11px] font-bold uppercase tracking-widest text-text-muted">Limits</th>
                                     <th className="pr-10 py-7 w-20"></th>
                                 </tr>
                             </thead>
@@ -318,8 +315,8 @@ export function Projects() {
                 </Card>
 
                 <div className="mt-8 flex items-center justify-between px-2">
-                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">
-                        {filteredProjects.length} NODE{filteredProjects.length !== 1 ? 'S' : ''} ACTIVE
+                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest">
+                        {filteredProjects.length} Project{filteredProjects.length !== 1 ? 's' : ''} total
                     </p>
                 </div>
             </div>
@@ -333,7 +330,7 @@ export function Projects() {
                     onSuccess={() => { setShowModal(false); fetchProjects(); }}
                 />
             )}
-        </div>
+        </PageLayout>
     );
 }
 

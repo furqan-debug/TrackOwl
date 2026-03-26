@@ -110,7 +110,7 @@ export function ProfilePage() {
                     <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-4 flex items-start gap-3 text-rose-600">
                         <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5" />
                         <div className="space-y-1">
-                            <p className="font-bold text-xs uppercase tracking-wider">Error</p>
+                            <p className="font-bold text-xs">Error</p>
                             <p className="text-xs font-medium opacity-90">{error}</p>
                         </div>
                     </div>
@@ -157,13 +157,13 @@ export function ProfilePage() {
                         accept="image/*" 
                     />
 
-                    <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-1 uppercase">{profile?.full_name || 'No Name Set'}</h2>
+                    <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-2">{profile?.full_name || 'No Name Set'}</h2>
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest leading-none">Status: Active</span>
+                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest leading-none">Active Profile</span>
                     </div>
 
-                    <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider opacity-60 max-w-sm leading-relaxed">
+                    <p className="text-xs font-medium text-text-muted max-w-sm leading-relaxed opacity-80">
                         Your profile is visible to other team members and administrators.
                     </p>
                 </Card>
@@ -176,14 +176,14 @@ export function ProfilePage() {
                                 <User className="w-5 h-5" />
                             </div>
                             <div className="flex flex-col">
-                                <h3 className="text-lg font-bold text-text-primary uppercase tracking-tight">Personal Information</h3>
-                                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mt-1 opacity-60">Your public profile details</p>
+                                <h3 className="text-lg font-bold text-text-primary">Personal Details</h3>
+                                <p className="text-xs font-medium text-text-muted mt-1 opacity-70">Information used across the team workspace</p>
                             </div>
                         </div>
 
                         <div className="space-y-3">
                             <div className="flex items-center justify-between px-1">
-                                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Full Name</label>
+                                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wide">Full Name</label>
                             </div>
                             <input
                                 type="text"

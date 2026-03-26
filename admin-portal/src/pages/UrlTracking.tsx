@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Globe, TrendingUp, Clock, Search, BarChart2, Users } from 'lucide-react';
+import clsx from 'clsx';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
 } from 'recharts';
-import { PageHeader, Card } from '../components/ui';
+import { PageLayout, Card, FilterSelect } from '../components/ui';
 
 interface DomainEntry {
     domain: string;
@@ -139,46 +140,39 @@ export function UrlTracking() {
     const topCategory = pieData.sort((a, b) => b.value - a.value)[0]?.name || '—';
 
     return (
-        <div className="min-h-screen bg-background pb-20">
-            <PageHeader 
-                title="URL Tracking" 
-                description="Browser domains visited during tracked time"
-                icon={<Globe className="w-8 h-8 text-primary" />}
-                actions={
-                    <div className="flex items-center gap-4">
-                        {/* Member Selector */}
-                        <div className="flex items-center gap-2 bg-surface-solid border border-border rounded-lg px-3 py-2 shadow-sm font-mono text-[11px] uppercase tracking-widest">
-                            <Users className="w-4 h-4 text-text-muted" />
-                            <select
-                                className="bg-transparent font-bold text-text-primary outline-none w-48"
-                                value={selectedMemberId}
-                                onChange={(e) => setSelectedMemberId(e.target.value)}
+        <PageLayout
+            title="URL Tracking" 
+            description="Monitor web domains visited during active work sessions." 
+            maxWidth="full"
+            actions={
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <FilterSelect 
+                        icon={<Users className="w-5 h-5 text-primary" />}
+                        value={selectedMemberId}
+                        onChange={setSelectedMemberId}
+                        options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
+                    />
+
+                    <div className="flex bg-surface-subtle p-1 rounded-lg border border-border shrink-0">
+                        {RANGES.map(r => (
+                            <button 
+                                key={r} 
+                                onClick={() => setRange(r)}
+                                className={clsx(
+                                    "px-4 py-1.5 rounded-md text-xs font-semibold transition-all",
+                                    range === r ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-primary"
+                                )}
                             >
-                                <option value="all">Entire Organization</option>
-                                <option disabled>──────────</option>
-                                {members.map(m => (
-                                    <option key={m.id} value={m.id}>{m.full_name}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* Range Selector */}
-                        <div className="flex items-center gap-1 bg-surface-solid border border-border rounded-lg p-1 shadow-sm font-mono text-[10px] uppercase tracking-widest font-bold">
-                            {RANGES.map(r => (
-                                <button key={r} onClick={() => setRange(r)}
-                                    className={`px-4 py-2 rounded-md transition-colors ${range === r ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text-primary hover:bg-surface-subtle'}`}>
-                                    {r}
-                                </button>
-                            ))}
-                        </div>
+                                {r}
+                            </button>
+                        ))}
                     </div>
-                }
-            />
-
-            <div className="px-10 space-y-10">
+                </div>
+            }
+        >
 
             {/* KPI Row */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 animate-in fade-in duration-500">
                 <KpiCard icon={<Globe className="w-6 h-6" />} label="Total Visits" value={totalVisits.toLocaleString()} />
                 <KpiCard icon={<TrendingUp className="w-6 h-6" />} label="Unique Domains" value={uniqueDomains.toString()} />
                 <KpiCard icon={<Clock className="w-6 h-6" />} label="Top Category" value={topCategory} />
@@ -187,17 +181,17 @@ export function UrlTracking() {
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                 {/* Hourly activity */}
-                <Card title="Browsing Activity — By Hour" className="lg:col-span-2 min-h-[300px] shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                <Card title="Traffic Over Time" className="lg:col-span-2 min-h-[300px] shadow-sm">
                     {loading ? <Skeleton /> : domains.length === 0 ? <EmptyChart /> : (
                         <div className="h-[250px] w-full mt-4">
                             <ResponsiveContainer width="100%" height="100%">
                                 <BarChart data={hourlyData} barSize={12}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
-                                    <XAxis dataKey="hour" tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontWeight: 'bold', fontFamily: 'monospace' }} interval={2} axisLine={false} tickLine={false} />
-                                    <YAxis tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontWeight: 'bold', fontFamily: 'monospace' }} axisLine={false} tickLine={false} />
+                                    <XAxis dataKey="hour" tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontWeight: 'bold' }} interval={2} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontWeight: 'bold' }} axisLine={false} tickLine={false} />
                                     <Tooltip
                                         formatter={(v?: number) => [`${v ?? 0} visits`, 'Count']}
-                                        contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', fontFamily: 'monospace', textTransform: 'uppercase' }}
+                                        contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', textTransform: 'uppercase' }}
                                     />
                                     <Bar dataKey="count" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
                                 </BarChart>
@@ -207,7 +201,7 @@ export function UrlTracking() {
                 </Card>
 
                 {/* Category Pie */}
-                <Card title="By Category" className="min-h-[300px] shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
+                <Card title="Categories" className="min-h-[300px] shadow-sm">
                     {loading ? <Skeleton /> : pieData.length === 0 ? <EmptyChart /> : (
                         <div className="h-[250px] w-full mt-4">
                             <ResponsiveContainer width="100%" height="100%">
@@ -215,8 +209,8 @@ export function UrlTracking() {
                                     <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value" stroke="none">
                                         {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                                     </Pie>
-                                    <Tooltip formatter={(v?: number) => [`${v ?? 0}`, 'Visits']} contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', fontFamily: 'monospace', textTransform: 'uppercase' }} />
-                                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, fontWeight: 'bold', fontFamily: 'monospace', textTransform: 'uppercase', color: 'var(--color-text-muted)' }} />
+                                    <Tooltip formatter={(v?: number) => [`${v ?? 0}`, 'Visits']} contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', textTransform: 'uppercase' }} />
+                                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--color-text-muted)' }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -226,71 +220,68 @@ export function UrlTracking() {
 
             {/* Domain Table */}
             {/* Domain Table */}
-            <Card noPadding title="Top Domains" className="shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-1200 overflow-hidden" 
+            <Card noPadding title="Top Domains" className="shadow-sm overflow-hidden" 
                 actions={
-                    <div className="relative border border-border bg-surface-solid rounded-xl flex items-center shadow-sm">
+                    <div className="relative border border-border bg-surface-solid rounded-xl flex items-center">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                         <input type="text" placeholder="Filter domains..." value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="bg-transparent pl-11 pr-4 py-2 text-[10px] font-bold uppercase tracking-widest font-mono text-text-primary outline-none focus:border-primary/50 w-64 h-full" />
+                            className="bg-transparent pl-11 pr-4 py-2 text-[10px] font-bold uppercase tracking-wider text-text-primary outline-none focus:border-primary/50 w-64 h-full" />
                     </div>
                 }
             >
                 {loading ? (
-                    <div className="px-10 py-12 text-center text-text-muted font-mono text-[11px] tracking-widest uppercase">Loading...</div>
+                    <div className="px-8 py-10 text-center text-text-muted text-[10px] font-bold uppercase tracking-wider">Loading...</div>
                 ) : filtered.length === 0 ? (
                     <div className="p-16 flex flex-col items-center gap-4 text-text-muted">
-                        <div className="w-16 h-16 bg-surface-subtle rounded-2xl flex items-center justify-center border border-border">
-                            <Globe className="w-8 h-8 text-text-muted opacity-50" />
+                        <div className="w-12 h-12 bg-surface-subtle rounded-xl flex items-center justify-center border border-border">
+                            <Globe className="w-6 h-6 text-text-muted opacity-50" />
                         </div>
-                        <p className="text-[12px] font-mono font-bold uppercase tracking-widest opacity-80 mt-2">No URL data yet</p>
-                        <p className="text-[10px] font-mono tracking-wider opacity-60">URL tracking is captured from the <code className="bg-surface-solid border border-border px-1.5 py-0.5 rounded">domain</code> field in activity samples.</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider opacity-60">No URL data found</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-surface-subtle/30 border-b border-border">
-                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono w-16">#</th>
-                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Domain</th>
-                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Category</th>
-                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Visits</th>
-                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Share</th>
+                                    <th className="px-8 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Domain</th>
+                                    <th className="px-8 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Category</th>
+                                    <th className="px-8 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Visits</th>
+                                    <th className="px-8 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Share</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/40">
-                                {filtered.slice(0, 50).map((d, i) => (
-                                    <tr key={d.domain} className="hover:bg-primary/[0.01] transition-all group duration-500">
-                                        <td className="px-10 py-5 text-text-muted font-mono text-[11px] opacity-70 border-r border-border/20">{i + 1}</td>
-                                        <td className="px-10 py-5">
+                                {filtered.slice(0, 50).map((d) => (
+                                    <tr key={d.domain} className="hover:bg-primary/[0.01] transition-colors group">
+                                        <td className="px-8 py-4">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-8 h-8 rounded-lg bg-surface-solid border border-border flex items-center justify-center shadow-sm shrink-0">
                                                     <img src={`https://www.google.com/s2/favicons?domain=${d.domain}&sz=16`}
                                                         alt="" className="w-4 h-4 rounded" onError={e => (e.currentTarget.style.display = 'none')} />
                                                 </div>
-                                                <span className="font-bold text-text-primary text-[14px] font-mono tracking-tight group-hover:text-primary transition-colors">{d.domain}</span>
+                                                <span className="font-semibold text-text-primary text-sm tracking-tight group-hover:text-primary transition-colors">{d.domain}</span>
                                             </div>
                                         </td>
-                                        <td className="px-10 py-5">
-                                            <span className={`inline-flex px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest font-mono border
-                                                ${d.category === 'Development' ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' :
-                                                    d.category === 'Search' ? 'bg-sky-500/10 text-sky-600 border-sky-500/20' :
-                                                        d.category === 'Communication' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
-                                                            d.category === 'Productivity' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
-                                                                d.category === 'Social' ? 'bg-fuchsia-500/10 text-fuchsia-600 border-fuchsia-500/20' :
-                                                                    d.category === 'Media' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
+                                        <td className="px-8 py-4">
+                                            <span className={`inline-flex px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider border
+                                                ${d.category === 'Development' ? 'bg-indigo-500/5 text-indigo-600 border-indigo-500/10' :
+                                                    d.category === 'Search' ? 'bg-sky-500/5 text-sky-600 border-sky-500/10' :
+                                                        d.category === 'Communication' ? 'bg-emerald-500/5 text-emerald-600 border-emerald-500/10' :
+                                                            d.category === 'Productivity' ? 'bg-amber-500/5 text-amber-600 border-amber-500/10' :
+                                                                d.category === 'Social' ? 'bg-fuchsia-500/5 text-fuchsia-600 border-fuchsia-500/10' :
+                                                                    d.category === 'Media' ? 'bg-rose-500/5 text-rose-600 border-rose-500/10' :
                                                                         'bg-surface-subtle text-text-muted border-border'}`}
                                             >
                                                 {d.category}
                                             </span>
                                         </td>
-                                        <td className="px-10 py-5 text-text-primary font-bold text-[12px] font-mono">{d.count.toLocaleString()}</td>
-                                        <td className="px-10 py-5 w-48">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-full h-2 bg-surface-subtle rounded-full overflow-hidden border border-border p-[1px] shadow-inner">
-                                                    <div className="h-full bg-primary rounded-full transition-all duration-[2000ms] shadow-sm" style={{ width: `${d.percent}%` }} />
+                                        <td className="px-8 py-4 text-text-primary font-bold text-[12px]">{d.count.toLocaleString()}</td>
+                                        <td className="px-8 py-4 w-44">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-full h-2 bg-surface-subtle rounded-full overflow-hidden border border-border p-[1px]">
+                                                    <div className="h-full bg-primary rounded-full transition-all duration-1000" style={{ width: `${d.percent}%` }} />
                                                 </div>
-                                                <span className="text-[11px] font-bold text-text-primary font-mono w-12">{d.percent}%</span>
+                                                <span className="text-[11px] font-bold text-text-primary w-10 text-right">{d.percent}%</span>
                                             </div>
                                         </td>
                                     </tr>
@@ -300,36 +291,35 @@ export function UrlTracking() {
                     </div>
                 )}
             </Card>
-        </div>
-        </div>
+        </PageLayout>
     );
 }
 
 function KpiCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
-        <div className="bg-surface-solid border border-border rounded-2xl p-8 shadow-sm flex items-center gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
-            <div className="w-14 h-14 bg-primary/10 text-primary rounded-xl flex items-center justify-center shrink-0">
+        <div className="bg-surface-solid border border-border rounded-2xl p-6 shadow-sm flex items-center gap-5">
+            <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center shrink-0">
                 {icon}
             </div>
             <div className="flex flex-col">
-                <p className="text-[11px] text-text-muted font-bold uppercase tracking-widest font-mono mb-1">{label}</p>
-                <p className="text-3xl font-black text-text-primary font-mono italic tracking-tighter">{value}</p>
+                <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider mb-1">{label}</p>
+                <p className="text-2xl font-bold text-text-primary tracking-tight">{value}</p>
             </div>
         </div>
     );
 }
 
 function Skeleton() { 
-    return <div className="h-64 flex items-center justify-center text-text-muted font-mono text-[11px] tracking-widest uppercase">Loading...</div>; 
+    return <div className="h-64 flex items-center justify-center text-text-muted text-[10px] font-bold uppercase tracking-wider">Loading...</div>; 
 }
 
 function EmptyChart() {
     return (
-        <div className="h-64 flex flex-col items-center justify-center text-text-muted gap-4">
+        <div className="h-64 flex flex-col items-center justify-center text-text-muted gap-3">
             <div className="w-12 h-12 bg-surface-subtle border border-border rounded-xl flex items-center justify-center">
                 <BarChart2 className="w-6 h-6 text-text-muted opacity-50" />
             </div>
-            <span className="text-[11px] font-mono font-bold uppercase tracking-widest opacity-80">No data for this period</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider opacity-60">No data for this period</span>
         </div>
     );
 }

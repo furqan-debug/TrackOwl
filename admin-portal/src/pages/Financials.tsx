@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { CircleDollarSign, TrendingUp, Clock, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import clsx from 'clsx';
 import { PageLayout, Card, KpiCard, Button, EmptyState, LoadingState } from '../components/ui';
 
 interface MemberFinancial {
@@ -136,10 +137,16 @@ export function Financials() {
             maxWidth="full"
             actions={
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center bg-surface border border-border rounded-shell-md p-1">
+                    <div className="flex bg-surface-subtle p-1 rounded-lg border border-border shrink-0">
                         {(['This Week', 'This Month', 'All Time'] as const).map(r => (
-                            <button key={r} onClick={() => setRange(r)}
-                                className={`px-3 py-1.5 rounded-shell-sm text-sm font-medium transition-colors ${range === r ? 'bg-primary text-white' : 'text-text-secondary hover:bg-surface-subtle'}`}>
+                            <button 
+                                key={r} 
+                                onClick={() => setRange(r)}
+                                className={clsx(
+                                    "px-4 py-1.5 rounded-md text-xs font-semibold transition-all",
+                                    range === r ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-primary"
+                                )}
+                            >
                                 {r}
                             </button>
                         ))}
@@ -184,8 +191,8 @@ export function Financials() {
                 </Card>
 
                 <Card noPadding className="lg:col-span-3">
-                    <div className="px-6 py-4 border-b border-border">
-                        <h2 className="text-sm font-semibold text-text-primary uppercase tracking-wide">Member Breakdown</h2>
+                    <div className="px-8 py-5 border-b border-border bg-border/5">
+                        <h2 className="text-[11px] font-bold text-text-muted uppercase tracking-widest opacity-80">Member Breakdown</h2>
                     </div>
                     {loading ? (
                         <LoadingState message="Loading financial data…" className="py-12" />
@@ -198,33 +205,33 @@ export function Financials() {
                     ) : (
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-border bg-surface-subtle/60">
-                                    <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted uppercase">Member</th>
-                                    <th className="text-right px-6 py-3 text-xs font-semibold text-text-muted uppercase">Pay Rate</th>
-                                    <th className="text-right px-6 py-3 text-xs font-semibold text-text-muted uppercase">Hours</th>
-                                    <th className="text-right px-6 py-3 text-xs font-semibold text-text-muted uppercase">Sessions</th>
-                                    <th className="text-right px-6 py-3 text-xs font-semibold text-text-muted uppercase">Cost</th>
+                                <tr className="border-b border-border/60 bg-border/[0.02]">
+                                    <th className="text-left px-8 py-4 text-[11px] font-bold text-text-muted uppercase tracking-widest opacity-80">Member</th>
+                                    <th className="text-right px-8 py-4 text-[11px] font-bold text-text-muted uppercase tracking-widest opacity-80">Pay Rate</th>
+                                    <th className="text-right px-8 py-4 text-[11px] font-bold text-text-muted uppercase tracking-widest opacity-80">Hours</th>
+                                    <th className="text-right px-8 py-4 text-[11px] font-bold text-text-muted uppercase tracking-widest opacity-80">Sessions</th>
+                                    <th className="text-right px-8 py-4 text-[11px] font-bold text-text-muted uppercase tracking-widest opacity-80">Cost</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {members.map((m, i) => (
-                                    <tr key={m.member_id} className="border-b border-border-subtle hover:bg-surface-subtle/50 transition-colors">
-                                        <td className="px-6 py-3.5">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0"
+                                    <tr key={m.member_id} className="border-b border-border/40 last:border-0 hover:bg-primary/[0.02] transition-colors group/row">
+                                        <td className="px-8 py-5">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-9 h-9 rounded-2xl flex items-center justify-center text-white text-[12px] font-bold shrink-0 shadow-sm group-hover/row:scale-105 transition-transform"
                                                     style={{ backgroundColor: COLORS[i % COLORS.length] }}>
                                                     {m.full_name.charAt(0).toUpperCase()}
                                                 </div>
-                                                <span className="font-medium text-text-primary">{m.full_name}</span>
+                                                <span className="font-bold text-text-primary tracking-tight">{m.full_name}</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-3.5 text-right text-text-secondary">
-                                            {m.pay_rate > 0 ? `$${m.pay_rate}/hr` : <span className="text-text-muted">—</span>}
+                                        <td className="px-8 py-5 text-right text-text-muted text-[13px] font-semibold">
+                                            {m.pay_rate > 0 ? `$${m.pay_rate}/hr` : <span className="opacity-40">—</span>}
                                         </td>
-                                        <td className="px-6 py-3.5 text-right text-text-secondary font-medium">{fmtTime(m.totalMinutes)}</td>
-                                        <td className="px-6 py-3.5 text-right text-text-muted">{m.sessions}</td>
-                                        <td className="px-6 py-3.5 text-right">
-                                            <span className="font-semibold text-text-primary">${m.totalCost.toFixed(2)}</span>
+                                        <td className="px-8 py-5 text-right text-text-primary text-[13px] font-bold">{fmtTime(m.totalMinutes)}</td>
+                                        <td className="px-8 py-5 text-right text-text-muted text-[13px] font-semibold">{m.sessions}</td>
+                                        <td className="px-8 py-5 text-right">
+                                            <span className="text-sm font-bold text-primary tracking-tight">${m.totalCost.toFixed(2)}</span>
                                         </td>
                                     </tr>
                                 ))}

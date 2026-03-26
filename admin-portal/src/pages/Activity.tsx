@@ -96,24 +96,24 @@ export function Activity() {
 
     return (
         <PageLayout 
-            title="Activity Metrics" 
-            description={`${dateLabel.toUpperCase()} • Forensic analytics & operational telemetry`} 
+            title="Screen Captures" 
+            description={`${dateLabel} • Review work session screenshots and input activity.`} 
             maxWidth="full" 
             actions={
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                     <FilterSelect 
-                        icon={<Users className="w-5 h-5 text-primary" strokeWidth={2.5} />}
+                        icon={<Users className="w-5 h-5 text-primary" />}
                         value={selectedMemberId}
                         onChange={setSelectedMemberId}
-                        options={[{ id: 'all', name: 'ALL OPERATORS' }, ...members.map(m => ({ id: m.id, name: m.full_name.toUpperCase() }))]}
+                        options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
                     />
                     <div 
                         className="relative group/date" 
                         onClick={() => dateInputRef.current?.showPicker()}
                     >
-                        <div className="flex items-center gap-3 bg-surface-solid border border-border rounded-2xl px-6 py-3.5 shadow-sm hover:border-primary transition-all group-hover/date:scale-[1.02] cursor-pointer">
-                            <Calendar className="w-5 h-5 text-primary" strokeWidth={2.5} />
-                            <span className="text-[11px] font-black text-text-primary tracking-widest font-mono italic uppercase min-w-[120px] text-center">{selectedDate.replace(/-/g, '.')}</span>
+                        <div className="flex items-center gap-3 bg-surface-solid border border-border rounded-xl px-5 py-2.5 shadow-sm hover:border-primary transition-all cursor-pointer">
+                            <Calendar className="w-5 h-5 text-primary" />
+                            <span className="text-[10px] font-bold text-text-primary tracking-wider min-w-[100px] text-center">{selectedDate}</span>
                             <ChevronDown className="w-4 h-4 text-text-muted opacity-40 group-hover/date:translate-y-0.5 transition-transform" />
                         </div>
                         <input 
@@ -127,38 +127,38 @@ export function Activity() {
                 </div>
             }
         >
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16 animate-in fade-in slide-in-from-top-6 duration-1000">
-                <KpiCard icon={<Mouse className="w-7 h-7" strokeWidth={2.5} />} label="INPUT_CLICKS" value={totalClicks.toLocaleString()} />
-                <KpiCard icon={<Keyboard className="w-7 h-7" strokeWidth={2.5} />} label="KEYSTROKES" value={totalKeys.toLocaleString()} />
-                <KpiCard icon={<ActivityIcon className="w-7 h-7" strokeWidth={2.5} />} label="ACTIVE_MINUTES" value={activeTime.toString()} sub="Verified activity" />
-                <KpiCard icon={<Zap className="w-7 h-7" strokeWidth={2.5} />} label="EFFICIENCY_RATE" value={`${avgActivity}%`} />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 animate-in fade-in duration-500">
+                <KpiCard icon={<Mouse className="w-6 h-6" />} label="Mouse Clicks" value={totalClicks.toLocaleString()} />
+                <KpiCard icon={<Keyboard className="w-6 h-6" />} label="Keyboard Usage" value={totalKeys.toLocaleString()} />
+                <KpiCard icon={<ActivityIcon className="w-6 h-6" />} label="Active Time" value={`${activeTime} min`} />
+                <KpiCard icon={<Zap className="w-6 h-6" />} label="Activity Rate" value={`${avgActivity}%`} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-12">
-                <Card className="lg:col-span-2 p-0 border-border bg-surface-solid shadow-2xl rounded-[48px] overflow-hidden">
-                    <div className="px-10 py-8 border-b border-border bg-surface-subtle flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-surface-solid border border-border flex items-center justify-center text-primary shadow-sm">
-                                <ActivityIcon className="w-6 h-6" strokeWidth={2.5} />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+                <Card className="lg:col-span-2 p-0 border-border bg-surface-solid shadow-sm rounded-2xl overflow-hidden">
+                    <div className="px-8 py-5 border-b border-border bg-surface-subtle flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-surface-solid border border-border flex items-center justify-center text-primary shadow-sm">
+                                <ActivityIcon className="w-5 h-5" />
                             </div>
-                            <h3 className="text-lg font-black text-text-primary tracking-tighter uppercase italic font-mono">Activity Flow Matrix</h3>
+                            <h3 className="text-sm font-bold text-text-primary tracking-tight">Activity Over Time</h3>
                         </div>
                         <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                            <span className="text-[9px] font-black text-text-muted uppercase tracking-widest font-mono">Telemetry: Live</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Live Updates</span>
                         </div>
                     </div>
-                    <div className="p-10">
+                    <div className="p-8">
                         <ActivityChart loading={loading} samples={samples} />
                     </div>
                 </Card>
                 
-                <Card className="lg:col-span-1 p-0 border-border bg-surface-solid shadow-2xl rounded-[48px] overflow-hidden">
-                    <div className="px-10 py-8 border-b border-border bg-surface-subtle flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-surface-solid border border-border flex items-center justify-center text-primary shadow-sm">
-                            <Diamond className="w-6 h-6" strokeWidth={2.5} />
+                <Card className="lg:col-span-1 p-0 border-border bg-surface-solid shadow-sm rounded-2xl overflow-hidden">
+                    <div className="px-8 py-5 border-b border-border bg-surface-subtle flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-surface-solid border border-border flex items-center justify-center text-primary shadow-sm">
+                            <Diamond className="w-5 h-5" />
                         </div>
-                        <h3 className="text-lg font-black text-text-primary tracking-tighter uppercase italic font-mono">Environment Usage</h3>
+                        <h3 className="text-sm font-bold text-text-primary tracking-tight">Usage Breakdown</h3>
                     </div>
                     <div className="p-0">
                         <AppUsageList samples={samples} />
@@ -166,14 +166,14 @@ export function Activity() {
                 </Card>
             </div>
 
-            <div className="mt-16">
-                 <div className="flex items-center gap-5 mb-10 px-4">
-                    <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-xl shadow-primary/20 rotate-3">
-                        <Monitor className="w-7 h-7" strokeWidth={2.5} />
+            <div className="mt-12">
+                 <div className="flex items-center gap-4 mb-8 px-4">
+                    <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg">
+                        <Monitor className="w-6 h-6" />
                     </div>
                     <div>
-                        <h2 className="text-3xl font-black text-text-primary tracking-tighter uppercase italic font-mono leading-none">Visual Archives</h2>
-                        <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.3em] font-mono mt-2 opacity-50">Temporal capture sequence registry</p>
+                        <h2 className="text-2xl font-bold text-text-primary tracking-tight">Screenshot Gallery</h2>
+                        <p className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">Visual history of work sessions</p>
                     </div>
                 </div>
                 

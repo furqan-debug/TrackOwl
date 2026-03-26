@@ -8,7 +8,7 @@ import {
 import clsx from 'clsx';
 import { supabase } from '../lib/supabase';
 import { 
-    PageHeader, Card, Button, Input, Modal, 
+    PageLayout, Card, Button, Input, Modal, 
     StatusBadge, EmptyState, LoadingState 
 } from '../components/ui';
 
@@ -276,77 +276,69 @@ export function Teams() {
     );
 
     return (
-        <div className="min-h-screen bg-background pb-20">
-            <PageHeader
-                title="Teams"
-                description="Organize and manage your team and departments"
-                icon={<UsersRound className="w-8 h-8" />}
-                actions={
-                    <div className="flex items-center gap-3">
-                        <div className="flex bg-white border border-border rounded-xl p-1 shadow-sm mr-2">
-                            <button
-                                onClick={() => setViewMode('grid')}
-                                className={clsx(
-                                    "p-2 rounded-lg transition-all",
-                                    viewMode === 'grid' ? "bg-primary/10 text-primary shadow-inner" : "text-text-muted hover:text-text-primary"
-                                )}
-                            >
-                                <LayoutGrid className="w-4 h-4" strokeWidth={2.5} />
-                            </button>
-                            <button
-                                onClick={() => setViewMode('list')}
-                                className={clsx(
-                                    "p-2 rounded-lg transition-all",
-                                    viewMode === 'list' ? "bg-primary/10 text-primary shadow-inner" : "text-text-muted hover:text-text-primary"
-                                )}
-                            >
-                                <List className="w-4 h-4" strokeWidth={2.5} />
-                            </button>
-                        </div>
-                        <Button
-                            onClick={openCreateModal}
-                            disabled={isViewer}
-                            leftIcon={<Plus className="w-4 h-4" strokeWidth={3} />}
+        <PageLayout
+            title="Teams"
+            description="Manage organizational groups, assign members, and set lead permissions."
+            actions={
+                <div className="flex items-center gap-4">
+                    <div className="flex bg-surface-subtle p-1 rounded-lg border border-border">
+                        <button 
+                            onClick={() => setViewMode('grid')}
+                            className={clsx("p-2 rounded-md transition-all", viewMode === 'grid' ? "bg-white shadow-sm text-primary" : "text-text-muted hover:text-text-primary")}
                         >
+                            <LayoutGrid className="w-4 h-4" />
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('list')}
+                            className={clsx("p-2 rounded-md transition-all", viewMode === 'list' ? "bg-white shadow-sm text-primary" : "text-text-muted hover:text-text-primary")}
+                        >
+                            <List className="w-4 h-4" />
+                        </button>
+                    </div>
+                    {!isViewer && (
+                        <Button onClick={openCreateModal} variant="primary" className="shadow-sm active:scale-95">
+                            <Plus className="w-4 h-4 mr-2" />
                             Create Team
                         </Button>
-                    </div>
-                }
-                stats={
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <Card className="!p-8 bg-surface-solid border-border shadow-sm">
-                            <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-3 font-mono">Hierarchy Nodes (Total Teams)</p>
-                            <h2 className="text-4xl font-bold text-text-primary tracking-tight font-mono">{teams.length}</h2>
-                        </Card>
-                        <Card className="!p-8 bg-surface-solid border-border shadow-sm">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-3 font-mono">Assigned Personnel</p>
-                                    <h2 className="text-4xl font-bold text-text-primary tracking-tight font-mono">
-                                        {teams.reduce((acc, t) => acc + (t.member_count || 0), 0)}
-                                    </h2>
-                                </div>
-                                <div className="w-12 h-12 rounded-[18px] bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm mt-1">
-                                    <Users className="w-6 h-6" strokeWidth={2.5} />
-                                </div>
+                    )}
+                </div>
+            }
+        >
+            <div className="space-y-12">
+                {/* Stats Row */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                    <Card className="!p-8 bg-surface-solid border-border shadow-sm">
+                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mb-3">Total Teams</p>
+                        <h2 className="text-4xl font-bold text-text-primary tracking-tight">{teams.length}</h2>
+                    </Card>
+                    <Card className="!p-8 bg-surface-solid border-border shadow-sm">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mb-3">Total Members</p>
+                                <h2 className="text-4xl font-bold text-text-primary tracking-tight">
+                                    {teams.reduce((acc, t) => acc + (t.member_count || 0), 0)}
+                                </h2>
                             </div>
-                        </Card>
-                        <Card className="!p-8 bg-surface-solid border-border shadow-sm">
-                            <div className="flex justify-between items-start">
-                                <div>
-                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-3 font-mono">Mean Node Density</p>
-                                    <h2 className="text-4xl font-bold text-text-primary tracking-tight font-mono">
-                                        {teams.length > 0 ? (teams.reduce((acc, t) => acc + (t.member_count || 0), 0) / teams.length).toFixed(1) : '0'}
-                                    </h2>
-                                </div>
-                                <div className="w-12 h-12 rounded-[18px] bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm mt-1">
-                                    <Shield className="w-6 h-6" strokeWidth={2.5} />
-                                </div>
+                            <div className="w-12 h-12 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm mt-1">
+                                <Users className="w-6 h-6" strokeWidth={2} />
                             </div>
-                        </Card>
-                    </div>
-                }
-            />
+                        </div>
+                    </Card>
+                    <Card className="!p-8 bg-surface-solid border-border shadow-sm">
+                        <div className="flex justify-between items-start">
+                            <div>
+                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mb-3">Avg. Team Size</p>
+                                <h2 className="text-4xl font-bold text-text-primary tracking-tight">
+                                    {teams.length > 0 ? (teams.reduce((acc, t) => acc + (t.member_count || 0), 0) / teams.length).toFixed(1) : '0'}
+                                </h2>
+                            </div>
+                            <div className="w-12 h-12 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-sm mt-1">
+                                <Shield className="w-6 h-6" strokeWidth={2} />
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            </div>
 
             <div className="px-10 space-y-10">
                 {/* Search Bar */}
@@ -690,7 +682,7 @@ export function Teams() {
                     </p>
                 </div>
             </Modal>
-        </div>
+        </PageLayout>
     );
 }
 
@@ -706,18 +698,18 @@ function TeamItem({ team, mode, onEdit, onDelete, isViewer }: {
     if (mode === 'list') {
         return (
             <div className="px-10 py-8 flex items-center group/row hover:bg-primary/[0.02] transition-all border-b last:border-0 border-border">
-                <div className="w-14 h-14 rounded-[20px] bg-primary/5 border border-primary/10 flex items-center justify-center text-primary font-bold text-lg mr-8 font-mono shadow-sm">
+                <div className="w-14 h-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary font-bold text-lg mr-8 shadow-sm">
                     {initials}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-text-primary tracking-tight text-xl mb-1 group-hover/row:text-primary transition-colors uppercase font-mono">{team.name}</h3>
-                    <p className="text-[11px] text-text-muted font-bold uppercase tracking-[0.15em] font-mono truncate max-w-xl">{team.description || 'No operational parameters defined'}</p>
+                    <h3 className="font-bold text-text-primary tracking-tight text-xl mb-1 group-hover/row:text-primary transition-colors">{team.name}</h3>
+                    <p className="text-xs text-text-muted font-medium truncate max-w-xl opacity-80">{team.description || 'No description provided'}</p>
                 </div>
                 <div className="px-12 shrink-0 border-x border-border/60">
-                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-2 font-mono">Node Density</p>
-                    <div className="flex items-center gap-3 text-primary font-bold font-mono">
-                        <UsersRound className="w-4 h-4" strokeWidth={2.5} />
-                        <span className="text-sm">{team.member_count} units</span>
+                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-2">Members</p>
+                    <div className="flex items-center gap-3 text-primary font-bold">
+                        <UsersRound className="w-4 h-4" strokeWidth={2} />
+                        <span className="text-sm">{team.member_count}</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-3 ml-auto opacity-0 group-hover/row:opacity-100 transition-all translate-x-4 group-hover/row:translate-x-0">
@@ -735,39 +727,39 @@ function TeamItem({ team, mode, onEdit, onDelete, isViewer }: {
     return (
         <Card className="h-full flex flex-col group/card hover:border-primary/40 transition-all duration-500 bg-surface-solid border-border shadow-sm hover:shadow-md" noPadding>
             <div className="p-8 pb-0">
-                <div className="flex items-start justify-between mb-8">
-                    <div className="w-16 h-16 rounded-[24px] bg-primary/5 border border-primary/10 flex items-center justify-center font-bold text-primary text-2xl font-mono shadow-sm group-hover/card:scale-105 transition-transform duration-500">
+                <div className="flex items-start justify-between mb-10">
+                    <div className="w-16 h-16 rounded-3xl bg-primary/5 border border-primary/10 flex items-center justify-center font-bold text-primary text-2xl shadow-sm group-hover/card:scale-105 transition-transform duration-500">
                         {initials}
                     </div>
-                    <div className="flex gap-2 opacity-0 group-hover/card:opacity-100 transition-all translate-y-2 group-hover/card:translate-y-0 duration-300">
-                        <Button variant="secondary" size="sm" onClick={onEdit} disabled={isViewer} className="shadow-sm">
+                    <div className="flex gap-2">
+                        <Button variant="secondary" size="sm" onClick={onEdit} disabled={isViewer} className="shadow-sm opacity-0 group-hover/card:opacity-100 transition-opacity">
                             <Pencil className="w-4 h-4" />
                         </Button>
-                        <Button variant="danger" size="sm" onClick={onDelete} disabled={isViewer} className="shadow-sm">
+                        <Button variant="danger" size="sm" onClick={onDelete} disabled={isViewer} className="shadow-sm opacity-0 group-hover/card:opacity-100 transition-opacity">
                             <Trash2 className="w-4 h-4" />
                         </Button>
                     </div>
                 </div>
 
-                <h3 className="text-2xl font-bold text-text-primary tracking-tight mb-3 group-hover/card:text-primary transition-colors uppercase font-mono leading-none">{team.name}</h3>
-                <p className="text-[11px] font-bold text-text-muted leading-relaxed uppercase tracking-[0.05em] font-mono line-clamp-2 h-10 mb-8">
-                    {team.description || "Operational parameters for this hierarchy node are currently undefined."}
+                <h3 className="text-2xl font-bold text-text-primary tracking-tight mb-2 group-hover/card:text-primary transition-colors">{team.name}</h3>
+                <p className="text-sm font-medium text-text-muted leading-relaxed line-clamp-2 h-10 mb-8 opacity-70">
+                    {team.description || "No description provided for this team."}
                 </p>
             </div>
 
-            <div className="mt-auto p-8 pt-6 border-t border-border bg-border/5 flex items-center justify-between">
+            <div className="mt-auto p-8 pt-6 border-t border-border bg-border/[0.02] flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/5 flex items-center justify-center text-primary shadow-inner">
-                        <Shield className="w-5 h-5" strokeWidth={2.5} />
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/5 flex items-center justify-center text-primary shadow-sm">
+                        <Shield className="w-5 h-5" strokeWidth={2} />
                     </div>
                     <div>
-                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] leading-none mb-1.5 font-mono">Lead Authority</p>
-                        <p className="text-sm font-bold text-text-primary uppercase font-mono truncate max-w-[140px] tracking-tight">{team.manager_name || 'Unassigned Node'}</p>
+                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 opacity-60">Manager</p>
+                        <p className="text-sm font-bold text-text-primary truncate max-w-[140px] tracking-tight">{team.manager_name || 'Unassigned'}</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2.5 px-4 py-2 bg-surface-solid border border-border rounded-xl shadow-sm">
-                    <UsersRound className="w-4 h-4 text-primary" strokeWidth={2.5} />
-                    <span className="text-sm font-bold text-text-primary font-mono tracking-tighter">{team.member_count}</span>
+                    <UsersRound className="w-4 h-4 text-primary" strokeWidth={2} />
+                    <span className="text-sm font-bold text-text-primary">{team.member_count}</span>
                 </div>
             </div>
         </Card>
