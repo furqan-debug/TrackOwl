@@ -5,9 +5,9 @@ import {
     Users, Activity, 
     Timer, BarChart3,
     CheckCircle2, AlertCircle,
-    ChevronDown
+    Clock, ChevronDown
 } from 'lucide-react';
-import { PageLayout, Card, KpiCard } from '../components/ui';
+import { PageHeader, Card, KpiCard } from '../components/ui';
 import clsx from 'clsx';
 
 interface Session {
@@ -139,10 +139,11 @@ export function Timesheets() {
         : 0;
 
     return (
-        <PageLayout 
-            title="Timesheets" 
-            description={`Daily and weekly breakdown of team activity sessions • ${weekLabel}`} 
-            maxWidth="full"
+        <div className="min-h-screen bg-background pb-20">
+            <PageHeader 
+                title="Timesheets" 
+                description={`Daily and weekly breakdown of team activity sessions • ${weekLabel}`} 
+                icon={<Clock className="w-8 h-8" />}
             actions={
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                     <FilterSelect 
@@ -152,32 +153,32 @@ export function Timesheets() {
                         options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
                     />
                     
-                    <div className="flex items-center gap-1 glass border border-black/[0.05] rounded-2xl p-1.5 shadow-xl">
-                        <button onClick={() => setWeekOffset(w => w - 1)} className="p-3 hover:bg-black/[0.03] rounded-xl transition-all text-text-muted hover:text-primary group">
-                            <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" strokeWidth={3} />
+                    <div className="flex items-center gap-1 bg-surface-solid border border-border rounded-xl p-1 shadow-sm">
+                        <button onClick={() => setWeekOffset(w => w - 1)} className="p-2 hover:bg-black/[0.03] rounded-lg transition-all text-text-muted hover:text-primary group">
+                            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" strokeWidth={3} />
                         </button>
-                        <div className="px-8 flex items-center justify-center min-w-[220px]">
+                        <div className="px-6 flex items-center justify-center min-w-[200px]">
                             <span className="text-[11px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono">
                                 {weekLabel}
                             </span>
                         </div>
-                        <button onClick={() => setWeekOffset(w => w + 1)} className="p-3 hover:bg-black/[0.03] rounded-xl transition-all text-text-muted hover:text-primary group">
-                            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" strokeWidth={3} />
+                        <button onClick={() => setWeekOffset(w => w + 1)} className="p-2 hover:bg-black/[0.03] rounded-lg transition-all text-text-muted hover:text-primary group">
+                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" strokeWidth={3} />
                         </button>
                     </div>
 
                     {weekOffset !== 0 && (
                         <button 
                             onClick={() => setWeekOffset(0)}
-                            className="px-8 py-4 glass border border-primary/10 rounded-2xl text-[10px] font-bold uppercase tracking-[0.3em] text-primary hover:bg-primary/5 transition-all active:scale-95 shadow-lg border-primary/20 font-mono"
+                            className="px-6 py-3 bg-surface-solid border border-border rounded-xl text-[10px] font-bold uppercase tracking-[0.3em] text-primary hover:border-primary/30 transition-all active:scale-95 shadow-sm font-mono"
                         >
                             SYNC TO PRESENT
                         </button>
                     )}
                 </div>
-            }
-        >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
+            } />
+            <div className="px-10 space-y-10">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
                 <KpiCard icon={<Timer className="w-6 h-6" />} label="Total Time Tracked" value={loading ? '—' : fmtHours(totalMins)} trend="+15%" trendVariant="positive" />
                 <KpiCard icon={<BarChart3 className="w-6 h-6" />} label="Average Activity" value={loading ? '—' : `${avgActivity}%`} trend="+2%" trendVariant="positive" />
                 <KpiCard icon={<CheckCircle2 className="w-6 h-6" />} label="Active Days" value={loading ? '—' : entries.filter(e => e.totalMinutes > 0).length + ' / 7 days'} />
@@ -193,7 +194,7 @@ export function Timesheets() {
                         </div>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x divide-black/[0.03] bg-white/[0.2]">
+                    <div className="grid grid-cols-1 md:grid-cols-7 divide-y md:divide-y-0 md:divide-x divide-border bg-surface-solid border-t border-border">
                         {entries.map((entry, i) => {
                             const d = new Date(entry.date + 'T12:00:00');
                             const isToday = d.toDateString() === today.toDateString();
@@ -203,7 +204,7 @@ export function Timesheets() {
                             return (
                                 <div key={i} className={clsx(
                                     "p-10 flex flex-col min-h-[380px] transition-all duration-700 relative group overflow-hidden",
-                                    isToday ? "bg-primary/[0.03] border-b-[10px] md:border-b-0 md:border-r-[10px] border-primary/20" : "hover:bg-white/[0.4]"
+                                    isToday ? "bg-primary/[0.03] border-b-[6px] md:border-b-0 md:border-b-primary/40 border-primary/40 md:border-r-[6px]" : "hover:bg-border/5"
                                 )}>
                                     <div className="mb-12 relative z-10">
                                         <span className={clsx(
@@ -275,7 +276,8 @@ export function Timesheets() {
                     </div>
                 )}
             </Card>
-        </PageLayout>
+        </div>
+    </div>
     );
 }
 
@@ -284,10 +286,10 @@ function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNod
     
     return (
         <div className="relative group/select">
-            <div className="flex items-center gap-3.5 glass border border-black/[0.05] rounded-2xl px-6 py-4 shadow-xl transition-all group-hover/select:border-primary/50 cursor-pointer shadow-black/[0.02]">
+            <div className="flex items-center gap-3.5 bg-surface-solid border border-border rounded-xl px-5 py-3 shadow-sm transition-all group-hover/select:border-primary/50 cursor-pointer">
                 <div className="text-primary group-hover/select:scale-110 transition-transform">{icon}</div>
                 <span className="text-[10px] font-bold text-text-primary uppercase tracking-[0.2em] min-w-[150px] font-mono">{activeLabel}</span>
-                <ChevronDown className="w-4.5 h-4.5 text-text-muted group-hover/select:text-text-primary transition-all group-hover/select:rotate-180" strokeWidth={3} />
+                <ChevronDown className="w-4 h-4 text-text-muted group-hover/select:text-text-primary transition-all group-hover/select:rotate-180" strokeWidth={3} />
             </div>
             
             <select

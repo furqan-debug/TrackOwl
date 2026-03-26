@@ -5,6 +5,7 @@ import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, Legend
 } from 'recharts';
+import { PageHeader, Card } from '../components/ui';
 
 interface DomainEntry {
     domain: string;
@@ -138,168 +139,197 @@ export function UrlTracking() {
     const topCategory = pieData.sort((a, b) => b.value - a.value)[0]?.name || '—';
 
     return (
-        <div className="p-8 max-w-[1600px] mx-auto w-full">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 relative z-20">
-                <div>
-                    <h1 className="text-2xl font-semibold text-slate-900">URL Tracking</h1>
-                    <p className="text-slate-500 text-sm mt-1">Browser domains visited during tracked time</p>
-                </div>
+        <div className="min-h-screen bg-background pb-20">
+            <PageHeader 
+                title="URL Tracking" 
+                description="Browser domains visited during tracked time"
+                icon={<Globe className="w-8 h-8 text-primary" />}
+                actions={
+                    <div className="flex items-center gap-4">
+                        {/* Member Selector */}
+                        <div className="flex items-center gap-2 bg-surface-solid border border-border rounded-lg px-3 py-2 shadow-sm font-mono text-[11px] uppercase tracking-widest">
+                            <Users className="w-4 h-4 text-text-muted" />
+                            <select
+                                className="bg-transparent font-bold text-text-primary outline-none w-48"
+                                value={selectedMemberId}
+                                onChange={(e) => setSelectedMemberId(e.target.value)}
+                            >
+                                <option value="all">Entire Organization</option>
+                                <option disabled>──────────</option>
+                                {members.map(m => (
+                                    <option key={m.id} value={m.id}>{m.full_name}</option>
+                                ))}
+                            </select>
+                        </div>
 
-                <div className="flex items-center gap-4">
-                    {/* Member Selector */}
-                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
-                        <Users className="w-4 h-4 text-slate-400" />
-                        <select
-                            className="bg-transparent text-sm font-medium text-slate-700 outline-none w-48"
-                            value={selectedMemberId}
-                            onChange={(e) => setSelectedMemberId(e.target.value)}
-                        >
-                            <option value="all">Entire Organization</option>
-                            <option disabled>──────────</option>
-                            {members.map(m => (
-                                <option key={m.id} value={m.id}>{m.full_name}</option>
+                        {/* Range Selector */}
+                        <div className="flex items-center gap-1 bg-surface-solid border border-border rounded-lg p-1 shadow-sm font-mono text-[10px] uppercase tracking-widest font-bold">
+                            {RANGES.map(r => (
+                                <button key={r} onClick={() => setRange(r)}
+                                    className={`px-4 py-2 rounded-md transition-colors ${range === r ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text-primary hover:bg-surface-subtle'}`}>
+                                    {r}
+                                </button>
                             ))}
-                        </select>
+                        </div>
                     </div>
+                }
+            />
 
-                    {/* Range Selector */}
-                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
-                        {RANGES.map(r => (
-                            <button key={r} onClick={() => setRange(r)}
-                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${range === r ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-50'}`}>
-                                {r}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </div>
+            <div className="px-10 space-y-10">
 
             {/* KPI Row */}
-            <div className="grid grid-cols-3 gap-4 mb-8">
-                <KpiCard icon={<Globe className="w-5 h-5 text-blue-500" />} label="Total Visits" value={totalVisits.toLocaleString()} />
-                <KpiCard icon={<TrendingUp className="w-5 h-5 text-purple-500" />} label="Unique Domains" value={uniqueDomains.toString()} />
-                <KpiCard icon={<Clock className="w-5 h-5 text-emerald-500" />} label="Top Category" value={topCategory} />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                <KpiCard icon={<Globe className="w-6 h-6" />} label="Total Visits" value={totalVisits.toLocaleString()} />
+                <KpiCard icon={<TrendingUp className="w-6 h-6" />} label="Unique Domains" value={uniqueDomains.toString()} />
+                <KpiCard icon={<Clock className="w-6 h-6" />} label="Top Category" value={topCategory} />
             </div>
 
             {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                 {/* Hourly activity */}
-                <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-                    <h2 className="text-sm font-semibold text-slate-500 mb-5 uppercase tracking-wider">Browsing Activity — By Hour</h2>
+                <Card title="Browsing Activity — By Hour" className="lg:col-span-2 min-h-[300px] shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-1000">
                     {loading ? <Skeleton /> : domains.length === 0 ? <EmptyChart /> : (
-                        <ResponsiveContainer width="100%" height={200}>
-                            <BarChart data={hourlyData} barSize={12}>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                <XAxis dataKey="hour" tick={{ fontSize: 10, fill: '#94a3b8' }} interval={2} />
-                                <YAxis tick={{ fontSize: 10, fill: '#94a3b8' }} />
-                                <Tooltip
-                                    formatter={(v?: number) => [`${v ?? 0} visits`, 'Count']}
-                                    contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }}
-                                />
-                                <Bar dataKey="count" fill="#3b82f6" radius={[3, 3, 0, 0]} />
-                            </BarChart>
-                        </ResponsiveContainer>
+                        <div className="h-[250px] w-full mt-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={hourlyData} barSize={12}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--color-border)" opacity={0.5} />
+                                    <XAxis dataKey="hour" tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontWeight: 'bold', fontFamily: 'monospace' }} interval={2} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontWeight: 'bold', fontFamily: 'monospace' }} axisLine={false} tickLine={false} />
+                                    <Tooltip
+                                        formatter={(v?: number) => [`${v ?? 0} visits`, 'Count']}
+                                        contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', fontFamily: 'monospace', textTransform: 'uppercase' }}
+                                    />
+                                    <Bar dataKey="count" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     )}
-                </div>
+                </Card>
 
                 {/* Category Pie */}
-                <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
-                    <h2 className="text-sm font-semibold text-slate-500 mb-5 uppercase tracking-wider">By Category</h2>
+                <Card title="By Category" className="min-h-[300px] shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-150">
                     {loading ? <Skeleton /> : pieData.length === 0 ? <EmptyChart /> : (
-                        <ResponsiveContainer width="100%" height={200}>
-                            <PieChart>
-                                <Pie data={pieData} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
-                                    {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                                </Pie>
-                                <Tooltip formatter={(v?: number) => [`${v ?? 0}`, 'Visits']} contentStyle={{ borderRadius: 8, fontSize: 12 }} />
-                                <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11 }} />
-                            </PieChart>
-                        </ResponsiveContainer>
+                        <div className="h-[250px] w-full mt-4">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value" stroke="none">
+                                        {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                    </Pie>
+                                    <Tooltip formatter={(v?: number) => [`${v ?? 0}`, 'Visits']} contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', fontFamily: 'monospace', textTransform: 'uppercase' }} />
+                                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, fontWeight: 'bold', fontFamily: 'monospace', textTransform: 'uppercase', color: 'var(--color-text-muted)' }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
                     )}
-                </div>
+                </Card>
             </div>
 
             {/* Domain Table */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Top Domains</h2>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            {/* Domain Table */}
+            <Card noPadding title="Top Domains" className="shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-1200 overflow-hidden" 
+                actions={
+                    <div className="relative border border-border bg-surface-solid rounded-xl flex items-center shadow-sm">
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                         <input type="text" placeholder="Filter domains..." value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-56" />
+                            className="bg-transparent pl-11 pr-4 py-2 text-[10px] font-bold uppercase tracking-widest font-mono text-text-primary outline-none focus:border-primary/50 w-64 h-full" />
                     </div>
-                </div>
+                }
+            >
                 {loading ? (
-                    <div className="p-8 text-center text-slate-400">Loading...</div>
+                    <div className="px-10 py-12 text-center text-text-muted font-mono text-[11px] tracking-widest uppercase">Loading...</div>
                 ) : filtered.length === 0 ? (
-                    <div className="p-12 flex flex-col items-center gap-3 text-slate-400">
-                        <Globe className="w-10 h-10 text-slate-200" />
-                        <p className="font-medium">No URL data yet</p>
-                        <p className="text-sm">URL tracking is captured from the <code className="bg-slate-100 px-1 rounded">domain</code> field in activity samples.</p>
+                    <div className="p-16 flex flex-col items-center gap-4 text-text-muted">
+                        <div className="w-16 h-16 bg-surface-subtle rounded-2xl flex items-center justify-center border border-border">
+                            <Globe className="w-8 h-8 text-text-muted opacity-50" />
+                        </div>
+                        <p className="text-[12px] font-mono font-bold uppercase tracking-widest opacity-80 mt-2">No URL data yet</p>
+                        <p className="text-[10px] font-mono tracking-wider opacity-60">URL tracking is captured from the <code className="bg-surface-solid border border-border px-1.5 py-0.5 rounded">domain</code> field in activity samples.</p>
                     </div>
                 ) : (
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="border-b border-slate-100 bg-slate-50/50">
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">#</th>
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Domain</th>
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Category</th>
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Visits</th>
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Share</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filtered.slice(0, 50).map((d, i) => (
-                                <tr key={d.domain} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-6 py-3.5 text-slate-400 font-mono text-xs">{i + 1}</td>
-                                    <td className="px-6 py-3.5">
-                                        <div className="flex items-center gap-2.5">
-                                            <img src={`https://www.google.com/s2/favicons?domain=${d.domain}&sz=16`}
-                                                alt="" className="w-4 h-4 rounded" onError={e => (e.currentTarget.style.display = 'none')} />
-                                            <span className="font-medium text-slate-700">{d.domain}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-3.5">
-                                        <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded-full font-medium">{d.category}</span>
-                                    </td>
-                                    <td className="px-6 py-3.5 text-slate-600 font-medium">{d.count.toLocaleString()}</td>
-                                    <td className="px-6 py-3.5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                <div className="h-full bg-blue-500 rounded-full" style={{ width: `${d.percent}%` }} />
-                                            </div>
-                                            <span className="text-xs text-slate-500 w-8">{d.percent}%</span>
-                                        </div>
-                                    </td>
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-surface-subtle/30 border-b border-border">
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono w-16">#</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Domain</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Category</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Visits</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Share</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-border/40">
+                                {filtered.slice(0, 50).map((d, i) => (
+                                    <tr key={d.domain} className="hover:bg-primary/[0.01] transition-all group duration-500">
+                                        <td className="px-10 py-5 text-text-muted font-mono text-[11px] opacity-70 border-r border-border/20">{i + 1}</td>
+                                        <td className="px-10 py-5">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-8 h-8 rounded-lg bg-surface-solid border border-border flex items-center justify-center shadow-sm shrink-0">
+                                                    <img src={`https://www.google.com/s2/favicons?domain=${d.domain}&sz=16`}
+                                                        alt="" className="w-4 h-4 rounded" onError={e => (e.currentTarget.style.display = 'none')} />
+                                                </div>
+                                                <span className="font-bold text-text-primary text-[14px] font-mono tracking-tight group-hover:text-primary transition-colors">{d.domain}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-10 py-5">
+                                            <span className={`inline-flex px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest font-mono border
+                                                ${d.category === 'Development' ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' :
+                                                    d.category === 'Search' ? 'bg-sky-500/10 text-sky-600 border-sky-500/20' :
+                                                        d.category === 'Communication' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                                                            d.category === 'Productivity' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                                                                d.category === 'Social' ? 'bg-fuchsia-500/10 text-fuchsia-600 border-fuchsia-500/20' :
+                                                                    d.category === 'Media' ? 'bg-rose-500/10 text-rose-600 border-rose-500/20' :
+                                                                        'bg-surface-subtle text-text-muted border-border'}`}
+                                            >
+                                                {d.category}
+                                            </span>
+                                        </td>
+                                        <td className="px-10 py-5 text-text-primary font-bold text-[12px] font-mono">{d.count.toLocaleString()}</td>
+                                        <td className="px-10 py-5 w-48">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-full h-2 bg-surface-subtle rounded-full overflow-hidden border border-border p-[1px] shadow-inner">
+                                                    <div className="h-full bg-primary rounded-full transition-all duration-[2000ms] shadow-sm" style={{ width: `${d.percent}%` }} />
+                                                </div>
+                                                <span className="text-[11px] font-bold text-text-primary font-mono w-12">{d.percent}%</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
-            </div>
+            </Card>
+        </div>
         </div>
     );
 }
 
 function KpiCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center">{icon}</div>
-            <div>
-                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">{label}</p>
-                <p className="text-xl font-semibold text-slate-800 mt-0.5">{value}</p>
+        <div className="bg-surface-solid border border-border rounded-2xl p-8 shadow-sm flex items-center gap-6 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="w-14 h-14 bg-primary/10 text-primary rounded-xl flex items-center justify-center shrink-0">
+                {icon}
+            </div>
+            <div className="flex flex-col">
+                <p className="text-[11px] text-text-muted font-bold uppercase tracking-widest font-mono mb-1">{label}</p>
+                <p className="text-3xl font-black text-text-primary font-mono italic tracking-tighter">{value}</p>
             </div>
         </div>
     );
 }
-function Skeleton() { return <div className="h-48 flex items-center justify-center text-slate-400 text-sm">Loading...</div>; }
+
+function Skeleton() { 
+    return <div className="h-64 flex items-center justify-center text-text-muted font-mono text-[11px] tracking-widest uppercase">Loading...</div>; 
+}
+
 function EmptyChart() {
     return (
-        <div className="h-48 flex flex-col items-center justify-center text-slate-400 gap-2">
-            <BarChart2 className="w-8 h-8 text-slate-200" />
-            <span className="text-sm">No data for this period</span>
+        <div className="h-64 flex flex-col items-center justify-center text-text-muted gap-4">
+            <div className="w-12 h-12 bg-surface-subtle border border-border rounded-xl flex items-center justify-center">
+                <BarChart2 className="w-6 h-6 text-text-muted opacity-50" />
+            </div>
+            <span className="text-[11px] font-mono font-bold uppercase tracking-widest opacity-80">No data for this period</span>
         </div>
     );
 }

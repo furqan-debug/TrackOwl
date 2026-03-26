@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { AppWindow, Monitor, Users, Search, Clock } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend } from 'recharts';
+import { PageHeader, Card } from '../components/ui';
 
 interface AppEntry {
     app: string;
@@ -149,75 +150,74 @@ export function AppUsage() {
     const chartData = getChartData();
 
     return (
-        <div className="p-8 max-w-[1200px] mx-auto w-full fade-in">
-            <div className="flex justify-between items-end mb-8 relative z-20">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-2">App Usage</h1>
-                    <p className="text-slate-500">Track which desktop applications are used during work hours.</p>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    {/* Member Selector */}
-                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm">
-                        <Users className="w-4 h-4 text-slate-400" />
-                        <select
-                            className="bg-transparent text-sm font-medium text-slate-700 outline-none w-48"
-                            value={selectedMemberId}
-                            onChange={(e) => setSelectedMemberId(e.target.value)}
-                        >
-                            <option value="all">Entire Organization</option>
-                            <option disabled>──────────</option>
-                            {members.map(m => (
-                                <option key={m.id} value={m.id}>{m.full_name}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Date Selector */}
-                    <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 shadow-sm bg-white hover:bg-slate-50 transition-colors"
-                    />
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                {/* Stats Card */}
-                <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col justify-center">
-                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-4">
-                        <Monitor className="w-6 h-6" strokeWidth={1.5} />
-                    </div>
-                    <div className="text-3xl font-bold text-slate-800 mb-1">
-                        {apps.length}
-                    </div>
-                    <div className="text-sm text-slate-500 font-medium">Distinct Apps Used</div>
-                </div>
-
-                {/* Donut Chart */}
-                <div className="col-span-2 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm min-h-[250px] relative z-0">
-                    <h3 className="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Top Applications Breakdown</h3>
-
-                    {loading ? (
-                        <div className="absolute inset-0 flex items-center justify-center text-slate-400">Loading data...</div>
-                    ) : apps.length === 0 ? (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="text-center text-slate-500">
-                                <Monitor className="w-8 h-8 text-slate-300 mx-auto mb-2" />
-                                <p>No app data recorded.</p>
-                            </div>
+        <div className="min-h-screen bg-background pb-20">
+            <PageHeader 
+                title="App Usage" 
+                description="Track which desktop applications are used during work hours"
+                icon={<AppWindow className="w-8 h-8 text-primary" />}
+                actions={
+                    <div className="flex items-center gap-4">
+                        {/* Member Selector */}
+                        <div className="flex items-center gap-2 bg-surface-solid border border-border rounded-lg px-3 py-2 shadow-sm font-mono text-[11px] uppercase tracking-widest">
+                            <Users className="w-4 h-4 text-text-muted" />
+                            <select
+                                className="bg-transparent font-bold text-text-primary outline-none w-48"
+                                value={selectedMemberId}
+                                onChange={(e) => setSelectedMemberId(e.target.value)}
+                            >
+                                <option value="all">Entire Organization</option>
+                                <option disabled>──────────</option>
+                                {members.map(m => (
+                                    <option key={m.id} value={m.id}>{m.full_name}</option>
+                                ))}
+                            </select>
                         </div>
+
+                        {/* Date Selector */}
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                            className="px-4 py-2 border border-border rounded-lg text-[11px] font-bold text-text-primary shadow-sm bg-surface-solid hover:bg-surface-subtle transition-colors uppercase tracking-widest font-mono cursor-pointer"
+                        />
+                    </div>
+                }
+            />
+
+            <div className="px-10 space-y-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+                    {/* Stats Card */}
+                    <div className="bg-surface-solid border border-border rounded-2xl p-8 shadow-sm flex flex-col justify-center animate-in fade-in slide-in-from-top-4 duration-700">
+                        <div className="w-14 h-14 bg-primary/10 text-primary rounded-xl flex items-center justify-center mb-6">
+                            <Monitor className="w-6 h-6" strokeWidth={2} />
+                        </div>
+                        <div className="text-4xl font-black text-text-primary mb-2 font-mono italic tracking-tighter">
+                            {apps.length}
+                        </div>
+                        <div className="text-[11px] text-text-muted font-bold uppercase tracking-widest font-mono">Distinct Apps Used</div>
+                    </div>
+
+                    {/* Donut Chart */}
+                    <Card title="Top Applications Breakdown" className="col-span-2 min-h-[300px] shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                        {loading ? (
+                            <div className="absolute inset-0 flex items-center justify-center text-text-muted font-mono text-[11px] uppercase tracking-widest">Loading data...</div>
+                        ) : apps.length === 0 ? (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="text-center text-text-muted">
+                                    <Monitor className="w-8 h-8 text-border mx-auto mb-3" />
+                                    <p className="font-mono text-[11px] uppercase tracking-widest">No app data recorded</p>
+                                </div>
+                            </div>
                     ) : (
-                        <div className="h-[200px] w-full">
+                        <div className="h-[220px] w-full mt-2">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
                                         data={chartData}
                                         cx="50%"
                                         cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
+                                        innerRadius={70}
+                                        outerRadius={90}
                                         paddingAngle={2}
                                         dataKey="value"
                                         stroke="none"
@@ -227,110 +227,112 @@ export function AppUsage() {
                                         ))}
                                     </Pie>
                                     <RechartsTooltip
-                                        contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', fontFamily: 'monospace', textTransform: 'uppercase' }}
                                         formatter={(value: number | undefined) => [formatTime(value || 0), 'Time Spent']}
                                     />
                                     <Legend
                                         layout="vertical"
                                         verticalAlign="middle"
                                         align="right"
-                                        wrapperStyle={{ fontSize: '12px', paddingLeft: '20px' }}
+                                        wrapperStyle={{ fontSize: '11px', paddingLeft: '20px', fontWeight: 'bold', fontFamily: 'monospace', textTransform: 'uppercase', color: 'var(--color-text-muted)' }}
                                     />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
                     )}
-                </div>
-            </div>
-
-            {/* Detailed Table */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex justify-between items-center">
-                    <h2 className="font-semibold text-slate-800">All Tracked Apps</h2>
-                    <div className="relative">
-                        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                            type="text"
-                            placeholder="Filter apps..."
-                            className="bg-white border border-slate-200 rounded-md pl-9 pr-4 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 w-64"
-                        />
-                    </div>
+                    </Card>
                 </div>
 
-                <table className="w-full text-left border-collapse">
-                    <thead>
-                        <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                            <th className="px-6 py-4 font-medium">Application</th>
-                            <th className="px-6 py-4 font-medium hidden sm:table-cell">Category</th>
-                            <th className="px-6 py-4 font-medium text-right">Time Spent</th>
-                            <th className="px-6 py-4 font-medium text-right">% of Activity</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {loading ? (
-                            <tr>
-                                <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
-                                    Analyzing app usage...
-                                </td>
-                            </tr>
-                        ) : apps.length === 0 ? (
-                            <tr>
-                                <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
-                                    <div className="flex flex-col items-center justify-center gap-2">
-                                        <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center">
-                                            <AppWindow className="w-6 h-6 text-slate-400" />
-                                        </div>
-                                        <p>No app activity recorded on this date.</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        ) : (
-                            apps.map((app, i) => (
-                                <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                                    <td className="px-6 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-6 h-6 rounded bg-blue-50 flex items-center justify-center shrink-0">
-                                                <AppWindow className="w-3.5 h-3.5 text-blue-600" />
-                                            </div>
-                                            <span className="font-medium text-slate-800">{app.app}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-4 hidden sm:table-cell text-sm">
-                                        <span className={`inline-flex px-2 py-0.5 rounded text-xs font-semibold
-                                            ${app.category === 'Development' ? 'bg-indigo-50 text-indigo-600' :
-                                                app.category === 'Browser' ? 'bg-sky-50 text-sky-600' :
-                                                    app.category === 'Communication' ? 'bg-emerald-50 text-emerald-600' :
-                                                        app.category === 'Productivity' ? 'bg-amber-50 text-amber-600' :
-                                                            app.category === 'Design' ? 'bg-fuchsia-50 text-fuchsia-600' :
-                                                                'bg-slate-100 text-slate-500'}`}
-                                        >
-                                            {app.category}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 text-slate-700 text-sm font-medium">
-                                            <Clock className="w-3.5 h-3.5 text-slate-400" />
-                                            {formatTime(app.count)}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-3">
-                                            <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                <div
-                                                    className="h-full bg-blue-500"
-                                                    style={{ width: `${app.percent}%` }}
-                                                />
-                                            </div>
-                                            <span className="text-sm font-medium text-slate-600 w-12 text-right">
-                                                {app.percent.toFixed(1)}%
-                                            </span>
-                                        </div>
-                                    </td>
+                {/* Detailed Table */}
+                <Card noPadding title="All Tracked Apps" className="overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-12 duration-1200"
+                    actions={
+                        <div className="relative">
+                            <Search className="w-4 h-4 text-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
+                            <input
+                                type="text"
+                                placeholder="Filter apps..."
+                                className="bg-surface-solid border border-border rounded-xl pl-11 pr-4 py-2 text-[10px] font-bold uppercase tracking-widest font-mono text-text-primary outline-none focus:border-primary/50 w-64 shadow-sm"
+                            />
+                        </div>
+                    }    
+                >
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-surface-subtle/30 border-b border-border">
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Application</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono hidden sm:table-cell">Category</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono text-right">Time Spent</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono text-right">% of Activity</th>
                                 </tr>
-                            ))
-                        )}
-                    </tbody>
-                </table>
+                            </thead>
+                            <tbody className="divide-y divide-border/40">
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={4} className="px-10 py-12 text-center text-text-muted font-mono text-[11px] tracking-widest uppercase">
+                                            Analyzing app usage...
+                                        </td>
+                                    </tr>
+                                ) : apps.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} className="px-10 py-16 text-center text-text-muted">
+                                            <div className="flex flex-col items-center justify-center gap-4">
+                                                <div className="w-14 h-14 bg-surface-subtle rounded-2xl flex items-center justify-center border border-border">
+                                                    <AppWindow className="w-6 h-6 text-text-muted opacity-50" />
+                                                </div>
+                                                <p className="text-[11px] font-mono font-bold uppercase tracking-widest opacity-80">No app activity recorded on this date.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    apps.map((app, i) => (
+                                        <tr key={i} className="hover:bg-primary/[0.01] transition-all group duration-500">
+                                            <td className="px-10 py-6">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-10 h-10 rounded-xl bg-surface-subtle border border-border flex items-center justify-center shrink-0 shadow-sm group-hover:border-primary/20 group-hover:bg-primary/5 transition-all">
+                                                        <AppWindow className="w-4 h-4 text-primary" strokeWidth={2.5} />
+                                                    </div>
+                                                    <span className="font-bold text-text-primary text-[14px] font-mono tracking-tight group-hover:text-primary transition-colors">{app.app}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-10 py-6 hidden sm:table-cell">
+                                                <span className={`inline-flex px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-widest font-mono border
+                                                    ${app.category === 'Development' ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20' :
+                                                        app.category === 'Browser' ? 'bg-sky-500/10 text-sky-600 border-sky-500/20' :
+                                                            app.category === 'Communication' ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20' :
+                                                                app.category === 'Productivity' ? 'bg-amber-500/10 text-amber-600 border-amber-500/20' :
+                                                                    app.category === 'Design' ? 'bg-fuchsia-500/10 text-fuchsia-600 border-fuchsia-500/20' :
+                                                                        'bg-surface-subtle text-text-muted border-border'}`}
+                                                >
+                                                    {app.category}
+                                                </span>
+                                            </td>
+                                            <td className="px-10 py-6 text-right">
+                                                <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-surface-subtle border border-border shadow-sm">
+                                                    <Clock className="w-3.5 h-3.5 text-text-muted" />
+                                                    <span className="font-bold text-text-primary text-[11px] font-mono tracking-wider">{formatTime(app.count)}</span>
+                                                </span>
+                                            </td>
+                                            <td className="px-10 py-6 text-right w-48">
+                                                <div className="flex items-center justify-end gap-4">
+                                                    <div className="w-full h-2 bg-surface-subtle rounded-full overflow-hidden border border-border p-[1px] shadow-inner">
+                                                        <div
+                                                            className="h-full bg-primary rounded-full transition-all duration-[2000ms] shadow-sm"
+                                                            style={{ width: `${app.percent}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-[11px] font-bold text-text-primary font-mono w-12 text-right">
+                                                        {app.percent.toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
             </div>
         </div>
     );

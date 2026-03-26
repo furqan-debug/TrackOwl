@@ -1,13 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-    Users, Search, Download,
-    ChevronDown, CheckCircle, X,
-    Pencil, Trash2,
-    RotateCcw,
-    Settings,
-    UserPlus, Filter, Shield, User,
-    MoreHorizontal,
-    AlertCircle,
+import { 
+    Users, Search, Filter, Download, UserPlus, Trash2, 
+    ChevronDown, MoreHorizontal, Pencil, RotateCcw, 
+    Settings, X, Shield, User, AlertCircle, CheckCircle,
     Clock, DollarSign, FileText
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -199,17 +194,16 @@ export function People() {
         } catch { fetchMembers(); }
     }
 
-    async function handleBatchDelete() {
-        if (selectedIds.size === 0) return;
-        if (!confirm(`Are you sure you want to remove ${selectedIds.size} selected member(s)?`)) return;
-        setMembers(prev => prev.filter(m => !selectedIds.has(m.id)));
-        try {
-            await Promise.all(
-                Array.from(selectedIds).map(id => supabase.from('members').delete().eq('id', id))
-            );
-            setSelectedIds(new Set());
-        } catch { fetchMembers(); }
-    }
+    const handleBatchDelete = async () => {
+        if (!window.confirm(`Are you sure you want to remove ${selectedIds.size} members?`)) return;
+        setLoading(true);
+        for (const id of Array.from(selectedIds)) {
+            await supabase.from('members').delete().eq('id', id);
+        }
+        setMembers((prev: MemberRow[]) => prev.filter(m => !selectedIds.has(m.id)));
+        setSelectedIds(new Set());
+        setLoading(false);
+    };
 
     function handleExportCsv() {
         if (filtered.length === 0) return;
@@ -228,18 +222,19 @@ export function People() {
         document.body.removeChild(a);
     }
 
-    function toggleSelection(id: string) {
-        const next = new Set(selectedIds);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        setSelectedIds(next);
-    }
+    const toggleSelection = (id: string) => {
+        setSelectedIds((prev: Set<string>) => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id); else next.add(id);
+            return next;
+        });
+    };
 
     function toggleSelectAll() {
         if (selectedIds.size === filtered.length) {
-            setSelectedIds(new Set());
+            setSelectedIds(new Set<string>());
         } else {
-            setSelectedIds(new Set(filtered.map(m => m.id)));
+            setSelectedIds(new Set<string>(filtered.map(m => m.id)));
         }
     }
 
@@ -397,7 +392,7 @@ export function People() {
                                         </td>
                                     </tr>
                                 ) : (
-                                    filtered.map(m => (
+                                    filtered.map((m: any) => (
                                         <MemberRowItem
                                             key={m.id}
                                             m={m}

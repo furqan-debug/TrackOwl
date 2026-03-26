@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { PageHeader, Card } from '../components/ui';
 
 interface Member {
     id: string;
@@ -176,84 +177,84 @@ export function Approvals() {
     const displayedTimesheets = timesheets.filter(t => t.approval_status === activeTab);
 
     return (
-        <div className="p-8 max-w-[1200px] mx-auto w-full fade-in">
-            <div className="flex justify-between items-end mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-2">Timesheet Approvals</h1>
-                    <p className="text-slate-500">Review and approve tracked time for payroll.</p>
-                </div>
-
-                {/* Week Selector */}
-                <div className="flex items-center gap-4 bg-white border border-slate-200 rounded-lg p-1.5 shadow-sm">
-                    <button onClick={previousWeek} className="p-1.5 hover:bg-slate-100 rounded text-slate-600 transition-colors">
-                        <ChevronLeft className="w-5 h-5" />
-                    </button>
-                    <div className="font-medium text-slate-800 min-w-[140px] text-center text-sm">
-                        {monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </div>
-                    <button onClick={nextWeek} className="p-1.5 hover:bg-slate-100 rounded text-slate-600 transition-colors">
-                        <ChevronRight className="w-5 h-5" />
-                    </button>
-                </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex gap-6 border-b border-slate-200 mb-6">
-                {(['Pending', 'Approved', 'Rejected'] as const).map(tab => {
-                    const count = timesheets.filter(t => t.approval_status === tab).length;
-                    return (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={`pb-3 text-sm font-medium transition-colors relative ${activeTab === tab ? 'text-primary' : 'text-slate-500 hover:text-slate-700'
-                                }`}
-                        >
-                            <div className="flex items-center gap-2">
-                                {tab}
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === tab ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-600'
-                                    }`}>
-                                    {count}
-                                </span>
-                            </div>
-                            {activeTab === tab && (
-                                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
-                            )}
+        <div className="min-h-screen bg-background pb-20">
+            <PageHeader 
+                title="Timesheet Approvals" 
+                description="Review and approve tracked time for payroll"
+                icon={<CheckCircle className="w-8 h-8 text-primary" />}
+                actions={
+                    <div className="flex items-center gap-1 bg-surface-solid border border-border rounded-xl p-1 shadow-sm">
+                        <button onClick={previousWeek} className="p-2 hover:bg-black/[0.03] rounded-lg transition-all text-text-muted hover:text-primary group">
+                            <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" strokeWidth={3} />
                         </button>
-                    );
-                })}
-            </div>
+                        <div className="px-6 flex items-center justify-center min-w-[200px]">
+                            <span className="text-[11px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono">
+                                {monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                        </div>
+                        <button onClick={nextWeek} className="p-2 hover:bg-black/[0.03] rounded-lg transition-all text-text-muted hover:text-primary group">
+                            <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" strokeWidth={3} />
+                        </button>
+                    </div>
+                }
+            />
 
-            {/* Table */}
-            <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
-                                <th className="px-6 py-4 font-medium">Member</th>
-                                <th className="px-6 py-4 font-medium">Pay Rate</th>
-                                <th className="px-6 py-4 font-medium">Tracked Time</th>
-                                <th className="px-6 py-4 font-medium">Total Amount</th>
-                                <th className="px-6 py-4 font-medium text-right">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                                        Loading timesheets...
-                                    </td>
+            <div className="px-10 space-y-10">
+                <Card noPadding className="overflow-hidden shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                    {/* Tabs */}
+                    <div className="flex gap-8 border-b border-border px-8 pt-4 bg-surface-subtle/30">
+                        {(['Pending', 'Approved', 'Rejected'] as const).map(tab => {
+                            const count = timesheets.filter(t => t.approval_status === tab).length;
+                            return (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className={`pb-4 text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative font-mono ${activeTab === tab ? 'text-primary' : 'text-text-muted hover:text-text-primary'}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        {tab}
+                                        <span className={`px-2 py-1 rounded-md text-[9px] ${activeTab === tab ? 'bg-primary/10 text-primary' : 'bg-surface-subtle border border-border text-text-muted'}`}>
+                                            {count}
+                                        </span>
+                                    </div>
+                                    {activeTab === tab && (
+                                        <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary" />
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Table */}
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-surface-subtle/30 border-b border-border">
+                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Member</th>
+                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Pay Rate</th>
+                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Tracked Time</th>
+                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Total Amount</th>
+                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono text-right">Actions</th>
                                 </tr>
-                            ) : displayedTimesheets.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
-                                        <div className="flex flex-col items-center justify-center gap-3">
-                                            <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center">
-                                                <Clock className="w-6 h-6 text-slate-400" />
+                            </thead>
+                            <tbody className="divide-y divide-border/40">
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-10 py-12 text-center text-text-muted font-mono text-[11px] tracking-widest uppercase">
+                                            Loading timesheets...
+                                        </td>
+                                    </tr>
+                                ) : displayedTimesheets.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-10 py-16 text-center text-text-muted">
+                                            <div className="flex flex-col items-center justify-center gap-4">
+                                                <div className="w-14 h-14 bg-surface-subtle rounded-2xl flex items-center justify-center border border-border">
+                                                    <Clock className="w-6 h-6 text-text-muted opacity-50" />
+                                                </div>
+                                                <p className="text-[11px] font-mono font-bold uppercase tracking-widest opacity-80">No {activeTab.toLowerCase()} timesheets for this week</p>
                                             </div>
-                                            <p>No {activeTab.toLowerCase()} timesheets for this week.</p>
-                                        </div>
-                                    </td>
-                                </tr>
+                                        </td>
+                                    </tr>
                             ) : (
                                 displayedTimesheets.map((ts) => {
                                     const amount = ts.total_hours * (ts.pay_rate || 0);
@@ -265,54 +266,61 @@ export function Approvals() {
                                     };
 
                                     return (
-                                        <tr key={ts.id} className="hover:bg-slate-50/50 transition-colors">
-                                            <td className="px-6 py-4">
-                                                <div className="font-medium text-slate-900">{ts.full_name}</div>
-                                                <div className="text-xs text-slate-500">{ts.email}</div>
+                                        <tr key={ts.id} className="hover:bg-primary/[0.01] transition-all group duration-500">
+                                            <td className="px-10 py-8">
+                                                <div className="flex items-center gap-5">
+                                                    <div className="w-12 h-12 rounded-2xl bg-surface-subtle border border-border flex items-center justify-center text-text-primary font-bold text-[12px] group-hover:bg-primary group-hover:text-white group-hover:border-primary/20 transition-all duration-500 font-mono shadow-sm">
+                                                        {ts.full_name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-bold text-text-primary text-[15px] tracking-tight group-hover:text-primary transition-colors duration-500">{ts.full_name}</span>
+                                                        <span className="text-[10px] text-text-muted font-mono tracking-wider opacity-60 mt-1">{ts.email}</span>
+                                                    </div>
+                                                </div>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className="text-sm text-slate-600">
+                                            <td className="px-10 py-8">
+                                                <span className="text-[14px] font-bold text-text-primary font-mono tracking-tight opacity-70">
                                                     ${ts.pay_rate ? ts.pay_rate.toFixed(2) : '0.00'}/hr
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 text-sm font-medium">
-                                                    <Clock className="w-3.5 h-3.5 text-slate-400" />
-                                                    {formatHours(ts.total_hours)}
+                                            <td className="px-10 py-8">
+                                                <span className="inline-flex items-center gap-3 px-4 py-2 bg-surface-subtle border border-border rounded-xl shadow-sm">
+                                                    <Clock className="w-4 h-4 text-primary" />
+                                                    <span className="font-bold text-text-primary text-[11px] uppercase font-mono italic tracking-tight">{formatHours(ts.total_hours)}</span>
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <span className="text-sm font-semibold text-slate-900">
+                                            <td className="px-10 py-8">
+                                                <span className="text-[16px] font-black text-text-primary font-mono italic tracking-tighter">
                                                     ${amount.toFixed(2)}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-right">
+                                            <td className="px-10 py-8 text-right">
                                                 {activeTab === 'Pending' && (
-                                                    <div className="flex items-center justify-end gap-2">
+                                                    <div className="flex items-center justify-end gap-3">
                                                         <button
                                                             onClick={() => handleAction(ts.id, 'Rejected')}
-                                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-md transition-colors"
+                                                            className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl transition-colors shadow-sm font-mono"
                                                         >
-                                                            <XCircle className="w-3.5 h-3.5" />
+                                                            <XCircle className="w-4 h-4" />
                                                             Reject
                                                         </button>
                                                         <button
                                                             onClick={() => handleAction(ts.id, 'Approved')}
-                                                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-md transition-colors shadow-sm"
+                                                            className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition-colors shadow-sm font-mono"
                                                         >
-                                                            <CheckCircle className="w-3.5 h-3.5" />
+                                                            <CheckCircle className="w-4 h-4" />
                                                             Approve
                                                         </button>
                                                     </div>
                                                 )}
                                                 {activeTab === 'Approved' && (
-                                                    <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600 font-medium">
+                                                    <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 shadow-sm font-mono italic">
                                                         <CheckCircle className="w-4 h-4" />
                                                         Approved
                                                     </span>
                                                 )}
                                                 {activeTab === 'Rejected' && (
-                                                    <span className="inline-flex items-center gap-1.5 text-sm text-rose-600 font-medium">
+                                                    <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] text-rose-600 bg-rose-500/10 border border-rose-500/20 shadow-sm font-mono italic">
                                                         <XCircle className="w-4 h-4" />
                                                         Rejected
                                                     </span>
@@ -325,6 +333,7 @@ export function Approvals() {
                         </tbody>
                     </table>
                 </div>
+            </Card>
             </div>
         </div>
     );

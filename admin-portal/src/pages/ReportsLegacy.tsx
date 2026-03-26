@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { FileText, Search, Download, Filter, User, Clock, Users } from 'lucide-react';
+import { PageHeader, Card, Button } from '../components/ui';
 
 interface LegacyRow {
     member: string;
@@ -92,127 +93,119 @@ export function ReportsLegacy() {
     );
 
     return (
-        <div className="p-8 max-w-[1400px] mx-auto w-full fade-in">
-            <div className="flex justify-between items-end mb-8">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-2 flex items-center gap-3">
-                        <FileText className="w-7 h-7 text-slate-400" />
-                        Time & Activity (Legacy)
-                    </h1>
-                    <p className="text-slate-500">Classic tabular view of all recorded activity samples.</p>
-                </div>
+        <div className="min-h-screen bg-background pb-20">
+            <PageHeader
+                title="Time & Activity (Legacy)"
+                description="Classic tabular view of all recorded activity samples."
+                icon={<FileText className="w-8 h-8 text-primary" />}
+                actions={
+                    <div className="flex items-center gap-4">
+                        {/* Member Filter */}
+                        <div className="flex items-center gap-2 bg-surface-solid border border-border rounded-lg px-3 py-2 shadow-sm font-mono text-[11px] uppercase tracking-widest">
+                            <Users className="w-4 h-4 text-text-muted" />
+                            <select
+                                value={selectedMemberId}
+                                onChange={(e) => setSelectedMemberId(e.target.value)}
+                                className="bg-transparent font-bold text-text-primary outline-none w-48 text-[11px] uppercase tracking-widest"
+                            >
+                                <option value="all">Entire Organization</option>
+                                <option disabled>──────────</option>
+                                {members.map(m => (
+                                    <option key={m.id} value={m.id}>{m.full_name}</option>
+                                ))}
+                            </select>
+                        </div>
 
-                <div className="flex items-center gap-3">
-                    {/* Member Filter */}
-                    <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-sm">
-                        <Users className="w-4 h-4 text-slate-400" />
-                        <select
-                            value={selectedMemberId}
-                            onChange={(e) => setSelectedMemberId(e.target.value)}
-                            className="text-sm font-medium text-slate-700 bg-transparent outline-none cursor-pointer w-48 truncate"
-                        >
-                            <option value="all">Entire Organization</option>
-                            <option disabled>──────────</option>
-                            {members.map(m => (
-                                <option key={m.id} value={m.id}>{m.full_name}</option>
+                        <div className="flex items-center gap-1 bg-surface-solid border border-border rounded-lg p-1 shadow-sm font-mono text-[10px] uppercase tracking-widest font-bold">
+                            {['Today', 'Last 7 Days', 'Last 30 Days'].map(r => (
+                                <button key={r} onClick={() => setRange(r)}
+                                    className={`px-4 py-2 rounded-md transition-colors ${range === r ? 'bg-primary text-white shadow-sm' : 'text-text-muted hover:text-text-primary hover:bg-surface-subtle'}`}>
+                                    {r}
+                                </button>
                             ))}
-                        </select>
-                    </div>
+                        </div>
 
-                    <select
-                        value={range}
-                        onChange={e => setRange(e.target.value)}
-                        className="bg-white border border-slate-200 rounded-lg px-4 py-2 text-sm font-medium outline-none shadow-sm focus:ring-2 focus:ring-blue-500/20"
-                    >
-                        <option>Today</option>
-                        <option>Last 7 Days</option>
-                        <option>Last 30 Days</option>
-                    </select>
-                    <button className="flex items-center gap-2 bg-white border border-slate-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">
-                        <Download className="w-4 h-4" />
-                        Export CSV
-                    </button>
-                </div>
-            </div>
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden min-h-[500px] flex flex-col">
-                <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
-                    <div className="relative w-80">
-                        <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                            type="text"
-                            placeholder="Search member or project..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
-                        />
+                        <Button variant="secondary" leftIcon={<Download className="w-4 h-4" />}>
+                            Export CSV
+                        </Button>
                     </div>
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest bg-white border border-slate-200 px-3 py-1.5 rounded-lg">
-                        <Filter className="w-3.5 h-3.5" />
-                        Filters
-                    </div>
-                </div>
+                }
+            />
 
-                <div className="flex-1 overflow-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="border-b border-slate-100 bg-white sticky top-0 z-10">
-                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Member</th>
-                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Project</th>
-                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Date & Time</th>
-                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Duration</th>
-                                <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest text-right">Activity %</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-50">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={5} className="py-20 text-center text-slate-400 font-medium">Loading legacy data...</td>
+            <div className="px-10">
+                <Card noPadding title="Activity Log" className="shadow-2xl overflow-hidden"
+                    actions={
+                        <div className="flex items-center gap-4">
+                            <div className="relative border border-border bg-surface-solid rounded-xl flex items-center shadow-sm">
+                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                                <input
+                                    type="text"
+                                    placeholder="Search member or project..."
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                    className="bg-transparent pl-11 pr-4 py-2 text-[10px] font-bold uppercase tracking-widest font-mono text-text-primary outline-none focus:border-primary/50 w-64 h-full"
+                                />
+                            </div>
+                            <Button variant="secondary" leftIcon={<Filter className="w-4 h-4" />} className="px-6 py-2 text-[10px] uppercase tracking-widest">
+                                Filters
+                            </Button>
+                        </div>
+                    }
+                >
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-surface-subtle/30 border-b border-border">
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-r border-border/10">Member</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Project</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Date & Time</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Duration</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono text-right">Activity %</th>
                                 </tr>
-                            ) : filtered.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} className="py-20 text-center text-slate-400 font-medium">No results found for {range}.</td>
-                                </tr>
-                            ) : (
-                                filtered.map((row, i) => (
-                                    <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
-                                                    <User className="w-4 h-4 text-indigo-600" />
-                                                </div>
-                                                <span className="text-sm font-bold text-slate-700">{row.member}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 font-bold text-xs text-slate-500 uppercase tracking-tight">{row.project}</td>
-                                        <td className="px-6 py-4 text-xs font-medium text-slate-500">{row.date}</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 bg-slate-100 px-2 py-1 rounded-md w-fit">
-                                                <Clock className="w-3 h-3" />
-                                                {row.duration}m
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <div className="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                    <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${row.activity}%` }} />
-                                                </div>
-                                                <span className="text-xs font-bold text-slate-800 min-w-[30px]">{row.activity}%</span>
-                                            </div>
-                                        </td>
+                            </thead>
+                            <tbody className="divide-y divide-border/40">
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={5} className="py-20 text-center text-text-muted font-mono text-[11px] tracking-widest uppercase">Loading legacy data...</td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="p-4 border-t border-slate-100 bg-slate-50/30 flex justify-between items-center">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Showing {filtered.length} samples</p>
-                    <div className="flex gap-2">
-                        <button disabled className="px-3 py-1 bg-white border border-slate-200 rounded text-xs font-bold text-slate-300">Previous</button>
-                        <button disabled className="px-3 py-1 bg-white border border-slate-200 rounded text-xs font-bold text-slate-300">Next</button>
+                                ) : filtered.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="py-20 text-center text-text-muted font-mono text-[11px] tracking-widest uppercase">No results found for {range}.</td>
+                                    </tr>
+                                ) : (
+                                    filtered.map((row, i) => (
+                                        <tr key={i} className="hover:bg-primary/[0.01] transition-all group duration-500">
+                                            <td className="px-10 py-5 border-r border-border/10">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-lg bg-surface-solid border border-border flex items-center justify-center shadow-sm">
+                                                        <User className="w-4 h-4 text-primary" />
+                                                    </div>
+                                                    <span className="text-[12px] font-bold text-text-primary font-mono group-hover:text-primary transition-colors">{row.member}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-10 py-5 font-bold text-[11px] text-text-muted uppercase tracking-widest font-mono">{row.project}</td>
+                                            <td className="px-10 py-5 text-[11px] font-bold text-text-muted font-mono">{row.date}</td>
+                                            <td className="px-10 py-5">
+                                                <div className="flex items-center gap-2 text-[10px] font-bold text-text-primary bg-surface-subtle px-3 py-1.5 border border-border rounded-lg w-fit uppercase tracking-widest font-mono">
+                                                    <Clock className="w-3.5 h-3.5 opacity-60" />
+                                                    {row.duration}m
+                                                </div>
+                                            </td>
+                                            <td className="px-10 py-5 w-48 text-right">
+                                                <div className="flex items-center justify-end gap-4">
+                                                    <div className="w-full h-2 bg-surface-subtle rounded-full overflow-hidden border border-border p-[1px] shadow-inner">
+                                                        <div className="h-full bg-primary rounded-full transition-all duration-1000 shadow-sm" style={{ width: `${row.activity}%` }} />
+                                                    </div>
+                                                    <span className="text-[11px] font-bold text-text-primary font-mono w-12">{row.activity}%</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
                     </div>
-                </div>
+                </Card>
             </div>
         </div>
     );
