@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
     CheckCircle2, Circle, Search, Plus, 
-    Clock, User, X, Calendar, 
+    User, Calendar, 
     LayoutGrid, List, MoreHorizontal, 
-    Trash2, Briefcase, Tag, AlertCircle,
+    Trash2, Tag, 
     CheckSquare, ClipboardList, Timer
 } from 'lucide-react';
 import { 
@@ -257,21 +257,21 @@ export function Todos() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <KpiCard 
                     label="Backlog & Active" 
-                    value={todos.filter(t => t.status !== 'Done').length} 
+                    value={todos.filter(t => t.status !== 'Done').length.toString()} 
                     icon={<Timer className="w-5 h-5 text-orange-500" strokeWidth={2.5} />} 
-                    description="Open requirements"
+                    sub="Open requirements"
                 />
                 <KpiCard 
                     label="Execution Volume" 
-                    value={todos.filter(t => t.status === 'Done').length} 
+                    value={todos.filter(t => t.status === 'Done').length.toString()} 
                     icon={<CheckSquare className="w-5 h-5 text-emerald-500" strokeWidth={2.5} />} 
-                    description="Completed milestones"
+                    sub="Completed milestones"
                 />
                 <KpiCard 
                     label="Task Distribution" 
-                    value={todos.filter(t => t.assignee_id).length} 
+                    value={todos.filter(t => t.assignee_id).length.toString()} 
                     icon={<ClipboardList className="w-5 h-5 text-indigo-500" strokeWidth={2.5} />} 
-                    description="Assigned personnel"
+                    sub="Assigned personnel"
                 />
             </div>
 

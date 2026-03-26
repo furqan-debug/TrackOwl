@@ -129,7 +129,7 @@ export function ProfilePage() {
                                     <div className="w-full h-full flex items-center justify-center text-primary text-5xl font-black font-mono uppercase italic">
                                         {profile?.full_name?.charAt(0) || user?.email?.charAt(0) || '?'}
                                     </div>
-                                ) || <User className="w-16 h-16 text-primary/20" />}
+                                )}
                                 
                                 {avatarLoading ? (
                                     <div className="absolute inset-0 bg-surface-solid/80 backdrop-blur-sm flex items-center justify-center">

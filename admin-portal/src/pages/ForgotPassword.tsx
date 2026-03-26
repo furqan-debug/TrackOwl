@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Mail, ArrowLeft, ArrowRight, CheckCircle2, Diamond, ShieldAlert } from 'lucide-react';
+import { Mail, ArrowLeft, ArrowRight, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';

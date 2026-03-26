@@ -129,26 +129,26 @@ export function Schedules() {
                 }
             />
 
-            {/* KPI Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <KpiCard 
                     label="Total Activity" 
                     value={totalActiveHours.toLocaleString()} 
                     icon={<Activity className="w-5 h-5 text-indigo-500" strokeWidth={2.5} />} 
-                    trend={{ value: 12, isPositive: true }}
-                    description="Aggregate active samples"
+                    trend="+12%"
+                    trendVariant="positive"
+                    sub="Aggregate active samples"
                 />
                 <KpiCard 
                     label="Peak Day" 
                     value={peakDay ? DAYS_SHORT[peakDay.getDay()] + ', ' + peakDay.getDate() : '—'} 
                     icon={<TrendingUp className="w-5 h-5 text-violet-500" strokeWidth={2.5} />} 
-                    description="Maximum intensity period"
+                    sub="Maximum intensity period"
                 />
                 <KpiCard 
                     label="Active Span" 
                     value={`${new Set(blocks.map(b => b.hour)).size} hr`} 
                     icon={<ShieldCheck className="w-5 h-5 text-emerald-500" strokeWidth={2.5} />} 
-                    description="Daily temporal coverage"
+                    sub="Daily temporal coverage"
                 />
             </div>
 

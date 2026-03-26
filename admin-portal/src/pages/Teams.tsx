@@ -24,17 +24,6 @@ interface LeadPermissions {
     receive_notifications: boolean;
 }
 
-const DEFAULT_PERMISSIONS: LeadPermissions = {
-    approve_timesheets: true,
-    approve_time_modifications: true,
-    approve_time_off: true,
-    create_schedules: true,
-    manage_projects: false,
-    edit_roles: false,
-    view_activity: true,
-    manage_financials: false,
-    receive_notifications: true
-};
 
 interface Team {
     id: string;

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
-import { Mouse, Keyboard, Activity as ActivityIcon, Zap, Users, Calendar, Diamond, ChevronDown } from 'lucide-react';
+import { Mouse, Keyboard, Activity as ActivityIcon, Zap, Users, Calendar, Diamond, ChevronDown, Monitor } from 'lucide-react';
 import { PageLayout, KpiCard, FilterSelect, Card } from '../components/ui';
 
 import { ActivityChart } from '../components/activity/ActivityChart';
@@ -106,7 +106,6 @@ export function Activity() {
                         value={selectedMemberId}
                         onChange={setSelectedMemberId}
                         options={[{ id: 'all', name: 'ALL OPERATORS' }, ...members.map(m => ({ id: m.id, name: m.full_name.toUpperCase() }))]}
-                        className="min-w-[200px] font-mono font-black italic"
                     />
                     <div 
                         className="relative group/date" 
@@ -129,10 +128,10 @@ export function Activity() {
             }
         >
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16 animate-in fade-in slide-in-from-top-6 duration-1000">
-                <KpiCard icon={<Mouse className="w-7 h-7" strokeWidth={2.5} />} label="INPUT_CLICKS" value={totalClicks.toLocaleString()} color="primary" />
-                <KpiCard icon={<Keyboard className="w-7 h-7" strokeWidth={2.5} />} label="KEYSTROKES" value={totalKeys.toLocaleString()} color="primary" />
-                <KpiCard icon={<ActivityIcon className="w-7 h-7" strokeWidth={2.5} />} label="ACTIVE_MINUTES" value={activeTime.toString()} sub="Verified activity" color="primary" />
-                <KpiCard icon={<Zap className="w-7 h-7" strokeWidth={2.5} />} label="EFFICIENCY_RATE" value={`${avgActivity}%`} color="primary" />
+                <KpiCard icon={<Mouse className="w-7 h-7" strokeWidth={2.5} />} label="INPUT_CLICKS" value={totalClicks.toLocaleString()} />
+                <KpiCard icon={<Keyboard className="w-7 h-7" strokeWidth={2.5} />} label="KEYSTROKES" value={totalKeys.toLocaleString()} />
+                <KpiCard icon={<ActivityIcon className="w-7 h-7" strokeWidth={2.5} />} label="ACTIVE_MINUTES" value={activeTime.toString()} sub="Verified activity" />
+                <KpiCard icon={<Zap className="w-7 h-7" strokeWidth={2.5} />} label="EFFICIENCY_RATE" value={`${avgActivity}%`} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-12">
