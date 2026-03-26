@@ -6,3 +6,6 @@ export { KpiCard } from './KpiCard';
 export { EmptyState } from './EmptyState';
 export { LoadingState } from './LoadingState';
 export { FilterSelect } from './FilterSelect';
+export { PageHeader } from './PageHeader';
+export { StatusBadge } from './StatusBadge';
+export { Modal } from './Modal';

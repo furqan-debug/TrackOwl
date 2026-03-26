@@ -6,7 +6,7 @@ import {
     BarChart3, Globe
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid } from 'recharts';
-import { PageLayout, Card, KpiCard, EmptyState, LoadingState } from './ui';
+import { PageHeader, Card, KpiCard, EmptyState, LoadingState } from './ui';
 
 interface DashStats {
     todayMinutes: number;
@@ -164,10 +164,16 @@ export function Dashboard() {
     const maxProjectMins = projects[0]?.minutes || 1;
 
     return (
-        <PageLayout title="Dashboard" description="System activity and resource distribution overview" maxWidth="full">
+        <div className="min-h-screen bg-background pb-20">
+            <PageHeader 
+                title="Dashboard" 
+                description="System activity and resource distribution overview"
+                icon={<BarChart3 className="w-8 h-8" />}
+            />
 
-            {/* KPI Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="px-10">
+                {/* KPI Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
                 <KpiCard icon={<Clock />} label="Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} />
                 <KpiCard icon={<BarChart3 />} label="Weekly Total" value={loading ? '—' : fmtTime(stats.weekMinutes)} />
                 <KpiCard icon={<CircleDollarSign />} label="Weekly Cost" value={loading ? '—' : `$${stats.weekCost.toLocaleString()}`} />
@@ -257,7 +263,8 @@ export function Dashboard() {
                 <RecentSessionsRows />
             </Card>
 
-        </PageLayout>
+            </div>
+        </div>
     );
 }
 

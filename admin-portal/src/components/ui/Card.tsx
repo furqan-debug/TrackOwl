@@ -18,17 +18,17 @@ export function Card({
     return (
         <div
             className={clsx(
-                'bg-white border border-slate-200 rounded-[32px] overflow-hidden relative group transition-all duration-300 hover:shadow-lg',
-                !noPadding && 'p-8 md:p-10',
+                'surface-solid rounded-2xl overflow-hidden relative group transition-all duration-300',
+                !noPadding && 'p-6 md:p-8',
                 className
             )}
         >
             {title && (
-                <div className="flex items-center justify-between mb-8 px-8 md:px-10">
-                    <h2 className="text-[17px] font-bold text-slate-900 dark:text-slate-100 tracking-tight">
+                <div className="flex items-center justify-between mb-6 border-b border-border pb-6 -mx-8 px-8">
+                    <h2 className="text-sm font-bold text-text-primary tracking-tight uppercase font-mono">
                         {title}
                     </h2>
-                    <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-6" aria-hidden />
+                    <div className="flex-1 h-px bg-border-subtle ml-4" aria-hidden />
                 </div>
             )}
             <div className="relative z-10">

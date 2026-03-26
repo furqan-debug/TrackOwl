@@ -11,11 +11,16 @@ import {
     Check,
     Lock,
     ShieldCheck,
-    Zap
+    Zap,
+    Diamond,
+    Target,
+    Layers,
+    ChevronRight
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import clsx from 'clsx';
 
 export function Onboarding() {
     const navigate = useNavigate();
@@ -85,126 +90,134 @@ export function Onboarding() {
     };
 
     const steps = [
-        { id: 1, title: 'Organization', icon: Building2, desc: 'Identity & Setup' },
-        { id: 2, title: 'Subscription', icon: CreditCard, desc: 'Secure Billing' },
-        { id: 3, title: 'Launch', icon: Rocket, desc: 'Ready to Track' }
+        { id: 1, title: 'Identity', icon: Building2, desc: 'Org Registry' },
+        { id: 2, title: 'Activation', icon: CreditCard, desc: 'Plan Linkage' },
+        { id: 3, title: 'Deployment', icon: Rocket, desc: 'Operational' }
     ];
 
     return (
         <div className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center p-4 md:p-8">
-            <div className="absolute inset-0 bg-gradient-mesh z-0" />
+            <div className="absolute inset-0 bg-surface-subtle/20 z-0" />
             
-            <Card className="relative z-10 w-full max-w-5xl overflow-hidden border-none shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] flex flex-col md:flex-row min-h-[640px]">
+            <Card className="relative z-10 w-full max-w-5xl overflow-hidden border-border shadow-2xl flex flex-col md:flex-row min-h-[680px] rounded-[56px] p-0 bg-surface-solid">
                 
                 {/* Left Sidebar: Progress */}
-                <div className="md:w-[320px] bg-slate-900/40 backdrop-blur-xl border-r border-white/5 p-10 flex flex-col relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-violet-600" />
+                <div className="md:w-[360px] bg-surface-subtle border-r border-border p-12 flex flex-col relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1.5 bg-primary shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.3)]" />
+                    <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-primary/[0.03] rounded-full blur-3xl" />
                     
-                    <div className="flex items-center gap-3 mb-16">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                             <div className="w-3.5 h-3.5 border-2 border-white rounded-[1px] rotate-45" />
+                    <div className="flex items-center gap-4 mb-20 relative z-10">
+                        <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
+                             <Diamond className="w-5 h-5 text-white" strokeWidth={2.5} />
                         </div>
-                        <span className="text-lg font-bold tracking-tight text-white font-head">Trackora</span>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-black tracking-tight text-text-primary font-mono italic uppercase">Trackora</span>
+                            <span className="text-[8px] font-bold text-text-muted tracking-[0.3em] font-mono uppercase opacity-60">Provisioning</span>
+                        </div>
                     </div>
 
-                    <div className="space-y-10 flex-1 relative z-10">
+                    <div className="space-y-12 flex-1 relative z-10 font-mono">
                         {steps.map((s) => (
-                            <div key={s.id} className="flex items-start gap-5 group relative">
+                            <div key={s.id} className="flex items-start gap-6 group relative">
                                 {s.id < 3 && (
                                     <div className={clsx(
-                                        "absolute left-[19px] top-10 w-[2px] h-10 transition-colors duration-500",
-                                        step > s.id ? "bg-indigo-500" : "bg-white/5"
+                                        "absolute left-[23px] top-12 w-[2px] h-12 transition-all duration-700",
+                                        step > s.id ? "bg-primary" : "bg-border"
                                     )} />
                                 )}
                                 <div className={clsx(
-                                    "w-10 h-10 rounded-xl flex items-center justify-center border-2 transition-all duration-500 shrink-0",
-                                    step > s.id ? "bg-indigo-500 border-indigo-500 shadow-[0_0_20px_rgba(99,102,241,0.4)]" : 
-                                    step === s.id ? "bg-indigo-500/10 border-indigo-500 text-indigo-400" : "border-white/5 text-text-muted"
+                                    "w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-700 shrink-0 shadow-sm",
+                                    step > s.id ? "bg-primary border-primary text-white shadow-primary/20 scale-110" : 
+                                    step === s.id ? "bg-surface-solid border-primary text-primary" : "bg-surface-solid border-border text-text-muted/40"
                                 )}>
-                                    {step > s.id ? <Check className="w-5 h-5 text-white" /> : <s.icon className="w-5 h-5" />}
+                                    {step > s.id ? <Check className="w-6 h-6" strokeWidth={3} /> : <s.icon className={clsx("w-5 h-5", step === s.id && "animate-pulse")} strokeWidth={2.5} />}
                                 </div>
-                                <div className="pt-0.5">
-                                    <span className={clsx("block text-[10px] font-bold uppercase tracking-[0.2em] mb-1 transition-colors duration-500", step >= s.id ? "text-indigo-400" : "text-text-muted/50")}>
-                                        Step 0{s.id}
+                                <div className="pt-1">
+                                    <span className={clsx("block text-[9px] font-bold uppercase tracking-[0.2em] mb-1.5 transition-colors duration-700", step >= s.id ? "text-primary" : "text-text-muted/40")}>
+                                        Protocol 0{s.id}
                                     </span>
-                                    <p className={clsx("text-base font-bold transition-colors duration-500 font-head", step === s.id ? "text-white" : "text-text-muted")}>
+                                    <p className={clsx("text-base font-black transition-colors duration-700 uppercase italic tracking-tighter", step === s.id ? "text-text-primary" : "text-text-muted/60")}>
                                         {s.title}
                                     </p>
-                                    <p className="text-xs text-text-muted/60 font-medium">{s.desc}</p>
+                                    <p className="text-[10px] font-bold text-text-muted/40 uppercase tracking-widest">{s.desc}</p>
                                 </div>
                             </div>
                         ))}
                     </div>
 
-                    <div className="mt-auto pt-10">
-                        <div className="p-5 rounded-2xl glass border border-white/5 overflow-hidden relative group">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-500/10 blur-2xl rounded-full -mr-12 -mt-12 group-hover:bg-indigo-500/20 transition-colors" />
-                            <p className="text-[10px] text-text-muted uppercase font-bold tracking-[0.15em] mb-2 opacity-60">Provisioned Plan</p>
-                            <div className="flex items-center gap-2">
-                                <Zap className="w-4 h-4 text-indigo-400" />
-                                <p className="text-base font-bold text-white font-head">{selectedPlan}</p>
+                    <div className="mt-auto pt-12 relative z-10">
+                        <div className="p-6 rounded-3xl bg-surface-solid border border-border overflow-hidden relative group shadow-sm">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/[0.03] blur-xl rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform duration-1000" />
+                            <p className="text-[9px] text-text-muted uppercase font-bold tracking-[0.2em] mb-3 opacity-40 font-mono">Assigned Protocol Plan</p>
+                            <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-lg bg-primary/10">
+                                    <Zap className="w-4 h-4 text-primary" strokeWidth={3} />
+                                </div>
+                                <p className="text-lg font-black text-text-primary font-mono italic uppercase tracking-tighter">{selectedPlan}</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {/* Right Area: Content */}
-                <div className="flex-1 bg-white/[0.02] backdrop-blur-sm p-8 md:p-16 overflow-y-auto">
+                <div className="flex-1 bg-surface-solid p-12 md:p-24 overflow-y-auto relative">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-primary/[0.01] rounded-full blur-3xl -mr-32 -mt-32" />
+                    
                     {step === 1 && (
-                        <div className="max-w-md mx-auto animate-in fade-in slide-in-from-right-8 duration-700">
-                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass mb-8">
-                                <Building2 className="w-4 h-4 text-indigo-400" />
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary font-sans">Business Identity</span>
+                        <div className="max-w-md mx-auto animate-in fade-in slide-in-from-right-12 duration-1000">
+                             <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-surface-subtle border border-border mb-12 shadow-sm font-mono">
+                                <Building2 className="w-5 h-5 text-primary" strokeWidth={2.5} />
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-primary italic">Initialization Matrix</span>
                             </div>
                             
-                            <h2 className="text-3xl font-bold text-text-primary mb-3 font-head">Setup your workspace</h2>
-                            <p className="text-text-secondary text-base mb-10 font-medium">Configure your organizational profile to get started.</p>
+                            <h2 className="text-4xl font-black text-text-primary mb-4 italic tracking-tight font-mono uppercase">Setup <span className="text-primary">Workspace</span></h2>
+                            <p className="text-text-muted text-sm mb-12 font-bold uppercase font-mono tracking-widest opacity-60 leading-relaxed">Configure organizational baseline for system integration.</p>
 
-                            <form onSubmit={handleOrgSubmit} className="space-y-8">
+                            <form onSubmit={handleOrgSubmit} className="space-y-10">
                                 <Input
-                                    label="Legal Company Name"
+                                    label="Organizational Designation (Entity Name)"
                                     required
                                     value={orgName}
                                     onChange={e => setOrgName(e.target.value)}
-                                    placeholder="Acme Global Inc."
-                                    leftIcon={<Building2 className="w-4 h-4 text-text-muted" />}
-                                    className="p-4"
+                                    placeholder="ACME DYNAMICS CORP"
+                                    leftIcon={<Building2 className="w-5 h-5 text-primary" strokeWidth={2.5} />}
+                                    className="font-mono text-[13px] font-bold uppercase"
                                 />
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-text-secondary uppercase tracking-wider pl-1 font-sans">Industry Segment</label>
-                                        <div className="relative">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] pl-1 font-mono opacity-80">Industry Segment</label>
+                                        <div className="relative group">
                                             <select
                                                 required
                                                 value={industry}
                                                 onChange={e => setIndustry(e.target.value)}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium appearance-none hover:bg-white/[0.07]"
+                                                className="w-full bg-surface-subtle border border-border rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono appearance-none hover:bg-surface-solid uppercase italic"
                                             >
-                                                <option value="" className="bg-slate-900">Select industry</option>
-                                                {industries.map(ind => <option key={ind} value={ind} className="bg-slate-900">{ind}</option>)}
+                                                <option value="" className="bg-surface-solid">SELECT SECTOR</option>
+                                                {industries.map(ind => <option key={ind} value={ind} className="bg-surface-solid">{ind.toUpperCase()}</option>)}
                                             </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted opacity-50">
-                                                <ArrowRight className="w-4 h-4 rotate-90" />
+                                            <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-primary group-hover:scale-125 transition-transform">
+                                                <Layers className="w-4 h-4" strokeWidth={3} />
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-text-secondary uppercase tracking-wider pl-1 font-sans">Organization Size</label>
-                                        <div className="relative">
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] pl-1 font-mono opacity-80">Personnel Volume</label>
+                                        <div className="relative group">
                                             <select
                                                 value={orgSize}
                                                 onChange={e => setOrgSize(e.target.value)}
-                                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-sm text-text-primary focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-medium appearance-none hover:bg-white/[0.07]"
+                                                className="w-full bg-surface-subtle border border-border rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono appearance-none hover:bg-surface-solid uppercase italic"
                                             >
-                                                <option value="1-10" className="bg-slate-900">1-10 people</option>
-                                                <option value="11-50" className="bg-slate-900">11-50 people</option>
-                                                <option value="51-200" className="bg-slate-900">51-200 people</option>
-                                                <option value="201+" className="bg-slate-900">201+ people</option>
+                                                <option value="1-10" className="bg-surface-solid">1-10 OPERATORS</option>
+                                                <option value="11-50" className="bg-surface-solid">11-50 OPERATORS</option>
+                                                <option value="51-200" className="bg-surface-solid">51-200 OPERATORS</option>
+                                                <option value="201+" className="bg-surface-solid">201+ OPERATORS</option>
                                             </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted opacity-50">
-                                                <ArrowRight className="w-4 h-4 rotate-90" />
+                                            <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-primary group-hover:scale-125 transition-transform">
+                                                <Target className="w-4 h-4" strokeWidth={3} />
                                             </div>
                                         </div>
                                     </div>
@@ -212,93 +225,98 @@ export function Onboarding() {
 
                                 <Button
                                     type="submit"
-                                    className="w-full py-4 text-base mt-4"
-                                    rightIcon={<ArrowRight className="w-5 h-5" />}
+                                    className="w-full py-5 text-[11px] font-mono font-bold uppercase tracking-[0.3em] shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all italic mt-4"
+                                    rightIcon={<ArrowRight className="w-5 h-5 ml-4 group-hover:translate-x-2 transition-transform" strokeWidth={3} />}
                                 >
-                                    Review & Continue
+                                    Review & Commit Configuration
                                 </Button>
                             </form>
                         </div>
                     )}
 
                     {step === 2 && (
-                        <div className="max-w-md mx-auto animate-in fade-in slide-in-from-right-8 duration-700">
-                             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass mb-8">
-                                <CreditCard className="w-4 h-4 text-indigo-400" />
-                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary font-sans">Payment verification</span>
+                        <div className="max-w-md mx-auto animate-in fade-in slide-in-from-right-12 duration-1000">
+                             <div className="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-surface-subtle border border-border mb-12 shadow-sm font-mono">
+                                <CreditCard className="w-5 h-5 text-primary" strokeWidth={2.5} />
+                                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-primary italic">Activation Linkage</span>
                             </div>
 
-                            <h2 className="text-3xl font-bold text-text-primary mb-3 font-head">Billing activation</h2>
-                            <p className="text-text-secondary text-base mb-10 font-medium">Confirm your subscription to activate your workspace.</p>
+                            <h2 className="text-4xl font-black text-text-primary mb-4 italic tracking-tight font-mono uppercase">Plan <span className="text-primary">Activation</span></h2>
+                            <p className="text-text-muted text-sm mb-12 font-bold uppercase font-mono tracking-widest opacity-60 leading-relaxed">Secure linkage of organizational billing properties.</p>
 
-                            <div className="bg-gradient-to-br from-indigo-500 to-violet-700 rounded-3xl p-8 mb-10 text-white relative overflow-hidden shadow-[0_20px_40px_-10px_rgba(99,102,241,0.5)]">
-                                <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 blur-3xl rounded-full translate-x-12 -translate-y-12" />
-                                <div className="relative z-10 flex justify-between items-start">
-                                    <div className="space-y-1">
-                                         <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-100/70">Activation Total</p>
-                                         <p className="text-4xl font-extrabold font-head">$0.00</p>
+                            <div className="bg-primary rounded-[40px] p-10 text-white relative overflow-hidden shadow-2xl shadow-primary/30 mb-12 group">
+                                <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 blur-3xl rounded-full translate-x-12 -translate-y-12 group-hover:scale-150 transition-transform duration-1000" />
+                                <div className="relative z-10 flex justify-between items-start mb-10">
+                                    <div className="space-y-2">
+                                         <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-white/60 font-mono">Activation Matrix Total</p>
+                                         <p className="text-5xl font-black font-mono italic tracking-tighter">$0.00</p>
                                     </div>
-                                    <Zap className="w-8 h-8 text-white/30" />
+                                    <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 shadow-inner group-hover:rotate-12 transition-transform duration-500">
+                                        <Zap className="w-8 h-8 text-white/50" strokeWidth={2.5} />
+                                    </div>
                                 </div>
-                                <div className="mt-8 pt-8 border-t border-white/20 flex items-center gap-3">
-                                    <ShieldCheck className="w-5 h-5 text-indigo-200" />
-                                    <p className="text-xs font-medium text-indigo-100 leading-snug">
-                                        Your 14-day free trial on the <span className="text-white font-bold">{selectedPlan} plan</span> starts now. Zero commitment required.
+                                <div className="pt-8 border-t border-white/20 flex items-start gap-4">
+                                    <div className="bg-white/10 p-2 rounded-lg shrink-0">
+                                        <ShieldCheck className="w-5 h-5 text-white/80" strokeWidth={3} />
+                                    </div>
+                                    <p className="text-[11px] font-bold font-mono uppercase tracking-wider leading-relaxed text-white/90 italic">
+                                        Trial Protocol: 14-day zero-cost entry on <span className="text-white underline decoration-white/40 decoration-2 underline-offset-4">{selectedPlan.toUpperCase()} PHASE</span>. No immediate commitment.
                                     </p>
                                 </div>
                             </div>
 
-                            <form onSubmit={handlePaymentSubmit} className="space-y-6">
-                                <div className="p-5 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-5 group hover:bg-white/[0.08] transition-colors cursor-pointer border-dashed">
-                                    <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-text-muted group-hover:text-indigo-400 transition-colors">
-                                        <Lock className="w-6 h-6" />
+                            <form onSubmit={handlePaymentSubmit} className="space-y-8">
+                                <div className="p-6 rounded-3xl bg-surface-subtle border border-border flex items-center gap-6 group hover:bg-surface-solid transition-all cursor-pointer border-dashed hover:shadow-inner">
+                                    <div className="w-14 h-14 rounded-2xl bg-surface-solid border border-border flex items-center justify-center text-text-muted group-hover:text-primary transition-all shadow-sm group-hover:scale-110 group-hover:rotate-3">
+                                        <Lock className="w-6 h-6" strokeWidth={2.5} />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold text-text-primary mb-0.5 font-head tracking-wide">Stripe Secured Portal</p>
-                                        <p className="text-xs text-text-muted font-medium">Click to confirm payment simulation</p>
+                                        <p className="text-sm font-black text-text-primary mb-1 font-mono uppercase italic tracking-tighter">Secure Handshake Portal</p>
+                                        <p className="text-[10px] text-text-muted font-bold uppercase font-mono tracking-widest opacity-60">Initialize Stripe Secure Environment</p>
                                     </div>
+                                    <ChevronRight className="w-5 h-5 text-text-muted opacity-40 group-hover:translate-x-2 transition-all" />
                                 </div>
 
                                 <Button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full py-4 text-base shadow-[0_20px_40px_-10px_rgba(14,165,233,0.3)]"
-                                    loading={loading}
+                                    className="w-full py-5 text-[12px] font-mono font-bold uppercase tracking-[0.3em] shadow-2xl shadow-primary/30 italic mt-4"
                                 >
-                                    Activate & Launch Workspace
+                                    {loading ? 'SYNCHRONIZING...' : 'Deploy Activation Protocol'}
+                                    {!loading && <Rocket className="w-5 h-5 ml-4 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" strokeWidth={3} />}
                                 </Button>
                                 
-                                <p className="text-[11px] text-text-muted text-center px-4 leading-relaxed font-medium opacity-60">
-                                    By clicking "Activate", you authorize Trackora to start your trial. You can cancel any time from the billing section.
+                                <p className="text-[9px] text-text-muted text-center px-10 leading-relaxed font-bold font-mono uppercase tracking-widest opacity-40 italic">
+                                    By proceeding, you authorize Trackora to initialize the 14-day trial sequence. Protocols can be dissolved at any moment within the Command Center.
                                 </p>
                             </form>
                         </div>
                     )}
 
                     {step === 3 && (
-                        <div className="max-w-md mx-auto animate-in zoom-in-95 duration-1000 text-center flex flex-col items-center justify-center min-h-[500px]">
-                            <div className="relative mb-10">
-                                <div className="absolute inset-0 bg-emerald-500/20 blur-3xl rounded-full" />
-                                <div className="w-24 h-24 bg-emerald-500/10 border border-emerald-500/20 rounded-[2.5rem] flex items-center justify-center relative z-10 shadow-2xl rotate-12 group hover:rotate-0 transition-transform duration-500">
-                                    <CheckCircle2 className="w-12 h-12 text-emerald-400" />
+                        <div className="max-w-md mx-auto animate-in zoom-in-95 duration-1000 text-center flex flex-col items-center justify-center min-h-[520px]">
+                            <div className="relative mb-12 group">
+                                <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-110 group-hover:scale-150 transition-transform duration-1000" />
+                                <div className="w-32 h-32 bg-surface-solid border border-primary/20 rounded-[44px] flex items-center justify-center relative z-10 shadow-2xl rotate-12 group-hover:rotate-0 transition-all duration-700">
+                                    <CheckCircle2 className="w-16 h-16 text-primary" strokeWidth={2.5} />
                                 </div>
                             </div>
                             
-                            <h2 className="text-4xl font-bold text-text-primary mb-4 font-head tracking-tight">Setup Complete!</h2>
-                            <p className="text-text-secondary mb-12 max-w-sm mx-auto text-base leading-relaxed font-medium">
-                                Welcome aboard, <span className="text-indigo-400 font-bold">{profile?.full_name}</span>. Your organization <span className="text-white font-bold">{orgName}</span> is now active.
+                            <h2 className="text-5xl font-black text-text-primary mb-6 italic tracking-tight font-mono uppercase">System <span className="text-primary">Online</span></h2>
+                            <p className="text-text-muted mb-16 max-w-sm mx-auto text-[11px] font-bold font-mono uppercase tracking-[0.1em] leading-loose opacity-60 italic px-8">
+                                Welcome, Lead Operator <span className="text-primary">{profile?.full_name?.toUpperCase()}</span>. Organizational Registry <span className="text-text-primary underline decoration-primary/40 decoration-2 underline-offset-8">{orgName.toUpperCase()}</span> has been fully integrated.
                             </p>
                             
                             <Button
                                 onClick={() => navigate('/dashboard')}
-                                className="w-full py-5 text-lg group"
-                                rightIcon={<ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />}
+                                className="w-full py-5 text-[11px] font-mono font-bold uppercase tracking-[0.4em] shadow-2xl shadow-primary/30 italic group"
                             >
-                                Enter Workspace
+                                Enter Command Center
+                                <ArrowRight className="w-6 h-6 ml-6 group-hover:translate-x-3 transition-transform" strokeWidth={3} />
                             </Button>
                             
-                            <p className="mt-8 text-[11px] text-text-muted font-bold tracking-widest uppercase opacity-40">
-                                Infrastructure Ready • System Online
+                            <p className="mt-12 text-[9px] font-bold text-text-muted font-mono tracking-[0.4em] uppercase opacity-30 animate-pulse">
+                                Core Services Operational • Ready for Tracking
                             </p>
                         </div>
                     )}
@@ -306,8 +324,4 @@ export function Onboarding() {
             </Card>
         </div>
     );
-}
-
-function clsx(...classes: any[]) {
-    return classes.filter(Boolean).join(' ');
 }

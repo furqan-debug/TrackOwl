@@ -1,13 +1,40 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
-    Users, Search,
-    Trash2, Shield, LayoutGrid, List, X,
-    ChevronRight, UsersRound, Plus, Pencil, Check,
-    Briefcase, Settings
+    Users, Search, Trash2, Shield, LayoutGrid, List,
+    UsersRound, Plus, Pencil, Check,
+    Briefcase
 } from 'lucide-react';
 import clsx from 'clsx';
 import { supabase } from '../lib/supabase';
+import { 
+    PageHeader, Card, Button, Input, Modal, 
+    StatusBadge, EmptyState, LoadingState 
+} from '../components/ui';
+
+interface LeadPermissions {
+    approve_timesheets: boolean;
+    approve_time_modifications: boolean;
+    approve_time_off: boolean;
+    create_schedules: boolean;
+    manage_projects: boolean;
+    edit_roles: boolean;
+    view_activity: boolean;
+    manage_financials: boolean;
+    receive_notifications: boolean;
+}
+
+const DEFAULT_PERMISSIONS: LeadPermissions = {
+    approve_timesheets: true,
+    approve_time_modifications: true,
+    approve_time_off: true,
+    create_schedules: true,
+    manage_projects: false,
+    edit_roles: false,
+    view_activity: true,
+    manage_financials: false,
+    receive_notifications: true
+};
 
 interface Team {
     id: string;
@@ -28,18 +55,6 @@ interface Member {
 interface Project {
     id: string;
     name: string;
-}
-
-interface LeadPermissions {
-    approve_timesheets: boolean;
-    approve_time_modifications: boolean;
-    approve_time_off: boolean;
-    create_schedules: boolean;
-    manage_projects: boolean;
-    edit_roles: boolean;
-    view_activity: boolean;
-    manage_financials: boolean;
-    receive_notifications: boolean;
 }
 
 export function Teams() {
@@ -272,124 +287,105 @@ export function Teams() {
     );
 
     return (
-        <div className="flex flex-col h-full bg-transparent">
-            {/* Header section with Stats */}
-            <div className="px-10 py-12 border-b border-black/[0.05] bg-white/[0.01]">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-4 mb-2">
-                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
-                                <UsersRound className="w-6 h-6 text-primary" strokeWidth={2.5} />
-                            </div>
-                            <h1 className="text-3xl font-bold text-text-primary tracking-tighter">Teams</h1>
-                        </div>
-                        <p className="text-sm font-medium text-slate-500 mt-2">Organize and manage your team and departments</p>
-                    </div>
-
-                    <div className="flex items-center gap-5">
-                        <div className="flex glass border border-black/[0.05] p-1.5 rounded-2xl shadow-sm">
+        <div className="min-h-screen bg-background pb-20">
+            <PageHeader
+                title="Teams"
+                description="Organize and manage your team and departments"
+                icon={<UsersRound className="w-8 h-8" />}
+                actions={
+                    <div className="flex items-center gap-3">
+                        <div className="flex bg-white border border-border rounded-xl p-1 shadow-sm mr-2">
                             <button
                                 onClick={() => setViewMode('grid')}
                                 className={clsx(
-                                    "p-3 rounded-xl transition-all duration-300",
-                                    viewMode === 'grid' ? "bg-primary text-white shadow-lg" : "text-text-muted hover:text-text-primary hover:bg-black/[0.02]"
+                                    "p-2 rounded-lg transition-all",
+                                    viewMode === 'grid' ? "bg-primary/10 text-primary shadow-inner" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
-                                <LayoutGrid className="w-4 h-4" />
+                                <LayoutGrid className="w-4 h-4" strokeWidth={2.5} />
                             </button>
                             <button
                                 onClick={() => setViewMode('list')}
                                 className={clsx(
-                                    "p-3 rounded-xl transition-all duration-300",
-                                    viewMode === 'list' ? "bg-primary text-white shadow-lg" : "text-text-muted hover:text-text-primary hover:bg-black/[0.02]"
+                                    "p-2 rounded-lg transition-all",
+                                    viewMode === 'list' ? "bg-primary/10 text-primary shadow-inner" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
-                                <List className="w-4 h-4" />
+                                <List className="w-4 h-4" strokeWidth={2.5} />
                             </button>
                         </div>
-                        <button
+                        <Button
                             onClick={openCreateModal}
                             disabled={isViewer}
-                            className={clsx(
-                                "flex items-center gap-3 px-10 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 font-mono",
-                                isViewer ? "bg-black/5 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-primary/30 hover:scale-[1.02]"
-                            )}
+                            leftIcon={<Plus className="w-4 h-4" strokeWidth={3} />}
                         >
-                            <Plus className="w-4 h-4 stroke-[4]" />
                             Create Team
-                        </button>
+                        </Button>
                     </div>
-                </div>
+                }
+                stats={
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <Card className="!p-6">
+                            <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.15em] mb-2 font-mono">Total Teams</p>
+                            <h2 className="text-4xl font-bold text-text-primary tracking-tight font-mono">{teams.length}</h2>
+                        </Card>
+                        <Card className="!p-6">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.15em] mb-2 font-mono">Total Members</p>
+                                    <h2 className="text-4xl font-bold text-text-primary tracking-tight font-mono">
+                                        {teams.reduce((acc, t) => acc + (t.member_count || 0), 0)}
+                                    </h2>
+                                </div>
+                                <div className="w-10 h-10 rounded-xl bg-emerald-500/5 border border-emerald-500/10 flex items-center justify-center text-emerald-600">
+                                    <Users className="w-5 h-5" />
+                                </div>
+                            </div>
+                        </Card>
+                        <Card className="!p-6">
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.15em] mb-2 font-mono">Avg. Team Size</p>
+                                    <h2 className="text-4xl font-bold text-text-primary tracking-tight font-mono">
+                                        {teams.length > 0 ? (teams.reduce((acc, t) => acc + (t.member_count || 0), 0) / teams.length).toFixed(1) : '0'}
+                                    </h2>
+                                </div>
+                                <div className="w-10 h-10 rounded-xl bg-purple-500/5 border border-purple-500/10 flex items-center justify-center text-purple-600">
+                                    <Shield className="w-5 h-5" />
+                                </div>
+                            </div>
+                        </Card>
+                    </div>
+                }
+            />
 
-                {/* Quick Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="glass p-8 rounded-[32px] border border-black/[0.03] hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-1000" />
-                        <p className="text-xs font-semibold text-slate-500 mb-3">Total Teams</p>
-                        <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">{teams.length}</h2>
-                    </div>
-                    <div className="glass p-8 rounded-[32px] border border-black/[0.03] hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-1000" />
-                        <p className="text-xs font-semibold text-slate-500 mb-3">Total Members</p>
-                        <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">{teams.reduce((acc, t) => acc + (t.member_count || 0), 0)}</h2>
-                        <Users className="absolute bottom-6 right-8 w-12 h-12 text-black/[0.02] group-hover:text-primary/5 transition-colors duration-500" />
-                    </div>
-                    <div className="glass p-8 rounded-[32px] border border-black/[0.03] hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-1000" />
-                        <p className="text-xs font-semibold text-slate-500 mb-3">Avg. Team Size</p>
-                        <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">
-                            {teams.length > 0 ? (teams.reduce((acc, t) => acc + (t.member_count || 0), 0) / teams.length).toFixed(1) : '0'}
-                        </h2>
-                        <Shield className="absolute bottom-6 right-8 w-12 h-12 text-black/[0.02] group-hover:text-primary/5 transition-colors duration-500" />
-                    </div>
-                </div>
-            </div>
-
-            <div className="p-10 flex-1 overflow-auto custom-scrollbar">
+            <div className="px-10 space-y-10">
                 {/* Search Bar */}
-                <div className="relative group max-w-2xl mb-12">
-                    <Search className="w-5 h-5 text-text-muted absolute left-6 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" strokeWidth={2.5} />
-                    <input
-                        type="text"
+                <div className="max-w-2xl">
+                    <Input
                         placeholder="Search teams or managers..."
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
-                        className="w-full pl-15 pr-8 py-5 bg-white border border-slate-200 rounded-[24px] text-[13px] font-bold text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-8 focus:ring-primary/5 focus:border-primary/20 transition-all shadow-sm font-mono"
+                        leftIcon={<Search className="w-4 h-4" />}
                     />
                 </div>
 
-                {loading ? (
-                    <div className="p-40 text-center">
-                        <div className="flex flex-col items-center gap-6">
-                            <div className="w-16 h-16 border-[6px] border-primary/10 border-t-primary rounded-full animate-spin shadow-inner" />
-                            <span className="text-[11px] font-bold text-text-muted uppercase tracking-[0.5em] animate-pulse font-mono">Loading teams...</span>
-                        </div>
-                    </div>
+                {loading && teams.length === 0 ? (
+                    <LoadingState message="Loading teams..." />
                 ) : filtered.length === 0 ? (
-                    <div className="p-40 text-center">
-                        <div className="flex flex-col items-center gap-10">
-                            <div className="w-32 h-32 bg-black/[0.02] border border-black/[0.05] rounded-[56px] flex items-center justify-center rotate-6 shadow-sm">
-                                <UsersRound className="w-16 h-16 text-text-muted/20" strokeWidth={1.5} />
-                            </div>
-                            <div className="space-y-4">
-                                <h3 className="text-2xl font-bold text-text-primary tracking-tighter">No Teams Found</h3>
-                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono italic">You haven't created any teams yet.</p>
-                            </div>
-                            <button
-                                onClick={openCreateModal}
-                                disabled={isViewer}
-                                className={clsx(
-                                    "font-bold uppercase tracking-[0.3em] text-[10px] transition-all px-10 py-4 rounded-2xl font-mono",
-                                    isViewer ? "text-text-muted cursor-default" : "bg-primary text-white hover:shadow-primary/30 hover:scale-105 active:scale-95 shadow-xl"
-                                )}
-                            >
-                                Create Team
-                            </button>
-                        </div>
-                    </div>
+                    <EmptyState
+                        title="No Teams Found"
+                        description={searchTerm ? "No teams match your search criteria." : "You haven't created any teams yet."}
+                        icon={<UsersRound className="w-12 h-12" />}
+                        action={!searchTerm && (
+                            <Button onClick={openCreateModal} disabled={isViewer}>
+                                Create First Team
+                            </Button>
+                        )}
+                    />
                 ) : (
                     <div className={clsx(
-                        viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 pb-20" : "glass rounded-[40px] border border-black/[0.05] overflow-hidden divide-y divide-black/[0.03] shadow-2xl mb-20"
+                        viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" : "bg-white border border-border rounded-[32px] overflow-hidden divide-y divide-border shadow-sm"
                     )}>
                         {filtered.map((team) => (
                             <TeamItem
@@ -405,304 +401,281 @@ export function Teams() {
                 )}
             </div>
 
-            {showModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-text-primary/10 backdrop-blur-xl animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[40px] w-full max-w-[680px] h-[85vh] shadow-[0_32px_120px_rgba(0,0,0,0.12)] flex flex-col border border-black/[0.05] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
-                        {/* Wizard Header */}
-                        <div className="px-10 pt-10 pb-6 bg-black/[0.01] border-b border-black/[0.03]">
-                            <div className="flex items-start justify-between mb-8">
-                                <div className="flex items-center gap-5">
-                                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
-                                        <UsersRound className="w-7 h-7 text-primary" strokeWidth={2.5} />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-text-primary tracking-tighter leading-none mb-2">
-                                            {editingTeam ? 'Edit Team' : 'Create Team'}
-                                        </h2>
-                                        <div className="flex items-center gap-3">
-                                            {[1, 2, 3, 4].map((step) => (
-                                                <div 
-                                                    key={step}
-                                                    className={clsx(
-                                                        "h-1.5 rounded-full transition-all duration-500",
-                                                        wizardStep >= step ? "bg-primary w-8" : "bg-black/10 w-4"
-                                                    )}
-                                                />
-                                            ))}
-                                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono ml-2">Step {wizardStep} of 4</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <button onClick={() => setShowModal(false)} className="p-3 bg-black/[0.03] hover:bg-black/[0.08] rounded-2xl transition-all text-text-muted hover:text-text-primary"><X className="w-5 h-5" strokeWidth={3} /></button>
+            {/* Creation Wizard Modal */}
+            <Modal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title={editingTeam ? 'Edit Team' : 'Create Team'}
+                subtitle={`Step ${wizardStep} of 4`}
+                footer={
+                    <div className="flex items-center justify-between w-full">
+                        <Button
+                            variant="secondary"
+                            onClick={() => wizardStep > 1 ? setWizardStep(wizardStep - 1) : setShowModal(false)}
+                        >
+                            {wizardStep === 1 ? 'Cancel' : 'Back'}
+                        </Button>
+                        <div className="flex items-center gap-3">
+                            <div className="flex gap-1.5 mr-4">
+                                {[1, 2, 3, 4].map((s) => (
+                                    <div
+                                        key={s}
+                                        className={clsx(
+                                            "w-2 h-2 rounded-full transition-all duration-300",
+                                            wizardStep === s ? "bg-primary w-6" : "bg-border"
+                                        )}
+                                    />
+                                ))}
+                            </div>
+                            {wizardStep < 4 ? (
+                                <Button
+                                    onClick={() => setWizardStep(wizardStep + 1)}
+                                    disabled={wizardStep === 1 && !name}
+                                >
+                                    Next Step
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={handleSave}
+                                    loading={loading}
+                                    disabled={isViewer}
+                                >
+                                    {editingTeam ? 'Save Changes' : 'Finish & Create'}
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                }
+            >
+                <div className="min-h-[400px]">
+                    {wizardStep === 1 && (
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
+                            <Input
+                                label="Team Name *"
+                                value={name}
+                                onChange={e => setName(e.target.value)}
+                                placeholder="e.g. Engineering, Marketing..."
+                                autoFocus
+                            />
+                            <div className="space-y-2">
+                                <label className="block text-[11px] font-bold text-text-muted uppercase tracking-[0.15em] ml-1">Description</label>
+                                <textarea
+                                    value={description}
+                                    onChange={e => setDescription(e.target.value)}
+                                    placeholder="Brief description of the team's purpose..."
+                                    rows={4}
+                                    className="w-full bg-white border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-muted/40 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/50 transition-all shadow-sm font-mono resize-none"
+                                />
                             </div>
                         </div>
+                    )}
 
-                        {/* Wizard Content */}
-                        <div className="flex-1 overflow-y-auto px-10 py-10 custom-scrollbar bg-white">
-                            {wizardStep === 1 && (
-                                <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
-                                    <div className="space-y-3">
-                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Team Name *</label>
-                                        <input
-                                            type="text"
-                                            value={name}
-                                            onChange={e => setName(e.target.value)}
-                                            placeholder="e.g. Engineering, Marketing..."
-                                            className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono placeholder:text-text-muted/30 uppercase"
-                                        />
-                                    </div>
-                                    <div className="space-y-3">
-                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Description</label>
-                                        <textarea
-                                            value={description}
-                                            onChange={e => setDescription(e.target.value)}
-                                            placeholder="Brief description of the team's purpose..."
-                                            rows={4}
-                                            className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono placeholder:text-text-muted/30 uppercase resize-none custom-scrollbar"
-                                        />
-                                    </div>
+                    {wizardStep === 2 && (
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
+                            <div className="flex items-center justify-between">
+                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.15em]">Select Teammates</p>
+                                <StatusBadge variant={selectedMemberIds.size > 0 ? "success" : "default"}>
+                                    {selectedMemberIds.size} Selected
+                                </StatusBadge>
+                            </div>
+                            <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                {members.map(m => {
+                                    const isSelected = selectedMemberIds.has(m.id);
+                                    return (
+                                        <button
+                                            key={m.id}
+                                            onClick={() => {
+                                                const next = new Set(selectedMemberIds);
+                                                if (next.has(m.id)) {
+                                                    next.delete(m.id);
+                                                    const nextLeads = new Set(selectedLeadIds);
+                                                    nextLeads.delete(m.id);
+                                                    setSelectedLeadIds(nextLeads);
+                                                } else {
+                                                    next.add(m.id);
+                                                }
+                                                setSelectedMemberIds(next);
+                                            }}
+                                            className={clsx(
+                                                "flex items-center justify-between p-4 rounded-xl border transition-all text-left",
+                                                isSelected ? "bg-primary/5 border-primary/30" : "bg-surface-subtle border-border hover:border-text-muted/20"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className={clsx(
+                                                    "w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold font-mono",
+                                                    isSelected ? "bg-primary text-white" : "bg-border text-text-muted"
+                                                )}>
+                                                    {m.full_name[0].toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-text-primary uppercase leading-none mb-1">{m.full_name}</p>
+                                                    <p className="text-[10px] font-mono text-text-muted">{m.email}</p>
+                                                </div>
+                                            </div>
+                                            <div className={clsx(
+                                                "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors",
+                                                isSelected ? "bg-primary border-primary" : "border-border"
+                                            )}>
+                                                {isSelected && <Check className="w-3 h-3 text-white stroke-[3.5]" />}
+                                            </div>
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {wizardStep === 3 && (
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
+                            <div className="flex items-center justify-between">
+                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.15em]">Assign Team Leads</p>
+                                <StatusBadge variant={selectedLeadIds.size > 0 ? "success" : "default"}>
+                                    {selectedLeadIds.size} Leads
+                                </StatusBadge>
+                            </div>
+                            
+                            {selectedMemberIds.size === 0 ? (
+                                <div className="text-center py-12 bg-surface-subtle border border-dashed border-border rounded-2xl">
+                                    <Shield className="w-10 h-10 text-text-muted/20 mx-auto mb-3" />
+                                    <p className="text-sm font-bold text-text-muted uppercase tracking-wider font-mono">No teammates selected yet</p>
                                 </div>
-                            )}
+                            ) : (
+                                <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {Array.from(selectedMemberIds).map(mid => {
+                                        const member = members.find(m => m.id === mid);
+                                        const isLead = selectedLeadIds.has(mid);
+                                        if (!member) return null;
 
-                            {wizardStep === 2 && (
-                                <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Select Teammates</label>
-                                        <span className="text-[10px] font-bold text-primary px-3 py-1 bg-primary/10 rounded-full font-mono">{selectedMemberIds.size} Selected</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        {members.map(m => {
-                                            const isSelected = selectedMemberIds.has(m.id);
-                                            return (
-                                                <button
-                                                    key={m.id}
-                                                    onClick={() => {
-                                                        const next = new Set(selectedMemberIds);
-                                                        if (next.has(m.id)) {
-                                                            next.delete(m.id);
-                                                            // Also remove from leads if removed from teammates
-                                                            const nextLeads = new Set(selectedLeadIds);
-                                                            nextLeads.delete(m.id);
-                                                            setSelectedLeadIds(nextLeads);
-                                                        } else {
-                                                            next.add(m.id);
-                                                        }
-                                                        setSelectedMemberIds(next);
-                                                    }}
-                                                    className={clsx(
-                                                        "flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
-                                                        isSelected ? "bg-primary/5 border-primary/20" : "bg-black/[0.01] border-black/[0.03] hover:border-black/[0.1]"
-                                                    )}
-                                                >
-                                                    <div className="flex items-center gap-4">
+                                        return (
+                                            <div key={mid} className={clsx(
+                                                "rounded-2xl border transition-all overflow-hidden",
+                                                isLead ? "bg-primary/[0.02] border-primary/20" : "bg-surface-subtle border-border"
+                                            )}>
+                                                <div className="p-4 flex items-center justify-between border-b border-border/50">
+                                                    <div className="flex items-center gap-3">
                                                         <div className={clsx(
-                                                            "w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-bold",
-                                                            isSelected ? "bg-primary text-white" : "bg-black/5 text-text-muted"
+                                                            "w-10 h-10 rounded-lg flex items-center justify-center",
+                                                            isLead ? "bg-primary text-white" : "bg-border text-text-muted"
                                                         )}>
-                                                            {m.full_name[0].toUpperCase()}
+                                                            <Shield className="w-5 h-5" />
                                                         </div>
-                                                        <div className="text-left">
-                                                            <p className="text-[13px] font-bold text-text-primary leading-none mb-1">{m.full_name.toUpperCase()}</p>
-                                                            <p className="text-[10px] font-mono text-text-muted tracking-tight">{m.email}</p>
-                                                        </div>
+                                                        <p className="font-bold text-text-primary uppercase text-sm font-mono">{member.full_name}</p>
                                                     </div>
-                                                    <div className={clsx(
-                                                        "w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center",
-                                                        isSelected ? "bg-primary border-primary" : "border-black/10"
-                                                    )}>
-                                                        {isSelected && <Check className="w-3 h-3 text-white stroke-[4]" />}
-                                                    </div>
-                                                </button>
-                                            )
-                                        })}
-                                    </div>
-                                </div>
-                            )}
+                                                    <Button 
+                                                        variant={isLead ? "primary" : "secondary"}
+                                                        size="sm"
+                                                        onClick={() => toggleLead(mid)}
+                                                    >
+                                                        {isLead ? 'Lead Assigned' : 'Make Lead'}
+                                                    </Button>
+                                                </div>
 
-                            {wizardStep === 3 && (
-                                <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Assign Team Leads & Permissions</label>
-                                        <span className="text-[10px] font-bold text-primary px-3 py-1 bg-primary/10 rounded-full font-mono">{selectedLeadIds.size} Leads</span>
-                                    </div>
-                                    
-                                    {selectedMemberIds.size === 0 ? (
-                                        <div className="text-center py-20 bg-black/[0.01] rounded-[32px] border border-dashed border-black/10">
-                                            <Shield className="w-12 h-12 text-black/10 mx-auto mb-4" />
-                                            <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">No teammates selected yet</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-6">
-                                            {Array.from(selectedMemberIds).map(mid => {
-                                                const member = members.find(m => m.id === mid);
-                                                const isLead = selectedLeadIds.has(mid);
-                                                const perms = leadPermissions[mid];
-                                                if (!member) return null;
-
-                                                return (
-                                                    <div key={mid} className={clsx(
-                                                        "rounded-[32px] border transition-all duration-500 overflow-hidden",
-                                                        isLead ? "bg-primary/[0.02] border-primary/20" : "bg-black/[0.01] border-black/[0.03]"
-                                                    )}>
-                                                        <div className="p-6 flex items-center justify-between border-b border-black/[0.03]">
-                                                            <div className="flex items-center gap-4">
-                                                                <div className={clsx(
-                                                                    "w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold",
-                                                                    isLead ? "bg-primary text-white" : "bg-black/5 text-text-muted"
-                                                                )}>
-                                                                    <Shield className="w-5 h-5" />
-                                                                </div>
-                                                                <p className="font-bold text-text-primary uppercase font-mono">{member.full_name}</p>
-                                                            </div>
-                                                            <button 
-                                                                onClick={() => toggleLead(mid)}
-                                                                className={clsx(
-                                                                    "px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] font-mono transition-all",
-                                                                    isLead ? "bg-primary text-white shadow-lg" : "bg-black/5 text-text-muted hover:bg-black/10"
-                                                                )}
+                                                {isLead && (
+                                                    <div className="p-4 bg-surface-solid/50 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                                                        {(Object.keys(DEFAULT_PERMISSIONS) as Array<keyof LeadPermissions>).map(key => (
+                                                            <button
+                                                                key={key}
+                                                                onClick={() => updateLeadPermission(mid, key, !leadPermissions[mid]?.[key])}
+                                                                className="flex items-center gap-3 text-left group"
                                                             >
-                                                                {isLead ? 'HEAD ASSIGNED' : 'MAKE LEAD'}
+                                                                <div className={clsx(
+                                                                    "w-5 h-5 rounded border-2 flex items-center justify-center transition-colors",
+                                                                    leadPermissions[mid]?.[key] ? "bg-emerald-500 border-emerald-500" : "border-border group-hover:border-text-muted/30"
+                                                                )}>
+                                                                    {leadPermissions[mid]?.[key] && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                                                                </div>
+                                                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider group-hover:text-text-primary transition-colors">
+                                                                    {key.replace(/_/g, ' ')}
+                                                                </span>
                                                             </button>
-                                                        </div>
-                                                        {isLead && perms && (
-                                                            <div className="p-8 grid grid-cols-2 gap-x-8 gap-y-4 bg-white/50">
-                                                                {Object.entries(perms).map(([key, value]) => (
-                                                                    <div key={key} className="flex items-center justify-between py-1">
-                                                                        <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider font-mono capitalize">
-                                                                            {key.replace(/_/g, ' ')}
-                                                                        </span>
-                                                                        <button 
-                                                                            onClick={() => updateLeadPermission(mid, key as keyof LeadPermissions, !value)}
-                                                                            className={clsx(
-                                                                                "w-10 h-5 rounded-full transition-all relative",
-                                                                                value ? "bg-primary" : "bg-black/10"
-                                                                            )}
-                                                                        >
-                                                                            <div className={clsx(
-                                                                                "absolute top-1 w-3 h-3 bg-white rounded-full transition-all",
-                                                                                value ? "right-1" : "left-1"
-                                                                            )} />
-                                                                        </button>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
+                                                        ))}
                                                     </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {wizardStep === 4 && (
-                                <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Assign Projects to Team</label>
-                                        <span className="text-[10px] font-bold text-primary px-3 py-1 bg-primary/10 rounded-full font-mono">{selectedProjectIds.size} Projects</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-3">
-                                        {allProjects.map(p => {
-                                            const isSelected = selectedProjectIds.has(p.id);
-                                            return (
-                                                <button
-                                                    key={p.id}
-                                                    onClick={() => {
-                                                        const next = new Set(selectedProjectIds);
-                                                        if (next.has(p.id)) next.delete(p.id);
-                                                        else next.add(p.id);
-                                                        setSelectedProjectIds(next);
-                                                    }}
-                                                    className={clsx(
-                                                        "flex items-center justify-between p-5 rounded-2xl border transition-all duration-300",
-                                                        isSelected ? "bg-primary/5 border-primary/20 shadow-md" : "bg-black/[0.01] border-black/[0.03] hover:border-black/[0.1]"
-                                                    )}
-                                                >
-                                                    <div className="flex items-center gap-4">
-                                                        <div className={clsx(
-                                                            "w-10 h-10 rounded-xl flex items-center justify-center",
-                                                            isSelected ? "bg-primary/20 text-primary" : "bg-black/5 text-text-muted"
-                                                        )}>
-                                                            <Briefcase className="w-5 h-5" />
-                                                        </div>
-                                                        <p className="text-[13px] font-bold text-text-primary uppercase font-mono">{p.name}</p>
-                                                    </div>
-                                                    <div className={clsx(
-                                                        "w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center",
-                                                        isSelected ? "bg-primary border-primary" : "border-black/10"
-                                                    )}>
-                                                        {isSelected && <Check className="w-3 h-3 text-white stroke-[4]" />}
-                                                    </div>
-                                                </button>
-                                            )
-                                        })}
-                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
+                    )}
 
-                        {/* Wizard Footer */}
-                        <div className="px-10 py-8 border-t border-black/[0.05] bg-black/[0.01] flex items-center justify-between">
-                            <button
-                                onClick={() => wizardStep > 1 ? setWizardStep(wizardStep - 1) : setShowModal(false)}
-                                className="px-8 py-4 rounded-2xl border border-black/[0.1] text-[11px] font-bold text-text-muted hover:text-text-primary hover:bg-white transition-all uppercase tracking-[0.2em] font-mono"
-                            >
-                                {wizardStep === 1 ? 'CANCEL' : 'BACK'}
-                            </button>
-                            <div className="flex items-center gap-4">
-                                {wizardStep < 4 ? (
-                                    <button
-                                        onClick={() => setWizardStep(wizardStep + 1)}
-                                        disabled={wizardStep === 1 && !name}
-                                        className="px-12 py-4 rounded-2xl bg-primary text-white text-[11px] font-bold hover:shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-[0.3em] font-mono shadow-xl disabled:opacity-30"
-                                    >
-                                        NEXT STEP
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={handleSave}
-                                        disabled={loading || isViewer}
-                                        className="px-12 py-4 rounded-2xl bg-primary text-white text-[11px] font-bold hover:shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-[0.3em] font-mono shadow-xl disabled:opacity-30"
-                                    >
-                                        {loading ? 'SAVING...' : (editingTeam ? 'SAVE CHANGES' : 'FINISH & CREATE')}
-                                    </button>
-                                )}
+                    {wizardStep === 4 && (
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
+                            <div className="flex items-center justify-between">
+                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.15em]">Assign Projects</p>
+                                <StatusBadge variant={selectedProjectIds.size > 0 ? "success" : "default"}>
+                                    {selectedProjectIds.size} Projects
+                                </StatusBadge>
+                            </div>
+                            <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                                {allProjects.map(p => {
+                                    const isSelected = selectedProjectIds.has(p.id);
+                                    return (
+                                        <button
+                                            key={p.id}
+                                            onClick={() => {
+                                                const next = new Set(selectedProjectIds);
+                                                if (next.has(p.id)) next.delete(p.id);
+                                                else next.add(p.id);
+                                                setSelectedProjectIds(next);
+                                            }}
+                                            className={clsx(
+                                                "flex items-center justify-between p-4 rounded-xl border transition-all text-left",
+                                                isSelected ? "bg-primary/5 border-primary/30" : "bg-surface-subtle border-border hover:border-text-muted/20"
+                                            )}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className={clsx(
+                                                    "w-10 h-10 rounded-lg flex items-center justify-center",
+                                                    isSelected ? "bg-primary/10 text-primary" : "bg-border text-text-muted"
+                                                )}>
+                                                    <Briefcase className="w-5 h-5" />
+                                                </div>
+                                                <p className="text-sm font-bold text-text-primary uppercase font-mono">{p.name}</p>
+                                            </div>
+                                            <div className={clsx(
+                                                "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors",
+                                                isSelected ? "bg-primary border-primary" : "border-border"
+                                            )}>
+                                                {isSelected && <Check className="w-3 h-3 text-white stroke-[3.5]" />}
+                                            </div>
+                                        </button>
+                                    )
+                                })}
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
-            )}
+            </Modal>
 
-            {/* DELETE CONFIRMATION MODAL */}
-            {deletingTeam && (
-                <div className="fixed inset-0 z-[100] bg-text-primary/10 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-500">
-                    <div className="bg-white border border-rose-500/10 rounded-[48px] w-full max-w-md p-12 text-center shadow-[0_40px_120px_rgba(225,29,72,0.1)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
-                        <div className="w-28 h-28 bg-rose-500/5 rounded-[40px] flex items-center justify-center mx-auto mb-10 shadow-inner border border-rose-500/10 rotate-6 group-hover:rotate-0 transition-transform duration-700">
-                            <Trash2 className="w-12 h-12 text-rose-600" strokeWidth={2.5} />
-                        </div>
-                         <h2 className="text-3xl font-bold text-text-primary tracking-tighter mb-4 uppercase">Delete Team?</h2>
-                        <p className="text-text-muted font-bold uppercase tracking-widest leading-relaxed mb-12 text-[11px] font-mono opacity-60">
-                            This will permanently delete <span className="text-rose-600">"{deletingTeam.name.toUpperCase()}"</span>.
-                            Team members will be unassigned from this team.
-                        </p>
-                        <div className="flex gap-4">
-                            <button
-                                onClick={() => setDeletingTeam(null)}
-                                className="flex-1 py-5 text-[11px] font-bold uppercase tracking-widest text-text-muted hover:text-text-primary transition-all font-mono"
-                            >
-                                CANCEL
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                className="flex-[1.8] bg-rose-600 hover:bg-rose-700 text-white py-5 rounded-[24px] text-[11px] font-bold uppercase tracking-[0.3em] transition-all shadow-xl shadow-rose-900/10 active:scale-95 font-mono"
-                            >
-                                CONFIRM DELETE
-                            </button>
-                        </div>
+            {/* Delete Confirmation Modal */}
+            <Modal
+                isOpen={!!deletingTeam}
+                onClose={() => setDeletingTeam(null)}
+                title="Delete Team?"
+                maxWidth="max-w-md"
+                footer={
+                    <div className="flex gap-3 w-full">
+                        <Button variant="secondary" className="flex-1" onClick={() => setDeletingTeam(null)}>
+                            Cancel
+                        </Button>
+                        <Button variant="danger" className="flex-[2]" onClick={handleDelete}>
+                            Confirm Delete
+                        </Button>
                     </div>
+                }
+            >
+                <div className="text-center py-6">
+                    <div className="w-20 h-20 bg-rose-50 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-rose-100 shadow-inner">
+                        <Trash2 className="w-10 h-10 text-rose-500" />
+                    </div>
+                    <p className="text-sm text-text-muted leading-relaxed font-bold uppercase tracking-wider font-mono">
+                        This will permanently delete <span className="text-rose-600">"{deletingTeam?.name}"</span>.
+                        All assignments associated with this team will be removed.
+                    </p>
                 </div>
-            )}
-            
+            </Modal>
         </div>
     );
 }
@@ -718,144 +691,69 @@ function TeamItem({ team, mode, onEdit, onDelete, isViewer }: {
 
     if (mode === 'list') {
         return (
-            <div className="px-10 py-8 flex items-center group/row hover:bg-black/[0.01] transition-all duration-500">
-                <div className="w-16 h-16 rounded-[24px] bg-primary/5 border border-primary/20 flex items-center justify-center text-primary font-bold text-base mr-10 group-hover/row:scale-110 transition-transform duration-700 shadow-sm font-mono">
+            <div className="px-10 py-6 flex items-center group/row hover:bg-primary/[0.02] transition-colors">
+                <div className="w-12 h-12 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary font-bold text-base mr-6 font-mono shadow-inner">
                     {initials}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-text-primary tracking-tight text-xl leading-tight group-hover/row:text-primary transition-colors duration-500 mb-1">{team.name}</h3>
-                    <p className="text-[10px] text-text-muted font-bold uppercase tracking-[0.2em] font-mono truncate max-w-md">{team.description || 'NO DESCRIPTION'}</p>
+                    <h3 className="font-bold text-text-primary tracking-tight text-lg mb-0.5 group-hover/row:text-primary transition-colors">{team.name}</h3>
+                    <p className="text-[10px] text-text-muted font-bold uppercase tracking-widest font-mono truncate max-w-md">{team.description || 'No description'}</p>
                 </div>
-                <div className="px-12 shrink-0">
-                    <p className="text-[9px] font-bold text-text-muted/40 uppercase tracking-[0.3em] mb-3 font-mono">Authority</p>
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
-                            <Shield className="w-4 h-4 text-primary" strokeWidth={2.5} />
-                        </div>
-                        <span className="text-xs font-semibold text-slate-400">Autonomous</span>
+                <div className="px-10 shrink-0 border-x border-border">
+                    <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest mb-1 font-mono">Members</p>
+                    <div className="flex items-center gap-2 text-primary font-bold font-mono">
+                        <UsersRound className="w-3.5 h-3.5" strokeWidth={2.5} />
+                        <span className="text-xs">{team.member_count}</span>
                     </div>
                 </div>
-                <div className="px-12 shrink-0 border-x border-black/[0.03]">
-                    <p className="text-[9px] font-bold text-text-muted/40 uppercase tracking-[0.3em] mb-3 font-mono">Member Count</p>
-                    <div className="flex items-center gap-3 text-primary font-bold">
-                        <div className="w-8 h-8 rounded-xl bg-black/[0.03] flex items-center justify-center border border-black/[0.05] shadow-sm">
-                            <UsersRound className="w-4 h-4 text-primary" strokeWidth={2.5} />
-                        </div>
-                        <span className="text-[13px] font-bold font-mono tracking-tighter">{team.member_count} MEMBERS</span>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3 ml-auto opacity-0 group-hover/row:opacity-100 transition-all duration-500 pr-4">
-                    <button 
-                        onClick={() => { if (!isViewer) onEdit(); }} 
-                        className={clsx(
-                            "p-3.5 rounded-2xl border transition-all shadow-sm active:scale-90",
-                            isViewer ? "opacity-20 cursor-not-allowed" : "glass border-black/[0.05] hover:border-primary/50 text-text-muted hover:text-primary hover:bg-primary/5"
-                        )}
-                    >
-                        <Pencil className="w-4.5 h-4.5" />
-                    </button>
-                    <button 
-                        onClick={() => { if (!isViewer) onEdit(); }} 
-                        className={clsx(
-                            "p-3.5 rounded-2xl border transition-all shadow-sm active:scale-90",
-                            isViewer ? "opacity-20 cursor-not-allowed" : "glass border-black/[0.05] hover:border-primary/50 text-text-muted hover:text-primary hover:bg-primary/5"
-                        )}
-                    >
-                        <Settings className="w-4.5 h-4.5" />
-                    </button>
-                    <button 
-                        onClick={() => { if (!isViewer) onDelete(); }} 
-                        className={clsx(
-                            "p-3.5 rounded-2xl border transition-all shadow-sm active:scale-90",
-                            isViewer ? "opacity-20 cursor-not-allowed" : "glass border-black/[0.05] hover:border-rose-500/50 text-text-muted hover:text-rose-600 hover:bg-rose-50"
-                        )}
-                    >
-                        <Trash2 className="w-4.5 h-4.5" />
-                    </button>
+                <div className="flex items-center gap-2 ml-auto opacity-0 group-hover/row:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="sm" onClick={onEdit} disabled={isViewer}>
+                        <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={onDelete} className="text-rose-500 hover:bg-rose-50" disabled={isViewer}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="glass border border-black/[0.05] rounded-[44px] p-10 hover:border-primary/30 hover:shadow-[0_40px_100px_rgba(0,0,0,0.08)] transition-all duration-700 group relative overflow-hidden flex flex-col h-full animate-in fade-in slide-in-from-bottom-6 group/card">
-            
-            {/* Action Bar */}
-            <div className="absolute top-8 right-8 opacity-0 group-hover/card:opacity-100 transition-all duration-500 flex flex-col gap-3 z-10">
-                <button 
-                    onClick={() => { if (!isViewer) onEdit(); }} 
-                    disabled={isViewer}
-                    className="p-4 glass border border-black/[0.1] rounded-[20px] shadow-xl hover:bg-primary hover:text-white hover:border-primary transition-all duration-500 text-text-muted active:scale-90"
-                >
-                    <Pencil className="w-4.5 h-4.5" strokeWidth={2.5} />
-                </button>
-                <button 
-                    onClick={() => { if (!isViewer) onDelete(); }} 
-                    disabled={isViewer}
-                    className="p-4 glass border border-black/[0.1] rounded-[20px] shadow-xl hover:bg-rose-600 hover:text-white hover:border-rose-600 transition-all duration-500 text-text-muted active:scale-90"
-                >
-                    <Trash2 className="w-4.5 h-4.5" strokeWidth={2.5} />
-                </button>
-            </div>
-
-            <div className="mb-12 relative">
-                <div className="w-24 h-24 rounded-[32px] bg-primary/5 border border-primary/10 flex items-center justify-center font-bold text-primary text-3xl group-hover/card:scale-110 group-hover/card:rotate-6 transition-all duration-1000 mb-10 shadow-inner font-mono">
+        <Card className="h-full flex flex-col group/card hover:border-primary/30 transition-all duration-300">
+            <div className="flex items-start justify-between mb-8">
+                <div className="w-16 h-16 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center font-bold text-primary text-2xl font-mono shadow-inner group-hover/card:scale-105 transition-transform">
                     {initials}
                 </div>
-                <h3 className="text-3xl font-bold text-text-primary tracking-tighter mb-4 group-hover/card:text-primary transition-colors duration-500">{team.name}</h3>
-                <p className="text-sm text-slate-600 leading-relaxed line-clamp-2 min-h-[48px]">
-                    {team.description || "No description available for this team."}
-                </p>
-            </div>
-
-            <div className="mt-auto space-y-10">
-                <div className="glass p-8 rounded-[36px] border border-black/[0.03] group-hover/card:border-primary/20 transition-all duration-700 shadow-lg bg-white/[0.01]">
-                    <div className="flex items-center gap-6">
-                        <div className="w-14 h-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-xl group-hover/card:scale-110 transition-transform duration-700">
-                            <Shield className="w-6 h-6 stroke-[3]" />
-                        </div>
-                        <div>
-                            <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] leading-none mb-2 font-mono">Team Lead</p>
-                            <p className="text-base font-bold text-text-primary tracking-tight uppercase font-mono">{team.manager_name || 'No Manager'}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center gap-6">
-                        <div className="flex -space-x-4">
-                            {[...Array(Math.min(3, team.member_count))].map((_, i) => (
-                                <div key={i} className="w-12 h-12 rounded-[18px] bg-white border-2 border-primary/20 flex items-center justify-center text-[11px] font-bold text-primary shadow-xl transition-transform hover:scale-110 hover:z-10 group-hover/card:animate-pulse" style={{ animationDelay: `${i * 200}ms` }}>
-                                    <UsersRound className="w-5 h-5" strokeWidth={2.5} />
-                                </div>
-                            ))}
-                            {team.member_count > 3 && (
-                                <div className="w-12 h-12 rounded-[18px] bg-primary border-2 border-white flex items-center justify-center text-[11px] font-bold text-white shadow-xl scale-110 z-10">
-                                    +{team.member_count - 3}
-                                </div>
-                            )}
-                        </div>
-                        <div>
-                            <span className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono leading-none mb-1">Members</span>
-                            <span className="text-[15px] font-bold text-text-primary font-mono tracking-tighter">{team.member_count} ACTIVE</span>
-                        </div>
-                    </div>
-                    <button 
-                        onClick={onEdit}
-                        disabled={isViewer}
-                        className={clsx(
-                            "flex items-center gap-2 font-bold uppercase tracking-[0.3em] text-[10px] transition-all group/btn font-mono p-4 rounded-xl",
-                            isViewer ? "text-text-muted cursor-default" : "text-primary hover:bg-primary/5 active:scale-95"
-                        )}
-                    >
-                        {isViewer ? 'VIEW' : 'EDIT WIZARD'}
-                        <ChevronRight className="w-5 h-5 group-hover/btn:translate-x-2 transition-transform" strokeWidth={3} />
-                    </button>
+                <div className="flex gap-2 opacity-0 group-hover/card:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="sm" onClick={onEdit} disabled={isViewer}>
+                        <Pencil className="w-4 h-4" />
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={onDelete} className="text-rose-500 hover:bg-rose-50" disabled={isViewer}>
+                        <Trash2 className="w-4 h-4" />
+                    </Button>
                 </div>
             </div>
-            
-            {/* Decorative Pulse */}
-            <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-primary/5 rounded-full blur-[80px] group-hover/card:bg-primary/10 transition-colors duration-1000" />
-        </div>
+
+            <h3 className="text-2xl font-bold text-text-primary tracking-tight mb-2 group-hover/card:text-primary transition-colors uppercase font-mono">{team.name}</h3>
+            <p className="text-xs text-text-muted leading-relaxed line-clamp-2 mb-8 h-8">
+                {team.description || "No description available for this team."}
+            </p>
+
+            <div className="mt-auto pt-6 border-t border-border flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                        <Shield className="w-4 h-4" />
+                    </div>
+                    <div>
+                        <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest leading-none mb-1 font-mono">Lead</p>
+                        <p className="text-xs font-bold text-text-primary uppercase font-mono truncate max-w-[120px]">{team.manager_name || 'Unassigned'}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-subtle border border-border rounded-lg">
+                    <UsersRound className="w-4 h-4 text-text-muted" />
+                    <span className="text-xs font-bold text-text-primary font-mono tracking-tighter">{team.member_count}</span>
+                </div>
+            </div>
+        </Card>
     );
 }

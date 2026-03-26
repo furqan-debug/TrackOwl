@@ -37,7 +37,7 @@ export function Input({
                 <input
                     id={inputId}
                     className={clsx(
-                        'w-full bg-black/[0.02] border border-black/[0.05] rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-muted/50 focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary/30 focus:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shadow-black/[0.02]',
+                        'w-full bg-white border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-muted/40 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm font-mono',
                         leftIcon && 'pl-11',
                         error && 'border-rose-500/50 focus:ring-rose-500/10 focus:border-rose-500/50',
                         className

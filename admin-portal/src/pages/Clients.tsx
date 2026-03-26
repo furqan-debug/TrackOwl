@@ -2,10 +2,14 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
     Search, Building2, Mail, 
-    X, Loader2, Plus, Globe, 
+    Plus, Globe, 
     Trash2, ShieldCheck, Activity
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { 
+    PageHeader, Card, Button, StatusBadge, 
+    LoadingState, EmptyState, Modal, Input 
+} from '../components/ui';
 import clsx from 'clsx';
 
 interface Client {
@@ -143,84 +147,71 @@ export function Clients() {
     });
 
     return (
-        <div className="flex flex-col h-full bg-transparent animate-in fade-in duration-700">
-            {/* Header section with Stats */}
-            <div className="px-10 py-12 border-b border-black/[0.05] bg-white/[0.01]">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-4 mb-2">
-                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
-                                <Building2 className="w-6 h-6 text-primary" strokeWidth={2.5} />
-                            </div>
-                            <h1 className="text-3xl font-bold text-text-primary tracking-tighter">Partner Ecosystem</h1>
-                        </div>
-                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono leading-relaxed">Strategic business alliances and jurisdictional entity registries</p>
-                    </div>
+        <div className="space-y-10 max-w-full mx-auto animate-in fade-in duration-700">
+            <PageHeader
+                title="Client Management"
+                description="Manage your strategic business partners and organizational representatives."
+                actions={
+                    <Button
+                        onClick={handleOpenCreate}
+                        disabled={isViewer}
+                        variant="primary"
+                        className="px-8 py-3.5 scale-105 shadow-xl shadow-primary/20 group"
+                    >
+                        <Plus className="w-4 h-4 mr-2.5 group-hover:rotate-90 transition-transform" strokeWidth={3} />
+                        Add New Client
+                    </Button>
+                }
+            />
 
-                    <div className="flex items-center gap-5">
-                        <button
-                            onClick={handleOpenCreate}
-                            disabled={isViewer}
-                            className={clsx(
-                                "flex items-center gap-3 px-10 py-4 rounded-2xl text-[11px] font-bold uppercase tracking-[0.2em] transition-all shadow-xl active:scale-95 font-mono",
-                                isViewer ? "bg-black/5 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-primary/30 hover:scale-[1.02]"
-                            )}
-                        >
-                            <Plus className="w-4 h-4 stroke-[4]" />
-                            Establish Alliance
-                        </button>
-                    </div>
-                </div>
-
-                {/* KPI Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <StatsCard 
-                        label="Strategic Partners" 
-                        value={clients.length} 
-                        icon={<Building2 className="w-5 h-5" strokeWidth={2.5} />} 
-                        color="indigo" 
-                    />
-                    <StatsCard 
-                        label="Active Channels" 
-                        value={clients.filter(c => c.status === 'Active').length} 
-                        icon={<Activity className="w-5 h-5" strokeWidth={2.5} />} 
-                        color="emerald" 
-                    />
-                    <StatsCard 
-                        label="Registry Expansion" 
-                        value={clients.filter(c => {
-                            const created = new Date(c.created_at).getTime();
-                            const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-                            return created > thirtyDaysAgo;
-                        }).length} 
-                        icon={<Globe className="w-5 h-5" strokeWidth={2.5} />} 
-                        color="violet" 
-                    />
-                </div>
+            {/* KPI Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <StatsCard 
+                    label="Total Clients" 
+                    value={clients.length} 
+                    icon={<Building2 className="w-5 h-5 text-primary" strokeWidth={2.5} />} 
+                    description="Registered entities"
+                />
+                <StatsCard 
+                    label="Active Partners" 
+                    value={clients.filter(c => c.status === 'Active').length} 
+                    icon={<Activity className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />} 
+                    description="Operational accounts"
+                />
+                <StatsCard 
+                    label="New Arrivals" 
+                    value={clients.filter(c => {
+                        const created = new Date(c.created_at).getTime();
+                        const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+                        return created > thirtyDaysAgo;
+                    }).length} 
+                    icon={<Globe className="w-5 h-5 text-violet-600" strokeWidth={2.5} />} 
+                    description="Last 30 days"
+                />
             </div>
 
-            {/* Content Area */}
-            <div className="p-10 flex-1 overflow-auto custom-scrollbar bg-white/[0.01]">
+            <Card className="overflow-hidden p-0 border-border/60 shadow-xl">
                 {/* Search & Filters */}
-                <div className="flex flex-col md:flex-row gap-8 mb-12 items-stretch">
-                    <div className="relative group flex-1">
-                        <Search className="w-5 h-5 text-text-muted absolute left-6 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" strokeWidth={2.5} />
+                <div className="p-8 border-b border-border bg-surface-subtle/30 flex flex-col md:flex-row gap-6 items-center justify-between">
+                    <div className="relative group w-full max-w-md">
+                        <Search className="w-4 h-4 text-text-muted absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" strokeWidth={3} />
                         <input
                             type="text"
-                            placeholder="QUERY PARTNER REGISTRY OR CORPORATE ID..."
+                            placeholder="Search by name, company, or email..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-15 pr-8 py-5 bg-white border border-black/[0.05] rounded-[24px] text-[13px] font-bold text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-8 focus:ring-primary/5 focus:border-primary/20 transition-all shadow-sm font-mono uppercase"
+                            className="w-full pl-13 pr-6 py-3.5 bg-surface-solid border border-border rounded-2xl text-[13px] font-bold text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono uppercase"
                         />
                     </div>
-                    <div className="flex items-center bg-black/[0.02] border border-black/[0.05] rounded-[24px] p-1.5 shadow-inner">
+                    
+                    <div className="flex items-center bg-surface-subtle border border-border rounded-2xl p-1 shadow-inner">
                         {['All', 'Active', 'Inactive'].map((s) => (
                             <button
                                 key={s}
                                 onClick={() => setStatusFilter(s)}
                                 className={clsx(
-                                    "px-8 py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-300 font-mono",
-                                    statusFilter === s ? "bg-white text-primary shadow-lg ring-1 ring-black/[0.05]" : "text-text-muted hover:text-text-primary hover:bg-black/[0.02]"
+                                    "px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300 font-mono",
+                                    statusFilter === s ? "bg-surface-solid text-primary shadow-sm border border-border" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
                                 {s}
@@ -229,101 +220,102 @@ export function Clients() {
                     </div>
                 </div>
 
-                <div className="glass border border-black/[0.05] rounded-[48px] overflow-hidden shadow-2xl bg-white mb-20">
+                <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full text-left border-collapse">
                         <thead>
-                            <tr className="border-b border-black/[0.03] bg-black/[0.01]">
-                                <th className="px-10 py-8 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Affiliate / Corporation</th>
-                                <th className="px-10 py-8 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Secure Contact</th>
-                                <th className="px-10 py-8 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Status Status</th>
-                                <th className="px-10 py-8 w-20"></th>
+                            <tr className="bg-surface-subtle/20">
+                                <th className="pl-12 pr-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border min-w-[320px]">Partner Details</th>
+                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border">Contact Channel</th>
+                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border">Current Status</th>
+                                <th className="pl-6 pr-12 py-8 text-right border-b border-border min-w-[150px]">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-black/[0.03]">
+                        <tbody className="divide-y divide-border/40">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={4} className="py-40 text-center">
-                                        <div className="flex flex-col items-center gap-6">
-                                            <Loader2 className="w-12 h-12 text-primary animate-spin" strokeWidth={3} />
-                                            <span className="text-[11px] font-bold text-text-muted uppercase tracking-[0.5em] animate-pulse font-mono">Loading clients...</span>
-                                        </div>
+                                    <td colSpan={4} className="py-32">
+                                        <LoadingState message="Retrieving client registry..." />
                                     </td>
                                 </tr>
                             ) : filteredClients.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="py-40 text-center">
-                                        <div className="flex flex-col items-center gap-10">
-                                            <div className="w-32 h-32 bg-black/[0.02] border border-black/[0.05] rounded-[56px] flex items-center justify-center rotate-6 shadow-sm">
-                                                <Building2 className="w-16 h-16 text-text-muted/20" strokeWidth={1.5} />
-                                            </div>
-                                            <div className="space-y-4">
-                                                <h3 className="text-2xl font-bold text-text-primary tracking-tighter">No Entities Found</h3>
-                                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono italic">Strategic registry remains void of affiliate data</p>
-                                            </div>
-                                        </div>
+                                    <td colSpan={4} className="py-32">
+                                        <EmptyState 
+                                            icon={<Building2 className="w-12 h-12 text-text-muted/20" />}
+                                            title="No clients found" 
+                                            description="Your client registry is currently empty or matches no filters." 
+                                            action={!isViewer && (
+                                                <Button onClick={handleOpenCreate} variant="secondary" size="sm">
+                                                    Initialize First Client
+                                                </Button>
+                                            )}
+                                        />
                                     </td>
                                 </tr>
                             ) : (
                                 filteredClients.map((client) => (
-                                    <tr key={client.id} className="hover:bg-black/[0.01] transition-all group/row group duration-500">
-                                        <td className="px-10 py-8">
+                                    <tr key={client.id} className="hover:bg-primary/[0.01] transition-all group duration-500">
+                                        <td className="px-12 py-8">
                                             <div className="flex items-center gap-6">
-                                                <div className="w-16 h-16 rounded-[24px] bg-primary/5 border border-primary/20 flex items-center justify-center shrink-0 group-hover/row:scale-110 group-hover/row:rotate-3 transition-all duration-700 shadow-sm">
-                                                    <Building2 className="w-7 h-7 text-primary" strokeWidth={2.5} />
+                                                <div className="w-14 h-14 rounded-2xl bg-surface-solid border border-border flex items-center justify-center font-bold text-text-primary text-xl shadow-sm transition-all group-hover:scale-110 group-hover:rotate-3 group-hover:bg-primary group-hover:text-white group-hover:border-primary/20 font-mono italic">
+                                                    {client.name.charAt(0)}
                                                 </div>
-                                                <div>
-                                                    <div className="font-bold text-text-primary text-xl tracking-tighter group-hover/row:text-primary transition-colors duration-500 mb-1">{client.name}</div>
-                                                    <div className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-60">{client.company.toUpperCase()}</div>
+                                                <div className="space-y-1">
+                                                    <div className="font-bold text-text-primary text-lg tracking-tighter group-hover:text-primary transition-colors duration-500 italic">{client.name}</div>
+                                                    <div className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-60 flex items-center gap-2">
+                                                        <Building2 className="w-3 h-3" />
+                                                        {client.company}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-10 py-8">
-                                            <div className="flex items-center gap-4 text-[13px] font-bold text-text-muted group-hover/row:text-text-primary transition-colors duration-500 font-mono uppercase">
-                                                <div className="w-10 h-10 rounded-[14px] bg-black/[0.03] flex items-center justify-center border border-black/[0.05] shadow-sm">
-                                                    <Mail className="w-4 h-4" strokeWidth={2.5} />
-                                                </div>
+                                        <td className="px-6 py-8">
+                                            <div className="inline-flex items-center gap-3 px-4 py-2.5 bg-surface-subtle border border-border rounded-xl text-[11px] font-bold text-text-muted group-hover:text-text-primary transition-colors duration-500 font-mono uppercase tracking-tight">
+                                                <Mail className="w-3.5 h-3.5 opacity-40" />
                                                 {client.email}
                                             </div>
                                         </td>
-                                        <td className="px-10 py-8">
+                                        <td className="px-6 py-8">
                                             <button 
                                                 onClick={() => toggleStatus(client)}
                                                 disabled={isViewer}
-                                                className={clsx(
-                                                    "inline-flex items-center gap-4 px-6 py-3 rounded-[18px] text-[10px] font-bold uppercase tracking-[0.3em] transition-all duration-500 font-mono shadow-sm",
-                                                    client.status === 'Active'
-                                                        ? "bg-emerald-50 text-emerald-600 border border-emerald-500/20"
-                                                        : "bg-black/[0.03] text-text-muted border border-black/[0.05]",
-                                                    isViewer ? "cursor-default" : "cursor-pointer hover:scale-105 active:scale-95"
-                                                )}
+                                                className="group/toggle"
                                             >
-                                                <div className={clsx(
-                                                    "w-2 h-2 rounded-full",
-                                                    client.status === 'Active' ? "bg-emerald-500 animate-pulse shadow-[0_0_12px_rgba(16,185,129,0.5)]" : "bg-text-muted/30"
-                                                )} />
-                                                {client.status}
+                                                <StatusBadge 
+                                                    variant={client.status === 'Active' ? 'success' : 'default'}
+                                                    className={clsx(
+                                                        "px-5 py-2 transition-all font-mono italic",
+                                                        !isViewer && "cursor-pointer group-hover/toggle:scale-110 active:scale-95 shadow-sm"
+                                                    )}
+                                                >
+                                                    {client.status}
+                                                </StatusBadge>
                                             </button>
                                         </td>
-                                        <td className="px-10 py-8 text-right">
-                                            <div className="flex justify-end gap-3 opacity-0 group-hover/row:opacity-100 transition-all duration-500 pr-2">
-                                                <button 
+                                        <td className="pl-6 pr-12 py-8 text-right">
+                                            <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500">
+                                                <Button 
                                                     onClick={() => handleOpenEdit(client)}
-                                                    className="p-4 glass bg-white border border-black/[0.05] rounded-[20px] hover:bg-primary hover:text-white hover:border-primary transition-all duration-500 text-text-muted shadow-xl active:scale-90"
-                                                    title="Reconfigure"
+                                                    variant="secondary"
+                                                    size="sm"
+                                                    className="p-3 bg-surface-solid rounded-xl hover:bg-primary hover:text-white transition-all shadow-lg active:scale-90"
+                                                    title="Configure"
                                                 >
-                                                    <ShieldCheck className="w-5 h-5" strokeWidth={2.5} />
-                                                </button>
-                                                <button 
+                                                    <ShieldCheck className="w-5 h-5 font-bold" strokeWidth={2.5} />
+                                                </Button>
+                                                <Button 
                                                     onClick={() => { if (!isViewer) setDeletingClient(client); }}
                                                     disabled={isViewer}
+                                                    variant="danger"
+                                                    size="sm"
                                                     className={clsx(
-                                                        "p-4 glass bg-white border border-black/[0.05] rounded-[20px] transition-all duration-500 shadow-xl active:scale-90",
-                                                        isViewer ? "opacity-20 cursor-not-allowed" : "hover:bg-rose-600 hover:text-white hover:border-rose-600 text-text-muted"
+                                                        "p-3 rounded-xl transition-all shadow-lg active:scale-90",
+                                                        isViewer ? "opacity-20 cursor-not-allowed" : "bg-surface-solid text-text-muted hover:bg-rose-600 hover:text-white"
                                                     )}
-                                                    title="Decommission"
+                                                    title="Remove"
                                                 >
                                                     <Trash2 className="w-5 h-5" strokeWidth={2.5} />
-                                                </button>
+                                                </Button>
                                             </div>
                                         </td>
                                     </tr>
@@ -332,139 +324,135 @@ export function Clients() {
                         </tbody>
                     </table>
                 </div>
-            </div>
+
+                <div className="p-10 bg-surface-subtle/30 border-t border-border flex flex-col md:flex-row items-center justify-between gap-6">
+                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-50 text-center md:text-left">
+                        Total {clients.length} strategic partners registered in the management ecosystem.
+                    </p>
+                    {clients.length > 5 && (
+                        <div className="flex items-center gap-2">
+                            <Button variant="secondary" size="sm" className="px-5 py-2 text-[9px] font-mono">
+                                Previous
+                            </Button>
+                            <Button variant="secondary" size="sm" className="px-5 py-2 text-[9px] font-mono">
+                                Next
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </Card>
 
             {/* CREATE/EDIT MODAL */}
-            {showModal && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-text-primary/10 backdrop-blur-xl animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[40px] w-full max-w-[580px] shadow-[0_32px_120px_rgba(0,0,0,0.12)] flex flex-col border border-black/[0.05] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
-                        <div className="px-10 pt-10 pb-0 bg-black/[0.01]">
-                            <div className="flex items-start justify-between mb-8">
-                                <div className="flex items-center gap-5">
-                                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm transform -rotate-3 hover:rotate-0 transition-transform duration-500">
-                                        <Building2 className="w-7 h-7 text-primary" strokeWidth={2.5} />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-text-primary tracking-tighter leading-none mb-2">{editClient ? 'Reconfigure Alliance' : 'Establish Alliance'}</h2>
-                                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Client details and settings</p>
-                                    </div>
-                                </div>
-                                <button onClick={handleCloseModal} className="p-3 bg-black/[0.03] hover:bg-black/[0.08] rounded-2xl transition-all text-text-muted hover:text-text-primary shadow-sm hover:scale-110 active:scale-90"><X className="w-5 h-5" strokeWidth={3} /></button>
-                            </div>
-                        </div>
+            <Modal
+                isOpen={showModal}
+                onClose={handleCloseModal}
+                title={editClient ? 'Update Client' : 'Add Client'}
+                subtitle={editClient ? 'Modify existing partner profile' : 'Initialize a new strategic alliance'}
+            >
+                <form onSubmit={handleSubmit} className="space-y-8">
+                    <Input
+                        label="Full Name / Representative"
+                        required
+                        value={formData.name}
+                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="John Doe"
+                        leftIcon={<Building2 className="w-4 h-4" />}
+                    />
+                    <Input
+                        label="Email Address"
+                        type="email"
+                        required
+                        value={formData.email}
+                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="contact@company.com"
+                        leftIcon={<Mail className="w-4 h-4" />}
+                    />
+                    <Input
+                        label="Company / Organization"
+                        required
+                        value={formData.company}
+                        onChange={e => setFormData({ ...formData, company: e.target.value })}
+                        placeholder="Acme Corp"
+                        leftIcon={<Globe className="w-4 h-4" />}
+                    />
 
-                        <form onSubmit={handleSubmit} className="px-10 py-10 space-y-8 bg-white">
-                            <div className="space-y-3">
-                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Entity Head Representative *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="DESIGNATE FULL NAME..."
-                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase"
-                                />
-                            </div>
-                            <div className="space-y-3">
-                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Secure Communication Hub (Email) *</label>
-                                <input
-                                    type="email"
-                                    required
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                    placeholder="SECURE@ENTITY.DOMAIN..."
-                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase"
-                                />
-                            </div>
-                            <div className="space-y-3">
-                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Corporation / Parent Entity *</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.company}
-                                    onChange={e => setFormData({ ...formData, company: e.target.value })}
-                                    placeholder="PARENT ORGANIZATION IDENTIFIER..."
-                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase"
-                                />
-                            </div>
-
-                            <div className="pt-6 flex gap-4">
-                                <button
-                                    type="button"
-                                    onClick={handleCloseModal}
-                                    className="flex-1 px-8 py-5 rounded-2xl border border-black/[0.1] text-[11px] font-bold text-text-muted hover:text-text-primary hover:bg-white transition-all uppercase tracking-[0.2em] font-mono active:scale-95 shadow-sm"
-                                >
-                                    ABORT
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={saving || isViewer}
-                                    className={clsx(
-                                        "flex-[2.2] px-8 py-5 rounded-[24px] text-[11px] font-bold transition-all shadow-xl flex items-center justify-center gap-3 uppercase tracking-[0.3em] font-mono active:scale-95",
-                                        isViewer ? "bg-black/20 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-primary/30 hover:scale-[1.02]"
-                                    )}
-                                >
-                                    {saving && (
-                                        <Loader2 className="w-4 h-4 animate-spin stroke-[3]" />
-                                    )}
-                                    {isViewer ? 'REGISTRY LOCKED' : (editClient ? 'SYNCHRONIZE ALLIANCE' : 'INITIALIZE ALLIANCE')}
-                                </button>
-                            </div>
-                        </form>
+                    <div className="pt-6 flex gap-4">
+                        <Button
+                            type="button"
+                            onClick={handleCloseModal}
+                            variant="secondary"
+                            className="flex-1 py-4 font-mono text-[11px]"
+                        >
+                            CANCEL
+                        </Button>
+                        <Button
+                            type="submit"
+                            disabled={saving || isViewer}
+                            variant="primary"
+                            className="flex-[2] py-4 shadow-xl font-mono text-[11px]"
+                        >
+                            {saving ? 'SAVING...' : (editClient ? 'UPDATE PROFILE' : 'CREATE ACCOUNT')}
+                        </Button>
                     </div>
-                </div>
-            )}
+                </form>
+            </Modal>
 
             {/* DELETE MODAL */}
             {deletingClient && (
-                <div className="fixed inset-0 z-[100] bg-text-primary/10 backdrop-blur-xl flex items-center justify-center p-6 animate-in fade-in duration-500">
-                    <div className="bg-white border border-rose-500/10 rounded-[48px] w-full max-w-md p-12 text-center shadow-[0_40px_120px_rgba(225,29,72,0.1)] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
-                        <div className="w-28 h-28 bg-rose-500/5 rounded-[40px] flex items-center justify-center mx-auto mb-10 shadow-inner border border-rose-500/10 rotate-6 group-hover:rotate-0 transition-transform duration-700">
-                            <Trash2 className="w-12 h-12 text-rose-600" strokeWidth={2.5} />
+                <Modal
+                    isOpen={!!deletingClient}
+                    onClose={() => setDeletingClient(null)}
+                    title="Terminate Partnership"
+                    subtitle="Critical Action Warning"
+                    maxWidth="max-w-[480px]"
+                >
+                    <div className="text-center space-y-8">
+                        <div className="w-24 h-24 bg-rose-500/10 rounded-[32px] flex items-center justify-center mx-auto shadow-inner border border-rose-500/10 rotate-3 group-hover:rotate-0 transition-transform">
+                            <Trash2 className="w-10 h-10 text-rose-600" strokeWidth={2.5} />
                         </div>
-                        <h2 className="text-3xl font-bold text-text-primary tracking-tighter mb-4 uppercase">Purge Entity?</h2>
-                        <p className="text-text-muted font-bold uppercase tracking-widest leading-relaxed mb-12 text-[11px] font-mono opacity-60">
-                            Operation will permanently dissolve alliance with <span className="text-rose-600">"{deletingClient.name.toUpperCase()}"</span>. 
-                            Project associations will be terminated.
-                        </p>
-                        <div className="flex gap-4">
-                            <button
+                        <div className="space-y-4">
+                            <p className="text-text-primary text-xl font-bold tracking-tight">Are you absolutely sure?</p>
+                            <p className="text-text-muted font-bold uppercase tracking-widest leading-relaxed text-[11px] font-mono opacity-80 px-4">
+                                This will permanently remove <span className="text-rose-600">"{deletingClient.name.toUpperCase()}"</span> from the registry. All associated records will be archived.
+                            </p>
+                        </div>
+                        <div className="flex gap-4 pt-4">
+                            <Button
                                 onClick={() => setDeletingClient(null)}
-                                className="flex-1 py-5 text-[11px] font-bold uppercase tracking-widest text-text-muted hover:text-text-primary transition-all font-mono"
+                                variant="secondary"
+                                className="flex-1 py-4 font-mono text-[11px]"
                             >
                                 ABORT
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={handleDelete}
-                                className="flex-[1.8] bg-rose-600 hover:bg-rose-700 text-white py-5 rounded-[24px] text-[11px] font-bold uppercase tracking-[0.3em] transition-all shadow-xl shadow-rose-900/10 active:scale-95 font-mono"
+                                variant="danger"
+                                className="flex-[1.5] py-4 shadow-xl shadow-rose-900/10 font-mono text-[11px]"
                             >
-                                CONFIRM PURGE
-                            </button>
+                                CONFIRM DELETE
+                            </Button>
                         </div>
                     </div>
-                </div>
+                </Modal>
             )}
         </div>
     );
 }
 
-function StatsCard({ label, value, icon, color }: { label: string; value: number | string; icon: React.ReactNode; color: 'indigo' | 'emerald' | 'violet' }) {
-    const colorClasses = {
-        indigo: { bg: 'bg-primary/5', border: 'border-primary/20', text: 'text-primary', glow: 'bg-primary/5' },
-        emerald: { bg: 'bg-emerald-500/5', border: 'border-emerald-500/20', text: 'text-emerald-600', glow: 'bg-emerald-500/5' },
-        violet: { bg: 'bg-violet-500/5', border: 'border-violet-500/20', text: 'text-violet-600', glow: 'bg-violet-500/5' }
-    };
-
+function StatsCard({ label, value, icon, description }: { label: string; value: number | string; icon: React.ReactNode; description: string }) {
     return (
-        <div className="glass p-10 rounded-[44px] border border-black/[0.03] hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl duration-700 bg-white">
-            <div className={clsx("absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-1000", colorClasses[color].glow)} />
+        <div className="bg-surface-solid p-10 rounded-[44px] border border-border hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl duration-700">
+            <div className="absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-16 translate-x-16 group-hover:bg-primary/[0.03] transition-colors duration-1000" />
             <div className="flex items-center gap-6 mb-6">
-                <div className={clsx("w-12 h-12 rounded-[18px] flex items-center justify-center border shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-all duration-700", colorClasses[color].bg, colorClasses[color].border, colorClasses[color].text)}>
+                <div className="w-12 h-12 rounded-[18px] bg-surface-subtle flex items-center justify-center border border-border shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
                     {icon}
                 </div>
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">{label}</p>
+                <div>
+                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-0.5">{label}</p>
+                    <p className="text-[9px] font-bold text-text-muted/40 uppercase tracking-widest font-mono italic">{description}</p>
+                </div>
             </div>
-            <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">{value}</h2>
+            <h2 className="text-6xl font-bold text-text-primary tracking-tighter leading-none italic font-mono">{value}</h2>
         </div>
     );
 }

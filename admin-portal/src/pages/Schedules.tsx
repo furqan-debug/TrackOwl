@@ -3,8 +3,12 @@ import { supabase } from '../lib/supabase';
 import { 
     ChevronLeft, ChevronRight, 
     Activity, TrendingUp, ShieldCheck, 
-    RefreshCw
+    RefreshCw, Calendar
 } from 'lucide-react';
+import { 
+    PageHeader, Card, Button, 
+    LoadingState, KpiCard
+} from '../components/ui';
 import clsx from 'clsx';
 
 const HOURS = Array.from({ length: 14 }, (_, i) => i + 7); // 7am – 8pm
@@ -85,199 +89,168 @@ export function Schedules() {
         `${weekStart.toLocaleString('en-US', { month: 'short' })} ${weekStart.getDate()} – ${weekEnd.toLocaleString('en-US', { month: 'short' })} ${weekEnd.getDate()}, ${weekStart.getFullYear()}`;
 
     return (
-        <div className="flex flex-col h-full bg-transparent animate-in fade-in duration-700">
-            {/* Header section with Summary */}
-            <div className="px-10 py-12 border-b border-black/[0.05] bg-white/[0.01]">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 mb-12">
-                    <div className="space-y-2">
-                        <div className="flex items-center gap-4 mb-2">
-                            <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
-                                <Activity className="w-6 h-6 text-primary" strokeWidth={2.5} />
-                            </div>
-                            <h1 className="text-3xl font-bold text-text-primary tracking-tighter leading-none">Weekly Activity</h1>
-                        </div>
-                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono leading-relaxed">Insights into team productivity and peak activity hours</p>
-                    </div>
-
+        <div className="space-y-10 animate-in fade-in duration-700">
+            <PageHeader
+                title="Personnel Schedules"
+                description="Monitor team activity intensity and peak operational hours across the organizational timeline."
+                actions={
                     <div className="flex items-center gap-6">
-                        <div className="flex bg-black/[0.02] border border-black/[0.05] p-1.5 rounded-[24px] shadow-inner items-center">
-                            <button 
+                        <div className="flex bg-surface-subtle border border-border p-1 rounded-2xl shadow-inner items-center">
+                            <Button 
                                 onClick={() => setWeekOffset(w => w - 1)}
-                                className="p-3.5 hover:bg-white rounded-xl transition-all text-text-muted hover:text-primary hover:shadow-sm"
+                                variant="secondary"
+                                size="sm"
+                                className="p-2.5 rounded-xl hover:bg-surface-solid border-none"
                             >
-                                <ChevronLeft className="w-5 h-5" strokeWidth={3} />
-                            </button>
-                            <div className="px-8 min-w-[280px] text-center">
-                                <span className="text-[11px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono whitespace-nowrap">
+                                <ChevronLeft className="w-4 h-4" strokeWidth={3} />
+                            </Button>
+                            <div className="px-6 min-w-[220px] text-center">
+                                <span className="text-[10px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono whitespace-nowrap">
                                     {formatHeader()}
                                 </span>
                             </div>
-                            <button 
+                            <Button 
                                 onClick={() => setWeekOffset(w => w + 1)}
-                                className="p-3.5 hover:bg-white rounded-xl transition-all text-text-muted hover:text-primary hover:shadow-sm"
+                                variant="secondary"
+                                size="sm"
+                                className="p-2.5 rounded-xl hover:bg-surface-solid border-none"
                             >
-                                <ChevronRight className="w-5 h-5" strokeWidth={3} />
-                            </button>
+                                <ChevronRight className="w-4 h-4" strokeWidth={3} />
+                            </Button>
                         </div>
-                        <button
+                        <Button
                             onClick={() => setWeekOffset(0)}
-                            className="px-8 py-5 rounded-[20px] bg-white border border-black/[0.1] text-[10px] font-bold text-text-muted hover:text-text-primary hover:border-text-primary transition-all active:scale-95 shadow-sm uppercase tracking-[0.2em] font-mono"
+                            variant="primary"
+                            className="px-8 py-3.5 shadow-lg font-mono text-[10px] tracking-widest"
                         >
-                            Sync to Present
-                        </button>
+                            PRESENT
+                        </Button>
                     </div>
-                </div>
+                }
+            />
 
-                {/* KPI Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <StatsCard 
-                        label="Total Activity" 
-                        value={totalActiveHours.toLocaleString()} 
-                        icon={<Activity className="w-5 h-5" strokeWidth={2.5} />} 
-                        subtitle="This week's volume"
-                        color="indigo" 
-                    />
-                    <StatsCard 
-                        label="Peak Activity" 
-                        value={peakDay ? DAYS_SHORT[peakDay.getDay()] + ', ' + peakDay.getDate() : '—'} 
-                        icon={<TrendingUp className="w-5 h-5" strokeWidth={2.5} />} 
-                        subtitle="Most active day"
-                        color="violet" 
-                    />
-                    <StatsCard 
-                        label="Daily Coverage" 
-                        value={`${new Set(blocks.map(b => b.hour)).size} hr`} 
-                        icon={<ShieldCheck className="w-5 h-5" strokeWidth={2.5} />} 
-                        subtitle="Active hours"
-                        color="emerald" 
-                    />
-                </div>
+            {/* KPI Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <KpiCard 
+                    label="Total Activity" 
+                    value={totalActiveHours.toLocaleString()} 
+                    icon={<Activity className="w-5 h-5 text-indigo-500" strokeWidth={2.5} />} 
+                    trend={{ value: 12, isPositive: true }}
+                    description="Aggregate active samples"
+                />
+                <KpiCard 
+                    label="Peak Day" 
+                    value={peakDay ? DAYS_SHORT[peakDay.getDay()] + ', ' + peakDay.getDate() : '—'} 
+                    icon={<TrendingUp className="w-5 h-5 text-violet-500" strokeWidth={2.5} />} 
+                    description="Maximum intensity period"
+                />
+                <KpiCard 
+                    label="Active Span" 
+                    value={`${new Set(blocks.map(b => b.hour)).size} hr`} 
+                    icon={<ShieldCheck className="w-5 h-5 text-emerald-500" strokeWidth={2.5} />} 
+                    description="Daily temporal coverage"
+                />
             </div>
 
             {/* Heatmap Section */}
-            <div className="p-10 flex-1 overflow-auto custom-scrollbar bg-white/[0.01]">
-                <div className="glass border border-black/[0.05] rounded-[48px] shadow-2xl overflow-hidden relative group bg-white mb-20 transition-all duration-700 hover:shadow-primary/5">
-                    <div className="px-10 py-10 border-b border-black/[0.03] bg-black/[0.01] flex flex-col md:flex-row md:items-center justify-between gap-6">
-                        <div>
-                            <h2 className="text-2xl font-bold text-text-primary tracking-tighter leading-none mb-3 uppercase">Activity Heatmap</h2>
-                            <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono leading-relaxed">Hourly breakdown of team activity across the week</p>
-                        </div>
-                        <div className="flex items-center gap-6 bg-black/[0.03] border border-black/[0.05] rounded-[24px] px-6 py-4 shadow-inner">
-                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono italic opacity-60">Activity Intensity:</span>
-                            <div className="flex items-center gap-2">
-                                {[0.2, 0.4, 0.6, 0.8, 1].map(o => (
-                                    <div 
-                                        key={o} 
-                                        className="w-4 h-4 rounded-md bg-primary shadow-sm transition-all hover:scale-125 cursor-help" 
-                                        style={{ opacity: o }} 
-                                    />
-                                ))}
-                            </div>
+            <Card className="p-0 overflow-hidden border-border/60 shadow-xl">
+                <div className="p-8 border-b border-border bg-surface-subtle/30 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div>
+                        <h2 className="text-xl font-bold text-text-primary tracking-tight mb-1 uppercase font-mono italic">Efficiency Heatmap</h2>
+                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-60">Distribution of operational velocity</p>
+                    </div>
+                    <div className="flex items-center gap-6 bg-surface-solid border border-border rounded-2xl px-6 py-3.5 shadow-sm">
+                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono italic opacity-60">Intensity:</span>
+                        <div className="flex items-center gap-1.5">
+                            {[0.2, 0.4, 0.6, 0.8, 1].map(o => (
+                                <div 
+                                    key={o} 
+                                    className="w-3.5 h-3.5 rounded-sm bg-primary shadow-sm transition-all hover:scale-125 cursor-help" 
+                                    style={{ opacity: o }} 
+                                />
+                            ))}
                         </div>
                     </div>
+                </div>
 
+                <div className="overflow-x-auto custom-scrollbar p-8">
                     {loading ? (
-                        <div className="h-[600px] flex items-center justify-center">
-                            <div className="flex flex-col items-center gap-6">
-                                <RefreshCw className="w-12 h-12 text-primary animate-spin" strokeWidth={3} />
-                                <span className="text-[11px] font-bold text-text-muted uppercase tracking-[0.5em] animate-pulse font-mono">Loading activity data...</span>
-                            </div>
+                        <div className="h-[500px] flex items-center justify-center">
+                            <LoadingState message="Synchronizing registry analytics..." />
                         </div>
                     ) : (
-                        <div className="overflow-x-auto custom-scrollbar p-10">
-                            <table className="w-full border-separate border-spacing-3">
-                                <thead>
-                                    <tr>
-                                        <th className="w-32 pb-8 text-right pr-10 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono italic opacity-60">Time</th>
-                                        {weekDays.map((d, i) => {
-                                            const isToday = d.toDateString() === today.toDateString();
-                                            return (
-                                                <th key={i} className="pb-8">
-                                                    <div className={clsx(
-                                                        "flex flex-col items-center p-5 rounded-[28px] transition-all duration-700 border",
-                                                        isToday 
-                                                            ? "bg-primary text-white border-primary shadow-xl shadow-primary/20 scale-105 -translate-y-1" 
-                                                            : "bg-black/[0.02] border-black/[0.05] hover:bg-black/[0.04]"
+                        <table className="w-full border-separate border-spacing-2">
+                            <thead>
+                                <tr>
+                                    <th className="w-32 pb-6 text-right pr-6 text-[9px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono italic opacity-40">Timeline</th>
+                                    {weekDays.map((d, i) => {
+                                        const isToday = d.toDateString() === today.toDateString();
+                                        return (
+                                            <th key={i} className="pb-6">
+                                                <div className={clsx(
+                                                    "flex flex-col items-center p-4 rounded-2xl transition-all duration-700 border",
+                                                    isToday 
+                                                        ? "bg-primary text-white border-primary shadow-xl shadow-primary/20 scale-105 -translate-y-0.5" 
+                                                        : "bg-surface-subtle border-border hover:bg-surface-solid"
+                                                )}>
+                                                    <span className={clsx(
+                                                        "text-[9px] font-bold uppercase tracking-[0.2em] mb-1.5",
+                                                        isToday ? "text-white/70" : "text-text-muted"
                                                     )}>
-                                                        <span className={clsx(
-                                                            "text-[10px] font-bold uppercase tracking-[0.2em] mb-2",
-                                                            isToday ? "text-white/70" : "text-text-muted"
-                                                        )}>
-                                                            {DAYS_SHORT[d.getDay()]}
-                                                        </span>
-                                                        <span className="text-2xl font-bold tracking-tighter">
-                                                            {d.getDate()}
-                                                        </span>
-                                                    </div>
-                                                </th>
+                                                        {DAYS_SHORT[d.getDay()]}
+                                                    </span>
+                                                    <span className="text-xl font-bold tracking-tighter italic font-mono">
+                                                        {d.getDate()}
+                                                    </span>
+                                                </div>
+                                            </th>
+                                        );
+                                    })}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {HOURS.map(hour => (
+                                    <tr key={hour} className="group/row">
+                                        <td className="py-3 text-right pr-6 font-mono text-[11px] font-bold text-text-muted group-hover/row:text-primary transition-all duration-500 uppercase tracking-tighter italic">
+                                            {hour < 12 ? `${hour}:00 AM` : hour === 12 ? '12:00 PM' : `${hour - 12}:00 PM`}
+                                        </td>
+                                        {weekDays.map((d, di) => {
+                                            const dateStr = d.toISOString().split('T')[0];
+                                            const block = getBlock(dateStr!, hour);
+                                            return (
+                                                <td key={di} className="p-0">
+                                                    {block ? (
+                                                        <div
+                                                            title={`${block.count} active samples at ${hour}:00`}
+                                                            className="h-14 w-full rounded-xl bg-primary border border-primary/20 transition-all duration-700 hover:scale-[1.05] hover:rotate-1 hover:shadow-xl hover:shadow-primary/20 cursor-pointer group/cell relative"
+                                                            style={{
+                                                                opacity: blockOpacity(block.count),
+                                                            }}
+                                                        >
+                                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-all duration-500 bg-primary rounded-xl shadow-inner ring-1 ring-white/10">
+                                                                <span className="text-[11px] font-mono font-bold text-white italic">{block.count}</span>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="h-14 w-full rounded-xl bg-surface-subtle/40 border border-border/20 group-hover/row:border-border/40 group-hover/row:bg-surface-subtle/60 transition-all duration-500" />
+                                                    )}
+                                                </td>
                                             );
                                         })}
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {HOURS.map(hour => (
-                                        <tr key={hour} className="group/row">
-                                            <td className="py-4 text-right pr-10 font-mono text-[12px] font-bold text-text-muted group-hover/row:text-text-primary transition-all duration-500 uppercase tracking-tighter italic">
-                                                {hour < 12 ? `${hour}:00 AM` : hour === 12 ? '12:00 PM' : `${hour - 12}:00 PM`}
-                                            </td>
-                                            {weekDays.map((d, di) => {
-                                                const dateStr = d.toISOString().split('T')[0];
-                                                const block = getBlock(dateStr!, hour);
-                                                return (
-                                                    <td key={di} className="p-0">
-                                                        {block ? (
-                                                            <div
-                                                                title={`${block.count} active samples at ${hour}:00`}
-                                                                className="h-16 w-full rounded-[18px] bg-primary border border-primary/20 transition-all duration-700 hover:scale-[1.08] hover:rotate-2 hover:shadow-2xl hover:shadow-primary/30 cursor-pointer group/cell relative"
-                                                                style={{
-                                                                    opacity: blockOpacity(block.count),
-                                                                }}
-                                                            >
-                                                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-all duration-500 bg-primary rounded-[18px] shadow-inner ring-1 ring-white/20">
-                                                                    <span className="text-[12px] font-bold text-white">{block.count}</span>
-                                                                </div>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="h-16 w-full rounded-[18px] bg-black/[0.01] border border-black/[0.02] group-hover/row:border-black/[0.05] group-hover/row:bg-black/[0.02] transition-all duration-500" />
-                                                        )}
-                                                    </td>
-                                                );
-                                            })}
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                ))}
+                            </tbody>
+                        </table>
                     )}
-                    
-                    {/* Background decoration */}
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 blur-[120px] rounded-full -mr-48 -mt-48 pointer-events-none group-hover:bg-indigo-500/10 transition-colors duration-1000" />
                 </div>
-            </div>
-        </div>
-    );
-}
-
-function StatsCard({ label, value, icon, subtitle, color }: { label: string; value: string; icon: React.ReactNode; subtitle: string; color: 'indigo' | 'violet' | 'emerald' }) {
-    const colorClasses = {
-        indigo: { bg: 'bg-primary/5', border: 'border-primary/20', text: 'text-primary', glow: 'bg-primary/5' },
-        emerald: { bg: 'bg-emerald-500/5', border: 'border-emerald-500/20', text: 'text-emerald-600', glow: 'bg-emerald-500/5' },
-        violet: { bg: 'bg-violet-500/5', border: 'border-violet-500/20', text: 'text-violet-600', glow: 'bg-violet-500/5' }
-    };
-
-    return (
-        <div className="glass p-10 rounded-[44px] border border-black/[0.03] hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl duration-700 bg-white">
-            <div className={clsx("absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-1000", colorClasses[color].glow)} />
-            <div className="flex items-center gap-6 mb-6">
-                <div className={clsx("w-12 h-12 rounded-[18px] flex items-center justify-center border shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-all duration-700", colorClasses[color].bg, colorClasses[color].border, colorClasses[color].text)}>
-                    {icon}
+                
+                <div className="p-8 bg-surface-subtle/20 border-t border-border flex items-center justify-between">
+                    <p className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-50 flex items-center gap-2">
+                        <Calendar className="w-3 h-3" />
+                        Historical activity depth analyzed for performance patterns.
+                    </p>
                 </div>
-                <div>
-                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono leading-none mb-2">{label}</p>
-                    <p className="text-[9px] font-bold text-text-muted/40 uppercase tracking-[0.2em] font-mono leading-none">{subtitle}</p>
-                </div>
-            </div>
-            <h2 className="text-5xl font-bold text-text-primary tracking-tighter leading-none">{value}</h2>
+            </Card>
         </div>
     );
 }
