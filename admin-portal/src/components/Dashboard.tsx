@@ -164,16 +164,15 @@ export function Dashboard() {
     const maxProjectMins = projects[0]?.minutes || 1;
 
     return (
-        <div className="min-h-screen bg-background pb-20">
+        <div className="space-y-10 animate-in fade-in duration-700">
             <PageHeader 
-                title="Dashboard" 
-                description="System activity and resource distribution overview"
-                icon={<BarChart3 className="w-8 h-8" />}
+                title="System Overview" 
+                description="Real-time telemetry and resource distribution analytics"
+                icon={<BarChart3 className="w-10 h-10 text-primary" strokeWidth={2.5} />}
             />
 
-            <div className="px-10">
-                {/* KPI Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6 mb-10 animate-in fade-in slide-in-from-top-4 duration-700">
+            {/* KPI Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
                 <KpiCard icon={<Clock />} label="Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} />
                 <KpiCard icon={<BarChart3 />} label="Weekly Total" value={loading ? '—' : fmtTime(stats.weekMinutes)} />
                 <KpiCard icon={<CircleDollarSign />} label="Weekly Cost" value={loading ? '—' : `$${stats.weekCost.toLocaleString()}`} />
@@ -182,40 +181,49 @@ export function Dashboard() {
                 <KpiCard icon={<Camera />} label="Screenshots" value={loading ? '—' : stats.screenshotCount.toString()} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 {/* Activity Trends */}
                 <div className="lg:col-span-8">
-                    <Card title="Activity Trends">
-                        <div className="h-[320px] w-full mt-4">
+                    <Card title="Productivity Trends" subtitle="Weekly engagement distribution">
+                        <div className="h-[420px] w-full mt-8">
                             {loading ? (
                                 <LoadingState className="h-full" />
                             ) : (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={weekBars} barSize={36}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                                    <BarChart data={weekBars} barSize={42}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
                                         <XAxis
                                             dataKey="day"
                                             axisLine={false}
                                             tickLine={false}
-                                            tick={{ fill: '#64748b', fontSize: 12, fontWeight: 600 }}
-                                            dy={10}
+                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 11, fontWeight: 700, fontFamily: 'monospace' }}
+                                            dy={15}
                                         />
                                         <YAxis hide />
                                         <Tooltip
-                                            cursor={{ fill: 'rgba(79, 70, 229, 0.03)' }}
+                                            cursor={{ fill: 'rgba(80, 110, 248, 0.03)' }}
                                             content={({ active, payload }) => {
                                                 if (active && payload && payload.length) {
                                                     return (
-                                                        <div className="bg-white border border-slate-200 rounded-xl px-4 py-3 shadow-xl">
-                                                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">{payload[0].payload.day}</p>
-                                                            <p className="text-lg font-bold text-slate-900">{fmtTime(payload[0].value as number)}</p>
+                                                        <div className="bg-surface-solid border border-border rounded-2xl px-5 py-4 shadow-2xl animate-in zoom-in-95 duration-200">
+                                                            <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-2 border-b border-border pb-2 italic opacity-60">{payload[0].payload.day}</p>
+                                                            <div className="flex items-baseline gap-2">
+                                                                <span className="text-2xl font-bold text-text-primary tracking-tighter italic">{fmtTime(payload[0].value as number)}</span>
+                                                                <span className="text-[9px] font-bold text-primary uppercase tracking-widest font-mono">Telemetry</span>
+                                                            </div>
                                                         </div>
                                                     );
                                                 }
                                                 return null;
                                             }}
                                         />
-                                        <Bar dataKey="minutes" fill="#4f46e5" radius={[8, 8, 0, 0]} />
+                                        <Bar dataKey="minutes" fill="url(#dashGradient)" radius={[12, 12, 0, 0]} animationDuration={2000} />
+                                        <defs>
+                                            <linearGradient id="dashGradient" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor="#506ef8" />
+                                                <stop offset="100%" stopColor="#818cf8" />
+                                            </linearGradient>
+                                        </defs>
                                     </BarChart>
                                 </ResponsiveContainer>
                             )}
@@ -225,25 +233,25 @@ export function Dashboard() {
 
                 {/* Project Breakdown */}
                 <div className="lg:col-span-4">
-                    <Card title="Project Distribution">
-                        <div className="mt-4 space-y-6">
+                    <Card title="Allocation" subtitle="Top 5 project distributions">
+                        <div className="mt-8 space-y-8">
                             {loading ? (
-                                <LoadingState className="h-[320px]" />
+                                <LoadingState className="h-[420px]" />
                             ) : projects.length === 0 ? (
                                 <EmptyState icon={<FolderOpen className="opacity-20" />} title="No data" description="No project activity yet" />
                             ) : (
                                 projects.map(p => (
                                     <div key={p.id} className="group">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
-                                                <span className="text-sm font-semibold text-slate-700 group-hover:text-primary transition-colors">{p.name}</span>
+                                        <div className="flex justify-between items-center mb-3">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-3 h-3 rounded-full shadow-sm" style={{ backgroundColor: p.color }} />
+                                                <span className="text-sm font-bold text-text-primary tracking-tight group-hover:text-primary transition-colors duration-300 uppercase font-mono italic">{p.name}</span>
                                             </div>
-                                            <span className="text-xs font-bold text-slate-400">{fmtTime(p.minutes)}</span>
+                                            <span className="text-[11px] font-bold text-text-muted bg-surface-subtle px-3 py-1.5 rounded-lg border border-border font-mono tracking-tighter">{fmtTime(p.minutes)}</span>
                                         </div>
-                                        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                        <div className="h-2.5 bg-surface-subtle rounded-full overflow-hidden border border-border p-[1px] shadow-inner">
                                             <div
-                                                className="h-full rounded-full transition-all duration-1000 ease-out"
+                                                className="h-full rounded-full transition-all duration-[2000ms] ease-out shadow-sm"
                                                 style={{
                                                     width: `${(p.minutes / maxProjectMins) * 100}%`,
                                                     backgroundColor: p.color
@@ -259,11 +267,10 @@ export function Dashboard() {
             </div>
 
             {/* Recent Activity Table */}
-            <Card title="Recent Activity" noPadding>
+            <Card title="Live Feed" subtitle="Latest system activity clusters" noPadding className="overflow-hidden">
                 <RecentSessionsRows />
             </Card>
 
-            </div>
         </div>
     );
 }
@@ -301,22 +308,22 @@ function RecentSessionsRows() {
         load();
     }, []);
 
-    if (loading) return <div className="p-20"><LoadingState /></div>;
-    if (!sessions.length) return <div className="p-20"><EmptyState icon={<Zap />} title="No sessions" description="No activity recorded yet" /></div>;
+    if (loading) return <div className="p-32"><LoadingState /></div>;
+    if (!sessions.length) return <div className="p-32"><EmptyState icon={<Zap />} title="No sessions" description="No activity recorded yet" /></div>;
 
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto custom-scrollbar">
             <table className="w-full text-left border-collapse">
                 <thead>
-                    <tr className="bg-slate-50/50">
-                        <th className="px-8 py-5 text-sm font-semibold text-slate-700">Team Member</th>
-                        <th className="px-8 py-5 text-sm font-semibold text-slate-700">Project</th>
-                        <th className="px-8 py-5 text-sm font-semibold text-slate-700">Starting Time</th>
-                        <th className="px-8 py-5 text-sm font-semibold text-slate-700">Duration</th>
-                        <th className="px-8 py-5 text-sm font-semibold text-slate-700 text-right">Status</th>
+                    <tr className="bg-surface-subtle/30 border-b border-border">
+                        <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Team Member</th>
+                        <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Project</th>
+                        <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Starting Time</th>
+                        <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Duration</th>
+                        <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono text-right">Status</th>
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border/40">
                     {sessions.map(s => {
                         const { endMs, isLive, isStale } = effectiveEnd(s.started_at, s.ended_at);
                         const dur = Math.max(0, Math.round((endMs - new Date(s.started_at).getTime()) / 60000));
@@ -324,43 +331,43 @@ function RecentSessionsRows() {
                         const proj = projectMap[s.project_id];
 
                         return (
-                            <tr key={s.id} className="hover:bg-slate-50/30 transition-colors group">
-                                <td className="px-8 py-5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                                            {mName.charAt(0)}
+                            <tr key={s.id} className="hover:bg-primary/[0.01] transition-all group duration-500">
+                                <td className="px-10 py-8">
+                                    <div className="flex items-center gap-5">
+                                        <div className="w-12 h-12 rounded-2xl bg-surface-subtle border border-border flex items-center justify-center text-text-primary font-bold text-[12px] group-hover:bg-primary group-hover:text-white group-hover:border-primary/20 transition-all duration-500 font-mono shadow-sm">
+                                            {mName.charAt(0).toUpperCase()}
                                         </div>
-                                        <span className="font-semibold text-slate-800">{mName}</span>
+                                        <span className="font-bold text-text-primary text-[15px] tracking-tight group-hover:text-primary transition-colors duration-500">{mName}</span>
                                     </div>
                                 </td>
-                                <td className="px-8 py-5">
+                                <td className="px-10 py-8">
                                     {proj ? (
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: proj.color }} />
-                                            <span className="text-slate-600 font-medium">{proj.name}</span>
+                                        <div className="inline-flex items-center gap-3 px-4 py-2 bg-surface-subtle border border-border rounded-xl shadow-sm">
+                                            <div className="w-2.5 h-2.5 rounded-full shadow-inner" style={{ backgroundColor: proj.color }} />
+                                            <span className="text-text-primary font-bold text-[11px] uppercase font-mono italic tracking-tight">{proj.name}</span>
                                         </div>
                                     ) : (
-                                        <span className="text-slate-400 italic">No Project</span>
+                                        <span className="text-text-muted/30 italic font-mono text-[11px] uppercase tracking-widest">Unassigned</span>
                                     )}
                                 </td>
-                                <td className="px-8 py-5 text-slate-500 font-medium">
+                                <td className="px-10 py-8 text-text-primary font-bold text-[13px] font-mono tracking-tighter opacity-70">
                                     {new Date(s.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </td>
-                                <td className="px-8 py-5 font-bold text-slate-700">
+                                <td className="px-10 py-8 font-bold text-text-primary text-[14px] italic font-mono tracking-tighter">
                                     {fmtTime(dur)}
                                 </td>
-                                <td className="px-8 py-5 text-right">
+                                <td className="px-10 py-8 text-right">
                                     {isLive ? (
-                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-emerald-600 bg-emerald-50 border border-emerald-100">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                            Active
+                                        <span className="inline-flex items-center gap-3 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 shadow-sm font-mono italic">
+                                            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                                            Operational
                                         </span>
                                     ) : isStale ? (
-                                        <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 border border-amber-100">
+                                        <span className="inline-flex items-center gap-3 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] text-amber-600 bg-amber-500/10 border border-amber-500/20 shadow-sm font-mono italic">
                                             Stale
                                         </span>
                                     ) : (
-                                        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Recorded</span>
+                                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-text-muted font-mono opacity-40">Archived</span>
                                     )}
                                 </td>
                             </tr>

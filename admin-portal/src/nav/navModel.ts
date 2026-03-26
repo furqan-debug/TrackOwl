@@ -56,7 +56,7 @@ export const navStructure: NavGroup[] = [
         children: [
             { name: 'All projects', path: '/dashboard/projects' },
             { name: 'Tasks / To-do list', path: '/dashboard/projects/todos' },
-            { name: 'Customers', path: '/dashboard/projects/clients', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
+            { name: 'Clients', path: '/dashboard/projects/clients', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
         ],
     },
     {

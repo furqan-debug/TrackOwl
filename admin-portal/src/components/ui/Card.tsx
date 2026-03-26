@@ -4,6 +4,7 @@ import clsx from 'clsx';
 export interface CardProps {
     children: ReactNode;
     title?: string;
+    subtitle?: string;
     className?: string;
     /** If true, card has no padding (for tables/charts that need full bleed) */
     noPadding?: boolean;
@@ -12,23 +13,31 @@ export interface CardProps {
 export function Card({
     children,
     title,
+    subtitle,
     className,
     noPadding = false,
 }: CardProps) {
     return (
         <div
             className={clsx(
-                'surface-solid rounded-2xl overflow-hidden relative group transition-all duration-300',
-                !noPadding && 'p-6 md:p-8',
+                'surface-solid rounded-[32px] overflow-hidden relative group transition-all duration-500 border border-border/60 shadow-sm hover:shadow-xl',
+                !noPadding && 'p-8 md:p-10',
                 className
             )}
         >
             {title && (
-                <div className="flex items-center justify-between mb-6 border-b border-border pb-6 -mx-8 px-8">
-                    <h2 className="text-sm font-bold text-text-primary tracking-tight uppercase font-mono">
-                        {title}
-                    </h2>
-                    <div className="flex-1 h-px bg-border-subtle ml-4" aria-hidden />
+                <div className="flex items-center justify-between mb-8 border-b border-border/40 pb-6 -mx-10 px-10">
+                    <div className="space-y-1">
+                        <h2 className="text-[13px] font-bold text-text-primary tracking-[0.2em] uppercase font-mono italic">
+                            {title}
+                        </h2>
+                        {subtitle && (
+                            <p className="text-[10px] font-bold text-text-muted/40 uppercase tracking-widest font-mono">
+                                {subtitle}
+                            </p>
+                        )}
+                    </div>
+                    <div className="flex-1 h-px bg-border/20 ml-6" aria-hidden />
                 </div>
             )}
             <div className="relative z-10">

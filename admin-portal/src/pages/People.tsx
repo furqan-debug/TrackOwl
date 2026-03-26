@@ -5,11 +5,21 @@ import {
     Pencil, Trash2,
     RotateCcw,
     Settings,
-    UserPlus
+    UserPlus, Filter, Shield, User,
+    MoreHorizontal,
+    AlertCircle,
+    Clock, DollarSign, FileText
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
-import { PageLayout, Button } from '../components/ui';
+import { 
+    Button, 
+    Card, 
+    PageHeader, 
+    StatusBadge, 
+    EmptyState, 
+    LoadingState 
+} from '../components/ui';
 import { supabase } from '../lib/supabase';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -62,9 +72,7 @@ export function People() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState<'Members' | 'Invites'>('Members');
-    const [statusFilter, setStatusFilter] = useState<Status | 'All'>('All');
     const [showFilters, setShowFilters] = useState(false);
-    const [showBatch, setShowBatch] = useState(false);
 
     // Selection state
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -201,7 +209,6 @@ export function People() {
             );
             setSelectedIds(new Set());
         } catch { fetchMembers(); }
-        setShowBatch(false);
     }
 
     function handleExportCsv() {
@@ -247,195 +254,185 @@ export function People() {
             m.email.toLowerCase().includes(search.toLowerCase());
         const isInvite = m.status === 'Pending';
         const matchesTab = activeTab === 'Invites' ? isInvite : !isInvite;
-        const matchesStatus = statusFilter === 'All' || m.status === statusFilter;
-        return matchesSearch && matchesTab && matchesStatus;
+        return matchesSearch && matchesTab;
     });
 
     const membersCount = members.filter(m => m.status !== 'Pending').length;
     const invitesCount = members.filter(m => m.status === 'Pending').length;
 
     return (
-        <PageLayout
-            title="Team Directory"
-            description="Manage your team members and their roles"
-            maxWidth="full"
-            actions={
-                <div className="flex items-center gap-4">
-                    <div className="hidden lg:flex items-center gap-2 px-4 py-2 bg-primary/5 border border-primary/10 rounded-2xl">
-                        <Users className="w-4 h-4 text-primary" strokeWidth={2.5} />
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] font-mono">{membersCount} Members Active</span>
-                    </div>
-                </div>
-            }
-        >
-            {/* Tabs */}
-            <div className="flex items-center gap-12 border-b border-black/[0.03] mb-10">
-                <button
-                    onClick={() => setActiveTab('Members')}
-                    className={clsx(
-                        "pb-5 text-[11px] font-bold uppercase tracking-[0.2em] transition-all border-b-[3px] font-mono",
-                        activeTab === 'Members' ? "border-primary text-text-primary" : "border-transparent text-text-muted hover:text-text-primary"
-                    )}
-                >
-                    MEMBERS ({membersCount})
-                </button>
-                <button
-                    onClick={() => setActiveTab('Invites')}
-                    className={clsx(
-                        "pb-5 text-[11px] font-bold uppercase tracking-[0.2em] transition-all border-b-[3px] font-mono",
-                        activeTab === 'Invites' ? "border-primary text-text-primary" : "border-transparent text-text-muted hover:text-text-primary"
-                    )}
-                >
-                    PENDING INVITES ({invitesCount})
-                </button>
-            </div>
-
-            {/* Action Bar */}
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6 mb-10">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
-                    <div className="relative group lg:w-[400px]">
-                        <Search className="w-5 h-5 text-text-muted absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" strokeWidth={2.5} />
-                        <input
-                            type="text"
-                            placeholder="Search members..."
-                            value={search}
-                            onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-12 pr-6 py-3.5 bg-black/[0.02] border border-black/[0.05] rounded-2xl text-[13px] font-bold text-text-primary placeholder:text-text-muted outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all shadow-sm font-mono"
-                        />
-                    </div>
-                    
-                    <div className="relative">
-                        <button
-                            onClick={() => { if (!isViewer) setShowBatch(!showBatch); }}
+        <div className="flex flex-col h-full bg-surface-solid/30 min-h-screen">
+            <PageHeader
+                title="Team Directory"
+                description="Manage your team members and their roles"
+                icon={<Users className="w-8 h-8" />}
+                actions={
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="primary"
+                            leftIcon={<UserPlus className="w-5 h-5" />}
+                            onClick={() => { if (!isViewer) { resetAddForm(); setShowAddModal(true); } }}
                             disabled={isViewer}
+                        >
+                            Invite Member
+                        </Button>
+                        <Button
+                            variant="secondary"
+                            leftIcon={<Download className="w-4 h-4" />}
+                            onClick={handleExportCsv}
+                        >
+                            Export CSV
+                        </Button>
+                    </div>
+                }
+                stats={
+                    <div className="flex gap-12">
+                        <button
+                            onClick={() => setActiveTab('Members')}
                             className={clsx(
-                                "flex items-center justify-between gap-4 px-6 py-3.5 glass border border-black/[0.05] rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] transition-all font-mono",
-                                isViewer ? "opacity-30 cursor-not-allowed" : "text-text-primary hover:bg-black/[0.02] shadow-sm active:scale-95"
+                                "pb-5 text-[11px] font-bold uppercase tracking-[0.2em] transition-all relative font-mono",
+                                activeTab === 'Members' ? "text-primary" : "text-text-muted hover:text-text-primary"
                             )}
                         >
-                            BULK ACTIONS <ChevronDown className={clsx("w-4 h-4 text-primary transition-transform", showBatch && "rotate-180")} strokeWidth={3} />
-                        </button>
-                        {showBatch && !isViewer && (
-                            <div className="absolute top-16 left-0 w-64 glass border border-black/[0.08] shadow-xl rounded-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                                <button onClick={handleBatchDelete} disabled={selectedIds.size === 0} className="w-full text-left px-6 py-4 text-[11px] font-bold uppercase tracking-[0.2em] text-rose-500 hover:bg-rose-500/10 disabled:opacity-30 transition-colors font-mono">REMOVE SELECTED ({selectedIds.size})</button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
-                    <button onClick={handleExportCsv} className="flex items-center justify-center gap-3 px-5 py-3.5 text-text-muted hover:text-text-primary text-[10px] font-bold uppercase tracking-[0.2em] transition-colors group font-mono">
-                        <Download className="w-4.5 h-4.5 group-hover:translate-y-0.5 transition-transform" strokeWidth={2.5} /> EXPORT CSV
-                    </button>
-                    
-                    <Button 
-                        onClick={() => { if (!isViewer) { resetAddForm(); setShowAddModal(true); } }}
-                        disabled={isViewer}
-                        className="shadow-lg shadow-primary/20 flex items-center gap-2"
-                    >
-                        <UserPlus className="w-4 h-4" strokeWidth={3} />
-                        INVITE MEMBER
-                    </Button>
-
-                    <div className="relative">
-                        <button onClick={() => setShowFilters(!showFilters)} className="px-6 py-3.5 bg-white border border-black/[0.05] text-text-primary rounded-2xl text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-black/[0.02] transition-all flex items-center gap-4 shadow-sm group font-mono">
-                            FILTER ROLE 
-                            {statusFilter !== 'All' ? <span className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(80,110,248,0.5)]"></span> : <Settings className="w-4 h-4 text-primary group-hover:rotate-90 transition-transform" strokeWidth={2.5} />}
-                        </button>
-                        {showFilters && (
-                            <div className="absolute right-0 top-16 w-60 bg-white/95 backdrop-blur-3xl border border-black/[0.08] shadow-xl rounded-2xl py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                                {['All', 'Active', 'Inactive', 'Pending'].map(s => (
-                                    <button key={s} onClick={() => { setStatusFilter(s as any); setShowFilters(false); }} className={clsx(
-                                        "w-full text-left px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] transition-colors font-mono",
-                                        statusFilter === s ? "text-primary bg-primary/5" : "text-text-muted hover:text-text-primary hover:bg-black/[0.02]"
-                                    )}>
-                                        SHOW {s.toUpperCase()}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-
-            {/* Table */}
-            <div className="glass rounded-[32px] border border-black/[0.05] shadow-xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
-                <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="border-b border-black/[0.03] bg-black/[0.01]">
-                                <th className="pl-10 py-7 w-12">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedIds.size === filtered.length && filtered.length > 0}
-                                        onChange={toggleSelectAll}
-                                        className="w-5 h-5 rounded-lg border-black/[0.1] bg-white checked:bg-primary transition-all cursor-pointer shadow-sm"
-                                    />
-                                </th>
-                                <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Name</th>
-                                <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Role</th>
-                                <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Status</th>
-                                <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Time Limits</th>
-                                <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Rates</th>
-                                <th className="px-8 py-7 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Date Added</th>
-                                <th className="px-10 py-7"></th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-black/[0.03]">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={10} className="py-48 text-center">
-                                        <div className="flex flex-col items-center gap-6">
-                                            <div className="w-12 h-12 border-[4px] border-primary/10 border-t-primary rounded-full animate-spin shadow-sm" />
-                                            <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-text-muted font-mono animate-pulse">Loading members...</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ) : filtered.length === 0 ? (
-                                <tr>
-                                    <td colSpan={10} className="py-48 text-center">
-                                        <div className="flex flex-col items-center gap-6 opacity-30">
-                                            <Users className="w-16 h-16 text-primary" strokeWidth={1} />
-                                            <span className="text-[11px] font-bold uppercase tracking-[0.3em] text-text-muted font-mono">No Members Found</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ) : (
-                                filtered.map(m => (
-                                    <MemberRowItem
-                                        key={m.id}
-                                        m={m}
-                                        isSelected={selectedIds.has(m.id)}
-                                        onToggle={() => toggleSelection(m.id)}
-                                        onEdit={() => setEditMember(m)}
-                                        onResendInvite={() => handleResendInvite(m.email)}
-                                        onDelete={() => handleDelete(m.id)}
-                                        isViewer={isViewer}
-                                        currentUserRole={profile?.role}
-                                    />
-                                ))
+                            MEMBERS ({membersCount})
+                            {activeTab === 'Members' && (
+                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_12px_rgba(80,110,248,0.4)]" />
                             )}
-                        </tbody>
-                    </table>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('Invites')}
+                            className={clsx(
+                                "pb-5 text-[11px] font-bold uppercase tracking-[0.2em] transition-all relative font-mono",
+                                activeTab === 'Invites' ? "text-primary" : "text-text-muted hover:text-text-primary"
+                            )}
+                        >
+                            PENDING INVITES ({invitesCount})
+                            {activeTab === 'Invites' && (
+                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_12px_rgba(80,110,248,0.4)]" />
+                            )}
+                        </button>
+                    </div>
+                }
+            />
+
+            <div className="px-10 pb-10 flex-1 overflow-auto custom-scrollbar">
+                {/* Action Bar */}
+                <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6 mb-8">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
+                        <div className="relative group lg:w-[400px]">
+                            <Search className="w-5 h-5 text-text-muted absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" strokeWidth={2} />
+                            <input
+                                type="text"
+                                placeholder={`Search ${activeTab.toLowerCase()} by name or email...`}
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                className="w-full pl-13 pr-6 py-4 bg-surface-solid border border-border rounded-2xl text-[13px] font-bold text-text-primary placeholder:text-text-muted outline-none focus:border-primary transition-all font-mono uppercase"
+                            />
+                        </div>
+                        <Button
+                            variant="secondary"
+                            leftIcon={<Filter className="w-4 h-4" />}
+                            onClick={() => setShowFilters(!showFilters)}
+                            className={clsx(showFilters && "border-primary bg-primary/5")}
+                        >
+                            Filters
+                        </Button>
+                    </div>
+
+                    {selectedIds.size > 0 && (
+                        <div className="flex items-center gap-4 animate-in slide-in-from-right-4 duration-300">
+                             <span className="text-[10px] font-bold text-primary bg-primary/5 px-4 py-2 rounded-full border border-primary/10 uppercase tracking-widest font-mono">
+                                {selectedIds.size} Selected
+                            </span>
+                            <Button 
+                                variant="danger" 
+                                size="sm" 
+                                leftIcon={<Trash2 className="w-4 h-4" />}
+                                onClick={handleBatchDelete}
+                                disabled={isViewer}
+                            >
+                                Batch Delete
+                            </Button>
+                        </div>
+                    )}
+                </div>
+
+                <Card noPadding className="border border-border/60 overflow-hidden shadow-sm">
+                    <div className="overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="border-b border-border bg-border/5">
+                                    <th className="pl-10 py-5 w-16">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedIds.size === filtered.length && filtered.length > 0}
+                                            onChange={toggleSelectAll}
+                                            className="w-5 h-5 rounded-lg border-border bg-surface-solid checked:bg-primary transition-all cursor-pointer shadow-sm"
+                                        />
+                                    </th>
+                                    <th className="px-8 py-5 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">Member Identity</th>
+                                    <th className="px-8 py-5 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">Role</th>
+                                    <th className="px-8 py-5 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono whitespace-nowrap">Engagement</th>
+                                    <th className="px-8 py-5 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono whitespace-nowrap">Pay / Bill</th>
+                                    <th className="px-8 py-5 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono whitespace-nowrap">Limits</th>
+                                    <th className="px-8 py-5 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono whitespace-nowrap">Status</th>
+                                    <th className="pr-10 py-5 text-right text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border/40">
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={10} className="py-24">
+                                            <LoadingState message="Synchronizing directory..." />
+                                        </td>
+                                    </tr>
+                                ) : filtered.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={10} className="py-24">
+                                            <EmptyState 
+                                                title={`No ${activeTab.toLowerCase()} detected`}
+                                                description="Check your filters or invite new team personnel."
+                                                icon={<Users className="w-10 h-10" />}
+                                            />
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filtered.map(m => (
+                                        <MemberRowItem
+                                            key={m.id}
+                                            m={m}
+                                            isSelected={selectedIds.has(m.id)}
+                                            onToggle={() => toggleSelection(m.id)}
+                                            onEdit={() => setEditMember(m)}
+                                            onResendInvite={() => handleResendInvite(m.email)}
+                                            onDelete={() => handleDelete(m.id)}
+                                            isViewer={isViewer}
+                                            currentUserRole={profile?.role}
+                                        />
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
+
+                {/* Pagination Placeholder */}
+                <div className="mt-8 flex items-center justify-between px-4">
+                    <div className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-60">
+                         Displaying {filtered.length} personnel nodes
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Button variant="secondary" size="sm" disabled className="px-6 opacity-40">PREV</Button>
+                        <Button variant="secondary" size="sm" disabled className="px-6 opacity-40">NEXT</Button>
+                    </div>
                 </div>
             </div>
 
-            {/* Pagination Mock */}
-            <div className="mt-8 flex items-center justify-between px-4">
-                <div className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">
-                    {filtered.length} MEMBERS FOUND
-                </div>
-                <div className="flex items-center gap-3">
-                    <button className="px-5 py-2.5 glass border border-black/[0.05] rounded-xl text-[10px] font-bold uppercase opacity-30 cursor-not-allowed tracking-[0.2em] transition-all font-mono">PREV</button>
-                    <button className="px-5 py-2.5 glass border border-black/[0.05] rounded-xl text-[10px] font-bold uppercase opacity-30 cursor-not-allowed tracking-[0.2em] transition-all font-mono">NEXT</button>
-                </div>
-            </div>
-
-            {/* MODALS */}
+            {/* Modals & Popups */}
             {showAddModal && <InviteModal onClose={() => setShowAddModal(false)} onInvite={handleAddMember} form={{ addEmail, setAddEmail, addRole, setAddRole, addPayRate, setAddPayRate, addBillRate, setAddBillRate, addWeekly, setAddWeekly, addDaily, setAddDaily, adding, addError }} isViewer={isViewer} currentUserRole={profile?.role} />}
             {editMember && <EditModal member={editMember} onClose={() => setEditMember(null)} onSave={(patch: any) => handleUpdateMeta(editMember.id, patch)} isViewer={isViewer} currentUserRole={profile?.role} onRefresh={fetchMembers} />}
             {inviteSentTo && <InviteSentPopup email={inviteSentTo} onClose={() => setInviteSentTo(null)} />}
-        </PageLayout>
+        </div>
     );
 }
 
@@ -452,101 +449,124 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
         document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h);
     }, []);
 
-    const dateAdded = new Date(m.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 
     return (
         <tr className={clsx(
-            "group/row hover:bg-black/[0.01] transition-all",
-            isSelected ? "bg-primary/[0.02]" : ""
+            "group/row transition-all border-b border-border/40 last:border-0",
+            isSelected ? "bg-primary/[0.04]" : "hover:bg-border/5"
         )}>
-            <td className="pl-10 py-7">
+            <td className="pl-10 py-6">
                 <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={onToggle}
-                    className="w-5 h-5 rounded-lg border-black/[0.1] bg-white checked:bg-primary transition-all cursor-pointer shadow-sm"
+                    className="w-5 h-5 rounded-lg border-border bg-surface-solid checked:bg-primary transition-all cursor-pointer shadow-sm"
                 />
             </td>
-            <td className="px-8 py-7">
+            <td className="px-8 py-6">
                 <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary text-[12px] font-bold shadow-sm group-hover/row:scale-110 transition-transform duration-300 font-mono">
+                    <div className="w-12 h-12 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary text-[12px] font-bold shadow-sm group-hover/row:scale-105 transition-transform duration-300 font-mono">
                         {initials || <Users className="w-5 h-5" />}
                     </div>
-                    <div>
-                        <span onClick={onEdit} className="text-[15px] font-bold text-text-primary hover:text-primary cursor-pointer block tracking-tight transition-colors leading-none mb-1.5">{m.full_name}</span>
-                        <span className="text-[11px] font-bold text-text-muted font-mono opacity-70">{m.email}</span>
+                    <div className="min-w-0">
+                        <span onClick={onEdit} className="text-[14px] font-bold text-text-primary hover:text-primary cursor-pointer block tracking-tight transition-colors leading-none mb-1.5 truncate">
+                            {m.full_name}
+                        </span>
+                        <span className="text-[11px] font-bold text-text-muted font-mono opacity-80 block truncate">
+                            {m.email}
+                        </span>
                     </div>
                 </div>
             </td>
-            <td className="px-8 py-7">
-                <span className={clsx(
-                    "px-4 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] font-mono",
-                    m.role === 'Admin' ? "bg-primary/5 text-primary border border-primary/10" : 
-                    m.role === 'Manager' ? "bg-purple-500/5 text-purple-600 border border-purple-500/10" :
-                    "bg-black/[0.03] text-text-muted border border-black/[0.05]"
-                )}>
-                    {m.role === 'Admin' ? 'OWNER' : m.role}
-                </span>
+            <td className="px-8 py-6">
+                <StatusBadge 
+                    variant={m.role === 'Admin' ? 'success' : m.role === 'Manager' ? 'warning' : 'default'}
+                    icon={m.role === 'Admin' ? <Shield className="w-3 h-3" /> : m.role === 'Manager' ? <Shield className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                >
+                    {m.role === 'Admin' ? 'OWNER' : m.role.toUpperCase()}
+                </StatusBadge>
             </td>
-            <td className="px-8 py-7">
-                <div className="flex items-center gap-3">
-                    <div className={clsx(
-                        "w-2 h-2 rounded-full",
-                        m.status === 'Active' ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]" :
-                        m.status === 'Pending' ? "bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.4)]" :
-                        "bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)]"
-                    )} />
-                    <span className="text-[11px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono">{m.status}</span>
+            <td className="px-8 py-6">
+                <div className="text-[11px] font-bold text-text-muted leading-relaxed uppercase tracking-[0.1em] font-mono whitespace-nowrap">
+                    <div className="flex items-center gap-3 mb-1">
+                        <span className="w-16">SESSIONS:</span>
+                        <span className="text-text-primary">{m.sessionCount || 0}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className="w-16">PROJECTS:</span>
+                        <span className="text-text-primary">{m.projectsCount || 0}</span>
+                    </div>
                 </div>
             </td>
-            <td className="px-8 py-7 text-right">
-                <div className="text-[11px] font-bold text-text-muted leading-relaxed uppercase tracking-[0.1em] font-mono">
-                    <p className="flex items-center justify-between gap-6"><span>WEEKLY</span> <span className="text-text-primary">{m.weekly_limit}h</span></p>
-                    <p className="flex items-center justify-between gap-6"><span>DAILY</span> <span className="text-text-primary">{m.daily_limit}h</span></p>
+            <td className="px-8 py-6">
+                <div className="text-[11px] font-bold text-text-muted leading-relaxed uppercase tracking-[0.1em] font-mono whitespace-nowrap">
+                    <div className="flex items-center gap-3 mb-1">
+                        <span className="w-10">PAY:</span>
+                        <span className="text-primary font-bold">${m.pay_rate || 0}/H</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className="w-10">BILL:</span>
+                        <span className="text-purple-600 font-bold">${m.bill_rate || 0}/H</span>
+                    </div>
                 </div>
             </td>
-            <td className="px-8 py-7">
-                <div className="text-[11px] font-bold text-text-muted leading-relaxed uppercase tracking-[0.1em] font-mono">
-                    <p className="flex items-center justify-between gap-6"><span>PAY</span> <span className="text-primary font-bold">${m.pay_rate || 0}/h</span></p>
-                    <p className="flex items-center justify-between gap-6"><span>BILL</span> <span className="text-purple-600 font-bold">${m.bill_rate || 0}/h</span></p>
+            <td className="px-8 py-6">
+                <div className="text-[11px] font-bold text-text-muted leading-relaxed uppercase tracking-[0.1em] font-mono whitespace-nowrap">
+                    <div className="flex items-center gap-3 mb-1">
+                        <span className="w-12">WEEKLY:</span>
+                        <span className="text-text-primary">{m.weekly_limit}H</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <span className="w-12">DAILY:</span>
+                        <span className="text-text-primary">{m.daily_limit}H</span>
+                    </div>
                 </div>
             </td>
-            <td className="px-8 py-7 font-mono text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">
-                {dateAdded}
+            <td className="px-8 py-6">
+                <StatusBadge 
+                    variant={m.status === 'Active' ? 'success' : m.status === 'Pending' ? 'warning' : 'default'}
+                >
+                    {m.status.toUpperCase()}
+                </StatusBadge>
             </td>
-            <td className="px-10 py-7 text-right relative" ref={dropRef}>
+            <td className="pr-10 py-6 text-right relative" ref={dropRef}>
                 <button
                     onClick={() => setOpen(!open)}
-                    className="p-3 bg-white/50 border border-black/[0.05] rounded-xl text-text-muted hover:text-text-primary transition-all shadow-sm active:scale-95"
+                    className="p-3 bg-white border border-border rounded-xl text-text-muted hover:text-text-primary hover:border-primary/30 transition-all shadow-sm active:scale-95 group/btn"
                 >
-                    <ChevronDown className={clsx("w-5 h-5 transition-transform duration-300", open && "rotate-180")} strokeWidth={3} />
+                    <MoreHorizontal className={clsx("w-5 h-5 transition-transform duration-300", open && "rotate-90")} strokeWidth={2} />
                 </button>
                 {open && (
-                    <div className="absolute right-10 top-20 bg-white/95 backdrop-blur-3xl border border-black/[0.08] shadow-2xl rounded-2xl z-50 py-3 w-64 animate-in fade-in zoom-in-95 duration-200">
+                    <div className="absolute right-10 top-20 bg-surface-solid border border-border shadow-2xl rounded-2xl z-50 py-3 w-64 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="px-6 py-4 border-b border-border/40 mb-2">
+                             <p className="text-[9px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Access Management</p>
+                             <p className="text-[12px] font-bold text-text-primary truncate">{m.full_name}</p>
+                        </div>
                         <DropItem
                             icon={<Pencil className="w-4 h-4" />}
-                            label={isRestricted ? 'VIEW DETAILS' : 'EDIT MEMBER'}
+                            label={isRestricted ? 'View Profile' : 'Edit Personnel'}
                             onClick={() => { onEdit(); setOpen(false); }}
                         />
-                        {(m.status === 'Pending') && (
+                        {m.status === 'Pending' && (
                             <DropItem
                                 icon={<RotateCcw className="w-4 h-4" />}
-                                label="RESEND INVITE"
+                                label="Resend Invite"
                                 disabled={isRestricted}
                                 onClick={() => { if (!isRestricted) { onResendInvite(); setOpen(false); } }}
-                                dull={isRestricted}
                             />
                         )}
-
-                        <DropItem icon={<Settings className="w-4 h-4" />} label="SETTINGS" onClick={() => { setOpen(false); onEdit(); }} />
-                        <div className="my-3 border-t border-black/[0.03]" />
+                        <DropItem 
+                            icon={<Settings className="w-4 h-4" />} 
+                            label="Configuration" 
+                            onClick={() => { setOpen(false); onEdit(); }} 
+                        />
+                        <div className="my-2 border-t border-border/40" />
                         <DropItem
                             icon={<Trash2 className="w-4 h-4" />}
-                            label="REMOVE MEMBER"
+                            label="Deactivate Node"
                             disabled={isRestricted}
                             onClick={() => { if (!isRestricted) { setOpen(false); onDelete(); } }}
-                            danger={!isRestricted}
-                            dull={isRestricted}
+                            danger
                         />
                     </div>
                 )}
@@ -555,18 +575,18 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
     );
 }
 
-function DropItem({ icon, label, onClick, danger, dull, disabled }: any) {
+function DropItem({ icon, label, onClick, danger, disabled }: any) {
     return (
         <button
             onClick={onClick}
             disabled={disabled}
             className={clsx(
-                "w-full flex items-center gap-4 px-6 py-3.5 text-[11px] font-bold uppercase tracking-[0.2em] transition-all text-left font-mono group", // added group
-                danger ? "text-rose-500 hover:bg-rose-500/10" : "text-text-muted hover:text-text-primary hover:bg-black/[0.02]",
-                dull && "opacity-30 grayscale cursor-not-allowed"
+                "w-full flex items-center gap-4 px-6 py-3.5 text-[11px] font-bold uppercase tracking-[0.2em] transition-all text-left font-mono group",
+                danger ? "text-rose-500 hover:bg-rose-500/10" : "text-text-muted hover:text-text-primary hover:bg-border/5",
+                disabled && "opacity-30 cursor-not-allowed"
             )}
         >
-            <span className="opacity-70 group-hover:opacity-100 transition-opacity">{icon}</span>
+            <span className={clsx("transition-opacity", !disabled && "group-hover:scale-110")}>{icon}</span>
             {label}
         </button>
     );
@@ -576,44 +596,77 @@ function DropItem({ icon, label, onClick, danger, dull, disabled }: any) {
 
 function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any) {
     const rolesAvailable = currentUserRole === 'Admin' ? ['User', 'Viewer', 'Manager', 'Admin'] : ['User', 'Viewer', 'Manager'];
+    
     return (
-        <div className="fixed inset-0 bg-black/30 backdrop-blur-md flex items-center justify-center z-[100] p-4 animate-in fade-in duration-500">
-            <div className="bg-white/95 backdrop-blur-3xl rounded-[40px] w-full max-w-xl shadow-2xl overflow-hidden border border-black/[0.05] animate-in zoom-in-95 duration-300">
-                <div className="px-12 py-10 border-b border-black/[0.03] flex items-center justify-between bg-black/[0.01]">
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-6 animate-in fade-in duration-300">
+            <Card className="w-full max-w-xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 duration-300" noPadding>
+                <div className="px-10 py-8 border-b border-border bg-border/5 flex items-center justify-between">
                     <div>
-                        <h2 className="text-3xl font-bold text-text-primary tracking-tighter leading-none mb-2">Invite Member</h2>
-                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Send an invitation to join the team</p>
+                        <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-1">Invite Personnel</h2>
+                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">Deploy an invitation to join the team hierarchy</p>
                     </div>
-                    <button onClick={onClose} className="p-4 hover:bg-black/5 rounded-3xl transition-all shadow-sm"><X className="w-7 h-7 text-text-muted hover:text-text-primary" strokeWidth={3} /></button>
-                </div>
-                <div className="p-12 space-y-10">
-                    <FormField label="EMAIL ADDRESS" value={form.addEmail} onChange={form.setAddEmail} type="email" placeholder="e.g. hello@example.com" />
-                    <div className="space-y-4">
-                        <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">USER ROLE</label>
-                        <div className="relative">
-                            <select value={form.addRole} onChange={e => form.setAddRole(e.target.value)}
-                                className="w-full px-6 py-4 bg-black/[0.03] border border-black/[0.05] rounded-2xl text-[15px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all appearance-none cursor-pointer font-mono tracking-tight">
-                                {rolesAvailable.map(r => <option key={r} value={r} className="bg-white text-text-primary">{r}</option>)}
-                            </select>
-                            <ChevronDown className="w-5 h-5 text-primary absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={3} />
-                        </div>
-                    </div>
-                    {form.addError && <div className="bg-rose-500/10 border border-rose-500/20 text-rose-600 text-[11px] font-bold uppercase tracking-[0.2em] p-5 rounded-2xl leading-relaxed font-mono">{form.addError}</div>}
-                </div>
-                <div className="px-12 py-10 bg-black/[0.01] border-t border-black/[0.03] flex justify-end gap-6">
-                    <button onClick={onClose} className="px-8 py-3.5 text-[11px] font-bold text-text-muted hover:text-text-primary uppercase tracking-[0.3em] transition-colors font-mono">CANCEL</button>
-                    <button
-                        onClick={onInvite}
-                        disabled={form.adding || !form.addEmail.trim() || isViewer}
-                        className={clsx(
-                            "px-10 py-4 rounded-[20px] text-[11px] font-bold uppercase tracking-[0.3em] transition-all font-mono",
-                            isViewer ? "bg-black/5 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-xl hover:shadow-primary/20 shadow-lg active:scale-95 disabled:opacity-30"
-                        )}
-                    >
-                        {form.adding ? 'SENDING...' : 'SEND INVITE'}
+                    <button onClick={onClose} className="p-3 hover:bg-border/10 rounded-2xl transition-all shadow-sm">
+                        <X className="w-6 h-6 text-text-muted hover:text-text-primary" strokeWidth={2.5} />
                     </button>
                 </div>
-            </div>
+
+                <div className="p-10 space-y-8">
+                    <FormField 
+                        label="Primary Email Identifier" 
+                        value={form.addEmail} 
+                        onChange={form.setAddEmail} 
+                        type="email" 
+                        placeholder="e.g. employee.node@company.com" 
+                    />
+
+                    <div className="space-y-3">
+                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">Assigned Organizational Role</label>
+                        <div className="relative group">
+                            <select 
+                                value={form.addRole} 
+                                onChange={e => form.setAddRole(e.target.value)}
+                                className="w-full px-6 py-4 bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer font-mono"
+                            >
+                                {rolesAvailable.map(r => <option key={r} value={r} className="bg-surface-solid text-text-primary">{r.toUpperCase()}</option>)}
+                            </select>
+                            <ChevronDown className="w-5 h-5 text-primary absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none group-hover:scale-110 transition-transform" strokeWidth={3} />
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        <FormField label="Personnel Pay Rate ($)" value={form.addPayRate} onChange={form.setAddPayRate} type="number" placeholder="0.00" />
+                        <FormField label="Client Bill Rate ($)" value={form.addBillRate} onChange={form.setAddBillRate} type="number" placeholder="0.00" />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        <FormField label="Weekly Limit (Hrs)" value={form.addWeekly} onChange={form.setAddWeekly} type="number" placeholder="40" />
+                        <FormField label="Daily Limit (Hrs)" value={form.addDaily} onChange={form.setAddDaily} type="number" placeholder="8" />
+                    </div>
+
+                    {form.addError && (
+                        <div className="bg-rose-500/5 border border-rose-500/20 text-rose-600 text-[10px] font-bold uppercase tracking-[0.1em] p-5 rounded-2xl leading-relaxed font-mono flex items-start gap-4 animate-in slide-in-from-top-2">
+                             <AlertCircle className="w-5 h-5 shrink-0" />
+                             {form.addError}
+                        </div>
+                    )}
+                </div>
+
+                <div className="px-10 py-8 bg-border/5 border-t border-border flex justify-end gap-4">
+                    <Button variant="secondary" onClick={onClose} className="px-8">
+                        Discard
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={onInvite}
+                        loading={form.adding}
+                        disabled={!form.addEmail.trim() || isViewer}
+                        leftIcon={<UserPlus className="w-5 h-5" />}
+                        className="px-10 shadow-lg shadow-primary/20"
+                    >
+                        Deploy Invite
+                    </Button>
+                </div>
+            </Card>
         </div>
     );
 }
@@ -681,7 +734,7 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole, onRefre
     const [lastSession, setLastSession] = useState<{started_at: string, ip_address: string} | null>(null);
     const [location, setLocation] = useState<{city: string, country: string} | null>(null);
 
-    // New Fields
+    // Metadata Fields
     const [osUsername, setOsUsername] = useState(member.os_username || '');
     const [employeeId, setEmployeeId] = useState(member.employee_id || '');
     const [birthday, setBirthday] = useState(member.birthday || '');
@@ -697,8 +750,7 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole, onRefre
     const [terminationDate, setTerminationDate] = useState(member.termination_date || '');
     const [customFields, setCustomFields] = useState<any>(member.custom_fields || {});
 
-    const [activeTab, setActiveTab] = useState('INFO');
-    const [showActions, setShowActions] = useState(false);
+    const [activeTab, setActiveTab] = useState<'INFO' | 'STATS' | 'ACTIONS'>('INFO');
     const [saving, setSaving] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
@@ -728,12 +780,55 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole, onRefre
         }
     }
 
+    async function handleSave() {
+        if (isRestricted) return;
+        setSaving(true);
+        setSaveStatus('idle');
+        
+        const patch = {
+            full_name: name,
+            role,
+            pay_rate: parseFloat(payRate) || 0,
+            bill_rate: parseFloat(billRate) || 0,
+            weekly_limit: parseInt(weekly) || 40,
+            daily_limit: parseInt(daily) || 8,
+            idle_limit: parseInt(idle) || 10,
+            idle_enabled: idleEnabled,
+            tracking_enabled: trackingEnabled,
+            os_username: osUsername,
+            employee_id: employeeId,
+            birthday,
+            work_address: workAddress,
+            work_phone: workPhone,
+            home_address: homeAddress,
+            personal_email: personalEmail,
+            personal_phone: personalPhone,
+            hire_date: hireDate,
+            department: dept,
+            employee_type: empType,
+            timezone,
+            termination_date: terminationDate,
+            custom_fields: customFields
+        };
+
+        try {
+            await onSave(patch);
+            setSaveStatus('success');
+            onRefresh?.();
+            setTimeout(() => setSaveStatus('idle'), 3000);
+        } catch (err) {
+            console.error('Save failed:', err);
+            setSaveStatus('error');
+        } finally {
+            setSaving(false);
+        }
+    }
+
     const handleDeactivate = async () => {
         if (!confirm('Deactivate this user? They will no longer be able to log in.')) return;
         try {
             const { error } = await supabase.from('members').update({ status: 'Inactive' }).eq('id', member.id);
             if (error) throw error;
-            alert('User deactivated');
             onRefresh?.();
             onClose();
         } catch (e: any) {
@@ -759,7 +854,6 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole, onRefre
         try {
             const { error } = await supabase.from('members').delete().eq('id', member.id);
             if (error) throw error;
-            alert('Member deleted');
             onRefresh?.();
             onClose();
         } catch (e: any) {
@@ -767,380 +861,290 @@ function EditModal({ member, onClose, onSave, isViewer, currentUserRole, onRefre
         }
     };
 
-    const handleSaveInternal = async () => {
-        if (isRestricted) {
-            onClose();
-            return;
-        }
-
-        setSaving(true);
-        setSaveStatus('idle');
-
-        const fullPatch: any = {
-            full_name: name,
-            role,
-            pay_rate: payRate.trim() === '' ? null : parseFloat(payRate),
-            bill_rate: billRate.trim() === '' ? null : parseFloat(billRate),
-            weekly_limit: parseInt(weekly) || 40,
-            daily_limit: parseInt(daily) || 8,
-            idle_limit: idle.trim() === '' ? null : parseInt(idle),
-            idle_enabled: idleEnabled,
-            os_username: osUsername.trim() || null,
-            employee_id: employeeId.trim() || null,
-            birthday: birthday.trim() || null,
-            work_address: workAddress.trim() || null,
-            work_phone: workPhone.trim() || null,
-            home_address: homeAddress.trim() || null,
-            personal_email: personalEmail.trim() || null,
-            personal_phone: personalPhone.trim() || null,
-            hire_date: hireDate.trim() || null,
-            department: dept.trim() || null,
-            employee_type: empType,
-            timezone: timezone,
-            termination_date: terminationDate.trim() || null,
-            custom_fields: customFields,
-            tracking_enabled: trackingEnabled
-        };
-
-        // Surgical Update: Only send what changed
-        const patch: any = {};
-        Object.keys(fullPatch).forEach(key => {
-            if (fullPatch[key] !== (member as any)[key]) {
-                patch[key] = fullPatch[key];
-            }
-        });
-
-        if (Object.keys(patch).length === 0) {
-            onClose();
-            return;
-        }
-
-        try {
-            console.log('--- ATTEMPTING SAVE ---', patch);
-            await onSave(patch);
-            setSaveStatus('success');
-            setTimeout(() => {
-                setSaveStatus('idle');
-                onClose();
-            }, 1000);
-        } catch (err) {
-            console.error('SAVE FAILED:', err);
-            setSaveStatus('error');
-            setSaving(false);
-        }
-    };
-    const tabs = ['INFO', 'EMPLOYMENT', 'ROLES', 'PAY / BILL', 'WORK TIME & LIMITS', 'SETTINGS'];
-
     return (
-        <div className="fixed inset-0 bg-white z-[100] flex flex-col animate-in fade-in duration-300 overflow-hidden font-sans">
-            {/* Top Header */}
-            <div className="px-12 py-8 border-b border-black/[0.05] flex items-center justify-between bg-white shrink-0">
-                <div className="flex items-center gap-6">
-                    <button onClick={onClose} className="p-3 hover:bg-black/5 rounded-2xl transition-all text-text-muted">
-                        <ChevronDown className="w-6 h-6 -rotate-90" strokeWidth={3} />
-                    </button>
-                    <div>
-                        <div className="flex items-center gap-3 text-[11px] font-bold text-text-muted mb-2 font-mono uppercase tracking-[0.2em]">
-                            <Users className="w-4 h-4" /> MEMBERS
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-6 animate-in fade-in duration-300">
+            <Card className="w-full max-w-4xl max-h-[90vh] shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 duration-300 flex flex-col" noPadding>
+                {/* Header */}
+                <div className="px-10 py-8 border-b border-border bg-border/5 flex items-center justify-between shrink-0">
+                    <div className="flex items-center gap-6">
+                        <div className="w-16 h-16 rounded-[24px] bg-primary/5 border border-primary/10 flex items-center justify-center text-primary text-[24px] font-bold shadow-sm font-mono">
+                            {member.full_name[0].toUpperCase()}
                         </div>
-                        <h2 className="text-4xl font-bold text-text-primary tracking-tighter leading-none">{name}</h2>
+                        <div>
+                            <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-1">{member.full_name}</h2>
+                            <div className="flex items-center gap-3">
+                                <StatusBadge variant={member.status === 'Active' ? 'success' : 'warning'}>{member.status.toUpperCase()}</StatusBadge>
+                                <span className="text-[11px] font-bold text-text-muted font-mono uppercase tracking-widest">{member.email}</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div className="flex items-center gap-4">
-                    <div className="relative">
-                        <button 
-                            onClick={() => setShowActions(!showActions)}
-                            className="px-6 py-4 bg-black/[0.03] border border-black/[0.05] rounded-2xl text-[12px] font-bold text-text-primary flex items-center gap-3 hover:bg-black/[0.06] transition-all font-mono tracking-widest uppercase"
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="primary"
+                            onClick={handleSave}
+                            loading={saving}
+                            disabled={isRestricted}
+                            className="px-8"
                         >
-                            ACTIONS <ChevronDown className="w-4 h-4 text-primary" strokeWidth={3} />
+                            {saveStatus === 'success' ? 'Changes Persisted' : 'Synchronize Node'}
+                        </Button>
+                        <button onClick={onClose} className="p-3 hover:bg-border/10 rounded-2xl transition-all shadow-sm">
+                            <X className="w-6 h-6 text-text-muted hover:text-text-primary" strokeWidth={2.5} />
                         </button>
-                        {showActions && (
-                            <div className="absolute right-0 mt-4 w-64 bg-white rounded-3xl shadow-2xl border border-black/[0.05] py-4 z-10 animate-in fade-in zoom-in-95 duration-200">
-                                <button 
-                                    onClick={handleDeactivate}
-                                    className="w-full px-8 py-4 text-left text-[11px] font-bold text-text-primary hover:bg-black/[0.03] transition-all uppercase tracking-widest font-mono flex items-center gap-4"
-                                >
-                                    <div className="w-2 h-2 rounded-full bg-emerald-500" /> DEACTIVATE USER
-                                </button>
-                                <button 
-                                    onClick={handleResetPassword}
-                                    className="w-full px-8 py-4 text-left text-[11px] font-bold text-text-primary hover:bg-black/[0.03] transition-all uppercase tracking-widest font-mono flex items-center gap-4"
-                                >
-                                    <div className="w-2 h-2 rounded-full bg-primary" /> RESET PASSWORD
-                                </button>
-                                <div className="h-[1px] bg-black/[0.05] my-2" />
-                                <button 
-                                    onClick={handleDeleteInternal}
-                                    className="w-full px-8 py-4 text-left text-[11px] font-bold text-red-500 hover:bg-red-50 transition-all uppercase tracking-widest font-mono flex items-center gap-4"
-                                >
-                                    <X className="w-4 h-4" strokeWidth={3} /> DELETE MEMBER
-                                </button>
-                            </div>
-                        )}
                     </div>
-                    <button
-                        onClick={handleSaveInternal}
-                        disabled={saving || isRestricted}
-                        className={clsx(
-                            "px-10 py-4 rounded-2xl text-[12px] font-bold uppercase tracking-[0.2em] transition-all active:scale-95 font-mono shadow-lg",
-                            saveStatus === 'success' ? "bg-emerald-500 text-white shadow-emerald-500/20" :
-                            saveStatus === 'error' ? "bg-red-500 text-white shadow-red-500/20" :
-                            "bg-primary text-white shadow-primary/20 hover:shadow-xl",
-                            (saving || isRestricted) && "opacity-50 cursor-not-allowed"
-                        )}
-                    >
-                        {saving ? 'SAVING...' : 
-                         saveStatus === 'success' ? 'SAVED!' : 
-                         saveStatus === 'error' ? 'ERROR!' :
-                         isRestricted ? 'READ ONLY' : 'SAVE CHANGES'}
-                    </button>
-                    <button onClick={onClose} className="p-3 hover:bg-black/5 rounded-2xl transition-all text-text-muted ml-4">
-                        <X className="w-7 h-7" strokeWidth={3} />
-                    </button>
                 </div>
-            </div>
 
-            {/* Tabs */}
-            <div className="px-12 border-b border-black/[0.03] flex items-center gap-10 bg-white shrink-0">
-                {tabs.map(t => (
-                    <button
-                        key={t}
-                        onClick={() => setActiveTab(t)}
-                        className={clsx(
-                            "py-6 text-[11px] font-bold uppercase tracking-[0.2em] transition-all border-b-[3px] font-mono",
-                            activeTab === t ? "border-primary text-text-primary" : "border-transparent text-text-muted hover:text-text-primary"
-                        )}
-                    >
-                        {t}
-                    </button>
-                ))}
-            </div>
+                {/* Tab Navigation */}
+                <div className="flex px-10 border-b border-border bg-surface-solid shrink-0">
+                    {(['INFO', 'STATS', 'ACTIONS'] as const).map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={clsx(
+                                "px-8 py-5 text-[11px] font-bold tracking-[0.2em] transition-all relative font-mono uppercase",
+                                activeTab === tab ? "text-primary" : "text-text-muted hover:text-text-primary"
+                            )}
+                        >
+                            {tab}
+                            {activeTab === tab && (
+                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-full shadow-[0_0_12px_rgba(80,110,248,0.4)]" />
+                            )}
+                        </button>
+                    ))}
+                </div>
 
-            {/* Tab Content */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar bg-[#FAFAFB]">
-                <div className="p-12 max-w-7xl mx-auto space-y-12 pb-32">
+                {/* Content Area */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-10">
                     {activeTab === 'INFO' && (
-                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            {/* Profile Summary */}
-                            <div className="flex items-start gap-10">
-                                <div className="relative">
-                                    <div className="w-32 h-32 rounded-[40px] bg-primary/5 border-2 border-primary/10 flex items-center justify-center text-primary text-4xl font-bold font-mono overflow-hidden shadow-sm">
-                                        {member.full_name.split(' ').map((n:any)=>n[0]).join('')}
-                                    </div>
-                                    <div className="text-center mt-4">
-                                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1">Joined</p>
-                                        <p className="text-[12px] font-bold text-text-primary font-mono">{new Date(member.created_at).toLocaleDateString(undefined, {month:'short', day:'numeric', year:'numeric'})}</p>
-                                    </div>
+                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                             {/* Core Personnel Identity */}
+                             <section>
+                                <div className="flex items-center gap-3 mb-8">
+                                    <User className="w-5 h-5 text-primary" />
+                                    <h3 className="text-[12px] font-bold text-text-primary uppercase tracking-[0.3em] font-mono">Core Personnel Identity</h3>
                                 </div>
-                                <div className="space-y-4 pt-4">
-                                    <div className="flex items-center gap-4 text-text-primary font-bold">
-                                        <div className="w-8 h-8 rounded-xl bg-black/[0.03] flex items-center justify-center"><X className="w-4 h-4 text-text-muted rotate-45" /></div>
-                                        <span className="text-[14px]">{member.email}</span>
+                                <div className="grid grid-cols-2 gap-8">
+                                    <FormField label="Personnel Identity (Legal Name)" value={name} onChange={setName} disabled={isRestricted} />
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">Assigned Organizational Role</label>
+                                        <select 
+                                            value={role} 
+                                            onChange={e => setRole(e.target.value as any)}
+                                            disabled={isRestricted}
+                                            className="w-full px-6 py-4 bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary transition-all font-mono"
+                                        >
+                                            {rolesAvailable.map(r => <option key={r} value={r} className="bg-surface-solid text-text-primary">{r.toUpperCase()}</option>)}
+                                        </select>
                                     </div>
-                                    <div className="flex items-center gap-4 text-text-primary font-bold">
-                                        <div className="w-8 h-8 rounded-xl bg-black/[0.03] flex items-center justify-center"><Settings className="w-4 h-4 text-text-muted" /></div>
-                                        <span className="text-[14px]">{location ? `${location.city}, ${location.country}` : timezone}</span>
+                                    <FormField label="Internal Employee Identifier" value={employeeId} onChange={setEmployeeId} disabled={isRestricted} placeholder="e.g. EMP-998" />
+                                    <div className="space-y-3">
+                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">Employment Classification</label>
+                                        <select 
+                                            value={empType} 
+                                            onChange={e => setEmpType(e.target.value)}
+                                            disabled={isRestricted}
+                                            className="w-full px-6 py-4 bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary transition-all font-mono"
+                                        >
+                                            {['Full-time', 'Part-time', 'Contractor'].map(t => <option key={t} value={t} className="bg-surface-solid text-text-primary">{t.toUpperCase()}</option>)}
+                                        </select>
                                     </div>
-                                    <div className="flex items-center gap-4 text-text-muted font-bold opacity-60">
-                                        <div className="w-8 h-8 rounded-xl bg-black/[0.03] flex items-center justify-center"><div className="w-2 h-2 rounded-full bg-text-muted" /></div>
-                                        <span className="text-[14px]">Last tracked {lastSession ? timeAgo(lastSession.started_at) : 'never'}</span>
-                                    </div>
+                                    <FormField label="Designated Department" value={dept} onChange={setDept} disabled={isRestricted} placeholder="e.g. Engineering" />
                                 </div>
-                            </div>
+                             </section>
 
-                            {/* Identity Section */}
-                            <section className="space-y-8">
-                                <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Identity</h3>
-                                <div className="grid grid-cols-2 gap-12">
-                                    <div className="space-y-8">
-                                        <FormField label="FULL NAME" value={name} onChange={setName} />
-                                        <FormField label="TIMEZONE" value={timezone} onChange={setTimezone} />
-                                        <FormField label="OS USERNAME" value={osUsername} onChange={setOsUsername} placeholder="No OS username" />
-                                        <FormField label="EMPLOYEE ID" value={employeeId} onChange={setEmployeeId} />
-                                        <div className="space-y-4">
-                                            <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">BIRTHDAY</label>
-                                            <input type="date" value={birthday} onChange={e => setBirthday(e.target.value)}
-                                                className="w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all shadow-sm font-mono" />
+                             {/* Financial Configuration */}
+                             <section>
+                                <div className="flex items-center gap-3 mb-8">
+                                    <DollarSign className="w-5 h-5 text-primary" />
+                                    <h3 className="text-[12px] font-bold text-text-primary uppercase tracking-[0.3em] font-mono">Financial Configuration</h3>
+                                </div>
+                                <div className="grid grid-cols-2 gap-8">
+                                    <FormField label="Standard Hourly Pay Rate ($)" value={payRate} onChange={setPayRate} disabled={isRestricted} type="number" />
+                                    <FormField label="Client Billing Multiplier ($)" value={billRate} onChange={setBillRate} disabled={isRestricted} type="number" />
+                                </div>
+                             </section>
+
+                             {/* Operational Rules */}
+                             <section>
+                                <div className="flex items-center gap-3 mb-8">
+                                    <Clock className="w-5 h-5 text-primary" />
+                                    <h3 className="text-[12px] font-bold text-text-primary uppercase tracking-[0.3em] font-mono">Operational Rules</h3>
+                                </div>
+                                <div className="grid grid-cols-2 gap-8">
+                                    <FormField label="Weekly Capacity Threshold (Hrs)" value={weekly} onChange={setWeekly} disabled={isRestricted} type="number" />
+                                    <FormField label="Daily Cap Threshold (Hrs)" value={daily} onChange={setDaily} disabled={isRestricted} type="number" />
+                                    
+                                    <div className="flex items-center justify-between p-6 bg-border/5 rounded-2xl border border-border/60">
+                                        <div>
+                                            <p className="text-[11px] font-bold text-text-primary font-mono uppercase">Idle Node Telemetry</p>
+                                            <p className="text-[10px] font-bold text-text-muted font-mono uppercase">Suspend on inactivity</p>
                                         </div>
-                                    </div>
-                                    <div className="space-y-8">
-                                        <div className="p-8 bg-black/[0.03] border border-black/[0.05] rounded-[32px] space-y-6">
-                                            <div>
-                                                <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-2">NETWORK IP</label>
-                                                <p className="text-xl font-bold text-text-primary font-mono">{lastSession?.ip_address || 'Not available'}</p>
-                                            </div>
-                                            <div>
-                                                <label className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-2">LAST ACTIVITY</label>
-                                                <p className="text-[14px] font-bold text-text-primary font-mono">{lastSession ? new Date(lastSession.started_at).toLocaleString() : 'Never'}</p>
-                                            </div>
-                                            <div className="pt-4 border-t border-black/[0.05]">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                                        <CheckCircle className="w-5 h-5 text-primary" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[12px] font-bold text-text-primary font-mono">Identity Verified</p>
-                                                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest font-mono">Secured by Trackora</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Contact Section */}
-                            <section className="space-y-8 pt-6">
-                                <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Contact</h3>
-                                <div className="grid grid-cols-2 gap-12">
-                                    <div className="space-y-8">
-                                        <FormField label="WORK ADDRESS" value={workAddress} onChange={setWorkAddress} />
-                                        <FormField label="WORK EMAIL" value={member.email} disabled={true} />
-                                        <FormField label="WORK PHONE" value={workPhone} onChange={setWorkPhone} />
-                                    </div>
-                                    <div className="space-y-8">
-                                        <FormField label="HOME ADDRESS" value={homeAddress} onChange={setHomeAddress} />
-                                        <FormField label="PERSONAL EMAIL" value={personalEmail} onChange={setPersonalEmail} />
-                                        <FormField label="PERSONAL PHONE" value={personalPhone} onChange={setPersonalPhone} />
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Custom Fields Section */}
-                            <section className="space-y-8 pt-6">
-                                <div className="flex items-center justify-between">
-                                    <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Custom Fields</h3>
-                                    <button className="text-[12px] font-bold text-primary hover:underline font-mono">Manage custom fields</button>
-                                </div>
-                                <div className="grid grid-cols-2 gap-12">
-                                    <div className="space-y-8">
-                                        <FormField label="SOCIAL SECURITY NUMBER" value={customFields.ssn || ''} onChange={(v:any) => setCustomFields({...customFields, ssn: v})} />
-                                        <FormField label="EMPLOYEE ID (CUSTOM)" value={customFields.customId || ''} onChange={(v:any) => setCustomFields({...customFields, customId: v})} />
-                                        <FormField label="EMERGENCY CONTACT" value={customFields.emergency || ''} onChange={(v:any) => setCustomFields({...customFields, emergency: v})} />
-                                    </div>
-                                    <div className="space-y-8">
-                                        <FormField label="SPECIALIZATION" value={customFields.spec || ''} onChange={(v:any) => setCustomFields({...customFields, spec: v})} />
-                                        <FormField label="ALIAS" value={customFields.alias || ''} onChange={(v:any) => setCustomFields({...customFields, alias: v})} />
-                                    </div>
-                                </div>
-                            </section>
-                        </div>
-                    )}
-
-                    {activeTab === 'EMPLOYMENT' && (
-                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                           <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Employment Details</h3>
-                           <div className="grid grid-cols-2 gap-12">
-                                <FormField label="JOB ROLE" value={dept} onChange={setDept} placeholder="Marketing Director" />
-                                <div className="space-y-4">
-                                    <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">EMPLOYEE TYPE</label>
-                                    <select value={empType} onChange={e => setEmpType(e.target.value)}
-                                        className="w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all font-mono">
-                                        <option value="Full-time">Full-time</option>
-                                        <option value="Part-time">Part-time</option>
-                                        <option value="Contractor">Contractor</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-4">
-                                    <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">HIRE DATE</label>
-                                    <input type="date" value={hireDate} onChange={e => setHireDate(e.target.value)}
-                                        className="w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all font-mono" />
-                                </div>
-                                <div className="space-y-4">
-                                    <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">TERMINATION DATE</label>
-                                    <input type="date" value={terminationDate} onChange={e => setTerminationDate(e.target.value)}
-                                        className="w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all font-mono" />
-                                </div>
-                           </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'ROLES' && (
-                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                           <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Permissions & Access</h3>
-                           <div className="max-w-md space-y-4">
-                               <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">USER ROLE</label>
-                               <div className="relative">
-                                   <select value={role} onChange={e => setRole(e.target.value)}
-                                       disabled={isRestricted}
-                                       className={clsx(
-                                           "w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[15px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all appearance-none cursor-pointer font-mono tracking-tight",
-                                           isRestricted && "opacity-60 cursor-not-allowed"
-                                       )}>
-                                       {rolesAvailable.map((r:any) => <option key={r} value={r} className="bg-white text-text-primary">{r}</option>)}
-                                   </select>
-                                   <ChevronDown className="w-5 h-5 text-primary absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none" strokeWidth={3} />
-                               </div>
-                               <p className="text-[11px] text-text-muted font-bold leading-relaxed pt-2">
-                                   Admins have full control, Managers can handle teams and projects, Users can track time, Viewers can only see reports.
-                               </p>
-                           </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'PAY / BILL' && (
-                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                           <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Compensation & Billing</h3>
-                           <div className="grid grid-cols-2 gap-12">
-                                <FormField label="PAY RATE ($/HR)" value={payRate} onChange={setPayRate} type="number" />
-                                <FormField label="BILL RATE ($/HR)" value={billRate} onChange={setBillRate} type="number" />
-                           </div>
-                        </div>
-                    )}
-
-                    {activeTab === 'WORK TIME & LIMITS' && (
-                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                           <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">Tracking Rules & Limits</h3>
-                           <div className="grid grid-cols-2 gap-12">
-                                <div className="space-y-10">
-                                    <FormField label="WEEKLY LIMIT (HOURS)" value={weekly} onChange={setWeekly} type="number" />
-                                    <FormField label="DAILY LIMIT (HOURS)" value={daily} onChange={setDaily} type="number" />
-                                </div>
-                                <div className="space-y-10">
-                                    <div className="flex items-center gap-4 bg-white p-8 rounded-[32px] border border-black/[0.1] shadow-sm">
-                                        <div className="flex-1">
-                                            <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-1">IDLE TRACKING</label>
-                                            <p className="text-[13px] text-text-primary font-bold tracking-tight">Pause tracker when inactive</p>
-                                        </div>
-                                        <button onClick={() => setIdleEnabled(!idleEnabled)} disabled={isRestricted}
-                                            className={clsx("w-14 h-8 rounded-full p-1 transition-all duration-300 shadow-inner", idleEnabled ? "bg-primary" : "bg-black/10")}>
-                                            <div className={clsx("w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300", idleEnabled ? "translate-x-6" : "translate-x-0")} />
+                                        <button 
+                                            onClick={() => setIdleEnabled(!idleEnabled)} 
+                                            disabled={isRestricted}
+                                            className={clsx("w-12 h-6 rounded-full p-1 transition-all", idleEnabled ? "bg-primary" : "bg-border")}
+                                        >
+                                            <div className={clsx("w-4 h-4 bg-white rounded-full transition-all", idleEnabled ? "translate-x-6" : "translate-x-0")} />
                                         </button>
                                     </div>
-                                    {idleEnabled && <FormField label="IDLE LIMIT (MINUTES)" value={idle} onChange={setIdle} type="number" />}
+
+                                    {idleEnabled && (
+                                        <FormField label="Idle Timeout Threshold (Min)" value={idle} onChange={setIdle} disabled={isRestricted} type="number" />
+                                    )}
+
+                                    <div className="flex items-center justify-between p-6 bg-border/5 rounded-2xl border border-border/60">
+                                        <div>
+                                            <p className="text-[11px] font-bold text-text-primary font-mono uppercase">Active Signal Tracking</p>
+                                            <p className="text-[10px] font-bold text-text-muted font-mono uppercase">Allow time record sync</p>
+                                        </div>
+                                        <button 
+                                            onClick={() => setTrackingEnabled(!trackingEnabled)} 
+                                            disabled={isRestricted}
+                                            className={clsx("w-12 h-6 rounded-full p-1 transition-all", trackingEnabled ? "bg-emerald-500" : "bg-border")}
+                                        >
+                                            <div className={clsx("w-4 h-4 bg-white rounded-full transition-all", trackingEnabled ? "translate-x-6" : "translate-x-0")} />
+                                        </button>
+                                    </div>
                                 </div>
-                           </div>
+                             </section>
+
+                             {/* Chronological Benchmarks */}
+                             <section>
+                                <div className="flex items-center gap-3 mb-8">
+                                    <FileText className="w-5 h-5 text-primary" />
+                                    <h3 className="text-[12px] font-bold text-text-primary uppercase tracking-[0.3em] font-mono">Chronological Benchmarks</h3>
+                                </div>
+                                <div className="grid grid-cols-2 gap-8">
+                                    <FormField label="OS Node Username" value={osUsername} onChange={setOsUsername} disabled={isRestricted} />
+                                    <FormField label="Personnel Birthday" value={birthday} onChange={setBirthday} type="date" disabled={isRestricted} />
+                                    <FormField label="Activation Datum (Hire Date)" value={hireDate} onChange={setHireDate} type="date" disabled={isRestricted} />
+                                    <FormField label="Termination Datum (End Date)" value={terminationDate} onChange={setTerminationDate} type="date" disabled={isRestricted} />
+                                    <FormField label="Operational Timezone" value={timezone} onChange={setTimezone} disabled={isRestricted} />
+                                </div>
+                             </section>
+
+                             {/* Contact Synchronicity */}
+                             <section>
+                                <div className="flex items-center gap-3 mb-8">
+                                    <Settings className="w-5 h-5 text-primary" />
+                                    <h3 className="text-[12px] font-bold text-text-primary uppercase tracking-[0.3em] font-mono">Contact Synchronicity</h3>
+                                </div>
+                                <div className="grid grid-cols-2 gap-8">
+                                    <FormField label="Workplace Network Address" value={workAddress} onChange={setWorkAddress} disabled={isRestricted} />
+                                    <FormField label="Residential Network Address" value={homeAddress} onChange={setHomeAddress} disabled={isRestricted} />
+                                    <FormField label="Secure Personal Email" value={personalEmail} onChange={setPersonalEmail} disabled={isRestricted} />
+                                    <FormField label="Work Voice Signal" value={workPhone} onChange={setWorkPhone} disabled={isRestricted} />
+                                    <FormField label="Mobile Voice Signal" value={personalPhone} onChange={setPersonalPhone} disabled={isRestricted} />
+                                </div>
+                             </section>
+
+                             {/* Surgical Data Vectors */}
+                             <section>
+                                <div className="flex items-center gap-3 mb-8">
+                                    <Shield className="w-5 h-5 text-primary" />
+                                    <h3 className="text-[12px] font-bold text-text-primary uppercase tracking-[0.3em] font-mono">Surgical Data Vectors</h3>
+                                </div>
+                                <div className="grid grid-cols-2 gap-8">
+                                    <FormField 
+                                        label="SSN Vector" 
+                                        value={customFields.ssn || ''} 
+                                        onChange={(v: any) => setCustomFields({...customFields, ssn: v})} 
+                                        disabled={isRestricted} 
+                                        placeholder="XXX-XX-XXXX"
+                                    />
+                                    <FormField 
+                                        label="Safety Link (Emergency)" 
+                                        value={customFields.emergency || ''} 
+                                        onChange={(v: any) => setCustomFields({...customFields, emergency: v})} 
+                                        disabled={isRestricted} 
+                                    />
+                                    <FormField 
+                                        label="Specialization Metadata" 
+                                        value={customFields.spec || ''} 
+                                        onChange={(v: any) => setCustomFields({...customFields, spec: v})} 
+                                        disabled={isRestricted} 
+                                    />
+                                    <FormField 
+                                        label="Pseudonym (Alias)" 
+                                        value={customFields.alias || ''} 
+                                        onChange={(v: any) => setCustomFields({...customFields, alias: v})} 
+                                        disabled={isRestricted} 
+                                    />
+                                </div>
+                             </section>
                         </div>
                     )}
 
-                    {activeTab === 'SETTINGS' && (
-                        <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                           <h3 className="text-[13px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono border-l-4 border-primary pl-4">User Configurations</h3>
-                           <div className="max-w-xl space-y-10">
-                                <div className="flex items-center justify-between p-8 bg-white rounded-[32px] border border-black/[0.1] shadow-sm">
-                                    <div className="flex-1">
-                                        <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono block mb-1">TRACKING ENABLED</label>
-                                        <p className="text-[13px] text-text-primary font-bold tracking-tight">Allow this user to record time</p>
-                                    </div>
-                                    <button 
-                                        onClick={() => setTrackingEnabled(!trackingEnabled)} 
-                                        disabled={isRestricted}
-                                        className={clsx(
-                                            "w-14 h-8 rounded-full p-1 transition-all duration-300 shadow-inner",
-                                            trackingEnabled ? "bg-emerald-500" : "bg-black/10"
-                                        )}
-                                    >
-                                        <div className={clsx(
-                                            "w-6 h-6 bg-white rounded-full shadow-sm transition-all duration-300",
-                                            trackingEnabled ? "translate-x-6" : "translate-x-0"
-                                        )} />
-                                    </button>
+                    {activeTab === 'STATS' && (
+                        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                             {/* Telemetry Overview */}
+                             <div className="grid grid-cols-3 gap-6">
+                                <Card className="bg-border/5">
+                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono mb-4">Last Node Access</p>
+                                    <h4 className="text-xl font-bold text-text-primary tracking-tight">
+                                        {lastSession ? timeAgo(lastSession.started_at) : 'No Telemetry'}
+                                    </h4>
+                                </Card>
+                                <Card className="bg-border/5">
+                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono mb-4">Current Entry Point</p>
+                                    <h4 className="text-xl font-bold text-text-primary tracking-tight">
+                                        {lastSession?.ip_address || 'Unset'}
+                                    </h4>
+                                </Card>
+                                <Card className="bg-border/5">
+                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono mb-4">Detected Origin</p>
+                                    <h4 className="text-xl font-bold text-text-primary tracking-tight">
+                                        {location ? `${location.city}, ${location.country}` : 'Locating...'}
+                                    </h4>
+                                </Card>
+                             </div>
+
+                             <Card noPadding className="border-border/60">
+                                <div className="px-8 py-6 border-b border-border bg-border/5">
+                                    <h4 className="text-[12px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono">Historical Telemetry</h4>
                                 </div>
-                           </div>
+                                <div className="p-8">
+                                     <div className="h-48 flex items-center justify-center border-2 border-dashed border-border rounded-xl">
+                                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">Telemetry Visualization Pending</p>
+                                     </div>
+                                </div>
+                             </Card>
+                        </div>
+                    )}
+
+                    {activeTab === 'ACTIONS' && (
+                        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                             <section className="p-8 bg-rose-500/5 border border-rose-500/10 rounded-3xl">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="p-3 bg-rose-500/10 rounded-2xl">
+                                        <AlertCircle className="w-6 h-6 text-rose-500" />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-lg font-bold text-rose-600 tracking-tight">Node Deactivation</h4>
+                                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.1em] font-mono">Permanently remove this personnel node from the hierarchy</p>
+                                    </div>
+                                </div>
+                                <Button 
+                                    variant="danger" 
+                                    disabled={isRestricted}
+                                    className="px-10"
+                                    onClick={handleDeactivate}
+                                >
+                                    Force Deactivate
+                                </Button>
+                             </section>
+
+                             <section className="p-8 bg-border/5 border border-border rounded-3xl">
+                                <h4 className="text-[12px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono mb-6">Credential Management</h4>
+                                <div className="flex flex-col gap-4 max-w-sm">
+                                    <Button variant="secondary" className="px-10" onClick={handleResetPassword}>Reset Node Credentials</Button>
+                                    <Button variant="danger" className="px-10" onClick={handleDeleteInternal}>Purge Node History</Button>
+                                </div>
+                             </section>
                         </div>
                     )}
                 </div>
-            </div>
+            </Card>
         </div>
     );
 }
