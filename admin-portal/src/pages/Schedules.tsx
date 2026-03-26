@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { 
     ChevronLeft, ChevronRight, 
     Activity, TrendingUp, ShieldCheck, 
-    RefreshCw, Calendar
+    Calendar
 } from 'lucide-react';
 import { 
     PageHeader, Card, Button, 
