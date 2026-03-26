@@ -31,45 +31,45 @@ export interface NavGroup {
 }
 
 export const navStructure: NavGroup[] = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+    { name: 'Home', icon: LayoutDashboard, path: '/dashboard' },
     {
         name: 'Timesheets',
         icon: Clock,
         children: [
-            { name: 'View & edit', path: '/dashboard/timesheets' },
-            { name: 'Approvals', path: '/dashboard/timesheets/approvals', badge: 'bolt', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
+            { name: 'View / Edit time', path: '/dashboard/timesheets' },
+            { name: 'Approve time', path: '/dashboard/timesheets/approvals', badge: 'bolt', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
         ],
     },
     {
         name: 'Activity',
         icon: Activity,
         children: [
-            { name: 'Screenshots', path: '/dashboard/activity' },
-            { name: 'Apps', path: '/dashboard/activity/apps' },
-            { name: 'URLs', path: '/dashboard/url-tracking' },
+            { name: 'Screen captures', path: '/dashboard/activity' },
+            { name: 'Applications used', path: '/dashboard/activity/apps' },
+            { name: 'Websites visited', path: '/dashboard/url-tracking' },
         ],
     },
     {
-        name: 'Project management',
+        name: 'Project Management',
         icon: FolderKanban,
         allowedRoles: ['Admin', 'Manager', 'User', 'Viewer'],
         children: [
-            { name: 'Projects', path: '/dashboard/projects' },
-            { name: 'To-dos', path: '/dashboard/projects/todos' },
-            { name: 'Clients', path: '/dashboard/projects/clients', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
+            { name: 'All projects', path: '/dashboard/projects' },
+            { name: 'Tasks / To-do list', path: '/dashboard/projects/todos' },
+            { name: 'Customers', path: '/dashboard/projects/clients', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
         ],
     },
     {
         name: 'Reports',
         icon: FileText,
         children: [
-            { name: 'Time & activity', path: '/dashboard/reports', badge: 'new' },
-            { name: 'Time & activity (Legacy)', path: '/dashboard/reports/legacy', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
-            { name: 'Daily totals (Weekly)', path: '/dashboard/reports/daily' },
-            { name: 'Amounts owed', path: '/dashboard/reports/owed', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
-            { name: 'Payments', path: '/dashboard/reports/payments', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
-            { name: 'All reports (Under Construction)', path: '/dashboard/reports/all', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
-            { name: 'Customized reports (Under Construction)', path: '/dashboard/reports/custom', badge: 'bolt', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
+            { name: 'Time usage report', path: '/dashboard/reports', badge: 'new' },
+            { name: 'Old time report', path: '/dashboard/reports/legacy', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
+            { name: 'Weekly summary', path: '/dashboard/reports/daily' },
+            { name: 'Payments due', path: '/dashboard/reports/owed', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
+            { name: 'Payment history', path: '/dashboard/reports/payments', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
+            { name: 'Reports (coming soon)', path: '/dashboard/reports/all', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
+            { name: 'Create report', path: '/dashboard/reports/custom', badge: 'bolt', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
         ],
     },
     {
@@ -77,12 +77,12 @@ export const navStructure: NavGroup[] = [
         icon: Users,
         allowedRoles: ['Admin', 'Manager', 'Viewer'],
         children: [
-            { name: 'Members', path: '/dashboard/people', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
-            { name: 'Teams', path: '/dashboard/people/teams', badge: 'bolt' },
+            { name: 'Team members', path: '/dashboard/people', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
+            { name: 'Groups', path: '/dashboard/people/teams', badge: 'bolt' },
         ],
     },
     {
-        name: 'Financials (Under Construction)',
+        name: 'Financials (WIP)',
         icon: CircleDollarSign,
         allowedRoles: ['Admin', 'Manager', 'Viewer'],
         children: [
