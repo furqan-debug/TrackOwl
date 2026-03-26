@@ -24,7 +24,7 @@ export function PageLayout({
     return (
         <div className={clsx("p-8 md:p-12 mx-auto w-full animate-in fade-in slide-in-from-top-4 duration-700", maxClass)}>
             {(title || actions) && (
-                <div className="mb-12 md:mb-16">
+                <div className="mb-8 md:mb-10">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                         <div>
                             {title && (

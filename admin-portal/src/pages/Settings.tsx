@@ -276,7 +276,7 @@ export function SettingsPage() {
 
 function SettingsSection({ icon, title, subtitle, children }: { icon: React.ReactNode; title: string; subtitle: string; children: React.ReactNode }) {
     return (
-        <Card className="p-0 overflow-hidden bg-surface-solid border-border shadow-sm group/section transition-all hover:border-primary/20 duration-300 mb-8 last:mb-0 rounded-xl">
+        <Card className="p-0 overflow-hidden bg-surface-solid border-border shadow-sm group/section transition-all hover:border-primary/20 duration-300 rounded-xl">
             <div className="px-8 py-6 border-b border-border bg-surface-subtle/30 flex items-center gap-6">
                 <div className="w-12 h-12 rounded-xl bg-surface-solid border border-border flex items-center justify-center text-primary shadow-sm transition-all duration-500">
                     {icon}

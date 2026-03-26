@@ -32,7 +32,7 @@ export function KpiCard({
               : 'bg-black/5 text-text-muted border-black/5';
 
     return (
-        <div className="surface-solid rounded-2xl p-6 flex flex-col relative overflow-hidden group transition-all duration-300">
+        <div className="bg-surface-solid border border-border shadow-sm rounded-2xl p-6 flex flex-col relative overflow-hidden group transition-all duration-300 hover:shadow-md">
             <div className="flex items-start justify-between mb-5 relative z-10">
                 <div className="w-12 h-12 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shrink-0 transition-all duration-300 group-hover:bg-primary/10">
                     {icon}

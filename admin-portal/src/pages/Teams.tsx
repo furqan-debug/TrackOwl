@@ -304,9 +304,9 @@ export function Teams() {
                 </div>
             }
         >
-            <div className="space-y-12">
+            <div className="space-y-8">
                 {/* Stats Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <Card className="!p-8 bg-surface-solid border-border shadow-sm">
                         <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest mb-3">Total Teams</p>
                         <h2 className="text-4xl font-bold text-text-primary tracking-tight">{teams.length}</h2>
@@ -338,9 +338,6 @@ export function Teams() {
                         </div>
                     </Card>
                 </div>
-            </div>
-
-            <div className="px-10 space-y-10">
                 {/* Search Bar */}
                 <div className="max-w-2xl">
                     <Input
@@ -386,8 +383,8 @@ export function Teams() {
             <Modal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
-                title={editingTeam ? 'Operational Node Configuration' : 'Initialize New Hierarchy'}
-                subtitle={`Sequence Index ${wizardStep} of 4`}
+                title={editingTeam ? 'Edit Team' : 'Create New Team'}
+                subtitle={`Step ${wizardStep} of 4`}
                 footer={
                     <div className="flex items-center justify-between w-full">
                         <Button
@@ -395,7 +392,7 @@ export function Teams() {
                             onClick={() => wizardStep > 1 ? setWizardStep(wizardStep - 1) : setShowModal(false)}
                             className="px-8"
                         >
-                            {wizardStep === 1 ? 'Abort' : 'Previous Vector'}
+                            {wizardStep === 1 ? 'Cancel' : 'Back'}
                         </Button>
                         <div className="flex items-center gap-6">
                             <div className="flex gap-2">
@@ -415,7 +412,7 @@ export function Teams() {
                                     disabled={wizardStep === 1 && !name}
                                     className="px-8"
                                 >
-                                    Next Phase
+                                    Next
                                 </Button>
                             ) : (
                                 <Button
@@ -424,7 +421,7 @@ export function Teams() {
                                     disabled={isViewer}
                                     className="px-8"
                                 >
-                                    {editingTeam ? 'Commit Changes' : 'Finalize Initialization'}
+                                    {editingTeam ? 'Save Changes' : 'Create Team'}
                                 </Button>
                             )}
                         </div>
@@ -436,24 +433,23 @@ export function Teams() {
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                             <div className="flex items-center gap-3 mb-2">
                                 <Info className="w-5 h-5 text-primary" />
-                                <p className="text-[12px] font-bold text-text-primary uppercase tracking-[0.3em] font-mono">Core Node Parameters</p>
+                                <p className="text-sm font-semibold text-text-primary">Team Details</p>
                             </div>
                             <Input
-                                label="Hierarchy Identity (Team Name) *"
+                                label="Team Name *"
                                 value={name}
                                 onChange={e => setName(e.target.value)}
-                                placeholder="e.g. CORE-ENGINEERING"
+                                placeholder="e.g. Engineering"
                                 autoFocus
-                                className="font-mono"
                             />
                             <div className="space-y-3">
-                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono ml-1">Operational Description</label>
+                                <label className="block text-xs font-semibold text-text-muted ml-1">Description</label>
                                 <textarea
                                     value={description}
                                     onChange={e => setDescription(e.target.value)}
-                                    placeholder="Define the strategic objectives for this node..."
+                                    placeholder="Describe the team's purpose and responsibilities..."
                                     rows={5}
-                                    className="w-full bg-surface-solid border border-border rounded-2xl px-6 py-4 text-[14px] font-bold text-text-primary placeholder:text-text-muted/30 focus:outline-none focus:border-primary transition-all font-mono resize-none shadow-sm"
+                                    className="w-full bg-surface-solid border border-border rounded-xl px-4 py-3 text-sm text-text-primary placeholder:text-text-muted/40 focus:outline-none focus:border-primary transition-all resize-none shadow-sm"
                                 />
                             </div>
                         </div>
@@ -464,10 +460,10 @@ export function Teams() {
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <UsersRound className="w-5 h-5 text-primary" />
-                                    <p className="text-[12px] font-bold text-text-primary uppercase tracking-[0.3em] font-mono">Teammate Allocation</p>
+                                    <p className="text-sm font-semibold text-text-primary">Select Team Members</p>
                                 </div>
                                 <StatusBadge variant={selectedMemberIds.size > 0 ? "success" : "default"}>
-                                    {selectedMemberIds.size} NODES ACTIVE
+                                    {selectedMemberIds.size} Selected
                                 </StatusBadge>
                             </div>
                             <div className="grid grid-cols-1 gap-4 max-h-[420px] overflow-y-auto pr-4 custom-scrollbar">
@@ -501,8 +497,8 @@ export function Teams() {
                                                     {m.full_name[0].toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="text-[13px] font-bold text-text-primary uppercase leading-none mb-1.5 font-mono">{m.full_name}</p>
-                                                    <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest">{m.email}</p>
+                                                    <p className="text-sm font-semibold text-text-primary leading-none mb-1">{m.full_name}</p>
+                                                    <p className="text-xs text-text-muted">{m.email}</p>
                                                 </div>
                                             </div>
                                             <div className={clsx(
@@ -523,17 +519,17 @@ export function Teams() {
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <Shield className="w-5 h-5 text-primary" />
-                                    <p className="text-[12px] font-bold text-text-primary uppercase tracking-[0.3em] font-mono">Lead Authority Matrix</p>
+                                    <p className="text-sm font-semibold text-text-primary">Assign Team Leads</p>
                                 </div>
                                 <StatusBadge variant={selectedLeadIds.size > 0 ? "success" : "default"}>
-                                    {selectedLeadIds.size} LEADS DESIGNATED
+                                    {selectedLeadIds.size} Leads
                                 </StatusBadge>
                             </div>
                             
                             {selectedMemberIds.size === 0 ? (
-                                <div className="text-center py-20 bg-border/5 border border-dashed border-border rounded-3xl">
+                                <div className="text-center py-20 bg-border/5 border border-dashed border-border rounded-2xl">
                                     <Shield className="w-12 h-12 text-text-muted/20 mx-auto mb-4" />
-                                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">No teammate nodes allocated for lead designation</p>
+                                    <p className="text-sm text-text-muted">Add team members first to designate leads</p>
                                 </div>
                             ) : (
                                 <div className="space-y-6 max-h-[420px] overflow-y-auto pr-4 custom-scrollbar">
@@ -556,8 +552,8 @@ export function Teams() {
                                                             <User className="w-6 h-6" />
                                                         </div>
                                                         <div>
-                                                            <p className="font-bold text-text-primary uppercase text-[13px] font-mono leading-none mb-1">{member.full_name}</p>
-                                                            <p className="text-[10px] text-text-muted font-mono uppercase tracking-widest">{isLead ? 'Lead Node' : 'Teammate Node'}</p>
+                                                            <p className="font-semibold text-text-primary text-sm leading-none mb-1">{member.full_name}</p>
+                                                            <p className="text-xs text-text-muted">{isLead ? 'Team Lead' : 'Member'}</p>
                                                         </div>
                                                     </div>
                                                     <Button 
@@ -566,7 +562,7 @@ export function Teams() {
                                                         onClick={() => toggleLead(mid)}
                                                         className="px-6"
                                                     >
-                                                        {isLead ? 'De-assign Lead' : 'Designate Lead'}
+                                                        {isLead ? 'Remove Lead' : 'Make Lead'}
                                                     </Button>
                                                 </div>
 
@@ -584,7 +580,7 @@ export function Teams() {
                                                                 )}>
                                                                     {leadPermissions[mid]?.[key] && <Check className="w-4 h-4 text-white stroke-[4]" />}
                                                                 </div>
-                                                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] group-hover:text-text-primary transition-colors font-mono">
+                                                                <span className="text-xs font-medium text-text-muted group-hover:text-text-primary transition-colors capitalize">
                                                                     {key.replace(/_/g, ' ')}
                                                                 </span>
                                                             </button>
@@ -604,10 +600,10 @@ export function Teams() {
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <Briefcase className="w-5 h-5 text-primary" />
-                                    <p className="text-[12px] font-bold text-text-primary uppercase tracking-[0.3em] font-mono">Project Associations</p>
+                                    <p className="text-sm font-semibold text-text-primary">Link Projects</p>
                                 </div>
                                 <StatusBadge variant={selectedProjectIds.size > 0 ? "success" : "default"}>
-                                    {selectedProjectIds.size} PROJECTS LINKED
+                                    {selectedProjectIds.size} Linked
                                 </StatusBadge>
                             </div>
                             <div className="grid grid-cols-1 gap-4 max-h-[420px] overflow-y-auto pr-4 custom-scrollbar">
@@ -635,8 +631,8 @@ export function Teams() {
                                                     <Briefcase className="w-6 h-6" />
                                                 </div>
                                                 <div>
-                                                    <p className="text-[13px] font-bold text-text-primary uppercase font-mono leading-none mb-1.5">{p.name}</p>
-                                                    <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Active Project Vector</p>
+                                                    <p className="text-sm font-semibold text-text-primary leading-none mb-1">{p.name}</p>
+                                                    <p className="text-xs text-text-muted">Active Project</p>
                                                 </div>
                                             </div>
                                             <div className={clsx(
@@ -658,27 +654,26 @@ export function Teams() {
             <Modal
                 isOpen={!!deletingTeam}
                 onClose={() => setDeletingTeam(null)}
-                title="Force Node Deletion"
+                title="Delete Team"
                 maxWidth="max-w-md"
                 footer={
                     <div className="flex gap-4 w-full">
                         <Button variant="secondary" className="flex-1 px-8" onClick={() => setDeletingTeam(null)}>
-                            Abort
+                            Cancel
                         </Button>
                         <Button variant="danger" className="flex-[2] px-8 shadow-md shadow-rose-500/10" onClick={handleDelete}>
-                            Confirm Purge
+                            Delete Team
                         </Button>
                     </div>
                 }
             >
                 <div className="text-center py-10">
-                    <div className="w-24 h-24 bg-rose-500/5 rounded-[32px] flex items-center justify-center mx-auto mb-8 border border-rose-500/10 shadow-inner">
+                    <div className="w-24 h-24 bg-rose-500/5 rounded-2xl flex items-center justify-center mx-auto mb-8 border border-rose-500/10">
                         <Trash2 className="w-12 h-12 text-rose-500" strokeWidth={2} />
                     </div>
-                    <h4 className="text-xl font-bold text-text-primary tracking-tight mb-3 uppercase font-mono">Irreversible Action</h4>
-                    <p className="text-[11px] text-text-muted leading-relaxed font-bold uppercase tracking-[0.1em] font-mono px-6">
-                        You are about to permanently purge <span className="text-rose-500">"{deletingTeam?.name}"</span> from the hierarchy.
-                        All teammate allocations and project links will be severed.
+                    <h4 className="text-xl font-bold text-text-primary tracking-tight mb-3">Delete "{deletingTeam?.name}"?</h4>
+                    <p className="text-sm text-text-muted leading-relaxed px-6">
+                        This will permanently remove the team and all member assignments. This action cannot be undone.
                     </p>
                 </div>
             </Modal>
