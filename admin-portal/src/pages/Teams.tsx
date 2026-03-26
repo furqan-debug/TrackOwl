@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import {
     Users, Search,
     Trash2, Shield, LayoutGrid, List, X,
-    ChevronRight, UsersRound, Plus, Pencil, Check
+    ChevronRight, UsersRound, Plus, Pencil, Check,
+    Briefcase, Settings
 } from 'lucide-react';
 import clsx from 'clsx';
 import { supabase } from '../lib/supabase';
@@ -24,6 +25,23 @@ interface Member {
     email: string;
 }
 
+interface Project {
+    id: string;
+    name: string;
+}
+
+interface LeadPermissions {
+    approve_timesheets: boolean;
+    approve_time_modifications: boolean;
+    approve_time_off: boolean;
+    create_schedules: boolean;
+    manage_projects: boolean;
+    edit_roles: boolean;
+    view_activity: boolean;
+    manage_financials: boolean;
+    receive_notifications: boolean;
+}
+
 export function Teams() {
     const { profile } = useAuth();
     const isViewer = profile?.role === 'Viewer';
@@ -33,16 +51,20 @@ export function Teams() {
     const [searchTerm, setSearchTerm] = useState('');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-    // Modal states
+    // Modal / Wizard states
     const [showModal, setShowModal] = useState(false);
+    const [wizardStep, setWizardStep] = useState(1);
     const [editingTeam, setEditingTeam] = useState<Team | null>(null);
     const [deletingTeam, setDeletingTeam] = useState<Team | null>(null);
-    const [managingMembersTeam, setManagingMembersTeam] = useState<Team | null>(null);
 
     // Form state
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
-    const [managerId, setManagerId] = useState('');
+    const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
+    const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
+    const [leadPermissions, setLeadPermissions] = useState<Record<string, LeadPermissions>>({});
+    const [selectedProjectIds, setSelectedProjectIds] = useState<Set<string>>(new Set());
+    const [allProjects, setAllProjects] = useState<Project[]>([]);
 
     useEffect(() => {
         fetchData();
@@ -51,22 +73,36 @@ export function Teams() {
     async function fetchData() {
         setLoading(true);
         try {
-            const [{ data: teamsData, error: tErr }, { data: membersData, error: mErr }] = await Promise.all([
-                supabase.from('teams').select('*, members!teams_manager_id_fkey(full_name), team_members(member_id)').order('created_at', { ascending: false }),
-                supabase.from('members').select('id, full_name, email').eq('status', 'Active')
+            const [
+                { data: teamsData, error: tErr }, 
+                { data: membersData, error: mErr },
+                { data: projectsData, error: pErr }
+            ] = await Promise.all([
+                supabase.from('teams').select(`
+                    *, 
+                    members!teams_manager_id_fkey(full_name), 
+                    team_members(member_id, is_lead),
+                    project_teams(project_id)
+                `).order('created_at', { ascending: false }),
+                supabase.from('members').select('id, full_name, email').eq('status', 'Active'),
+                supabase.from('projects').select('id, name').eq('status', 'Active')
             ]);
             if (tErr) throw tErr;
             if (mErr) throw mErr;
+            if (pErr) throw pErr;
 
             const formattedTeams = (teamsData || []).map(t => ({
                 ...t,
                 manager_name: t.members?.full_name,
                 member_count: t.team_members?.length || 0,
-                memberIds: t.team_members?.map((tm: any) => tm.member_id) || []
+                memberIds: t.team_members?.map((tm: any) => tm.member_id) || [],
+                leadIds: t.team_members?.filter((tm: any) => tm.is_lead).map((tm: any) => tm.member_id) || [],
+                projectIds: t.project_teams?.map((pt: any) => pt.project_id) || []
             }));
 
             setTeams(formattedTeams);
             setMembers(membersData || []);
+            setAllProjects(projectsData || []);
         } catch (e) {
             console.error('Fetch teams error:', e);
         } finally {
@@ -78,38 +114,143 @@ export function Teams() {
         setEditingTeam(null);
         setName('');
         setDescription('');
-        setManagerId('');
+        setSelectedMemberIds(new Set());
+        setSelectedLeadIds(new Set());
+        setSelectedProjectIds(new Set());
+        setLeadPermissions({});
+        setWizardStep(1);
         setShowModal(true);
     }
 
-    function openEditModal(team: Team) {
-        setEditingTeam(team);
-        setName(team.name);
-        setDescription(team.description);
-        setManagerId(team.manager_id || '');
-        setShowModal(true);
+    async function openEditModal(team: Team) {
+        setLoading(true);
+        try {
+            const { data: perms } = await supabase
+                .from('team_lead_permissions')
+                .select('*')
+                .eq('team_id', team.id);
+
+            const permsMap: Record<string, LeadPermissions> = {};
+            perms?.forEach(p => {
+                const { id, team_id, member_id, created_at, updated_at, ...rest } = p;
+                permsMap[member_id] = rest;
+            });
+
+            setEditingTeam(team);
+            setName(team.name);
+            setDescription(team.description);
+            setSelectedMemberIds(new Set((team as any).memberIds || []));
+            setSelectedLeadIds(new Set((team as any).leadIds || []));
+            setSelectedProjectIds(new Set((team as any).projectIds || []));
+            setLeadPermissions(permsMap);
+            setWizardStep(1);
+            setShowModal(true);
+        } catch (e) {
+            console.error('Open edit modal error:', e);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const DEFAULT_PERMISSIONS: LeadPermissions = {
+        approve_timesheets: true,
+        approve_time_modifications: true,
+        approve_time_off: true,
+        create_schedules: true,
+        manage_projects: true,
+        edit_roles: true,
+        view_activity: true,
+        manage_financials: false,
+        receive_notifications: true
+    };
+
+    function toggleLead(memberId: string) {
+        const next = new Set(selectedLeadIds);
+        if (next.has(memberId)) {
+            next.delete(memberId);
+            const nextPerms = { ...leadPermissions };
+            delete nextPerms[memberId];
+            setLeadPermissions(nextPerms);
+        } else {
+            next.add(memberId);
+            setLeadPermissions({
+                ...leadPermissions,
+                [memberId]: { ...DEFAULT_PERMISSIONS }
+            });
+        }
+        setSelectedLeadIds(next);
+    }
+
+    function updateLeadPermission(memberId: string, key: keyof LeadPermissions, value: boolean) {
+        setLeadPermissions({
+            ...leadPermissions,
+            [memberId]: {
+                ...leadPermissions[memberId],
+                [key]: value
+            }
+        });
     }
 
     async function handleSave() {
-        const payload = {
-            name,
-            description,
-            manager_id: managerId || null,
-            organization_id: profile?.organization_id
-        };
-
+        setLoading(true);
         try {
+            const teamPayload = {
+                name,
+                description,
+                organization_id: profile?.organization_id
+            };
+
+            let teamId = editingTeam?.id;
+
             if (editingTeam) {
-                const { error } = await supabase.from('teams').update(payload).eq('id', editingTeam.id);
+                const { error } = await supabase.from('teams').update(teamPayload).eq('id', editingTeam.id);
                 if (error) throw error;
             } else {
-                const { error } = await supabase.from('teams').insert(payload);
+                const { data, error } = await supabase.from('teams').insert(teamPayload).select().single();
                 if (error) throw error;
+                teamId = data.id;
             }
+
+            if (!teamId) return;
+
+            // 1. Sync Members
+            await supabase.from('team_members').delete().eq('team_id', teamId);
+            if (selectedMemberIds.size > 0) {
+                const memberInserts = Array.from(selectedMemberIds).map(mid => ({
+                    team_id: teamId,
+                    member_id: mid,
+                    is_lead: selectedLeadIds.has(mid)
+                }));
+                await supabase.from('team_members').insert(memberInserts);
+            }
+
+            // 2. Sync Projects
+            await supabase.from('project_teams').delete().eq('team_id', teamId);
+            if (selectedProjectIds.size > 0) {
+                const projectInserts = Array.from(selectedProjectIds).map(pid => ({
+                    team_id: teamId,
+                    project_id: pid
+                }));
+                await supabase.from('project_teams').insert(projectInserts);
+            }
+
+            // 3. Sync Lead Permissions
+            await supabase.from('team_lead_permissions').delete().eq('team_id', teamId);
+            if (selectedLeadIds.size > 0) {
+                const permInserts = Array.from(selectedLeadIds).map(mid => ({
+                    team_id: teamId,
+                    member_id: mid,
+                    ...(leadPermissions[mid] || DEFAULT_PERMISSIONS)
+                }));
+                await supabase.from('team_lead_permissions').insert(permInserts);
+            }
+
             setShowModal(false);
             fetchData();
         } catch (e) {
             console.error('Save team error:', e);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -256,7 +397,6 @@ export function Teams() {
                                 team={team}
                                 mode={viewMode}
                                 onEdit={() => openEditModal(team)}
-                                onManage={() => setManagingMembersTeam(team)}
                                 onDelete={() => setDeletingTeam(team)}
                                 isViewer={isViewer}
                             />
@@ -265,84 +405,269 @@ export function Teams() {
                 )}
             </div>
 
-            {/* CREATE/EDIT MODAL */}
             {showModal && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-text-primary/10 backdrop-blur-xl animate-in fade-in duration-300">
-                    <div className="bg-white rounded-[40px] w-full max-w-[580px] shadow-[0_32px_120px_rgba(0,0,0,0.12)] flex flex-col border border-black/[0.05] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
-                        <div className="px-10 pt-10 pb-0 bg-black/[0.01]">
+                    <div className="bg-white rounded-[40px] w-full max-w-[680px] h-[85vh] shadow-[0_32px_120px_rgba(0,0,0,0.12)] flex flex-col border border-black/[0.05] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
+                        {/* Wizard Header */}
+                        <div className="px-10 pt-10 pb-6 bg-black/[0.01] border-b border-black/[0.03]">
                             <div className="flex items-start justify-between mb-8">
                                 <div className="flex items-center gap-5">
-                                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm transform -rotate-3 hover:rotate-0 transition-transform duration-500">
+                                    <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm">
                                         <UsersRound className="w-7 h-7 text-primary" strokeWidth={2.5} />
                                     </div>
                                     <div>
-                                        <h2 className="text-2xl font-bold text-text-primary tracking-tighter leading-none mb-2">{editingTeam ? 'Edit Team' : 'Create Team'}</h2>
-                                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Manage team details and department head</p>
+                                        <h2 className="text-2xl font-bold text-text-primary tracking-tighter leading-none mb-2">
+                                            {editingTeam ? 'Edit Team' : 'Create Team'}
+                                        </h2>
+                                        <div className="flex items-center gap-3">
+                                            {[1, 2, 3, 4].map((step) => (
+                                                <div 
+                                                    key={step}
+                                                    className={clsx(
+                                                        "h-1.5 rounded-full transition-all duration-500",
+                                                        wizardStep >= step ? "bg-primary w-8" : "bg-black/10 w-4"
+                                                    )}
+                                                />
+                                            ))}
+                                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono ml-2">Step {wizardStep} of 4</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <button onClick={() => setShowModal(false)} className="p-3 bg-black/[0.03] hover:bg-black/[0.08] rounded-2xl transition-all text-text-muted hover:text-text-primary shadow-sm hover:scale-110 active:scale-90"><X className="w-5 h-5" strokeWidth={3} /></button>
+                                <button onClick={() => setShowModal(false)} className="p-3 bg-black/[0.03] hover:bg-black/[0.08] rounded-2xl transition-all text-text-muted hover:text-text-primary"><X className="w-5 h-5" strokeWidth={3} /></button>
                             </div>
                         </div>
 
-                        <div className="px-10 py-10 space-y-8 bg-white">
-                            <div className="space-y-3">
-                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Team Name *</label>
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={e => setName(e.target.value)}
-                                    placeholder="e.g. Engineering, Marketing..."
-                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase"
-                                />
-                            </div>
-                            <div className="space-y-3">
-                                <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-1">Description</label>
-                                <textarea
-                                    value={description}
-                                    onChange={e => setDescription(e.target.value)}
-                                    placeholder="Brief description of the team's purpose..."
-                                    rows={3}
-                                    className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/20 transition-all font-mono placeholder:text-text-muted/30 uppercase resize-none custom-scrollbar"
-                                />
-                            </div>
-                            <div className="space-y-3">
-                                <label className="block text-[10px] font-bold text-primary uppercase tracking-[0.3em] font-mono mb-1 flex items-center gap-2">
-                                    <Shield className="w-3.5 h-3.5" strokeWidth={3} />
-                                    Team Manager
-                                </label>
-                                <div className="relative group">
-                                    <select
-                                        value={managerId}
-                                        onChange={e => setManagerId(e.target.value)}
-                                        className="w-full pl-6 pr-12 py-4 bg-black/[0.02] border border-black/[0.05] rounded-2xl text-[13px] font-bold text-text-primary appearance-none focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono uppercase cursor-pointer"
-                                    >
-                                        <option value="" className="bg-white">NO MANAGER ASSIGNED</option>
-                                        {members.map(m => (
-                                            <option key={m.id} value={m.id} className="bg-white">{m.full_name.toUpperCase()}</option>
-                                        ))}
-                                    </select>
-                                    <ChevronRight className="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-text-muted pointer-events-none group-hover:text-primary transition-colors rotate-90" strokeWidth={3} />
+                        {/* Wizard Content */}
+                        <div className="flex-1 overflow-y-auto px-10 py-10 custom-scrollbar bg-white">
+                            {wizardStep === 1 && (
+                                <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+                                    <div className="space-y-3">
+                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Team Name *</label>
+                                        <input
+                                            type="text"
+                                            value={name}
+                                            onChange={e => setName(e.target.value)}
+                                            placeholder="e.g. Engineering, Marketing..."
+                                            className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono placeholder:text-text-muted/30 uppercase"
+                                        />
+                                    </div>
+                                    <div className="space-y-3">
+                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Description</label>
+                                        <textarea
+                                            value={description}
+                                            onChange={e => setDescription(e.target.value)}
+                                            placeholder="Brief description of the team's purpose..."
+                                            rows={4}
+                                            className="w-full bg-black/[0.02] border border-black/[0.05] rounded-2xl px-6 py-4 text-[13px] font-bold text-text-primary focus:outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono placeholder:text-text-muted/30 uppercase resize-none custom-scrollbar"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            )}
+
+                            {wizardStep === 2 && (
+                                <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Select Teammates</label>
+                                        <span className="text-[10px] font-bold text-primary px-3 py-1 bg-primary/10 rounded-full font-mono">{selectedMemberIds.size} Selected</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {members.map(m => {
+                                            const isSelected = selectedMemberIds.has(m.id);
+                                            return (
+                                                <button
+                                                    key={m.id}
+                                                    onClick={() => {
+                                                        const next = new Set(selectedMemberIds);
+                                                        if (next.has(m.id)) {
+                                                            next.delete(m.id);
+                                                            // Also remove from leads if removed from teammates
+                                                            const nextLeads = new Set(selectedLeadIds);
+                                                            nextLeads.delete(m.id);
+                                                            setSelectedLeadIds(nextLeads);
+                                                        } else {
+                                                            next.add(m.id);
+                                                        }
+                                                        setSelectedMemberIds(next);
+                                                    }}
+                                                    className={clsx(
+                                                        "flex items-center justify-between p-4 rounded-2xl border transition-all duration-300",
+                                                        isSelected ? "bg-primary/5 border-primary/20" : "bg-black/[0.01] border-black/[0.03] hover:border-black/[0.1]"
+                                                    )}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={clsx(
+                                                            "w-10 h-10 rounded-xl flex items-center justify-center text-[11px] font-bold",
+                                                            isSelected ? "bg-primary text-white" : "bg-black/5 text-text-muted"
+                                                        )}>
+                                                            {m.full_name[0].toUpperCase()}
+                                                        </div>
+                                                        <div className="text-left">
+                                                            <p className="text-[13px] font-bold text-text-primary leading-none mb-1">{m.full_name.toUpperCase()}</p>
+                                                            <p className="text-[10px] font-mono text-text-muted tracking-tight">{m.email}</p>
+                                                        </div>
+                                                    </div>
+                                                    <div className={clsx(
+                                                        "w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center",
+                                                        isSelected ? "bg-primary border-primary" : "border-black/10"
+                                                    )}>
+                                                        {isSelected && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                                                    </div>
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {wizardStep === 3 && (
+                                <div className="space-y-8 animate-in slide-in-from-right-4 duration-500">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Assign Team Leads & Permissions</label>
+                                        <span className="text-[10px] font-bold text-primary px-3 py-1 bg-primary/10 rounded-full font-mono">{selectedLeadIds.size} Leads</span>
+                                    </div>
+                                    
+                                    {selectedMemberIds.size === 0 ? (
+                                        <div className="text-center py-20 bg-black/[0.01] rounded-[32px] border border-dashed border-black/10">
+                                            <Shield className="w-12 h-12 text-black/10 mx-auto mb-4" />
+                                            <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">No teammates selected yet</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            {Array.from(selectedMemberIds).map(mid => {
+                                                const member = members.find(m => m.id === mid);
+                                                const isLead = selectedLeadIds.has(mid);
+                                                const perms = leadPermissions[mid];
+                                                if (!member) return null;
+
+                                                return (
+                                                    <div key={mid} className={clsx(
+                                                        "rounded-[32px] border transition-all duration-500 overflow-hidden",
+                                                        isLead ? "bg-primary/[0.02] border-primary/20" : "bg-black/[0.01] border-black/[0.03]"
+                                                    )}>
+                                                        <div className="p-6 flex items-center justify-between border-b border-black/[0.03]">
+                                                            <div className="flex items-center gap-4">
+                                                                <div className={clsx(
+                                                                    "w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold",
+                                                                    isLead ? "bg-primary text-white" : "bg-black/5 text-text-muted"
+                                                                )}>
+                                                                    <Shield className="w-5 h-5" />
+                                                                </div>
+                                                                <p className="font-bold text-text-primary uppercase font-mono">{member.full_name}</p>
+                                                            </div>
+                                                            <button 
+                                                                onClick={() => toggleLead(mid)}
+                                                                className={clsx(
+                                                                    "px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.2em] font-mono transition-all",
+                                                                    isLead ? "bg-primary text-white shadow-lg" : "bg-black/5 text-text-muted hover:bg-black/10"
+                                                                )}
+                                                            >
+                                                                {isLead ? 'HEAD ASSIGNED' : 'MAKE LEAD'}
+                                                            </button>
+                                                        </div>
+                                                        {isLead && perms && (
+                                                            <div className="p-8 grid grid-cols-2 gap-x-8 gap-y-4 bg-white/50">
+                                                                {Object.entries(perms).map(([key, value]) => (
+                                                                    <div key={key} className="flex items-center justify-between py-1">
+                                                                        <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider font-mono capitalize">
+                                                                            {key.replace(/_/g, ' ')}
+                                                                        </span>
+                                                                        <button 
+                                                                            onClick={() => updateLeadPermission(mid, key as keyof LeadPermissions, !value)}
+                                                                            className={clsx(
+                                                                                "w-10 h-5 rounded-full transition-all relative",
+                                                                                value ? "bg-primary" : "bg-black/10"
+                                                                            )}
+                                                                        >
+                                                                            <div className={clsx(
+                                                                                "absolute top-1 w-3 h-3 bg-white rounded-full transition-all",
+                                                                                value ? "right-1" : "left-1"
+                                                                            )} />
+                                                                        </button>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {wizardStep === 4 && (
+                                <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <label className="block text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Assign Projects to Team</label>
+                                        <span className="text-[10px] font-bold text-primary px-3 py-1 bg-primary/10 rounded-full font-mono">{selectedProjectIds.size} Projects</span>
+                                    </div>
+                                    <div className="grid grid-cols-1 gap-3">
+                                        {allProjects.map(p => {
+                                            const isSelected = selectedProjectIds.has(p.id);
+                                            return (
+                                                <button
+                                                    key={p.id}
+                                                    onClick={() => {
+                                                        const next = new Set(selectedProjectIds);
+                                                        if (next.has(p.id)) next.delete(p.id);
+                                                        else next.add(p.id);
+                                                        setSelectedProjectIds(next);
+                                                    }}
+                                                    className={clsx(
+                                                        "flex items-center justify-between p-5 rounded-2xl border transition-all duration-300",
+                                                        isSelected ? "bg-primary/5 border-primary/20 shadow-md" : "bg-black/[0.01] border-black/[0.03] hover:border-black/[0.1]"
+                                                    )}
+                                                >
+                                                    <div className="flex items-center gap-4">
+                                                        <div className={clsx(
+                                                            "w-10 h-10 rounded-xl flex items-center justify-center",
+                                                            isSelected ? "bg-primary/20 text-primary" : "bg-black/5 text-text-muted"
+                                                        )}>
+                                                            <Briefcase className="w-5 h-5" />
+                                                        </div>
+                                                        <p className="text-[13px] font-bold text-text-primary uppercase font-mono">{p.name}</p>
+                                                    </div>
+                                                    <div className={clsx(
+                                                        "w-5 h-5 rounded-md border-2 transition-all flex items-center justify-center",
+                                                        isSelected ? "bg-primary border-primary" : "border-black/10"
+                                                    )}>
+                                                        {isSelected && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                                                    </div>
+                                                </button>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="px-10 py-8 border-t border-black/[0.05] bg-black/[0.01] flex items-center justify-end gap-4">
+                        {/* Wizard Footer */}
+                        <div className="px-10 py-8 border-t border-black/[0.05] bg-black/[0.01] flex items-center justify-between">
                             <button
-                                onClick={() => setShowModal(false)}
-                                className="px-8 py-4 rounded-2xl border border-black/[0.1] text-[11px] font-bold text-text-muted hover:text-text-primary hover:bg-white transition-all uppercase tracking-[0.2em] font-mono active:scale-95 shadow-sm"
+                                onClick={() => wizardStep > 1 ? setWizardStep(wizardStep - 1) : setShowModal(false)}
+                                className="px-8 py-4 rounded-2xl border border-black/[0.1] text-[11px] font-bold text-text-muted hover:text-text-primary hover:bg-white transition-all uppercase tracking-[0.2em] font-mono"
                             >
-                                CANCEL
+                                {wizardStep === 1 ? 'CANCEL' : 'BACK'}
                             </button>
-                            <button
-                                onClick={handleSave}
-                                disabled={!name || isViewer}
-                                className={clsx(
-                                    "px-10 py-4 rounded-2xl text-[11px] font-bold transition-all shadow-xl flex items-center gap-3 uppercase tracking-[0.3em] font-mono active:scale-95",
-                                    isViewer || !name ? "bg-black/20 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-primary/30 hover:scale-[1.02]"
+                            <div className="flex items-center gap-4">
+                                {wizardStep < 4 ? (
+                                    <button
+                                        onClick={() => setWizardStep(wizardStep + 1)}
+                                        disabled={wizardStep === 1 && !name}
+                                        className="px-12 py-4 rounded-2xl bg-primary text-white text-[11px] font-bold hover:shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-[0.3em] font-mono shadow-xl disabled:opacity-30"
+                                    >
+                                        NEXT STEP
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={loading || isViewer}
+                                        className="px-12 py-4 rounded-2xl bg-primary text-white text-[11px] font-bold hover:shadow-primary/30 hover:scale-[1.02] active:scale-95 transition-all uppercase tracking-[0.3em] font-mono shadow-xl disabled:opacity-30"
+                                    >
+                                        {loading ? 'SAVING...' : (editingTeam ? 'SAVE CHANGES' : 'FINISH & CREATE')}
+                                    </button>
                                 )}
-                            >
-                                {editingTeam ? 'SAVE CHANGES' : 'CREATE TEAM'}
-                            </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -378,138 +703,14 @@ export function Teams() {
                 </div>
             )}
             
-            {/* MANAGE MEMBERS MODAL */}
-            {managingMembersTeam && (
-                <ManageMembersModal
-                    team={managingMembersTeam}
-                    allMembers={members}
-                    onClose={() => setManagingMembersTeam(null)}
-                    onSuccess={() => { setManagingMembersTeam(null); fetchData(); }}
-                    isViewer={isViewer}
-                />
-            )}
         </div>
     );
 }
 
-function ManageMembersModal({ team, allMembers, onClose, onSuccess, isViewer }: {
-    team: Team;
-    allMembers: Member[];
-    onClose: () => void;
-    onSuccess: () => void;
-    isViewer?: boolean;
-}) {
-    // Note: team.memberIds is populated by our refined data fetch
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set((team as any).memberIds || []));
-    const [loading, setLoading] = useState(false);
-
-    async function handleSave() {
-        setLoading(true);
-        try {
-            await supabase.from('team_members').delete().eq('team_id', team.id);
-            if (selectedIds.size > 0) {
-               const inserts = Array.from(selectedIds).map(mid => ({ team_id: team.id, member_id: mid }));
-               const { error } = await supabase.from('team_members').insert(inserts);
-               if (error) throw error;
-            }
-            onSuccess();
-        } catch (e) {
-            console.error('Update members error:', e);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-text-primary/10 backdrop-blur-xl animate-in fade-in duration-300">
-            <div className="bg-white rounded-[48px] w-full max-w-[620px] shadow-[0_32px_120px_rgba(0,0,0,0.12)] flex flex-col border border-black/[0.05] overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500">
-                <div className="px-12 pt-12 pb-0 bg-black/[0.01]">
-                    <div className="flex items-start justify-between mb-10">
-                        <div className="flex items-center gap-6">
-                            <div className="w-16 h-16 rounded-[24px] bg-primary/10 flex items-center justify-center border border-primary/20 shadow-sm transform -rotate-6 hover:rotate-0 transition-transform duration-700">
-                                <Users className="w-8 h-8 text-primary" strokeWidth={2.5} />
-                            </div>
-                            <div>
-                                <h2 className="text-3xl font-bold text-text-primary tracking-tighter leading-none mb-2 uppercase">Team Members</h2>
-                                <p className="text-[11px] font-bold text-primary uppercase tracking-[0.3em] font-mono">{team.name.toUpperCase()} MEMBERS</p>
-                            </div>
-                        </div>
-                        <button onClick={onClose} className="p-4 bg-black/[0.03] hover:bg-black/[0.08] rounded-2xl transition-all text-text-muted hover:text-text-primary shadow-sm hover:scale-110 active:scale-90"><X className="w-6 h-6" strokeWidth={3} /></button>
-                    </div>
-                </div>
-
-                <div className="px-12 py-10 max-h-[55vh] overflow-y-auto space-y-4 custom-scrollbar bg-white">
-                    <div className="space-y-4 mb-8">
-                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono px-2">Team Member Assignment ({allMembers.length} Registered)</p>
-                        <div className="space-y-3">
-                            {allMembers.map(m => {
-                                const isSelected = selectedIds.has(m.id);
-                                return (
-                                    <button
-                                        key={m.id}
-                                        onClick={() => {
-                                            if (isViewer) return;
-                                            const next = new Set(selectedIds);
-                                            if (next.has(m.id)) next.delete(m.id);
-                                            else next.add(m.id);
-                                            setSelectedIds(next);
-                                        }}
-                                        className={clsx(
-                                            "w-full flex items-center justify-between p-6 rounded-[28px] border transition-all duration-500 group/item",
-                                            isSelected 
-                                                ? "border-primary/30 bg-primary/[0.03] shadow-lg shadow-primary/5" 
-                                                : "border-black/[0.03] bg-white hover:bg-black/[0.01] hover:border-black/[0.1]",
-                                            isViewer ? "cursor-default" : ""
-                                        )}
-                                    >
-                                        <div className="flex items-center gap-6">
-                                            <div className={clsx(
-                                                "w-14 h-14 rounded-[18px] flex items-center justify-center text-[13px] font-bold transition-all shadow-sm border border-black/[0.03] group-hover/item:scale-110",
-                                                isSelected ? "bg-primary text-white shadow-primary/20" : "bg-black/[0.03] text-text-primary"
-                                            )}>
-                                                {m.full_name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                                            </div>
-                                            <div className="text-left">
-                                                <p className="text-base font-bold text-text-primary tracking-tight leading-none mb-2">{m.full_name.toUpperCase()}</p>
-                                                <p className="text-[10px] text-text-muted font-bold uppercase tracking-[0.1em] font-mono opacity-60 truncate max-w-[240px]">{m.email}</p>
-                                            </div>
-                                        </div>
-                                        <div className={clsx(
-                                            "w-7 h-7 rounded-xl border-[2.5px] flex items-center justify-center transition-all duration-500",
-                                            isSelected ? "bg-primary border-primary shadow-lg shadow-primary/20 rotate-0" : "border-black/[0.1] rotate-45 opacity-20 group-hover/item:opacity-100 group-hover/item:rotate-0"
-                                        )}>
-                                            {isSelected && <Check className="w-4 h-4 text-white stroke-[4]" />}
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="px-12 py-10 bg-black/[0.01] border-t border-black/[0.05] flex gap-6">
-                    <button onClick={onClose} className="flex-1 px-8 py-5 rounded-[20px] text-[11px] font-bold uppercase tracking-[0.3em] text-text-muted hover:text-text-primary hover:bg-white transition-all font-mono active:scale-95 shadow-sm">CANCEL</button>
-                    <button 
-                        onClick={handleSave} 
-                        disabled={loading || isViewer} 
-                        className={clsx(
-                            "flex-[2.2] px-10 py-5 rounded-[24px] text-[11px] font-bold uppercase tracking-[0.4em] transition-all shadow-2xl active:scale-95 disabled:opacity-30 font-mono",
-                            isViewer ? "bg-black/10 text-text-muted cursor-not-allowed" : "bg-primary text-white hover:shadow-primary/30 hover:scale-[1.02]"
-                        )}
-                    >
-                        {loading ? 'SAVING...' : (isViewer ? 'LOCKED' : 'SAVE CHANGES')}
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function TeamItem({ team, mode, onEdit, onManage, onDelete, isViewer }: {
+function TeamItem({ team, mode, onEdit, onDelete, isViewer }: {
     team: Team;
     mode: 'grid' | 'list';
     onEdit: () => void;
-    onManage: () => void;
     onDelete: () => void;
     isViewer: boolean;
 }) {
@@ -554,13 +755,13 @@ function TeamItem({ team, mode, onEdit, onManage, onDelete, isViewer }: {
                         <Pencil className="w-4.5 h-4.5" />
                     </button>
                     <button 
-                        onClick={() => { if (!isViewer) onManage(); }} 
+                        onClick={() => { if (!isViewer) onEdit(); }} 
                         className={clsx(
                             "p-3.5 rounded-2xl border transition-all shadow-sm active:scale-90",
                             isViewer ? "opacity-20 cursor-not-allowed" : "glass border-black/[0.05] hover:border-primary/50 text-text-muted hover:text-primary hover:bg-primary/5"
                         )}
                     >
-                        <Users className="w-4.5 h-4.5" />
+                        <Settings className="w-4.5 h-4.5" />
                     </button>
                     <button 
                         onClick={() => { if (!isViewer) onDelete(); }} 
@@ -640,14 +841,14 @@ function TeamItem({ team, mode, onEdit, onManage, onDelete, isViewer }: {
                         </div>
                     </div>
                     <button 
-                        onClick={onManage}
+                        onClick={onEdit}
                         disabled={isViewer}
                         className={clsx(
                             "flex items-center gap-2 font-bold uppercase tracking-[0.3em] text-[10px] transition-all group/btn font-mono p-4 rounded-xl",
                             isViewer ? "text-text-muted cursor-default" : "text-primary hover:bg-primary/5 active:scale-95"
                         )}
                     >
-                        {isViewer ? 'VIEW' : 'MANAGE'}
+                        {isViewer ? 'VIEW' : 'EDIT WIZARD'}
                         <ChevronRight className="w-5 h-5 group-hover/btn:translate-x-2 transition-transform" strokeWidth={3} />
                     </button>
                 </div>
