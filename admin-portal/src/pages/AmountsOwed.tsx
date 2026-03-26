@@ -96,18 +96,18 @@ export function AmountsOwed() {
     return (
         <div className="space-y-10 max-w-full mx-auto animate-in fade-in duration-700">
             <PageHeader
-                title="Amounts Owed"
-                description="Monitor outstanding balances and pending member payouts with real-time calculations."
+                title="Payments Due"
+                description="Review and manage outstanding payments for team members."
                 actions={
                     <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex items-center gap-1.5 bg-surface-subtle border border-border p-1 rounded-xl shadow-inner">
+                        <div className="flex items-center gap-1 bg-surface-solid border border-border p-1 rounded-lg shadow-sm">
                             {(['This Week', 'This Month', 'All Time'] as const).map(r => (
                                 <button
                                     key={r}
                                     onClick={() => setRange(r)}
                                     className={clsx(
-                                        "px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all font-mono",
-                                        range === r ? "bg-surface-solid text-primary shadow-sm border border-border" : "text-text-muted hover:text-text-primary"
+                                        "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
+                                        range === r ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text-primary"
                                     )}
                                 >
                                     {r}
@@ -122,49 +122,44 @@ export function AmountsOwed() {
             />
 
             {/* Total Highlight */}
-            <div className="bg-surface-solid border border-border rounded-[48px] p-12 text-text-primary mb-10 shadow-2xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-96 h-96 bg-primary/[0.03] rounded-full -translate-y-32 translate-x-32 blur-3xl group-hover:bg-primary/[0.05] transition-colors duration-1000" />
-                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
-                    <div className="text-center md:text-left space-y-4">
-                        <div className="flex items-center gap-3 justify-center md:justify-start">
-                            <div className="bg-primary/10 p-3 rounded-xl border border-primary/20 shadow-sm">
-                                <TrendingUp className="w-5 h-5 text-primary" strokeWidth={2.5} />
-                            </div>
-                            <p className="text-text-muted font-bold text-[10px] uppercase tracking-[0.4em] font-mono opacity-60">Total Outstanding Payouts</p>
+            <div className="bg-surface-solid border border-border rounded-xl p-8 mb-10 shadow-sm relative overflow-hidden">
+                <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+                    <div className="text-center md:text-left space-y-2">
+                        <div className="flex items-center gap-2 justify-center md:justify-start">
+                            <TrendingUp className="w-4 h-4 text-emerald-600" />
+                            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">Total Payments Due</h3>
                         </div>
-                        <div className="flex items-baseline gap-4 justify-center md:justify-start">
-                            <span className="text-8xl font-bold tracking-tighter text-text-primary leading-none italic">${totalOwed.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                            <span className="text-2xl font-bold text-text-muted/30 tracking-widest font-mono uppercase">USD</span>
+                        <div className="flex items-baseline gap-2 justify-center md:justify-start">
+                            <span className="text-5xl font-bold text-text-primary">${totalOwed.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                            <span className="text-sm font-semibold text-text-muted/60 uppercase">USD</span>
                         </div>
                     </div>
                     
-                    <div className="flex gap-6 relative z-10 w-full md:w-auto">
-                        <div className="bg-surface-subtle/50 border border-border px-8 py-6 rounded-[32px] flex-1 text-center group/card hover:bg-surface-subtle transition-all duration-300">
-                            <p className="text-[9px] font-bold text-text-muted uppercase tracking-[0.3em] mb-3 font-mono opacity-50">Members Owed</p>
-                            <p className="text-4xl font-bold text-text-primary tracking-tighter font-mono italic group-hover:text-primary transition-colors">{data.length}</p>
+                    <div className="flex gap-4 w-full md:w-auto">
+                        <div className="bg-surface-subtle/50 border border-border px-6 py-4 rounded-lg flex-1 text-center">
+                            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">Members</p>
+                            <p className="text-2xl font-bold text-text-primary">{data.length}</p>
                         </div>
-                        <div className="bg-surface-subtle/50 border border-border px-8 py-6 rounded-[32px] flex-1 text-center group/card hover:bg-surface-subtle transition-all duration-300">
-                            <p className="text-[9px] font-bold text-text-muted uppercase tracking-[0.3em] mb-3 font-mono opacity-50">Avg. Payout</p>
-                            <p className="text-4xl font-bold text-text-primary tracking-tighter font-mono italic group-hover:text-primary transition-colors">${(totalOwed / (data.length || 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                        <div className="bg-surface-subtle/50 border border-border px-6 py-4 rounded-lg flex-1 text-center">
+                            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">Avg. Payment</p>
+                            <p className="text-2xl font-bold text-text-primary">${(totalOwed / (data.length || 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                         </div>
                     </div>
                 </div>
             </div>
 
             <Card className="overflow-hidden p-0 border-border/60 shadow-xl">
-                <div className="p-8 border-b border-border bg-surface-subtle/30 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                        <div className="p-2.5 bg-primary/10 rounded-xl border border-primary/20 shadow-sm">
-                            <BadgeDollarSign className="w-5 h-5 text-primary" />
-                        </div>
-                        <h3 className="text-[11px] font-bold text-text-muted uppercase tracking-[0.4em] font-mono opacity-80">Detail Breakdown</h3>
+                <div className="p-6 border-b border-border bg-surface-subtle/30 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                        <BadgeDollarSign className="w-5 h-5 text-text-muted" />
+                        <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider">Breakdown</h3>
                     </div>
-                    <div className="flex items-center gap-6">
-                        <div className="relative group/select">
-                            <div className="flex items-center gap-3 bg-surface-solid border border-border rounded-xl px-4 py-2.5 shadow-sm transition-all group-hover/select:border-primary/40 group-hover/select:shadow-md cursor-pointer">
-                                <Filter className="w-4 h-4 text-primary" strokeWidth={3} />
-                                <span className="text-[10px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono min-w-[140px] truncate text-center">Sort: Highest Amount</span>
-                                <ChevronDown className="w-4 h-4 text-text-muted group-hover/select:text-primary transition-all" strokeWidth={3} />
+                    <div className="flex items-center gap-4">
+                        <div className="relative group">
+                            <div className="flex items-center gap-2 bg-surface-solid border border-border rounded-lg px-3 py-1.5 shadow-sm cursor-pointer">
+                                <Filter className="w-3.5 h-3.5 text-text-muted" />
+                                <span className="text-xs font-medium text-text-primary min-w-[120px] truncate pb-0.5">Sort: Highest Amount</span>
+                                <ChevronDown className="w-3.5 h-3.5 text-text-muted" />
                             </div>
                             <select className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
                                 <option>Highest Amount</option>
@@ -179,76 +174,76 @@ export function AmountsOwed() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-surface-subtle/20">
-                                <th className="pl-12 pr-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border min-w-[320px]">Team Member</th>
-                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border">Rate</th>
-                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border">Hours Owed</th>
-                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border">Last Activity</th>
-                                <th className="pl-6 pr-12 py-8 text-[11px] font-bold text-primary uppercase tracking-[0.4em] font-mono border-b border-border text-right min-w-[180px] italic">Total Balance</th>
+                                <th className="pl-6 pr-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border min-w-[280px]">Member</th>
+                                <th className="px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border">Rate</th>
+                                <th className="px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border">Hours</th>
+                                <th className="px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border">Last Tracked</th>
+                                <th className="pl-4 pr-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border text-right min-w-[160px]">Balance</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/40">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="py-32">
-                                        <LoadingState message="Recalculating payouts..." />
+                                    <td colSpan={5} className="py-20 text-center text-text-muted">
+                                        <LoadingState message="Calculating balances..." />
                                     </td>
                                 </tr>
                             ) : data.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="py-32">
+                                    <td colSpan={5} className="py-20">
                                         <EmptyState 
                                             icon={<BadgeDollarSign className="w-12 h-12 text-text-muted/20" />}
-                                            title="No outstanding balances" 
-                                            description="All member payouts are currently up to date." 
+                                            title="No payments due" 
+                                            description="All member payouts are up to date." 
                                         />
                                     </td>
                                 </tr>
                             ) : (
                                 data.map((row) => (
-                                    <tr key={row.member_id} className="hover:bg-primary/[0.01] transition-all group">
-                                        <td className="pl-12 pr-6 py-8">
-                                            <div className="flex items-center gap-6">
-                                                <div className="w-12 h-12 rounded-2xl bg-surface-solid border border-border flex items-center justify-center font-bold text-text-primary text-sm shadow-sm transition-all group-hover:scale-110 group-hover:rotate-3 group-hover:bg-primary group-hover:text-white group-hover:border-primary/20">
+                                    <tr key={row.member_id} className="hover:bg-surface-subtle transition-all group">
+                                        <td className="pl-6 pr-4 py-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-lg bg-surface-subtle border border-border flex items-center justify-center font-bold text-text-primary text-sm shadow-sm transition-all group-hover:bg-primary group-hover:text-white">
                                                     {row.full_name.charAt(0)}
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <p className="text-base font-bold text-text-primary tracking-tighter group-hover:text-primary transition-colors italic">{row.full_name}</p>
-                                                    <p className="text-[10px] text-text-muted font-bold uppercase tracking-[0.15em] opacity-60 font-mono">Verified Active Member</p>
+                                                <div className="flex flex-col">
+                                                    <span className="font-semibold text-text-primary text-sm">{row.full_name}</span>
+                                                    <span className="text-[10px] text-text-muted uppercase font-medium">Verified Member</span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-8">
-                                            <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-surface-subtle border border-border rounded-xl text-[10px] font-bold text-text-muted font-mono tracking-widest shadow-inner">
-                                                <span className="text-text-primary font-bold">${row.pay_rate}</span>
-                                                <span className="opacity-40">/HR</span>
+                                        <td className="px-4 py-4">
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-subtle border border-border rounded-lg text-[10px] font-bold text-text-primary">
+                                                ${row.pay_rate}
+                                                <span className="text-text-muted font-medium">/hr</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-8">
-                                            <div className="flex flex-col items-start gap-1">
-                                                <span className="text-lg font-bold text-text-primary tracking-tighter font-mono italic">{row.totalHours}</span>
-                                                <span className="text-[9px] text-text-muted font-bold uppercase tracking-[0.2em] font-mono opacity-50">Pending Hours</span>
+                                        <td className="px-4 py-4">
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-text-primary">{row.totalHours}</span>
+                                                <span className="text-[10px] text-text-muted uppercase font-medium">Hours</span>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-8">
-                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface-subtle border border-border rounded-lg text-[9px] font-bold text-text-muted uppercase tracking-widest font-mono">
-                                                <Calendar className="w-3 h-3 opacity-40" />
-                                                {row.lastTracked}
+                                        <td className="px-4 py-4">
+                                            <div className="flex items-center gap-2 text-text-muted">
+                                                <Calendar className="w-3.5 h-3.5 opacity-60" />
+                                                <span className="text-[11px] font-medium">{row.lastTracked}</span>
                                             </div>
                                         </td>
-                                        <td className="pl-6 pr-12 py-8 text-right">
-                                            <div className="flex flex-col items-end gap-2">
-                                                <span className="text-2xl font-bold text-emerald-600 tracking-tighter font-mono italic group-hover:scale-110 transition-transform origin-right">
+                                        <td className="pl-4 pr-6 py-4 text-right">
+                                            <div className="flex flex-col items-end gap-1.5">
+                                                <span className="font-bold text-emerald-600 text-lg">
                                                     ${row.amountOwed.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </span>
-                                                <div className="flex items-center gap-3">
+                                                <div className="flex items-center gap-2">
                                                     <StatusBadge 
                                                         variant={row.totalHours > 40 ? "warning" : row.totalHours > 0 ? "success" : "default"}
-                                                        className="scale-90 shadow-sm"
+                                                        className="px-2 py-0.5"
                                                     >
                                                         {row.totalHours}h
                                                     </StatusBadge>
-                                                    <Button size="sm" variant="ghost" className="text-[9px] p-0 h-auto font-bold text-primary active:scale-95 group/pay">
-                                                        Pay <MoreHorizontal className="w-3.5 h-3.5 ml-1.5 group-hover/pay:translate-x-1 transition-transform" />
+                                                    <Button size="sm" variant="ghost" className="h-auto p-0 text-[10px] font-bold text-primary active:scale-95 group">
+                                                        Pay <MoreHorizontal className="w-3 h-3 ml-1 group-hover:translate-x-0.5 transition-transform" />
                                                     </Button>
                                                 </div>
                                             </div>
@@ -260,18 +255,16 @@ export function AmountsOwed() {
                     </table>
                 </div>
 
-                <div className="p-10 bg-surface-subtle/40 border-t border-border flex flex-col md:flex-row items-center justify-between gap-8">
-                    <div className="flex items-start gap-4 max-w-lg">
-                        <div className="p-2 bg-primary/5 rounded-lg border border-primary/10 mt-1">
-                            <Shield className="w-4 h-4 text-primary" strokeWidth={3} />
-                        </div>
-                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] leading-relaxed font-mono opacity-60">
-                            Values are derived from cumulative verified session durations and contractual pay rates. Actual disbursements may vary by local tax obligations and approved deductions.
+                <div className="p-6 bg-surface-subtle/40 border-t border-border flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="flex items-start gap-3 max-w-lg">
+                        <Shield className="w-4 h-4 text-text-muted mt-0.5" />
+                        <p className="text-[10px] font-medium text-text-muted uppercase leading-relaxed tracking-wider">
+                            Values are derived from cumulative session durations and pay rates. Actual payouts may vary by tax obligations and approved deductions.
                         </p>
                     </div>
-                    <Button variant="primary" className="w-full md:w-auto px-10 py-4 scale-110 shadow-2xl shadow-primary/30 group">
-                        Process Systematic Payouts
-                        <TrendingUp className="w-4 h-4 ml-3 group-hover:translate-y-[-2px] transition-transform" />
+                    <Button variant="primary" className="w-full md:w-auto px-8 py-3 shadow-sm hover:shadow-md">
+                        Process Payments
+                        <TrendingUp className="w-4 h-4 ml-2" />
                     </Button>
                 </div>
             </Card>

@@ -186,18 +186,18 @@ export function Reports() {
     return (
         <div className="space-y-10 max-w-full mx-auto animate-in fade-in duration-700">
             <PageHeader
-                title="Activity Reports"
-                description="Track team productivity and engagement analytics with high-precision metrics."
+                title="Reports"
+                description="Analyze team activity, productivity, and project costs."
                 actions={
                     <div className="flex flex-wrap items-center gap-6">
-                        <div className="flex items-center gap-2 bg-surface-subtle border border-border p-1.5 rounded-2xl shadow-inner">
+                        <div className="flex items-center gap-1 bg-surface-solid border border-border p-1 rounded-lg shadow-sm">
                             {RANGES.map(r => (
                                 <button
                                     key={r}
                                     onClick={() => setRange(r)}
                                     className={clsx(
-                                        "px-6 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all font-mono",
-                                        range === r ? "bg-surface-solid text-primary shadow-sm border border-border" : "text-text-muted hover:text-text-primary"
+                                        "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
+                                        range === r ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text-primary"
                                     )}
                                 >
                                     {r}
@@ -205,25 +205,25 @@ export function Reports() {
                             ))}
                         </div>
                         
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3">
                             <FilterSelect 
-                                icon={<Users className="w-4 h-4" strokeWidth={3} />}
+                                icon={<Users className="w-4 h-4" />}
                                 value={selectedTeamId}
                                 onChange={(val) => { setSelectedTeamId(val); setSelectedMemberEmail('All'); }}
                                 options={[{ id: 'All', name: 'All Teams' }, ...teams]}
                             />
                             <FilterSelect 
-                                icon={<ActivityIcon className="w-4 h-4" strokeWidth={3} />}
+                                icon={<ActivityIcon className="w-4 h-4" />}
                                 value={selectedMemberEmail}
                                 onChange={(val) => { setSelectedMemberEmail(val); setSelectedTeamId('All'); }}
                                 options={[{ id: 'All', email: 'All', full_name: 'All Members' }, ...members].map(m => ({ id: (m as any).email || m.id, name: (m as any).full_name || (m as any).name }))}
                             />
                             <Button 
                                 variant="secondary" 
-                                className="p-4 rounded-xl group"
+                                className="p-2.5 rounded-lg"
                                 onClick={() => {/* export logic */}}
                             >
-                                <Download className="w-5 h-5 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+                                <Download className="w-4 h-4" />
                             </Button>
                         </div>
                     </div>
@@ -305,25 +305,24 @@ export function Reports() {
                                             dataKey="date" 
                                             axisLine={false} 
                                             tickLine={false} 
-                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 700, fontFamily: 'monospace' }}
-                                            dy={15}
+                                            tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
+                                            dy={10}
                                         />
                                         <YAxis 
                                             domain={[0, 100]} 
                                             axisLine={false} 
                                             tickLine={false} 
-                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 700, fontFamily: 'monospace' }}
+                                            tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
                                             unit="%"
                                         />
-                                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(80,110,248,0.2)', strokeWidth: 2 }} />
+                                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(80,110,248,0.1)', strokeWidth: 1 }} />
                                         <Area 
                                             type="monotone" 
                                             dataKey="activity" 
                                             stroke="#506ef8" 
-                                            strokeWidth={5}
+                                            strokeWidth={2}
                                             fillOpacity={1} 
                                             fill="url(#colorActivity)" 
-                                            animationDuration={2500}
                                         />
                                     </AreaChart>
                                 </ResponsiveContainer>
@@ -339,20 +338,19 @@ export function Reports() {
                                             dataKey="date" 
                                             axisLine={false} 
                                             tickLine={false} 
-                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 700, fontFamily: 'monospace' }}
-                                            dy={15}
+                                            tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
+                                            dy={10}
                                         />
                                         <YAxis 
                                             axisLine={false} 
                                             tickLine={false} 
-                                            tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 700, fontFamily: 'monospace' }}
+                                            tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
                                         />
                                         <Tooltip content={<CustomTooltip unit="min" />} cursor={{ fill: 'rgba(80,110,248,0.03)' }} />
                                         <Bar 
                                             dataKey="minutes" 
                                             fill="url(#barGradient)" 
-                                            radius={[12, 12, 0, 0]}
-                                            animationDuration={2500}
+                                            radius={[4, 4, 0, 0]}
                                         />
                                         <defs>
                                             <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
@@ -376,11 +374,10 @@ export function Reports() {
                                                 data={appBreakdown}
                                                 cx="50%"
                                                 cy="50%"
-                                                innerRadius={90}
-                                                outerRadius={125}
-                                                paddingAngle={6}
+                                                innerRadius={60}
+                                                outerRadius={90}
+                                                paddingAngle={4}
                                                 dataKey="value"
-                                                animationDuration={2500}
                                             >
                                                 {appBreakdown.map((_, i) => (
                                                     <Cell key={i} fill={COLORS[i % COLORS.length]} strokeWidth={0} />
@@ -390,20 +387,20 @@ export function Reports() {
                                         </PieChart>
                                     </ResponsiveContainer>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <span className="text-5xl font-bold text-text-primary tracking-tighter leading-none italic">{appBreakdown.length}</span>
-                                        <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mt-1">Top Apps</span>
+                                        <span className="text-3xl font-bold text-text-primary">{appBreakdown.length}</span>
+                                        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Apps</span>
                                     </div>
                                 </div>
 
-                                <div className="w-full mt-14 space-y-4">
+                                <div className="w-full mt-8 space-y-2">
                                     {appBreakdown.map((item, i) => (
-                                        <div key={i} className="flex items-center justify-between group cursor-default p-2 rounded-xl hover:bg-surface-subtle transition-all border border-transparent hover:border-border">
-                                            <div className="flex items-center gap-5">
-                                                <div className="w-3.5 h-3.5 rounded-full shadow-sm" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                                                <span className="text-[12px] font-bold text-text-primary tracking-tight truncate max-w-[180px] uppercase font-mono italic">{item.name}</span>
+                                        <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-surface-subtle transition-all">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                                                <span className="text-sm text-text-primary truncate max-w-[180px]">{item.name}</span>
                                             </div>
-                                            <span className="text-[9px] font-bold text-text-muted bg-surface-subtle px-3 py-1.5 rounded-lg uppercase tracking-widest font-mono border border-border">
-                                                {item.value} Sessions
+                                            <span className="text-[10px] font-medium text-text-muted bg-surface-subtle px-2 py-1 rounded border border-border">
+                                                {item.value} sess
                                             </span>
                                         </div>
                                     ))}
@@ -411,33 +408,31 @@ export function Reports() {
                             </div>
                         </Card>
 
-                        <div className="bg-surface-solid border border-border overflow-hidden rounded-[48px] relative group p-12 shadow-2xl">
+                        <div className="bg-surface-solid border border-border overflow-hidden rounded-2xl relative p-8 shadow-sm">
                             <div className="relative z-10">
-                                <div className="flex justify-between items-start mb-10">
-                                    <div className="bg-primary/10 p-4 rounded-[24px] border border-primary/20 shadow-sm rotate-3 group-hover:rotate-0 transition-transform duration-700">
-                                        <Zap className="w-8 h-8 text-primary" strokeWidth={2.5} />
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className="bg-primary/10 p-3 rounded-xl border border-primary/20">
+                                        <Zap className="w-6 h-6 text-primary" />
                                     </div>
-                                    <span className="text-[10px] font-bold bg-surface-subtle px-4 py-2 rounded-full tracking-[0.2em] uppercase border border-border font-mono italic">
-                                        Member Status
+                                    <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+                                        Performance Status
                                     </span>
                                 </div>
-                                <h4 className="text-text-muted font-bold uppercase tracking-[0.4em] text-[11px] mb-3 font-mono opacity-60">Activity Score</h4>
-                                <div className="flex items-baseline gap-4 mb-8">
-                                    <span className="text-7xl font-bold tracking-tighter text-text-primary leading-none italic">{avgActivity}</span>
-                                    <span className="text-3xl font-bold text-text-muted/30 tracking-tight font-mono">/ 100</span>
+                                <h4 className="text-text-muted font-semibold uppercase tracking-wider text-[10px] mb-2 opacity-60">Activity Score</h4>
+                                <div className="flex items-baseline gap-2 mb-6">
+                                    <span className="text-5xl font-bold text-text-primary">{avgActivity}</span>
+                                    <span className="text-xl font-medium text-text-muted/40">/ 100</span>
                                 </div>
-                                <p className="text-sm font-bold text-text-primary leading-relaxed mb-10 opacity-80 uppercase tracking-tight">
-                                    {selectedTeamId === 'All' ? 'Organization-wide' : 'Team'} efficiency is currently <span className="text-primary underline underline-offset-4 decoration-primary/30">optimal</span>. 
+                                <p className="text-sm text-text-primary leading-relaxed mb-6">
+                                    Efficiency for {selectedTeamId === 'All' ? 'the organization' : 'this team'} is currently <span className="font-semibold text-primary">optimal</span>. 
                                 </p>
-                                <div className="w-full h-4 bg-surface-subtle rounded-full overflow-hidden border border-border shadow-inner">
+                                <div className="w-full h-2.5 bg-surface-subtle rounded-full overflow-hidden border border-border">
                                     <div
-                                        className="h-full bg-primary rounded-full transition-all duration-[2500ms] shadow-[0_0_25px_rgba(80,110,248,0.4)]"
+                                        className="h-full bg-primary rounded-full transition-all duration-1000"
                                         style={{ width: `${avgActivity}%` }}
                                     />
                                 </div>
                             </div>
-                            
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-primary/[0.03] rounded-full blur-3xl -mr-32 -mt-32 pointer-events-none group-hover:bg-primary/[0.06] transition-colors duration-1000" />
                         </div>
                     </div>
                 </div>
@@ -450,11 +445,11 @@ function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNod
     const activeLabel = options.find(o => o.id === value)?.name || value;
     
     return (
-        <div className="relative group/select">
-            <div className="flex items-center gap-4 bg-surface-solid border border-border rounded-xl px-5 py-3 shadow-sm transition-all group-hover/select:border-primary/40 group-hover/select:shadow-md cursor-pointer">
-                <div className="text-primary group-hover/select:scale-110 group-hover/select:rotate-12 transition-all duration-500">{icon}</div>
-                <span className="text-[11px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono min-w-[120px] truncate">{activeLabel}</span>
-                <ChevronDown className="w-4 h-4 text-text-muted group-hover/select:text-primary transition-all group-hover/select:rotate-180" strokeWidth={3} />
+        <div className="relative group">
+            <div className="flex items-center gap-3 bg-surface-solid border border-border rounded-lg px-4 py-2 shadow-sm hover:border-primary/40 cursor-pointer">
+                <div className="text-text-muted">{icon}</div>
+                <span className="text-xs font-medium text-text-primary min-w-[100px] truncate">{activeLabel}</span>
+                <ChevronDown className="w-3.5 h-3.5 text-text-muted" />
             </div>
             
             <select
@@ -463,7 +458,7 @@ function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNod
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
             >
                 {options.map(o => (
-                    <option key={o.id} value={o.id} className="text-text-primary">{o.name}</option>
+                    <option key={o.id} value={o.id}>{o.name}</option>
                 ))}
             </select>
         </div>
@@ -473,16 +468,16 @@ function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNod
 function CustomTooltip({ active, payload, label, unit }: any) {
     if (active && payload && payload.length) {
         return (
-            <Card className="p-6 shadow-2xl shadow-primary/10 animate-in zoom-in-95 duration-300 min-w-[200px]">
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-4 border-b border-border pb-3 italic opacity-60 text-right">{label}</p>
-                <div className="flex items-center gap-4">
-                    <div className="w-3 h-3 rounded-full bg-primary shadow-lg shadow-primary/40" />
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-text-primary tracking-tighter italic">
+            <Card className="p-4 shadow-lg border border-border min-w-[150px]">
+                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2 border-b border-border pb-2">{label}</p>
+                <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                    <div className="flex items-baseline gap-1.5">
+                        <span className="text-2xl font-bold text-text-primary">
                             {payload[0].value}
                         </span>
-                        <span className="text-[10px] font-bold text-primary uppercase tracking-[0.2em] font-mono">
-                            {unit === 'min' ? 'Minutes' : 'Percent'}
+                        <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
+                            {unit === 'min' ? 'Mins' : '%'}
                         </span>
                     </div>
                 </div>

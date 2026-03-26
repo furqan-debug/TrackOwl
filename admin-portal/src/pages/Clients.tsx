@@ -149,69 +149,69 @@ export function Clients() {
     return (
         <div className="space-y-10 max-w-full mx-auto animate-in fade-in duration-700">
             <PageHeader
-                title="Client Management"
-                description="Manage your strategic business partners and organizational representatives."
+                title="Clients"
+                description="Manage your client database and business relationships."
                 actions={
                     <Button
                         onClick={handleOpenCreate}
                         disabled={isViewer}
                         variant="primary"
-                        className="px-8 py-3.5 scale-105 shadow-xl shadow-primary/20 group"
+                        className="shadow-sm"
                     >
-                        <Plus className="w-4 h-4 mr-2.5 group-hover:rotate-90 transition-transform" strokeWidth={3} />
-                        Add New Client
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Client
                     </Button>
                 }
             />
 
             {/* KPI Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <StatsCard 
                     label="Total Clients" 
                     value={clients.length} 
-                    icon={<Building2 className="w-5 h-5 text-primary" strokeWidth={2.5} />} 
-                    description="Registered entities"
+                    icon={<Building2 className="w-5 h-5 text-text-muted" />} 
+                    description="Registered clients"
                 />
                 <StatsCard 
-                    label="Active Partners" 
+                    label="Active" 
                     value={clients.filter(c => c.status === 'Active').length} 
-                    icon={<Activity className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />} 
-                    description="Operational accounts"
+                    icon={<Activity className="w-5 h-5 text-text-muted" />} 
+                    description="Currently active"
                 />
                 <StatsCard 
-                    label="New Arrivals" 
+                    label="Recent" 
                     value={clients.filter(c => {
                         const created = new Date(c.created_at).getTime();
                         const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
                         return created > thirtyDaysAgo;
                     }).length} 
-                    icon={<Globe className="w-5 h-5 text-violet-600" strokeWidth={2.5} />} 
+                    icon={<Globe className="w-5 h-5 text-text-muted" />} 
                     description="Last 30 days"
                 />
             </div>
 
             <Card className="overflow-hidden p-0 border-border/60 shadow-xl">
                 {/* Search & Filters */}
-                <div className="p-8 border-b border-border bg-surface-subtle/30 flex flex-col md:flex-row gap-6 items-center justify-between">
+                <div className="p-6 border-b border-border bg-surface-subtle/30 flex flex-col md:flex-row gap-4 items-center justify-between">
                     <div className="relative group w-full max-w-md">
-                        <Search className="w-4 h-4 text-text-muted absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" strokeWidth={3} />
+                        <Search className="w-4 h-4 text-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
                         <input
                             type="text"
-                            placeholder="Search by name, company, or email..."
+                            placeholder="Search clients..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-13 pr-6 py-3.5 bg-surface-solid border border-border rounded-2xl text-[13px] font-bold text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono uppercase"
+                            className="w-full pl-11 pr-4 py-2 bg-surface-solid border border-border rounded-lg text-sm text-text-primary outline-none focus:border-primary transition-all"
                         />
                     </div>
                     
-                    <div className="flex items-center bg-surface-subtle border border-border rounded-2xl p-1 shadow-inner">
+                    <div className="flex items-center bg-surface-solid border border-border rounded-lg p-1 shadow-sm">
                         {['All', 'Active', 'Inactive'].map((s) => (
                             <button
                                 key={s}
                                 onClick={() => setStatusFilter(s)}
                                 className={clsx(
-                                    "px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300 font-mono",
-                                    statusFilter === s ? "bg-surface-solid text-primary shadow-sm border border-border" : "text-text-muted hover:text-text-primary"
+                                    "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
+                                    statusFilter === s ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
                                 {s}
@@ -224,29 +224,29 @@ export function Clients() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-surface-subtle/20">
-                                <th className="pl-12 pr-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border min-w-[320px]">Partner Details</th>
-                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border">Contact Channel</th>
-                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border">Current Status</th>
-                                <th className="pl-6 pr-12 py-8 text-right border-b border-border min-w-[150px]">Actions</th>
+                                <th className="pl-6 pr-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border min-w-[320px]">Client</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border">Email</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border">Status</th>
+                                <th className="pl-6 pr-6 py-4 text-right border-b border-border min-w-[150px]">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/40">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={4} className="py-32">
-                                        <LoadingState message="Retrieving client registry..." />
+                                    <td colSpan={4} className="py-20 text-center text-text-muted">
+                                        <LoadingState message="Loading clients..." />
                                     </td>
                                 </tr>
                             ) : filteredClients.length === 0 ? (
                                 <tr>
-                                    <td colSpan={4} className="py-32">
+                                    <td colSpan={4} className="py-20">
                                         <EmptyState 
                                             icon={<Building2 className="w-12 h-12 text-text-muted/20" />}
                                             title="No clients found" 
-                                            description="Your client registry is currently empty or matches no filters." 
+                                            description="Your client list is currently empty." 
                                             action={!isViewer && (
                                                 <Button onClick={handleOpenCreate} variant="secondary" size="sm">
-                                                    Initialize First Client
+                                                    Add First Client
                                                 </Button>
                                             )}
                                         />
@@ -254,67 +254,61 @@ export function Clients() {
                                 </tr>
                             ) : (
                                 filteredClients.map((client) => (
-                                    <tr key={client.id} className="hover:bg-primary/[0.01] transition-all group duration-500">
-                                        <td className="px-12 py-8">
-                                            <div className="flex items-center gap-6">
-                                                <div className="w-14 h-14 rounded-2xl bg-surface-solid border border-border flex items-center justify-center font-bold text-text-primary text-xl shadow-sm transition-all group-hover:scale-110 group-hover:rotate-3 group-hover:bg-primary group-hover:text-white group-hover:border-primary/20 font-mono italic">
+                                    <tr key={client.id} className="hover:bg-surface-subtle transition-all group">
+                                        <td className="px-6 py-4">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-lg bg-surface-subtle border border-border flex items-center justify-center font-bold text-text-primary text-sm">
                                                     {client.name.charAt(0)}
                                                 </div>
-                                                <div className="space-y-1">
-                                                    <div className="font-bold text-text-primary text-lg tracking-tighter group-hover:text-primary transition-colors duration-500 italic">{client.name}</div>
-                                                    <div className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-60 flex items-center gap-2">
+                                                <div className="flex flex-col">
+                                                    <span className="font-semibold text-text-primary text-sm">{client.name}</span>
+                                                    <span className="text-xs text-text-muted flex items-center gap-1.5">
                                                         <Building2 className="w-3 h-3" />
                                                         {client.company}
-                                                    </div>
+                                                    </span>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-8">
-                                            <div className="inline-flex items-center gap-3 px-4 py-2.5 bg-surface-subtle border border-border rounded-xl text-[11px] font-bold text-text-muted group-hover:text-text-primary transition-colors duration-500 font-mono uppercase tracking-tight">
-                                                <Mail className="w-3.5 h-3.5 opacity-40" />
+                                        <td className="px-6 py-4">
+                                            <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface-subtle border border-border rounded-lg text-xs text-text-muted">
+                                                <Mail className="w-3.5 h-3.5 opacity-60" />
                                                 {client.email}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-8">
+                                        <td className="px-6 py-4">
                                             <button 
                                                 onClick={() => toggleStatus(client)}
                                                 disabled={isViewer}
-                                                className="group/toggle"
                                             >
                                                 <StatusBadge 
                                                     variant={client.status === 'Active' ? 'success' : 'default'}
                                                     className={clsx(
-                                                        "px-5 py-2 transition-all font-mono italic",
-                                                        !isViewer && "cursor-pointer group-hover/toggle:scale-110 active:scale-95 shadow-sm"
+                                                        "px-3 py-0.5",
+                                                        !isViewer && "cursor-pointer active:scale-95"
                                                     )}
                                                 >
                                                     {client.status}
                                                 </StatusBadge>
                                             </button>
                                         </td>
-                                        <td className="pl-6 pr-12 py-8 text-right">
-                                            <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500">
+                                        <td className="px-6 py-4 text-right">
+                                            <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
                                                 <Button 
                                                     onClick={() => handleOpenEdit(client)}
-                                                    variant="secondary"
+                                                    variant="ghost"
                                                     size="sm"
-                                                    className="p-3 bg-surface-solid rounded-xl hover:bg-primary hover:text-white transition-all shadow-lg active:scale-90"
-                                                    title="Configure"
+                                                    className="p-1.5 text-text-muted"
                                                 >
-                                                    <ShieldCheck className="w-5 h-5 font-bold" strokeWidth={2.5} />
+                                                    <ShieldCheck className="w-4 h-4" />
                                                 </Button>
                                                 <Button 
                                                     onClick={() => { if (!isViewer) setDeletingClient(client); }}
                                                     disabled={isViewer}
-                                                    variant="danger"
+                                                    variant="ghost"
                                                     size="sm"
-                                                    className={clsx(
-                                                        "p-3 rounded-xl transition-all shadow-lg active:scale-90",
-                                                        isViewer ? "opacity-20 cursor-not-allowed" : "bg-surface-solid text-text-muted hover:bg-rose-600 hover:text-white"
-                                                    )}
-                                                    title="Remove"
+                                                    className="p-1.5 text-text-muted hover:text-rose-600"
                                                 >
-                                                    <Trash2 className="w-5 h-5" strokeWidth={2.5} />
+                                                    <Trash2 className="w-4 h-4" />
                                                 </Button>
                                             </div>
                                         </td>
@@ -325,16 +319,16 @@ export function Clients() {
                     </table>
                 </div>
 
-                <div className="p-10 bg-surface-subtle/30 border-t border-border flex flex-col md:flex-row items-center justify-between gap-6">
-                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-50 text-center md:text-left">
-                        Total {clients.length} strategic partners registered in the management ecosystem.
+                <div className="p-6 bg-surface-subtle/30 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
+                    <p className="text-xs text-text-muted text-center md:text-left">
+                        Total {clients.length} clients registered.
                     </p>
                     {clients.length > 5 && (
                         <div className="flex items-center gap-2">
-                            <Button variant="secondary" size="sm" className="px-5 py-2 text-[9px] font-mono">
+                            <Button variant="secondary" size="sm">
                                 Previous
                             </Button>
-                            <Button variant="secondary" size="sm" className="px-5 py-2 text-[9px] font-mono">
+                            <Button variant="secondary" size="sm">
                                 Next
                             </Button>
                         </div>
@@ -346,16 +340,16 @@ export function Clients() {
             <Modal
                 isOpen={showModal}
                 onClose={handleCloseModal}
-                title={editClient ? 'Update Client' : 'Add Client'}
-                subtitle={editClient ? 'Modify existing partner profile' : 'Initialize a new strategic alliance'}
+                title={editClient ? 'Edit Client' : 'Add Client'}
+                subtitle={editClient ? 'Update client details and information' : 'Create a new client record'}
             >
-                <form onSubmit={handleSubmit} className="space-y-8">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     <Input
-                        label="Full Name / Representative"
+                        label="Client Name"
                         required
                         value={formData.name}
                         onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="John Doe"
+                        placeholder="e.g., Jane Cooper"
                         leftIcon={<Building2 className="w-4 h-4" />}
                     />
                     <Input
@@ -364,34 +358,34 @@ export function Clients() {
                         required
                         value={formData.email}
                         onChange={e => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="contact@company.com"
+                        placeholder="e.g., jane@example.com"
                         leftIcon={<Mail className="w-4 h-4" />}
                     />
                     <Input
-                        label="Company / Organization"
+                        label="Company Name"
                         required
                         value={formData.company}
                         onChange={e => setFormData({ ...formData, company: e.target.value })}
-                        placeholder="Acme Corp"
+                        placeholder="e.g., Acme Inc"
                         leftIcon={<Globe className="w-4 h-4" />}
                     />
 
-                    <div className="pt-6 flex gap-4">
+                    <div className="pt-4 flex gap-3">
                         <Button
                             type="button"
                             onClick={handleCloseModal}
                             variant="secondary"
-                            className="flex-1 py-4 font-mono text-[11px]"
+                            className="flex-1"
                         >
-                            CANCEL
+                            Cancel
                         </Button>
                         <Button
                             type="submit"
                             disabled={saving || isViewer}
                             variant="primary"
-                            className="flex-[2] py-4 shadow-xl font-mono text-[11px]"
+                            className="flex-1"
                         >
-                            {saving ? 'SAVING...' : (editClient ? 'UPDATE PROFILE' : 'CREATE ACCOUNT')}
+                            {saving ? 'Saving...' : (editClient ? 'Save Changes' : 'Add Client')}
                         </Button>
                     </div>
                 </form>
@@ -402,34 +396,33 @@ export function Clients() {
                 <Modal
                     isOpen={!!deletingClient}
                     onClose={() => setDeletingClient(null)}
-                    title="Terminate Partnership"
-                    subtitle="Critical Action Warning"
-                    maxWidth="max-w-[480px]"
+                    title="Delete Client"
+                    subtitle="Are you sure you want to remove this client?"
+                    maxWidth="max-w-md"
                 >
-                    <div className="text-center space-y-8">
-                        <div className="w-24 h-24 bg-rose-500/10 rounded-[32px] flex items-center justify-center mx-auto shadow-inner border border-rose-500/10 rotate-3 group-hover:rotate-0 transition-transform">
-                            <Trash2 className="w-10 h-10 text-rose-600" strokeWidth={2.5} />
+                    <div className="text-center space-y-6">
+                        <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto border border-rose-100">
+                            <Trash2 className="w-8 h-8" />
                         </div>
-                        <div className="space-y-4">
-                            <p className="text-text-primary text-xl font-bold tracking-tight">Are you absolutely sure?</p>
-                            <p className="text-text-muted font-bold uppercase tracking-widest leading-relaxed text-[11px] font-mono opacity-80 px-4">
-                                This will permanently remove <span className="text-rose-600">"{deletingClient.name.toUpperCase()}"</span> from the registry. All associated records will be archived.
+                        <div className="space-y-2">
+                            <p className="text-sm text-text-secondary leading-relaxed">
+                                This will permanently remove <span className="font-bold text-text-primary">"{deletingClient.name}"</span>. This action cannot be undone.
                             </p>
                         </div>
-                        <div className="flex gap-4 pt-4">
+                        <div className="flex gap-3 pt-4">
                             <Button
                                 onClick={() => setDeletingClient(null)}
                                 variant="secondary"
-                                className="flex-1 py-4 font-mono text-[11px]"
+                                className="flex-1"
                             >
-                                ABORT
+                                Cancel
                             </Button>
                             <Button
                                 onClick={handleDelete}
                                 variant="danger"
-                                className="flex-[1.5] py-4 shadow-xl shadow-rose-900/10 font-mono text-[11px]"
+                                className="flex-1 shadow-sm shadow-rose-100"
                             >
-                                CONFIRM DELETE
+                                Delete Client
                             </Button>
                         </div>
                     </div>
@@ -441,18 +434,17 @@ export function Clients() {
 
 function StatsCard({ label, value, icon, description }: { label: string; value: number | string; icon: React.ReactNode; description: string }) {
     return (
-        <div className="bg-surface-solid p-10 rounded-[44px] border border-border hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl duration-700">
-            <div className="absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-16 translate-x-16 group-hover:bg-primary/[0.03] transition-colors duration-1000" />
-            <div className="flex items-center gap-6 mb-6">
-                <div className="w-12 h-12 rounded-[18px] bg-surface-subtle flex items-center justify-center border border-border shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
+        <div className="bg-surface-solid p-6 rounded-xl border border-border hover:shadow-md transition-all group relative overflow-hidden">
+            <div className="flex items-center gap-4 mb-4">
+                <div className="w-10 h-10 rounded-lg bg-surface-subtle flex items-center justify-center border border-border">
                     {icon}
                 </div>
                 <div>
-                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-0.5">{label}</p>
-                    <p className="text-[9px] font-bold text-text-muted/40 uppercase tracking-widest font-mono italic">{description}</p>
+                    <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">{label}</h3>
+                    <p className="text-[10px] text-text-muted/60">{description}</p>
                 </div>
             </div>
-            <h2 className="text-6xl font-bold text-text-primary tracking-tighter leading-none italic font-mono">{value}</h2>
+            <p className="text-3xl font-bold text-text-primary tracking-tight">{value}</p>
         </div>
     );
 }

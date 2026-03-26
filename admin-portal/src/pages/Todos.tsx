@@ -216,15 +216,15 @@ export function Todos() {
     return (
         <div className="space-y-10 animate-in fade-in duration-700">
             <PageHeader
-                title="Management To-dos"
-                description="Coordinate organizational tasks, track project milestones, and monitor team commitments."
+                title="Tasks"
+                description="Manage project tasks, track progress, and organize team priorities."
                 actions={
                     <div className="flex items-center gap-4">
-                        <div className="flex bg-surface-subtle border border-border p-1 rounded-2xl shadow-inner mr-2">
+                        <div className="flex bg-surface-subtle border border-border p-1 rounded-xl shadow-inner">
                             <button
                                 onClick={() => setViewMode('list')}
                                 className={clsx(
-                                    "p-2.5 rounded-xl transition-all",
+                                    "p-2 rounded-lg transition-all",
                                     viewMode === 'list' ? "bg-surface-solid text-primary shadow-sm border border-border" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
@@ -233,7 +233,7 @@ export function Todos() {
                             <button
                                 onClick={() => setViewMode('grid')}
                                 className={clsx(
-                                    "p-2.5 rounded-xl transition-all",
+                                    "p-2 rounded-lg transition-all",
                                     viewMode === 'grid' ? "bg-surface-solid text-primary shadow-sm border border-border" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
@@ -244,62 +244,62 @@ export function Todos() {
                             onClick={handleOpenCreate}
                             disabled={isViewer}
                             variant="primary"
-                            className="px-8 py-3.5 shadow-xl shadow-primary/20 scale-105"
+                            className="shadow-sm"
                         >
-                            <Plus className="w-4 h-4 mr-2" strokeWidth={3} />
-                            Deploy Task
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Task
                         </Button>
                     </div>
                 }
             />
 
             {/* KPI Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <KpiCard 
-                    label="Backlog & Active" 
+                    label="Pending Tasks" 
                     value={todos.filter(t => t.status !== 'Done').length.toString()} 
-                    icon={<Timer className="w-5 h-5 text-orange-500" strokeWidth={2.5} />} 
-                    sub="Open requirements"
+                    icon={<Timer className="w-5 h-5 text-text-muted" />} 
+                    sub="Assigned & backlog"
                 />
                 <KpiCard 
-                    label="Execution Volume" 
+                    label="Completed" 
                     value={todos.filter(t => t.status === 'Done').length.toString()} 
-                    icon={<CheckSquare className="w-5 h-5 text-emerald-500" strokeWidth={2.5} />} 
-                    sub="Completed milestones"
+                    icon={<CheckSquare className="w-5 h-5 text-text-muted" />} 
+                    sub="Successfully finished"
                 />
                 <KpiCard 
-                    label="Task Distribution" 
+                    label="Total Assigned" 
                     value={todos.filter(t => t.assignee_id).length.toString()} 
-                    icon={<ClipboardList className="w-5 h-5 text-indigo-500" strokeWidth={2.5} />} 
-                    sub="Assigned personnel"
+                    icon={<ClipboardList className="w-5 h-5 text-text-muted" />} 
+                    sub="Current workload"
                 />
             </div>
 
             <Card className="p-0 overflow-hidden border-border/60 shadow-xl">
                 {/* Search & Filters */}
-                <div className="p-8 border-b border-border bg-surface-subtle/30 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="p-6 border-b border-border bg-surface-subtle/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="relative group w-full max-w-md">
-                        <Search className="w-4 h-4 text-text-muted absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" strokeWidth={3} />
+                        <Search className="w-4 h-4 text-text-muted absolute left-4 top-1/2 -translate-y-1/2" />
                         <input
                             type="text"
-                            placeholder="Find a to-do, project, or identifier..."
+                            placeholder="Search tasks, projects..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-13 pr-6 py-3.5 bg-surface-solid border border-border rounded-2xl text-[13px] font-bold text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono uppercase"
+                            className="w-full pl-11 pr-4 py-2 bg-surface-solid border border-border rounded-lg text-sm text-text-primary outline-none focus:border-primary transition-all"
                         />
                     </div>
                     
-                    <div className="flex items-center bg-surface-solid border border-border rounded-2xl p-1 shadow-inner">
+                    <div className="flex items-center bg-surface-solid border border-border rounded-lg p-1 shadow-sm">
                         {['All', 'Todo', 'In Progress', 'Done'].map((s) => (
                             <button
                                 key={s}
                                 onClick={() => setStatusFilter(s)}
                                 className={clsx(
-                                    "px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300 font-mono",
-                                    statusFilter === s ? "bg-primary text-white shadow-lg" : "text-text-muted hover:text-text-primary"
+                                    "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
+                                    statusFilter === s ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
-                                {s === 'Done' ? 'Complete' : s}
+                                {s === 'Done' ? 'Completed' : s}
                             </button>
                         ))}
                     </div>
@@ -307,18 +307,18 @@ export function Todos() {
 
                 <div className="p-8">
                     {loading ? (
-                        <div className="py-32">
-                            <LoadingState message="Retrieving organizational backlog..." />
+                        <div className="py-20 text-center text-text-muted">
+                            <LoadingState message="Loading tasks..." />
                         </div>
                     ) : filteredTodos.length === 0 ? (
-                        <div className="py-32">
+                        <div className="py-20">
                             <EmptyState 
-                                icon={<CheckCircle2 className="w-16 h-16 text-text-muted/20" />}
-                                title={searchTerm ? "No results found" : "Backlog clear"}
-                                description={searchTerm ? "Try adjusting your search parameters." : "Your task list is currently empty. Initialize a new requirement to begin."}
+                                icon={<CheckCircle2 className="w-12 h-12 text-text-muted/20" />}
+                                title={searchTerm ? "No tasks found" : "All caught up"}
+                                description={searchTerm ? "Try adjusting your search filters." : "You have no pending tasks. Click 'Add Task' to get started."}
                                 action={!searchTerm && !isViewer && (
                                     <Button onClick={handleOpenCreate} variant="secondary">
-                                        Initialize First Task
+                                        Add First Task
                                     </Button>
                                 )}
                             />
@@ -357,42 +357,42 @@ export function Todos() {
             <Modal
                 isOpen={showModal}
                 onClose={handleCloseModal}
-                title={editTodo ? 'Configure Task' : 'Initialize Task'}
-                subtitle={editTodo ? 'Modify existing operational parameters' : 'Define a new organizational objective'}
+                title={editTodo ? 'Edit Task' : 'New Task'}
+                subtitle={editTodo ? 'Update task details and status' : 'Create a new task and assign it to a team member'}
             >
-                <form onSubmit={handleSubmit} className="space-y-8">
+                <form onSubmit={handleSubmit} className="space-y-6">
                     <Input
-                        label="Task Designation / Title"
+                        label="Task Title"
                         required
                         value={formData.title}
                         onChange={e => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="Milestone ALPHA Implementation"
+                        placeholder="e.g., Update project documentation"
                         leftIcon={<Tag className="w-4 h-4" />}
                     />
                     
-                    <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] px-1">
-                            Objective Description
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-semibold text-text-primary px-1">
+                            Description
                         </label>
                         <textarea
                             rows={3}
                             value={formData.description}
                             onChange={e => setFormData({ ...formData, description: e.target.value })}
-                            placeholder="Detailed technical specifications and requirements..."
-                            className="w-full px-6 py-4 bg-surface-subtle border border-border rounded-2xl text-[13px] font-bold text-text-primary placeholder:text-text-muted/30 outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono italic resize-none"
+                            placeholder="Add more details about this task..."
+                            className="w-full px-4 py-3 bg-surface-solid border border-border rounded-xl text-sm text-text-primary placeholder:text-text-muted/50 outline-none focus:border-primary transition-all resize-none"
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] px-1">
-                                Project Assignment
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-text-primary px-1">
+                                Project
                             </label>
                             <select
                                 required
                                 value={formData.project_id}
                                 onChange={e => setFormData({ ...formData, project_id: e.target.value })}
-                                className="w-full px-6 py-3.5 bg-surface-solid border border-border rounded-2xl text-[13px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono uppercase"
+                                className="w-full px-4 py-2.5 bg-surface-solid border border-border rounded-xl text-sm text-text-primary outline-none focus:border-primary transition-all"
                             >
                                 <option value="">Select Project</option>
                                 {projects.map(p => (
@@ -400,14 +400,14 @@ export function Todos() {
                                 ))}
                             </select>
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] px-1">
-                                Operational Lead
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-text-primary px-1">
+                                Assignee
                             </label>
                             <select
                                 value={formData.assignee_id}
                                 onChange={e => setFormData({ ...formData, assignee_id: e.target.value })}
-                                className="w-full px-6 py-3.5 bg-surface-solid border border-border rounded-2xl text-[13px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono uppercase"
+                                className="w-full px-4 py-2.5 bg-surface-solid border border-border rounded-xl text-sm text-text-primary outline-none focus:border-primary transition-all"
                             >
                                 <option value="">Unassigned</option>
                                 {members.map(m => (
@@ -417,52 +417,52 @@ export function Todos() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] px-1">
-                                Target Date
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-semibold text-text-primary px-1">
+                                Due Date
                             </label>
                             <input
                                 type="date"
                                 value={formData.due_date}
                                 onChange={e => setFormData({ ...formData, due_date: e.target.value })}
-                                className="w-full px-6 py-3.5 bg-surface-solid border border-border rounded-2xl text-[13px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono"
+                                className="w-full px-4 py-2 bg-surface-solid border border-border rounded-xl text-sm text-text-primary outline-none focus:border-primary transition-all"
                             />
                         </div>
                         {editTodo && (
-                            <div className="space-y-2">
-                                <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] px-1">
-                                    Execution Status
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-text-primary px-1">
+                                    Status
                                 </label>
                                 <select
                                     value={formData.status}
                                     onChange={e => setFormData({ ...formData, status: e.target.value as any })}
-                                    className="w-full px-6 py-3.5 bg-surface-solid border border-border rounded-2xl text-[13px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono uppercase"
+                                    className="w-full px-4 py-2.5 bg-surface-solid border border-border rounded-xl text-sm text-text-primary outline-none focus:border-primary transition-all"
                                 >
                                     <option value="Todo">Todo</option>
                                     <option value="In Progress">In Progress</option>
-                                    <option value="Done">Complete</option>
+                                    <option value="Done">Completed</option>
                                 </select>
                             </div>
                         )}
                     </div>
 
-                    <div className="pt-6 flex gap-4">
+                    <div className="pt-4 flex gap-3">
                         <Button
                             type="button"
                             onClick={handleCloseModal}
                             variant="secondary"
-                            className="flex-1 py-4 font-mono text-[11px]"
+                            className="flex-1"
                         >
-                            CANCEL
+                            Cancel
                         </Button>
                         <Button
                             type="submit"
                             disabled={saving || !formData.project_id || isViewer}
                             variant="primary"
-                            className="flex-[2] py-4 shadow-xl font-mono text-[11px]"
+                            className="flex-1"
                         >
-                            {saving ? 'COMMITTING...' : (editTodo ? 'UPDATE OBJECTIVE' : 'INITIALIZE TASK')}
+                            {saving ? 'Saving...' : (editTodo ? 'Save Changes' : 'Create Task')}
                         </Button>
                     </div>
                 </form>
@@ -473,34 +473,33 @@ export function Todos() {
                 <Modal
                     isOpen={!!deletingTodo}
                     onClose={() => setDeletingTodo(null)}
-                    title="Dissolve Task"
-                    subtitle="Critical Action Warning"
-                    maxWidth="max-w-[480px]"
+                    title="Delete Task"
+                    subtitle="Are you sure you want to remove this task?"
+                    maxWidth="max-w-md"
                 >
-                    <div className="text-center space-y-8">
-                        <div className="w-24 h-24 bg-rose-500/10 rounded-[32px] flex items-center justify-center mx-auto shadow-inner border border-rose-500/10 rotate-3 group-hover:rotate-0 transition-transform">
-                            <Trash2 className="w-10 h-10 text-rose-600" strokeWidth={2.5} />
+                    <div className="text-center space-y-6">
+                        <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto border border-rose-100">
+                            <Trash2 className="w-8 h-8" />
                         </div>
-                        <div className="space-y-4">
-                            <p className="text-text-primary text-xl font-bold tracking-tight">Are you absolutely sure?</p>
-                            <p className="text-text-muted font-bold uppercase tracking-widest leading-relaxed text-[11px] font-mono opacity-80 px-4">
-                                This will permanently dissolve task <span className="text-rose-600">"{deletingTodo.title.toUpperCase()}"</span>. Historical progress will be lost.
+                        <div className="space-y-2">
+                            <p className="text-sm text-text-secondary leading-relaxed">
+                                This will permanently remove <span className="font-bold text-text-primary">"{deletingTodo.title}"</span>. This action cannot be undone.
                             </p>
                         </div>
-                        <div className="flex gap-4 pt-4">
+                        <div className="flex gap-3 pt-4">
                             <Button
                                 onClick={() => setDeletingTodo(null)}
                                 variant="secondary"
-                                className="flex-1 py-4 font-mono text-[11px]"
+                                className="flex-1"
                             >
-                                ABORT
+                                Cancel
                             </Button>
                             <Button
                                 onClick={handleDelete}
                                 variant="danger"
-                                className="flex-[1.5] py-4 shadow-xl shadow-rose-900/10 font-mono text-[11px]"
+                                className="flex-1 shadow-sm shadow-rose-100"
                             >
-                                CONFIRM DISSOLUTION
+                                Delete Task
                             </Button>
                         </div>
                     </div>
@@ -512,31 +511,31 @@ export function Todos() {
 
 function TodoListItem({ todo, onToggle, onEdit, onDelete, isViewer }: { todo: Todo; onToggle: () => void; onEdit: () => void; onDelete: () => void; isViewer: boolean }) {
     return (
-        <div className="py-6 px-4 hover:bg-primary/[0.01] transition-all group flex items-start gap-8 duration-500">
+        <div className="py-4 px-4 hover:bg-surface-subtle transition-all group flex items-start gap-4 border-b border-border/40 last:border-0 rounded-xl">
             <button
                 onClick={onToggle}
                 disabled={isViewer}
                 className={clsx(
-                    "mt-1 shrink-0 transition-all duration-500 scale-125",
-                    todo.status === 'Done' ? "text-emerald-500" : "text-text-muted/30 hover:text-primary hover:scale-150 rotate-0 hover:rotate-12",
+                    "mt-1 shrink-0 transition-all",
+                    todo.status === 'Done' ? "text-emerald-500" : "text-text-muted/40 hover:text-primary",
                     isViewer && "cursor-not-allowed opacity-50"
                 )}
             >
-                {todo.status === 'Done' ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" strokeWidth={3} />}
+                {todo.status === 'Done' ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
             </button>
 
             <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-4 mb-2">
+                <div className="flex items-center gap-3 mb-1">
                     <h4 className={clsx(
-                        "text-lg font-bold tracking-tight transition-all duration-700",
-                        todo.status === 'Done' ? "text-text-muted/40 line-through decoration-emerald-500/40" : "text-text-primary group-hover:text-primary"
+                        "text-sm font-semibold tracking-tight transition-all",
+                        todo.status === 'Done' ? "text-text-muted/40 line-through" : "text-text-primary"
                     )}>
                         {todo.title}
                     </h4>
                     {todo.projects && (
                         <span
-                            className="px-3 py-1 rounded-lg text-[9px] font-bold uppercase tracking-widest font-mono shadow-sm"
-                            style={{ backgroundColor: `${todo.projects.color}15`, color: todo.projects.color, border: `1px solid ${todo.projects.color}20` }}
+                            className="px-2 py-0.5 rounded-md text-[10px] font-medium"
+                            style={{ backgroundColor: `${todo.projects.color}10`, color: todo.projects.color }}
                         >
                             {todo.projects.name}
                         </span>
@@ -544,57 +543,52 @@ function TodoListItem({ todo, onToggle, onEdit, onDelete, isViewer }: { todo: To
                 </div>
                 {todo.description && (
                     <p className={clsx(
-                        "text-[12px] font-bold italic line-clamp-1 mb-4 opacity-60 font-mono",
-                        todo.status === 'Done' ? "opacity-20" : "text-text-muted"
+                        "text-xs mb-3 line-clamp-1",
+                        todo.status === 'Done' ? "text-text-muted/30" : "text-text-muted"
                     )}>
                         {todo.description}
                     </p>
                 )}
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4">
                     {todo.members && (
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-wider font-mono">
-                            <User className="w-3.5 h-3.5 opacity-40" />
+                        <div className="flex items-center gap-1.5 text-[11px] font-medium text-text-muted">
+                            <User className="w-3 h-3 opacity-60" />
                             {todo.members.full_name}
                         </div>
                     )}
                     {todo.due_date && (
                         <div className={clsx(
-                            "flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest font-mono",
-                            new Date(todo.due_date) < new Date() && todo.status !== 'Done' ? "text-rose-500" : "text-orange-500 opacity-70"
+                            "flex items-center gap-1.5 text-[11px] font-medium",
+                            new Date(todo.due_date) < new Date() && todo.status !== 'Done' ? "text-rose-500" : "text-text-muted"
                         )}>
-                            <Calendar className="w-3.5 h-3.5" />
+                            <Calendar className="w-3 h-3 opacity-60" />
                             {new Date(todo.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         </div>
                     )}
                     <StatusBadge 
                         variant={todo.status === 'Done' ? 'success' : todo.status === 'In Progress' ? 'warning' : 'default'}
-                        className="px-3 py-0.5 text-[8px] font-mono italic"
+                        className="px-2 py-0 text-[10px]"
                     >
-                        {todo.status}
+                        {todo.status === 'Done' ? 'Completed' : todo.status}
                     </StatusBadge>
                 </div>
             </div>
 
-            <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500 translate-x-4 group-hover:translate-x-0">
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
                 <Button 
                     onClick={onEdit}
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
-                    className="p-3 bg-surface-solid border-border rounded-xl hover:bg-primary hover:text-white transition-all shadow-lg active:scale-90"
-                    title="Configure"
+                    className="p-1.5 text-text-muted"
                 >
                     <MoreHorizontal className="w-4 h-4" />
                 </Button>
                 <Button 
                     onClick={onDelete}
                     disabled={isViewer}
-                    variant="danger"
+                    variant="ghost"
                     size="sm"
-                    className={clsx(
-                        "p-3 rounded-xl transition-all shadow-lg active:scale-90",
-                        isViewer ? "opacity-10 cursor-not-allowed" : "bg-surface-solid text-text-muted hover:bg-rose-600 hover:text-white"
-                    )}
-                    title="Dissolve"
+                    className="p-1.5 text-text-muted hover:text-rose-600"
                 >
                     <Trash2 className="w-4 h-4" />
                 </Button>
@@ -605,85 +599,76 @@ function TodoListItem({ todo, onToggle, onEdit, onDelete, isViewer }: { todo: To
 
 function TodoGridItem({ todo, onToggle, onEdit, onDelete, isViewer }: { todo: Todo; onToggle: () => void; onEdit: () => void; onDelete: () => void; isViewer: boolean }) {
     return (
-        <div className="bg-surface-solid border border-border rounded-[32px] p-8 hover:border-primary/20 transition-all group relative overflow-hidden shadow-sm hover:shadow-2xl duration-700 flex flex-col h-full">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/[0.02] rounded-full translate-x-12 -translate-y-12 group-hover:scale-150 transition-transform duration-1000" />
-            
-            <div className="flex justify-between items-start mb-6 mb-auto">
+        <div className="bg-surface-solid border border-border rounded-xl p-6 hover:shadow-md transition-all group flex flex-col h-full">
+            <div className="flex justify-between items-start mb-4">
                 <span
-                    className="px-3 py-1.5 rounded-xl text-[9px] font-bold uppercase tracking-[0.2em] font-mono shadow-sm border border-transparent"
-                    style={{ backgroundColor: `${todo.projects?.color}15`, color: todo.projects?.color, border: `1px solid ${todo.projects?.color}20` }}
+                    className="px-2 py-0.5 rounded-md text-[10px] font-medium"
+                    style={{ backgroundColor: `${todo.projects?.color}10`, color: todo.projects?.color }}
                 >
                     {todo.projects?.name || 'General'}
                 </span>
-                <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-500">
-                    <button 
-                        onClick={onDelete}
-                        disabled={isViewer}
-                        className={clsx(
-                            "p-2 rounded-lg transition-all active:scale-90",
-                            isViewer ? "opacity-10 cursor-not-allowed" : "text-text-muted/40 hover:text-rose-600 hover:bg-rose-50"
-                        )}
-                        title="Delete"
-                    >
-                        <Trash2 className="w-4 h-4" strokeWidth={2.5} />
-                    </button>
+                <div className="flex items-center gap-2">
                     <button
                         onClick={onToggle}
                         disabled={isViewer}
                         className={clsx(
-                            "transition-all duration-500 hover:scale-125",
-                            todo.status === 'Done' ? "text-emerald-500" : "text-text-muted/20 hover:text-primary",
+                            "transition-all",
+                            todo.status === 'Done' ? "text-emerald-500" : "text-text-muted/30 hover:text-primary",
                             isViewer && "opacity-50"
                         )}
                     >
-                        {todo.status === 'Done' ? <CheckCircle2 className="w-6 h-6" /> : <Circle className="w-6 h-6" strokeWidth={3} />}
+                        {todo.status === 'Done' ? <CheckCircle2 className="w-5 h-5" /> : <Circle className="w-5 h-5" />}
                     </button>
+                    {!isViewer && (
+                        <button 
+                            onClick={onDelete}
+                            className="p-1 text-text-muted/40 hover:text-rose-600 transition-all"
+                            title="Delete"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
             </div>
 
-            <h4 className={clsx(
-                "text-xl font-bold mb-4 tracking-tight leading-7 transition-all duration-700 italic group-hover:text-primary",
-                todo.status === 'Done' && "text-text-muted/40 line-through decoration-emerald-500/20"
-            )}>
+            <button 
+                onClick={onEdit}
+                className={clsx(
+                    "text-lg font-bold mb-2 tracking-tight transition-all text-left",
+                    todo.status === 'Done' ? "text-text-muted/40 line-through" : "text-text-primary hover:text-primary"
+                )}
+            >
                 {todo.title}
-            </h4>
+            </button>
             
-            <p className={clsx(
-                "text-[12px] font-bold text-text-muted mb-8 line-clamp-3 font-mono opacity-60 leading-relaxed",
-                todo.status === 'Done' && "opacity-20"
-            )}>
-                {todo.description || 'System generated: task lacks extended documentation properties.'}
-            </p>
+            {todo.description && (
+                <p className={clsx(
+                    "text-xs text-text-muted mb-6 line-clamp-3 leading-relaxed",
+                    todo.status === 'Done' && "opacity-40"
+                )}>
+                    {todo.description}
+                </p>
+            )}
 
-            <div className="flex items-center justify-between pt-6 border-t border-border/40 mt-auto">
-                <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-surface-subtle border border-border flex items-center justify-center text-[10px] font-bold text-text-primary shadow-inner group-hover:bg-primary group-hover:text-white transition-all duration-500 font-mono italic">
+            <div className="flex items-center justify-between pt-4 border-t border-border/40 mt-auto">
+                <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded-full bg-surface-subtle border border-border flex items-center justify-center text-[10px] font-bold text-text-primary">
                         {todo.members?.full_name.charAt(0) || '?'}
                     </div>
-                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest font-mono opacity-50 group-hover:opacity-100 transition-all">
+                    <span className="text-[11px] font-medium text-text-muted">
                         {todo.members?.full_name.split(' ')[0] || 'Unassigned'}
                     </span>
                 </div>
                 {todo.due_date && (
                     <span className={clsx(
-                        "text-[10px] font-bold flex items-center gap-2 uppercase tracking-tighter font-mono italic",
-                        new Date(todo.due_date) < new Date() && todo.status !== 'Done' ? "text-rose-500 bg-rose-500/5 px-3 py-1.5 rounded-lg" : "text-orange-500 opacity-60"
+                        "text-[10px] font-medium flex items-center gap-1.5",
+                        new Date(todo.due_date) < new Date() && todo.status !== 'Done' ? "text-rose-500" : "text-text-muted"
                     )}>
-                        <Calendar className="w-3.5 h-3.5" strokeWidth={2.5} />
+                        <Calendar className="w-3.5 h-3.5 opacity-60" />
                         {new Date(todo.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                     </span>
                 )}
             </div>
-
-            {/* Hover configuration button */}
-            <Button 
-                onClick={onEdit}
-                variant="primary"
-                size="sm"
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-500 shadow-2xl scale-75 group-hover:scale-100 px-6 font-mono text-[9px] tracking-widest"
-            >
-                CONFIGURE OBJECTIVE
-            </Button>
         </div>
     );
 }
