@@ -11,6 +11,10 @@ use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 
 // ─── Shared App State ─────────────────────────────────────────────────────────
+pub struct AppState {
+    pub active_session_id: Option<String>,
+    /// User's Supabase JWT — stored as Arc so cache.rs sync loop can read it
+    pub auth_token: Arc<Mutex<Option<String>>>,
     pub supabase_url: String,
     pub supabase_anon_key: String,
     pub user_id: Option<String>,
