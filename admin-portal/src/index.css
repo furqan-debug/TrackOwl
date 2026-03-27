@@ -123,7 +123,7 @@ h1, h2, h3, h4, .font-head {
   font-weight: 700;
   letter-spacing: -0.03em;
   color: var(--color-text-primary);
-  line-height: 1.1;
+  line-height: 1.25;
 }
 
 .font-sans {

@@ -11,6 +11,7 @@ import {
     Button, 
     Card, 
     PageLayout,
+    Modal,
     StatusBadge, 
     EmptyState, 
     LoadingState 
@@ -581,60 +582,13 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
     const rolesAvailable = currentUserRole === 'Admin' ? ['User', 'Viewer', 'Manager', 'Admin'] : ['User', 'Viewer', 'Manager'];
     
     return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-[100] p-6 animate-in fade-in duration-300">
-            <Card className="w-full max-w-xl shadow-2xl overflow-hidden border border-border animate-in zoom-in-95 duration-300" noPadding>
-                <div className="px-10 py-8 border-b border-border bg-border/5 flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-1">Invite Member</h2>
-                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Send an invitation to join the team.</p>
-                    </div>
-                    <button onClick={onClose} className="p-3 hover:bg-border/10 rounded-2xl transition-all shadow-sm">
-                        <X className="w-6 h-6 text-text-muted hover:text-text-primary" strokeWidth={2.5} />
-                    </button>
-                </div>
-
-                <div className="p-10 space-y-8">
-                    <FormField 
-                        label="Email Address" 
-                        value={form.addEmail} 
-                        onChange={form.setAddEmail} 
-                        type="email" 
-                        placeholder="email@company.com" 
-                    />
-
-                    <div className="space-y-3">
-                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Role</label>
-                        <div className="relative group">
-                            <select 
-                                value={form.addRole} 
-                                onChange={e => form.setAddRole(e.target.value)}
-                                className="w-full px-6 py-4 bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer"
-                            >
-                                {rolesAvailable.map(r => <option key={r} value={r} className="bg-surface-solid text-text-primary">{r.toUpperCase()}</option>)}
-                            </select>
-                            <ChevronDown className="w-5 h-5 text-primary absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none group-hover:scale-110 transition-transform" strokeWidth={3} />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                        <FormField label="Pay Rate ($/hr)" value={form.addPayRate} onChange={form.setAddPayRate} type="number" placeholder="0.00" />
-                        <FormField label="Bill Rate ($/hr)" value={form.addBillRate} onChange={form.setAddBillRate} type="number" placeholder="0.00" />
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                        <FormField label="Weekly Limit (Hrs)" value={form.addWeekly} onChange={form.setAddWeekly} type="number" placeholder="40" />
-                        <FormField label="Daily Limit (Hrs)" value={form.addDaily} onChange={form.setAddDaily} type="number" placeholder="8" />
-                    </div>
-
-                    {form.addError && (
-                        <div className="bg-rose-500/5 border border-rose-500/20 text-rose-600 text-[10px] font-bold uppercase tracking-[0.1em] p-5 rounded-2xl leading-relaxed font-mono flex items-start gap-4 animate-in slide-in-from-top-2">
-                             <AlertCircle className="w-5 h-5 shrink-0" />
-                             {form.addError}
-                        </div>
-                    )}
-                </div>
-
-                <div className="px-10 py-8 bg-border/5 border-t border-border flex justify-end gap-4">
+        <Modal
+            isOpen={true}
+            onClose={onClose}
+            title="Invite Member"
+            subtitle="Send an invitation to join the team."
+            footer={
+                <>
                     <Button variant="secondary" onClick={onClose} className="px-8">
                         Discard
                     </Button>
@@ -648,9 +602,50 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
                     >
                         Send Invite
                     </Button>
+                </>
+            }
+        >
+            <div className="space-y-8">
+                <FormField 
+                    label="Email Address" 
+                    value={form.addEmail} 
+                    onChange={form.setAddEmail} 
+                    type="email" 
+                    placeholder="email@company.com" 
+                />
+
+                <div className="space-y-3">
+                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Role</label>
+                    <div className="relative group">
+                        <select 
+                            value={form.addRole} 
+                            onChange={e => form.setAddRole(e.target.value)}
+                            className="w-full px-6 py-4 bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer"
+                        >
+                            {rolesAvailable.map(r => <option key={r} value={r} className="bg-surface-solid text-text-primary">{r.toUpperCase()}</option>)}
+                        </select>
+                        <ChevronDown className="w-5 h-5 text-primary absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none group-hover:scale-110 transition-transform" strokeWidth={3} />
+                    </div>
                 </div>
-            </Card>
-        </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                    <FormField label="Pay Rate ($/hr)" value={form.addPayRate} onChange={form.setAddPayRate} type="number" placeholder="0.00" />
+                    <FormField label="Bill Rate ($/hr)" value={form.addBillRate} onChange={form.setAddBillRate} type="number" placeholder="0.00" />
+                </div>
+
+                <div className="grid grid-cols-2 gap-6">
+                    <FormField label="Weekly Limit (Hrs)" value={form.addWeekly} onChange={form.setAddWeekly} type="number" placeholder="40" />
+                    <FormField label="Daily Limit (Hrs)" value={form.addDaily} onChange={form.setAddDaily} type="number" placeholder="8" />
+                </div>
+
+                {form.addError && (
+                    <div className="bg-rose-500/5 border border-rose-500/20 text-rose-600 text-[10px] font-bold uppercase tracking-[0.1em] p-5 rounded-2xl leading-relaxed font-mono flex items-start gap-4 animate-in slide-in-from-top-2">
+                         <AlertCircle className="w-5 h-5 shrink-0" />
+                         {form.addError}
+                    </div>
+                )}
+            </div>
+        </Modal>
     );
 }
 
