@@ -72,13 +72,17 @@ export function Onboarding() {
 
             if (orgError) throw orgError;
 
-            // 2. Update Member Record (USE ID instead of Email for absolute precision)
+            // 2. Update Member Record (USE ID instead of Email + Sync UUID)
             if (profile?.id && orgData) {
+                const { data: { user } } = await supabase.auth.getUser();
+                const curr_uid = user?.id;
+
                 const { error: memberError } = await supabase
                     .from('members')
                     .update({
                         status: 'Active',
-                        organization_id: orgData.id
+                        organization_id: orgData.id,
+                        auth_user_id: curr_uid // Crucial: reconcile identity
                     })
                     .eq('id', profile.id);
 
