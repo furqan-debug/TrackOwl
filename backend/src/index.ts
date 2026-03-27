@@ -151,6 +151,22 @@ async function requireAuth(req: express.Request, res: express.Response, next: ex
     }
 }
 
+/** Helper: Get organization_id and user_id for a session */
+async function getSessionContext(sessionId: string) {
+    const db = getDb();
+    const { data: session, error } = await db
+        .from('sessions')
+        .select('organization_id, user_id')
+        .eq('id', sessionId)
+        .single();
+    
+    if (error || !session) return null;
+    return { 
+        organizationId: session.organization_id, 
+        userId: session.user_id 
+    };
+}
+
 /** Helper: Fetch per-project stats for a member */
 async function getMemberProjectStats(memberId: string, projectIds: string[]) {
     if (projectIds.length === 0) return {};
@@ -941,12 +957,21 @@ app.post('/api/screenshot', async (req, res) => {
             return res.status(400).json({ error: 'session_id and base64 are required' });
         }
 
+        const context = await getSessionContext(session_id);
+        if (!context) {
+            console.warn(`⚠️ Could not find session context for ${session_id}`);
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        const { organizationId, userId } = context;
         const db = getDb();
 
         // Strip data URL prefix if present (e.g. "data:image/png;base64,...")
         const raw = base64.replace(/^data:image\/\w+;base64,/, '');
         const buffer = Buffer.from(raw, 'base64');
-        const filename = `${session_id}/${Date.now()}.png`;
+        
+        // New hierarchical path: org_id/user_id/screenshots/session_id/timestamp.png
+        const filename = `${organizationId}/${userId}/screenshots/${session_id}/${Date.now()}.png`;
 
         // Upload to Supabase Storage bucket named 'screenshots'
         const { error: uploadError } = await db.storage
@@ -963,9 +988,11 @@ app.post('/api/screenshot', async (req, res) => {
             .from('screenshots')
             .getPublicUrl(filename);
 
-        // Save metadata row to screenshots table
+        // Save metadata row to screenshots table with full scoping
         const { error: dbError } = await db.from('screenshots').insert([{
             session_id,
+            organization_id: organizationId,
+            user_id: userId,
             recorded_at: timestamp || new Date().toISOString(),
             file_url: urlData.publicUrl,
         }]);
@@ -997,10 +1024,21 @@ app.post('/api/heartbeats', async (req, res) => {
         const activitySamples = heartbeats.filter(h => h.session_id && h.timestamp && !h.type);
         const screenshotSamples = heartbeats.filter(h => h.type === 'screenshot');
 
+        // Look up session context once for the whole batch (assuming same session per batch)
+        const context = await getSessionContext(heartbeats[0].session_id);
+        if (!context) {
+            console.warn(`⚠️ Could not find session context for heartbeat batch`);
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        const { organizationId, userId } = context;
+
         // ── Insert activity samples ──
         if (activitySamples.length > 0) {
             const rows = activitySamples.map(h => ({
                 session_id: h.session_id,
+                organization_id: organizationId,
+                user_id: userId,
                 recorded_at: h.timestamp,
                 mouse_clicks: h.mouse_count ?? 0,
                 key_presses: h.keyboard_count ?? 0,
@@ -1028,7 +1066,9 @@ app.post('/api/heartbeats', async (req, res) => {
             try {
                 const base64Data = snap.file_url.replace(/^data:image\/\w+;base64,/, '');
                 const buffer = Buffer.from(base64Data, 'base64');
-                const filename = `${snap.session_id}/${Date.now()}.png`;
+                
+                // New hierarchical path: org_id/user_id/screenshots/session_id/timestamp.png
+                const filename = `${organizationId}/${userId}/screenshots/${snap.session_id}/${Date.now()}.png`;
 
                 const { error: uploadError } = await getDb().storage
                     .from('screenshots')
@@ -1043,9 +1083,11 @@ app.post('/api/heartbeats', async (req, res) => {
                     .from('screenshots')
                     .getPublicUrl(filename);
 
-                // Save screenshot metadata to DB
+                // Save screenshot metadata to DB with full scoping
                 const { error: dbError } = await getDb().from('screenshots').insert([{
                     session_id: snap.session_id,
+                    organization_id: organizationId,
+                    user_id: userId,
                     recorded_at: snap.timestamp || new Date().toISOString(),
                     file_url: urlData.publicUrl,
                 }]);
@@ -1088,7 +1130,15 @@ app.post('/api/screenshots/presign', async (req, res) => {
             return res.status(400).json({ error: 'session_id and filename are required' });
         }
 
-        const filePath = `${session_id}/${filename}`;
+        const context = await getSessionContext(session_id);
+        if (!context) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        const { organizationId, userId } = context;
+        // New hierarchical path: org_id/user_id/screenshots/session_id/filename
+        const filePath = `${organizationId}/${userId}/screenshots/${session_id}/${filename}`;
+        
         const { data, error } = await getDb().storage
             .from('screenshots')
             .createSignedUploadUrl(filePath);
