@@ -33,6 +33,8 @@ import { MemberTimeline } from './pages/MemberTimeline';
 import { Teams } from './pages/Teams';
 import { Calendar } from './pages/Calendar';
 import { PlaceholderPage } from './pages/PlaceholderPage';
+import { ProjectFormPage } from './pages/ProjectFormPage';
+import { MemberFormPage } from './pages/MemberFormPage';
 
 import { FavoritesProvider } from './context/FavoritesContext';
 import { AuthProvider } from './context/AuthContext';
@@ -104,7 +106,10 @@ function App() {
                     <Route path="/timesheets" element={<Timesheets />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/people" element={<People />} />
+                    <Route path="/people/:id/edit" element={<MemberFormPage />} />
                     <Route path="/projects" element={<Projects />} />
+                    <Route path="/projects/new" element={<ProjectFormPage />} />
+                    <Route path="/projects/:id/edit" element={<ProjectFormPage />} />
                     <Route path="/schedules" element={<Schedules />} />
                     <Route path="/url-tracking" element={<UrlTracking />} />
                     <Route path="/financials" element={<PlaceholderPage title="Financials" />} />
