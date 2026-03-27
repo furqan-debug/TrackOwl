@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => subscription.unsubscribe();
     }, []);
 
-    async function fetchProfile(email: string) {
+    async function fetchProfile(email: string, retries = 3) {
         try {
             // Use case-insensitive match just in case
             // Use maybeSingle to avoid errors if the member record doesn't exist yet
@@ -65,24 +65,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (error) {
                 console.warn('Profile fetch error for:', email, error.message);
                 setError(error.message);
+                setLoading(false);
                 return; 
             }
             
             if (!data) {
+                if (retries > 0) {
+                    console.log(`No member profile record found for ${email}, retrying in 1s... (${retries} left)`);
+                    setTimeout(() => fetchProfile(email, retries - 1), 1000);
+                    return;
+                }
                 console.log('No member profile record found for:', email);
                 setProfile(null);
-                setError(null); // Clear any previous error
-                // We don't necessarily treat this as a blocking error in the context, 
-                // components can decide how to handle a null profile.
+                setError(null); 
             } else {
                 setProfile(data);
                 setError(null);
+                setLoading(false);
             }
         } catch (err: any) {
             console.error('Error fetching profile:', err);
             setError(err.message || 'Unknown error fetching profile');
             setProfile(null);
-        } finally {
             setLoading(false);
         }
     }
