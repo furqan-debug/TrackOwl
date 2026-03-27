@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 
 export interface ModalProps {
@@ -21,14 +22,31 @@ export function Modal({
     footer,
     maxWidth = 'max-w-lg',
 }: ModalProps) {
+    useEffect(() => {
+        if (isOpen) {
+            const originalStyle = window.getComputedStyle(document.body).overflow;
+            document.body.style.overflow = 'hidden';
+            return () => {
+                document.body.style.overflow = originalStyle;
+            };
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-text-primary/20 backdrop-blur-sm animate-in fade-in duration-300">
+    return createPortal(
+        <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300"
+            onClick={(e) => {
+                if (e.target === e.currentTarget) onClose();
+            }}
+        >
             <div className={clsx(
                 "bg-white rounded-[32px] w-full shadow-2xl flex flex-col border border-border overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500",
                 maxWidth
-            )}>
+            )}
+            onClick={(e) => e.stopPropagation()}
+            >
                 {/* Modal Header */}
                 <div className="px-8 py-6 border-b border-border bg-surface-subtle">
                     <div className="flex items-center justify-between">
@@ -63,6 +81,7 @@ export function Modal({
                     </div>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
