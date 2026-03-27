@@ -3,19 +3,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
-    Building2,
     CreditCard,
     CheckCircle2,
     ArrowRight,
     Rocket,
     Check,
-    Lock,
     ShieldCheck,
-    Zap,
-    ChevronRight,
-    Layout,
     Users,
-    Activity
+    Activity,
+    ChevronRight,
+    Briefcase
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -40,6 +37,7 @@ export function Onboarding() {
         'Customer Support',
         'E-commerce',
         'Real Estate',
+        'Fintech',
         'Other'
     ];
 
@@ -53,7 +51,6 @@ export function Onboarding() {
         setLoading(true);
 
         try {
-            // Simulate a brief delay for a better UX
             await new Promise(resolve => setTimeout(resolve, 1500));
 
             const { data: orgData, error: orgError } = await supabase
@@ -83,120 +80,146 @@ export function Onboarding() {
 
             setStep(3);
         } catch (err) {
-            console.error('Onboarding update error:', err);
-            alert('Failed to complete setup. Please try again.');
+            console.error('Onboarding error:', err);
+            alert('Setup failed. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
     const steps = [
-        { id: 1, title: 'Company', icon: Building2, desc: 'Basic info' },
-        { id: 2, title: 'Billing', icon: CreditCard, desc: 'Plan setup' },
-        { id: 3, title: 'Finish', icon: Rocket, desc: 'Get started' }
+        { id: 1, label: 'Company' },
+        { id: 2, label: 'Billing' },
+        { id: 3, label: 'Finalize' }
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 md:p-8">
-            <Card className="w-full max-w-5xl overflow-hidden border-slate-200 shadow-2xl flex flex-col md:flex-row min-h-[600px] rounded-3xl p-0 bg-white">
+        <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center">
+            
+            {/* Minimal Header */}
+            <div className="w-full max-w-[1200px] px-8 pt-8 flex items-center justify-between">
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+                    <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
+                         <Activity className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-lg font-bold text-slate-900 tracking-tight">Trackora</span>
+                </div>
+                <div className="text-xs font-semibold text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-200">
+                    Step {step} of 3
+                </div>
+            </div>
+
+            <div className="flex-1 w-full max-w-[1210px] grid lg:grid-cols-2 gap-12 items-center px-8 pb-12">
                 
-                {/* Left Sidebar: Progress */}
-                <div className="md:w-[320px] bg-slate-900 p-10 flex flex-col text-white">
-                    <div className="flex items-center gap-3 mb-16">
-                        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
-                             <Activity className="w-6 h-6 text-white" />
-                        </div>
-                        <span className="text-xl font-bold tracking-tight">Trackora</span>
+                {/* Left Side: Context/Info (Desktop only or stack) */}
+                <div className="hidden lg:flex flex-col space-y-8 pr-12">
+                    <div className="space-y-4">
+                        <h1 className="text-5xl font-extrabold text-slate-900 leading-[1.1] tracking-tight">
+                            Build your workspace <br/>in minutes.
+                        </h1>
+                        <p className="text-lg text-slate-500 leading-relaxed max-w-[440px]">
+                            Join 2,000+ teams using Trackora to streamline their operations and boost performance.
+                        </p>
                     </div>
 
-                    <div className="space-y-10 flex-1">
-                        {steps.map((s) => (
-                            <div key={s.id} className="flex items-start gap-5 relative">
-                                {s.id < 3 && (
-                                    <div className={clsx(
-                                        "absolute left-5 top-10 w-[2px] h-10 transition-all duration-500",
-                                        step > s.id ? "bg-blue-500" : "bg-slate-800"
-                                    )} />
-                                )}
-                                <div className={clsx(
-                                    "w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-500 shrink-0",
-                                    step > s.id ? "bg-blue-500 border-blue-500 text-white" : 
-                                    step === s.id ? "bg-slate-900 border-blue-500 text-blue-500" : "bg-slate-900 border-slate-800 text-slate-600"
-                                )}>
-                                    {step > s.id ? <Check className="w-5 h-5" strokeWidth={3} /> : <s.icon className="w-5 h-5" />}
+                    <div className="space-y-6">
+                        {[
+                            { icon: Check, text: "Unlimited projects & clients", color: "blue" },
+                            { icon: Check, text: "Real-time activity monitoring", color: "blue" },
+                            { icon: Check, text: "Instant report generation", color: "blue" }
+                        ].map((feat, i) => (
+                            <div key={i} className="flex items-center gap-4 group">
+                                <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                                    <feat.icon className="w-3.5 h-3.5" strokeWidth={3} />
                                 </div>
-                                <div className="pt-0.5">
-                                    <p className={clsx("font-semibold leading-none mb-1 transition-colors", step >= s.id ? "text-white" : "text-slate-600")}>
-                                        {s.title}
-                                    </p>
-                                    <p className={clsx("text-xs transition-colors", step >= s.id ? "text-slate-400" : "text-slate-700")}>{s.desc}</p>
-                                </div>
+                                <span className="text-sm font-semibold text-slate-700">{feat.text}</span>
                             </div>
                         ))}
                     </div>
 
-                    <div className="mt-8 pt-8 border-t border-slate-800">
-                        <div className="p-5 rounded-2xl bg-slate-800/50 border border-slate-800">
-                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-2">Selected Plan</p>
-                            <div className="flex items-center gap-3">
-                                <Zap className="w-4 h-4 text-blue-400" />
-                                <p className="text-lg font-bold">{selectedPlan}</p>
+                    <div className="pt-8 mt-8 border-t border-slate-200">
+                        <div className="flex items-center gap-4 p-4 rounded-3xl bg-white border border-slate-200 max-w-[340px] shadow-sm">
+                            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
+                                <Rocket className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest leading-none mb-1">Trial Plan</p>
+                                <p className="text-sm font-bold text-slate-900">{selectedPlan} Plan (14 Days)</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Area: Content */}
-                <div className="flex-1 p-8 md:p-16 lg:p-24 overflow-y-auto bg-white relative">
-                    {step === 1 && (
-                        <div className="max-w-md mx-auto animate-in fade-in slide-in-from-right-8 duration-500">
-                            <h2 className="text-3xl font-bold text-slate-900 mb-2">Setup Your Workspace</h2>
-                            <p className="text-slate-500 mb-10">Tell us a bit about your organization to customize your experience.</p>
+                {/* Right Side: The Form Card */}
+                <div className="w-full max-w-[520px] mx-auto">
+                    <Card className="p-8 md:p-12 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] bg-white border-slate-200 rounded-[40px] relative overflow-hidden">
+                        
+                        {/* Internal Navigation Bar */}
+                        <div className="flex items-center gap-4 mb-10 overflow-x-auto pb-1 no-scrollbar">
+                            {steps.map((s) => (
+                                <div key={s.id} className="flex items-center gap-2 group transition-all shrink-0">
+                                    <div className={clsx(
+                                        "w-2 h-2 rounded-full transition-all duration-300",
+                                        step === s.id ? "bg-blue-600 w-6" : step > s.id ? "bg-slate-900" : "bg-slate-200"
+                                    )} />
+                                    <span className={clsx(
+                                        "text-[10px] font-extrabold uppercase tracking-widest",
+                                        step === s.id ? "text-blue-600" : step > s.id ? "text-slate-900" : "text-slate-300"
+                                    )}>
+                                        {s.label}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
 
-                            <form onSubmit={handleOrgSubmit} className="space-y-8">
-                                <Input
-                                    label="Organization Name"
-                                    required
-                                    value={orgName}
-                                    onChange={e => setOrgName(e.target.value)}
-                                    placeholder="e.g. Acme Corp"
-                                    leftIcon={<Building2 className="w-5 h-5 text-slate-400" />}
-                                />
+                        {step === 1 && (
+                            <form onSubmit={handleOrgSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="space-y-2">
+                                    <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none">Your Organization</h2>
+                                    <p className="text-slate-500 text-sm">Tell us about your company to tailor your dashboard.</p>
+                                </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 ml-1">Industry</label>
-                                        <div className="relative group">
-                                            <select
-                                                required
-                                                value={industry}
-                                                onChange={e => setIndustry(e.target.value)}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none pr-10 hover:bg-slate-100"
-                                            >
-                                                <option value="">Select industry</option>
-                                                {industries.map(ind => <option key={ind} value={ind}>{ind}</option>)}
-                                            </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                                <Layout className="w-4 h-4" />
+                                <div className="space-y-6">
+                                    <Input
+                                        label="Name"
+                                        required
+                                        value={orgName}
+                                        onChange={e => setOrgName(e.target.value)}
+                                        placeholder="e.g. Acme Corp"
+                                        className="h-14 rounded-2xl text-base px-5 bg-slate-50/50"
+                                    />
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Industry</label>
+                                            <div className="relative">
+                                                <select
+                                                    required
+                                                    value={industry}
+                                                    onChange={e => setIndustry(e.target.value)}
+                                                    className="w-full bg-slate-50/50 border border-slate-200 h-14 rounded-2xl px-5 text-slate-900 text-sm appearance-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all outline-none"
+                                                >
+                                                    <option value="">Choose...</option>
+                                                    {industries.map(i => <option key={i} value={i}>{i}</option>)}
+                                                </select>
+                                                <Briefcase className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
                                             </div>
                                         </div>
-                                    </div>
-                                    
-                                    <div className="space-y-2">
-                                        <label className="text-sm font-medium text-slate-700 ml-1">Team Size</label>
-                                        <div className="relative group">
-                                            <select
-                                                value={orgSize}
-                                                onChange={e => setOrgSize(e.target.value)}
-                                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none pr-10 hover:bg-slate-100"
-                                            >
-                                                <option value="1-10">1-10 employees</option>
-                                                <option value="11-50">11-50 employees</option>
-                                                <option value="51-200">51-200 employees</option>
-                                                <option value="201+">201+ employees</option>
-                                            </select>
-                                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                                                <Users className="w-4 h-4" />
+                                        
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Team Size</label>
+                                            <div className="relative">
+                                                <select
+                                                    value={orgSize}
+                                                    onChange={e => setOrgSize(e.target.value)}
+                                                    className="w-full bg-slate-50/50 border border-slate-200 h-14 rounded-2xl px-5 text-slate-900 text-sm appearance-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all outline-none"
+                                                >
+                                                    <option value="1-10">1-10</option>
+                                                    <option value="11-50">11-50</option>
+                                                    <option value="51-200">51-200</option>
+                                                    <option value="201+">201+</option>
+                                                </select>
+                                                <Users className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
                                             </div>
                                         </div>
                                     </div>
@@ -204,92 +227,94 @@ export function Onboarding() {
 
                                 <Button
                                     type="submit"
-                                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 rounded-xl font-bold group"
-                                    rightIcon={<ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />}
+                                    className="w-full py-6 bg-blue-600 hover:bg-black shadow-xl shadow-blue-600/10 rounded-2xl font-bold group text-white border-0 transition-all duration-300"
                                 >
-                                    Continue to Billing
+                                    Proceed to Plan
+                                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
                                 </Button>
                             </form>
-                        </div>
-                    )}
+                        )}
 
-                    {step === 2 && (
-                        <div className="max-w-md mx-auto animate-in fade-in slide-in-from-right-8 duration-500">
-                            <h2 className="text-3xl font-bold text-slate-900 mb-2">Finalize Your Plan</h2>
-                            <p className="text-slate-500 mb-10">Start your free trial today. You won&apos;t be charged until your trial ends.</p>
+                        {step === 2 && (
+                            <form onSubmit={handlePaymentSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="space-y-2">
+                                    <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none">Access Granted</h2>
+                                    <p className="text-slate-500 text-sm">Review your 14-day free trial on the {selectedPlan} plan.</p>
+                                </div>
 
-                            <div className="bg-blue-600 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl mb-10 group">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 blur-2xl rounded-full translate-x-8 -translate-y-8" />
-                                <div className="relative z-10 space-y-4">
-                                    <p className="text-xs font-bold uppercase tracking-widest text-blue-100/60">Selected Subscription</p>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-4xl font-bold">$0.00</span>
-                                        <span className="text-blue-100/60">for 14 days</span>
-                                    </div>
-                                    <div className="pt-6 border-t border-white/10 flex items-start gap-3">
-                                        <div className="bg-white/10 p-2 rounded-lg shrink-0 mt-0.5">
-                                            <ShieldCheck className="w-4 h-4 text-blue-100" />
+                                <div className="rounded-3xl bg-slate-900 p-8 text-white relative overflow-hidden group shadow-2xl">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 blur-3xl rounded-full" />
+                                    <div className="relative z-10 space-y-6">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Plan</p>
+                                                <p className="text-2xl font-black">{selectedPlan} Trial</p>
+                                            </div>
+                                            <div className="px-3 py-1 bg-blue-600 rounded-full text-[10px] font-bold uppercase tracking-widest">Active</div>
                                         </div>
-                                        <p className="text-sm text-blue-50 font-medium leading-relaxed">
-                                            Enjoy 14 days of full access to the {selectedPlan} plan. Cancel anytime before the trial ends.
-                                        </p>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-4xl font-extrabold">$0.00</span>
+                                            <span className="text-slate-400 text-sm">/ first 14 days</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 pt-6 border-t border-white/5 text-xs text-slate-400">
+                                            <ShieldCheck className="w-4 h-4 text-blue-500" />
+                                            No commitment. Cancel anytime.
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <form onSubmit={handlePaymentSubmit} className="space-y-6">
-                                <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200 flex items-center gap-5 group hover:bg-white hover:border-blue-500 hover:shadow-md transition-all cursor-pointer">
-                                    <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:border-blue-100 transition-all shadow-sm">
-                                        <Lock className="w-5 h-5" />
+                                <div className="p-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 flex items-center gap-4 group hover:border-blue-600 transition-all cursor-pointer">
+                                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-blue-600 transition-colors">
+                                        <CreditCard className="w-5 h-5" />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-bold text-slate-900 mb-0.5">Payment Verification</p>
-                                        <p className="text-xs text-slate-500">Securely connect via Stripe</p>
+                                        <p className="text-xs font-bold text-slate-900 mb-0.5">Stripe Secure Connection</p>
+                                        <p className="text-[10px] text-slate-500 uppercase tracking-widest">Connect to finalize setup</p>
                                     </div>
-                                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                                 </div>
 
                                 <Button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full py-4 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-500/20 rounded-xl font-bold"
+                                    className="w-full py-6 bg-slate-900 hover:bg-blue-600 shadow-xl rounded-2xl font-bold group text-white border-0 transition-all duration-300"
                                 >
-                                    {loading ? 'Setting up...' : 'Start My Free Trial'}
-                                    {!loading && <Rocket className="w-5 h-5 ml-2" />}
+                                    {loading ? 'Initializing Workspace...' : 'Activate Free Trial'}
+                                    {!loading && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />}
+                                </Button>
+                            </form>
+                        )}
+
+                        {step === 3 && (
+                            <div className="animate-in zoom-in-95 duration-700 text-center py-10">
+                                <div className="relative mb-10 w-fit mx-auto">
+                                    <div className="absolute inset-0 bg-blue-100 blur-3xl rounded-full scale-110" />
+                                    <div className="w-24 h-24 bg-blue-600 rounded-[32px] flex items-center justify-center relative z-10 shadow-2xl rotate-12 transition-transform hover:rotate-0 duration-500">
+                                        <CheckCircle2 className="w-12 h-12 text-white" />
+                                    </div>
+                                </div>
+                                
+                                <h1 className="text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">Organization Created</h1>
+                                <p className="text-slate-500 mb-12 text-lg">
+                                    Welcome, {profile?.full_name?.split(' ')[0]}. <br/>
+                                    <strong>{orgName}</strong> is ready for deployment.
+                                </p>
+                                
+                                <Button
+                                    onClick={() => navigate('/dashboard')}
+                                    className="w-full py-6 bg-blue-600 hover:bg-black shadow-2xl shadow-blue-600/10 rounded-2xl font-bold group text-white border-0 transition-all duration-300 mb-6"
+                                >
+                                    Launch Dashboard
+                                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
                                 </Button>
                                 
-                                <p className="text-[11px] text-slate-400 text-center leading-relaxed font-medium mt-6">
-                                    By clicking above, you agree to our Terms of Service and Privacy Policy. Your trial begins immediately.
-                                </p>
-                            </form>
-                        </div>
-                    )}
-
-                    {step === 3 && (
-                        <div className="max-w-md mx-auto animate-in zoom-in-95 duration-700 text-center flex flex-col items-center justify-center min-h-[480px]">
-                            <div className="relative mb-10">
-                                <div className="absolute inset-0 bg-blue-100 blur-2xl rounded-full scale-110" />
-                                <div className="w-24 h-24 bg-white border border-blue-100 rounded-[32px] flex items-center justify-center relative z-10 shadow-xl">
-                                    <CheckCircle2 className="w-12 h-12 text-blue-600" />
-                                </div>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Deployment: Production 2.0</p>
                             </div>
-                            
-                            <h2 className="text-3xl font-bold text-slate-900 mb-3">You&apos;re All Set!</h2>
-                            <p className="text-slate-500 mb-12 leading-relaxed">
-                                Welcome, <span className="text-slate-900 font-bold">{profile?.full_name}</span>. Your workspace for <span className="text-blue-600 font-bold">{orgName}</span> is ready for tracking.
-                            </p>
-                            
-                            <Button
-                                onClick={() => navigate('/dashboard')}
-                                className="w-full py-4 bg-slate-900 hover:bg-slate-800 shadow-lg rounded-xl font-bold group"
-                            >
-                                Go to Dashboard
-                                <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
-                            </Button>
-                        </div>
-                    )}
+                        )}
+
+                    </Card>
                 </div>
-            </Card>
+            </div>
         </div>
     );
 }
