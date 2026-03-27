@@ -354,7 +354,7 @@ pub fn start_screenshot_loop(
             // Hierarchical structure: organization_id / user_id / screenshots / session_id / filename
             let org_slug = organization_id.clone().unwrap_or_else(|| "unknown".to_string());
             let timestamp_num = captured_at.timestamp_millis();
-            let filename = format!("{}/{}/screenshots/{}/{}.png", org_slug, user_id, session_id, timestamp_num);
+            let filename = format!("{}/{}/screenshots/{}.png", org_slug, user_id, timestamp_num);
             
             let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
             let public_url = format!("{}/storage/v1/object/public/screenshots/{}", cfg.url, filename);
@@ -401,7 +401,7 @@ pub fn start_screenshot_loop(
                 
                 let org_slug = organization_id.clone().unwrap_or_else(|| "unknown".to_string());
                 let timestamp_num = captured_at.timestamp_millis();
-                let filename = format!("{}/{}/screenshots/{}/{}.png", org_slug, user_id, session_id, timestamp_num);
+                let filename = format!("{}/{}/screenshots/{}.png", org_slug, user_id, timestamp_num);
                 
                 let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
                 let public_url = format!("{}/storage/v1/object/public/screenshots/{}", cfg.url, filename);
