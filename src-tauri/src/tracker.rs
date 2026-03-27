@@ -358,6 +358,7 @@ pub fn start_screenshot_loop(
             
             let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
             let public_url = format!("{}/storage/v1/object/public/screenshots/{}", cfg.url, filename);
+            println!("[tracker] 📸 CAPTURING INITIAL SCREENSHOT: Path={}", filename);
 
             use base64::Engine;
             if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
@@ -404,6 +405,7 @@ pub fn start_screenshot_loop(
                 
                 let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
                 let public_url = format!("{}/storage/v1/object/public/screenshots/{}", cfg.url, filename);
+                println!("[tracker] 📸 CAPTURING RANDOM SCREENSHOT: Path={}", filename);
 
                 {
                     use base64::Engine;

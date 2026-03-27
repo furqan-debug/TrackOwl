@@ -185,9 +185,14 @@ fn start_tracking(
     ) {
         Ok(resp_body) => {
             let json_rows: serde_json::Value = serde_json::from_str(&resp_body).unwrap_or(serde_json::json!([]));
-            json_rows.get(0).and_then(|r| r.get("organization_id")).and_then(|v| v.as_str()).map(|s| s.to_string())
+            let id = json_rows.get(0).and_then(|r| r.get("organization_id")).and_then(|v| v.as_str()).map(|s| s.to_string());
+            println!("[lib] 🔍 Organization lookup for user {}: {:?}", user_id, id);
+            id
         }
-        Err(_) => None,
+        Err(e) => {
+            println!("[lib] ❌ Organization lookup FAILED for user {}: {}", user_id, e);
+            None
+        }
     };
 
     // Get public IP
