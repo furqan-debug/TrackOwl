@@ -177,30 +177,30 @@ pub fn sync_once(
 
     let token = auth_token.lock().unwrap().clone().unwrap_or_default();
 
-    // Build JSON array — Supabase PostgREST accepts array inserts natively
+    // Build JSON array for the /api/heartbeats endpoint
     let payload: Vec<serde_json::Value> = samples.iter().map(|s| {
         serde_json::json!({
             "session_id":      s.session_id,
-            "recorded_at":     s.recorded_at,
-            "mouse_clicks":    s.mouse_clicks,
-            "key_presses":     s.key_presses,
+            "timestamp":       s.recorded_at, // Backend expects 'timestamp'
+            "mouse_count":     s.mouse_clicks, // Backend expects 'mouse_count'
+            "keyboard_count":  s.key_presses,  // Backend expects 'keyboard_count'
             "app_name":        s.app_name,
             "window_title":    s.window_title,
             "domain":          s.domain,
-            "idle":            s.idle,
+            "idle_flag":       s.idle,         // Backend expects 'idle_flag'
             "activity_percent": s.activity_percent,
         })
     }).collect();
 
     let body = serde_json::json!(payload).to_string();
 
-    match crate::supabase_post(cfg, "activity_samples", &body, Some(&token), None) {
+    match crate::backend_post(cfg, "/api/heartbeats", &body, Some(&token)) {
         Ok(_) => {
             let ids: Vec<i64> = samples.iter().map(|s| s.id).collect();
             if let Err(e) = mark_synced(conn, &ids) {
                 eprintln!("[cache] mark_synced error: {}", e);
             } else {
-                println!("[cache] ✅ Synced {} samples to Supabase", ids.len());
+                println!("[cache] ✅ Synced {} samples to Backend", ids.len());
             }
         }
         Err(e) => eprintln!("[cache] sync failed (will retry): {}", e),

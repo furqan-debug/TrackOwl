@@ -19,6 +19,7 @@ pub struct AppState {
     pub supabase_url: String,
     /// public anon key (safe to embed in app, RLS enforces access)
     pub supabase_anon_key: String,
+    pub ingestion_url: String,
     pub tracking_running: Arc<Mutex<bool>>,
     pub counts: Arc<Mutex<tracker::TrackerCounts>>,
     pub db: Arc<Mutex<Option<rusqlite::Connection>>>,
@@ -37,6 +38,8 @@ impl Default for AppState {
                 .unwrap_or_else(|_| "https://lgmggbnaoyoapxqsfgzv.supabase.co".to_string()),
             supabase_anon_key: std::env::var("VITE_SUPABASE_ANON_KEY")
                 .unwrap_or_else(|_| "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnbWdnYm5hb3lvYXB4cXNmZ3p2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NTMxNDIsImV4cCI6MjA4ODEyOTE0Mn0.GkzsADYd-kpJYTgY9EZGwgy5kvN6nyYmfVoLUHRJQI4".to_string()),
+            ingestion_url: std::env::var("VITE_INGESTION_URL")
+                .unwrap_or_else(|_| "http://localhost:3000".to_string()),
             tracking_running: Arc::new(Mutex::new(false)),
             counts: Arc::new(Mutex::new(tracker::TrackerCounts::default())),
             db: Arc::new(Mutex::new(db)),
@@ -49,6 +52,7 @@ impl Default for AppState {
 pub struct SupabaseConfig {
     pub url: String,
     pub anon_key: String,
+    pub ingestion_url: String,
 }
 
 // ─── Response types ────────────────────────────────────────────────────────────
@@ -71,28 +75,29 @@ pub struct TrackingResult {
 
 /// POST to a Supabase PostgREST endpoint.
 /// Returns the raw response body on success.
-pub fn supabase_post(
+    req.send_string(body)
+        .map_err(|e| format!("Supabase POST error: {}", e))
+        .and_then(|resp| resp.into_string().map_err(|e| e.to_string()))
+}
+
+/// POST to the ingestion backend (Express API).
+pub fn backend_post(
     cfg: &SupabaseConfig,
-    table: &str,
+    endpoint: &str,
     body: &str,
     auth_token: Option<&str>,
-    prefer: Option<&str>,
 ) -> Result<String, String> {
-    let url = format!("{}/rest/v1/{}", cfg.url, table);
+    let url = format!("{}{}", cfg.ingestion_url, endpoint);
 
     let mut req = ureq::post(&url)
-        .set("apikey", &cfg.anon_key)
         .set("Content-Type", "application/json");
 
     if let Some(token) = auth_token {
         req = req.set("Authorization", &format!("Bearer {}", token));
     }
-    if let Some(p) = prefer {
-        req = req.set("Prefer", p);
-    }
 
     req.send_string(body)
-        .map_err(|e| format!("Supabase POST error: {}", e))
+        .map_err(|e| format!("Backend POST error ({}): {}", url, e))
         .and_then(|resp| resp.into_string().map_err(|e| e.to_string()))
 }
 
@@ -157,7 +162,11 @@ fn start_tracking(
         let mut s = state.lock().unwrap();
         *s.auth_token.lock().unwrap() = Some(token.clone());
         (
-            SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() },
+            SupabaseConfig { 
+                url: s.supabase_url.clone(), 
+                anon_key: s.supabase_anon_key.clone(),
+                ingestion_url: s.ingestion_url.clone(),
+            },
             Arc::clone(&s.counts),
             Arc::clone(&s.tracking_running),
             Arc::clone(&s.auth_token),
@@ -251,9 +260,12 @@ fn start_tracking(
 #[tauri::command]
 fn stop_tracking(state: tauri::State<'_, Mutex<AppState>>) -> TrackingResult {
     let (cfg, token, session_id, running) = {
-        let mut s = state.lock().unwrap();
         let token = s.auth_token.lock().unwrap().clone();
-        let cfg = SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() };
+        let cfg = SupabaseConfig { 
+            url: s.supabase_url.clone(), 
+            anon_key: s.supabase_anon_key.clone(),
+            ingestion_url: s.ingestion_url.clone(),
+        };
         (cfg, token, s.active_session_id.take(), Arc::clone(&s.tracking_running))
     };
 
@@ -284,7 +296,11 @@ fn resume_tracking(
     let (cfg, session_id, counts, running, auth_arc, db_arc) = {
         let s = state.lock().unwrap();
         (
-            SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() },
+            SupabaseConfig { 
+                url: s.supabase_url.clone(), 
+                anon_key: s.supabase_anon_key.clone(),
+                ingestion_url: s.ingestion_url.clone(),
+            },
             s.active_session_id.clone(),
             Arc::clone(&s.counts),
             Arc::clone(&s.tracking_running),
@@ -377,7 +393,11 @@ pub fn run() {
                 let (cfg, token, session_id, running) = {
                     let mut s = state_handle.lock().unwrap();
                     let token = s.auth_token.lock().unwrap().clone();
-                    let cfg = SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() };
+                    let cfg = SupabaseConfig { 
+                        url: s.supabase_url.clone(), 
+                        anon_key: s.supabase_anon_key.clone(),
+                        ingestion_url: s.ingestion_url.clone(),
+                    };
                     (cfg, token, s.active_session_id.take(), Arc::clone(&s.tracking_running))
                 };
                 

@@ -309,20 +309,20 @@ pub fn start_sample_loop(
                     crate::cache::sync_once(conn, &cfg, &auth_token);
                 }
             } else {
-                // No DB — post the single sample directly
+                // No DB (or sync logic failed) — post the single sample directly to our backend
                 let body = serde_json::json!([{
                     "session_id":      sample.session_id,
-                    "recorded_at":     sample.recorded_at,
-                    "mouse_clicks":    sample.mouse_clicks,
-                    "key_presses":     sample.key_presses,
+                    "timestamp":       sample.recorded_at, // Backend expects 'timestamp'
+                    "mouse_count":     sample.mouse_clicks,
+                    "keyboard_count":  sample.key_presses,
                     "app_name":        sample.app_name,
                     "window_title":    sample.window_title,
                     "domain":          sample.domain,
-                    "idle":            sample.idle,
+                    "idle_flag":       sample.idle,
                     "activity_percent": sample.activity_percent,
                 }]).to_string();
                 let token = auth_token.lock().unwrap().clone();
-                let _ = crate::supabase_post(&cfg, "activity_samples", &body, token.as_deref(), None);
+                let _ = crate::backend_post(&cfg, "/api/heartbeats", &body, token.as_deref());
             }
         }
     });
@@ -345,35 +345,16 @@ pub fn start_screenshot_loop(
             let captured_at = chrono::Utc::now();
             let recorded_at = captured_at.to_rfc3339();
             
-            // Sanitize filename for URL safety
-            let safe_timestamp = recorded_at
-                .replace(':', "-")
-                .replace('+', "Z")
-                .replace('.', "-");
-            let filename = format!("{}_{}.png", session_id, safe_timestamp);
-            let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
-            let public_url = format!("{}/storage/v1/object/public/screenshots/{}", cfg.url, filename);
+            // Format for ingestion backend: POST /api/heartbeats
+            let body = serde_json::json!([{
+                "type": "screenshot",
+                "session_id": session_id,
+                "timestamp": recorded_at,
+                "file_url": format!("data:image/png;base64,{}", base64_data),
+            }]).to_string();
 
-            use base64::Engine;
-            if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
-                let s_token = auth_token.lock().unwrap().clone();
-                let mut req = ureq::post(&storage_url)
-                    .set("apikey", &cfg.anon_key)
-                    .set("Content-Type", "image/png");
-                
-                if let Some(token) = &s_token {
-                    req = req.set("Authorization", &format!("Bearer {}", token));
-                }
-
-                if let Ok(_) = req.send_bytes(png_bytes.as_slice()) {
-                    let body = serde_json::json!({
-                        "session_id": session_id,
-                        "recorded_at": recorded_at,
-                        "file_url": public_url,
-                    }).to_string();
-                    let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
-                }
-            }
+            let s_token = auth_token.lock().unwrap().clone();
+            let _ = crate::backend_post(&cfg, "/api/heartbeats", &body, s_token.as_deref());
         }
 
         // --- 2. Enter random capture loop ---
@@ -392,42 +373,16 @@ pub fn start_screenshot_loop(
             if let Some(base64_data) = capture_screenshot() {
                 let recorded_at = chrono::Utc::now().to_rfc3339();
                 
-                // Sanitize filename for URL safety: remove :, +, and extra dots
-                let safe_timestamp = recorded_at
-                    .replace(':', "-")
-                    .replace('+', "Z")
-                    .replace('.', "-");
-                let filename = format!("{}_{}.png", session_id, safe_timestamp);
-                let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
-                let public_url = format!("{}/storage/v1/object/public/screenshots/{}", cfg.url, filename);
+                // Format for ingestion backend: POST /api/heartbeats
+                let body = serde_json::json!([{
+                    "type": "screenshot",
+                    "session_id": session_id,
+                    "timestamp": recorded_at,
+                    "file_url": format!("data:image/png;base64,{}", base64_data),
+                }]).to_string();
 
-                {
-                    use base64::Engine;
-                    if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
-                        let s_token = auth_token.lock().unwrap().clone();
-
-                        let mut req = ureq::post(&storage_url)
-                            .set("apikey", &cfg.anon_key)
-                            .set("Content-Type", "image/png");
-                        
-                        if let Some(token) = &s_token {
-                            req = req.set("Authorization", &format!("Bearer {}", token));
-                        }
-
-                        let upload_res = req.send_bytes(png_bytes.as_slice());
-
-                        if upload_res.is_ok() {
-                            let body = serde_json::json!({
-                                "session_id": session_id,
-                                "recorded_at": recorded_at,
-                                "file_url": public_url,
-                            }).to_string();
-                            
-                                
-                            let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
-                        }
-                    }
-                }
+                let s_token = auth_token.lock().unwrap().clone();
+                let _ = crate::backend_post(&cfg, "/api/heartbeats", &body, s_token.as_deref());
             }
 
             // Wait out the remainder of the window
