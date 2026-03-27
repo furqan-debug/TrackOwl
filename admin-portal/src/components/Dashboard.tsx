@@ -169,105 +169,107 @@ export function Dashboard() {
             description="View team performance, project distribution, and recent activity."
         >
 
-            {/* KPI Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
-                <KpiCard icon={<Clock />} label="Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} />
-                <KpiCard icon={<BarChart3 />} label="Weekly Total" value={loading ? '—' : fmtTime(stats.weekMinutes)} />
-                <KpiCard icon={<CircleDollarSign />} label="Weekly Cost" value={loading ? '—' : `$${stats.weekCost.toLocaleString()}`} />
-                <KpiCard icon={<Users />} label="Members" value={loading ? '—' : stats.activeMembers.toString()} />
-                <KpiCard icon={<Globe />} label="Projects" value={loading ? '—' : stats.activeProjects.toString()} />
-                <KpiCard icon={<Camera />} label="Screenshots" value={loading ? '—' : stats.screenshotCount.toString()} />
-            </div>
-
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-                {/* Activity Trends */}
-                <div className="lg:col-span-8">
-                    <Card title="Activity Trends" subtitle="Work session distribution for the week">
-                        <div className="h-[400px] w-full mt-6">
-                            {loading ? (
-                                <LoadingState className="h-full" />
-                            ) : (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={weekBars} barSize={40}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                                        <XAxis
-                                            dataKey="day"
-                                            axisLine={false}
-                                            tickLine={false}
-                                            tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11, fontWeight: 600 }}
-                                            dy={10}
-                                        />
-                                        <YAxis hide />
-                                        <Tooltip
-                                            cursor={{ fill: 'rgba(80, 110, 248, 0.03)' }}
-                                            content={({ active, payload }) => {
-                                                if (active && payload && payload.length) {
-                                                    return (
-                                                        <div className="bg-surface-solid border border-border rounded-xl px-4 py-3 shadow-lg">
-                                                            <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-2 border-b border-border pb-2 opacity-60">{payload[0].payload.day}</p>
-                                                            <div className="flex items-baseline gap-2">
-                                                                <span className="text-xl font-bold text-text-primary tracking-tight">{fmtTime(payload[0].value as number)}</span>
-                                                                <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Total</span>
-                                                            </div>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            }}
-                                        />
-                                        <Bar dataKey="minutes" fill="url(#dashGradient)" radius={[8, 8, 0, 0]} />
-                                        <defs>
-                                            <linearGradient id="dashGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#506ef8" />
-                                                <stop offset="100%" stopColor="#818cf8" />
-                                            </linearGradient>
-                                        </defs>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            )}
-                        </div>
-                    </Card>
+            <div className="flex flex-col gap-10">
+                {/* KPI Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
+                    <KpiCard icon={<Clock />} label="Today" value={loading ? '—' : fmtTime(stats.todayMinutes)} />
+                    <KpiCard icon={<BarChart3 />} label="Weekly Total" value={loading ? '—' : fmtTime(stats.weekMinutes)} />
+                    <KpiCard icon={<CircleDollarSign />} label="Weekly Cost" value={loading ? '—' : `$${stats.weekCost.toLocaleString()}`} />
+                    <KpiCard icon={<Users />} label="Members" value={loading ? '—' : stats.activeMembers.toString()} />
+                    <KpiCard icon={<Globe />} label="Projects" value={loading ? '—' : stats.activeProjects.toString()} />
+                    <KpiCard icon={<Camera />} label="Screenshots" value={loading ? '—' : stats.screenshotCount.toString()} />
                 </div>
 
-                {/* Project Breakdown */}
-                <div className="lg:col-span-4">
-                    <Card title="Project Allocation" subtitle="Distribution of time across projects">
-                        <div className="mt-6 space-y-6">
-                            {loading ? (
-                                <LoadingState className="h-[400px]" />
-                            ) : projects.length === 0 ? (
-                                <EmptyState icon={<FolderOpen className="opacity-20" />} title="No data" description="No project activity yet" />
-                            ) : (
-                                projects.map(p => (
-                                    <div key={p.id} className="group">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
-                                                <span className="text-sm font-semibold text-text-primary tracking-tight group-hover:text-primary transition-colors">{p.name}</span>
-                                            </div>
-                                            <span className="text-[10px] font-bold text-text-muted bg-surface-subtle px-2 py-1 rounded-lg border border-border">{fmtTime(p.minutes)}</span>
-                                        </div>
-                                        <div className="h-2 bg-surface-subtle rounded-full overflow-hidden border border-border p-[1px]">
-                                            <div
-                                                className="h-full rounded-full transition-all duration-1000 ease-out"
-                                                style={{
-                                                    width: `${(p.minutes / maxProjectMins) * 100}%`,
-                                                    backgroundColor: p.color
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                    {/* Activity Trends */}
+                    <div className="lg:col-span-8">
+                        <Card title="Activity Trends" subtitle="Work session distribution for the week">
+                            <div className="h-[400px] w-full mt-6">
+                                {loading ? (
+                                    <LoadingState className="h-full" />
+                                ) : (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={weekBars} barSize={40}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
+                                            <XAxis
+                                                dataKey="day"
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11, fontWeight: 600 }}
+                                                dy={10}
+                                            />
+                                            <YAxis hide />
+                                            <Tooltip
+                                                cursor={{ fill: 'rgba(80, 110, 248, 0.03)' }}
+                                                content={({ active, payload }) => {
+                                                    if (active && payload && payload.length) {
+                                                        return (
+                                                            <div className="bg-surface-solid border border-border rounded-xl px-4 py-3 shadow-lg">
+                                                                <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-2 border-b border-border pb-2 opacity-60">{payload[0].payload.day}</p>
+                                                                <div className="flex items-baseline gap-2">
+                                                                    <span className="text-xl font-bold text-text-primary tracking-tight">{fmtTime(payload[0].value as number)}</span>
+                                                                    <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Total</span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    }
+                                                    return null;
                                                 }}
                                             />
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </Card>
-                </div>
-            </div>
+                                            <Bar dataKey="minutes" fill="url(#dashGradient)" radius={[8, 8, 0, 0]} />
+                                            <defs>
+                                                <linearGradient id="dashGradient" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#506ef8" />
+                                                    <stop offset="100%" stopColor="#818cf8" />
+                                                </linearGradient>
+                                            </defs>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                        </Card>
+                    </div>
 
-            {/* Recent Activity Table */}
-            <Card title="Recent Activity" subtitle="Latest work sessions from your team" noPadding className="overflow-hidden">
-                <RecentSessionsRows />
-            </Card>
+                    {/* Project Breakdown */}
+                    <div className="lg:col-span-4">
+                        <Card title="Project Allocation" subtitle="Distribution of time across projects">
+                            <div className="mt-6 space-y-6">
+                                {loading ? (
+                                    <LoadingState className="h-[400px]" />
+                                ) : projects.length === 0 ? (
+                                    <EmptyState icon={<FolderOpen className="opacity-20" />} title="No data" description="No project activity yet" />
+                                ) : (
+                                    projects.map(p => (
+                                        <div key={p.id} className="group">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: p.color }} />
+                                                    <span className="text-sm font-semibold text-text-primary tracking-tight group-hover:text-primary transition-colors">{p.name}</span>
+                                                </div>
+                                                <span className="text-[10px] font-bold text-text-muted bg-surface-subtle px-2 py-1 rounded-lg border border-border">{fmtTime(p.minutes)}</span>
+                                            </div>
+                                            <div className="h-2 bg-surface-subtle rounded-full overflow-hidden border border-border p-[1px]">
+                                                <div
+                                                    className="h-full rounded-full transition-all duration-1000 ease-out"
+                                                    style={{
+                                                        width: `${(p.minutes / maxProjectMins) * 100}%`,
+                                                        backgroundColor: p.color
+                                                    }}
+                                                />
+                                            </div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </Card>
+                    </div>
+                </div>
+
+                {/* Recent Activity Table */}
+                <Card title="Recent Activity" subtitle="Latest work sessions from your team" noPadding className="overflow-hidden">
+                    <RecentSessionsRows />
+                </Card>
+            </div>
 
         </PageLayout>
     );

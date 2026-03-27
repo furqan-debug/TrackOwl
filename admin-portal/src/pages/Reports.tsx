@@ -229,212 +229,214 @@ export function Reports() {
             }
         >
 
-            {/* KPI Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-                <KpiCard
-                    icon={<Clock className="w-5 h-5" strokeWidth={2.5} />}
-                    label="Total Time"
-                    value={fmtHours(totalMins)}
-                    trend="+12%"
-                    trendVariant="positive"
-                />
-                <KpiCard
-                    icon={<ActivityIcon className="w-5 h-5" strokeWidth={2.5} />}
-                    label="Activity Rating"
-                    value={`${avgActivity}%`}
-                    trend="+4%"
-                    trendVariant="positive"
-                />
-                <KpiCard
-                    icon={<DollarSign className="w-5 h-5" strokeWidth={2.5} />}
-                    label="Total Billed"
-                    value={`$${totalBilled.toLocaleString()}`}
-                    trend="+15%"
-                    trendVariant="positive"
-                />
-                <KpiCard
-                    icon={<Monitor className="w-5 h-5" strokeWidth={2.5} />}
-                    label="Total Sessions"
-                    value={totalSessions.toString()}
-                    trend="+2"
-                    trendVariant="positive"
-                />
-                <KpiCard
-                    icon={<Camera className="w-5 h-5" strokeWidth={2.5} />}
-                    label="Screenshots"
-                    value={screenshotCount.toString()}
-                    trend="+45"
-                    trendVariant="positive"
-                />
-                <KpiCard
-                    icon={<DollarSign className="w-5 h-5" strokeWidth={2.5} />}
-                    label="Total Costs"
-                    value={`$${totalCosts.toLocaleString()}`}
-                    trend="+8%"
-                    trendVariant="negative"
-                />
-            </div>
-
-            {loading ? (
-                <div className="h-[600px] flex items-center justify-center">
-                    <LoadingState message="Generating activity reports..." />
-                </div>
-            ) : dailyActivity.length === 0 ? (
-                <div className="h-[600px] flex items-center justify-center">
-                    <EmptyState 
-                        title="No activity data found" 
-                        description="Try adjusting your filters or date range to see results." 
+            <div className="flex flex-col gap-10">
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+                    <KpiCard
+                        icon={<Clock className="w-5 h-5" strokeWidth={2.5} />}
+                        label="Total Time"
+                        value={fmtHours(totalMins)}
+                        trend="+12%"
+                        trendVariant="positive"
+                    />
+                    <KpiCard
+                        icon={<ActivityIcon className="w-5 h-5" strokeWidth={2.5} />}
+                        label="Activity Rating"
+                        value={`${avgActivity}%`}
+                        trend="+4%"
+                        trendVariant="positive"
+                    />
+                    <KpiCard
+                        icon={<DollarSign className="w-5 h-5" strokeWidth={2.5} />}
+                        label="Total Billed"
+                        value={`$${totalBilled.toLocaleString()}`}
+                        trend="+15%"
+                        trendVariant="positive"
+                    />
+                    <KpiCard
+                        icon={<Monitor className="w-5 h-5" strokeWidth={2.5} />}
+                        label="Total Sessions"
+                        value={totalSessions.toString()}
+                        trend="+2"
+                        trendVariant="positive"
+                    />
+                    <KpiCard
+                        icon={<Camera className="w-5 h-5" strokeWidth={2.5} />}
+                        label="Screenshots"
+                        value={screenshotCount.toString()}
+                        trend="+45"
+                        trendVariant="positive"
+                    />
+                    <KpiCard
+                        icon={<DollarSign className="w-5 h-5" strokeWidth={2.5} />}
+                        label="Total Costs"
+                        value={`$${totalCosts.toLocaleString()}`}
+                        trend="+8%"
+                        trendVariant="negative"
                     />
                 </div>
-            ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                    <div className="lg:col-span-2 space-y-10">
-                        <Card title="Activity Trends">
-                            <div className="h-[400px] w-full mt-8">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={dailyActivity} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                                        <defs>
-                                            <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#506ef8" stopOpacity={0.15} />
-                                                <stop offset="95%" stopColor="#506ef8" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
-                                        <XAxis 
-                                            dataKey="date" 
-                                            axisLine={false} 
-                                            tickLine={false} 
-                                            tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
-                                            dy={10}
-                                        />
-                                        <YAxis 
-                                            domain={[0, 100]} 
-                                            axisLine={false} 
-                                            tickLine={false} 
-                                            tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
-                                            unit="%"
-                                        />
-                                        <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(80,110,248,0.1)', strokeWidth: 1 }} />
-                                        <Area 
-                                            type="monotone" 
-                                            dataKey="activity" 
-                                            stroke="#506ef8" 
-                                            strokeWidth={2}
-                                            fillOpacity={1} 
-                                            fill="url(#colorActivity)" 
-                                        />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </Card>
 
-                        <Card title="Time Distribution">
-                            <div className="h-[350px] w-full mt-8">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={dailyActivity} barSize={36}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
-                                        <XAxis 
-                                            dataKey="date" 
-                                            axisLine={false} 
-                                            tickLine={false} 
-                                            tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
-                                            dy={10}
-                                        />
-                                        <YAxis 
-                                            axisLine={false} 
-                                            tickLine={false} 
-                                            tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
-                                        />
-                                        <Tooltip content={<CustomTooltip unit="min" />} cursor={{ fill: 'rgba(80,110,248,0.03)' }} />
-                                        <Bar 
-                                            dataKey="minutes" 
-                                            fill="url(#barGradient)" 
-                                            radius={[4, 4, 0, 0]}
-                                        />
-                                        <defs>
-                                            <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#506ef8" />
-                                                <stop offset="100%" stopColor="#818cf8" />
-                                            </linearGradient>
-                                        </defs>
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </Card>
+                {loading ? (
+                    <div className="h-[600px] flex items-center justify-center">
+                        <LoadingState message="Generating activity reports..." />
                     </div>
-
-                    <div className="space-y-10">
-                        <Card title="Top Applications" className="flex flex-col h-full">
-                            <div className="flex-1 min-h-[450px] flex flex-col items-center justify-center py-12">
-                                <div className="h-[300px] w-full relative">
+                ) : dailyActivity.length === 0 ? (
+                    <div className="h-[600px] flex items-center justify-center">
+                        <EmptyState 
+                            title="No activity data found" 
+                            description="Try adjusting your filters or date range to see results." 
+                        />
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                        <div className="lg:col-span-2 space-y-10">
+                            <Card title="Activity Trends">
+                                <div className="h-[400px] w-full mt-8">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={appBreakdown}
-                                                cx="50%"
-                                                cy="50%"
-                                                innerRadius={60}
-                                                outerRadius={90}
-                                                paddingAngle={4}
-                                                dataKey="value"
-                                            >
-                                                {appBreakdown.map((_, i) => (
-                                                    <Cell key={i} fill={COLORS[i % COLORS.length]} strokeWidth={0} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip content={<CustomTooltip />} />
-                                        </PieChart>
+                                        <AreaChart data={dailyActivity} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                                            <defs>
+                                                <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#506ef8" stopOpacity={0.15} />
+                                                    <stop offset="95%" stopColor="#506ef8" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
+                                            <XAxis 
+                                                dataKey="date" 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
+                                                dy={10}
+                                            />
+                                            <YAxis 
+                                                domain={[0, 100]} 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
+                                                unit="%"
+                                            />
+                                            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(80,110,248,0.1)', strokeWidth: 1 }} />
+                                            <Area 
+                                                type="monotone" 
+                                                dataKey="activity" 
+                                                stroke="#506ef8" 
+                                                strokeWidth={2}
+                                                fillOpacity={1} 
+                                                fill="url(#colorActivity)" 
+                                            />
+                                        </AreaChart>
                                     </ResponsiveContainer>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <span className="text-3xl font-bold text-text-primary">{appBreakdown.length}</span>
-                                        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Apps</span>
-                                    </div>
                                 </div>
+                            </Card>
 
-                                <div className="w-full mt-8 space-y-2">
-                                    {appBreakdown.map((item, i) => (
-                                        <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-surface-subtle transition-all">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                                                <span className="text-sm text-text-primary truncate max-w-[180px]">{item.name}</span>
-                                            </div>
-                                            <span className="text-[10px] font-medium text-text-muted bg-surface-subtle px-2 py-1 rounded border border-border">
-                                                {item.value} sess
-                                            </span>
+                            <Card title="Time Distribution">
+                                <div className="h-[350px] w-full mt-8">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={dailyActivity} barSize={36}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
+                                            <XAxis 
+                                                dataKey="date" 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
+                                                dy={10}
+                                            />
+                                            <YAxis 
+                                                axisLine={false} 
+                                                tickLine={false} 
+                                                tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
+                                            />
+                                            <Tooltip content={<CustomTooltip unit="min" />} cursor={{ fill: 'rgba(80,110,248,0.03)' }} />
+                                            <Bar 
+                                                dataKey="minutes" 
+                                                fill="url(#barGradient)" 
+                                                radius={[4, 4, 0, 0]}
+                                            />
+                                            <defs>
+                                                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="0%" stopColor="#506ef8" />
+                                                    <stop offset="100%" stopColor="#818cf8" />
+                                                </linearGradient>
+                                            </defs>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </Card>
+                        </div>
+
+                        <div className="space-y-10">
+                            <Card title="Top Applications" className="flex flex-col h-full">
+                                <div className="flex-1 min-h-[450px] flex flex-col items-center justify-center py-12">
+                                    <div className="h-[300px] w-full relative">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={appBreakdown}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={90}
+                                                    paddingAngle={4}
+                                                    dataKey="value"
+                                                >
+                                                    {appBreakdown.map((_, i) => (
+                                                        <Cell key={i} fill={COLORS[i % COLORS.length]} strokeWidth={0} />
+                                                    ))}
+                                                </Pie>
+                                                <Tooltip content={<CustomTooltip />} />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                            <span className="text-3xl font-bold text-text-primary">{appBreakdown.length}</span>
+                                            <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Apps</span>
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </Card>
-
-                        <div className="bg-surface-solid border border-border overflow-hidden rounded-2xl relative p-8 shadow-sm">
-                            <div className="relative z-10">
-                                <div className="flex justify-between items-start mb-6">
-                                    <div className="bg-primary/10 p-3 rounded-xl border border-primary/20">
-                                        <Zap className="w-6 h-6 text-primary" />
                                     </div>
-                                    <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
-                                        Organization Activity
-                                    </span>
+
+                                    <div className="w-full mt-8 space-y-2">
+                                        {appBreakdown.map((item, i) => (
+                                            <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-surface-subtle transition-all">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                                                    <span className="text-sm text-text-primary truncate max-w-[180px]">{item.name}</span>
+                                                </div>
+                                                <span className="text-[10px] font-medium text-text-muted bg-surface-subtle px-2 py-1 rounded border border-border">
+                                                    {item.value} sess
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
-                                <h4 className="text-text-muted font-semibold uppercase tracking-wider text-[10px] mb-2 opacity-60">Avg. Activity Score</h4>
-                                <div className="flex items-baseline gap-2 mb-6">
-                                    <span className="text-5xl font-bold text-text-primary">{avgActivity}%</span>
-                                </div>
-                                <p className="text-sm text-text-primary leading-relaxed mb-6">
-                                    This activity baseline reflects active mouse/keyboard usage of the team during their recorded work hours.
-                                </p>
-                                <div className="w-full h-2.5 bg-surface-subtle rounded-full overflow-hidden border border-border">
-                                    <div
-                                        className="h-full bg-primary rounded-full transition-all duration-1000"
-                                        style={{ width: `${avgActivity}%` }}
-                                    />
+                            </Card>
+
+                            <div className="bg-surface-solid border border-border overflow-hidden rounded-2xl relative p-8 shadow-sm">
+                                <div className="relative z-10">
+                                    <div className="justify-between items-start mb-6 hidden md:flex">
+                                        <div className="bg-primary/10 p-3 rounded-xl border border-primary/20">
+                                            <Zap className="w-6 h-6 text-primary" />
+                                        </div>
+                                        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
+                                            Organization Activity
+                                        </span>
+                                    </div>
+                                    <h4 className="text-text-muted font-semibold uppercase tracking-wider text-[10px] mb-2 opacity-60">Avg. Activity Score</h4>
+                                    <div className="flex items-baseline gap-2 mb-6">
+                                        <span className="text-5xl font-bold text-text-primary">{avgActivity}%</span>
+                                    </div>
+                                    <p className="text-sm text-text-primary leading-relaxed mb-6">
+                                        This activity baseline reflects active mouse/keyboard usage of the team during their recorded work hours.
+                                    </p>
+                                    <div className="w-full h-2.5 bg-surface-subtle rounded-full overflow-hidden border border-border">
+                                        <div
+                                            className="h-full bg-primary rounded-full transition-all duration-1000"
+                                            style={{ width: `${avgActivity}%` }}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </div>
         </PageLayout>
     );
 }
