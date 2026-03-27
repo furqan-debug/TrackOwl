@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { 
     Save, Check,
-    Layout, Users, Target, Info
+    Layout, Users, Target, Info, Clock
 } from 'lucide-react';
 import { 
     Button, 
@@ -51,6 +51,9 @@ export function ProjectFormPage() {
     const [billable, setBillable] = useState(true);
     const [budgetType, setBudgetType] = useState<BudgetType>('No budget');
     const [budgetLimit, setBudgetLimit] = useState('');
+    
+    const [status, setStatus] = useState<'Active' | 'Archived' | 'Completed'>('Active');
+    const [trackedSeconds, setTrackedSeconds] = useState(0);
     
     // Selection Sets
     const [userIds, setUserIds] = useState<Set<string>>(new Set());
@@ -99,6 +102,8 @@ export function ProjectFormPage() {
                     setBillable(project.billable);
                     setBudgetType(project.budget_type || 'No budget');
                     setBudgetLimit(project.budget_limit?.toString() || '');
+                    setStatus(project.status || 'Active');
+                    setTrackedSeconds(project.tracked_seconds || 0);
                     setUserIds(new Set(project.project_members?.map((m: any) => m.member_id) || []));
                     setTeamIds(new Set(project.project_teams?.map((t: any) => t.team_id) || []));
                 }
@@ -127,7 +132,7 @@ export function ProjectFormPage() {
                 billable,
                 budget_type: budgetType,
                 budget_limit: budgetLimit ? parseFloat(budgetLimit) : null,
-                status: 'Active',
+                status,
             };
 
             let projectId = id;
@@ -235,9 +240,39 @@ export function ProjectFormPage() {
                                             {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </select>
                                     </div>
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1">Lifecycle Status</label>
+                                        <select 
+                                            value={status} 
+                                            onChange={e => setStatus(e.target.value as any)}
+                                            className="w-full px-5 py-3.5 bg-surface-subtle border border-border rounded-xl text-sm font-semibold text-text-primary outline-none focus:border-primary transition-all appearance-none"
+                                        >
+                                            {['Active', 'Archived', 'Completed'].map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="pt-8">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <span className="text-sm font-bold text-text-primary block">Billable Default</span>
+                                                <p className="text-[11px] text-text-muted font-medium mt-1">Mark time entries as billable</p>
+                                            </div>
+                                            <button 
+                                                onClick={() => setBillable(!billable)}
+                                                className={clsx(
+                                                    "relative w-12 h-6 rounded-full transition-all duration-300",
+                                                    billable ? 'bg-primary' : 'bg-border'
+                                                )}
+                                            >
+                                                <div className={clsx(
+                                                    "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
+                                                    billable ? 'left-7' : 'left-1'
+                                                )} />
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <div className="space-y-3">
+                                <div className="space-y-3 pt-4 border-t border-border/40">
                                     <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1">Aesthetic Token</label>
                                     <div className="flex flex-wrap gap-3">
                                         {COLORS.map(c => (
@@ -254,27 +289,6 @@ export function ProjectFormPage() {
                                                 {color === c && <Check className="w-5 h-5 text-white" />}
                                             </button>
                                         ))}
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t border-border/40">
-                                    <div className="flex items-center justify-between">
-                                        <div>
-                                            <span className="text-sm font-bold text-text-primary block">Billable Default</span>
-                                            <p className="text-[11px] text-text-muted font-medium mt-1">Mark all time entries as billable by default</p>
-                                        </div>
-                                        <button 
-                                            onClick={() => setBillable(!billable)}
-                                            className={clsx(
-                                                "relative w-12 h-6 rounded-full transition-all duration-300",
-                                                billable ? 'bg-primary' : 'bg-border'
-                                            )}
-                                        >
-                                            <div className={clsx(
-                                                "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
-                                                billable ? 'left-7' : 'left-1'
-                                            )} />
-                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -322,11 +336,24 @@ export function ProjectFormPage() {
                                         </div>
                                     )}
                                 </div>
-                                <div className="bg-primary/[0.02] border border-primary/5 rounded-2xl p-6 flex items-start gap-4">
-                                    <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                                    <p className="text-xs text-text-muted leading-relaxed">
-                                        Budget notifications will be dispatched to project managers when the utilization threshold reaches 80% and 100%.
-                                    </p>
+                                <div className="space-y-4">
+                                    <div className="bg-primary/[0.02] border border-primary/5 rounded-2xl p-6 flex items-start gap-4">
+                                        <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                                        <p className="text-xs text-text-muted leading-relaxed">
+                                            Budget notifications will be dispatched to project managers when utilization reaches 80% and 100%.
+                                        </p>
+                                    </div>
+                                    {isEdit && (
+                                        <div className="p-6 bg-surface-subtle border border-border rounded-2xl flex items-center justify-between">
+                                            <div>
+                                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest block">Current Utilization</span>
+                                                <span className="text-lg font-bold text-text-primary">{(trackedSeconds / 3600).toFixed(1)} <span className="text-xs font-semibold opacity-60">Hours</span></span>
+                                            </div>
+                                            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                                <Clock className="w-5 h-5" />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </Card>

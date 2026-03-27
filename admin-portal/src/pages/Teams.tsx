@@ -64,6 +64,7 @@ export function Teams() {
     // Form state
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
+    const [managerId, setManagerId] = useState<string>('');
     const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
     const [selectedLeadIds, setSelectedLeadIds] = useState<Set<string>>(new Set());
     const [leadPermissions, setLeadPermissions] = useState<Record<string, LeadPermissions>>({});
@@ -118,6 +119,7 @@ export function Teams() {
         setEditingTeam(null);
         setName('');
         setDescription('');
+        setManagerId('');
         setSelectedMemberIds(new Set());
         setSelectedLeadIds(new Set());
         setSelectedProjectIds(new Set());
@@ -143,6 +145,7 @@ export function Teams() {
             setEditingTeam(team);
             setName(team.name);
             setDescription(team.description);
+            setManagerId(team.manager_id || '');
             setSelectedMemberIds(new Set((team as any).memberIds || []));
             setSelectedLeadIds(new Set((team as any).leadIds || []));
             setSelectedProjectIds(new Set((team as any).projectIds || []));
@@ -201,6 +204,7 @@ export function Teams() {
             const teamPayload = {
                 name,
                 description,
+                manager_id: managerId || null,
                 organization_id: profile?.organization_id
             };
 
@@ -442,6 +446,17 @@ export function Teams() {
                                 placeholder="e.g. Engineering"
                                 autoFocus
                             />
+                            <div className="space-y-2">
+                                <label className="block text-xs font-semibold text-text-muted ml-1 uppercase tracking-wider">Designated Manager</label>
+                                <select 
+                                    value={managerId} 
+                                    onChange={e => setManagerId(e.target.value)}
+                                    className="w-full bg-surface-solid border border-border rounded-xl px-4 py-3 text-sm text-text-primary focus:outline-none focus:border-primary transition-all shadow-sm appearance-none"
+                                >
+                                    <option value="">Select a manager...</option>
+                                    {members.map(m => <option key={m.id} value={m.id}>{m.full_name}</option>)}
+                                </select>
+                            </div>
                             <div className="space-y-3">
                                 <label className="block text-xs font-semibold text-text-muted ml-1">Description</label>
                                 <textarea
