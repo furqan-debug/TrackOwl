@@ -587,6 +587,7 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
             onClose={onClose}
             title="Invite Member"
             subtitle="Send an invitation to join the team."
+            maxWidth="max-w-md"
             footer={
                 <>
                     <Button variant="secondary" onClick={onClose} className="px-8">
@@ -605,7 +606,7 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
                 </>
             }
         >
-            <div className="space-y-8">
+            <div className="space-y-6">
                 <FormField 
                     label="Email Address" 
                     value={form.addEmail} 

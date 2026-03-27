@@ -19,7 +19,7 @@ export function Modal({
     subtitle,
     children,
     footer,
-    maxWidth = 'max-w-[620px]',
+    maxWidth = 'max-w-lg',
 }: ModalProps) {
     if (!isOpen) return null;
 
@@ -30,10 +30,10 @@ export function Modal({
                 maxWidth
             )}>
                 {/* Modal Header */}
-                <div className="px-10 py-8 border-b border-border bg-surface-subtle">
+                <div className="px-8 py-6 border-b border-border bg-surface-subtle">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h2 className="text-2xl font-bold text-text-primary tracking-tight leading-none mb-2">
+                            <h2 className="text-2xl font-bold text-text-primary tracking-tight leading-tight mb-2">
                                 {title}
                             </h2>
                             {subtitle && (
@@ -52,13 +52,13 @@ export function Modal({
                 </div>
 
                 {/* Modal Content */}
-                <div className="flex-1 overflow-y-auto px-10 py-10 custom-scrollbar">
+                <div className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar">
                     {children}
                 </div>
 
                 {/* Modal Footer */}
                 {footer && (
-                    <div className="px-10 py-8 border-t border-border bg-surface-subtle flex items-center justify-end gap-4">
+                    <div className="px-8 py-6 border-t border-border bg-surface-subtle flex items-center justify-end gap-4">
                         {footer}
                     </div>
                 )}

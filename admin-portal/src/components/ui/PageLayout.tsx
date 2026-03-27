@@ -22,9 +22,9 @@ export function PageLayout({
         maxWidth === '7xl' ? 'max-w-7xl' : maxWidth === '6xl' ? 'max-w-6xl' : '';
 
     return (
-        <div className={clsx("p-8 md:p-12 mx-auto w-full animate-in fade-in slide-in-from-top-4 duration-700", maxClass)}>
+        <div className={clsx("p-6 md:p-10 mx-auto w-full animate-in fade-in slide-in-from-top-4 duration-700", maxClass)}>
             {(title || actions) && (
-                <div className="mb-8 md:mb-10">
+                <div className="mb-6 md:mb-8">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
                         <div>
                             {title && (
