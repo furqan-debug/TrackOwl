@@ -47,8 +47,9 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
         );
     }
 
-    // 4. Force onboarding if organization is missing for Admins
-    if (profile && !profile.organization_id && (profile.role === 'Admin' || profile.role === 'Manager') && location.pathname !== '/onboarding') {
+    // 4. Force onboarding if organization is missing OR user is still Pending
+    //    This catches new self-signups before they have an org assigned
+    if (profile && (!profile.organization_id || profile.status === 'Pending') && location.pathname !== '/onboarding') {
         return <Navigate to="/onboarding" replace />;
     }
 
