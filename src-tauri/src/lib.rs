@@ -186,21 +186,21 @@ fn start_tracking(
         Some(&token)
     );
 
-    // Fetch organization_id for the user
+    // Fetch organization_id from the project to ensure correct scoping for multi-org users
     let org_id: Option<String> = match crate::supabase_get(
         &cfg,
-        "members",
-        &format!("id=eq.{}&select=organization_id", user_id),
+        "projects",
+        &format!("id=eq.{}&select=organization_id", project_id),
         Some(&token),
     ) {
         Ok(resp_body) => {
             let json_rows: serde_json::Value = serde_json::from_str(&resp_body).unwrap_or(serde_json::json!([]));
             let id = json_rows.get(0).and_then(|r| r.get("organization_id")).and_then(|v| v.as_str()).map(|s| s.to_string());
-            println!("[lib] 🔍 Organization lookup for user {}: {:?}", user_id, id);
+            println!("[lib] 🔍 Organization lookup for project {}: {:?}", project_id, id);
             id
         }
         Err(e) => {
-            println!("[lib] ❌ Organization lookup FAILED for user {}: {}", user_id, e);
+            println!("[lib] ❌ Organization lookup FAILED for project {}: {}", project_id, e);
             None
         }
     };
