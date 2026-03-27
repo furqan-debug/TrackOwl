@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
 import { 
-    X, Check, ChevronLeft, Save, 
+    ChevronLeft, Save, 
     User, Shield, DollarSign, Clock, 
-    Settings, Info, AlertCircle, Calendar,
-    MapPin, Phone, Mail, Briefcase
+    Info, AlertCircle, Calendar,
+    Briefcase
 } from 'lucide-react';
 import { 
     Button, 
@@ -22,7 +21,6 @@ type Role = 'Admin' | 'Manager' | 'User' | 'Viewer';
 export function MemberFormPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { profile } = useAuth();
     
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);

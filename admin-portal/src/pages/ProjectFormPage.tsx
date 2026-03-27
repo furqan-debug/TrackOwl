@@ -3,8 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { 
-    X, Check, ChevronLeft, Save, 
-    Building2, Layouts, Users, Target, Info
+    Save, Check,
+    Layout, Users, Target, Info
 } from 'lucide-react';
 import { 
     Button, 
@@ -393,7 +393,7 @@ export function ProjectFormPage() {
 
                             <div className="mt-8 pt-6 border-t border-border/40">
                                 <div className="flex items-center gap-3 mb-4">
-                                    <Layouts className="w-4 h-4 text-text-muted" />
+                                    <Layout className="w-4 h-4 text-text-muted" />
                                     <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Global Teams</span>
                                 </div>
                                 <div className="space-y-2">
@@ -422,7 +422,7 @@ export function ProjectFormPage() {
 
                 {error && (
                     <div className="mt-8 bg-rose-500/5 border border-rose-500/10 p-6 rounded-[24px] flex items-center gap-4 animate-in slide-in-from-top-4">
-                        <StatusBadge variant="danger">System Error</StatusBadge>
+                        <StatusBadge variant="error">System Error</StatusBadge>
                         <p className="text-xs font-bold text-rose-600 uppercase tracking-widest font-mono">{error}</p>
                     </div>
                 )}
