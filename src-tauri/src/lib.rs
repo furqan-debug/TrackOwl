@@ -11,12 +11,10 @@ use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 
 // ─── Shared App State ─────────────────────────────────────────────────────────
-pub struct AppState {
-    pub active_session_id: Option<String>,
-    /// User's Supabase JWT — stored as Arc so cache.rs sync loop can read it
-    pub auth_token: Arc<Mutex<Option<String>>>,
-    /// https://<project>.supabase.co
+    pub supabase_url: String,
     pub supabase_anon_key: String,
+    pub user_id: Option<String>,
+    pub org_id: Option<String>,
     pub tracking_running: Arc<Mutex<bool>>,
     pub counts: Arc<Mutex<tracker::TrackerCounts>>,
     pub db: Arc<Mutex<Option<rusqlite::Connection>>>,
@@ -31,8 +29,12 @@ impl Default for AppState {
         Self {
             active_session_id: None,
             auth_token: Arc::new(Mutex::new(None)),
+            supabase_url: std::env::var("VITE_SUPABASE_URL")
+                .unwrap_or_else(|_| "https://lgmggbnaoyoapxqsfgzv.supabase.co".to_string()),
             supabase_anon_key: std::env::var("VITE_SUPABASE_ANON_KEY")
                 .unwrap_or_else(|_| "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnbWdnYm5hb3lvYXB4cXNmZ3p2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NTMxNDIsImV4cCI6MjA4ODEyOTE0Mn0.GkzsADYd-kpJYTgY9EZGwgy5kvN6nyYmfVoLUHRJQI4".to_string()),
+            user_id: None,
+            org_id: None,
             tracking_running: Arc::new(Mutex::new(false)),
             counts: Arc::new(Mutex::new(tracker::TrackerCounts::default())),
             db: Arc::new(Mutex::new(db)),
@@ -210,6 +212,8 @@ fn start_tracking(
                     {
                         let mut s = state.lock().unwrap();
                         s.active_session_id = Some(session_id.clone());
+                        s.user_id = Some(user_id.clone());
+                        s.org_id = org_id.clone();
                         *s.tracking_running.lock().unwrap() = true;
                     }
 
@@ -248,7 +252,10 @@ fn stop_tracking(state: tauri::State<'_, Mutex<AppState>>) -> TrackingResult {
     let (cfg, token, session_id, running) = {
         let mut s = state.lock().unwrap();
         let token = s.auth_token.lock().unwrap().clone();
-        let cfg = SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() };
+        let cfg = SupabaseConfig { 
+            url: s.supabase_url.clone(), 
+            anon_key: s.supabase_anon_key.clone() 
+        };
         (cfg, token, s.active_session_id.take(), Arc::clone(&s.tracking_running))
     };
 
@@ -276,7 +283,7 @@ fn resume_tracking(
     app: tauri::AppHandle,
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> TrackingResult {
-    let (cfg, session_id, counts, running, auth_arc, db_arc) = {
+    let (cfg, session_id, counts, running, auth_arc, db_arc, user_id, org_id) = {
         let s = state.lock().unwrap();
         (
             SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() },
@@ -285,6 +292,8 @@ fn resume_tracking(
             Arc::clone(&s.tracking_running),
             Arc::clone(&s.auth_token),
             Arc::clone(&s.db),
+            s.user_id.clone(),
+            s.org_id.clone(),
         )
     };
 
@@ -302,7 +311,10 @@ fn resume_tracking(
         app.clone(), Arc::clone(&counts), sid.clone(),
         cfg.clone(), Arc::clone(&running), 60_000, Arc::clone(&db_arc), Arc::clone(&auth_arc),
     );
-    tracker::start_screenshot_loop(app.clone(), sid.clone(), cfg.clone(), Arc::clone(&running), Arc::clone(&auth_arc));
+    tracker::start_screenshot_loop(
+        app.clone(), sid.clone(), cfg.clone(), Arc::clone(&running), 
+        Arc::clone(&auth_arc), org_id, user_id.unwrap_or_default()
+    );
     cache::start_sync_loop(cfg.clone(), Arc::clone(&auth_arc), Arc::clone(&running));
 
     TrackingResult { status: "running".to_string(), session_id: Some(sid), error: None }
@@ -372,7 +384,10 @@ pub fn run() {
                 let (cfg, token, session_id, running) = {
                     let mut s = state_handle.lock().unwrap();
                     let token = s.auth_token.lock().unwrap().clone();
-                    let cfg = SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() };
+                    let cfg = SupabaseConfig { 
+                        url: s.supabase_url.clone(), 
+                        anon_key: s.supabase_anon_key.clone() 
+                    };
                     (cfg, token, s.active_session_id.take(), Arc::clone(&s.tracking_running))
                 };
                 

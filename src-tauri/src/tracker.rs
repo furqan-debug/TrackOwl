@@ -11,9 +11,9 @@
 
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 use rdev::{listen, Event, EventType};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 use serde::{Deserialize, Serialize};
 
 // ─── Shared counts (accessed from rdev listener thread) ───────────────────────
