@@ -55,6 +55,17 @@ export function PaymentsReport() {
         (p.member.toLowerCase().includes(searchTerm.toLowerCase()) || p.reference.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
+    const totals = payments.reduce((acc, p) => {
+        if (p.status === 'Completed') acc.disbursed += p.amount;
+        if (p.status === 'Pending') acc.pending += p.amount;
+        if (p.status === 'Failed') acc.failedCount++;
+        if (p.status === 'Completed') acc.totalSuccess++;
+        return acc;
+    }, { disbursed: 0, pending: 0, failedCount: 0, totalSuccess: 0 });
+
+    const totalAttempts = totals.totalSuccess + totals.failedCount;
+    const successRate = totalAttempts > 0 ? (totals.totalSuccess / totalAttempts) * 100 : 100;
+
     return (
         <div className="min-h-screen bg-background pb-20">
             <PageHeader
@@ -81,9 +92,9 @@ export function PaymentsReport() {
 
             <div className="px-10">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
-                    <PaymentStatCard label="Total Disbursed" value="$7,650.50" sub="Last 30 days" color="primary" />
-                    <PaymentStatCard label="Pending Payouts" value="$1,800.00" sub="Awaiting approval" color="amber" />
-                    <PaymentStatCard label="Success Rate" value="94.2%" sub="Across all methods" color="emerald" />
+                    <PaymentStatCard label="Total Disbursed" value={`$${totals.disbursed.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} sub="Completed Payouts" color="primary" />
+                    <PaymentStatCard label="Pending Payouts" value={`$${totals.pending.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} sub="Awaiting Approval" color="amber" />
+                    <PaymentStatCard label="Success Rate" value={`${successRate.toFixed(1)}%`} sub="Transaction Health" color="emerald" />
                 </div>
 
                 <Card noPadding title="Transaction Log" className="shadow-2xl overflow-hidden"

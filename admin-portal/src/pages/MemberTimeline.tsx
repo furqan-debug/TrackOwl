@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Clock, Mouse, Keyboard, Globe, Camera, Search, User } from 'lucide-react';
+import { Clock, Mouse, Keyboard, Globe, Camera, Search, User, X } from 'lucide-react';
+import { SecureImage } from '../components/ui/SecureImage';
 
 interface MemberInfo {
     id: string;
@@ -215,9 +216,19 @@ export function MemberTimeline() {
             {/* Lightbox */}
             {enlargedScreenshot && (
                 <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-6" onClick={() => setEnlargedScreenshot(null)}>
-                    <div className="max-w-5xl w-full" onClick={e => e.stopPropagation()}>
-                        <img src={enlargedScreenshot} alt="Screenshot Fullsize" className="w-full object-contain rounded-xl shadow-2xl" />
-                        <p className="text-white/60 text-sm text-center mt-4">Click anywhere outside the image to close</p>
+                    <div className="max-w-5xl w-full relative" onClick={e => e.stopPropagation()}>
+                        <button 
+                            onClick={() => setEnlargedScreenshot(null)}
+                            className="absolute -top-12 right-0 text-white/60 hover:text-white transition-colors"
+                        >
+                            <X className="w-8 h-8" />
+                        </button>
+                        <SecureImage 
+                            path={enlargedScreenshot} 
+                            alt="Screenshot Fullsize" 
+                            className="w-full object-contain rounded-xl shadow-2xl" 
+                        />
+                        <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.2em] text-center mt-6">Secure Encrypted Stream</p>
                     </div>
                 </div>
             )}
@@ -267,8 +278,12 @@ function TimelineNode({ event, onImageClick }: { event: TimelineEvent, onImageCl
                         <span className="font-semibold text-slate-800">{timeStr}</span>
                         <span className="text-slate-500 ml-3">Captured screenshot</span>
                     </div>
-                    <button onClick={() => onImageClick(event.data.file_url)} className="block relative w-full max-w-md aspect-video rounded-xl overflow-hidden border border-slate-200 group">
-                        <img src={event.data.file_url} alt="Screenshot Thumbnail" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <button onClick={() => onImageClick(event.data.file_url)} className="block relative w-full max-w-md aspect-video rounded-xl overflow-hidden border border-slate-200 group bg-slate-50">
+                        <SecureImage 
+                            path={event.data.file_url} 
+                            alt="Screenshot Thumbnail" 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                        />
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors" />
                     </button>
                 </div>

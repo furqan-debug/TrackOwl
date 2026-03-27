@@ -1,5 +1,6 @@
 import { Camera, Maximize2, ShieldCheck } from 'lucide-react';
 import { Card } from '../ui';
+import { SecureImage } from '../ui/SecureImage';
 
 interface ScreenshotGalleryProps {
     screenshots: any[];
@@ -21,10 +22,10 @@ export function ScreenshotGallery({ screenshots, onSelectImage }: ScreenshotGall
                         <div 
                             key={ss.id}
                             onClick={() => onSelectImage(ss)}
-                            className="group relative rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary/50 transition-all aspect-video cursor-pointer shadow-sm hover:shadow-md"
+                            className="group relative rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 transition-all aspect-video cursor-pointer shadow-sm hover:shadow-md"
                         >
-                            <img 
-                                src={ss.file_url} 
+                            <SecureImage 
+                                path={ss.file_url} 
                                 alt="Surveillance Capture" 
                                 className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
                             />

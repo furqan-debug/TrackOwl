@@ -8,6 +8,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { PageLayout, Card } from '../components/ui';
 import { supabase } from '../lib/supabase';
+import { SecureImage } from '../components/ui/SecureImage';
 import clsx from 'clsx';
 
 export function ProfilePage() {
@@ -57,8 +58,8 @@ export function ProfilePage() {
 
         try {
             const fileExt = file.name.split('.').pop();
-            const fileName = `${profile.id}_${Math.random()}.${fileExt}`;
-            const filePath = `avatars/${fileName}`;
+            const fileName = `${Date.now()}.${fileExt}`;
+            const filePath = `${profile.organization_id}/${profile.id}/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
                 .from('avatars')
@@ -66,17 +67,14 @@ export function ProfilePage() {
 
             if (uploadError) throw uploadError;
 
-            const { data: { publicUrl } } = supabase.storage
-                .from('avatars')
-                .getPublicUrl(filePath);
-
+            // Store only the relative path in the database
             const { error: updateError } = await supabase
                 .from('members')
-                .update({ avatar_url: publicUrl })
+                .update({ avatar_url: filePath })
                 .eq('id', profile.id);
 
             if (updateError) throw updateError;
-
+            
             await refreshProfile();
         } catch (err: any) {
             setError(err.message);
@@ -122,7 +120,12 @@ export function ProfilePage() {
                         <div className="w-32 h-32 rounded-xl bg-surface-subtle p-1 shadow-sm overflow-hidden group/avatar border border-border">
                             <div className="w-full h-full rounded-lg bg-surface-solid overflow-hidden relative">
                                 {profile?.avatar_url ? (
-                                    <img src={profile.avatar_url} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover/avatar:scale-105" />
+                                    <SecureImage 
+                                        path={profile.avatar_url} 
+                                        bucket="avatars"
+                                        alt="" 
+                                        className="w-full h-full object-cover transition-transform duration-500 group-hover/avatar:scale-105" 
+                                    />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-primary text-4xl font-bold bg-primary/5">
                                         {profile?.full_name?.charAt(0) || user?.email?.charAt(0) || '?'}
