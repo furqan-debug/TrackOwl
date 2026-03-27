@@ -181,6 +181,9 @@ pub fn get_browser_domain(app_name: &str, title: &str) -> String {
 
 #[cfg(target_os = "windows")]
 fn get_url_via_powershell() -> Option<String> {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+
     let ps_script = r#"
 Add-Type -AssemblyName UIAutomationClient
 Add-Type -AssemblyName UIAutomationTypes
@@ -201,6 +204,7 @@ exit 1
 "#;
 
     let output = std::process::Command::new("powershell")
+        .creation_flags(CREATE_NO_WINDOW)
         .args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", ps_script])
         .output()
         .ok()?;
