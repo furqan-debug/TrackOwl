@@ -91,9 +91,14 @@ pub fn supabase_post(
         req = req.set("Prefer", p);
     }
 
-    req.send_string(body)
-        .map_err(|e| format!("Supabase POST error: {}", e))
-        .and_then(|resp| resp.into_string().map_err(|e| e.to_string()))
+    match req.send_string(body) {
+        Ok(resp) => resp.into_string().map_err(|e| e.to_string()),
+        Err(ureq::Error::Status(code, resp)) => {
+            let body = resp.into_string().unwrap_or_else(|_| "Unknown error body".to_string());
+            Err(format!("Supabase POST error ({}): {}", code, body))
+        }
+        Err(e) => Err(format!("Supabase POST transport error: {}", e)),
+    }
 }
 
 /// PATCH a Supabase PostgREST row by filter.
@@ -115,9 +120,14 @@ pub fn supabase_patch(
         req = req.set("Authorization", &format!("Bearer {}", token));
     }
 
-    req.send_string(body)
-        .map_err(|e| format!("Supabase PATCH error: {}", e))
-        .and_then(|resp| resp.into_string().map_err(|e| e.to_string()))
+    match req.send_string(body) {
+        Ok(resp) => resp.into_string().map_err(|e| e.to_string()),
+        Err(ureq::Error::Status(code, resp)) => {
+            let body = resp.into_string().unwrap_or_else(|_| "Unknown error body".to_string());
+            Err(format!("Supabase PATCH error ({}): {}", code, body))
+        }
+        Err(e) => Err(format!("Supabase PATCH transport error: {}", e)),
+    }
 }
 
 /// GET from a Supabase PostgREST endpoint.
