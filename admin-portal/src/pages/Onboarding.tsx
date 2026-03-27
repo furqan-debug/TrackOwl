@@ -30,8 +30,9 @@ export function Onboarding() {
     const [orgName, setOrgName] = useState('');
     const [orgSize, setOrgSize] = useState('1-10');
     const [industry, setIndustry] = useState('');
+    const [syncError, setSyncError] = useState(false);
 
-    // Failsafe: If user is already active, skip to the last step immediately
+    // Skip to Step 3 if already active
     useEffect(() => {
         if (profile?.status === 'Active' && profile?.organization_id) {
             setStep(3);
@@ -71,24 +72,26 @@ export function Onboarding() {
 
             if (orgError) throw orgError;
 
-            // 2. Update Member Record
-            if (profile?.email && orgData) {
+            // 2. Update Member Record (USE ID instead of Email for absolute precision)
+            if (profile?.id && orgData) {
                 const { error: memberError } = await supabase
                     .from('members')
                     .update({
                         status: 'Active',
                         organization_id: orgData.id
                     })
-                    .eq('email', profile.email);
+                    .eq('id', profile.id);
 
                 if (memberError) throw memberError;
                 
                 // 3. Force Sync Profile
-                const updatedProfile = await refreshProfile();
-                
-                // If the profile fetch didn't reflect the change yet (unlikely but possible), 
-                // we'll still show step 3, and the useEffect will catch it later if it re-renders.
-                console.log('Profile synced:', updatedProfile?.status);
+                const updated = await refreshProfile();
+                if (updated?.status !== 'Active') {
+                    console.warn('Profile sync lag detected. Retrying...');
+                    // Try one more time after a tiny delay
+                    await new Promise(r => setTimeout(r, 500));
+                    await refreshProfile();
+                }
             }
 
             setStep(3);
@@ -105,6 +108,20 @@ export function Onboarding() {
         { id: 2, label: 'Billing' },
         { id: 3, label: 'Finalize' }
     ];
+
+    const handleFinalLaunch = async () => {
+        setLoading(true);
+        // Final sanity check before navigating to ensure the ProtectedRoute won't catch them
+        const finalProfile = await refreshProfile();
+        
+        if (finalProfile?.status === 'Active' && finalProfile?.organization_id) {
+            navigate('/dashboard');
+        } else {
+            setSyncError(true);
+            setLoading(false);
+            console.error('Final sync check failed. Profile still not active:', finalProfile);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center">
@@ -304,17 +321,24 @@ export function Onboarding() {
                                 </div>
                                 
                                 <h1 className="text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">Organization Created</h1>
-                                <p className="text-slate-500 mb-12 text-lg font-medium">
+                                <p className="text-slate-500 mb-8 text-lg font-medium">
                                     Welcome home. <br/>
                                     <strong>{orgName || 'Your Workspace'}</strong> is ready for action.
                                 </p>
+
+                                {syncError && (
+                                    <div className="mb-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 text-amber-600 text-[10px] font-bold uppercase tracking-widest animate-in shake duration-500">
+                                        Sync delay detected. Please try again in a moment.
+                                    </div>
+                                )}
                                 
                                 <Button
-                                    onClick={() => navigate('/dashboard')}
+                                    onClick={handleFinalLaunch}
+                                    disabled={loading}
                                     className="w-full py-6 bg-blue-600 hover:bg-black shadow-2xl shadow-blue-600/10 rounded-2xl font-bold group text-white border-0 transition-all duration-300 mb-6"
                                 >
-                                    Launch Dashboard
-                                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
+                                    {loading ? 'Verifying Link...' : 'Launch Dashboard'}
+                                    {!loading && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />}
                                 </Button>
                                 
                                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Operational Sync Complete</p>
