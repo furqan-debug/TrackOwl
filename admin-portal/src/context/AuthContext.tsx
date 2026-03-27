@@ -19,7 +19,7 @@ interface AuthContextType {
     profile: MemberProfile | null;
     loading: boolean;
     error: string | null;
-    refreshProfile: () => Promise<void>;
+    refreshProfile: () => Promise<MemberProfile | null>;
     signOut: () => Promise<void>;
 }
 
@@ -95,17 +95,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await supabase.auth.signOut();
     };
 
-    const refreshProfile = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user?.email) {
-            const { data: member } = await supabase
-                .from('members')
-                .select('*')
-                .ilike('email', session.user.email)
-                .single();
-            setProfile(member);
-        } else {
+    const refreshProfile = async (): Promise<MemberProfile | null> => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user?.email) {
+                const { data: member, error: memberError } = await supabase
+                    .from('members')
+                    .select('*')
+                    .ilike('email', session.user.email)
+                    .single();
+                
+                if (memberError) throw memberError;
+                
+                setProfile(member);
+                setLoading(false);
+                return member;
+            }
             setProfile(null);
+            setLoading(false);
+            return null;
+        } catch (err: any) {
+            console.error('Error in refreshProfile:', err);
+            setError(err.message);
+            return null;
         }
     };
 

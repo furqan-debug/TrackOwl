@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +31,13 @@ export function Onboarding() {
     const [orgSize, setOrgSize] = useState('1-10');
     const [industry, setIndustry] = useState('');
 
+    // Failsafe: If user is already active, skip to the last step immediately
+    useEffect(() => {
+        if (profile?.status === 'Active' && profile?.organization_id) {
+            setStep(3);
+        }
+    }, [profile]);
+
     const industries = [
         'Marketing Agency',
         'Software Development',
@@ -51,8 +58,7 @@ export function Onboarding() {
         setLoading(true);
 
         try {
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
+            // 1. Create Organization
             const { data: orgData, error: orgError } = await supabase
                 .from('organizations')
                 .insert({
@@ -65,6 +71,7 @@ export function Onboarding() {
 
             if (orgError) throw orgError;
 
+            // 2. Update Member Record
             if (profile?.email && orgData) {
                 const { error: memberError } = await supabase
                     .from('members')
@@ -75,13 +82,19 @@ export function Onboarding() {
                     .eq('email', profile.email);
 
                 if (memberError) throw memberError;
-                await refreshProfile();
+                
+                // 3. Force Sync Profile
+                const updatedProfile = await refreshProfile();
+                
+                // If the profile fetch didn't reflect the change yet (unlikely but possible), 
+                // we'll still show step 3, and the useEffect will catch it later if it re-renders.
+                console.log('Profile synced:', updatedProfile?.status);
             }
 
             setStep(3);
-        } catch (err) {
+        } catch (err: any) {
             console.error('Onboarding error:', err);
-            alert('Setup failed. Please try again.');
+            alert(err.message || 'Setup failed. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -96,7 +109,6 @@ export function Onboarding() {
     return (
         <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center">
             
-            {/* Minimal Header */}
             <div className="w-full max-w-[1200px] px-8 pt-8 flex items-center justify-between">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
                     <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
@@ -111,7 +123,6 @@ export function Onboarding() {
 
             <div className="flex-1 w-full max-w-[1210px] grid lg:grid-cols-2 gap-12 items-center px-8 pb-12">
                 
-                {/* Left Side: Context/Info (Desktop only or stack) */}
                 <div className="hidden lg:flex flex-col space-y-8 pr-12">
                     <div className="space-y-4">
                         <h1 className="text-5xl font-extrabold text-slate-900 leading-[1.1] tracking-tight">
@@ -150,11 +161,9 @@ export function Onboarding() {
                     </div>
                 </div>
 
-                {/* Right Side: The Form Card */}
                 <div className="w-full max-w-[520px] mx-auto">
                     <Card className="p-8 md:p-12 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] bg-white border-slate-200 rounded-[40px] relative overflow-hidden">
                         
-                        {/* Internal Navigation Bar */}
                         <div className="flex items-center gap-4 mb-10 overflow-x-auto pb-1 no-scrollbar">
                             {steps.map((s) => (
                                 <div key={s.id} className="flex items-center gap-2 group transition-all shrink-0">
@@ -271,7 +280,7 @@ export function Onboarding() {
                                         <p className="text-xs font-bold text-slate-900 mb-0.5">Stripe Secure Connection</p>
                                         <p className="text-[10px] text-slate-500 uppercase tracking-widest">Connect to finalize setup</p>
                                     </div>
-                                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
                                 </div>
 
                                 <Button
@@ -295,9 +304,9 @@ export function Onboarding() {
                                 </div>
                                 
                                 <h1 className="text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">Organization Created</h1>
-                                <p className="text-slate-500 mb-12 text-lg">
-                                    Welcome, {profile?.full_name?.split(' ')[0]}. <br/>
-                                    <strong>{orgName}</strong> is ready for deployment.
+                                <p className="text-slate-500 mb-12 text-lg font-medium">
+                                    Welcome home. <br/>
+                                    <strong>{orgName || 'Your Workspace'}</strong> is ready for action.
                                 </p>
                                 
                                 <Button
@@ -308,7 +317,7 @@ export function Onboarding() {
                                     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
                                 </Button>
                                 
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Deployment: Production 2.0</p>
+                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Operational Sync Complete</p>
                             </div>
                         )}
 
