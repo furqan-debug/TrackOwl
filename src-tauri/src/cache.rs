@@ -136,7 +136,7 @@ pub fn mark_synced(conn: &Connection, ids: &[i64]) -> rusqlite::Result<()> {
         .map(|dt| dt.to_rfc3339())
         .unwrap_or_default();
     conn.execute(
-        "DELETE FROM activity_samples WHERE synced = 1 AND timestamp < ?1",
+        "DELETE FROM activity_samples WHERE synced = 1 AND recorded_at < ?1",
         params![cutoff],
     )?;
     Ok(())

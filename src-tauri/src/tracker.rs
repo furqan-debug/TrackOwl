@@ -375,7 +375,7 @@ pub fn start_screenshot_loop(
                     let body = serde_json::json!({
                         "session_id": session_id,
                         "recorded_at": recorded_at,
-                        "file_url": public_url,
+                        "file_url": filename, // Store relative path
                     }).to_string();
                     let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
                 }
@@ -426,7 +426,7 @@ pub fn start_screenshot_loop(
                             let body = serde_json::json!({
                                 "session_id": session_id,
                                 "recorded_at": recorded_at,
-                                "file_url": public_url,
+                                "file_url": filename, // Store relative path for SecureImage to use
                             }).to_string();
                             
                             let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
