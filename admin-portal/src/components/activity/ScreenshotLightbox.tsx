@@ -1,4 +1,5 @@
 import { X, Clock } from 'lucide-react';
+import { SecureImage } from '../ui/SecureImage';
 
 interface ScreenshotLightboxProps {
     enlarged: any;
@@ -27,7 +28,7 @@ export function ScreenshotLightbox({ enlarged, setEnlarged }: ScreenshotLightbox
                 </div>
                 
                 <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-2xl animate-in zoom-in-95 duration-500">
-                    <img src={enlarged.file_url} alt="Full Screenshot" className="w-full h-auto" />
+                    <SecureImage path={enlarged.file_url} alt="Full Screenshot" className="w-full h-auto" />
                     <div className="absolute bottom-8 left-8 p-6 bg-black/60 border border-white/10 rounded-2xl backdrop-blur-xl animate-in slide-in-from-left-8 duration-1000 delay-300 shadow-xl">
                         <div className="flex items-center gap-5">
                             <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center border border-primary/30 shadow-inner">
