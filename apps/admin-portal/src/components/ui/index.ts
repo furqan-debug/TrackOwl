@@ -9,3 +9,5 @@ export { FilterSelect } from './FilterSelect';
 export { PageHeader } from './PageHeader';
 export { StatusBadge } from './StatusBadge';
 export { Modal } from './Modal';
+export { StatMetric } from './StatMetric';
+export { ScreenshotModal } from './ScreenshotModal';

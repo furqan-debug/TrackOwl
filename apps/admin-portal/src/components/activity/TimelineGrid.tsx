@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { getHubstaffBlocks, type HubstaffBlock } from '../../lib/dataUtils';
+import clsx from 'clsx';
 
 interface TimelineGridProps {
     samples: any[];
@@ -21,56 +22,62 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
 
     if (samples.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-12 text-text-muted">
-                <p className="text-sm font-medium italic opacity-60">No activity tracked for this period.</p>
+            <div className="flex flex-col items-center justify-center py-24 text-slate-300">
+                <p className="text-sm font-bold uppercase tracking-widest italic opacity-40">Operational silence detected.</p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex items-center justify-between px-2">
-                <h4 className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Daily Activity Timeline</h4>
-                <div className="flex items-center gap-4">
-                    <LegendItem color="bg-emerald-500" label="High" />
-                    <LegendItem color="bg-amber-400" label="Med" />
-                    <LegendItem color="bg-rose-500" label="Low" />
-                    <LegendItem color="bg-slate-200 dark:bg-slate-800 border border-border" label="Idle" />
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-12">
+            <div className="grid grid-cols-1 gap-10">
                 {hourGroups.map(([hour, hourBlocks]) => (
                     <div key={hour} className="group relative">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 text-right">
-                                <span className="text-[11px] font-bold text-text-primary tabular-nums">
+                        <div className="flex items-start gap-8">
+                            {/* Time Pillar */}
+                            <div className="w-20 pt-1 border-r border-slate-100 flex flex-col items-end pr-8 shrink-0">
+                                <span className="text-[14px] font-black text-slate-900 tabular-nums leading-none">
                                     {hour.toString().padStart(2, '0')}:00
+                                </span>
+                                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter mt-1">
+                                    {hour < 12 ? 'AM' : 'PM'}
                                 </span>
                             </div>
                             
-                            <div className="flex-1 grid grid-cols-6 gap-1.5 h-12">
+                            {/* Activity Blocks */}
+                            <div className="flex-1 grid grid-cols-6 gap-3 min-h-[56px]">
                                 {[0, 1, 2, 3, 4, 5].map(index => {
                                     const blockStartMin = index * 10;
                                     const block = hourBlocks.find(b => parseInt(b.startTime.split(':')[1]) === blockStartMin);
                                     
-                                    const label = block ? `${block.startTime}-${block.endTime}: ${block.minutesTracked}/10 mins, ${block.activityPercent}% activity` : '';
+                                    const hasData = !!block;
+                                    const intensity = block?.activityPercent ?? 0;
 
                                     return (
                                         <div 
                                             key={index}
-                                            title={label}
-                                            className={`
-                                                relative rounded-lg transition-all duration-300 cursor-help group/block
-                                                ${getBlockColor(block?.activityPercent ?? -1)}
-                                                ${block ? 'hover:scale-[1.02] hover:shadow-lg hover:z-10 ring-1 ring-inset ring-black/5' : 'opacity-20 border border-dashed border-border'}
-                                            `}
+                                            className={clsx(
+                                                "relative rounded-xl transition-all duration-300 flex flex-col items-center justify-center group/block overflow-hidden shadow-sm",
+                                                !hasData ? "bg-slate-50 border border-slate-100 border-dashed" : getBlockStyle(intensity)
+                                            )}
                                         >
-                                            {block && (
-                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                    <span className="text-[9px] font-black text-white/40 group-hover/block:text-white/70 transition-colors">
-                                                        {block.activityPercent}%
+                                            {hasData && (
+                                                <>
+                                                    <span className="text-[12px] font-black text-white leading-none z-10 transition-transform group-hover/block:scale-110">
+                                                        {intensity}%
                                                     </span>
+                                                    <span className="text-[8px] font-bold text-white/60 uppercase tracking-tighter mt-1 z-10 opacity-0 group-hover/block:opacity-100 transition-opacity">
+                                                        {block.minutesTracked}m
+                                                    </span>
+                                                    {/* Background Glow */}
+                                                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+                                                </>
+                                            )}
+                                            
+                                            {/* Tooltip HUD */}
+                                            {hasData && (
+                                                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover/block:opacity-100 transition-all pointer-events-none whitespace-nowrap z-20 shadow-xl border border-white/10 uppercase tracking-widest">
+                                                    {block.startTime} – {block.endTime}
                                                 </div>
                                             )}
                                         </div>
@@ -85,19 +92,9 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
     );
 }
 
-function getBlockColor(percent: number): string {
-    if (percent === -1) return 'bg-surface-subtle';
-    if (percent === 0) return 'bg-slate-200 dark:bg-slate-800';
-    if (percent < 30) return 'bg-rose-500 shadow-[0_0_15px_-5px_rgba(244,63,94,0.4)]';
-    if (percent < 70) return 'bg-amber-400 shadow-[0_0_15px_-5px_rgba(251,191,36,0.4)]';
-    return 'bg-emerald-500 shadow-[0_0_15px_-5px_rgba(16,185,129,0.4)]';
-}
-
-function LegendItem({ color, label }: { color: string, label: string }) {
-    return (
-        <div className="flex items-center gap-2">
-            <div className={`w-2.5 h-2.5 rounded-full ${color}`} />
-            <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">{label}</span>
-        </div>
-    );
+function getBlockStyle(percent: number): string {
+    if (percent === 0) return 'bg-slate-300 text-slate-500';
+    if (percent < 30) return 'bg-slate-900 text-white ring-1 ring-slate-800'; 
+    if (percent < 70) return 'bg-primary text-white shadow-[0_8px_20px_-8px_rgba(99,102,241,0.5)]';
+    return 'bg-indigo-600 text-white shadow-[0_8px_30px_-10px_rgba(79,70,229,0.7)]';
 }

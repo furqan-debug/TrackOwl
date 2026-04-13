@@ -5,10 +5,10 @@ import {
     Camera, TrendingUp, BarChart3, 
     Monitor, Globe, RefreshCw,
     ChevronLeft, ChevronRight,
-    MoreHorizontal, X, Download, Calendar as CalendarIcon
+    MoreHorizontal, Calendar as CalendarIcon
 } from 'lucide-react';
 import clsx from 'clsx';
-import { PageLayout, EmptyState, LoadingState, StatusBadge } from './ui';
+import { PageLayout, EmptyState, LoadingState, StatusBadge, StatMetric, ScreenshotModal } from './ui';
 import { SecureImage } from './ui/SecureImage';
 import { 
     getEffectiveEnd,
@@ -66,112 +66,6 @@ interface DashStats {
 }
 
 // ============================================================================
-// Subcomponents
-// ============================================================================
-
-function StatMetric({ icon, label, value, sub, trend }: { icon: React.ReactNode, label: string, value: string | number, sub: string, trend?: number }) {
-    return (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 group">
-            <div className="flex items-center justify-between mb-4">
-                <div className="p-2 rounded-lg bg-slate-50 text-slate-500 group-hover:text-primary group-hover:bg-primary/5 transition-colors">
-                    {icon}
-                </div>
-                {trend !== undefined && (
-                    <span className={clsx(
-                        "text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1",
-                        trend >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
-                    )}>
-                        {trend >= 0 ? "+" : ""}{trend}%
-                    </span>
-                )}
-            </div>
-            <div className="space-y-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
-                <div className="text-2xl font-bold text-slate-900 tracking-tight">{value}</div>
-                <p className="text-[11px] text-slate-500 font-medium">{sub}</p>
-            </div>
-        </div>
-    );
-}
-
-function ScreenshotModal({ screenshot, onClose }: { screenshot: any, onClose: () => void }) {
-    useEffect(() => {
-        const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') onClose();
-        };
-        window.addEventListener('keydown', handleEsc);
-        return () => window.removeEventListener('keydown', handleEsc);
-    }, [onClose]);
-
-    if (!screenshot) return null;
-
-    return (
-        <div 
-            className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-sm flex items-center justify-center p-4 md:p-10 animate-in fade-in duration-300"
-            onClick={onClose}
-        >
-            <div 
-                className="bg-white rounded-2xl shadow-2xl overflow-hidden w-full max-w-6xl max-h-full flex flex-col relative animate-in zoom-in-95 duration-300"
-                onClick={e => e.stopPropagation()}
-            >
-                {/* Header */}
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400">
-                            <Camera className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h3 className="text-sm font-bold text-slate-900">Enlarged Capture</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                Recorded at {new Date(screenshot.recordedAt).toLocaleTimeString()}
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <button className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-600 transition-colors">
-                            <Download className="w-5 h-5" />
-                        </button>
-                        <button 
-                            onClick={onClose}
-                            className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-rose-500 transition-colors"
-                        >
-                            <X className="w-5 h-5" />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 overflow-auto bg-slate-50 flex items-center justify-center p-6 min-h-0">
-                    <SecureImage 
-                        path={screenshot.path} 
-                        className="max-w-full max-h-full object-contain rounded-lg shadow-xl"
-                    />
-                </div>
-
-                {/* Footer */}
-                <div className="px-6 py-4 border-t border-slate-100 bg-white flex items-center justify-between shrink-0">
-                    <div className="flex items-center gap-6">
-                        <div className="flex flex-col">
-                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">Activity Intensity</span>
-                            <div className="flex items-center gap-2 mt-0.5">
-                                <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                                    <div className="h-full bg-primary" style={{ width: `${screenshot.activityPercent}%` }} />
-                                </div>
-                                <span className="text-[10px] font-black text-slate-700">{screenshot.activityPercent}%</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-slate-400 text-[9px] font-bold uppercase tracking-widest">
-                        <kbd className="px-1.5 py-0.5 rounded bg-slate-50 border border-slate-200 text-slate-500">ESC</kbd>
-                        to close
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// ============================================================================
 // Dashboard Main Component
 // ============================================================================
 
@@ -181,6 +75,7 @@ export function Dashboard() {
     const [enlargedScreenshot, setEnlargedScreenshot] = useState<any | null>(null);
     const dateInputRef = useRef<HTMLInputElement>(null);
     
+    // Date Range (Weekly) - Mon to Sun
     const [weekStart, setWeekStart] = useState(() => {
         const d = new Date();
         const day = d.getDay();
@@ -282,18 +177,21 @@ export function Dashboard() {
                 const userId = sessionToUserMap[sample.session_id];
                 const projectId = sessionToProjectMap[sample.session_id];
                 if (!userId) return;
+
                 const score = sample.activity_percent ?? (sample.idle ? 0 : 50);
                 if (!sample.idle) totalMins++;
                 activitySum += score;
                 activityCount++;
                 if (projectId) projectsWorked.add(projectId);
                 activeMemberIds.add(userId);
+
                 if (projectId) {
                     if (!projStats[projectId]) projStats[projectId] = { mins: 0, activitySum: 0, activityCount: 0 };
                     if (!sample.idle) projStats[projectId].mins++;
                     projStats[projectId].activitySum += score;
                     projStats[projectId].activityCount++;
                 }
+
                 if (sample.app_name) {
                     appStats[sample.app_name] = (appStats[sample.app_name] || 0) + 1;
                 }
@@ -307,7 +205,7 @@ export function Dashboard() {
                             id: ss.id,
                             path: ss.file_url,
                             recordedAt: ss.recorded_at,
-                            activityPercent: activitySamples.find(s => s.session_id === ss.session_id && Math.abs(new Date(s.recorded_at).getTime() - new Date(ss.recorded_at).getTime()) < 600000)?.activity_percent ?? 0
+                            activityPercent: activitySamples.find(s => s.session_id === ss.session_id && Math.abs(new Date(s.recorded_at).getTime() - new Date(ss.recorded_at).getTime()) < 600000)?.activity_percent ?? 50
                         });
                     }
                 }
@@ -337,17 +235,31 @@ export function Dashboard() {
                 return { id: m.id, fullName: m.full_name, email: m.email, projectName: activeSession ? (projectMap[activeSession.project_id]?.name || 'Unknown Project') : 'None', timeWorkedToday: dailyMins, status, lastActive: activeSession ? activeSession.started_at : m.id };
             }).sort((a,b) => (a.status === 'offline' ? 1 : 0) - (b.status === 'offline' ? 1 : 0));
 
-            setStats({ totalProductiveMinutes: totalMins, avgActivityScore: activityCount > 0 ? Math.round(activitySum / activityCount) : 0, projectsWorked: projectsWorked.size, activeMembers: activeMemberIds.size, totalScreenshots: screenshots?.length || 0 });
+            setStats({
+                totalProductiveMinutes: totalMins,
+                avgActivityScore: activityCount > 0 ? Math.round(activitySum / activityCount) : 0,
+                projectsWorked: projectsWorked.size,
+                activeMembers: activeMemberIds.size,
+                totalScreenshots: screenshots?.length || 0
+            });
+
             setUserActivity(Object.values(userRows).filter(r => r.screenshots.length > 0 || r.activityScore > 0));
             setOnlineMembers(online);
             setProjectActivity(Object.entries(projStats).map(([id, p]) => ({ id, name: projectMap[id]?.name || 'Unknown', minutes: p.mins, activityScore: p.activityCount > 0 ? Math.round(p.activitySum / p.activityCount) : 0, color: projectMap[id]?.color || '#6366f1' })).sort((a,b) => b.minutes - a.minutes));
+            
             const totalSamplesForApps = Object.values(appStats).reduce((a, b) => a + b, 0);
             setAppUsage(Object.entries(appStats).map(([name, count]) => ({ 
                 name, 
                 minutes: count, 
                 percent: totalSamplesForApps > 0 ? (count / totalSamplesForApps) * 100 : 0 
             })).sort((a,b) => b.minutes - a.minutes).slice(0, 10));
-        } catch (error) { console.error('Dashboard error:', error); } finally { setLoading(false); setRefreshing(false); }
+
+        } catch (error) {
+            console.error('Dashboard error:', error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
     }, [weekStart, weekEnd]);
 
     useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
@@ -391,14 +303,21 @@ export function Dashboard() {
             }
         >
             <div className="flex flex-col gap-6 pb-12">
+                
+                {/* 📊 KPI Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <StatMetric icon={<TrendingUp className="w-5 h-5" />} label="Avg Activity" value={`${stats.avgActivityScore}%`} sub="Overall team engagement" trend={3} />
                     <StatMetric icon={<Clock className="w-5 h-5" />} label="Time Tracked" value={formatDuration(stats.totalProductiveMinutes)} sub="Billable productive hours" trend={5} />
                     <StatMetric icon={<FolderOpen className="w-5 h-5" />} label="Active Projects" value={stats.projectsWorked} sub="Resources this period" />
                     <StatMetric icon={<Users className="w-5 h-5" />} label="Active Members" value={stats.activeMembers} sub="Personnel contributing" />
                 </div>
+
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+                    
+                    {/* 🖥️ Left Content */}
                     <div className="xl:col-span-8 space-y-6">
+                        
+                        {/* Recent Activity Table-Grid */}
                         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                                 <h3 className="text-sm font-bold text-slate-800">Recent Activity</h3>
@@ -424,11 +343,17 @@ export function Dashboard() {
                                             </div>
                                             <div className="flex gap-4 overflow-x-auto no-scrollbar py-1">
                                                 {user.screenshots.map((ss) => (
-                                                    <div key={ss.id} className="relative group flex-shrink-0" onClick={() => setEnlargedScreenshot(ss)}>
+                                                    <div 
+                                                        key={ss.id} 
+                                                        className="relative group flex-shrink-0"
+                                                        onClick={() => setEnlargedScreenshot(ss)}
+                                                    >
                                                         <div className="w-44 aspect-video bg-slate-50 border border-slate-200 rounded-lg overflow-hidden relative group-hover:border-primary transition-colors cursor-zoom-in">
                                                             <SecureImage path={ss.path} className="w-full h-full object-cover opacity-90 group-hover:opacity-100" />
                                                             <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <p className="text-[9px] font-bold text-white uppercase tracking-tighter">{new Date(ss.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                                                <p className="text-[9px] font-bold text-white uppercase tracking-tighter">
+                                                                    {new Date(ss.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                </p>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -439,6 +364,8 @@ export function Dashboard() {
                                 )}
                             </div>
                         </div>
+
+                        {/* Who's Online Table */}
                         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
                                 <h3 className="text-sm font-bold text-slate-800">Who's Online</h3>
@@ -470,14 +397,22 @@ export function Dashboard() {
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     {member.projectName !== 'None' ? (
-                                                        <div className="px-2 py-0.5 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold rounded w-fit">{member.projectName}</div>
+                                                        <div className="px-2 py-0.5 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold rounded w-fit">
+                                                            {member.projectName}
+                                                        </div>
                                                     ) : (
                                                         <span className="text-[10px] font-bold text-slate-300 uppercase italic">Standby</span>
                                                     )}
                                                 </td>
-                                                <td className="px-6 py-4 text-right font-bold text-slate-700 text-[11px]">{formatDuration(member.timeWorkedToday)}</td>
+                                                <td className="px-6 py-4 text-right font-bold text-slate-700 text-[11px]">
+                                                    {formatDuration(member.timeWorkedToday)}
+                                                </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <div className={clsx("inline-flex items-center gap-1.5 px-2 py-1 rounded border text-[9px] font-bold uppercase tracking-widest shadow-sm", member.status === 'working' ? "bg-emerald-50 text-emerald-700 border-emerald-100" : member.status === 'idle' ? "bg-amber-50 text-amber-700 border-amber-100" : "bg-slate-50 text-slate-400 border-slate-100")}>
+                                                    <div className={clsx(
+                                                        "inline-flex items-center gap-1.5 px-2 py-1 rounded border text-[9px] font-bold uppercase tracking-widest shadow-sm",
+                                                        member.status === 'working' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+                                                        member.status === 'idle' ? "bg-amber-50 text-amber-700 border-amber-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                                                    )}>
                                                         <div className={clsx("w-1.5 h-1.5 rounded-full", member.status === 'working' ? "bg-emerald-500 animate-pulse" : member.status === 'idle' ? "bg-amber-500" : "bg-slate-300")} />
                                                         {member.status}
                                                     </div>
@@ -489,25 +424,50 @@ export function Dashboard() {
                             </div>
                         </div>
                     </div>
+
+                    {/* 📊 Right Sidebar */}
                     <div className="xl:col-span-4 space-y-6">
+                        
+                        {/* Project Velocity */}
                         <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
-                            <h3 className="text-sm font-bold text-slate-800 mb-6 flex items-center justify-between">Project Velocity<BarChart3 className="w-4 h-4 text-slate-300" /></h3>
+                            <h3 className="text-sm font-bold text-slate-800 mb-6 flex items-center justify-between">
+                                Project Velocity
+                                <BarChart3 className="w-4 h-4 text-slate-300" />
+                            </h3>
                             <div className="space-y-6">
                                 {projectActivity.length === 0 ? (
                                     <EmptyState icon={<Camera />} title="No data" />
                                 ) : (
                                     projectActivity.map((proj) => (
                                         <div key={proj.id} className="space-y-2">
-                                            <div className="flex items-center justify-between text-[11px] font-bold"><span className="text-slate-700 tracking-tight">{proj.name}</span><span className="text-slate-400">{proj.activityScore}%</span></div>
-                                            <div className="h-1 bg-slate-100 rounded-full overflow-hidden"><div className="h-full rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, (proj.minutes / stats.totalProductiveMinutes) * 100)}%`, backgroundColor: proj.color }} /></div>
-                                            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-tighter"><span>{formatDuration(proj.minutes)}</span><span>{Math.round((proj.minutes / stats.totalProductiveMinutes) * 100)}%</span></div>
+                                            <div className="flex items-center justify-between text-[11px] font-bold">
+                                                <span className="text-slate-700 tracking-tight">{proj.name}</span>
+                                                <span className="text-slate-400">{proj.activityScore}%</span>
+                                            </div>
+                                            <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                <div 
+                                                    className="h-full rounded-full transition-all duration-1000" 
+                                                    style={{ 
+                                                        width: `${Math.min(100, (proj.minutes / stats.totalProductiveMinutes) * 100)}%`,
+                                                        backgroundColor: proj.color
+                                                    }} 
+                                                />
+                                            </div>
+                                            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                                                <span>{formatDuration(proj.minutes)}</span>
+                                                <span>{Math.round((proj.minutes / stats.totalProductiveMinutes) * 100)}%</span>
+                                            </div>
                                         </div>
                                     ))
                                 )}
                             </div>
                         </div>
+
+                        {/* App Ecosystem */}
                         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-100"><h3 className="text-sm font-bold text-slate-800">Top Ecosystem Tools</h3></div>
+                            <div className="px-6 py-4 border-b border-slate-100">
+                                <h3 className="text-sm font-bold text-slate-800">Top Ecosystem Tools</h3>
+                            </div>
                             <div className="divide-y divide-slate-50">
                                 {appUsage.length === 0 ? (
                                     <EmptyState icon={<Monitor />} title="No data" />
@@ -515,8 +475,17 @@ export function Dashboard() {
                                     appUsage.map((app, i) => (
                                         <div key={i} className="flex items-center justify-between px-6 py-3.5 hover:bg-slate-50 transition-colors">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">{app.name.toLowerCase().includes('chrome') ? <Globe className="w-4 h-4 text-sky-500" /> : <Monitor className="w-4 h-4" />}</div>
-                                                <div className="flex flex-col"><span className="text-xs font-bold text-slate-700 leading-none">{app.name}</span><span className="text-[10px] text-slate-400 font-medium mt-1">{formatDuration(app.minutes)}</span></div>
+                                                <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">
+                                                    {(app.name.toLowerCase().includes('chrome') || app.name.toLowerCase().includes('browser')) ? (
+                                                        <Globe className="w-4 h-4 text-sky-500" />
+                                                    ) : (
+                                                        <Monitor className="w-4 h-4" />
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-slate-700 leading-none">{app.name}</span>
+                                                    <span className="text-[10px] text-slate-400 font-medium mt-1">{formatDuration(app.minutes)}</span>
+                                                </div>
                                             </div>
                                             <span className="text-[11px] font-bold text-slate-900">{Math.round(app.percent)}%</span>
                                         </div>
@@ -524,10 +493,16 @@ export function Dashboard() {
                                 )}
                             </div>
                         </div>
+
                     </div>
                 </div>
+
             </div>
-            <ScreenshotModal screenshot={enlargedScreenshot} onClose={() => setEnlargedScreenshot(null)} />
+
+            <ScreenshotModal 
+                screenshot={enlargedScreenshot} 
+                onClose={() => setEnlargedScreenshot(null)} 
+            />
         </PageLayout>
     );
 }

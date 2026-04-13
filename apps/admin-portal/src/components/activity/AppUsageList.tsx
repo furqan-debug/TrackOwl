@@ -1,5 +1,5 @@
-import { Monitor } from 'lucide-react';
-import { Card } from '../ui';
+import { Monitor, Globe } from 'lucide-react';
+import { EmptyState } from '../ui';
 
 interface AppUsageListProps {
     samples: any[];
@@ -8,41 +8,74 @@ interface AppUsageListProps {
 export function AppUsageList({ samples }: AppUsageListProps) {
     const list = groupByApp(samples);
 
+    if (list.length === 0) {
+        return (
+            <div className="py-20 flex flex-col items-center justify-center">
+                <EmptyState icon={<Monitor />} title="No data detected" />
+            </div>
+        );
+    }
+
     return (
-        <Card title="App Usage">
-            <div className="space-y-6 mt-4 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
-                {list.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-400 py-24">
-                        <Monitor className="w-10 h-10 mb-4 opacity-50" />
-                        <p className="text-sm font-medium">No stats recorded</p>
-                    </div>
-                ) : (
-                    list.map(({ app, percent }) => (
-                        <div key={app} className="group cursor-default">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate max-w-[180px] leading-tight">{app || 'System'}</span>
-                                <span className="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-md transition-colors">
-                                    {percent}%
+        <div className="divide-y divide-slate-100 h-full overflow-auto no-scrollbar">
+            {list.map(({ app, count, percent }, i) => (
+                <div key={i} className="flex items-center justify-between px-8 py-5 hover:bg-slate-50 transition-all duration-200 group">
+                    <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:border-primary/20 group-hover:text-primary transition-all shadow-sm">
+                            {(app.toLowerCase().includes('chrome') || app.toLowerCase().includes('browser')) ? (
+                                <Globe className="w-5 h-5 text-sky-500" />
+                            ) : (
+                                <Monitor className="w-5 h-5" />
+                            )}
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-sm font-black text-slate-900 leading-none truncate max-w-[180px] uppercase tracking-tight">
+                                {app}
+                            </span>
+                            <div className="flex items-center gap-2 mt-1.5">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">
+                                    {count} samples
+                                </span>
+                                <span className="w-1 h-1 rounded-full bg-slate-200" />
+                                <span className="text-[10px] text-primary/60 font-black uppercase tracking-widest leading-none">
+                                    Active
                                 </span>
                             </div>
-                            <div className="h-2 bg-black/[0.03] rounded-full overflow-hidden w-full p-[1px]">
-                                <div 
-                                    className="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-[1500ms] ease-out shadow-sm shadow-primary/10"
-                                    style={{ width: `${percent}%` }} 
-                                />
-                            </div>
                         </div>
-                    ))
-                )}
-            </div>
-        </Card>
+                    </div>
+                    <div className="flex flex-col items-end gap-1.5">
+                        <span className="text-xs font-black text-slate-900 leading-none">
+                            {percent}%
+                        </span>
+                        <div className="w-12 h-1 bg-slate-100 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-primary transition-all duration-1000" 
+                                style={{ width: `${percent}%` }} 
+                            />
+                        </div>
+                    </div>
+                </div>
+            ))}
+        </div>
     );
 }
 
 function groupByApp(samples: any[]) {
+    if (!samples || samples.length === 0) return [];
+    
     const map: Record<string, number> = {};
-    samples.forEach(s => { const app = s.app_name || 'System'; map[app] = (map[app] || 0) + 1; });
+    samples.forEach(s => { 
+        const app = s.app_name || 'System'; 
+        map[app] = (map[app] || 0) + 1; 
+    });
+    
     const total = samples.length;
-    return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, 10)
-        .map(([app, count]) => ({ app, count, percent: Math.round((count / total) * 100) }));
+    return Object.entries(map)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 15)
+        .map(([app, count]) => ({ 
+            app, 
+            count, 
+            percent: Math.round((count / total) * 100) 
+        }));
 }
