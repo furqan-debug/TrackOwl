@@ -28,37 +28,37 @@ export function PageLayout({
         maxWidth === '7xl' ? 'max-w-7xl' : maxWidth === '6xl' ? 'max-w-6xl' : '';
 
     return (
-        <div className={clsx("p-6 md:p-10 mx-auto w-full animate-in fade-in slide-in-from-top-4 duration-700", maxClass)}>
+        <div className={clsx("p-6 md:px-10 md:py-10 w-full animate-in fade-in slide-in-from-top-4 duration-700", maxClass)}>
             {(title || actions) && (
-                <div className="mb-6 md:mb-8">
+                <div className="mb-10 md:mb-12">
                     <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                        <div>
+                        <div className="space-y-2">
                             {backButton && (
                                 <button
                                     onClick={backButton.onClick}
-                                    className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-widest hover:text-primary transition-colors mb-4 group"
+                                    className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors mb-6 group"
                                 >
-                                    <span className="p-1 rounded-md bg-surface-subtle border border-border group-hover:border-primary transition-colors">
+                                    <span className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 group-hover:border-primary transition-colors">
                                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                                             <path d="M19 12H5M12 19l-7-7 7-7"/>
                                         </svg>
                                     </span>
-                                    {backButton.label || 'Back'}
+                                    {backButton.label || 'Project Backtrack'}
                                 </button>
                             )}
                             {title && (
-                                <h1 className="text-3xl md:text-4xl font-bold text-text-primary tracking-tight mb-4 text-balance">
+                                <h1 className="text-3xl md:text-[42px] font-black text-slate-900 tracking-tighter uppercase leading-[0.85] mb-2">
                                     {title}
                                 </h1>
                             )}
                             {description && (
-                                <p className="text-sm font-medium text-text-muted max-w-2xl opacity-70 leading-relaxed">
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] max-w-2xl leading-relaxed opacity-80">
                                     {description}
                                 </p>
                             )}
                         </div>
                         {actions && (
-                            <div className="flex items-center gap-4 shrink-0">
+                            <div className="flex items-center gap-4 shrink-0 pb-1">
                                 {actions}
                             </div>
                         )}

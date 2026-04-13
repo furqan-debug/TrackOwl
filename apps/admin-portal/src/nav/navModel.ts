@@ -32,14 +32,10 @@ export interface NavGroup {
 
 export const navStructure: NavGroup[] = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    {
-        name: 'Timesheets',
-        icon: Clock,
-        path: '/dashboard/timesheets',
-        children: [
-            { name: 'View Timesheets', path: '/dashboard/timesheets' },
-            { name: 'Approvals', path: '/dashboard/timesheets/approvals', badge: 'bolt', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
-        ],
+    { 
+        name: 'Timesheets', 
+        icon: Clock, 
+        path: '/dashboard/timesheets' 
     },
     {
         name: 'Activity',
@@ -57,15 +53,11 @@ export const navStructure: NavGroup[] = [
             { name: 'Highlights', path: '/dashboard/insights/highlights' },
         ],
     },
-    {
-        name: 'Project Management',
-        icon: FolderKanban,
-        allowedRoles: ['Admin', 'Manager', 'User', 'Viewer'],
-        children: [
-            { name: 'Projects', path: '/dashboard/projects' },
-            { name: 'Tasks', path: '/dashboard/projects/todos' },
-            { name: 'Clients', path: '/dashboard/projects/clients', allowedRoles: ['Admin', 'Manager', 'Viewer'] },
-        ],
+    { 
+        name: 'Projects', 
+        icon: FolderKanban, 
+        path: '/dashboard/projects',
+        allowedRoles: ['Admin', 'Manager', 'User', 'Viewer']
     },
     { name: 'Calendar', icon: CalendarIcon, path: '/dashboard/calendar' },
     {
@@ -88,9 +80,9 @@ export const navStructure: NavGroup[] = [
     {
         name: 'Settings',
         icon: Settings,
+        path: '/dashboard/settings',
         children: [
             { name: 'Org Settings', path: '/dashboard/settings' },
-            { name: 'Tracking', path: '/dashboard/settings/tracking' },
         ],
     },
 ];

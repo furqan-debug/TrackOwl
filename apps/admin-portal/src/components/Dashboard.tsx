@@ -5,20 +5,17 @@ import {
     Camera, TrendingUp, BarChart3, 
     Monitor, Globe, RefreshCw,
     ChevronLeft, ChevronRight,
-    MoreHorizontal, Calendar as CalendarIcon
+    MoreHorizontal, Calendar as CalendarIcon,
+    ArrowUpRight
 } from 'lucide-react';
 import clsx from 'clsx';
-import { PageLayout, EmptyState, LoadingState, StatusBadge, StatMetric, ScreenshotModal } from './ui';
+import { PageLayout, EmptyState, LoadingState, StatMetric, ScreenshotModal } from './ui';
 import { SecureImage } from './ui/SecureImage';
 import { 
     getEffectiveEnd,
     formatDuration,
     fetchAllActivitySamples
 } from '../lib/dataUtils';
-
-// ============================================================================
-// Types
-// ============================================================================
 
 interface UserActivityRow {
     userId: string;
@@ -65,17 +62,12 @@ interface DashStats {
     totalScreenshots: number;
 }
 
-// ============================================================================
-// Dashboard Main Component
-// ============================================================================
-
 export function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [enlargedScreenshot, setEnlargedScreenshot] = useState<any | null>(null);
     const dateInputRef = useRef<HTMLInputElement>(null);
     
-    // Date Range (Weekly) - Mon to Sun
     const [weekStart, setWeekStart] = useState(() => {
         const d = new Date();
         const day = d.getDay();
@@ -211,11 +203,11 @@ export function Dashboard() {
                 }
             });
 
-            Object.keys(userRows).forEach(uId => {
+            Object.entries(userRows).forEach(([uId, row]) => {
                 const userSamples = activitySamples.filter(s => sessionToUserMap[s.session_id] === uId);
                 if (userSamples.length > 0) {
                     const sum = userSamples.reduce((acc, s) => acc + (s.activity_percent ?? (s.idle ? 0 : 50)), 0);
-                    userRows[uId].activityScore = Math.round(sum / userSamples.length);
+                    row.activityScore = Math.round(sum / userSamples.length);
                 }
             });
 
@@ -269,22 +261,22 @@ export function Dashboard() {
     return (
         <PageLayout
             maxWidth="full"
-            title="Dashboard Overview"
-            description="Operational monitoring and team productivity summary."
+            title="Operational Dashboard"
+            description="Real-time monitoring of team trajectory and ecosystem dynamics."
             actions={
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center bg-white border border-slate-200 rounded-lg shadow-sm">
-                        <button onClick={() => navigateWeek('prev')} className="p-2 hover:bg-slate-50 border-r border-slate-200 transition-colors">
-                            <ChevronLeft className="w-4 h-4 text-slate-500" />
+                    <div className="flex items-center bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+                        <button onClick={() => navigateWeek('prev')} className="p-2.5 hover:bg-slate-50 border-r border-slate-100 transition-colors">
+                            <ChevronLeft className="w-4 h-4 text-slate-400" />
                         </button>
                         <div 
-                            className="relative px-4 py-1.5 min-w-[180px] text-center cursor-pointer hover:bg-slate-50 transition-colors group/date"
+                            className="relative px-5 py-2 min-w-[200px] text-center cursor-pointer hover:bg-slate-50 transition-all group/date"
                             onClick={() => dateInputRef.current?.showPicker()}
                         >
-                            <span className="text-xs font-semibold text-slate-700">
+                            <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
                                 {weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
-                            <CalendarIcon className="w-3 h-3 text-primary absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/date:opacity-100 transition-opacity" />
+                            <CalendarIcon className="w-3.5 h-3.5 text-slate-300 absolute right-3 top-1/2 -translate-y-1/2 group-hover/date:text-primary transition-colors" />
                             <input 
                                 ref={dateInputRef}
                                 type="date" 
@@ -292,68 +284,71 @@ export function Dashboard() {
                                 onChange={(e) => handleDateChange(e.target.value)}
                             />
                         </div>
-                        <button onClick={() => navigateWeek('next')} className="p-2 hover:bg-slate-50 border-l border-slate-200 transition-colors" disabled={weekEnd > new Date()}>
-                            <ChevronRight className="w-4 h-4 text-slate-500" />
+                        <button onClick={() => navigateWeek('next')} className="p-2.5 hover:bg-slate-50 border-l border-slate-100 transition-colors" disabled={weekEnd > new Date()}>
+                            <ChevronRight className="w-4 h-4 text-slate-400" />
                         </button>
                     </div>
-                    <button onClick={() => fetchDashboardData(true)} className={clsx("p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all text-slate-500", refreshing && "animate-spin text-primary")}>
+                    <button onClick={() => fetchDashboardData(true)} className={clsx("p-2.5 bg-white border border-slate-200 rounded-xl hover:border-slate-400 transition-all text-slate-400", refreshing && "animate-spin text-primary")}>
                         <RefreshCw className="w-4 h-4" />
                     </button>
                 </div>
             }
         >
-            <div className="flex flex-col gap-6 pb-12">
+            <div className="flex flex-col gap-8 pb-20">
                 
-                {/* 📊 KPI Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <StatMetric icon={<TrendingUp className="w-5 h-5" />} label="Avg Activity" value={`${stats.avgActivityScore}%`} sub="Overall team engagement" trend={3} />
-                    <StatMetric icon={<Clock className="w-5 h-5" />} label="Time Tracked" value={formatDuration(stats.totalProductiveMinutes)} sub="Billable productive hours" trend={5} />
-                    <StatMetric icon={<FolderOpen className="w-5 h-5" />} label="Active Projects" value={stats.projectsWorked} sub="Resources this period" />
-                    <StatMetric icon={<Users className="w-5 h-5" />} label="Active Members" value={stats.activeMembers} sub="Personnel contributing" />
+                {/* 📊 KPI Architecture */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                    <StatMetric icon={<TrendingUp className="w-5 h-5" />} label="Team Velocity" value={`${stats.avgActivityScore}%`} sub="Aggregate focus level" trend={3} />
+                    <StatMetric icon={<Clock className="w-5 h-5" />} label="Time Capital" value={formatDuration(stats.totalProductiveMinutes)} sub="Total billable yield" trend={5} />
+                    <StatMetric icon={<FolderOpen className="w-5 h-5" />} label="Live Portfolio" value={stats.projectsWorked} sub="Active project nodes" />
+                    <StatMetric icon={<Users className="w-5 h-5" />} label="Human Resources" value={stats.activeMembers} sub="Personnel in workflow" />
                 </div>
 
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
                     
-                    {/* 🖥️ Left Content */}
-                    <div className="xl:col-span-8 space-y-6">
+                    {/* 🖥️ Left Content: Activity Stream */}
+                    <div className="xl:col-span-8 space-y-8">
                         
-                        {/* Recent Activity Table-Grid */}
-                        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                                <h3 className="text-sm font-bold text-slate-800">Recent Activity</h3>
-                                <button className="text-xs font-semibold text-primary hover:underline">View All</button>
+                        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col min-h-[500px]">
+                            <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
+                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Recent Visual Verification</h3>
+                                <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1.5">
+                                    Expanded Timeline <ArrowUpRight className="w-3 h-3" />
+                                </button>
                             </div>
-                            <div className="divide-y divide-slate-100">
+                            <div className="divide-y divide-slate-50">
                                 {userActivity.length === 0 ? (
-                                    <EmptyState icon={<Camera />} title="No recent activity" description="Tracking data will appear here." className="py-20" />
+                                    <EmptyState icon={<Camera />} title="No data in stream" description="System is awaiting new activity signals." className="py-24" />
                                 ) : (
                                     userActivity.map((user) => (
-                                        <div key={user.userId} className="p-6 space-y-4">
+                                        <div key={user.userId} className="p-8 space-y-6 hover:bg-slate-50/30 transition-all group">
                                             <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-400 border border-slate-200 uppercase">
-                                                        {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover rounded-lg" /> : user.fullName.charAt(0)}
+                                                <div className="flex items-center gap-5">
+                                                    <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-[13px] font-black text-white shadow-lg shadow-slate-200 overflow-hidden shrink-0 border-2 border-white">
+                                                        {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : user.fullName.charAt(0)}
                                                     </div>
                                                     <div>
-                                                        <p className="text-sm font-bold text-slate-800 leading-none">{user.fullName}</p>
-                                                        <p className="text-[10px] font-semibold text-primary uppercase mt-1 tracking-wider">{user.activityScore}% Activity Score</p>
+                                                        <p className="text-[14px] font-black text-slate-900 uppercase tracking-tight">{user.fullName}</p>
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{user.activityScore}% Engagement Status</span>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <MoreHorizontal className="w-4 h-4 text-slate-300" />
+                                                <button className="p-2 text-slate-300 hover:text-slate-600 transition-colors"><MoreHorizontal className="w-5 h-5" /></button>
                                             </div>
                                             <div className="flex gap-4 overflow-x-auto no-scrollbar py-1">
                                                 {user.screenshots.map((ss) => (
-                                                    <div 
-                                                        key={ss.id} 
-                                                        className="relative group flex-shrink-0"
-                                                        onClick={() => setEnlargedScreenshot(ss)}
-                                                    >
-                                                        <div className="w-44 aspect-video bg-slate-50 border border-slate-200 rounded-lg overflow-hidden relative group-hover:border-primary transition-colors cursor-zoom-in">
-                                                            <SecureImage path={ss.path} className="w-full h-full object-cover opacity-90 group-hover:opacity-100" />
-                                                            <div className="absolute inset-x-0 bottom-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <p className="text-[9px] font-bold text-white uppercase tracking-tighter">
+                                                    <div key={ss.id} className="relative shrink-0 group/ss" onClick={() => setEnlargedScreenshot(ss)}>
+                                                        <div className="w-52 aspect-video bg-slate-100 border border-slate-200 rounded-xl overflow-hidden relative cursor-zoom-in transition-all group-hover/ss:border-slate-900 shadow-sm">
+                                                            <SecureImage path={ss.path} className="w-full h-full object-cover opacity-90 group-hover/ss:opacity-100 group-hover/ss:scale-105 transition-all duration-500" />
+                                                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/ss:opacity-100 transition-opacity flex items-center justify-center">
+                                                                <span className="text-[10px] font-black text-white uppercase tracking-widest bg-black/40 px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/20">Analyze</span>
+                                                            </div>
+                                                            <div className="absolute bottom-3 left-3">
+                                                                <span className="px-2 py-1 rounded bg-slate-900/80 text-white text-[8px] font-black uppercase tracking-widest backdrop-blur-sm">
                                                                     {new Date(ss.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                </p>
+                                                                </span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -365,53 +360,56 @@ export function Dashboard() {
                             </div>
                         </div>
 
-                        {/* Who's Online Table */}
-                        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                                <h3 className="text-sm font-bold text-slate-800">Who's Online</h3>
-                                <StatusBadge variant="success">Live</StatusBadge>
+                        {/* Who's Online: High Density Table */}
+                        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                            <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
+                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Real-Time Team Status</h3>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Sync Active</span>
+                                </div>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
                                         <tr className="bg-slate-50/50 border-b border-slate-100">
-                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Team Member</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Project</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Today</th>
-                                            <th className="px-6 py-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Status</th>
+                                            <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Resource</th>
+                                            <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Allocation</th>
+                                            <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Cycle Yield</th>
+                                            <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">State</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
                                         {onlineMembers.map((member) => (
-                                            <tr key={member.id} className="hover:bg-slate-50/30 transition-colors">
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-7 h-7 rounded bg-slate-100 border border-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-400 uppercase">
+                                            <tr key={member.id} className="hover:bg-slate-50/30 transition-colors group">
+                                                <td className="px-8 py-5">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-[11px] font-black text-slate-400 uppercase shadow-sm group-hover:border-slate-300 transition-colors">
                                                             {member.fullName.charAt(0)}
                                                         </div>
                                                         <div className="flex flex-col">
-                                                            <span className="text-xs font-bold text-slate-700 leading-tight">{member.fullName}</span>
-                                                            <span className="text-[10px] text-slate-400 truncate max-w-[140px]">{member.email}</span>
+                                                            <span className="text-[13px] font-black text-slate-900 leading-tight uppercase tracking-tight">{member.fullName}</span>
+                                                            <span className="text-[10px] text-slate-400 font-bold tracking-widest lowercase opacity-60 truncate max-w-[140px]">{member.email}</span>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-6 py-4">
+                                                <td className="px-8 py-5">
                                                     {member.projectName !== 'None' ? (
-                                                        <div className="px-2 py-0.5 bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-bold rounded w-fit">
+                                                        <div className="px-3 py-1 bg-white border border-slate-200 text-slate-900 text-[10px] font-black rounded-lg uppercase tracking-tight shadow-sm inline-block">
                                                             {member.projectName}
                                                         </div>
                                                     ) : (
-                                                        <span className="text-[10px] font-bold text-slate-300 uppercase italic">Standby</span>
+                                                        <span className="text-[9px] font-black text-slate-200 uppercase tracking-widest">Unassigned</span>
                                                     )}
                                                 </td>
-                                                <td className="px-6 py-4 text-right font-bold text-slate-700 text-[11px]">
+                                                <td className="px-8 py-5 text-right font-black text-slate-900 text-[12px] tabular-nums">
                                                     {formatDuration(member.timeWorkedToday)}
                                                 </td>
-                                                <td className="px-6 py-4 text-right">
+                                                <td className="px-8 py-5 text-right">
                                                     <div className={clsx(
-                                                        "inline-flex items-center gap-1.5 px-2 py-1 rounded border text-[9px] font-bold uppercase tracking-widest shadow-sm",
-                                                        member.status === 'working' ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
-                                                        member.status === 'idle' ? "bg-amber-50 text-amber-700 border-amber-100" : "bg-slate-50 text-slate-400 border-slate-100"
+                                                        "inline-flex items-center gap-2 px-3 py-1 rounded-lg border text-[9px] font-black uppercase tracking-widest shadow-sm",
+                                                        member.status === 'working' ? "bg-white text-emerald-600 border-emerald-100" :
+                                                        member.status === 'idle' ? "bg-white text-amber-600 border-amber-100" : "bg-slate-50 text-slate-400 border-slate-100"
                                                     )}>
                                                         <div className={clsx("w-1.5 h-1.5 rounded-full", member.status === 'working' ? "bg-emerald-500 animate-pulse" : member.status === 'idle' ? "bg-amber-500" : "bg-slate-300")} />
                                                         {member.status}
@@ -425,37 +423,37 @@ export function Dashboard() {
                         </div>
                     </div>
 
-                    {/* 📊 Right Sidebar */}
-                    <div className="xl:col-span-4 space-y-6">
+                    {/* 📊 Right Sidebar: Performance Architecture */}
+                    <div className="xl:col-span-4 space-y-8">
                         
-                        {/* Project Velocity */}
-                        <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
-                            <h3 className="text-sm font-bold text-slate-800 mb-6 flex items-center justify-between">
-                                Project Velocity
+                        {/* Project Velocity Chart (Minimalist Ledger) */}
+                        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
+                            <div className="flex items-center justify-between mb-8">
+                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Project Velocity</h3>
                                 <BarChart3 className="w-4 h-4 text-slate-300" />
-                            </h3>
-                            <div className="space-y-6">
+                            </div>
+                            <div className="space-y-8">
                                 {projectActivity.length === 0 ? (
-                                    <EmptyState icon={<Camera />} title="No data" />
+                                    <EmptyState icon={<Camera />} title="Awaiting Data" />
                                 ) : (
                                     projectActivity.map((proj) => (
-                                        <div key={proj.id} className="space-y-2">
-                                            <div className="flex items-center justify-between text-[11px] font-bold">
-                                                <span className="text-slate-700 tracking-tight">{proj.name}</span>
-                                                <span className="text-slate-400">{proj.activityScore}%</span>
+                                        <div key={proj.id} className="space-y-3 group/bar">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight">{proj.name}</span>
+                                                <span className="text-[10px] font-black text-slate-400">{proj.activityScore}% Quality</span>
                                             </div>
-                                            <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                                            <div className="h-1.5 bg-slate-50 border border-slate-100 rounded-full overflow-hidden">
                                                 <div 
-                                                    className="h-full rounded-full transition-all duration-1000" 
+                                                    className="h-full rounded-full transition-all duration-1000 shadow-[0_0_12px_rgba(0,0,0,0.05)]" 
                                                     style={{ 
                                                         width: `${Math.min(100, (proj.minutes / stats.totalProductiveMinutes) * 100)}%`,
                                                         backgroundColor: proj.color
                                                     }} 
                                                 />
                                             </div>
-                                            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-                                                <span>{formatDuration(proj.minutes)}</span>
-                                                <span>{Math.round((proj.minutes / stats.totalProductiveMinutes) * 100)}%</span>
+                                            <div className="flex justify-between">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{formatDuration(proj.minutes)}</span>
+                                                <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest">{Math.round((proj.minutes / stats.totalProductiveMinutes) * 100)}% Load</span>
                                             </div>
                                         </div>
                                     ))
@@ -463,31 +461,31 @@ export function Dashboard() {
                             </div>
                         </div>
 
-                        {/* App Ecosystem */}
-                        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-100">
-                                <h3 className="text-sm font-bold text-slate-800">Top Ecosystem Tools</h3>
+                        {/* App Ecosystem Ledger */}
+                        <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+                            <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/20">
+                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Tool Ecosystem</h3>
                             </div>
                             <div className="divide-y divide-slate-50">
                                 {appUsage.length === 0 ? (
-                                    <EmptyState icon={<Monitor />} title="No data" />
+                                    <EmptyState icon={<Monitor />} title="Awaiting data" />
                                 ) : (
                                     appUsage.map((app, i) => (
-                                        <div key={i} className="flex items-center justify-between px-6 py-3.5 hover:bg-slate-50 transition-colors">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">
+                                        <div key={i} className="flex items-center justify-between px-8 py-4.5 hover:bg-slate-50 transition-colors">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm">
                                                     {(app.name.toLowerCase().includes('chrome') || app.name.toLowerCase().includes('browser')) ? (
-                                                        <Globe className="w-4 h-4 text-sky-500" />
+                                                        <Globe className="w-4.5 h-4.5 text-sky-500" />
                                                     ) : (
-                                                        <Monitor className="w-4 h-4" />
+                                                        <Monitor className="w-4.5 h-4.5" />
                                                     )}
                                                 </div>
                                                 <div className="flex flex-col">
-                                                    <span className="text-xs font-bold text-slate-700 leading-none">{app.name}</span>
-                                                    <span className="text-[10px] text-slate-400 font-medium mt-1">{formatDuration(app.minutes)}</span>
+                                                    <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight leading-none">{app.name}</span>
+                                                    <span className="text-[9px] text-slate-400 font-black uppercase tracking-widest mt-1.5">{formatDuration(app.minutes)}</span>
                                                 </div>
                                             </div>
-                                            <span className="text-[11px] font-bold text-slate-900">{Math.round(app.percent)}%</span>
+                                            <div className="text-[11px] font-black text-slate-900 p-1.5 bg-slate-50 border border-slate-100 rounded-lg min-w-[40px] text-center">{Math.round(app.percent)}%</div>
                                         </div>
                                     ))
                                 )}
