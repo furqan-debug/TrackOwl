@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { navStructure, matchActive, type Role } from '../nav/navModel';
 import { useAuth } from '../context/AuthContext';
 import { SecureImage } from './ui/SecureImage';
-import logoIcon from '../assets/branding/icon.png';
+import logoFull from '../assets/branding/logo-full.png';
 
 export interface HeaderProps {
     onOpenMobileMenu?: () => void;
@@ -18,7 +18,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
     const { profile, user } = useAuth();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-    
+
     const menuRef = useRef<HTMLDivElement>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const userRole = (profile?.role || 'User') as Role;
@@ -58,17 +58,15 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
     return (
         <header className="h-16 sticky top-0 z-[60] w-full bg-white/80 backdrop-blur-xl border-b border-slate-100 transition-all">
             <div className="max-w-[1600px] mx-auto h-full flex items-center justify-between px-6 lg:px-10">
-                
+
                 {/* 💎 Brand Architecture */}
                 <div className="flex items-center gap-8 lg:gap-12 shrink-0">
-                    <Link to="/dashboard" className="flex items-center gap-3.5 group">
-                        <div className="w-10 h-10 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
-                            <img src={logoIcon} alt="Trackora" className="w-full h-full object-contain" />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-[17px] font-black tracking-tighter text-primary leading-none">TRACKORA</span>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] leading-tight">By DigiReps</span>
-                        </div>
+                    <Link to="/dashboard" className="flex items-center group">
+                        <img
+                            src={logoFull}
+                            alt="Trackora"
+                            className="h-23 w-auto object-contain scale-[1.6] origin-left transition-transform duration-300"
+                        />
                     </Link>
 
                     {/* 🗺️ Global Navigation */}
@@ -105,7 +103,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                     )}
 
                                     {hasChildren && isDropdownOpen && (
-                                        <div 
+                                        <div
                                             className="absolute top-full left-0 mt-1 w-52 p-1.5 bg-white border border-slate-200 rounded-xl shadow-2xl animate-in fade-in slide-in-from-top-1 duration-200 z-50 overflow-hidden"
                                             onMouseLeave={() => setActiveDropdown(null)}
                                         >
@@ -168,7 +166,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                             </span>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="p-1.5 space-y-0.5">
                                         <Link to="/dashboard/profile" className="w-full flex items-center gap-4 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all group">
                                             <UserIcon className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
