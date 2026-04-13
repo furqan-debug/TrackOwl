@@ -4,6 +4,7 @@ import { navStructure, type Role } from '../nav/navModel';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../context/FavoritesContext';
 import clsx from 'clsx';
+import logoFull from '../assets/branding/logo-full.png';
 
 interface MobileNavProps {
     onClose: () => void;
@@ -31,11 +32,8 @@ export function MobileNav({ onClose }: MobileNavProps) {
             {/* Drawer */}
             <div className="fixed inset-y-0 left-0 w-[300px] bg-white shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
                 <div className="flex items-center justify-between p-6 border-b border-black/[0.05]">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white">
-                            <div className="w-3.5 h-3.5 border-2 border-white rounded-[1px] rotate-45" />
-                        </div>
-                        <span className="text-lg font-bold text-text-primary tracking-tight">Trackora</span>
+                    <div className="flex items-center">
+                        <img src={logoFull} alt="Trackora" className="h-11 w-auto object-contain" />
                     </div>
                     <button 
                         onClick={onClose}

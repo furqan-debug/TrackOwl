@@ -5,6 +5,7 @@ import { ChevronDown, ChevronLeft, Star, Zap, LogOut } from 'lucide-react';
 import { navStructure, matchActive, type BadgeType, type Role } from '../nav/navModel';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
+import logoFull from '../assets/branding/logo-full.png';
 
 const SIDEBAR_WIDTH_EXPANDED = 240;
 const SIDEBAR_WIDTH_COLLAPSED = 68;
@@ -100,17 +101,15 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 to="/dashboard"
                 className={clsx(
                     "flex items-center sticky top-0 z-20 bg-[#f8f9fa]/80 backdrop-blur-md border-b border-black/[0.03] hover:opacity-80 transition-opacity", 
-                    effectiveCollapsed ? "justify-center px-0 py-5" : "px-6 py-5 gap-3"
+                    effectiveCollapsed ? "justify-center px-0 py-5" : "px-6 py-5"
                 )}
             >
-                <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center shrink-0 shadow-sm">
-                     <div className="w-4.5 h-4.5 border-[2.5px] border-white rounded-[2px] rotate-45" aria-hidden />
-                </div>
-                {!effectiveCollapsed && (
-                    <div className="flex flex-col text-left">
-                        <span className="text-xl font-bold text-text-primary tracking-tight leading-none mb-1">Trackora</span>
-                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] opacity-60">Admin Portal</span>
+                {effectiveCollapsed ? (
+                    <div className="w-11 h-11 flex items-center justify-center shrink-0">
+                        <img src={logoFull} alt="" className="w-full h-full object-contain" />
                     </div>
+                ) : (
+                    <img src={logoFull} alt="Trackora" className="h-11 w-auto object-contain" />
                 )}
             </Link>
 
