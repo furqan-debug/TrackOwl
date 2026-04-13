@@ -26,7 +26,7 @@ export function AppShell({ children }: AppShellProps) {
     return (
         <div className="flex flex-col h-screen bg-background text-text-secondary overflow-hidden font-sans">
             <Header onOpenMobileMenu={() => setMobileMenuOpen(true)} />
-            
+
             <div className="flex-1 flex flex-col min-h-0 relative">
                 {/* Mobile overlay */}
                 {mobileMenuOpen && (
