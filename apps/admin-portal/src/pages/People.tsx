@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Users, Search, Filter, Download, UserPlus, Trash2,
     ChevronDown, MoreHorizontal, Pencil, RotateCcw,
-    Settings, Shield, User, AlertCircle, CheckCircle, MapPin
+    Settings, Shield, User, AlertCircle, CheckCircle, MapPin, Globe2
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
@@ -511,6 +511,11 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     <div className="flex items-center gap-2 text-[11px] font-bold whitespace-nowrap">
                         <MapPin className="w-3 h-3 text-primary" />
                         {m.location}
+                    </div>
+                ) : m.timezone ? (
+                    <div className="flex items-center gap-2 text-[11px] font-bold whitespace-nowrap opacity-60">
+                        <Globe2 className="w-3 h-3 text-primary" />
+                        {m.timezone}
                     </div>
                 ) : (
                     <span className="text-[10px] font-medium text-text-muted opacity-40 uppercase tracking-widest italic">Unknown</span>

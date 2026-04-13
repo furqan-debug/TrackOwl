@@ -15,6 +15,7 @@ export function ProfilePage() {
     const { profile, user, refreshProfile } = useAuth();
     const [fullName, setFullName] = useState(profile?.full_name || '');
     const [phone, setPhone] = useState(profile?.phone || '');
+    const [location, setLocation] = useState(profile?.location || '');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export function ProfilePage() {
                 .update({
                     full_name: fullName,
                     phone: phone,
+                    location: location,
                     updated_at: new Date().toISOString()
                 })
                 .eq('id', profile.id);
@@ -193,6 +195,19 @@ export function ProfilePage() {
                                 value={fullName}
                                 onChange={e => setFullName(e.target.value)}
                                 placeholder="Enter your full name"
+                                className="w-full bg-surface-subtle border border-border rounded-lg px-4 py-3 text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-surface-solid transition-all shadow-sm"
+                            />
+                        </div>
+
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between px-1">
+                                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wide">Location</label>
+                            </div>
+                            <input
+                                type="text"
+                                value={location}
+                                onChange={e => setLocation(e.target.value)}
+                                placeholder="e.g. London, UK"
                                 className="w-full bg-surface-subtle border border-border rounded-lg px-4 py-3 text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-surface-solid transition-all shadow-sm"
                             />
                         </div>

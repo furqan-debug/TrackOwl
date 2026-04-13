@@ -324,7 +324,7 @@ export function Dashboard() {
                                         <div key={user.userId} className="p-8 space-y-6 hover:bg-slate-50/30 transition-all group">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-5">
-                                                    <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-[13px] font-black text-white shadow-lg shadow-slate-200 overflow-hidden shrink-0 border-2 border-white">
+                                                    <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-[13px] font-black text-white shadow-lg shadow-primary/10 overflow-hidden shrink-0 border-2 border-white">
                                                         {user.avatarUrl ? <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" /> : user.fullName.charAt(0)}
                                                     </div>
                                                     <div>

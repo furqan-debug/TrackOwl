@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { navStructure, matchActive, type Role } from '../nav/navModel';
 import { useAuth } from '../context/AuthContext';
 import { SecureImage } from './ui/SecureImage';
+import logoIcon from '../assets/branding/icon.png';
 
 export interface HeaderProps {
     onOpenMobileMenu?: () => void;
@@ -61,12 +62,12 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                 {/* 💎 Brand Architecture */}
                 <div className="flex items-center gap-8 lg:gap-12 shrink-0">
                     <Link to="/dashboard" className="flex items-center gap-3.5 group">
-                        <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-xl shadow-slate-200 group-hover:scale-105 transition-all duration-300">
-                            <div className="w-4 h-4 border-2 border-white rounded-[1px] rotate-45 transform group-hover:rotate-90 transition-transform duration-500" />
+                        <div className="w-10 h-10 flex items-center justify-center group-hover:scale-105 transition-all duration-300">
+                            <img src={logoIcon} alt="Trackora" className="w-full h-full object-contain" />
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-[17px] font-black tracking-tighter text-slate-900 leading-none">TRACKORA</span>
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] leading-tight">Architecture</span>
+                            <span className="text-[17px] font-black tracking-tighter text-primary leading-none">TRACKORA</span>
+                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] leading-tight">By DigiReps</span>
                         </div>
                     </Link>
 

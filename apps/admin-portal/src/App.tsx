@@ -18,8 +18,6 @@ import { Todos } from './pages/Todos';
 import { Clients } from './pages/Clients';
 import { Approvals } from './pages/Approvals';
 import { AppUsage } from './pages/AppUsage';
-import { Highlights } from './pages/Highlights';
-import { Performance } from './pages/Performance';
 import { SettingsPage } from './pages/Settings';
 import { ProfilePage } from './pages/Profile';
 import { Landing } from './pages/Landing';
@@ -120,14 +118,6 @@ function App() {
                     {/* --- NEW FEATURES --- */}
                     <Route path="/timesheets/approvals" element={<Approvals />} />
                     <Route path="/activity/apps" element={<AppUsage />} />
-                    <Route path="/insights/highlights" element={<Highlights />} />
-                    <Route path="/insights/performance" element={<Performance />} />
-
-                    {/* --- PLACEHOLDER ROUTES --- */}
-
-                    <Route path="/insights/unusual" element={<PlaceholderPage title="Unusual Activity" />} />
-                    <Route path="/insights/notifications" element={<PlaceholderPage title="Smart Notifications" />} />
-                    <Route path="/insights/output" element={<PlaceholderPage title="Output" />} />
 
                     {/* --- NEW LOCATIONS FEATURE --- */}
                     <Route path="/locations" element={<Locations />} />

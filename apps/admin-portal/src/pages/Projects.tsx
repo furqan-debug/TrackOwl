@@ -159,7 +159,7 @@ export function Projects() {
                                 onClick={() => { setActiveTab(tab); setSelectedIds(new Set()); }}
                                 className={clsx(
                                     "px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all",
-                                    activeTab === tab ? "bg-slate-900 text-white shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                    activeTab === tab ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
                                 )}
                             >
                                 {tab}
@@ -232,7 +232,7 @@ export function Projects() {
                             <thead>
                                 <tr className="bg-slate-50/50 border-b border-slate-100">
                                     <th className="pl-10 py-4 w-12">
-                                        <button onClick={toggleSelectAll} className={clsx("w-5 h-5 rounded border flex items-center justify-center transition-all", selectedIds.size === filteredProjects.length && filteredProjects.length > 0 ? "bg-slate-900 border-slate-900 text-white" : "bg-white border-slate-200 hover:border-slate-400")}>
+                                        <button onClick={toggleSelectAll} className={clsx("w-5 h-5 rounded border flex items-center justify-center transition-all", selectedIds.size === filteredProjects.length && filteredProjects.length > 0 ? "bg-primary border-primary text-white" : "bg-white border-slate-200 hover:border-slate-400")}>
                                             {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 && <Check className="w-3 h-3 stroke-[3]" />}
                                         </button>
                                     </th>
@@ -297,7 +297,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
     return (
         <tr className={clsx("group/row transition-all duration-200", isSelected ? "bg-slate-50/50" : "hover:bg-slate-50/30")}>
             <td className="pl-10 py-6">
-                <button onClick={onSelect} className={clsx("w-5 h-5 rounded border flex items-center justify-center transition-all", isSelected ? "bg-slate-900 border-slate-900 text-white" : "bg-white border-slate-200 group-hover/row:border-slate-400")}>
+                <button onClick={onSelect} className={clsx("w-5 h-5 rounded border flex items-center justify-center transition-all", isSelected ? "bg-primary border-primary text-white" : "bg-white border-slate-200 group-hover/row:border-slate-400")}>
                     {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                 </button>
             </td>
@@ -345,7 +345,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                                 </div>
                             ))}
                             {project.memberCount > 3 && (
-                                <div className="w-8 h-8 rounded-full border-2 border-white bg-slate-900 flex items-center justify-center text-[9px] font-black text-white shadow-sm z-10">
+                                <div className="w-8 h-8 rounded-full border-2 border-white bg-primary flex items-center justify-center text-[9px] font-black text-white shadow-sm z-10">
                                     +{project.memberCount - 3}
                                 </div>
                             )}

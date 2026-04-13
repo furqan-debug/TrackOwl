@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Header } from './Header';
-import { MobileNav } from './MobileNav';
+import { MobileNav } from './MobileNav.tsx';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -24,7 +24,7 @@ export function AppShell({ children }: AppShellProps) {
     }, []);
 
     return (
-        <div className="flex flex-col h-screen bg-[#f8fafc] text-text-secondary overflow-hidden font-sans">
+        <div className="flex flex-col h-screen bg-background text-text-secondary overflow-hidden font-sans">
             <Header onOpenMobileMenu={() => setMobileMenuOpen(true)} />
             
             <div className="flex-1 flex flex-col min-h-0 relative">

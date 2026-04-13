@@ -3,14 +3,16 @@ import { supabase } from '../lib/supabase';
 import {
     Monitor, Camera,
     Clock, Activity as ActivityIcon, Users,
-    ChevronDown, Zap, Download, DollarSign
+    ChevronDown, Zap, Download, DollarSign,
+    BarChart3,
+    ArrowUpRight
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 import {
-    PageLayout, Card, KpiCard, Button,
+    PageLayout, Card, StatMetric, Button,
     LoadingState, EmptyState
 } from '../components/ui';
 import clsx from 'clsx';
@@ -22,7 +24,16 @@ import {
     fetchAllActivitySamples
 } from '../lib/dataUtils';
 
-const COLORS = ['#506ef8', '#818cf8', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899'];
+// Official Trackora Brand Palette
+const BRAND_PRIMARY = '#4066D3';
+const CHART_COLORS = [
+    '#4066D3', // Brand Blue
+    '#597EE8', 
+    '#7495FF', 
+    '#8FB3FF', 
+    '#A9D0FF'
+];
+
 const RANGES = ['Today', 'Last 7 Days', 'Last 30 Days'] as const;
 type Range = typeof RANGES[number];
 
@@ -67,16 +78,15 @@ export function Reports() {
         return Array.from(new Set([member.id, member.auth_user_id].filter(Boolean) as string[]));
     }
 
-    // ✅ FIX 1: getDateRange no longer mutates `now`, uses consistent references
     function getDateRange(): { start: string; end: string } {
         const now = new Date();
         const end = now.toISOString();
         let start: Date;
         if (range === 'Today') {
             start = new Date();
-            start.setHours(0, 0, 0, 0); // ✅ fresh Date, not mutating `now`
+            start.setHours(0, 0, 0, 0);
         } else if (range === 'Last 7 Days') {
-            start = new Date(now.getTime() - 7 * 86400000); // ✅ using now.getTime()
+            start = new Date(now.getTime() - 7 * 86400000);
         } else {
             start = new Date(now.getTime() - 30 * 86400000);
         }
@@ -87,14 +97,13 @@ export function Reports() {
         setLoading(true);
         const { start, end } = getDateRange();
 
-        // ✅ FIX 2: Always fetch fresh members at top of fetchReports to avoid
-        // stale state race condition when member filter is changed on first load
         const membersForLookup = members.length > 0
             ? members
             : (await supabase
                 .from('members')
                 .select('id, auth_user_id, email, full_name, pay_rate, bill_rate, timezone')
                 .eq('status', 'Active')).data || [];
+        
         const allMemberSessionUserIds = Array.from(
             new Set(
                 membersForLookup.flatMap((m: any) => [m.id, m.auth_user_id].filter(Boolean) as string[])
@@ -104,7 +113,6 @@ export function Reports() {
         let filteredSessionUserIds: string[] = [];
 
         if (selectedMemberId !== 'All') {
-            // ✅ FIX 3: Use membersForLookup (fresh) instead of stale members state
             const selectedMember = membersForLookup.find(m => m.id === selectedMemberId);
             filteredSessionUserIds = selectedMember
                 ? getMemberSessionUserIds(selectedMember)
@@ -126,25 +134,14 @@ export function Reports() {
             }
         }
 
-        // Early exit if specific filter selected but no user IDs found
         if ((selectedMemberId !== 'All' || selectedTeamId !== 'All') && filteredSessionUserIds.length === 0) {
-            setDailyActivity([]);
-            setAppBreakdown([]);
-            setTotalSessions(0);
-            setScreenshotCount(0);
-            setTotalMins(0);
-            setAvgActivity(0);
-            setTotalCosts(0);
-            setTotalBilled(0);
-            setLoading(false);
-            return;
+            setDailyActivity([]); setAppBreakdown([]);
+            setTotalSessions(0); setScreenshotCount(0); setTotalMins(0); 
+            setAvgActivity(0); setTotalCosts(0); setTotalBilled(0);
+            setLoading(false); return;
         }
 
         try {
-            // ✅ FIX 4: Filter sessions by user_id IN THE DB QUERY when a member/team
-            // is selected, instead of fetching all sessions and filtering in JS.
-            // This is the root cause of member data not showing — JS filter was running
-            // before membersForLookup was populated, resulting in empty filteredSessions.
             let sessionsQuery = supabase
                 .from('sessions')
                 .select('id, user_id, started_at, ended_at')
@@ -153,69 +150,33 @@ export function Reports() {
 
             const scopedUserIds = filteredSessionUserIds.length > 0 ? filteredSessionUserIds : allMemberSessionUserIds;
             if (scopedUserIds.length === 0) {
-                setDailyActivity([]);
-                setAppBreakdown([]);
-                setTotalSessions(0);
-                setScreenshotCount(0);
-                setTotalMins(0);
-                setAvgActivity(0);
-                setTotalCosts(0);
-                setTotalBilled(0);
-                setLoading(false);
-                return;
+                setLoading(false); return;
             }
             sessionsQuery = sessionsQuery.in('user_id', scopedUserIds);
 
             const { data: sessionData } = await sessionsQuery;
             const filteredSessions = sessionData || [];
-
-            // If a specific member/team was selected but they have no sessions, return early
             if ((selectedMemberId !== 'All' || selectedTeamId !== 'All') && filteredSessions.length === 0) {
-                setDailyActivity([]);
-                setAppBreakdown([]);
-                setTotalSessions(0);
-                setScreenshotCount(0);
-                setTotalMins(0);
-                setAvgActivity(0);
-                setTotalCosts(0);
-                setTotalBilled(0);
-                setLoading(false);
-                return;
+                setDailyActivity([]); setAppBreakdown([]); setLoading(false); return;
             }
 
             const activeSessionIds = filteredSessions.map(s => s.id);
 
-            // Fetch screenshots count
             let ssQuery = supabase
                 .from('screenshots')
                 .select('id', { count: 'exact', head: true })
                 .gte('recorded_at', start)
                 .lte('recorded_at', end);
 
-            if (activeSessionIds.length > 0) {
-                ssQuery = ssQuery.in('session_id', activeSessionIds);
-            }
+            if (activeSessionIds.length > 0) ssQuery = ssQuery.in('session_id', activeSessionIds);
 
             const [samples, { count: ssCount }] = await Promise.all([
-                fetchAllActivitySamples(
-                    supabase,
-                    start,
-                    end,
-                    'session_id, recorded_at, activity_percent, idle, app_name',
-                    { sessionIds: activeSessionIds.length > 0 ? activeSessionIds : undefined }
-                ),
+                fetchAllActivitySamples(supabase, start, end, 'session_id, recorded_at, activity_percent, idle, app_name', { sessionIds: activeSessionIds.length > 0 ? activeSessionIds : undefined }),
                 ssQuery,
             ]);
 
             const allSamples = samples || [];
-
-            setTotalSessions(activeSessionIds.length);
-            setScreenshotCount(ssCount || 0);
-
-            const sessionToUserId = new Map();
-            filteredSessions.forEach(s => sessionToUserId.set(s.id, s.user_id));
             const activeSessionIdsSet = new Set(activeSessionIds);
-
             const inScopeSamples = allSamples.filter(s => activeSessionIdsSet.has(s.session_id));
             const productiveSamples = inScopeSamples.filter(s => s.idle !== true);
 
@@ -231,13 +192,10 @@ export function Reports() {
                 }
             });
 
-            // Deduplicate samples (1 per user per minute)
             const seen = new Set<string>();
             const dedupedSamples: any[] = [];
-
-            const sortedSamples = [...inScopeSamples].sort((a, b) => (b.activity_percent ?? 0) - (a.activity_percent ?? 0));
-
-            sortedSamples.forEach(s => {
+            [...inScopeSamples].sort((a, b) => (b.activity_percent ?? 0) - (a.activity_percent ?? 0)).forEach(s => {
+                const sessionToUserId = new Map(filteredSessions.map(sess => [sess.id, sess.user_id]));
                 const uid = sessionToUserId.get(s.session_id);
                 if (!uid) return;
                 const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
@@ -252,16 +210,14 @@ export function Reports() {
             let billed = 0;
 
             dedupedSamples.forEach(s => {
+                const sessionToUserId = new Map(filteredSessions.map(sess => [sess.id, sess.user_id]));
                 const uid = sessionToUserId.get(s.session_id);
                 if (!uid) return;
 
                 const day = getGroupingDateInTz(s.recorded_at, memberTzs.get(uid));
-
                 if (!dailyMap[day]) dailyMap[day] = { active: 0, total_samples: 0, total_minutes: 0 };
 
-                if (s.activity_percent && s.activity_percent > 0) {
-                    dailyMap[day].active++;
-                }
+                if (s.activity_percent && s.activity_percent > 0) dailyMap[day].active++;
                 dailyMap[day].total_samples++;
                 dailyMap[day].total_minutes++;
 
@@ -286,15 +242,13 @@ export function Reports() {
                 appMap[app] = (appMap[app] || 0) + 1;
             });
             setAppBreakdown(
-                Object.entries(appMap).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([name, value]) => ({ name, value }))
+                Object.entries(appMap).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name, value }))
             );
 
-            // Total time based on sessions
             let totalSessionMins = 0;
             filteredSessions.forEach(s => {
                 const { endMs } = getEffectiveEnd(s.started_at, s.ended_at);
-                const startMs = new Date(s.started_at).getTime();
-                totalSessionMins += (endMs - startMs) / 60000;
+                totalSessionMins += (endMs - new Date(s.started_at).getTime()) / 60000;
             });
 
             setTotalSessions(filteredSessions.length);
@@ -304,7 +258,7 @@ export function Reports() {
             setTotalCosts(costs);
             setTotalBilled(billed);
         } catch (err) {
-            console.error("fetchReports unhandled error:", err);
+            console.error("fetchReports error:", err);
         } finally {
             setLoading(false);
         }
@@ -312,18 +266,20 @@ export function Reports() {
 
     return (
         <PageLayout
+            maxWidth="full"
             title="Reports"
-            description="Analyze team activity, productivity, and project costs."
+            description="High-fidelity activity auditing and project capitalization ledger."
             actions={
-                <div className="flex flex-wrap items-center gap-6">
-                    <div className="flex items-center gap-1 bg-surface-solid border border-border p-1 rounded-lg shadow-sm">
+                <div className="flex flex-wrap items-center gap-4">
+                    {/* Command Control Strip: Range Switching */}
+                    <div className="flex items-center bg-white border border-slate-200 p-1.5 rounded-xl shadow-sm">
                         {RANGES.map(r => (
                             <button
                                 key={r}
                                 onClick={() => setRange(r)}
                                 className={clsx(
-                                    "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
-                                    range === r ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text-primary"
+                                    "px-5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                                    range === r ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
                                 )}
                             >
                                 {r}
@@ -331,22 +287,25 @@ export function Reports() {
                         ))}
                     </div>
 
+                    {/* Filter Suite */}
                     <div className="flex items-center gap-3">
                         <FilterSelect
                             icon={<Users className="w-4 h-4" />}
+                            label="Team Allocation"
                             value={selectedTeamId}
                             onChange={(val) => { setSelectedTeamId(val); setSelectedMemberId('All'); }}
-                            options={[{ id: 'All', name: 'All Teams' }, ...teams]}
+                            options={[{ id: 'All', name: 'Global Ecosystem' }, ...teams]}
                         />
                         <FilterSelect
                             icon={<ActivityIcon className="w-4 h-4" />}
+                            label="Member Scope"
                             value={selectedMemberId}
                             onChange={(val) => { setSelectedMemberId(val); setSelectedTeamId('All'); }}
-                            options={[{ id: 'All', name: 'All Members' }, ...members].map((m: any) => ({ id: m.id, name: m.full_name || m.email || m.name || 'Member' }))}
+                            options={[{ id: 'All', name: 'All Personnel' }, ...members].map((m: any) => ({ id: m.id, name: m.full_name || m.email || m.name || 'Unknown' }))}
                         />
                         <Button
                             variant="secondary"
-                            className="p-2.5 rounded-lg"
+                            className="w-10 h-10 p-0 flex items-center justify-center rounded-xl bg-white border border-slate-200 hover:border-slate-400 hover:bg-slate-50 transition-all text-slate-400"
                             onClick={() => {/* export logic */ }}
                         >
                             <Download className="w-4 h-4" />
@@ -356,70 +315,44 @@ export function Reports() {
             }
         >
 
-            <div className="flex flex-col gap-10">
-                {/* KPI Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-                    <KpiCard
-                        icon={<Clock className="w-5 h-5" strokeWidth={2.5} />}
-                        label="Total Time"
-                        value={formatDuration(totalMins)}
-                        trend={12}
-                    />
-                    <KpiCard
-                        icon={<ActivityIcon className="w-5 h-5" strokeWidth={2.5} />}
-                        label="Activity Rating"
-                        value={`${avgActivity}%`}
-                        trend={4}
-                    />
-                    <KpiCard
-                        icon={<DollarSign className="w-5 h-5" strokeWidth={2.5} />}
-                        label="Total Billed"
-                        value={`$${totalBilled.toLocaleString()}`}
-                        trend={15}
-                    />
-                    <KpiCard
-                        icon={<Monitor className="w-5 h-5" strokeWidth={2.5} />}
-                        label="Total Sessions"
-                        value={totalSessions.toString()}
-                        trend={2}
-                    />
-                    <KpiCard
-                        icon={<Camera className="w-5 h-5" strokeWidth={2.5} />}
-                        label="Screenshots"
-                        value={screenshotCount.toString()}
-                        trend={45}
-                    />
-                    <KpiCard
-                        icon={<DollarSign className="w-5 h-5" strokeWidth={2.5} />}
-                        label="Total Costs"
-                        value={`$${totalCosts.toLocaleString()}`}
-                        trend={8}
-                        variant="negative"
-                    />
+            <div className="flex flex-col gap-8 pb-20">
+                
+                {/* 📊 KPI Architectural Ledger */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 lg:gap-8">
+                    <StatMetric icon={<Clock className="w-5 h-5" />} label="Time Capital" value={formatDuration(totalMins)} sub="Total billable yield" trend={12} />
+                    <StatMetric icon={<ActivityIcon className="w-5 h-5" />} label="Quality Index" value={`${avgActivity}%`} sub="Avg activity score" trend={4} />
+                    <StatMetric icon={<DollarSign className="w-5 h-5" />} label="Yield Billed" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Revenue generation" />
+                    <StatMetric icon={<Monitor className="w-5 h-5" />} label="Total Cycles" value={totalSessions.toString()} sub="Workflow sessions" />
+                    <StatMetric icon={<Camera className="w-5 h-5" />} label="Visual Proofs" value={screenshotCount.toString()} sub="Verification proofs" />
+                    <StatMetric icon={<DollarSign className="w-5 h-5" />} label="Project Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Personnel expense" />
                 </div>
 
                 {loading ? (
-                    <div className="h-[600px] flex items-center justify-center">
-                        <LoadingState message="Generating activity reports..." />
+                    <div className="h-[600px] flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-100">
+                        <LoadingState message="Generating high-fidelity reports..." />
                     </div>
                 ) : dailyActivity.length === 0 ? (
-                    <div className="h-[600px] flex items-center justify-center">
-                        <EmptyState
-                            title="No activity data found"
-                            description="Try adjusting your filters or date range to see results."
-                        />
+                    <div className="h-[600px] flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-100 italic">
+                        <EmptyState title="No active signals detected" description="System is awaiting data from the selected scope." />
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-                        <div className="lg:col-span-2 space-y-10">
-                            <Card title="Activity Trends">
-                                <div className="h-[400px] w-full mt-8">
+                    <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+                        
+                        {/* 🖥️ Primary Analytics: Trends & Distro */}
+                        <div className="xl:col-span-8 space-y-8">
+                            
+                            <Card className="p-8">
+                                <div className="flex items-center justify-between mb-8">
+                                    <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Team Trajectory Index</h3>
+                                    <TrendingUpIcon size={16} className="text-slate-300" />
+                                </div>
+                                <div className="h-[400px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <AreaChart data={dailyActivity} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="colorActivity" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#506ef8" stopOpacity={0.15} />
-                                                    <stop offset="95%" stopColor="#506ef8" stopOpacity={0} />
+                                                    <stop offset="5%" stopColor={BRAND_PRIMARY} stopOpacity={0.15} />
+                                                    <stop offset="95%" stopColor={BRAND_PRIMARY} stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
@@ -427,21 +360,21 @@ export function Reports() {
                                                 dataKey="date"
                                                 axisLine={false}
                                                 tickLine={false}
-                                                tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
+                                                tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 800 }}
                                                 dy={10}
                                             />
                                             <YAxis
                                                 domain={[0, 100]}
                                                 axisLine={false}
                                                 tickLine={false}
-                                                tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
+                                                tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 800 }}
                                                 unit="%"
                                             />
                                             <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(80,110,248,0.1)', strokeWidth: 1 }} />
                                             <Area
                                                 type="monotone"
                                                 dataKey="activity"
-                                                stroke="#506ef8"
+                                                stroke={BRAND_PRIMARY}
                                                 strokeWidth={2}
                                                 fillOpacity={1}
                                                 fill="url(#colorActivity)"
@@ -451,108 +384,110 @@ export function Reports() {
                                 </div>
                             </Card>
 
-                            <Card title="Time Distribution">
-                                <div className="h-[350px] w-full mt-8">
+                            <Card className="p-8">
+                                <div className="flex items-center justify-between mb-8">
+                                    <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Daily Capital Allocation</h3>
+                                    <BarChart3 className="w-4 h-4 text-slate-300" />
+                                </div>
+                                <div className="h-[350px] w-full">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={dailyActivity} barSize={36}>
+                                        <BarChart data={dailyActivity} barSize={40}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
                                             <XAxis
                                                 dataKey="date"
                                                 axisLine={false}
                                                 tickLine={false}
-                                                tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
+                                                tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 800 }}
                                                 dy={10}
                                             />
                                             <YAxis
                                                 axisLine={false}
                                                 tickLine={false}
-                                                tick={{ fill: 'rgba(41,61,99,0.5)', fontSize: 11 }}
+                                                tick={{ fill: 'rgba(41,61,99,0.4)', fontSize: 10, fontWeight: 800 }}
                                             />
                                             <Tooltip content={<CustomTooltip unit="min" />} cursor={{ fill: 'rgba(80,110,248,0.03)' }} />
                                             <Bar
                                                 dataKey="minutes"
-                                                fill="url(#barGradient)"
-                                                radius={[4, 4, 0, 0]}
+                                                fill={BRAND_PRIMARY}
+                                                radius={[6, 6, 0, 0]}
                                             />
-                                            <defs>
-                                                <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="0%" stopColor="#506ef8" />
-                                                    <stop offset="100%" stopColor="#818cf8" />
-                                                </linearGradient>
-                                            </defs>
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             </Card>
                         </div>
 
-                        <div className="space-y-10">
-                            <Card title="Top Applications" className="flex flex-col h-full">
-                                <div className="flex-1 min-h-[450px] flex flex-col items-center justify-center py-12">
-                                    <div className="h-[300px] w-full relative">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={appBreakdown}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    innerRadius={60}
-                                                    outerRadius={90}
-                                                    paddingAngle={4}
-                                                    dataKey="value"
-                                                >
-                                                    {appBreakdown.map((_, i) => (
-                                                        <Cell key={i} fill={COLORS[i % COLORS.length]} strokeWidth={0} />
-                                                    ))}
-                                                </Pie>
-                                                <Tooltip content={<CustomTooltip />} />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                            <span className="text-3xl font-bold text-text-primary">{appBreakdown.length}</span>
-                                            <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">Apps</span>
-                                        </div>
+                        {/* 📊 Right Sidebar: Ecosystem Data */}
+                        <div className="xl:col-span-4 space-y-8">
+                            
+                            <Card className="p-8">
+                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-8">Tool Ecosystem Breakdown</h3>
+                                <div className="h-[280px] w-full relative mb-10">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={appBreakdown}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={65}
+                                                outerRadius={95}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                {appBreakdown.map((_, i) => (
+                                                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip content={<CustomTooltip />} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                        <span className="text-3xl font-black text-slate-900 leading-none">{appBreakdown.length}</span>
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">Active Tools</span>
                                     </div>
+                                </div>
 
-                                    <div className="w-full mt-8 space-y-2">
-                                        {appBreakdown.map((item, i) => (
-                                            <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-surface-subtle transition-all">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                                                    <span className="text-sm text-text-primary truncate max-w-[180px]">{item.name}</span>
-                                                </div>
-                                                <span className="text-[10px] font-medium text-text-muted bg-surface-subtle px-2 py-1 rounded border border-border">
-                                                    {item.value} sess
-                                                </span>
+                                <div className="space-y-1.5">
+                                    {appBreakdown.map((item, i) => (
+                                        <div key={i} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                                <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight truncate max-w-[140px] group-hover:text-primary transition-colors">{item.name}</span>
                                             </div>
-                                        ))}
-                                    </div>
+                                            <span className="text-[10px] font-black text-slate-400 bg-slate-50 px-2 py-1 rounded shadow-sm border border-slate-100 uppercase tabular-nums">
+                                                {item.value}
+                                            </span>
+                                        </div>
+                                    ))}
                                 </div>
                             </Card>
 
-                            <div className="bg-surface-solid border border-border overflow-hidden rounded-2xl relative p-8 shadow-sm">
-                                <div className="relative z-10">
-                                    <div className="justify-between items-start mb-6 hidden md:flex">
-                                        <div className="bg-primary/10 p-3 rounded-xl border border-primary/20">
-                                            <Zap className="w-6 h-6 text-primary" />
+                            {/* Velocity Summary Strip */}
+                            <div className="bg-primary border border-primary p-8 rounded-2xl shadow-premium relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-white/20 transition-all duration-700" />
+                                <div className="relative z-10 space-y-6 text-white">
+                                    <div className="flex items-center justify-between">
+                                        <div className="bg-white/20 p-2 rounded-lg backdrop-blur-md">
+                                            <Zap className="w-5 h-5 text-white" />
                                         </div>
-                                        <span className="text-[10px] font-semibold text-text-muted uppercase tracking-wider">
-                                            Organization Activity
-                                        </span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Aggregate Velocity</span>
                                     </div>
-                                    <h4 className="text-text-muted font-semibold uppercase tracking-wider text-[10px] mb-2 opacity-60">Avg. Activity Score</h4>
-                                    <div className="flex items-baseline gap-2 mb-6">
-                                        <span className="text-5xl font-bold text-text-primary">{avgActivity}%</span>
+                                    <div>
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Human Signal Baseline</h4>
+                                        <div className="text-5xl font-black tracking-tighter tabular-nums">{avgActivity}%</div>
                                     </div>
-                                    <p className="text-sm text-text-primary leading-relaxed mb-6">
-                                        This activity baseline reflects active mouse/keyboard usage of the team during their recorded work hours.
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+                                            <span>Efficiency Pulse</span>
+                                            <span>Active Monitoring</span>
+                                        </div>
+                                        <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
+                                            <div className="h-full bg-white rounded-full transition-all duration-1000" style={{ width: `${avgActivity}%` }} />
+                                        </div>
+                                    </div>
+                                    <p className="text-[11px] font-medium leading-relaxed opacity-80 uppercase tracking-tight">
+                                        This threshold reflects aggregate input-active duration optimized for enterprise benchmarks.
                                     </p>
-                                    <div className="w-full h-2.5 bg-surface-subtle rounded-full overflow-hidden border border-border">
-                                        <div
-                                            className="h-full bg-primary rounded-full transition-all duration-1000"
-                                            style={{ width: `${avgActivity}%` }}
-                                        />
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -563,15 +498,18 @@ export function Reports() {
     );
 }
 
-function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNode; value: string; onChange: (val: string) => void; options: { id: string; name: string }[] }) {
+function FilterSelect({ icon, label, value, onChange, options }: { icon: React.ReactNode; label: string; value: string; onChange: (val: string) => void; options: { id: string; name: string }[] }) {
     const activeLabel = options.find(o => o.id === value)?.name || value;
 
     return (
         <div className="relative group">
-            <div className="flex items-center gap-3 bg-surface-solid border border-border rounded-lg px-4 py-2 shadow-sm hover:border-primary/40 cursor-pointer">
-                <div className="text-text-muted">{icon}</div>
-                <span className="text-xs font-medium text-text-primary min-w-[100px] truncate">{activeLabel}</span>
-                <ChevronDown className="w-3.5 h-3.5 text-text-muted" />
+            <div className="flex items-center gap-4 bg-white border border-slate-200 rounded-xl px-4 py-2 hover:border-slate-400 hover:bg-slate-50 transition-all cursor-pointer shadow-sm group">
+                <div className="text-slate-300 group-hover:text-primary transition-colors">{icon}</div>
+                <div className="flex flex-col min-w-[120px]">
+                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{label}</span>
+                    <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight truncate">{activeLabel}</span>
+                </div>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-300 group-hover:text-primary transition-colors ml-auto" />
             </div>
 
             <select
@@ -590,21 +528,25 @@ function FilterSelect({ icon, value, onChange, options }: { icon: React.ReactNod
 function CustomTooltip({ active, payload, label, unit }: any) {
     if (active && payload && payload.length) {
         return (
-            <Card className="p-4 shadow-lg border border-border min-w-[150px]">
-                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-2 border-b border-border pb-2">{label}</p>
-                <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-primary" />
-                    <div className="flex items-baseline gap-1.5">
-                        <span className="text-2xl font-bold text-text-primary">
+            <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-100 min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 pb-2 border-b border-slate-50">{label} Ledger</p>
+                <div className="flex items-center gap-4">
+                    <div className="w-2 h-2 rounded-full bg-primary ring-4 ring-primary/10 shadow-[0_0_12px_rgba(64,102,211,0.4)]" />
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-black text-slate-900 tracking-tighter tabular-nums">
                             {payload[0].value}
                         </span>
-                        <span className="text-[10px] font-medium text-text-muted uppercase tracking-wider">
-                            {unit === 'min' ? 'Mins' : '%'}
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                            {unit === 'min' ? 'Mins Capture' : '% Activity'}
                         </span>
                     </div>
                 </div>
-            </Card>
+            </div>
         );
     }
     return null;
+}
+
+function TrendingUpIcon({ size, className }: { size?: number, className?: string }) {
+    return <ArrowUpRight size={size} className={className} />;
 }

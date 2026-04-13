@@ -7,7 +7,6 @@ import {
     FileText,
     Users,
     Settings,
-    BarChart3,
     Calendar as CalendarIcon
 } from 'lucide-react';
 
@@ -43,14 +42,6 @@ export const navStructure: NavGroup[] = [
         children: [
             { name: 'Screenshots', path: '/dashboard/activity' },
             { name: 'Apps & URLs', path: '/dashboard/activity/apps' },
-        ],
-    },
-    {
-        name: 'Insights',
-        icon: BarChart3,
-        children: [
-            { name: 'Performance', path: '/dashboard/insights/performance' },
-            { name: 'Highlights', path: '/dashboard/insights/highlights' },
         ],
     },
     { 

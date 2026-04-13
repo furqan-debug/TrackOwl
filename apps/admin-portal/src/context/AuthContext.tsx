@@ -11,6 +11,7 @@ interface MemberProfile {
     role: 'Admin' | 'Manager' | 'User' | 'Viewer';
     status: 'Active' | 'Inactive' | 'Pending';
     organization_id: string | null;
+    location: string | null;
 }
 
 interface AuthContextType {

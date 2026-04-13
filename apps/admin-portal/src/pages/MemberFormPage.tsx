@@ -66,6 +66,7 @@ export function MemberFormPage() {
     const [keepIdleMode, setKeepIdleMode] = useState<'prompt' | 'always' | 'never'>('prompt');
     const [trackingEnabled, setTrackingEnabled] = useState(true);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [location, setLocation] = useState('');
 
     useEffect(() => {
         if (id) loadMember();
@@ -112,6 +113,7 @@ export function MemberFormPage() {
                 setKeepIdleMode(data.keep_idle_mode || 'prompt');
                 setTrackingEnabled(data.tracking_enabled ?? true);
                 setAvatarUrl(data.avatar_url || null);
+                setLocation(data.location || '');
             }
         } catch (err: any) {
             setError(err.message);
@@ -154,6 +156,7 @@ export function MemberFormPage() {
                 idle_limit: parseInt(idleLimit) || 10,
                 keep_idle_mode: keepIdleMode,
                 tracking_enabled: trackingEnabled,
+                location: location,
             };
 
             const { error: sError } = await supabase
@@ -246,9 +249,15 @@ export function MemberFormPage() {
                                         >
                                             {['User', 'Viewer', 'Manager', 'Admin'].map(r => <option key={r} value={r}>{r}</option>)}
                                         </select>
-                                        <ChevronLeft className="w-4 h-4 text-primary absolute right-6 top-1/2 -translate-y-1/2 -rotate-90 pointer-events-none group-hover:scale-110 transition-transform" />
                                     </div>
                                 </div>
+                                <FormField
+                                    label="Geographic Location (City/Country)"
+                                    value={location}
+                                    onChange={setLocation}
+                                    icon={<MapPin className="w-4 h-4" />}
+                                    placeholder="e.g. New York, USA..."
+                                />
                                 <FormField
                                     label="Department / Sector"
                                     value={department}
