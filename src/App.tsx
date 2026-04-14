@@ -25,6 +25,13 @@ async function getSupabase() {
 
 type Screen = 'login' | 'projects' | 'consent' | 'tracker' | 'settings';
 
+interface NotificationSettings {
+  tracking_alerts: boolean;
+  screenshot_alerts: boolean;
+  tracking_reminders: boolean;
+  reminder_interval: number;
+}
+
 interface User {
   id: string;
   email: string;
@@ -41,6 +48,9 @@ interface User {
   organization_id?: string;
   timezone?: string;
   keep_idle?: boolean;
+  custom_fields?: {
+    notification_settings?: NotificationSettings;
+  };
 }
 
 async function syncTimezone(sb: any, memberId: string, memberTz: string | null | undefined) {
@@ -209,6 +219,10 @@ function SettingsScreen({ user, onSave, onBack }: {
   const [fullName, setFullName] = useState(user.full_name);
   const [phone, setPhone] = useState(user.phone || '');
   const [avatarUrl, setAvatarUrl] = useState(user.avatar_url || '');
+  const [notifyTracking, setNotifyTracking] = useState(user.custom_fields?.notification_settings?.tracking_alerts ?? true);
+  const [notifyScreenshots, setNotifyScreenshots] = useState(user.custom_fields?.notification_settings?.screenshot_alerts ?? true);
+  const [notifyReminders, setNotifyReminders] = useState(user.custom_fields?.notification_settings?.tracking_reminders ?? true);
+  const [reminderInterval, setReminderInterval] = useState(user.custom_fields?.notification_settings?.reminder_interval ?? 30);
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -240,7 +254,21 @@ function SettingsScreen({ user, onSave, onBack }: {
 
   async function save() {
     setIsSaving(true);
-    await onSave({ full_name: fullName, phone, avatar_url: avatarUrl });
+    const updatedCustomFields = {
+      ...(user.custom_fields || {}),
+      notification_settings: {
+        tracking_alerts: notifyTracking,
+        screenshot_alerts: notifyScreenshots,
+        tracking_reminders: notifyReminders,
+        reminder_interval: reminderInterval
+      }
+    };
+    await onSave({
+      full_name: fullName,
+      phone,
+      avatar_url: avatarUrl,
+      custom_fields: updatedCustomFields
+    });
     setIsSaving(false);
   }
 
@@ -297,6 +325,53 @@ function SettingsScreen({ user, onSave, onBack }: {
               <input type="email" value={user.email} disabled className="field-input" />
               <span style={{ position: 'absolute', right: '0.75rem', fontSize: '0.625rem', fontWeight: 600, color: 'var(--success)', background: 'var(--success-bg)', padding: '0.125rem 0.4rem', borderRadius: '999px', letterSpacing: '0.03em' }}>VERIFIED</span>
             </div>
+          </div>
+
+          <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.25rem' }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>Desktop Notifications</h3>
+
+            <div className="field-group" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+              <div style={{ flex: 1 }}>
+                <label className="field-label" style={{ marginBottom: 0 }}>Tracking Alerts</label>
+                <p className="text-muted" style={{ fontSize: '0.625rem' }}>Notify when tracking starts or stops</p>
+              </div>
+              <label className="switch">
+                <input type="checkbox" checked={notifyTracking} onChange={e => setNotifyTracking(e.target.checked)} />
+                <span className="slider round"></span>
+              </label>
+            </div>
+
+            <div className="field-group" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginTop: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                <label className="field-label" style={{ marginBottom: 0 }}>Screenshot Alerts</label>
+                <p className="text-muted" style={{ fontSize: '0.625rem' }}>Notify when a screenshot is captured</p>
+              </div>
+              <label className="switch">
+                <input type="checkbox" checked={notifyScreenshots} onChange={e => setNotifyScreenshots(e.target.checked)} />
+                <span className="slider round"></span>
+              </label>
+            </div>
+
+            <div className="field-group" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginTop: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                <label className="field-label" style={{ marginBottom: 0 }}>Tracking Reminders</label>
+                <p className="text-muted" style={{ fontSize: '0.625rem' }}>Remind me to track if I'm inactive</p>
+              </div>
+              <label className="switch">
+                <input type="checkbox" checked={notifyReminders} onChange={e => setNotifyReminders(e.target.checked)} />
+                <span className="slider round"></span>
+              </label>
+            </div>
+
+            {notifyReminders && (
+              <div className="field-group" style={{ marginTop: '1rem' }}>
+                <label className="field-label">Reminder Interval (minutes)</label>
+                <div className="field-input-wrap">
+                  <Clock size={14} className="field-icon" />
+                  <input type="number" min="1" max="120" value={reminderInterval} onChange={e => setReminderInterval(parseInt(e.target.value) || 30)} className="field-input" />
+                </div>
+              </div>
+            )}
           </div>
 
           <button onClick={save} disabled={isSaving || uploading} className="btn btn-primary" style={{ width: '100%' }}>
@@ -1064,6 +1139,11 @@ export default function App() {
       setIsTracking(true);
       setSessionId(res?.session_id ?? null);
       setScreen('tracker');
+
+      // Notification Alert
+      if (user?.custom_fields?.notification_settings?.tracking_alerts !== false) {
+        trackerAPI.showNotification('Tracking Started', `Now tracking for ${project.name}`);
+      }
     } catch (err: any) {
       setTrackingError(err.toString());
       setActiveProject(null);
@@ -1086,6 +1166,12 @@ export default function App() {
     setActiveProject(null);
     setElapsed(0);
     setScreen('projects');
+
+    // Notification Alert
+    if (user?.custom_fields?.notification_settings?.tracking_alerts !== false) {
+      trackerAPI.showNotification('Tracking Stopped', 'Your session has ended.');
+    }
+
     // Refresh from DB immediately after stop — this gives accurate numbers
     if (user) fetchDashboardStats(user.id, projects);
   }
@@ -1135,6 +1221,40 @@ export default function App() {
       alert('Error updating profile: ' + err.message);
     }
   }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Effects: Notifications
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  // 1. Screenshot captured listener
+  useEffect(() => {
+    let unlisten: any = null;
+    const setup = async () => {
+      unlisten = await (trackerAPI as any).onScreenshotCaptured(() => {
+        if (user?.custom_fields?.notification_settings?.screenshot_alerts !== false) {
+          trackerAPI.showNotification('📸 Screenshot Captured', 'Your screen activity has been recorded.');
+        }
+      });
+    };
+    setup();
+    return () => { if (unlisten) unlisten(); };
+  }, [user?.custom_fields?.notification_settings?.screenshot_alerts]);
+
+  // 2. Tracking Reminder
+  useEffect(() => {
+    if (!user || isTracking || user?.custom_fields?.notification_settings?.tracking_reminders === false) return;
+
+    const intervalMin = user?.custom_fields?.notification_settings?.reminder_interval || 30;
+    const intervalMs = intervalMin * 60_000;
+
+    const interval = setInterval(() => {
+      if (!isTracking) {
+        trackerAPI.showNotification('⏰ Time to Track?', "You haven't started tracking time yet. Don't forget to clock in!");
+      }
+    }, intervalMs);
+
+    return () => clearInterval(interval);
+  }, [isTracking, user?.custom_fields?.notification_settings?.tracking_reminders, user?.custom_fields?.notification_settings?.reminder_interval]);
 
   const pageVariants = {
     initial: { opacity: 0, y: 8 },
@@ -1278,7 +1398,7 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
       >
         <div className="brand-header">
           <div className="brand-logo">
-            <div style={{ width: 18, height: 18, border: '2.5px solid white', borderRadius: 3, transform: 'rotate(45deg)' }} />
+            <img src="/logo.svg" style={{ width: 64, height: 64, objectFit: 'contain' }} alt="Trackora" />
           </div>
           <div className="brand-header-text">
             <h1 className="heading-1">{forgotMode ? 'Reset Password' : 'Welcome back'}</h1>
@@ -1404,7 +1524,7 @@ function Topbar({ user, onLogout, onSettings, todoBadge, disabled }: { user?: Us
     <header className="app-topbar">
       <div className="topbar-brand">
         <div className="topbar-logo">
-          <div style={{ width: 12, height: 12, border: '2px solid white', borderRadius: 2, transform: 'rotate(45deg)' }} />
+          <img src="/logo.svg" style={{ width: 30, height: 30, objectFit: 'contain' }} alt="Trackora" />
         </div>
         <span className="topbar-title">Trackora</span>
       </div>

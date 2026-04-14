@@ -30,6 +30,7 @@ interface Session {
     idle_percent?: number;
     manual_percent?: number;
     duration_mins?: number;
+    offline_mins?: number;
     user_name?: string;
     display_timezone?: string;
 }
@@ -147,7 +148,7 @@ export function Timesheets() {
                         supabase, 
                         fetchStart.toISOString(), 
                         fetchEnd.toISOString(), 
-                        'session_id, recorded_at, idle, activity_percent',
+                        'session_id, recorded_at, idle, activity_percent, is_offline',
                         { sessionIds }
                     );
                 } catch (actErr) {
@@ -182,6 +183,7 @@ export function Timesheets() {
                     const durationMins = s.ended_at 
                         ? (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000 
                         : (new Date().getTime() - new Date(s.started_at).getTime()) / 60000;
+                    const offlineMins = samples.filter(samp => samp.is_offline).length;
                     
                     dailyMap[key].sessions.push({
                         ...s,
@@ -189,6 +191,7 @@ export function Timesheets() {
                         idle_percent: 100 - score,
                         manual_percent: 0,
                         duration_mins: durationMins,
+                        offline_mins: offlineMins,
                         user_name: member?.full_name || 'System User',
                         display_timezone: tz
                     });
@@ -462,8 +465,17 @@ function DailyView({ entries }: { entries: DailyEntry[] }) {
                                 <td className="p-4 text-center text-[13px] font-medium text-slate-400">0%</td>
                                 <td className="p-4 text-center text-[14px] font-bold text-slate-800">{formatDuration(s.duration_mins || 0)}</td>
                                 <td className="p-4 text-[12px] font-medium text-slate-500 italic">
-                                    {new Date(s.started_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase()} - 
-                                    {s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase() : 'Active'}
+                                    <div className="flex flex-col">
+                                        <span>
+                                            {new Date(s.started_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase()} - 
+                                            {s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase() : 'Active'}
+                                        </span>
+                                        {s.offline_mins && s.offline_mins > 0 ? (
+                                            <span className="text-[10px] text-slate-400 not-italic font-bold mt-1">
+                                                ({s.offline_mins} minutes tracked offline)
+                                            </span>
+                                        ) : null}
+                                    </div>
                                 </td>
                             </tr>
                         ))}

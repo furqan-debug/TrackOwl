@@ -35,6 +35,7 @@ pub struct ActivitySample {
     pub domain: String,
     pub idle: bool,
     pub activity_percent: i32,
+    pub is_offline: bool,
 }
 
 // ─── Screenshot payload ───────────────────────────────────────────────────────
@@ -297,6 +298,7 @@ pub fn start_sample_loop(
                 domain,
                 idle,
                 activity_percent,
+                is_offline: false,
             };
 
             // Emit to React UI
@@ -328,6 +330,7 @@ pub fn start_sample_loop(
                     "domain":          sample.domain,
                     "idle":            sample.idle,
                     "activity_percent": sample.activity_percent,
+                    "is_offline":      sample.is_offline,
                 }]).to_string();
                 let token = auth_token.lock().unwrap().clone();
                 let _ = crate::supabase_post(&cfg, "activity_samples", &body, token.as_deref(), None);
@@ -342,7 +345,7 @@ const SCREENSHOT_WINDOW_MS: u64 = 10 * 60 * 1000; // 10 minutes
 const SCREENSHOTS_PER_WINDOW: usize = 3;
 
 pub fn start_screenshot_loop(
-    _app: AppHandle,
+    app: AppHandle,
     session_id: String,
     cfg: crate::SupabaseConfig,
     running: Arc<Mutex<bool>>,
@@ -379,6 +382,7 @@ pub fn start_screenshot_loop(
                 }
 
                 if let Ok(_) = req.send_bytes(png_bytes.as_slice()) {
+                    let _ = app.emit("screenshot-captured", {});
                     let body = serde_json::json!({
                         "session_id": session_id,
                         "recorded_at": recorded_at,
@@ -447,6 +451,7 @@ pub fn start_screenshot_loop(
                             let upload_res = req.send_bytes(png_bytes.as_slice());
 
                             if upload_res.is_ok() {
+                                let _ = app.emit("screenshot-captured", {});
                                 let body = serde_json::json!({
                                     "session_id": session_id,
                                     "recorded_at": recorded_at,
