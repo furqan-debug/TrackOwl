@@ -5,7 +5,7 @@ import {
   ChevronRight, LogOut, CheckCircle2,
   ShieldAlert, Eye, EyeOff, MapPin, MonitorPlay, MousePointerClick,
   ClipboardList, Calendar, Circle, ChevronDown, ChevronUp,
-  User as UserIcon, Camera, Save, ArrowLeft,
+  User as UserIcon, Camera, Save,
   Clock, Activity
 } from 'lucide-react';
 import { trackerAPI } from './tauri-ipc';
@@ -29,7 +29,7 @@ interface NotificationSettings {
   tracking_alerts: boolean;
   screenshot_alerts: boolean;
   tracking_reminders: boolean;
-  reminder_interval: number;
+  reminder_interval?: number;
 }
 
 interface User {
@@ -222,7 +222,6 @@ function SettingsScreen({ user, onSave, onBack }: {
   const [notifyTracking, setNotifyTracking] = useState(user.custom_fields?.notification_settings?.tracking_alerts ?? true);
   const [notifyScreenshots, setNotifyScreenshots] = useState(user.custom_fields?.notification_settings?.screenshot_alerts ?? true);
   const [notifyReminders, setNotifyReminders] = useState(user.custom_fields?.notification_settings?.tracking_reminders ?? true);
-  const [reminderInterval, setReminderInterval] = useState(user.custom_fields?.notification_settings?.reminder_interval ?? 30);
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -259,8 +258,7 @@ function SettingsScreen({ user, onSave, onBack }: {
       notification_settings: {
         tracking_alerts: notifyTracking,
         screenshot_alerts: notifyScreenshots,
-        tracking_reminders: notifyReminders,
-        reminder_interval: reminderInterval
+        tracking_reminders: notifyReminders
       }
     };
     await onSave({
@@ -275,7 +273,9 @@ function SettingsScreen({ user, onSave, onBack }: {
   return (
     <div className="settings-screen">
       <header className="settings-header">
-        <button onClick={onBack} className="settings-back-btn"><ArrowLeft size={16} /></button>
+        <button onClick={onBack} className="settings-back-btn">
+          <img src="/logo.svg" alt="Back" className="settings-back-logo" />
+        </button>
         <div>
           <h2 className="heading-2">Profile Settings</h2>
           <p className="text-muted" style={{ fontSize: '0.6875rem', marginTop: '0.125rem' }}>Manage your account details</p>
@@ -293,7 +293,7 @@ function SettingsScreen({ user, onSave, onBack }: {
               </div>
             )}
             <button className="btn-avatar-edit" onClick={() => fileInputRef.current?.click()}>
-              {uploading ? '...' : <Camera size={14} />}
+              {uploading ? '...' : <Camera size={16} strokeWidth={2.5} />}
             </button>
             <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
           </div>
@@ -363,15 +363,6 @@ function SettingsScreen({ user, onSave, onBack }: {
               </label>
             </div>
 
-            {notifyReminders && (
-              <div className="field-group" style={{ marginTop: '1rem' }}>
-                <label className="field-label">Reminder Interval (minutes)</label>
-                <div className="field-input-wrap">
-                  <Clock size={14} className="field-icon" />
-                  <input type="number" min="1" max="120" value={reminderInterval} onChange={e => setReminderInterval(parseInt(e.target.value) || 30)} className="field-input" />
-                </div>
-              </div>
-            )}
           </div>
 
           <button onClick={save} disabled={isSaving || uploading} className="btn btn-primary" style={{ width: '100%' }}>

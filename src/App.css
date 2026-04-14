@@ -996,25 +996,38 @@ input:checked+.slider:before {
 }
 
 .settings-back-btn {
-  background: transparent;
-  border: 1.5px solid var(--border);
+  background: white;
+  border: 1px solid var(--border);
   cursor: pointer;
-  color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--r-md);
-  transition: all 0.2s ease;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   flex-shrink: 0;
+  padding: 0;
+}
+
+.settings-back-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.settings-back-btn:hover {
+  background: var(--bg-app);
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.12);
+  transform: translateY(-1px);
 }
 
 .settings-back-btn:hover {
   background: var(--accent-subtle);
-  border-color: rgba(79, 70, 229, 0.25);
   color: var(--accent);
-  transform: translateX(-1px);
+  transform: translateX(-3px);
 }
 
 .settings-content {
@@ -1033,30 +1046,9 @@ input:checked+.slider:before {
 
 .avatar-preview-container {
   position: relative;
-  width: 88px;
-  height: 88px;
-}
-
-/* Gradient ring behind the avatar */
-.avatar-preview-container::before {
-  content: '';
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), #818cf8, #c084fc);
-  opacity: 0.5;
-  z-index: 0;
-  animation: avatar-ring-rotate 4s linear infinite;
-}
-
-@keyframes avatar-ring-rotate {
-  0% {
-    filter: hue-rotate(0deg);
-  }
-
-  100% {
-    filter: hue-rotate(360deg);
-  }
+  width: 96px;
+  height: 96px;
+  margin-bottom: 0.5rem;
 }
 
 .avatar-preview-large,
@@ -1065,15 +1057,15 @@ input:checked+.slider:before {
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 3px solid var(--surface);
+  border: 4px solid var(--surface);
   box-shadow: var(--shadow-md);
   position: relative;
   z-index: 1;
 }
 
 .avatar-placeholder-large {
-  background: linear-gradient(135deg, var(--accent-light), var(--accent-subtle));
-  color: var(--accent);
+  background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+  color: var(--text-tertiary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1081,27 +1073,27 @@ input:checked+.slider:before {
 
 .btn-avatar-edit {
   position: absolute;
-  bottom: 0;
-  right: -2px;
-  width: 30px;
-  height: 30px;
+  bottom: 2px;
+  right: 2px;
+  width: 32px;
+  height: 32px;
   background: var(--accent);
   color: white;
-  border: 2.5px solid var(--surface);
+  border: 2px solid var(--surface);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
-  transition: all 0.2s ease;
-  z-index: 2;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
 }
 
 .btn-avatar-edit:hover {
-  transform: scale(1.15);
   background: var(--accent-hover);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
 }
 
 /* ── Form ── */
