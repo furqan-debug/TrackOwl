@@ -148,8 +148,8 @@ export function Projects() {
     return (
         <PageLayout
             maxWidth="full"
-            title="Projects Architecture"
-            description="Structural management of client engagements and resource allocation."
+            title="Projects"
+            description="Manage your projects and see how much time is being spent on them."
             actions={
                 <div className="flex items-center gap-4">
                     <div className="flex bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
@@ -183,9 +183,11 @@ export function Projects() {
                 
                 {/* 📊 KPI Pulse */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <StatMetric icon={<Briefcase className="w-5 h-5" />} label="Live Portfolio" value={stats.total} sub={`${activeTab} engagements`} />
-                    <StatMetric icon={<Building2 className="w-5 h-5" />} label="Client Partners" value={stats.uniqueClients} sub="Distinct organizations" />
-                    <StatMetric icon={<Check className="w-5 h-5" />} label="Budget Integrity" value={`${projects.length - stats.overBudget}`} sub="Projects within limits" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <StatMetric icon={<Briefcase className="w-5 h-5" />} label="Total Projects" value={stats.total} sub={`${activeTab} projects`} />
+                    <StatMetric icon={<Building2 className="w-5 h-5" />} label="Clients" value={stats.uniqueClients} sub="Total clinical clients" />
+                    <StatMetric icon={<Check className="w-5 h-5" />} label="On Budget" value={`${projects.length - stats.overBudget}`} sub="Projects within time limits" />
+                </div>
                 </div>
 
                 {/* 🏗️ Project Ledger */}
@@ -236,10 +238,10 @@ export function Projects() {
                                             {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 && <Check className="w-3 h-3 stroke-[3]" />}
                                         </button>
                                     </th>
-                                    <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Project Context</th>
-                                    <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Team Density</th>
-                                    <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Resources</th>
-                                    <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Budget Integrity</th>
+                                    <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Project</th>
+                                    <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Teams & Tasks</th>
+                                    <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Members</th>
+                                    <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Budget Status</th>
                                     <th className="pr-10 py-4 w-12"></th>
                                 </tr>
                             </thead>
@@ -380,7 +382,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                 {showMenu && (
                     <div className="absolute right-10 top-14 w-48 bg-white border border-slate-200 shadow-2xl z-50 py-2 rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
                         <button onClick={() => { setShowMenu(false); onEdit(); }} className="w-full px-5 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 flex items-center gap-3 transition-colors">
-                            <ArrowUpRight className="w-3.5 h-3.5" /> Details
+                            <ArrowUpRight className="w-3.5 h-3.5" /> Edit Project
                         </button>
                         <button onClick={() => { if (!isViewer) { setShowMenu(false); handleArchive(); } }} className={clsx("w-full px-5 py-2.5 text-left text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-colors", isViewer ? "opacity-30 cursor-not-allowed" : "text-slate-600 hover:bg-slate-50")}>
                             <Archive className="w-3.5 h-3.5" /> {project.status === 'Active' ? 'Archive' : 'Restore'}

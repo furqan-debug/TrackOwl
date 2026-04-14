@@ -160,7 +160,7 @@ export function SettingsPage() {
                     <SettingsSection 
                         icon={<Monitor className="w-5 h-5" />} 
                         title="Tracking Limits" 
-                        subtitle="Set daily and weekly tracking quotas"
+                        subtitle="Set daily and weekly tracking limits"
                     >
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
                             <RangeField
@@ -187,7 +187,7 @@ export function SettingsPage() {
                     <SettingsSection 
                         icon={<Shield className="w-5 h-5" />} 
                         title="Activity Tracking" 
-                        subtitle="Choose which types of activity should be monitored"
+                        subtitle="Choose what activity should be tracked"
                     >
                         <div className="space-y-12">
                             <ToggleField
@@ -223,8 +223,8 @@ export function SettingsPage() {
                             <div className="space-y-4">
                                 <ConfigValue label="Capture Range" value={`${settings.screenshotIntervalMin}-${settings.screenshotIntervalMax}m`} />
                                 <ConfigValue label="Idle Timeout" value={`${settings.idleThresholdSeconds}s`} />
-                                <ConfigValue label="Daily Quota" value={`${settings.dailyHoursLimit}h`} />
-                                <ConfigValue label="Weekly Quota" value={`${settings.weeklyHoursLimit}h`} />
+                                <ConfigValue label="Daily Limit" value={`${settings.dailyHoursLimit}h`} />
+                                <ConfigValue label="Weekly Limit" value={`${settings.weeklyHoursLimit}h`} />
                                 <div className="h-px bg-border my-2" />
                                 <ConfigValue label="Privacy Mode" value={settings.screenshotBlur ? 'Enabled' : 'Disabled'} color={settings.screenshotBlur ? 'emerald' : 'rose'} />
                                 <ConfigValue label="URL Tracking" value={settings.trackUrls ? 'Active' : 'Inactive'} color={settings.trackUrls ? 'emerald' : 'rose'} />

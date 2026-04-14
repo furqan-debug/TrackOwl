@@ -268,7 +268,7 @@ export function Reports() {
         <PageLayout
             maxWidth="full"
             title="Reports"
-            description="High-fidelity activity auditing and project capitalization ledger."
+            description="View detailed reports on your team's activity and time spent."
             actions={
                 <div className="flex flex-wrap items-center gap-4">
                     {/* Command Control Strip: Range Switching */}
@@ -291,17 +291,17 @@ export function Reports() {
                     <div className="flex items-center gap-3">
                         <FilterSelect
                             icon={<Users className="w-4 h-4" />}
-                            label="Team Allocation"
+                            label="Team"
                             value={selectedTeamId}
                             onChange={(val) => { setSelectedTeamId(val); setSelectedMemberId('All'); }}
-                            options={[{ id: 'All', name: 'Global Ecosystem' }, ...teams]}
+                            options={[{ id: 'All', name: 'All Teams' }, ...teams]}
                         />
                         <FilterSelect
                             icon={<ActivityIcon className="w-4 h-4" />}
-                            label="Member Scope"
+                            label="Member"
                             value={selectedMemberId}
-                            onChange={(val) => { setSelectedMemberId(val); setSelectedTeamId('All'); }}
-                            options={[{ id: 'All', name: 'All Personnel' }, ...members].map((m: any) => ({ id: m.id, name: m.full_name || m.email || m.name || 'Unknown' }))}
+                            onChange={(val) => { setSelectedMemberId('All'); setSelectedTeamId('All'); }}
+                            options={[{ id: 'All', name: 'All Members' }, ...members].map((m: any) => ({ id: m.id, name: m.full_name || m.email || m.name || 'Unknown' }))}
                         />
                         <Button
                             variant="secondary"
@@ -319,21 +319,21 @@ export function Reports() {
                 
                 {/* 📊 KPI Architectural Ledger */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 lg:gap-8">
-                    <StatMetric icon={<Clock className="w-5 h-5" />} label="Time Capital" value={formatDuration(totalMins)} sub="Total billable yield" trend={12} />
-                    <StatMetric icon={<ActivityIcon className="w-5 h-5" />} label="Quality Index" value={`${avgActivity}%`} sub="Avg activity score" trend={4} />
-                    <StatMetric icon={<DollarSign className="w-5 h-5" />} label="Yield Billed" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Revenue generation" />
-                    <StatMetric icon={<Monitor className="w-5 h-5" />} label="Total Cycles" value={totalSessions.toString()} sub="Workflow sessions" />
-                    <StatMetric icon={<Camera className="w-5 h-5" />} label="Visual Proofs" value={screenshotCount.toString()} sub="Verification proofs" />
-                    <StatMetric icon={<DollarSign className="w-5 h-5" />} label="Project Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Personnel expense" />
+                    <StatMetric icon={<Clock className="w-5 h-5" />} label="Total Time" value={formatDuration(totalMins)} sub="Time worked" trend={12} />
+                    <StatMetric icon={<ActivityIcon className="w-5 h-5" />} label="Avg Activity" value={`${avgActivity}%`} sub="Team focus score" trend={4} />
+                    <StatMetric icon={<DollarSign className="w-5 h-5" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Billed to clients" />
+                    <StatMetric icon={<Monitor className="w-5 h-5" />} label="Sessions" value={totalSessions.toString()} sub="Total sessions" />
+                    <StatMetric icon={<Camera className="w-5 h-5" />} label="Screenshots" value={screenshotCount.toString()} sub="Capture proofs" />
+                    <StatMetric icon={<DollarSign className="w-5 h-5" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Internal expense" />
                 </div>
 
                 {loading ? (
                     <div className="h-[600px] flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-100">
-                        <LoadingState message="Generating high-fidelity reports..." />
+                        <LoadingState message="Loading reports..." />
                     </div>
                 ) : dailyActivity.length === 0 ? (
                     <div className="h-[600px] flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-2xl border border-slate-100 italic">
-                        <EmptyState title="No active signals detected" description="System is awaiting data from the selected scope." />
+                        <EmptyState title="No activity found" description="Try selecting a different team or date range." />
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
@@ -343,7 +343,7 @@ export function Reports() {
                             
                             <Card className="p-8">
                                 <div className="flex items-center justify-between mb-8">
-                                    <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Team Trajectory Index</h3>
+                                    <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Activity Trend</h3>
                                     <TrendingUpIcon size={16} className="text-slate-300" />
                                 </div>
                                 <div className="h-[400px] w-full">
@@ -386,7 +386,7 @@ export function Reports() {
 
                             <Card className="p-8">
                                 <div className="flex items-center justify-between mb-8">
-                                    <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Daily Capital Allocation</h3>
+                                    <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Daily Time Allocation</h3>
                                     <BarChart3 className="w-4 h-4 text-slate-300" />
                                 </div>
                                 <div className="h-[350px] w-full">
@@ -421,7 +421,7 @@ export function Reports() {
                         <div className="xl:col-span-4 space-y-8">
                             
                             <Card className="p-8">
-                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-8">Tool Ecosystem Breakdown</h3>
+                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-8">App & Browser Usage</h3>
                                 <div className="h-[280px] w-full relative mb-10">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
@@ -443,7 +443,7 @@ export function Reports() {
                                     </ResponsiveContainer>
                                     <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                                         <span className="text-3xl font-black text-slate-900 leading-none">{appBreakdown.length}</span>
-                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">Active Tools</span>
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-2">Active Apps</span>
                                     </div>
                                 </div>
 
@@ -470,15 +470,15 @@ export function Reports() {
                                         <div className="bg-white/20 p-2 rounded-lg backdrop-blur-md">
                                             <Zap className="w-5 h-5 text-white" />
                                         </div>
-                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Aggregate Velocity</span>
+                                        <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Success Score</span>
                                     </div>
                                     <div>
-                                        <h4 className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Human Signal Baseline</h4>
+                                        <h4 className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Activity Score</h4>
                                         <div className="text-5xl font-black tracking-tighter tabular-nums">{avgActivity}%</div>
                                     </div>
                                     <div className="space-y-2">
                                         <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
-                                            <span>Efficiency Pulse</span>
+                                            <span>Focus Score</span>
                                             <span>Active Monitoring</span>
                                         </div>
                                         <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
@@ -486,7 +486,7 @@ export function Reports() {
                                         </div>
                                     </div>
                                     <p className="text-[11px] font-medium leading-relaxed opacity-80 uppercase tracking-tight">
-                                        This threshold reflects aggregate input-active duration optimized for enterprise benchmarks.
+                                        This score shows how active the team has been based on mouse and keyboard movement.
                                     </p>
                                 </div>
                             </div>
@@ -529,7 +529,7 @@ function CustomTooltip({ active, payload, label, unit }: any) {
     if (active && payload && payload.length) {
         return (
             <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-100 min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 pb-2 border-b border-slate-50">{label} Ledger</p>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 pb-2 border-b border-slate-50">{label}</p>
                 <div className="flex items-center gap-4">
                     <div className="w-2 h-2 rounded-full bg-primary ring-4 ring-primary/10 shadow-[0_0_12px_rgba(64,102,211,0.4)]" />
                     <div className="flex items-baseline gap-2">
