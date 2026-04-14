@@ -5,7 +5,7 @@ Trackora (by DigiReps) is a comprehensive time and productivity tracking solutio
 ## Architecture
 
 The project is divided into three main components: 
-
+ 
 - **Desktop Client (Root)**: An Electron-based application that runs in the background to track user activity, take screenshots, and monitor application/URL usage.
 - **Admin Portal (`/admin-portal`)**: A React-based web interface for managers to oversee projects, members, budgets, and detailed productivity reports.
 - **Backend (`/backend`)**: An Express server that handles data aggregation, member invitations, and complex business logic, sitting on top of a Supabase database.
