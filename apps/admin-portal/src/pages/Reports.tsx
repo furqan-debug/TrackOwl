@@ -300,7 +300,7 @@ export function Reports() {
                             icon={<ActivityIcon className="w-4 h-4" />}
                             label="Member"
                             value={selectedMemberId}
-                            onChange={(val) => { setSelectedMemberId('All'); setSelectedTeamId('All'); }}
+                            onChange={(val) => { setSelectedMemberId(val); setSelectedTeamId('All'); }}
                             options={[{ id: 'All', name: 'All Members' }, ...members].map((m: any) => ({ id: m.id, name: m.full_name || m.email || m.name || 'Unknown' }))}
                         />
                         <Button
