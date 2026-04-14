@@ -33,6 +33,7 @@ interface Session {
     offline_mins?: number;
     user_name?: string;
     display_timezone?: string;
+    is_active?: boolean;
 }
 
 interface DailyEntry {
@@ -180,20 +181,37 @@ export function Timesheets() {
                 if (key) {
                     const samples = sessionSamplesMap[s.id] || [];
                     const score = calculateActivityScore(samples);
-                    const durationMins = s.ended_at 
-                        ? (new Date(s.ended_at).getTime() - new Date(s.started_at).getTime()) / 60000 
-                        : (new Date().getTime() - new Date(s.started_at).getTime()) / 60000;
+                    
+                    // Improved duration calculation:
+                    // If ended_at is null, check if the last sample is recent.
+                    // If the last sample is > 10 mins ago, use the last sample's time as the effective end.
+                    const lastSample = samples.length > 0 ? samples.sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())[0] : null;
+                    const lastSampleTime = lastSample ? new Date(lastSample.recorded_at).getTime() : new Date(s.started_at).getTime();
+                    const nowMs = new Date().getTime();
+                    
+                    let effectiveEndMs = nowMs;
+                    if (s.ended_at) {
+                        effectiveEndMs = new Date(s.ended_at).getTime();
+                    } else if (nowMs - lastSampleTime > 15 * 60000) {
+                        // If no activity for 15 mins, don't assume it's still running
+                        effectiveEndMs = lastSampleTime;
+                    }
+
+                    const durationMins = (effectiveEndMs - new Date(s.started_at).getTime()) / 60000;
                     const offlineMins = samples.filter(samp => samp.is_offline).length;
                     
+                    const isTrulyActive = !s.ended_at && (nowMs - lastSampleTime < 15 * 60000);
+
                     dailyMap[key].sessions.push({
                         ...s,
                         activity_percent: score,
                         idle_percent: 100 - score,
                         manual_percent: 0,
-                        duration_mins: durationMins,
+                        duration_mins: Math.max(0, durationMins),
                         offline_mins: offlineMins,
                         user_name: member?.full_name || 'System User',
-                        display_timezone: tz
+                        display_timezone: tz,
+                        is_active: isTrulyActive // Add this to the session object
                     });
                 }
             });
@@ -468,7 +486,9 @@ function DailyView({ entries }: { entries: DailyEntry[] }) {
                                     <div className="flex flex-col">
                                         <span>
                                             {new Date(s.started_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase()} - 
-                                            {s.ended_at ? new Date(s.ended_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase() : 'Active'}
+                                            {s.ended_at ? 
+                                                new Date(s.ended_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase() : 
+                                                (s.is_active ? 'Active' : 'Unfinished')}
                                         </span>
                                         {s.offline_mins && s.offline_mins > 0 ? (
                                             <span className="text-[10px] text-slate-400 not-italic font-bold mt-1">
