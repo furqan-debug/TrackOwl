@@ -163,21 +163,12 @@ h4 {
   animation-delay: 300ms;
 }
 
-/* Scrollbar Refinement */
+/* Scrollbar Refinement - Hidden for cleaner UI */
 ::-webkit-scrollbar {
-  width: 8px;
+  display: none;
 }
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--color-border-strong);
-  border-radius: 10px;
-  border: 2px solid var(--color-background);
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-text-disabled);
-}
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}

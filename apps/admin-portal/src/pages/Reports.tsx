@@ -28,9 +28,9 @@ import {
 const BRAND_PRIMARY = '#4066D3';
 const CHART_COLORS = [
     '#4066D3', // Brand Blue
-    '#597EE8', 
-    '#7495FF', 
-    '#8FB3FF', 
+    '#597EE8',
+    '#7495FF',
+    '#8FB3FF',
     '#A9D0FF'
 ];
 
@@ -103,7 +103,7 @@ export function Reports() {
                 .from('members')
                 .select('id, auth_user_id, email, full_name, pay_rate, bill_rate, timezone')
                 .eq('status', 'Active')).data || [];
-        
+
         const allMemberSessionUserIds = Array.from(
             new Set(
                 membersForLookup.flatMap((m: any) => [m.id, m.auth_user_id].filter(Boolean) as string[])
@@ -136,7 +136,7 @@ export function Reports() {
 
         if ((selectedMemberId !== 'All' || selectedTeamId !== 'All') && filteredSessionUserIds.length === 0) {
             setDailyActivity([]); setAppBreakdown([]);
-            setTotalSessions(0); setScreenshotCount(0); setTotalMins(0); 
+            setTotalSessions(0); setScreenshotCount(0); setTotalMins(0);
             setAvgActivity(0); setTotalCosts(0); setTotalBilled(0);
             setLoading(false); return;
         }
@@ -316,7 +316,7 @@ export function Reports() {
         >
 
             <div className="flex flex-col gap-8 pb-20">
-                
+
                 {/* 📊 KPI Architectural Ledger */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 lg:gap-8">
                     <StatMetric icon={<Clock className="w-5 h-5" />} label="Total Time" value={formatDuration(totalMins)} sub="Time worked" trend={12} />
@@ -337,10 +337,10 @@ export function Reports() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
-                        
+
                         {/* 🖥️ Primary Analytics: Trends & Distro */}
                         <div className="xl:col-span-8 space-y-8">
-                            
+
                             <Card className="p-8">
                                 <div className="flex items-center justify-between mb-8">
                                     <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Activity Trend</h3>
@@ -419,7 +419,7 @@ export function Reports() {
 
                         {/* 📊 Right Sidebar: Ecosystem Data */}
                         <div className="xl:col-span-4 space-y-8">
-                            
+
                             <Card className="p-8">
                                 <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest mb-8">App & Browser Usage</h3>
                                 <div className="h-[280px] w-full relative mb-10">
