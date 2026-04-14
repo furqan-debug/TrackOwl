@@ -72,6 +72,14 @@ export const trackerAPI = {
       });
     }
   },
+  
+  onScreenshotCaptured: (cb: () => void) => {
+    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+      return (window as any).__TAURI__.event.listen('screenshot-captured', () => {
+        cb();
+      });
+    }
+  },
 
   /** Install the pending auto-update (downloads + restarts app) */
   installUpdate: async () => {

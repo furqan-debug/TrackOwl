@@ -10,6 +10,9 @@ use serde::{Deserialize, Serialize};
 use crate::tracker::ActivitySample;
 use crate::SupabaseConfig;
 
+// Global lock to prevent concurrent sync loops from overlapping
+static SYNC_LOCK: Mutex<()> = Mutex::new(());
+
 // ─── Row types ─────────────────────────────────────────────────────────────────
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CachedSample {
@@ -23,6 +26,7 @@ pub struct CachedSample {
     pub domain: String,
     pub idle: bool,
     pub activity_percent: i32,
+    pub is_offline: bool,
     pub synced: bool,
 }
 
@@ -65,6 +69,9 @@ pub fn init_db() -> rusqlite::Result<Connection> {
         if !table_info.contains(&"idle".to_string()) && table_info.contains(&"idle_flag".to_string()) {
             let _ = conn.execute("ALTER TABLE activity_samples RENAME COLUMN idle_flag TO idle", []);
         }
+        if !table_info.contains(&"is_offline".to_string()) {
+            let _ = conn.execute("ALTER TABLE activity_samples ADD COLUMN is_offline INTEGER NOT NULL DEFAULT 0", []);
+        }
     }
 
     conn.execute_batch(
@@ -79,6 +86,7 @@ pub fn init_db() -> rusqlite::Result<Connection> {
             domain           TEXT    NOT NULL DEFAULT '',
             idle             INTEGER NOT NULL DEFAULT 0,
             activity_percent INTEGER NOT NULL DEFAULT 0,
+            is_offline       INTEGER NOT NULL DEFAULT 0,
             synced           INTEGER NOT NULL DEFAULT 0
         );
         CREATE INDEX IF NOT EXISTS idx_synced ON activity_samples(synced);",
@@ -90,12 +98,13 @@ pub fn init_db() -> rusqlite::Result<Connection> {
 pub fn cache_sample(conn: &Connection, sample: &ActivitySample) -> rusqlite::Result<()> {
     conn.execute(
         "INSERT INTO activity_samples
-             (session_id, recorded_at, mouse_clicks, key_presses, app_name, window_title, domain, idle, activity_percent, synced)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 0)",
+             (session_id, recorded_at, mouse_clicks, key_presses, app_name, window_title, domain, idle, activity_percent, is_offline, synced)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 0)",
         params![
             sample.session_id, sample.recorded_at, sample.mouse_clicks,
             sample.key_presses, sample.app_name, sample.window_title,
             sample.domain, sample.idle as i32, sample.activity_percent,
+            sample.is_offline as i32,
         ],
     )?;
     Ok(())
@@ -104,7 +113,7 @@ pub fn cache_sample(conn: &Connection, sample: &ActivitySample) -> rusqlite::Res
 pub fn get_unsynced_samples(conn: &Connection) -> rusqlite::Result<Vec<CachedSample>> {
     let mut stmt = conn.prepare(
         "SELECT id, session_id, recorded_at, mouse_clicks, key_presses,
-                app_name, window_title, domain, idle, activity_percent, synced
+                app_name, window_title, domain, idle, activity_percent, is_offline, synced
          FROM activity_samples WHERE synced = 0 ORDER BY id ASC LIMIT 50"
     )?;
     let rows = stmt.query_map([], |row| {
@@ -119,26 +128,35 @@ pub fn get_unsynced_samples(conn: &Connection) -> rusqlite::Result<Vec<CachedSam
             domain: row.get(7)?,
             idle: row.get::<_, i32>(8)? != 0,
             activity_percent: row.get(9)?,
-            synced: row.get::<_, i32>(10)? != 0,
+            is_offline: row.get::<_, i32>(10)? != 0,
+            synced: row.get::<_, i32>(11)? != 0,
         })
     })?;
     rows.collect()
 }
 
-pub fn mark_synced(conn: &Connection, ids: &[i64]) -> rusqlite::Result<()> {
+pub fn mark_synced(conn: &mut Connection, ids: &[i64]) -> rusqlite::Result<()> {
     if ids.is_empty() { return Ok(()); }
+    
+    // Use a transaction for atomic updates
+    let tx = conn.transaction()?;
+    
     for id in ids {
-        conn.execute("UPDATE activity_samples SET synced = 1 WHERE id = ?1", params![id])?;
+        tx.execute("UPDATE activity_samples SET synced = 1 WHERE id = ?1", params![id])?;
     }
+    
     // Prune synced rows older than 7 days
     let cutoff = chrono::Utc::now()
         .checked_sub_signed(chrono::Duration::days(7))
         .map(|dt| dt.to_rfc3339())
         .unwrap_or_default();
-    conn.execute(
+    
+    tx.execute(
         "DELETE FROM activity_samples WHERE synced = 1 AND recorded_at < ?1",
         params![cutoff],
     )?;
+    
+    tx.commit()?;
     Ok(())
 }
 
@@ -150,25 +168,30 @@ pub fn start_sync_loop(
     running: Arc<Mutex<bool>>,
 ) {
     thread::spawn(move || {
-        let conn = match init_db() {
+        let mut conn = match init_db() {
             Ok(c) => c,
             Err(e) => { eprintln!("[cache] Failed to open DB: {}", e); return; }
         };
         loop {
             thread::sleep(Duration::from_secs(30));
             if !*running.lock().unwrap() { break; }
-            sync_once(&conn, &cfg, &auth_token);
+            sync_once(&mut conn, &cfg, &auth_token);
         }
     });
 }
 
 /// One sync pass — inserts unsynced samples as a batch into Supabase.
-/// PostgREST supports multi-row inserts by sending a JSON array.
 pub fn sync_once(
-    conn: &Connection,
+    conn: &mut Connection,
     cfg: &SupabaseConfig,
     auth_token: &Arc<Mutex<Option<String>>>,
 ) {
+    // Prevent concurrent syncs
+    let _guard = match SYNC_LOCK.try_lock() {
+        Ok(g) => g,
+        Err(_) => return, // Already syncing
+    };
+
     let samples = match get_unsynced_samples(conn) {
         Ok(s) => s,
         Err(e) => { eprintln!("[cache] get_unsynced error: {}", e); return; }
@@ -177,18 +200,24 @@ pub fn sync_once(
 
     let token = auth_token.lock().unwrap().clone().unwrap_or_default();
 
-    // Build JSON array — Supabase PostgREST accepts array inserts natively
     let payload: Vec<serde_json::Value> = samples.iter().map(|s| {
+        // If the sample is more than 3 minutes old, it was likely cached while offline
+        let recorded_at_dt = chrono::DateTime::parse_from_rfc3339(&s.recorded_at).ok();
+        let is_delayed = recorded_at_dt.map(|dt| {
+            chrono::Utc::now().signed_duration_since(dt) > chrono::Duration::minutes(3)
+        }).unwrap_or(false);
+
         serde_json::json!({
-            "session_id":      s.session_id,
-            "recorded_at":     s.recorded_at,
-            "mouse_clicks":    s.mouse_clicks,
-            "key_presses":     s.key_presses,
-            "app_name":        s.app_name,
-            "window_title":    s.window_title,
-            "domain":          s.domain,
-            "idle":            s.idle,
+            "session_id":       s.session_id,
+            "recorded_at":      s.recorded_at,
+            "mouse_clicks":     s.mouse_clicks,
+            "key_presses":      s.key_presses,
+            "app_name":         s.app_name,
+            "window_title":     s.window_title,
+            "domain":           s.domain,
+            "idle":             s.idle,
             "activity_percent": s.activity_percent,
+            "is_offline":       s.is_offline || is_delayed,
         })
     }).collect();
 
@@ -203,7 +232,18 @@ pub fn sync_once(
                 println!("[cache] ✅ Synced {} samples to Supabase", ids.len());
             }
         }
-        Err(e) => eprintln!("[cache] sync failed (will retry): {}", e),
+        Err(e) => {
+            // If the error is a "409 Conflict", it means these rows already exist on the server
+            // due to a previous partial sync or duplicate attempt. We should mark them as synced 
+            // locally so we don't get stuck retrying them.
+            if e.contains("409") || e.contains("duplicate key") {
+                println!("[cache] ⚠️ Conflict detected (already synced). Marking as synced locally.");
+                let ids: Vec<i64> = samples.iter().map(|s| s.id).collect();
+                let _ = mark_synced(conn, &ids);
+            } else {
+                eprintln!("[cache] sync failed (will retry): {}", e);
+            }
+        }
     }
 }
 
@@ -214,12 +254,18 @@ pub fn sync_from_arc(
     cfg: &SupabaseConfig,
     auth_token: &Arc<Mutex<Option<String>>>,
 ) {
+    // Prevent concurrent syncs
+    let _guard = match SYNC_LOCK.try_lock() {
+        Ok(g) => g,
+        Err(_) => return, // Already syncing
+    };
+
     let samples = {
         let db_lock = db_arc.lock().unwrap();
         if let Some(conn) = db_lock.as_ref() {
             match get_unsynced_samples(conn) {
                 Ok(s) => s,
-                Err(e) => { eprintln!("[cache] get_unsynced error: {}", e); return; }
+                Err(e) => { eprintln!("[cache] get_unsynced error: {}", s_format_error(e)); return; }
             }
         } else {
             return;
@@ -231,16 +277,23 @@ pub fn sync_from_arc(
     let token = auth_token.lock().unwrap().clone().unwrap_or_default();
     
     let payload: Vec<serde_json::Value> = samples.iter().map(|s| {
+        // If the sample is more than 3 minutes old, it was likely cached while offline
+        let recorded_at_dt = chrono::DateTime::parse_from_rfc3339(&s.recorded_at).ok();
+        let is_delayed = recorded_at_dt.map(|dt| {
+            chrono::Utc::now().signed_duration_since(dt) > chrono::Duration::minutes(3)
+        }).unwrap_or(false);
+
         serde_json::json!({
-            "session_id":      s.session_id,
-            "recorded_at":     s.recorded_at,
-            "mouse_clicks":    s.mouse_clicks,
-            "key_presses":     s.key_presses,
-            "app_name":        s.app_name,
-            "window_title":    s.window_title,
-            "domain":          s.domain,
-            "idle":            s.idle,
+            "session_id":       s.session_id,
+            "recorded_at":      s.recorded_at,
+            "mouse_clicks":     s.mouse_clicks,
+            "key_presses":      s.key_presses,
+            "app_name":         s.app_name,
+            "window_title":     s.window_title,
+            "domain":           s.domain,
+            "idle":             s.idle,
             "activity_percent": s.activity_percent,
+            "is_offline":       s.is_offline || is_delayed,
         })
     }).collect();
 
@@ -249,8 +302,8 @@ pub fn sync_from_arc(
     match crate::supabase_post(cfg, "activity_samples", &body, Some(&token), None) {
         Ok(_) => {
             let ids: Vec<i64> = samples.iter().map(|s| s.id).collect();
-            let db_lock = db_arc.lock().unwrap(); // RE-ACQUIRE lock just to mark synced
-            if let Some(conn) = db_lock.as_ref() {
+            let mut db_lock = db_arc.lock().unwrap(); // RE-ACQUIRE lock just to mark synced
+            if let Some(conn) = db_lock.as_mut() {
                 if let Err(e) = mark_synced(conn, &ids) {
                     eprintln!("[cache] mark_synced error: {}", e);
                 } else {
@@ -258,7 +311,22 @@ pub fn sync_from_arc(
                 }
             }
         }
-        Err(e) => eprintln!("[cache] sync failed (will retry): {}", e),
+        Err(e) => {
+            if e.contains("409") || e.contains("duplicate key") {
+                println!("[cache] ⚠️ Conflict detected (already synced). Marking as synced locally.");
+                let ids: Vec<i64> = samples.iter().map(|s| s.id).collect();
+                let mut db_lock = db_arc.lock().unwrap();
+                if let Some(conn) = db_lock.as_mut() {
+                    let _ = mark_synced(conn, &ids);
+                }
+            } else {
+                eprintln!("[cache] sync failed (will retry): {}", e);
+            }
+        }
     }
+}
+
+fn s_format_error(e: rusqlite::Error) -> String {
+    e.to_string()
 }
 
