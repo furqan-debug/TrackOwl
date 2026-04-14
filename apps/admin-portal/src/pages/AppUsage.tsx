@@ -147,8 +147,8 @@ export function AppUsage() {
     return (
         <PageLayout
             maxWidth="full"
-            title="Application Intelligence"
-            description="Deep analysis of software usage and team ecosystem during work sessions."
+            title="App Usage"
+            description="See which apps and websites your team is using while tracking time."
             actions={
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-3 bg-white border border-slate-200 rounded-lg px-4 py-1.5 shadow-sm">
@@ -198,8 +198,8 @@ export function AppUsage() {
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
                     
                     <div className="xl:col-span-4 grid grid-cols-1 gap-6">
-                        <StatMetric icon={<Monitor className="w-5 h-5" />} label="Ecosystem Radius" value={apps.length} sub="Unique tools utilized today" />
-                        <StatMetric icon={<Clock className="w-5 h-5" />} label="Engagement Time" value={formatTime(apps.reduce((a,b) => a+b.count, 0))} sub="Total tracked software time" />
+                        <StatMetric icon={<Monitor className="w-5 h-5" />} label="Total Apps" value={apps.length} sub="Unique tools used today" />
+                        <StatMetric icon={<Clock className="w-5 h-5" />} label="Usage Time" value={formatTime(apps.reduce((a,b) => a+b.count, 0))} sub="Total tracked software time" />
                     </div>
 
                     <div className="xl:col-span-8 bg-white border border-slate-200 rounded-xl shadow-sm p-8 relative overflow-hidden flex flex-col">
@@ -208,7 +208,7 @@ export function AppUsage() {
                                 <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary shadow-sm">
                                     <PieChartIcon className="w-5 h-5" />
                                 </div>
-                                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Software Dispersion</h3>
+                                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">App Distribution</h3>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
@@ -250,14 +250,14 @@ export function AppUsage() {
                             <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-primary shadow-sm">
                                 <Filter className="w-5 h-5" />
                             </div>
-                            <h3 className="text-base font-black text-slate-900 uppercase tracking-tight">Ecosystem Ledger</h3>
+                            <h3 className="text-base font-black text-slate-900 uppercase tracking-tight">App List</h3>
                         </div>
                         <div className="flex items-center gap-4">
                             <div className="relative">
                                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
                                 <input 
                                     type="text" 
-                                    placeholder="Filter ledger..." 
+                                    placeholder="Filter apps..." 
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
                                     className="bg-white border border-slate-200 rounded-lg pl-9 pr-4 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all w-64"
@@ -273,10 +273,10 @@ export function AppUsage() {
                         <table className="w-full text-left order-collapse">
                             <thead>
                                 <tr className="bg-slate-50/50 border-b border-slate-100">
-                                    <th className="px-10 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest w-1/3">Application Context</th>
+                                    <th className="px-10 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest w-1/3">App / Website</th>
                                     <th className="px-10 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest hidden sm:table-cell">Category</th>
-                                    <th className="px-10 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Time Invested</th>
-                                    <th className="px-10 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Activity Weight</th>
+                                    <th className="px-10 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Time Used</th>
+                                    <th className="px-10 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-right">Usage %</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -291,7 +291,7 @@ export function AppUsage() {
                                                     <span className="text-sm font-black text-slate-900 leading-none truncate max-w-[240px] uppercase tracking-tight group-hover:text-primary transition-colors">
                                                         {app.app}
                                                     </span>
-                                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">Managed Asset</span>
+                                                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">Application</span>
                                                 </div>
                                             </div>
                                         </td>

@@ -261,8 +261,8 @@ export function Dashboard() {
     return (
         <PageLayout
             maxWidth="full"
-            title="Operational Dashboard"
-            description="Real-time monitoring of team trajectory and ecosystem dynamics."
+            title="Team Overview"
+            description="See what your team is working on right now and how they are spending their time."
             actions={
                 <div className="flex items-center gap-4">
                     <div className="flex items-center bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -298,10 +298,10 @@ export function Dashboard() {
                 
                 {/* 📊 KPI Architecture */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-                    <StatMetric icon={<TrendingUp className="w-5 h-5" />} label="Team Velocity" value={`${stats.avgActivityScore}%`} sub="Aggregate focus level" trend={3} />
-                    <StatMetric icon={<Clock className="w-5 h-5" />} label="Time Capital" value={formatDuration(stats.totalProductiveMinutes)} sub="Total billable yield" trend={5} />
-                    <StatMetric icon={<FolderOpen className="w-5 h-5" />} label="Live Portfolio" value={stats.projectsWorked} sub="Active project nodes" />
-                    <StatMetric icon={<Users className="w-5 h-5" />} label="Human Resources" value={stats.activeMembers} sub="Personnel in workflow" />
+                    <StatMetric icon={<TrendingUp className="w-5 h-5" />} label="Average Activity" value={`${stats.avgActivityScore}%`} sub="Overall team focus level" trend={3} />
+                    <StatMetric icon={<Clock className="w-5 h-5" />} label="Total Time" value={formatDuration(stats.totalProductiveMinutes)} sub="Total hours worked this week" trend={5} />
+                    <StatMetric icon={<FolderOpen className="w-5 h-5" />} label="Active Projects" value={stats.projectsWorked} sub="Total projects being worked on" />
+                    <StatMetric icon={<Users className="w-5 h-5" />} label="Team Members" value={stats.activeMembers} sub="Number of people active" />
                 </div>
 
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
@@ -311,14 +311,14 @@ export function Dashboard() {
                         
                         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col min-h-[500px]">
                             <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
-                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Recent Visual Verification</h3>
+                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Recent Screenshots</h3>
                                 <button className="text-[10px] font-black text-primary uppercase tracking-widest hover:underline flex items-center gap-1.5">
-                                    Expanded Timeline <ArrowUpRight className="w-3 h-3" />
+                                    View All <ArrowUpRight className="w-3 h-3" />
                                 </button>
                             </div>
                             <div className="divide-y divide-slate-50">
                                 {userActivity.length === 0 ? (
-                                    <EmptyState icon={<Camera />} title="No data in stream" description="System is awaiting new activity signals." className="py-24" />
+                                    <EmptyState icon={<Camera />} title="No recent activity" description="Waiting for the next update from your team." className="py-24" />
                                 ) : (
                                     userActivity.map((user) => (
                                         <div key={user.userId} className="p-8 space-y-6 hover:bg-slate-50/30 transition-all group">
@@ -331,7 +331,7 @@ export function Dashboard() {
                                                         <p className="text-[14px] font-black text-slate-900 uppercase tracking-tight">{user.fullName}</p>
                                                         <div className="flex items-center gap-2 mt-1">
                                                             <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
-                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{user.activityScore}% Engagement Status</span>
+                                                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{user.activityScore}% Activity Score</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -343,7 +343,7 @@ export function Dashboard() {
                                                         <div className="w-52 aspect-video bg-slate-100 border border-slate-200 rounded-xl overflow-hidden relative cursor-zoom-in transition-all group-hover/ss:border-slate-900 shadow-sm">
                                                             <SecureImage path={ss.path} className="w-full h-full object-cover opacity-90 group-hover/ss:opacity-100 group-hover/ss:scale-105 transition-all duration-500" />
                                                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover/ss:opacity-100 transition-opacity flex items-center justify-center">
-                                                                <span className="text-[10px] font-black text-white uppercase tracking-widest bg-black/40 px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/20">Analyze</span>
+                                                                <span className="text-[10px] font-black text-white uppercase tracking-widest bg-black/40 px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/20">View</span>
                                                             </div>
                                                             <div className="absolute bottom-3 left-3">
                                                                 <span className="px-2 py-1 rounded bg-slate-900/80 text-white text-[8px] font-black uppercase tracking-widest backdrop-blur-sm">
@@ -363,20 +363,20 @@ export function Dashboard() {
                         {/* Who's Online: High Density Table */}
                         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                             <div className="px-8 py-6 border-b border-slate-50 flex items-center justify-between bg-slate-50/20">
-                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Real-Time Team Status</h3>
+                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Who's Online</h3>
                                 <div className="flex items-center gap-2">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Sync Active</span>
+                                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Live</span>
                                 </div>
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
                                     <thead>
                                         <tr className="bg-slate-50/50 border-b border-slate-100">
-                                            <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Resource</th>
-                                            <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Allocation</th>
-                                            <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Cycle Yield</th>
-                                            <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">State</th>
+                                            <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Team Member</th>
+                                            <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Current Project</th>
+                                            <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Time Worked</th>
+                                            <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Status</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
@@ -429,7 +429,7 @@ export function Dashboard() {
                         {/* Project Velocity Chart (Minimalist Ledger) */}
                         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Project Velocity</h3>
+                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Time by Project</h3>
                                 <BarChart3 className="w-4 h-4 text-slate-300" />
                             </div>
                             <div className="space-y-8">
@@ -440,7 +440,7 @@ export function Dashboard() {
                                         <div key={proj.id} className="space-y-3 group/bar">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-[12px] font-black text-slate-900 uppercase tracking-tight">{proj.name}</span>
-                                                <span className="text-[10px] font-black text-slate-400">{proj.activityScore}% Quality</span>
+                                                <span className="text-[10px] font-black text-slate-400">{proj.activityScore}% Activity</span>
                                             </div>
                                             <div className="h-1.5 bg-slate-50 border border-slate-100 rounded-full overflow-hidden">
                                                 <div 
@@ -453,7 +453,7 @@ export function Dashboard() {
                                             </div>
                                             <div className="flex justify-between">
                                                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">{formatDuration(proj.minutes)}</span>
-                                                <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest">{Math.round((proj.minutes / stats.totalProductiveMinutes) * 100)}% Load</span>
+                                                <span className="text-[9px] font-black text-slate-900 uppercase tracking-widest">{Math.round((proj.minutes / stats.totalProductiveMinutes) * 100)}% Share</span>
                                             </div>
                                         </div>
                                     ))
@@ -464,7 +464,7 @@ export function Dashboard() {
                         {/* App Ecosystem Ledger */}
                         <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
                             <div className="px-8 py-6 border-b border-slate-50 bg-slate-50/20">
-                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Tool Ecosystem</h3>
+                                <h3 className="text-[11px] font-black text-slate-900 uppercase tracking-widest">Apps & Browsers</h3>
                             </div>
                             <div className="divide-y divide-slate-50">
                                 {appUsage.length === 0 ? (

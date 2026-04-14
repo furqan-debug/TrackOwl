@@ -54,10 +54,7 @@ export const navStructure: NavGroup[] = [
     {
         name: 'Reports',
         icon: FileText,
-        children: [
-            { name: 'Time Usage', path: '/dashboard/reports' },
-            { name: 'Weekly Summary', path: '/dashboard/reports/daily' },
-        ],
+        path: '/dashboard/reports'
     },
     {
         name: 'People',

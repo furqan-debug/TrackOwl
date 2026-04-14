@@ -108,7 +108,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                             onMouseLeave={() => setActiveDropdown(null)}
                                         >
                                             <div className="px-3 py-2 border-b border-slate-50 mb-1">
-                                                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">{group.name} Spectrum</span>
+                                                <span className="text-[8px] font-black text-slate-300 uppercase tracking-widest">{group.name}</span>
                                             </div>
                                             {group.children!.map((child) => (
                                                 <Link
@@ -162,7 +162,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                         <p className="text-[10px] text-slate-400 font-bold truncate tracking-widest">{profile?.email || user?.email}</p>
                                         <div className="mt-4">
                                             <span className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[8px] font-black uppercase tracking-widest text-slate-500">
-                                                Lvl: {profile?.role || 'Guest'}
+                                                Role: {profile?.role || 'Guest'}
                                             </span>
                                         </div>
                                     </div>
@@ -170,12 +170,12 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                     <div className="p-1.5 space-y-0.5">
                                         <Link to="/dashboard/profile" className="w-full flex items-center gap-4 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all group">
                                             <UserIcon className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
-                                            Credentials
+                                            My Profile
                                         </Link>
                                         <div className="h-px bg-slate-50 my-1 mx-2" />
                                         <button onClick={handleLogout} className="w-full flex items-center gap-4 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 rounded-xl transition-all group">
                                             <LogOut className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
-                                            Termination
+                                            Logout
                                         </button>
                                     </div>
                                 </div>
