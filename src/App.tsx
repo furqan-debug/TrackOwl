@@ -396,6 +396,12 @@ export default function App() {
   const [updateInstalling, setUpdateInstalling] = useState(false);
   const memberSubscriptionRef = useRef<any>(null);
 
+  // Keep a ref of notification settings for listeners/intervals to avoid stale closures
+  const settingsRef = useRef(user?.custom_fields?.notification_settings);
+  useEffect(() => {
+    settingsRef.current = user?.custom_fields?.notification_settings;
+  }, [user?.custom_fields?.notification_settings]);
+
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (isTracking) {
@@ -1132,7 +1138,7 @@ export default function App() {
       setScreen('tracker');
 
       // Notification Alert
-      if (user?.custom_fields?.notification_settings?.tracking_alerts !== false) {
+      if (settingsRef.current?.tracking_alerts !== false) {
         trackerAPI.showNotification('Tracking Started', `Now tracking for ${project.name}`);
       }
     } catch (err: any) {
@@ -1159,7 +1165,7 @@ export default function App() {
     setScreen('projects');
 
     // Notification Alert
-    if (user?.custom_fields?.notification_settings?.tracking_alerts !== false) {
+    if (settingsRef.current?.tracking_alerts !== false) {
       trackerAPI.showNotification('Tracking Stopped', 'Your session has ended.');
     }
 
@@ -1220,32 +1226,44 @@ export default function App() {
   // 1. Screenshot captured listener
   useEffect(() => {
     let unlisten: any = null;
+    let isMounted = true;
+
     const setup = async () => {
-      unlisten = await (trackerAPI as any).onScreenshotCaptured(() => {
-        if (user?.custom_fields?.notification_settings?.screenshot_alerts !== false) {
+      const u = await (trackerAPI as any).onScreenshotCaptured(() => {
+        if (settingsRef.current?.screenshot_alerts !== false) {
           trackerAPI.showNotification('📸 Screenshot Captured', 'Your screen activity has been recorded.');
         }
       });
+      if (!isMounted && u) {
+        u(); // Clean up if unmounted before setup finished
+      } else {
+        unlisten = u;
+      }
     };
     setup();
-    return () => { if (unlisten) unlisten(); };
-  }, [user?.custom_fields?.notification_settings?.screenshot_alerts]);
+    return () => {
+      isMounted = false;
+      if (unlisten) unlisten();
+    };
+  }, []); // Only run once on mount
 
   // 2. Tracking Reminder
   useEffect(() => {
-    if (!user || isTracking || user?.custom_fields?.notification_settings?.tracking_reminders === false) return;
+    // Check ref immediately for interval creation
+    if (!user || isTracking || settingsRef.current?.tracking_reminders === false) return;
 
-    const intervalMin = user?.custom_fields?.notification_settings?.reminder_interval || 30;
+    const intervalMin = settingsRef.current?.reminder_interval || 30;
     const intervalMs = intervalMin * 60_000;
 
     const interval = setInterval(() => {
-      if (!isTracking) {
+      // Re-verify ref inside interval
+      if (!isTracking && settingsRef.current?.tracking_reminders !== false) {
         trackerAPI.showNotification('⏰ Time to Track?', "You haven't started tracking time yet. Don't forget to clock in!");
       }
     }, intervalMs);
 
     return () => clearInterval(interval);
-  }, [isTracking, user?.custom_fields?.notification_settings?.tracking_reminders, user?.custom_fields?.notification_settings?.reminder_interval]);
+  }, [isTracking, user?.id, user?.custom_fields?.notification_settings?.tracking_reminders, user?.custom_fields?.notification_settings?.reminder_interval]);
 
   const pageVariants = {
     initial: { opacity: 0, y: 8 },
@@ -1283,12 +1301,12 @@ export default function App() {
 
       <AnimatePresence mode="wait">
         {screen === 'login' && (
-          <motion.div key="login" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1 }}>
+          <motion.div key="login" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, minHeight: 0 }}>
             <LoginScreen onLogin={handleLogin} rememberMe={rememberMe} setRememberMe={setRememberMe} />
           </motion.div>
         )}
         {screen === 'projects' && (
-          <motion.div key="projects" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+          <motion.div key="projects" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
             <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} trackingError={trackingError} setTrackingError={setTrackingError} todos={todos} onTodoDone={handleTodoDone} />
           </motion.div>
         )}
@@ -1298,7 +1316,7 @@ export default function App() {
           </motion.div>
         )}
         {screen === 'tracker' && (
-          <motion.div key="tracker" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+          <motion.div key="tracker" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
             <TrackerScreen
               user={user!}
               project={activeProject!}
@@ -1319,7 +1337,7 @@ export default function App() {
           </motion.div>
         )}
         {screen === 'settings' && user && (
-          <motion.div key="settings" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
+          <motion.div key="settings" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
             <SettingsScreen user={user} onSave={handleUpdateProfile} onBack={() => setScreen('projects')} />
           </motion.div>
         )}

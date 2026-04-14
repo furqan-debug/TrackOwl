@@ -425,6 +425,13 @@ input:checked+.slider:before {
   justify-content: center;
   padding: 1.25rem;
   overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.login-screen::-webkit-scrollbar {
+  display: none;
 }
 
 .login-card {
@@ -476,12 +483,20 @@ input:checked+.slider:before {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .projects-scroll {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
   padding: 1rem 1.125rem 1.25rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.projects-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 /* Stats summary bar */
@@ -886,6 +901,7 @@ input:checked+.slider:before {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .tracker-body {
@@ -983,6 +999,7 @@ input:checked+.slider:before {
   flex-direction: column;
   background: var(--bg-app);
   overflow: hidden;
+  min-height: 0;
 }
 
 .settings-header {
@@ -1034,6 +1051,13 @@ input:checked+.slider:before {
   flex: 1;
   padding: 1.75rem 1.25rem 2rem;
   overflow-y: auto;
+  min-height: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.settings-content::-webkit-scrollbar {
+  display: none;
 }
 
 /* ── Avatar ── */
