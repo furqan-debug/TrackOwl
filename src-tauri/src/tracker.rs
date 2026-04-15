@@ -362,26 +362,26 @@ pub fn start_screenshot_loop(
             // Hierarchical structure: organization_id / user_id / screenshots / session_id / filename
             let org_slug = organization_id.clone().unwrap_or_else(|| "unknown".to_string());
             let timestamp_num = captured_at.timestamp_millis();
-            let filename = format!("{}/{}/{}.png", org_slug, user_id, timestamp_num);
+            let filename = format!("{}/{}/{}.jpg", org_slug, user_id, timestamp_num);
             
             let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
             println!("[tracker] 📸 CAPTURING INITIAL SCREENSHOT: Path={}", filename);
 
             use base64::Engine;
-            if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
+            if let Ok(image_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
                 let s_token = auth_token.lock().unwrap().clone();
                 let agent = ureq::AgentBuilder::new()
                     .timeout(std::time::Duration::from_secs(15))
                     .build();
                 let mut req = agent.post(&storage_url)
                     .set("apikey", &cfg.anon_key)
-                    .set("Content-Type", "image/png");
+                    .set("Content-Type", "image/jpeg");
                 
                 if let Some(token) = &s_token {
                     req = req.set("Authorization", &format!("Bearer {}", token));
                 }
 
-                if let Ok(_) = req.send_bytes(png_bytes.as_slice()) {
+                if let Ok(_) = req.send_bytes(image_bytes.as_slice()) {
                     let _ = app.emit("screenshot-captured", {});
                     let body = serde_json::json!({
                         "session_id": session_id,
@@ -423,7 +423,7 @@ pub fn start_screenshot_loop(
                     
                     let org_slug = organization_id.clone().unwrap_or_else(|| "unknown".to_string());
                     let timestamp_num = captured_at.timestamp_millis();
-                    let filename = format!("{}/{}/{}.png", org_slug, user_id, timestamp_num);
+                    let filename = format!("{}/{}/{}.jpg", org_slug, user_id, timestamp_num);
                     
                     let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
                     println!("[tracker] 📸 CAPTURING RANDOM SCREENSHOT ({} of {}): Path={}", 
@@ -434,7 +434,7 @@ pub fn start_screenshot_loop(
 
                     {
                         use base64::Engine;
-                        if let Ok(png_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
+                        if let Ok(image_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
                             let s_token = auth_token.lock().unwrap().clone();
 
                             let agent = ureq::AgentBuilder::new()
@@ -442,13 +442,13 @@ pub fn start_screenshot_loop(
                                 .build();
                             let mut req = agent.post(&storage_url)
                                 .set("apikey", &cfg.anon_key)
-                                .set("Content-Type", "image/png");
+                                .set("Content-Type", "image/jpeg");
                             
                             if let Some(token) = &s_token {
                                 req = req.set("Authorization", &format!("Bearer {}", token));
                             }
 
-                            let upload_res = req.send_bytes(png_bytes.as_slice());
+                            let upload_res = req.send_bytes(image_bytes.as_slice());
 
                             if upload_res.is_ok() {
                                 let _ = app.emit("screenshot-captured", {});
@@ -490,23 +490,34 @@ fn rand_ms(max: u64) -> u64 {
 fn capture_screenshot() -> Option<String> {
     use screenshots::Screen;
     use base64::{Engine, engine::general_purpose::STANDARD};
-    use image::codecs::png::PngEncoder;
+    use image::codecs::jpeg::JpegEncoder;
     use image::ImageEncoder;
 
     let screens = Screen::all().ok()?;
     let screen = screens.into_iter().next()?;
     let image = screen.capture().ok()?;
 
-    // Encode directly to PNG bytes using PngEncoder
-    let (width, height) = image.dimensions();
-    let mut png_bytes: Vec<u8> = Vec::new();
-    let encoder = PngEncoder::new(std::io::Cursor::new(&mut png_bytes));
+    // Aggressive downscaling: Max width 1600px
+    let (orig_width, orig_height) = image.dimensions();
+    let final_image = if orig_width > 1600 {
+        let new_width = 1600;
+        let new_height = (orig_height as f32 * (1600.0 / orig_width as f32)) as u32;
+        image::imageops::resize(&image, new_width, new_height, image::imageops::FilterType::Lanczos3)
+    } else {
+        image
+    };
+
+    let (width, height) = final_image.dimensions();
+    let mut jpeg_bytes: Vec<u8> = Vec::new();
+    
+    // Quality 60 is aggressive but preserves readability for UI/text
+    let encoder = JpegEncoder::new_with_quality(std::io::Cursor::new(&mut jpeg_bytes), 60);
     encoder.write_image(
-        image.as_raw(),
+        final_image.as_raw(),
         width,
         height,
         image::ColorType::Rgba8.into(),
     ).ok()?;
 
-    Some(STANDARD.encode(&png_bytes))
+    Some(STANDARD.encode(&jpeg_bytes))
 }
