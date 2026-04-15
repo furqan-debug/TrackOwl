@@ -192,7 +192,7 @@ export function Dashboard() {
             screenshots?.forEach(ss => {
                 const userId = sessionToUserMap[ss.session_id];
                 if (userId && userRows[userId]) {
-                    if (userRows[userId].screenshots.length < 15) {
+                    if (userRows[userId].screenshots.length < 4) {
                         userRows[userId].screenshots.push({
                             id: ss.id,
                             path: ss.file_url,

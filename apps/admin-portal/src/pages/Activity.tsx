@@ -60,6 +60,12 @@ export function Activity() {
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
     const [sessionMinutes, setSessionMinutes] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
+    
+    // Pagination for screenshots
+    const [screenshotLimit, setScreenshotLimit] = useState(10);
+    const [hasMoreScreenshots, setHasMoreScreenshots] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+
     const dateInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -109,10 +115,18 @@ export function Activity() {
                 return;
             }
 
-            const [{ data: actData }, { data: ssData }] = await Promise.all([
+            const [{ data: actData }, { data: ssData, count: totalSS }] = await Promise.all([
                 supabase.from('activity_samples').select('*').in('session_id', sessionIds).gte('recorded_at', start).lte('recorded_at', end).order('recorded_at', { ascending: true }),
-                supabase.from('screenshots').select('*').in('session_id', sessionIds).gte('recorded_at', start).lte('recorded_at', end).order('recorded_at', { ascending: false }).limit(500)
+                supabase.from('screenshots')
+                    .select('*', { count: 'exact' })
+                    .in('session_id', sessionIds)
+                    .gte('recorded_at', start)
+                    .lte('recorded_at', end)
+                    .order('recorded_at', { ascending: false })
+                    .limit(screenshotLimit)
             ]);
+            
+            setHasMoreScreenshots((totalSS || 0) > screenshotLimit);
 
             const startMs = new Date(start).getTime();
             const endMs = new Date(end).getTime();
@@ -132,12 +146,27 @@ export function Activity() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [selectedDate, selectedMemberId, members]);
+    }, [selectedDate, selectedMemberId, members, screenshotLimit]);
 
+    // Reset pagination when filters change
+    useEffect(() => {
+        setScreenshotLimit(10);
+    }, [selectedMemberId, selectedDate]);
+
+    // Re-fetch data whenever any dependency changes
     useEffect(() => {
         if (selectedMemberId !== 'all' && members.length === 0) return;
         fetchData(false);
-    }, [fetchData, members, selectedMemberId]);
+    }, [fetchData, members]);
+
+    const loadMoreScreenshots = async () => {
+        if (loadingMore || refreshing || !hasMoreScreenshots) return;
+        
+        setLoadingMore(true);
+        setScreenshotLimit(prev => prev + 10);
+        // fetchData will be re-created due to screenshotLimit dependency and triggered by useEffect
+        setLoadingMore(false);
+    };
 
     // Data Processing
     const uniqueMinMap = new Map<string, ActivitySample>();
@@ -307,6 +336,30 @@ export function Activity() {
                                         activityPercent: samples.find(samp => samp.recorded_at.substring(0, 16) === ss.recorded_at.substring(0, 16))?.activity_percent ?? 50
                                     })} 
                                 />
+
+                                {hasMoreScreenshots && (
+                                    <div className="mt-12 flex justify-center pb-4">
+                                        <button 
+                                            onClick={loadMoreScreenshots}
+                                            disabled={loadingMore || refreshing}
+                                            className="group relative flex items-center gap-3 px-8 py-3 bg-white border border-slate-200 rounded-xl hover:border-primary hover:bg-slate-50 transition-all duration-300 shadow-sm"
+                                        >
+                                            {loadingMore || refreshing ? (
+                                                <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+                                            ) : (
+                                                <Camera className="w-4 h-4 text-slate-400 group-hover:text-primary transition-colors" />
+                                            )}
+                                            <span className="text-xs font-black text-slate-900 uppercase tracking-widest">
+                                                {loadingMore || refreshing ? 'Syncing...' : 'Load More Captures'}
+                                            </span>
+                                            
+                                            {/* Subtle indicator of how many are left */}
+                                            <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-[9px] font-black text-white rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-bounce">
+                                                +
+                                            </div>
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
