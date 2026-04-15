@@ -1,0 +1,11 @@
+{
+  "version": "1.1.8",
+  "notes": "Trackora v1.1.8 - Added App Footer with real-time location and version display. Fixed IP detection to bypass browser-level CSP.",
+  "pub_date": "2026-04-15T19:54:03.536Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajV5NzVYa1g1SEhoSmpDU0VQSVN0aDJQY1BqTzhSR3pyMEhwRlJmU1E2bFhkbndublNIZ3JjSk0ycW80cmVYd1JWbVY2d05JeXI3L1lYc1RMeWNkRXdrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2MjgyODQyCWZpbGU6VHJhY2tvcmFfMS4xLjhfeDY0LXNldHVwLmV4ZQpoKzlGNmY0VVNSZmhHeGgxYm43VTV2VHZmUld5RlZnelBwZ0tMemFGdmVlVDJYWCtXb0xpaXZoZWxzdlVmUnRmWVBpbmpudzVBdlgvZzM0V3MrREJBUT09Cg==",
+      "url": "https://github.com/furqan-debug/Trackora/releases/download/v1.1.8/Trackora_1.1.8_x64-setup.exe"
+    }
+  }
+}
