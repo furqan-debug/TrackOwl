@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Loader2, ImageOff } from 'lucide-react';
+import { getCachedUrl, setCachedUrl } from '../../lib/urlCache';
 
 interface SecureImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
     path: string;
     bucket?: string;
 }
+
+const EXPIRY_SECONDS = 86400; // 24 hours
 
 export function SecureImage({ path, bucket = 'screenshots', className, ...props }: SecureImageProps) {
     const [url, setUrl] = useState<string | null>(null);
@@ -16,17 +19,24 @@ export function SecureImage({ path, bucket = 'screenshots', className, ...props 
         const fetchSignedUrl = async () => {
             if (!path) return;
             
-            // If it's already a full URL AND NOT a Supabase storage URL, use it directly
+            // 1. If it's already a full URL AND NOT a Supabase storage URL, use it directly
             if (path.startsWith('http') && !path.includes('.supabase.co/storage/v1/object/')) {
                 setUrl(path);
                 setLoading(false);
                 return;
             }
 
-            // If it's a Supabase storage URL, extract the path from it
+            // 2. Check internal cache first to avoid redundant Supabase API calls & egress
+            const cached = getCachedUrl(bucket, path);
+            if (cached) {
+                setUrl(cached);
+                setLoading(false);
+                return;
+            }
+
+            // 3. Extract the final path if it's a full Supabase URL
             let finalPath = path;
             if (path.includes('.supabase.co/storage/v1/object/')) {
-                // Extract bucket and path (e.g., .../public/avatars/path/to/file)
                 const parts = path.split('/avatars/');
                 if (parts.length > 1) {
                     finalPath = parts[1];
@@ -39,10 +49,13 @@ export function SecureImage({ path, bucket = 'screenshots', className, ...props 
                 
                 const { data, error: storageError } = await supabase.storage
                     .from(bucket)
-                    .createSignedUrl(finalPath, 3600); // 1 hour expiry
+                    .createSignedUrl(finalPath, EXPIRY_SECONDS);
 
                 if (storageError) throw storageError;
+                
                 if (data?.signedUrl) {
+                    // Update cache and state
+                    setCachedUrl(bucket, path, data.signedUrl, EXPIRY_SECONDS);
                     setUrl(data.signedUrl);
                 } else {
                     setError(true);

@@ -1,0 +1,11 @@
+{
+  "version": "1.1.6",
+  "notes": "Trackora v1.1.6 - Scroll wheel fix and notification preference improvements.",
+  "pub_date": "2026-04-15T17:07:35.763Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajQ5QndGd2ZzNDg2eFk5anBCczVBbUVRdHg3bS9lV3pGTkZUcHg0S2swQ1JmN1ZIbzd5bCtUVVA0WnVaV0xnN2tYdExPcldDNTRGZWVOcFJGNGFTR1FFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2MjcyODU1CWZpbGU6VHJhY2tvcmFfMS4xLjZfeDY0LXNldHVwLmV4ZQpiTmNlVU9YWGV1R25sZmNqNTY4bS9RYXExQXlRNkNjQ01lUVVPemFiem51bVozWU1XYlg2VXI4MEhNYUxxVU1tYmVNanFML3BlOU1LZjJsQ2FGVWtEUT09Cg==",
+      "url": "https://github.com/furqan-debug/Trackora/releases/download/v1.1.6/Trackora_1.1.6_x64-setup.exe"
+    }
+  }
+}

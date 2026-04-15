@@ -381,7 +381,8 @@ pub fn start_screenshot_loop(
                     req = req.set("Authorization", &format!("Bearer {}", token));
                 }
 
-                if let Ok(_) = req.send_bytes(image_bytes.as_slice()) {
+                if let Ok(resp) = req.send_bytes(image_bytes.as_slice()) {
+                    println!("[tracker] ✅ Initial screenshot UPLOADED successfully. Status: {}", resp.status());
                     let _ = app.emit("screenshot-captured", {});
                     let body = serde_json::json!({
                         "session_id": session_id,
@@ -389,6 +390,8 @@ pub fn start_screenshot_loop(
                         "file_url": filename, // Store relative path
                     }).to_string();
                     let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
+                } else {
+                    eprintln!("[tracker] ❌ Initial screenshot UPLOAD FAILED for path: {}", filename);
                 }
             }
         }
@@ -450,7 +453,8 @@ pub fn start_screenshot_loop(
 
                             let upload_res = req.send_bytes(image_bytes.as_slice());
 
-                            if upload_res.is_ok() {
+                            if let Ok(resp) = upload_res {
+                                println!("[tracker] ✅ Random screenshot UPLOADED. Status: {} | Path: {}", resp.status(), filename);
                                 let _ = app.emit("screenshot-captured", {});
                                 let body = serde_json::json!({
                                     "session_id": session_id,
@@ -459,6 +463,8 @@ pub fn start_screenshot_loop(
                                 }).to_string();
                                 
                                 let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
+                            } else {
+                                eprintln!("[tracker] ❌ Random screenshot UPLOAD FAILED: {}", filename);
                             }
                         }
                     }
@@ -491,33 +497,48 @@ fn capture_screenshot() -> Option<String> {
     use screenshots::Screen;
     use base64::{Engine, engine::general_purpose::STANDARD};
     use image::codecs::jpeg::JpegEncoder;
-    use image::ImageEncoder;
 
     let screens = Screen::all().ok()?;
     let screen = screens.into_iter().next()?;
     let image = screen.capture().ok()?;
 
-    // Aggressive downscaling: Max width 1600px
+    // Optimized downscaling: Max width 2000px (Balanced for 1080p and Retina)
     let (orig_width, orig_height) = image.dimensions();
-    let final_image = if orig_width > 1600 {
-        let new_width = 1600;
-        let new_height = (orig_height as f32 * (1600.0 / orig_width as f32)) as u32;
+    let resized_image = if orig_width > 2000 {
+        let new_width = 2000;
+        let new_height = (orig_height as f32 * (2000.0 / orig_width as f32)) as u32;
         image::imageops::resize(&image, new_width, new_height, image::imageops::FilterType::Lanczos3)
     } else {
         image
     };
 
-    let (width, height) = final_image.dimensions();
+    // CRITICAL FIX: Convert RGBA to RGB (removing alpha channel)
+    // JPEG encoders often fail or produce invalid data if alpha is present.
+    let rgb_image = image::DynamicImage::ImageRgba8(resized_image).into_rgb8();
+    let (width, height) = rgb_image.dimensions();
+    
     let mut jpeg_bytes: Vec<u8> = Vec::new();
     
-    // Quality 60 is aggressive but preserves readability for UI/text
-    let encoder = JpegEncoder::new_with_quality(std::io::Cursor::new(&mut jpeg_bytes), 60);
-    encoder.write_image(
-        final_image.as_raw(),
-        width,
-        height,
-        image::ColorType::Rgba8.into(),
-    ).ok()?;
+    // Quality 60 is the "Goldilocks" zone for size vs text clarity
+    // image 0.24 JpegEncoder::encode takes ([u8], width, height, ColorType)
+    let mut encoder = JpegEncoder::new_with_quality(std::io::Cursor::new(&mut jpeg_bytes), 60);
+    match encoder.encode(
+        &rgb_image.as_raw(), 
+        width, 
+        height, 
+        image::ColorType::Rgb8
+    ) {
+        Ok(_) => {
+            println!("[tracker] 📸 Encoded screenshot to JPEG ({}x{} @ 60%): {} bytes", width, height, jpeg_bytes.len());
+            Some(STANDARD.encode(&jpeg_bytes))
+        }
 
-    Some(STANDARD.encode(&jpeg_bytes))
+
+        Err(e) => {
+            eprintln!("[tracker] ❌ JPEG encoding FAILED: {}", e);
+            None
+        }
+    }
 }
+
+
