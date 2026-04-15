@@ -450,6 +450,30 @@ fn stop_idle_monitoring(state: tauri::State<'_, Mutex<AppState>>) {
     *s.is_idle_monitoring.lock().unwrap() = false;
 }
 
+/// invoke('get_location')
+#[tauri::command]
+fn get_location() -> Result<String, String> {
+    // Try ipapi.co first
+    if let Ok(resp) = ureq::get("https://ipapi.co/json/").timeout(std::time::Duration::from_secs(5)).call() {
+        if let Ok(json) = resp.into_json::<serde_json::Value>() {
+            if let (Some(city), Some(country)) = (json["city"].as_str(), json["country_name"].as_str()) {
+                return Ok(format!("{}, {}", city, country));
+            }
+        }
+    }
+    
+    // Fallback to ipwho.is
+    if let Ok(resp) = ureq::get("https://ipwho.is/").timeout(std::time::Duration::from_secs(5)).call() {
+        if let Ok(json) = resp.into_json::<serde_json::Value>() {
+            if let (Some(city), Some(country)) = (json["city"].as_str(), json["country"].as_str()) {
+                return Ok(format!("{}, {}", city, country));
+            }
+        }
+    }
+
+    Err("Could not detect location".to_string())
+}
+
 // ─── App entry point ──────────────────────────────────────────────────────────
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -527,6 +551,7 @@ pub fn run() {
             show_idle_dialog,
             start_idle_monitoring,
             stop_idle_monitoring,
+            get_location,
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api: _api, .. } = event {

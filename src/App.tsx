@@ -176,16 +176,12 @@ function LocalClock() {
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
 
-    // Fetch location once
-    fetch('https://ipapi.co/json/')
-      .then(r => r.json())
-      .then(d => {
-        if (d.city && d.country_name) {
-          setLoc(`${d.city}, ${d.country_name}`);
-        }
-      })
-      .catch(() => setLoc(null));
+    const fetchLoc = async () => {
+      const locStr = await trackerAPI.getLocation();
+      if (locStr) setLoc(locStr);
+    };
 
+    fetchLoc();
     return () => clearInterval(timer);
   }, []);
 
@@ -205,6 +201,37 @@ function LocalClock() {
         </div>
       )}
     </div>
+  );
+}
+
+// ── App Footer (Version & Location) ──────────────────────────────────────────
+function AppFooter() {
+  const [version, setVersion] = useState<string>('...');
+  const [loc, setLoc] = useState<string | null>(null);
+
+  useEffect(() => {
+    // 1. Get Version
+    const tauri = (window as any).__TAURI__;
+    if (tauri?.app) {
+      tauri.app.getVersion().then(setVersion);
+    } else {
+      setVersion('1.1.7'); 
+    }
+
+    // 2. Get Location
+    const fetchLoc = async () => {
+      const locStr = await trackerAPI.getLocation();
+      if (locStr) setLoc(locStr);
+    };
+
+    fetchLoc();
+  }, []);
+
+  return (
+    <footer className="app-footer">
+      <div className="footer-version">Version {version}</div>
+      {loc && <div className="footer-location">{loc}</div>}
+    </footer>
   );
 }
 
@@ -274,7 +301,7 @@ function SettingsScreen({ user, onSave, onBack }: {
     <div className="settings-screen">
       <header className="settings-header">
         <button onClick={onBack} className="settings-back-btn">
-          <img src="/logo.svg" alt="Back" className="settings-back-logo" />
+          <img src="/back-button.png" alt="Back" className="settings-back-logo" />
         </button>
         <div>
           <h2 className="heading-2">Profile Settings</h2>
@@ -1342,6 +1369,7 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+      <AppFooter />
     </div>
   );
 }
