@@ -115,4 +115,15 @@ export const trackerAPI = {
     if (!invoke) return;
     return invoke('stop_idle_monitoring') as Promise<void>;
   },
+
+  /** Get user location via Rust (bypasses UI CSP) */
+  getLocation: async (): Promise<string> => {
+    const invoke = getInvoke();
+    if (!invoke) return '';
+    try {
+      return await invoke('get_location') as string;
+    } catch (e) {
+      return '';
+    }
+  },
 };
