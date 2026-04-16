@@ -887,8 +887,7 @@ app.post('/api/sessions', async (req, res) => {
             || req.socket.remoteAddress
             || null;
 
-        const session_id = uuidv4();
-        const started_at = new Date().toISOString();
+        // We now use rpc_start_session which handles session_id and started_at generation
 
         // Fetch the member's organization_id so admins can see their activity
         const { data: member, error: memberErr } = await getDb()
@@ -903,18 +902,17 @@ app.post('/api/sessions', async (req, res) => {
 
         const organization_id = member?.organization_id || null;
 
-        const { error } = await getDb()
-            .from('sessions')
-            .insert([{
-                id: session_id,
-                user_id,
-                project_id,
-                started_at,
-                ip_address,
-                organization_id
-            }]);
+        const { data, error } = await getDb().rpc('rpc_start_session', {
+            p_user_id: user_id,
+            p_project_id: project_id,
+            p_organization_id: organization_id,
+            p_ip_address: ip_address
+        });
 
         if (error) throw error;
+
+        const session_id = data.id;
+        const started_at = data.started_at;
 
         console.log(`✅ Created session ${session_id} for user ${user_id} from IP ${ip_address}`);
         res.status(201).json({ session_id, started_at });
@@ -931,14 +929,12 @@ app.post('/api/sessions', async (req, res) => {
 app.post('/api/sessions/:id/end', async (req, res) => {
     try {
         const { id } = req.params;
-        const ended_at = new Date().toISOString();
-        const { error } = await getDb()
-            .from('sessions')
-            .update({ ended_at })
-            .eq('id', id);
+        const { data, error } = await getDb().rpc('rpc_stop_session', {
+            p_session_id: id
+        });
         if (error) throw error;
-        console.log(`🏁 Session ${id} ended at ${ended_at}`);
-        res.json({ session_id: id, ended_at });
+        console.log(`🏁 Session ${id} ended at ${data.ended_at}`);
+        res.json({ session_id: id, ended_at: data.ended_at });
     } catch (error: any) {
         console.error('Error ending session:', error);
         res.status(500).json({ error: error.message || 'Internal server error' });

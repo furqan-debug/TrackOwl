@@ -62,6 +62,13 @@ export function Timesheets() {
     const [projects, setProjects] = useState<any[]>([]);
     const [selectedMember, setSelectedMember] = useState<string>('all');
     const [filterProjectId, setFilterProjectId] = useState<string>('all');
+
+    const toProperCase = (str: string) => {
+        if (!str) return '';
+        if (str.includes('@')) return str.toLowerCase();
+        return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    };
+
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(new Date());
     const [showFilters, setShowFilters] = useState(false);
@@ -119,7 +126,7 @@ export function Timesheets() {
                 .select('id, user_id, project_id, started_at, ended_at')
                 .lt('started_at', fetchEnd.toISOString())
                 .or(`ended_at.is.null,ended_at.gt.${fetchStart.toISOString()}`)
-                .order('started_at', { ascending: true });
+                .order('started_at', { ascending: false });
 
             if (selectedMember !== 'all' && selectedMember !== '') {
                 const member = members.find(m => m.id === selectedMember);
@@ -369,7 +376,7 @@ export function Timesheets() {
             <main className="flex-1 overflow-y-auto px-8 py-8">
                 {loading ? <div className="flex items-center justify-center h-64"><LoadingState /></div> : (
                     <div className="max-w-[1500px] mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
-                        {viewMode === 'daily' && <DailyView entries={entries} />}
+                        {viewMode === 'daily' && <DailyView entries={entries} selectedMember={selectedMember} toProperCase={toProperCase} />}
                         {viewMode === 'weekly' && <WeeklyView entries={entries} onNavigate={(d) => { setSelectedDate(new Date(d + 'T12:00:00')); setViewMode('daily'); }} />}
                         {viewMode === 'calendar' && <CalendarView entries={entries} />}
                     </div>
@@ -427,9 +434,96 @@ export function Timesheets() {
     );
 }
 
-function DailyView({ entries }: { entries: DailyEntry[] }) {
+function DailyView({ entries, selectedMember, toProperCase }: { 
+    entries: DailyEntry[], 
+    selectedMember: string,
+    toProperCase: (s: string) => string
+}) {
     const day = entries[0];
-    if (!day || day.sessions.length === 0) return <div className="flex flex-col items-center justify-center h-64"><EmptyState title="No entries found for this date" /></div>;
+    
+    const displayRows = useMemo(() => {
+        if (!day) return [];
+        
+        const userMap: Record<string, any> = {};
+
+        day.sessions.forEach(s => {
+            const userId = s.user_id;
+            
+            // For Single User view, return individual sessions
+            if (selectedMember !== 'all') {
+                return;
+            }
+            
+            // For All Members view, aggregate by user
+            if (!userMap[userId]) {
+                userMap[userId] = {
+                    ...s,
+                    min_start: s.started_at,
+                    max_end: s.ended_at,
+                    total_duration: 0,
+                    weighted_activity: 0,
+                    weighted_idle: 0,
+                    weighted_manual: 0,
+                    offline_mins: 0,
+                    is_active: false,
+                    isAggregated: true
+                };
+            }
+            const row = userMap[userId];
+            const dur = s.duration_mins || 0;
+            row.total_duration += dur;
+            row.weighted_activity += (s.activity_percent || 0) * dur;
+            row.weighted_idle += (s.idle_percent || 0) * dur;
+            row.weighted_manual += (s.manual_percent || 0) * dur;
+            row.offline_mins += (s.offline_mins || 0);
+            
+            if (new Date(s.started_at) < new Date(row.min_start)) row.min_start = s.started_at;
+            
+            // Only update max_end if the new session is NOT active
+            // If any session is active, row.is_active becomes true and row.max_end effectively becomes 'Now'
+            if (s.is_active) {
+                row.is_active = true;
+            } else if (s.ended_at && (!row.max_end || new Date(s.ended_at) > new Date(row.max_end))) {
+                row.max_end = s.ended_at;
+            }
+            
+            if (row.project_id !== s.project_id) row.project_name = 'Multiple Projects';
+        });
+
+        if (selectedMember !== 'all') return day.sessions;
+
+        // Filter: ONLY active users (current status = working/active)
+        return Object.values(userMap)
+            .filter(row => row.is_active)
+            .map(row => ({
+                ...row,
+                activity_percent: row.total_duration > 0 ? Math.round(row.weighted_activity / row.total_duration) : 0,
+                idle_percent: row.total_duration > 0 ? Math.round(row.weighted_idle / row.total_duration) : 0,
+                manual_percent: row.total_duration > 0 ? Math.round(row.weighted_manual / row.total_duration) : 0,
+                duration_mins: row.total_duration
+            }));
+    }, [day, selectedMember]);
+
+    if (!day) return <div className="flex flex-col items-center justify-center h-64"><EmptyState title="No entries found for this date" /></div>;
+
+    const renderTimeDisplay = (s: any) => {
+        const startTime = s.isAggregated ? s.min_start : s.started_at;
+        const endTime = s.isAggregated ? s.max_end : s.ended_at;
+        const active = s.is_active;
+
+        const start = new Date(startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase();
+        
+        if (active) {
+            return `${start} – Now`;
+        }
+        
+        const end = endTime ? 
+            new Date(endTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase() : 
+            'Unfinished'; // Should not happen with current logic but as fallback
+            
+        return `${start} – ${end}`;
+    };
+
     return (
         <div className="space-y-6">
             <h2 className="text-xl font-bold text-slate-800">Total: {formatDuration(day.totalMinutes)}</h2>
@@ -463,12 +557,17 @@ function DailyView({ entries }: { entries: DailyEntry[] }) {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                        {day.sessions.map((s, idx) => (
+                        {displayRows.map((s, idx) => (
                             <tr key={idx} className="group hover:bg-slate-50/50 transition-all">
                                 <td className="p-4">
                                     <div className="flex flex-col">
-                                        <span className="text-[13px] font-bold text-slate-700">{s.project_name}</span>
-                                        <span className="text-[11px] font-medium text-slate-400">{s.user_name}</span>
+                                        <span className="text-[13px] font-bold text-slate-700 uppercase tracking-tight">{s.project_name}</span>
+                                        <span className={clsx(
+                                            "text-[11px] font-medium text-slate-400",
+                                            s.user_name?.includes('@') && "variant-caps-small-caps lowercase"
+                                        )}>
+                                            {s.user_name ? toProperCase(s.user_name) : 'Unknown User'}
+                                        </span>
                                     </div>
                                 </td>
                                 <td className="p-4 text-center">
@@ -480,15 +579,12 @@ function DailyView({ entries }: { entries: DailyEntry[] }) {
                                     </div>
                                 </td>
                                 <td className="p-4 text-center text-[13px] font-medium text-slate-400">{s.idle_percent}%</td>
-                                <td className="p-4 text-center text-[13px] font-medium text-slate-400">0%</td>
+                                <td className="p-4 text-center text-[13px] font-medium text-slate-400">{s.manual_percent || 0}%</td>
                                 <td className="p-4 text-center text-[14px] font-bold text-slate-800">{formatDuration(s.duration_mins || 0)}</td>
                                 <td className="p-4 text-[12px] font-medium text-slate-500 italic">
                                     <div className="flex flex-col">
                                         <span>
-                                            {new Date(s.started_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase()} - 
-                                            {s.ended_at ? 
-                                                new Date(s.ended_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase() : 
-                                                (s.is_active ? 'Active' : 'Unfinished')}
+                                            {renderTimeDisplay(s)}
                                         </span>
                                         {s.offline_mins && s.offline_mins > 0 ? (
                                             <span className="text-[10px] text-slate-400 not-italic font-bold mt-1">

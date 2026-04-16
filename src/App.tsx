@@ -809,25 +809,20 @@ export default function App() {
 
     const startTime = new Date(Date.now() - (minutes * 60000)).toISOString();
 
-    // Find or create a session for the target project
-    const { data: existingSession } = await sb.from('sessions')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('project_id', newProjectId)
-      .is('ended_at', null)
-      .order('started_at', { ascending: false })
-      .limit(1)
-      .single();
+    // Find or create a session for the target project using the atomic RPC
+    const { data: rpcData, error: rpcError } = await sb.rpc('rpc_start_session', {
+      p_user_id: user.id,
+      p_project_id: newProjectId,
+      p_organization_id: user.organization_id,
+      p_ip_address: null // We don't necessarily have the IP here, or we could fetch it
+    });
 
-    let targetSessionId = existingSession?.id;
-    if (!targetSessionId) {
-      const { data: newSess } = await sb.from('sessions').insert({
-        user_id: user.id,
-        project_id: newProjectId,
-        started_at: startTime
-      }).select().single();
-      targetSessionId = newSess?.id;
+    if (rpcError) {
+      console.error('Failed to reassign session via RPC:', rpcError);
+      return;
     }
+
+    const targetSessionId = rpcData.id;
 
     if (targetSessionId) {
       await sb.from('activity_samples')
