@@ -24,7 +24,7 @@ pub async fn check_for_updates(app: AppHandle) {
     // Wait 15s after launch so we don't slow down startup
     tokio::time::sleep(std::time::Duration::from_secs(15)).await;
 
-    let updater = match app.updater() {
+    let updater: tauri_plugin_updater::Updater = match app.updater() {
         Ok(u) => u,
         Err(e) => {
             eprintln!("[updater] Failed to get updater: {}", e);
@@ -70,7 +70,7 @@ pub async fn check_for_updates(app: AppHandle) {
         Err(e) => {
             eprintln!("[updater] Update check failed: {}", e);
         }
-    }
+    };
 }
 
 /// Download and install the pending update.
@@ -79,16 +79,18 @@ pub async fn check_for_updates(app: AppHandle) {
 pub async fn install_update(app: AppHandle) -> Result<(), String> {
     let updater = app.updater().map_err(|e| e.to_string())?;
 
-    let update = match updater.check().await.map_err(|e| e.to_string())? {
+    let update = updater.check().await.map_err(|e| e.to_string())?;
+
+    let update = match update {
         Some(u) => u,
         None => return Err("No update available".to_string()),
     };
 
     println!("[updater] Downloading v{}...", update.version);
 
-    update
+    let install_res: Result<(), tauri_plugin_updater::Error> = update
         .download_and_install(
-            |chunk_length, content_length| {
+            |chunk_length: usize, content_length: Option<u64>| {
                 if let Some(total) = content_length {
                     let pct = (chunk_length as f64 / total as f64 * 100.0) as u32;
                     let _ = app.emit("update-progress", pct);
@@ -99,8 +101,9 @@ pub async fn install_update(app: AppHandle) -> Result<(), String> {
                 let _ = app.emit("update-progress", 100u32);
             },
         )
-        .await
-        .map_err(|e| e.to_string())?;
+        .await;
+    
+    install_res.map_err(|e| e.to_string())?;
 
     Ok(())
 }

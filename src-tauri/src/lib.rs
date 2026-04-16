@@ -7,6 +7,7 @@ mod cache;
 mod updater;
 
 use tauri::Manager;
+use tauri_plugin_notification::NotificationExt;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
 
@@ -191,7 +192,7 @@ fn start_tracking(
         }
     }
     
-    let (cfg, counts, running, auth_arc, db_arc) = {
+    let (cfg, counts, running, auth_arc, db_arc): (SupabaseConfig, Arc<Mutex<tracker::TrackerCounts>>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>) = {
         let mut s = state.lock().unwrap();
         *s.auth_token.lock().unwrap() = Some(token.clone());
         (
@@ -203,16 +204,8 @@ fn start_tracking(
         )
     };
     
-    // Self-healing: Close any other open sessions for this user before starting a new one.
-    // PostgREST: filter is user_id=eq.X&ended_at=is.null
-    let cleanup_body = serde_json::json!({ "ended_at": chrono::Utc::now().to_rfc3339() }).to_string();
-    let _ = crate::supabase_patch(
-        &cfg, 
-        "sessions", 
-        &format!("user_id=eq.{}&ended_at=is.null", user_id), 
-        &cleanup_body, 
-        Some(&token)
-    );
+    // ─── Phase 1: Clean/Start Session Atomic ─────────────────────────────────────
+    // We now use an RPC function to ensure atomicity (closes old sessions and starts new one)
 
     // Fetch organization_id from the project to ensure correct scoping for multi-org users
     let org_id: Option<String> = match crate::supabase_get(
@@ -239,23 +232,20 @@ fn start_tracking(
         .ok()
         .and_then(|r| r.into_string().ok());
 
-    // Insert session row — PostgREST returns array with Prefer: return=representation
-    let now = chrono::Utc::now().to_rfc3339();
     let body = serde_json::json!({
-        "user_id": user_id,
-        "project_id": project_id,
-        "started_at": now,
-        "organization_id": org_id,
-        "ip_address": ip_address,
+        "p_user_id": user_id,
+        "p_project_id": project_id,
+        "p_organization_id": org_id,
+        "p_ip_address": ip_address,
     }).to_string();
 
-    match supabase_post(&cfg, "sessions", &body, Some(&token), Some("return=representation")) {
+    match supabase_post(&cfg, "rpc/rpc_start_session", &body, Some(&token), None) {
         Ok(resp_body) => {
-            // PostgREST returns an array: [{...}]
-            let rows: Result<Vec<SupabaseSessionRow>, _> = serde_json::from_str(&resp_body);
-            match rows.ok().and_then(|mut v| v.pop()) {
-                Some(row) => {
-                    let session_id = row.id.clone();
+            // RPC returns the JSON result directly: {"id": "...", "started_at": "..."}
+            let row: Result<SupabaseSessionRow, _> = serde_json::from_str(&resp_body);
+            match row {
+                Ok(row) => {
+                    let session_id: String = row.id.clone();
                     {
                         let mut s = state.lock().unwrap();
                         s.active_session_id = Some(session_id.clone());
@@ -275,7 +265,7 @@ fn start_tracking(
                     );
                     tracker::start_screenshot_loop(
                         app.clone(), session_id.clone(), cfg.clone(), Arc::clone(&running), 
-                        Arc::clone(&auth_arc), org_id, user_id
+                        Arc::clone(&auth_arc), org_id, user_id.clone()
                     );
 
                     // 30s offline sync loop
@@ -283,20 +273,20 @@ fn start_tracking(
 
                     TrackingResult { status: "running".to_string(), session_id: Some(session_id), error: None }
                 }
-                None => TrackingResult {
+                Err(e) => TrackingResult {
                     status: "error".to_string(), session_id: None,
-                    error: Some(format!("Unexpected response from Supabase: {}", resp_body)),
+                    error: Some(format!("Failed to parse RPC response: {} (Body: {})", e, resp_body)),
                 },
             }
         }
-        Err(msg) => TrackingResult { status: "error".to_string(), session_id: None, error: Some(msg) },
+        Err(msg) => TrackingResult { status: "error".to_string(), session_id: None, error: Some(msg.to_string()) },
     }
 }
 
 /// invoke('stop_tracking')
 #[tauri::command]
 fn stop_tracking(state: tauri::State<'_, Mutex<AppState>>) -> TrackingResult {
-    let (cfg, auth_arc, session_id, running, db_arc) = {
+    let (cfg, auth_arc, session_id, running, db_arc): (SupabaseConfig, Arc<Mutex<Option<String>>>, Option<String>, Arc<Mutex<bool>>, Arc<Mutex<Option<rusqlite::Connection>>>) = {
         let mut s = state.lock().unwrap();
         (
             SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() },
@@ -314,9 +304,8 @@ fn stop_tracking(state: tauri::State<'_, Mutex<AppState>>) -> TrackingResult {
 
     if let Some(sid) = session_id {
         let token = auth_arc.lock().unwrap().clone();
-        let ended = chrono::Utc::now().to_rfc3339();
-        let body = serde_json::json!({ "ended_at": ended }).to_string();
-        let _ = supabase_patch(&cfg, "sessions", &format!("id=eq.{}", sid), &body, token.as_deref());
+        let body = serde_json::json!({ "p_session_id": sid }).to_string();
+        let _ = supabase_post(&cfg, "rpc/rpc_stop_session", &body, token.as_deref(), None);
     }
 
     TrackingResult { status: "stopped".to_string(), session_id: None, error: None }
@@ -335,7 +324,7 @@ fn resume_tracking(
     app: tauri::AppHandle,
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> TrackingResult {
-    let (cfg, session_id, counts, running, auth_arc, db_arc, user_id, org_id) = {
+    let (cfg, session_id, counts, running, auth_arc, db_arc, user_id, org_id): (SupabaseConfig, Option<String>, Arc<Mutex<tracker::TrackerCounts>>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>, Option<String>, Option<String>) = {
         let s = state.lock().unwrap();
         // Guard against duplicate loops
         if *s.tracking_running.lock().unwrap() {
@@ -357,7 +346,7 @@ fn resume_tracking(
         )
     };
 
-    let sid = match session_id {
+    let sid: String = match session_id {
         Some(id) => id,
         None => return TrackingResult {
             status: "error".to_string(), session_id: None,
@@ -384,7 +373,7 @@ fn resume_tracking(
 #[tauri::command]
 fn show_notification_cmd(app: tauri::AppHandle, title: String, body: String) -> Result<(), String> {
     use tauri_plugin_notification::NotificationExt;
-    app.notification().builder().title(title).body(body).show().map_err(|e| e.to_string())
+    app.notification().builder().title(title).body(body).show().map_err(|e: tauri_plugin_notification::Error| e.to_string())
 }
 
 /// invoke('install_update')
@@ -418,6 +407,7 @@ fn show_idle_dialog(app: tauri::AppHandle, limit: u32) {
     use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
     if let Some(window) = app.get_webview_window("main") {
+        let window: tauri::WebviewWindow = window;
         let _ = window.unminimize();
         let _ = window.show();
         let _ = window.set_focus();
@@ -487,7 +477,7 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
-        .setup(move |app| {
+        .setup(move |app: &mut tauri::App| {
             tracker::spawn_input_listener(Arc::clone(&counts));
 
             let app_handle = app.handle().clone();
@@ -553,11 +543,11 @@ pub fn run() {
             stop_idle_monitoring,
             get_location,
         ])
-        .on_window_event(|window, event| {
+        .on_window_event(|window: &tauri::Window, event: &tauri::WindowEvent| {
             if let tauri::WindowEvent::CloseRequested { api: _api, .. } = event {
                 // When 'X' is clicked, try to stop tracking
                 let state_handle = window.state::<Mutex<AppState>>();
-                let (cfg, token, session_id, running) = {
+                let (cfg, token, session_id, running): (SupabaseConfig, Option<String>, Option<String>, Arc<Mutex<bool>>) = {
                     let mut s = state_handle.lock().unwrap();
                     let token = s.auth_token.lock().unwrap().clone();
                     let cfg = SupabaseConfig { 
