@@ -7,17 +7,25 @@ interface StatMetricProps {
     value: string | number;
     sub?: string;
     trend?: number;
+    accent?: 'emerald' | 'amber' | 'rose' | 'primary';
     className?: string;
 }
 
-export function StatMetric({ icon, label, value, sub, trend, className }: StatMetricProps) {
+export function StatMetric({ icon, label, value, sub, trend, accent, className }: StatMetricProps) {
     return (
         <div className={clsx(
             "bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 group",
             className
         )}>
             <div className="flex items-center justify-between mb-4">
-                <div className="p-2 rounded-lg bg-slate-50 text-slate-500 group-hover:text-primary group-hover:bg-primary/5 transition-colors">
+                <div className={clsx(
+                    "p-2 rounded-lg transition-colors",
+                    accent === 'emerald' && "bg-emerald-50 text-emerald-600",
+                    accent === 'amber' && "bg-amber-50 text-amber-600",
+                    accent === 'rose' && "bg-rose-50 text-rose-600",
+                    accent === 'primary' && "bg-primary/5 text-primary",
+                    !accent && "bg-slate-50 text-slate-500 group-hover:text-primary group-hover:bg-primary/5"
+                )}>
                     {icon}
                 </div>
                 {trend !== undefined && (
