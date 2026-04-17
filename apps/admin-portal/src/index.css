@@ -163,12 +163,28 @@ h4 {
   animation-delay: 300ms;
 }
 
-/* Scrollbar Refinement - Hidden for cleaner UI */
+/* Scrollbar Refinement - High-Contrast Custom Style */
 ::-webkit-scrollbar {
-  display: none;
+  width: 12px;
+  height: 12px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 100px;
+  border: 3px solid #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 
 * {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
+  scrollbar-width: auto;
+  scrollbar-color: #94a3b8 #f1f5f9;
+}

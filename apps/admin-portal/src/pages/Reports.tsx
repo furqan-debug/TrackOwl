@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import {
     Monitor, Camera,
     Clock, Activity as ActivityIcon, Users,
     ChevronDown, Zap, Download, DollarSign,
     BarChart3,
-    ArrowUpRight
+    ArrowUpRight,
+    ChevronLeft,
+    ChevronRight,
+    Calendar as CalendarIcon
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -34,11 +37,16 @@ const CHART_COLORS = [
     '#A9D0FF'
 ];
 
-const RANGES = ['Today', 'Last 7 Days', 'Last 30 Days'] as const;
+const RANGES = ['Today', 'Yesterday', 'Last 7 Days', 'Last Week', 'Last 2 Weeks', 'This Month', 'Last Month', 'Custom'] as const;
 type Range = typeof RANGES[number];
 
 export function Reports() {
     const [range, setRange] = useState<Range>('Last 7 Days');
+    const [offset, setOffset] = useState(0); // offset in days
+    const [showRangeDropdown, setShowRangeDropdown] = useState(false);
+    const [customStart, setCustomStart] = useState<Date | null>(null);
+    const [customEnd, setCustomEnd] = useState<Date | null>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
     const [loading, setLoading] = useState(true);
     const [dailyActivity, setDailyActivity] = useState<{ date: string; activity: number; minutes: number }[]>([]);
     const [appBreakdown, setAppBreakdown] = useState<{ name: string; value: number }[]>([]);
@@ -73,7 +81,17 @@ export function Reports() {
 
     useEffect(() => {
         fetchReports();
-    }, [range, selectedTeamId, selectedMemberId]);
+    }, [range, offset, selectedTeamId, selectedMemberId]);
+
+    function shiftRange(direction: number) {
+        let days = 0;
+        if (range === 'Today' || range === 'Yesterday') days = 1;
+        else if (range === 'Last 7 Days' || range === 'Last Week') days = 7;
+        else if (range === 'Last 2 Weeks') days = 14;
+        else if (range === 'This Month' || range === 'Last Month') days = 30;
+        
+        setOffset(prev => prev + (direction * days));
+    }
 
     async function fetchTeams() {
         const { data } = await supabase.from('teams').select('id, name');
@@ -90,18 +108,57 @@ export function Reports() {
     }
 
     function getDateRange(): { start: string; end: string } {
-        const now = new Date();
-        const end = now.toISOString();
-        let start: Date;
-        if (range === 'Today') {
-            start = new Date();
-            start.setHours(0, 0, 0, 0);
-        } else if (range === 'Last 7 Days') {
-            start = new Date(now.getTime() - 7 * 86400000);
-        } else {
-            start = new Date(now.getTime() - 30 * 86400000);
+        if (range === 'Custom' && customStart && customEnd) {
+            const s = new Date(customStart); s.setHours(0,0,0,0);
+            const e = new Date(customEnd); e.setHours(23,59,59,999);
+            return { start: s.toISOString(), end: e.toISOString() };
         }
-        return { start: start.toISOString(), end };
+
+        const now = new Date();
+        now.setDate(now.getDate() + offset); 
+        
+        let start = new Date(now);
+        let end = new Date(now);
+
+        if (range === 'Today') {
+            start.setHours(0,0,0,0);
+            end.setHours(23,59,59,999);
+        } else if (range === 'Yesterday') {
+            start.setDate(start.getDate() - 1);
+            start.setHours(0,0,0,0);
+            end.setDate(end.getDate() - 1);
+            end.setHours(23,59,59,999);
+        } else if (range === 'Last 7 Days') {
+            start.setDate(start.getDate() - 6);
+            start.setHours(0,0,0,0);
+            end.setHours(23,59,59,999);
+        } else if (range === 'Last Week') {
+            const day = start.getDay();
+            const diff = day === 0 ? 6 : day - 1; // distance to Monday
+            start.setDate(start.getDate() - diff - 7);
+            start.setHours(0,0,0,0);
+            end = new Date(start);
+            end.setDate(end.getDate() + 6);
+            end.setHours(23,59,59,999);
+        } else if (range === 'Last 2 Weeks') {
+            start.setDate(start.getDate() - 13);
+            start.setHours(0,0,0,0);
+            end.setHours(23,59,59,999);
+        } else if (range === 'This Month') {
+            start.setDate(1);
+            start.setHours(0,0,0,0);
+            end.setHours(23,59,59,999);
+        } else if (range === 'Last Month') {
+            start.setMonth(start.getMonth() - 1);
+            start.setDate(1);
+            start.setHours(0,0,0,0);
+            end = new Date(start);
+            end.setMonth(end.getMonth() + 1);
+            end.setDate(0);
+            end.setHours(23,59,59,999);
+        }
+        
+        return { start: start.toISOString(), end: end.toISOString() };
     }
 
     async function fetchReports() {
@@ -268,10 +325,12 @@ export function Reports() {
             setAvgActivity(calculateActivityScore(productiveSamples));
             setTotalCosts(costs);
             setTotalBilled(billed);
-            // --- Build Weekly Table Data ---
+            // --- Build Weekly Table Data (Aligned to Monday) ---
             const dateList: string[] = [];
             let curr = new Date(start);
+            curr.setHours(12, 0, 0, 0); // Force middle of day to avoid timezone flip-flops
             const stop = new Date(end);
+            
             while (curr <= stop) {
                 dateList.push(curr.toISOString().split('T')[0]);
                 curr.setDate(curr.getDate() + 1);
@@ -346,23 +405,63 @@ export function Reports() {
             title="Reports"
             description="View detailed reports on your team's activity and time spent."
             actions={
-                <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center bg-white border border-slate-200 p-1.5 rounded-xl shadow-sm">
-                        {RANGES.map(r => (
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
                             <button
-                                key={r}
-                                onClick={() => setRange(r)}
-                                className={clsx(
-                                    "px-5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
-                                    range === r ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
-                                )}
+                                onClick={() => shiftRange(-1)}
+                                className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-all border border-transparent hover:border-slate-100"
                             >
-                                {r}
+                                <ChevronLeft className="w-4 h-4" />
                             </button>
-                        ))}
+                            <button
+                                onClick={() => shiftRange(1)}
+                                className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-all border border-transparent hover:border-slate-100"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
+
+                        <div className="relative group">
+                            <div 
+                                onClick={() => setShowRangeDropdown(!showRangeDropdown)}
+                                className="flex items-center gap-4 bg-white border border-slate-200 px-5 py-2.5 rounded-xl shadow-sm hover:border-primary transition-all cursor-pointer min-w-[340px]"
+                            >
+                                <span className="text-[12px] font-bold text-slate-800 tabular-nums flex items-center gap-2">
+                                    {new Date(getDateRange().start).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                                    <span className="text-slate-300 mx-1">—</span>
+                                    {new Date(getDateRange().end).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                                </span>
+                                <CalendarIcon className="w-4 h-4 text-primary ml-auto group-hover:scale-110 transition-transform" />
+                            </div>
+
+                            {showRangeDropdown && (
+                                <div className="absolute top-full left-0 mt-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <DateRangePicker 
+                                        range={range}
+                                        setRange={setRange}
+                                        setOffset={setOffset}
+                                        onApply={(s: Date, e: Date) => {
+                                            setCustomStart(s);
+                                            setCustomEnd(e);
+                                            setRange('Custom');
+                                            setShowRangeDropdown(false);
+                                        }}
+                                        onCancel={() => setShowRangeDropdown(false)}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={() => { setRange('Today'); setOffset(0); }}
+                            className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+                        >
+                            Today
+                        </button>
                     </div>
 
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 ml-auto">
                         <FilterSelect
                             icon={<Users className="w-4 h-4" />}
                             label="Team"
@@ -554,71 +653,97 @@ export function Reports() {
                             </div>
                         </Card>
 
-                        {/* 4. Weekly Timesheet Matrix (Premium Grid) */}
-                        <Card className="overflow-hidden border-none shadow-premium-lg">
-                            <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-white">
-                                <div>
-                                    <h3 className="text-[12px] font-black text-slate-900 uppercase tracking-[0.2em]">Weekly Timesheet Matrix</h3>
-                                    <p className="text-[10px] text-slate-400 mt-1 font-bold tracking-tight uppercase opacity-60">Daily performance architecture per team member</p>
+                        <div className="mt-12 bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
+                            <div className="px-10 py-8 border-b border-slate-50 flex items-center justify-between bg-white">
+                                <div className="space-y-1">
+                                    <h3 className="text-[14px] font-black text-slate-900 tracking-tight">Weekly Timesheet Matrix</h3>
+                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest opacity-60">Architectural breakdown of team performance</p>
                                 </div>
-                                <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100">
-                                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Real-time Sync</span>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-2 border-r border-slate-100 pr-4 mr-2">
+                                        <button 
+                                            onClick={() => {
+                                                if (scrollRef.current) scrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+                                            }}
+                                            className="p-2 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-primary transition-all border border-transparent hover:border-slate-100"
+                                        >
+                                            <ChevronLeft className="w-4 h-4" />
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                if (scrollRef.current) scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+                                            }}
+                                            className="p-2 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-primary transition-all border border-transparent hover:border-slate-100"
+                                        >
+                                            <ChevronRight className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                    <div className="flex -space-x-2">
+                                    {tableData.rows.slice(0, 3).map((r, i) => (
+                                        <div key={i} className="w-8 h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-black text-slate-500 uppercase">
+                                            {r.fullName[0]}
+                                        </div>
+                                    ))}
+                                    {tableData.rows.length > 3 && (
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 border-2 border-white flex items-center justify-center text-[10px] font-black text-primary uppercase">
+                                            +{tableData.rows.length - 3}
+                                        </div>
+                                    )}
+                                    </div>
                                 </div>
                             </div>
-                            <div className="overflow-hidden">
-                                <table className="w-full text-left border-separate border-spacing-0 table-fixed">
+                        </div>
+
+                            <div ref={scrollRef} className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent pb-4">
+                                <table className="w-full border-collapse min-w-max table-auto">
                                     <thead>
                                         <tr className="bg-slate-50/50">
-                                            <th className="py-4 px-6 text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100 w-[180px]">Member</th>
+                                            <th className="sticky left-0 z-20 bg-slate-50/90 backdrop-blur-md py-6 px-10 text-[11px] font-black text-primary uppercase tracking-widest border-b border-slate-100 text-left w-[250px] min-w-[250px]">
+                                                Member
+                                            </th>
                                             {tableData.dates.map(date => (
-                                                <th key={date} className="py-4 px-2 text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] text-center border-b border-slate-100">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-slate-900 leading-none">{new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                                                        <span className="opacity-40 text-[8px] mt-0.5">{new Date(date + 'T12:00:00').toLocaleDateString('en-US', { day: 'numeric' })}</span>
-                                                    </div>
+                                                <th key={date} className="py-6 px-4 text-[11px] font-bold text-slate-800 border-b border-slate-100 text-center w-[140px] min-w-[140px]">
+                                                    {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
                                                 </th>
                                             ))}
-                                            <th className="py-4 px-4 text-[9px] font-black text-slate-900 uppercase tracking-[0.15em] text-right border-b border-slate-100 bg-slate-50/30 w-[100px]">Total</th>
-                                            <th className="py-4 px-4 text-[9px] font-black text-slate-900 uppercase tracking-[0.15em] text-right border-b border-slate-100 bg-slate-50/30 w-[100px]">Focus</th>
+                                            <th className="py-6 px-8 text-[11px] font-black text-slate-900 border-b border-slate-100 text-right w-[120px] min-w-[120px] uppercase tracking-widest">
+                                                Total
+                                            </th>
+                                            <th className="py-6 px-8 text-[11px] font-black text-slate-900 border-b border-slate-100 text-right w-[120px] min-w-[120px] uppercase tracking-widest">
+                                                Activity
+                                            </th>
                                         </tr>
                                     </thead>
-                                    <tbody className="bg-white">
-                                        {tableData.rows.map((row) => (
-                                            <tr key={row.memberId} className="group hover:bg-slate-50/20 transition-all">
-                                                <td className="py-3 px-6 border-b border-slate-100">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-[9px] font-black text-slate-500 shrink-0 border border-slate-200/50 group-hover:border-primary/20 transition-all">
-                                                            {row.fullName.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                                                        </div>
-                                                        <div className="flex flex-col min-w-0">
-                                                            <span className="text-[10px] font-black text-slate-900 uppercase tracking-tight truncate group-hover:text-primary transition-colors leading-none">{row.fullName}</span>
-                                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest opacity-60 truncate mt-1">Active</span>
-                                                        </div>
-                                                    </div>
+                                    <tbody className="divide-y divide-slate-50">
+                                        {tableData.rows.map(row => (
+                                            <tr key={row.memberId} className="group hover:bg-slate-50/50 transition-colors">
+                                                <td className="sticky left-0 z-20 bg-white group-hover:bg-slate-50/90 backdrop-blur-md py-5 px-10 text-[13px] font-bold text-slate-900 border-r border-slate-50 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)]">
+                                                    {row.fullName}
                                                 </td>
-                                                {tableData.dates.map(date => {
-                                                    const mins = row.dailyMins[date] || 0;
-                                                    return (
-                                                        <td key={date} className="py-3 px-2 border-b border-slate-50 text-center">
-                                                            {mins > 0 ? (
-                                                                <span className="text-[11px] font-black text-slate-800 tabular-nums tracking-tighter">
-                                                                    {formatDuration(mins).split(':')[0]}:{formatDuration(mins).split(':')[1]}
-                                                                </span>
-                                                            ) : (
-                                                                <div className="w-1 h-1 rounded-full bg-slate-100 mx-auto" />
-                                                            )}
-                                                        </td>
-                                                    );
-                                                })}
-                                                <td className="py-3 px-4 text-right font-black text-slate-900 tabular-nums border-b border-slate-50 bg-slate-50/10">
-                                                    <span className="text-[11px] tracking-tighter">{formatDuration(row.totalMins).split(':')[0]}:{formatDuration(row.totalMins).split(':')[1]}h</span>
+                                                {tableData.dates.map(date => (
+                                                    <td key={date} className="py-5 px-4 text-[12px] font-medium text-slate-600 text-center tabular-nums">
+                                                        {row.dailyMins[date] ? formatDuration(row.dailyMins[date]) : <span className="text-slate-200">—</span>}
+                                                    </td>
+                                                ))}
+                                                <td className="py-5 px-8 text-[12px] font-bold text-slate-900 text-right tabular-nums">
+                                                    {formatDuration(row.totalMins)}
                                                 </td>
-                                                <td className="py-3 px-4 text-right border-b border-slate-50 bg-slate-50/10">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <span className="text-[9px] font-black text-slate-900 tabular-nums">{row.activityScore}%</span>
-                                                        <div className="w-6 h-1 bg-slate-100 rounded-full overflow-hidden shrink-0">
-                                                            <div className="h-full bg-primary rounded-full" style={{ width: `${row.activityScore}%` }} />
+                                                <td className="py-5 px-8 text-right">
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <span className={clsx(
+                                                            "text-[12px] font-bold tabular-nums",
+                                                            row.activityScore > 70 ? "text-emerald-600" : row.activityScore > 40 ? "text-amber-600" : "text-rose-600"
+                                                        )}>
+                                                            {row.activityScore}%
+                                                        </span>
+                                                        <div className="w-16 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                            <div 
+                                                                className={clsx(
+                                                                    "h-full rounded-full transition-all duration-500",
+                                                                    row.activityScore > 70 ? "bg-emerald-500" : row.activityScore > 40 ? "bg-amber-500" : "bg-rose-500"
+                                                                )}
+                                                                style={{ width: `${row.activityScore}%` }}
+                                                            />
                                                         </div>
                                                     </div>
                                                 </td>
@@ -626,38 +751,38 @@ export function Reports() {
                                         ))}
                                     </tbody>
                                     <tfoot>
-                                        <tr className="bg-slate-50/50">
-                                            <td className="py-6 px-6 font-black text-[9px] uppercase tracking-[0.15em] text-slate-400 border-r border-slate-100/50">Team Total</td>
+                                        <tr className="bg-slate-50/30 font-bold">
+                                            <td className="sticky left-0 z-20 bg-slate-50/90 backdrop-blur-md py-6 px-10 text-[11px] font-black text-slate-400 uppercase tracking-widest border-t border-slate-100">
+                                                Daily total
+                                            </td>
                                             {tableData.dates.map(date => {
                                                 const dayTotal = tableData.rows.reduce((sum, r) => sum + (r.dailyMins[date] || 0), 0);
                                                 return (
-                                                    <td key={date} className="py-6 px-2 text-center">
-                                                        {dayTotal > 0 ? (
-                                                            <span className="text-[12px] font-black text-slate-900 tabular-nums tracking-tighter">
-                                                                {Math.floor(dayTotal / 60)}h
-                                                            </span>
-                                                        ) : (
-                                                            <span className="text-slate-200">—</span>
-                                                        )}
+                                                    <td key={date} className="py-6 px-4 text-[12px] font-black text-slate-900 text-center tabular-nums border-t border-slate-100">
+                                                        {dayTotal > 0 ? formatDuration(dayTotal) : <span className="text-slate-200">—</span>}
                                                     </td>
                                                 );
                                             })}
-                                            <td className="py-6 px-4 text-right bg-slate-100/30">
-                                                <span className="text-[13px] font-black text-slate-900 tabular-nums tracking-tighter">
-                                                    {Math.floor(tableData.rows.reduce((sum, r) => sum + r.totalMins, 0) / 60)}h
-                                                </span>
+                                            <td className="py-6 px-8 border-t border-slate-100 bg-slate-50/50">
+                                                <div className="text-right">
+                                                    <span className="text-[12px] font-black text-slate-900 tabular-nums">
+                                                        {formatDuration(tableData.rows.reduce((sum, r) => sum + r.totalMins, 0))}
+                                                    </span>
+                                                </div>
                                             </td>
-                                            <td className="py-6 px-4 text-right bg-slate-100/30">
-                                                <span className="text-[11px] font-black text-slate-900 tabular-nums tracking-tighter">
-                                                    {tableData.rows.length > 0 ? Math.round(tableData.rows.reduce((sum, r) => sum + r.activityScore, 0) / tableData.rows.length) : 0}%
-                                                </span>
+                                            <td className="py-6 px-8 border-t border-slate-100 bg-slate-50/50">
+                                                <div className="text-right">
+                                                    <span className="text-[12px] font-black text-slate-900 tabular-nums">
+                                                        {tableData.rows.length > 0 ? Math.round(tableData.rows.reduce((sum, r) => sum + r.activityScore, 0) / tableData.rows.length) : 0}%
+                                                    </span>
+                                                </div>
                                             </td>
                                         </tr>
                                     </tfoot>
                                 </table>
                             </div>
+                        </div>
 
-                        </Card>
                     </>
                 )}
             </div>
@@ -712,6 +837,135 @@ function CustomTooltip({ active, payload, label, unit }: any) {
         );
     }
     return null;
+}
+
+function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any) {
+    const [leftMonth, setLeftMonth] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
+    const [selStart, setSelStart] = useState<Date | null>(null);
+    const [selEnd, setSelEnd] = useState<Date | null>(null);
+
+    const rightMonth = new Date(leftMonth);
+    rightMonth.setMonth(rightMonth.getMonth() + 1);
+
+    const handleDateClick = (d: Date) => {
+        if (!selStart || (selStart && selEnd)) {
+            setSelStart(d);
+            setSelEnd(null);
+        } else {
+            if (d < selStart) {
+                setSelEnd(selStart);
+                setSelStart(d);
+            } else {
+                setSelEnd(d);
+            }
+        }
+    };
+
+    const isSelected = (d: Date) => {
+        if (!selStart) return false;
+        if (selStart.getTime() === d.getTime()) return true;
+        if (selEnd && selEnd.getTime() === d.getTime()) return true;
+        return false;
+    };
+
+    const isInRange = (d: Date) => {
+        if (!selStart || !selEnd) return false;
+        return d > selStart && d < selEnd;
+    };
+
+    return (
+        <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl flex p-1 overflow-hidden min-w-[850px]">
+            <div className="flex-1 flex border-r border-slate-100 p-2 gap-4">
+                <MonthView month={leftMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
+                <MonthView month={rightMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
+            </div>
+            <div className="w-56 p-4 flex flex-col gap-2 bg-slate-50/30">
+                {RANGES.filter(r => r !== 'Custom').map(r => (
+                    <button
+                        key={r}
+                        onClick={() => { setRange(r); setOffset(0); onCancel(); }}
+                        className={clsx(
+                            "w-full text-left px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border",
+                            range === r ? "bg-white border-slate-200 text-primary shadow-sm" : "text-slate-400 border-transparent hover:text-slate-900 hover:bg-white"
+                        )}
+                    >
+                        {r}
+                    </button>
+                ))}
+                <div className="mt-auto pt-4 border-t border-slate-100 flex flex-col gap-2">
+                    <button
+                        disabled={!selStart || !selEnd}
+                        onClick={() => selStart && selEnd && onApply(selStart, selEnd)}
+                        className="w-full py-3 bg-[#4FC08D] hover:bg-[#3FA07D] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[12px] font-black uppercase tracking-widest rounded-xl transition-all"
+                    >
+                        Apply
+                    </button>
+                    <button
+                        onClick={onCancel}
+                        className="w-full py-3 bg-white border border-slate-200 text-slate-600 text-[12px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }: any) {
+    const year = month.getFullYear();
+    const monthIdx = month.getMonth();
+    const firstDay = new Date(year, monthIdx, 1).getDay();
+    const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
+    
+    // Adjust for Monday start: (day + 6) % 7
+    const adjustedStart = (firstDay + 6) % 7;
+    
+    const days = [];
+    for (let i = 0; i < adjustedStart; i++) days.push(null);
+    for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, monthIdx, i));
+
+    const monthName = month.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+    return (
+        <div className="flex-1 min-w-[300px]">
+            <div className="bg-primary p-4 rounded-xl flex items-center justify-between text-white mb-4">
+                <button onClick={onPrev} className="hover:bg-white/20 p-1 rounded-lg transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+                <span className="text-[13px] font-black uppercase tracking-widest">{monthName}</span>
+                <button onClick={onNext} className="hover:bg-white/20 p-1 rounded-lg transition-colors"><ChevronRight className="w-4 h-4" /></button>
+            </div>
+            <div className="grid grid-cols-7 gap-1 text-center">
+                {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
+                    <div key={d} className="py-2 text-[10px] font-black text-primary/60 uppercase tracking-widest">{d}</div>
+                ))}
+                {days.map((d, i) => {
+                    if (!d) return <div key={i} className="py-3" />;
+                    const selected = isSelected(d);
+                    const inRange = isInRange(d);
+                    
+                    return (
+                        <button
+                            key={i}
+                            onClick={() => onDateClick(d)}
+                            className={clsx(
+                                "py-3 text-[12px] font-medium transition-all rounded-lg relative z-10",
+                                selected ? "bg-primary text-white shadow-lg shadow-primary/30" : 
+                                inRange ? "bg-primary/5 text-primary" : 
+                                "text-slate-600 hover:bg-slate-50"
+                            )}
+                        >
+                            {d.getDate()}
+                        </button>
+                    );
+                })}
+            </div>
+            <div className="mt-4 pt-4 border-t border-slate-50 text-center">
+                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                    {month.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </span>
+            </div>
+        </div>
+    );
 }
 
 function TrendingUpIcon({ size, className }: { size?: number, className?: string }) {
