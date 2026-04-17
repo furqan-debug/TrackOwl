@@ -25,7 +25,7 @@ export function PageLayout({
     backButton,
 }: PageLayoutProps) {
     const maxClass =
-        maxWidth === '7xl' ? 'max-w-7xl' : maxWidth === '6xl' ? 'max-w-6xl' : '';
+        maxWidth === '7xl' ? 'max-w-7xl mx-auto' : maxWidth === '6xl' ? 'max-w-6xl mx-auto' : '';
 
     return (
         <div className={clsx("p-6 md:px-10 md:py-10 w-full animate-in fade-in slide-in-from-top-4 duration-700", maxClass)}>
