@@ -472,6 +472,17 @@ fn stop_idle_monitoring(state: tauri::State<'_, Mutex<AppState>>) {
 
 /// invoke('get_location')
 #[tauri::command]
+fn sync_now(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, String> {
+    let s = state.lock().unwrap();
+    let cfg = SupabaseConfig {
+        url: s.supabase_url.clone(),
+        anon_key: s.supabase_anon_key.clone(),
+    };
+    cache::sync_from_arc(&s.db, &cfg, &s.auth_token);
+    Ok("Sync triggered".to_string())
+}
+
+#[tauri::command]
 fn get_location() -> Result<String, String> {
     // Try ipapi.co first
     if let Ok(resp) = ureq::get("https://ipapi.co/json/").timeout(std::time::Duration::from_secs(5)).call() {
@@ -608,6 +619,7 @@ pub fn run() {
             stop_idle_monitoring,
             get_location,
             set_close_behavior,
+            sync_now,
         ])
         .on_window_event(|window: &tauri::Window, event: &tauri::WindowEvent| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

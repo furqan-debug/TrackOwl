@@ -1,11 +1,11 @@
 {
-  "version": "1.1.9",
-  "notes": "Trackora v1.1.9 - Atomic session management. Fixed race conditions during tracking start by using server-side RPC functions. Required migration: fix_session_conflicts.sql",
-  "pub_date": "2026-04-16T19:17:52.051Z",
+  "version": "1.2.0",
+  "notes": "Trackora v1.2.0 - Admin Portal improvements and manual synchronization support for desktop app.",
+  "pub_date": "2026-04-17T19:04:30.000Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajNyOVRZWlYzcjluL00xVDVNU2ovQkJTekxkQVk0ejhGWVVSL3ZDY3hUcXMveDhwc1JEM1VnNVMxc0ZieXFaTVgrR0pJZElXTzZjQW9BdnZVOXVGUWdFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2MzY3MDcxCWZpbGU6VHJhY2tvcmFfMS4xLjlfeDY0LXNldHVwLmV4ZQppcUZvSmw2TEJVUEU1UGl1Uk5HYzNyQXpXR3RSTWhLc2h6d24yUCs1VEpnNm13LzdXZVkrU1hVc21VL2R0Q084akg2WWd4MlRCWkI5S1QzK21uM2NEUT09Cg==",
-      "url": "https://github.com/furqan-debug/Trackora/releases/download/v1.1.9/Trackora_1.1.9_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajdWVW1NRlp5Yy9OamV3UTJaZ2I0UWFxOUdrVWFoajVlNnFCQTZ0MlFLak9xbk5Pb2dzd01MWm1VNGZEK1BWTjUzdnR5ZTI4MjcyRUhhT0RJbU1OS0FjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2NDUyNjIzCWZpbGU6VHJhY2tvcmFfMS4yLjBfeDY0LXNldHVwLmV4ZQpmYnZtWmhKc1FLYWNnZW5xOWR2L2RGWGd2U0R0Q1J1cHBFZlBXeFVGZUlnUnZTN1VMbWtFWmxDNTliM0lsay9rNk5QVThRYy80VUdMdDNnRm9rSXFBdz09Cg==",
+      "url": "https://github.com/furqan-debug/Trackora/releases/download/v1.2.0/Trackora_1.2.0_x64-setup.exe"
     }
   }
 }

@@ -133,4 +133,11 @@ export const trackerAPI = {
     if (!invoke) return;
     return invoke('set_close_behavior', { behavior });
   },
+
+  /** Manually trigger sync of cached data to server */
+  syncNow: async () => {
+    const invoke = getInvoke();
+    if (!invoke) return;
+    return invoke('sync_now');
+  },
 };

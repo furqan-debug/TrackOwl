@@ -5,7 +5,7 @@ import {
   ChevronRight, LogOut, CheckCircle2,
   ShieldAlert, Eye, EyeOff, MapPin, MonitorPlay, MousePointerClick,
   ClipboardList, Calendar, Circle, ChevronDown, ChevronUp,
-  User as UserIcon, Camera, Save,
+  User as UserIcon, Camera, Save, RefreshCcw,
   Clock, Activity, HelpCircle, LifeBuoy, MessageSquare, Send, ArrowLeft
 } from 'lucide-react';
 import { trackerAPI } from './tauri-ipc';
@@ -206,7 +206,11 @@ function LocalClock() {
 }
 
 // ── App Footer (Version & Location) ──────────────────────────────────────────
-function AppFooter() {
+function AppFooter({ lastSyncTime, isSyncing, onSync }: { 
+  lastSyncTime: Date | null, 
+  isSyncing: boolean, 
+  onSync: () => void 
+}) {
   const [version, setVersion] = useState<string>('...');
   const [loc, setLoc] = useState<string | null>(null);
 
@@ -228,10 +232,35 @@ function AppFooter() {
     fetchLoc();
   }, []);
 
+  const syncDateStr = lastSyncTime 
+    ? lastSyncTime.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+    : '';
+  const syncTimeStr = lastSyncTime 
+    ? lastSyncTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    : '';
+
   return (
     <footer className="app-footer">
-      <div className="footer-version">Version {version}</div>
-      {loc && <div className="footer-location">{loc}</div>}
+      <div className="footer-sync-wrap">
+        <button 
+          className={`footer-sync-btn ${isSyncing ? 'syncing' : ''}`} 
+          onClick={onSync}
+          disabled={isSyncing}
+          title="Sync unsynced data to server"
+        >
+          <RefreshCcw size={14} className={isSyncing ? 'animate-spin' : ''} />
+        </button>
+        {lastSyncTime && (
+          <div className="footer-sync-text">
+            Last updated at: {syncDateStr} {syncTimeStr}
+          </div>
+        )}
+      </div>
+
+      <div className="footer-right">
+        <div className="footer-version">Version {version}</div>
+        {loc && <div className="footer-location">{loc}</div>}
+      </div>
     </footer>
   );
 }
@@ -605,6 +634,26 @@ export default function App() {
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [updateInstalling, setUpdateInstalling] = useState(false);
   const memberSubscriptionRef = useRef<any>(null);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(() => {
+    const stored = localStorage.getItem('lastSyncTime');
+    return stored ? new Date(stored) : null;
+  });
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const handleManualSync = async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    try {
+      await trackerAPI.syncNow();
+      const now = new Date();
+      setLastSyncTime(now);
+      localStorage.setItem('lastSyncTime', now.toISOString());
+    } catch (e) {
+      console.error('[App] Sync failed:', e);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   // Keep a ref of notification settings for listeners/intervals to avoid stale closures
   const settingsRef = useRef(user?.custom_fields?.notification_settings);
@@ -1559,7 +1608,11 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-      <AppFooter />
+      <AppFooter 
+        lastSyncTime={lastSyncTime} 
+        isSyncing={isSyncing} 
+        onSync={handleManualSync} 
+      />
     </div>
   );
 }
