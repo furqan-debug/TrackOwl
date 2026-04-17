@@ -9,7 +9,11 @@ mod updater;
 use tauri::Manager;
 use tauri_plugin_notification::NotificationExt;
 use serde::{Deserialize, Serialize};
+use serde_json;
+use chrono;
 use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::Duration;
 
 // ─── Shared App State ─────────────────────────────────────────────────────────
 pub struct AppState {
@@ -25,6 +29,7 @@ pub struct AppState {
     pub db: Arc<Mutex<Option<rusqlite::Connection>>>,
     pub is_idle_monitoring: Arc<Mutex<bool>>,
     pub last_idle_limit: Arc<Mutex<u32>>,
+    pub close_behavior: Arc<Mutex<String>>,
 }
 
 impl Default for AppState {
@@ -47,6 +52,7 @@ impl Default for AppState {
             db: Arc::new(Mutex::new(db)),
             is_idle_monitoring: Arc::new(Mutex::new(false)),
             last_idle_limit: Arc::new(Mutex::new(10)),
+            close_behavior: Arc::new(Mutex::new("quit".to_string())),
         }
     }
 }
@@ -141,6 +147,30 @@ pub fn supabase_patch(
         }
         Err(e) => Err(format!("Supabase PATCH transport error: {}", e)),
     }
+}
+
+/// Robust stop and sync logic used on exit or manual stop.
+fn stop_and_sync_internal(state_handle: &Mutex<AppState>) {
+    let (cfg, token, session_id, running, db_arc, auth_token_arc) = {
+        let mut s = state_handle.lock().unwrap();
+        let token = s.auth_token.lock().unwrap().clone();
+        let cfg = SupabaseConfig { 
+            url: s.supabase_url.clone(), 
+            anon_key: s.supabase_anon_key.clone() 
+        };
+        let sid = s.active_session_id.take();
+        (cfg, token, sid, Arc::clone(&s.tracking_running), Arc::clone(&s.db), Arc::clone(&s.auth_token))
+    };
+    
+    *running.lock().unwrap() = false;
+    if let Some(sid) = session_id {
+        println!("[lib] 🛑 Stopping session via RPC: {}", sid);
+        let body = serde_json::json!({ "p_session_id": sid }).to_string();
+        let _ = supabase_post(&cfg, "rpc/rpc_stop_session", &body, token.as_deref(), None);
+    }
+
+    println!("[lib] 🔄 Final sync of cached samples...");
+    cache::sync_from_arc(&db_arc, &cfg, &auth_token_arc);
 }
 
 /// GET from a Supabase PostgREST endpoint.
@@ -464,6 +494,14 @@ fn get_location() -> Result<String, String> {
     Err("Could not detect location".to_string())
 }
 
+#[tauri::command]
+fn set_close_behavior(behavior: String, state: tauri::State<'_, Mutex<AppState>>) {
+    let s = state.lock().unwrap();
+    let mut b = s.close_behavior.lock().unwrap();
+    *b = behavior;
+    println!("[lib] ⚙️ Close behavior set to: {}", *b);
+}
+
 // ─── App entry point ──────────────────────────────────────────────────────────
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -481,6 +519,33 @@ pub fn run() {
             tracker::spawn_input_listener(Arc::clone(&counts));
 
             let app_handle = app.handle().clone();
+            
+            // --- System Tray ---
+            let quit_i = tauri::menu::MenuItem::with_id(app, "quit", "Quit Trackora", true, None::<&str>)?;
+            let show_i = tauri::menu::MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
+            let menu = tauri::menu::Menu::with_items(app, &[&show_i, &quit_i])?;
+
+            let _tray = tauri::tray::TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .menu(&menu)
+                .on_menu_event(move |app, event| {
+                    match event.id.as_ref() {
+                        "quit" => {
+                            let state_handle = app.state::<Mutex<AppState>>();
+                            stop_and_sync_internal(&state_handle);
+                            app.exit(0);
+                        }
+                        "show" => {
+                            if let Some(window) = app.get_webview_window("main") {
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                            }
+                        }
+                        _ => {}
+                    }
+                })
+                .build(app)?;
+
             tauri::async_runtime::spawn(async move {
                 updater::check_for_updates(app_handle).await;
             });
@@ -542,41 +607,28 @@ pub fn run() {
             start_idle_monitoring,
             stop_idle_monitoring,
             get_location,
+            set_close_behavior,
         ])
         .on_window_event(|window: &tauri::Window, event: &tauri::WindowEvent| {
-            if let tauri::WindowEvent::CloseRequested { api: _api, .. } = event {
-                // When 'X' is clicked, try to stop tracking
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let state_handle = window.state::<Mutex<AppState>>();
-                let (cfg, token, session_id, running): (SupabaseConfig, Option<String>, Option<String>, Arc<Mutex<bool>>) = {
-                    let mut s = state_handle.lock().unwrap();
-                    let token = s.auth_token.lock().unwrap().clone();
-                    let cfg = SupabaseConfig { 
-                        url: s.supabase_url.clone(), 
-                        anon_key: s.supabase_anon_key.clone() 
-                    };
-                    (cfg, token, s.active_session_id.take(), Arc::clone(&s.tracking_running))
+                let behavior = {
+                    let s = state_handle.lock().unwrap();
+                    let b = s.close_behavior.lock().unwrap();
+                    b.clone()
                 };
-                
-                *running.lock().unwrap() = false;
-                if let Some(sid) = session_id {
-                    let ended = chrono::Utc::now().to_rfc3339();
-                    let body = serde_json::json!({ "ended_at": ended }).to_string();
-                    println!("[lib] 🛑 Shutting down. Closing session: {}", sid);
-                    let _ = supabase_patch(&cfg, "sessions", &format!("id=eq.{}", sid), &body, token.as_deref());
+
+                if behavior == "minimize" {
+                    api.prevent_close();
+                    let _ = window.hide();
+                    println!("[lib] 🔽 Minimized to tray");
+                } else {
+                    // Default 'quit' behavior
+                    println!("[lib] 🛑 Closing requested (Quit behavior)");
+                    api.prevent_close(); // Prevent immediate close so we can sync
+                    stop_and_sync_internal(&state_handle);
+                    window.app_handle().exit(0); // Now exit
                 }
-
-                // Final sync of any cached samples before exit
-                let db_arc = {
-                    let s = state_handle.lock().unwrap();
-                    Arc::clone(&s.db)
-                };
-                let auth_token_arc = {
-                    let s = state_handle.lock().unwrap();
-                    Arc::clone(&s.auth_token)
-                };
-
-                println!("[lib] 🔄 Final sync of cached samples...");
-                cache::sync_from_arc(&db_arc, &cfg, &auth_token_arc);
             }
         })
         .run(tauri::generate_context!())

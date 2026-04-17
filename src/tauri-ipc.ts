@@ -126,4 +126,11 @@ export const trackerAPI = {
       return '';
     }
   },
+
+  /** Set close behavior: 'quit' (stop+exit) or 'minimize' (hide window) */
+  setCloseBehavior: async (behavior: 'quit' | 'minimize') => {
+    const invoke = getInvoke();
+    if (!invoke) return;
+    return invoke('set_close_behavior', { behavior });
+  },
 };
