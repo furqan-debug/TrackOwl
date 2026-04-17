@@ -1362,3 +1362,46 @@ input:checked+.slider:before {
   color: var(--text-tertiary);
   letter-spacing: 0.02em;
 }
+
+/* ---------------------------------------------------------------------------
+   SUPPORT SCREEN
+   --------------------------------------------------------------------------- */
+.support-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-app);
+}
+
+.support-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.support-option-card:hover {
+  border-color: var(--accent) !important;
+  background: var(--surface-hover) !important;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.support-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.support-form .field-input {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.support-form .field-input:focus {
+  border-color: var(--accent);
+  background: #fff;
+}
+

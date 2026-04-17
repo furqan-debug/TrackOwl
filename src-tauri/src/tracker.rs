@@ -284,9 +284,9 @@ pub fn start_sample_loop(
             let domain = get_browser_domain(&app_name, &window_title);
             let idle = mouse == 0 && keyboard == 0;
 
-            // Simple activity percentage calculation:
-            // 60-second window, 1 point for any activity
-            let activity_percent = if !idle { 100 } else { 0 };
+            // Granular activity calculation:
+            // 60-second window, 20 combined events (clicks/keys) = 100% activity
+            let activity_percent = (((mouse + keyboard) as f32 / 20.0) * 100.0).min(100.0) as i32;
 
             let sample = ActivitySample {
                 session_id: session_id.clone(),

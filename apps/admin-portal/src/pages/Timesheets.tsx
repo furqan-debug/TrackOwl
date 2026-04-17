@@ -492,9 +492,8 @@ function DailyView({ entries, selectedMember, toProperCase }: {
 
         if (selectedMember !== 'all') return day.sessions;
 
-        // Filter: ONLY active users (current status = working/active)
+        // For All Members view, return aggregated users (both active and inactive)
         return Object.values(userMap)
-            .filter(row => row.is_active)
             .map(row => ({
                 ...row,
                 activity_percent: row.total_duration > 0 ? Math.round(row.weighted_activity / row.total_duration) : 0,

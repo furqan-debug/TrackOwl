@@ -6,7 +6,7 @@ import {
   ShieldAlert, Eye, EyeOff, MapPin, MonitorPlay, MousePointerClick,
   ClipboardList, Calendar, Circle, ChevronDown, ChevronUp,
   User as UserIcon, Camera, Save,
-  Clock, Activity
+  Clock, Activity, HelpCircle, LifeBuoy, MessageSquare, Send, ArrowLeft
 } from 'lucide-react';
 import { trackerAPI } from './tauri-ipc';
 import './App.css';
@@ -23,7 +23,7 @@ async function getSupabase() {
   return _supabase;
 }
 
-type Screen = 'login' | 'projects' | 'consent' | 'tracker' | 'settings';
+type Screen = 'login' | 'projects' | 'consent' | 'tracker' | 'settings' | 'support';
 
 interface NotificationSettings {
   tracking_alerts: boolean;
@@ -50,6 +50,7 @@ interface User {
   keep_idle?: boolean;
   custom_fields?: {
     notification_settings?: NotificationSettings;
+    close_behavior?: 'quit' | 'minimize';
   };
 }
 
@@ -249,9 +250,15 @@ function SettingsScreen({ user, onSave, onBack }: {
   const [notifyTracking, setNotifyTracking] = useState(user.custom_fields?.notification_settings?.tracking_alerts ?? true);
   const [notifyScreenshots, setNotifyScreenshots] = useState(user.custom_fields?.notification_settings?.screenshot_alerts ?? true);
   const [notifyReminders, setNotifyReminders] = useState(user.custom_fields?.notification_settings?.tracking_reminders ?? true);
+  const [closeBehavior, setCloseBehavior] = useState<'quit' | 'minimize'>(user.custom_fields?.close_behavior ?? 'quit');
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Sync to Rust on mount
+    trackerAPI.setCloseBehavior(closeBehavior);
+  }, []);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -292,8 +299,12 @@ function SettingsScreen({ user, onSave, onBack }: {
       full_name: fullName,
       phone,
       avatar_url: avatarUrl,
-      custom_fields: updatedCustomFields
+      custom_fields: {
+        ...updatedCustomFields,
+        close_behavior: closeBehavior
+      }
     });
+    trackerAPI.setCloseBehavior(closeBehavior);
     setIsSaving(false);
   }
 
@@ -389,7 +400,31 @@ function SettingsScreen({ user, onSave, onBack }: {
                 <span className="slider round"></span>
               </label>
             </div>
+          </div>
 
+          <div style={{ marginBottom: '1.5rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.25rem' }}>
+            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>Application Behavior</h3>
+            <div className="field-group">
+              <label className="field-label">On Close (X button)</label>
+              <div className="field-input-wrap">
+                <MonitorPlay size={14} className="field-icon" />
+                <select 
+                  value={closeBehavior} 
+                  onChange={e => setCloseBehavior(e.target.value as 'quit' | 'minimize')}
+                  className="field-input"
+                  style={{ appearance: 'none', background: 'var(--card-bg)' }}
+                >
+                  <option value="quit">Quit App (Stop Timer)</option>
+                  <option value="minimize">Minimize to Tray (Keep Timer Running)</option>
+                </select>
+                <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', color: 'var(--text-tertiary)', pointerEvents: 'none' }} />
+              </div>
+              <p className="text-muted" style={{ fontSize: '0.625rem', marginTop: '0.375rem' }}>
+                {closeBehavior === 'quit' 
+                  ? 'Closing the window will fully exit the application and stop your timer.' 
+                  : 'Closing the window will hide it to the system tray. Use the tray icon to restore or quit.'}
+              </p>
+            </div>
           </div>
 
           <button onClick={save} disabled={isSaving || uploading} className="btn btn-primary" style={{ width: '100%' }}>
@@ -397,6 +432,154 @@ function SettingsScreen({ user, onSave, onBack }: {
             {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function SupportScreen({ user, onBack }: { user: User; onBack: () => void }) {
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSending(true);
+    setError(null);
+    try {
+      const sb = await getSupabase();
+      const { error: submitError } = await sb.from('support_tickets').insert({
+        user_id: user.id,
+        organization_id: user.organization_id,
+        subject,
+        message,
+      });
+      if (submitError) throw submitError;
+      setSent(true);
+    } catch (err: any) {
+      setError(err.message || 'Failed to send support ticket');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <div className="support-screen">
+      <header className="settings-header">
+        <button onClick={onBack} className="settings-back-btn">
+          <ArrowLeft size={20} />
+        </button>
+        <div>
+          <h2 className="heading-2">Support & Help</h2>
+          <p className="text-muted" style={{ fontSize: '0.6875rem', marginTop: '0.125rem' }}>How can we help you today?</p>
+        </div>
+      </header>
+
+      <div className="settings-content" style={{ padding: '1.5rem' }}>
+        <AnimatePresence mode="wait">
+          {sent ? (
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="support-success"
+              style={{ textAlign: 'center', padding: '2rem 1rem' }}
+            >
+              <div className="success-icon-wrap" style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+                <div style={{ background: 'var(--success-bg)', color: 'var(--success)', padding: '1rem', borderRadius: '50%' }}>
+                  <CheckCircle2 size={48} />
+                </div>
+              </div>
+              <h3 className="heading-3">Message Sent!</h3>
+              <p className="text-muted" style={{ marginTop: '0.5rem', marginBottom: '1.5rem' }}>
+                Thank you for reaching out. Our support team will get back to you at <strong>{user.email}</strong> as soon as possible.
+              </p>
+              <button onClick={onBack} className="btn btn-primary" style={{ width: '100%' }}>
+                Back to Dashboard
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="form"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="support-options" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
+                <div className="support-option-card" style={{ 
+                  background: 'var(--card-bg)', 
+                  border: '1px solid var(--border-light)', 
+                  padding: '1rem', 
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <LifeBuoy size={20} style={{ color: 'var(--accent)', marginBottom: '0.5rem' }} />
+                  <h4 style={{ fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>Guides</h4>
+                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>Help documentation</p>
+                </div>
+                <div className="support-option-card" style={{ 
+                  background: 'var(--card-bg)', 
+                  border: '1px solid var(--border-light)', 
+                  padding: '1rem', 
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}>
+                  <MessageSquare size={20} style={{ color: 'var(--success)', marginBottom: '0.5rem' }} />
+                  <h4 style={{ fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>Chat</h4>
+                  <p style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>Talk to an agent</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSubmit} className="support-form">
+                <div className="field-group">
+                  <label className="field-label">Subject</label>
+                  <input
+                    type="text"
+                    required
+                    value={subject}
+                    onChange={e => setSubject(e.target.value)}
+                    className="field-input"
+                    placeholder="Briefly describe your issue"
+                  />
+                </div>
+                <div className="field-group">
+                  <label className="field-label">Message</label>
+                  <textarea
+                    required
+                    value={message}
+                    onChange={e => setMessage(e.target.value)}
+                    className="field-input"
+                    style={{ minHeight: '120px', paddingTop: '0.75rem', resize: 'none' }}
+                    placeholder="Tell us more about what's happening..."
+                  />
+                </div>
+
+                {error && (
+                  <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
+                    <ShieldAlert size={14} /><span>{error}</span>
+                  </div>
+                )}
+
+                <button type="submit" disabled={sending} className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem' }}>
+                  {sending ? 'Sending...' : 'Send Message'}
+                  {!sending && <Send size={16} style={{ marginLeft: '0.5rem' }} />}
+                </button>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -428,6 +611,12 @@ export default function App() {
   useEffect(() => {
     settingsRef.current = user?.custom_fields?.notification_settings;
   }, [user?.custom_fields?.notification_settings]);
+
+  useEffect(() => {
+    if (user?.custom_fields?.close_behavior) {
+      trackerAPI.setCloseBehavior(user.custom_fields.close_behavior);
+    }
+  }, [user?.custom_fields?.close_behavior]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -1329,7 +1518,7 @@ export default function App() {
         )}
         {screen === 'projects' && (
           <motion.div key="projects" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
-            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} trackingError={trackingError} setTrackingError={setTrackingError} todos={todos} onTodoDone={handleTodoDone} />
+            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} onSupport={() => setScreen('support')} trackingError={trackingError} setTrackingError={setTrackingError} todos={todos} onTodoDone={handleTodoDone} />
           </motion.div>
         )}
         {screen === 'consent' && (
@@ -1352,6 +1541,7 @@ export default function App() {
               onPause={handlePause}
               onResume={handleResume}
               onSettings={() => setScreen('settings')}
+              onSupport={() => setScreen('support')}
               todos={todos}
               onTodoDone={handleTodoDone}
               projects={projects}
@@ -1361,6 +1551,11 @@ export default function App() {
         {screen === 'settings' && user && (
           <motion.div key="settings" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
             <SettingsScreen user={user} onSave={handleUpdateProfile} onBack={() => setScreen('projects')} />
+          </motion.div>
+        )}
+        {screen === 'support' && user && (
+          <motion.div key="support" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
+            <SupportScreen user={user} onBack={() => setScreen('projects')} />
           </motion.div>
         )}
       </AnimatePresence>
@@ -1550,7 +1745,7 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // Topbar
 // ─────────────────────────────────────────────────────────────────────────────
-function Topbar({ user, onLogout, onSettings, todoBadge, disabled }: { user?: User; onLogout?: () => void; onSettings?: () => void; todoBadge?: number; disabled?: boolean }) {
+function Topbar({ user, onLogout, onSettings, onSupport, todoBadge, disabled }: { user?: User; onLogout?: () => void; onSettings?: () => void; onSupport?: () => void; todoBadge?: number; disabled?: boolean }) {
   const initials = user?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'U';
   return (
     <header className="app-topbar">
@@ -1581,6 +1776,9 @@ function Topbar({ user, onLogout, onSettings, todoBadge, disabled }: { user?: Us
               ) : initials}
             </div>
           </div>
+          <button onClick={disabled ? undefined : onSupport} className="btn btn-ghost" title="Support" style={{ padding: '0.3rem' }} disabled={disabled}>
+            <HelpCircle size={16} />
+          </button>
           <button onClick={disabled ? undefined : onLogout} className="btn btn-ghost" title={disabled ? "Stop timer to sign out" : "Sign out"} style={{ padding: '0.3rem' }} disabled={disabled}>
             <LogOut size={16} />
           </button>
@@ -1642,12 +1840,13 @@ function MyTasksPanel({ todos, onDone, disabled }: { todos: Todo[]; onDone: (id:
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Projects
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone }: {
+function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, onSupport, trackingError, setTrackingError, todos, onTodoDone }: {
   user: User;
   projects: Project[];
   onSelect: (p: Project) => void;
   onLogout: () => void;
   onSettings: () => void;
+  onSupport: () => void;
   trackingError?: string | null;
   setTrackingError: (err: string | null) => void;
   todos: Todo[];
@@ -1674,7 +1873,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
 
   return (
     <div className="projects-layout">
-      <Topbar user={user} onLogout={onLogout} onSettings={onSettings} todoBadge={todos.length} />
+      <Topbar user={user} onLogout={onLogout} onSettings={onSettings} onSupport={onSupport} todoBadge={todos.length} />
 
       <div className="projects-scroll">
         {/* Stats bar */}
@@ -1834,7 +2033,7 @@ function ConsentItem({ icon, title, desc }: { icon: React.ReactNode; title: stri
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Tracker
 // ─────────────────────────────────────────────────────────────────────────────
-function TrackerScreen({ user, project, isPaused = false, idlePaused = false, onResumeFromIdle, elapsed, liveIdleSeconds = 0, onStop, onPause, onResume, onSettings, todos, onTodoDone, projects }: {
+function TrackerScreen({ user, project, isPaused = false, idlePaused = false, onResumeFromIdle, elapsed, liveIdleSeconds = 0, onStop, onPause, onResume, onSettings, onSupport, todos, onTodoDone, projects }: {
   user: User;
   project: Project;
   sessionId?: string | null;
@@ -1847,6 +2046,7 @@ function TrackerScreen({ user, project, isPaused = false, idlePaused = false, on
   onPause: () => void;
   onResume: () => void;
   onSettings: () => void;
+  onSupport: () => void;
   todos: Todo[];
   onTodoDone: (id: string) => void;
   projects: Project[];
@@ -1868,7 +2068,7 @@ function TrackerScreen({ user, project, isPaused = false, idlePaused = false, on
 
   return (
     <div className="tracker-layout">
-      <Topbar user={user} onLogout={onStop} onSettings={onSettings} todoBadge={todos.length} disabled={true} />
+      <Topbar user={user} onLogout={onStop} onSettings={onSettings} onSupport={onSupport} todoBadge={todos.length} disabled={true} />
 
       <div className="tracker-body">
         <motion.div className="tracker-widget" initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.35 }}>
