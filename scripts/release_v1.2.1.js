@@ -6,12 +6,12 @@ const VERSION = '1.2.1';
 const BASE_DIR = 'c:/Users/Furqan/DigiReps/DigiReps Tracker';
 const KEY_PATH = path.join(BASE_DIR, 'src-tauri/signing.key');
 const NSIS_PATH = path.join(BASE_DIR, `src-tauri/target/release/bundle/nsis/Trackora_${VERSION}_x64-setup.exe`);
-const MSI_PATH  = path.join(BASE_DIR, `src-tauri/target/release/bundle/msi/Trackora_${VERSION}_x64_en-US.msi`);
+const MSI_PATH = path.join(BASE_DIR, `src-tauri/target/release/bundle/msi/Trackora_${VERSION}_x64_en-US.msi`);
 const RELEASE_DIR = path.join(BASE_DIR, `releases/v${VERSION}`);
 
 function log(msg) { console.log(`\n\x1b[36m[*]  ${msg}\x1b[0m`); }
-function ok(msg)  { console.log(`\x1b[32m[+] ${msg}\x1b[0m`); }
-function fail(msg){ console.error(`\x1b[31m[!] ${msg}\x1b[0m`); process.exit(1); }
+function ok(msg) { console.log(`\x1b[32m[+] ${msg}\x1b[0m`); }
+function fail(msg) { console.error(`\x1b[31m[!] ${msg}\x1b[0m`); process.exit(1); }
 
 function sign(filePath) {
   const encodedKey = fs.readFileSync(KEY_PATH, 'utf8').trim();
@@ -35,7 +35,7 @@ try {
   // 1. Verify artifacts exist
   log('Checking built artifacts...');
   if (!fs.existsSync(NSIS_PATH)) fail(`NSIS exe not found:\n  ${NSIS_PATH}`);
-  if (!fs.existsSync(MSI_PATH))  fail(`MSI not found:\n  ${MSI_PATH}`);
+  if (!fs.existsSync(MSI_PATH)) fail(`MSI not found:\n  ${MSI_PATH}`);
   ok('Both installers found');
 
   // 2. Sign .exe
