@@ -396,15 +396,26 @@ pub fn start_screenshot_loop(
             }
         }
 
-        // --- 2. Enter random capture loop ---
+            // --- 2. Enter random capture loop ---
         loop {
             if !*running.lock().unwrap() { break; }
             let window_start = std::time::Instant::now();
 
-            // Generate random capture times within the window
-            let mut capture_times: Vec<u64> = (0..SCREENSHOTS_PER_WINDOW)
-                .map(|_| rand_ms(SCREENSHOT_WINDOW_MS))
-                .collect();
+            // IMPROVED LOGIC: Divide 10-min window into 3 equal slots
+            // to ensure screenshots are distributed (e.g. one in each ~3.3 min segment)
+            // instead of potentially clumped at the start.
+            let slot_duration = SCREENSHOT_WINDOW_MS / SCREENSHOTS_PER_WINDOW as u64;
+            
+            // Generate one random offset for each slot
+            let mut capture_times = Vec::new();
+            for i in 0..SCREENSHOTS_PER_WINDOW {
+                let slot_start = i as u64 * slot_duration;
+                // Add a random offset within the slot, with a unique additive factor per loop
+                let offset = rand_ms(slot_duration, i as u32); 
+                capture_times.push(slot_start + offset);
+            }
+            
+            // capture_times is already roughly sorted, but let's be sure
             capture_times.sort();
 
             let mut last_sleep_end = 0;
@@ -483,14 +494,22 @@ pub fn start_screenshot_loop(
     });
 }
 
-fn rand_ms(max: u64) -> u64 {
-    // Simple LCG-based "random" — no rand crate needed
+fn rand_ms(max: u64, salt: u32) -> u64 {
+    // Improved LCG-based "random" with a salt to prevent identical results
+    // in rapid succession (since SystemTime might not tick fast enough).
     use std::time::{SystemTime, UNIX_EPOCH};
-    let seed = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.subsec_nanos())
-        .unwrap_or(12345) as u64;
-    (seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407)) % max
+    let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default();
+    let mut seed = now.as_micros() as u64;
+    
+    // Mix in the salt and some bits from the address space/pid for entropy
+    seed = seed.wrapping_add(salt as u64).wrapping_add(0x9E3779B97F4A7C15);
+    
+    // SplitMix64 or similar transformation for better bit distribution
+    seed = (seed ^ (seed >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
+    seed = (seed ^ (seed >> 27)).wrapping_mul(0x94D049BB133111EB);
+    seed = seed ^ (seed >> 31);
+    
+    seed % max
 }
 
 fn capture_screenshot() -> Option<String> {

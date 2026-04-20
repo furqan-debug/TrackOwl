@@ -89,7 +89,7 @@ export function Reports() {
         else if (range === 'Last 7 Days' || range === 'Last Week') days = 7;
         else if (range === 'Last 2 Weeks') days = 14;
         else if (range === 'This Month' || range === 'Last Month') days = 30;
-        
+
         setOffset(prev => prev + (direction * days));
     }
 
@@ -109,55 +109,55 @@ export function Reports() {
 
     function getDateRange(): { start: string; end: string } {
         if (range === 'Custom' && customStart && customEnd) {
-            const s = new Date(customStart); s.setHours(0,0,0,0);
-            const e = new Date(customEnd); e.setHours(23,59,59,999);
+            const s = new Date(customStart); s.setHours(0, 0, 0, 0);
+            const e = new Date(customEnd); e.setHours(23, 59, 59, 999);
             return { start: s.toISOString(), end: e.toISOString() };
         }
 
         const now = new Date();
-        now.setDate(now.getDate() + offset); 
-        
+        now.setDate(now.getDate() + offset);
+
         let start = new Date(now);
         let end = new Date(now);
 
         if (range === 'Today') {
-            start.setHours(0,0,0,0);
-            end.setHours(23,59,59,999);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
         } else if (range === 'Yesterday') {
             start.setDate(start.getDate() - 1);
-            start.setHours(0,0,0,0);
+            start.setHours(0, 0, 0, 0);
             end.setDate(end.getDate() - 1);
-            end.setHours(23,59,59,999);
+            end.setHours(23, 59, 59, 999);
         } else if (range === 'Last 7 Days') {
             start.setDate(start.getDate() - 6);
-            start.setHours(0,0,0,0);
-            end.setHours(23,59,59,999);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
         } else if (range === 'Last Week') {
             const day = start.getDay();
             const diff = day === 0 ? 6 : day - 1; // distance to Monday
             start.setDate(start.getDate() - diff - 7);
-            start.setHours(0,0,0,0);
+            start.setHours(0, 0, 0, 0);
             end = new Date(start);
             end.setDate(end.getDate() + 6);
-            end.setHours(23,59,59,999);
+            end.setHours(23, 59, 59, 999);
         } else if (range === 'Last 2 Weeks') {
             start.setDate(start.getDate() - 13);
-            start.setHours(0,0,0,0);
-            end.setHours(23,59,59,999);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
         } else if (range === 'This Month') {
             start.setDate(1);
-            start.setHours(0,0,0,0);
-            end.setHours(23,59,59,999);
+            start.setHours(0, 0, 0, 0);
+            end.setHours(23, 59, 59, 999);
         } else if (range === 'Last Month') {
             start.setMonth(start.getMonth() - 1);
             start.setDate(1);
-            start.setHours(0,0,0,0);
+            start.setHours(0, 0, 0, 0);
             end = new Date(start);
             end.setMonth(end.getMonth() + 1);
             end.setDate(0);
-            end.setHours(23,59,59,999);
+            end.setHours(23, 59, 59, 999);
         }
-        
+
         return { start: start.toISOString(), end: end.toISOString() };
     }
 
@@ -330,22 +330,22 @@ export function Reports() {
             let curr = new Date(start);
             curr.setHours(12, 0, 0, 0); // Force middle of day to avoid timezone flip-flops
             const stop = new Date(end);
-            
+
             while (curr <= stop) {
                 dateList.push(curr.toISOString().split('T')[0]);
                 curr.setDate(curr.getDate() + 1);
             }
 
             const memberRows: Record<string, any> = {};
-            
+
             // Initialize rows for all active members (or filtered ones)
             membersForLookup.forEach(m => {
                 // If member filter is active, only include that member
                 if (selectedMemberId !== 'All' && m.id !== selectedMemberId) return;
-                
+
                 // If team filter is active, only include team members
                 // (Note: filteredSessionUserIds already handles this scope if we use it)
-                
+
                 memberRows[m.id] = {
                     memberId: m.id,
                     fullName: m.full_name || m.email || 'Unknown',
@@ -361,17 +361,17 @@ export function Reports() {
                 const sessionToUserId = new Map(filteredSessions.map(sess => [sess.id, sess.user_id]));
                 const uid = sessionToUserId.get(s.session_id);
                 if (!uid) return;
-                
+
                 // Find which member record this uid corresponds to
                 const member = membersMap.get(uid);
                 if (!member || !memberRows[member.id]) return;
 
                 const day = getGroupingDateInTz(s.recorded_at, memberTzs.get(uid));
                 const row = memberRows[member.id];
-                
+
                 row.dailyMins[day] = (row.dailyMins[day] || 0) + 1;
                 row.totalMins++;
-                
+
                 if (s.activity_percent !== undefined && s.activity_percent !== null && s.idle !== true) {
                     row.activitySum += s.activity_percent;
                     row.activitySamples++;
@@ -405,39 +405,32 @@ export function Reports() {
             title="Reports"
             description="View detailed reports on your team's activity and time spent."
             actions={
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                    <div className="flex items-center gap-2">
-                        <div className="flex items-center bg-white border border-slate-200 p-1 rounded-xl shadow-sm">
-                            <button
-                                onClick={() => shiftRange(-1)}
-                                className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-all border border-transparent hover:border-slate-100"
-                            >
-                                <ChevronLeft className="w-4 h-4" />
-                            </button>
-                            <button
-                                onClick={() => shiftRange(1)}
-                                className="p-2 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-900 transition-all border border-transparent hover:border-slate-100"
-                            >
-                                <ChevronRight className="w-4 h-4" />
-                            </button>
-                        </div>
+                <div className="flex items-center gap-3 w-full">
+                    <div className="flex items-center bg-white border border-slate-200 rounded-xl shadow-sm relative shrink-0 h-[46px]">
+                        <button
+                            onClick={() => shiftRange(-1)}
+                            className="p-3 hover:bg-slate-50 text-slate-400 hover:text-primary transition-all border-r border-slate-100 rounded-l-xl h-full"
+                            title="Previous period"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
 
-                        <div className="relative group">
-                            <div 
+                        <div className="relative group min-w-[100px]">
+                            <div
                                 onClick={() => setShowRangeDropdown(!showRangeDropdown)}
-                                className="flex items-center gap-4 bg-white border border-slate-200 px-5 py-2.5 rounded-xl shadow-sm hover:border-primary transition-all cursor-pointer min-w-[340px]"
+                                className="flex items-center gap-3 px-6 py-2 cursor-pointer hover:bg-slate-50 transition-all h-full"
                             >
-                                <span className="text-[12px] font-bold text-slate-800 tabular-nums flex items-center gap-2">
-                                    {new Date(getDateRange().start).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
-                                    <span className="text-slate-300 mx-1">—</span>
-                                    {new Date(getDateRange().end).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                                <CalendarIcon className="w-4 h-4 text-primary opacity-60" />
+                                <span className="text-[11px] font-black text-slate-800 tabular-nums uppercase tracking-widest">
+                                    {new Date(getDateRange().start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    <span className="text-slate-300 mx-3">—</span>
+                                    {new Date(getDateRange().end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </span>
-                                <CalendarIcon className="w-4 h-4 text-primary ml-auto group-hover:scale-110 transition-transform" />
                             </div>
 
                             {showRangeDropdown && (
-                                <div className="absolute top-full left-0 mt-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    <DateRangePicker 
+                                <div className="absolute top-full left-0 mt-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <DateRangePicker
                                         range={range}
                                         setRange={setRange}
                                         setOffset={setOffset}
@@ -454,49 +447,50 @@ export function Reports() {
                         </div>
 
                         <button
-                            onClick={() => { setRange('Today'); setOffset(0); }}
-                            className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all shadow-sm"
+                            onClick={() => shiftRange(1)}
+                            className="p-3 hover:bg-slate-50 text-slate-400 hover:text-primary transition-all border-l border-slate-100 rounded-r-xl h-full"
+                            title="Next period"
                         >
-                            Today
+                            <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
 
-                    <div className="flex items-center gap-3 ml-auto">
-                        <FilterSelect
-                            icon={<Users className="w-4 h-4" />}
-                            label="Team"
-                            value={selectedTeamId}
-                            onChange={(val) => { setSelectedTeamId(val); setSelectedMemberId('All'); }}
-                            options={[{ id: 'All', name: 'All Teams' }, ...teams]}
-                        />
-                        <FilterSelect
-                            icon={<ActivityIcon className="w-4 h-4" />}
-                            label="Member"
-                            value={selectedMemberId}
-                            onChange={(val) => { setSelectedMemberId(val); setSelectedTeamId('All'); }}
-                            options={[{ id: 'All', name: 'All Members' }, ...members].map((m: any) => ({ id: m.id, name: m.full_name || m.email || m.name || 'Unknown' }))}
-                        />
-                        <Button
-                            variant="secondary"
-                            className="w-10 h-10 p-0 flex items-center justify-center rounded-xl bg-white border border-slate-200 hover:border-slate-400 hover:bg-slate-50 transition-all text-slate-400"
-                            onClick={() => {/* export logic */ }}
-                        >
-                            <Download className="w-4 h-4" />
-                        </Button>
-                    </div>
+                    <button
+                        onClick={() => { setRange('Today'); setOffset(0); }}
+                        className="px-6 py-2.5 bg-white border border-slate-200 rounded-xl text-[11px] font-black text-slate-600 hover:text-primary hover:border-primary/30 transition-all shadow-sm uppercase tracking-widest shrink-0 h-[46px]"
+                    >
+                        Today
+                    </button>
+
+                    <div className="w-px h-6 bg-slate-200 mx-2 shrink-0" />
+
+                    <FilterSelect
+                        icon={<Users className="w-4 h-4" />}
+                        label="Team"
+                        value={selectedTeamId}
+                        onChange={(val) => { setSelectedTeamId(val); setSelectedMemberId('All'); }}
+                        options={[{ id: 'All', name: 'All Teams' }, ...teams]}
+                    />
+                    <FilterSelect
+                        icon={<ActivityIcon className="w-4 h-4" />}
+                        label="Member"
+                        value={selectedMemberId}
+                        onChange={(val) => { setSelectedMemberId(val); setSelectedTeamId('All'); }}
+                        options={[{ id: 'All', name: 'All Members' }, ...members].map((m: any) => ({ id: m.id, name: m.full_name || m.email || m.name || 'Unknown' }))}
+                    />
                 </div>
             }
         >
             <div className="flex flex-col gap-10">
-                
+
                 {/* 1. Stats Architectural Ledger (Single Row) */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-                    <StatMetric icon={<Clock className="w-5 h-5" />} label="Total Time" value={formatDuration(totalMins)} sub="Time worked" />
-                    <StatMetric icon={<ActivityIcon className="w-5 h-5" />} label="Avg Activity" value={`${avgActivity}%`} sub="Team focus score" />
-                    <StatMetric icon={<DollarSign className="w-5 h-5" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Billed to clients" />
-                    <StatMetric icon={<Monitor className="w-5 h-5" />} label="Sessions" value={totalSessions.toString()} sub="Total sessions" />
-                    <StatMetric icon={<Camera className="w-5 h-5" />} label="Screenshots" value={screenshotCount.toString()} sub="Capture proofs" />
-                    <StatMetric icon={<DollarSign className="w-5 h-5" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Internal expense" />
+                    <StatMetric icon={<Clock className="w-5 h-5" />} label="Total Time" value={formatDuration(totalMins)} sub="Time worked" accent="primary" />
+                    <StatMetric icon={<ActivityIcon className="w-5 h-5" />} label="Avg Activity" value={`${avgActivity}%`} sub="Team focus score" accent="emerald" />
+                    <StatMetric icon={<DollarSign className="w-5 h-5" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Billed to clients" accent="amber" />
+                    <StatMetric icon={<Monitor className="w-5 h-5" />} label="Sessions" value={totalSessions.toString()} sub="Total sessions" accent="primary" />
+                    <StatMetric icon={<Camera className="w-5 h-5" />} label="Screenshots" value={screenshotCount.toString()} sub="Capture proofs" accent="rose" />
+                    <StatMetric icon={<DollarSign className="w-5 h-5" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Internal expense" accent="rose" />
                 </div>
 
                 {loading ? (
@@ -583,14 +577,14 @@ export function Reports() {
                                             <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-2">Active Apps</span>
                                         </div>
                                     </div>
-                                    <div className="space-y-1">
-                                        {appBreakdown.slice(0, 5).map((item, i) => (
-                                            <div key={i} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group">
+                                    <div className="space-y-1.5">
+                                        {appBreakdown.slice(0, 6).map((item, i) => (
+                                            <div key={i} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100 group cursor-default">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-2 h-2 rounded-full shrink-0 shadow-sm" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
-                                                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-tight truncate max-w-[120px] group-hover:text-primary transition-colors">{item.name}</span>
+                                                    <div className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm ring-2 ring-white" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                                                    <span className="text-[11px] font-black text-slate-700 uppercase tracking-tight truncate max-w-[140px] group-hover:text-primary transition-colors">{item.name}</span>
                                                 </div>
-                                                <span className="text-[9px] font-black text-slate-400 bg-slate-50 px-2 py-0.5 rounded shadow-sm border border-slate-100 uppercase tabular-nums">
+                                                <span className="text-[10px] font-black text-slate-500 bg-white px-2.5 py-1 rounded-lg shadow-sm border border-slate-100 uppercase tabular-nums">
                                                     {item.value}
                                                 </span>
                                             </div>
@@ -600,20 +594,30 @@ export function Reports() {
 
                                 {/* Insight / Velocity Score Card */}
                                 <div className="bg-primary border border-primary p-8 rounded-2xl shadow-premium relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl group-hover:bg-white/20 transition-all duration-700" />
+                                    <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -translate-y-1/4 translate-x-1/4 blur-3xl group-hover:bg-white/20 transition-all duration-700" />
+                                    <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-400/20 rounded-full translate-y-1/2 -translate-x-1/4 blur-2xl" />
                                     <div className="relative z-10 space-y-6 text-white">
                                         <div className="flex items-center justify-between">
-                                            <div className="bg-white/20 p-2 rounded-lg backdrop-blur-md">
+                                            <div className="bg-white/20 p-2.5 rounded-xl backdrop-blur-md ring-1 ring-white/30">
                                                 <Zap className="w-5 h-5 text-white" />
                                             </div>
-                                            <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Insight</span>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] opacity-70">Focus Insight</span>
                                         </div>
                                         <div>
-                                            <h4 className="text-[10px] font-black uppercase tracking-widest opacity-60 mb-1">Activity Score</h4>
-                                            <div className="text-5xl font-black tracking-tighter tabular-nums">{avgActivity}%</div>
+                                            <h4 className="text-[11px] font-black uppercase tracking-[0.1em] opacity-60 mb-2">Aggregate Velocity</h4>
+                                            <div className="flex items-baseline gap-2">
+                                                <div className="text-6xl font-black tracking-tighter tabular-nums drop-shadow-sm">{avgActivity}%</div>
+                                                <div className="text-[12px] font-black opacity-60 uppercase tracking-widest">Score</div>
+                                            </div>
                                         </div>
-                                        <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
-                                            <div className="h-full bg-white rounded-full transition-all duration-1000" style={{ width: `${avgActivity}%` }} />
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest opacity-60">
+                                                <span>Intensity</span>
+                                                <span>Goal: 85%</span>
+                                            </div>
+                                            <div className="w-full h-2.5 bg-black/10 rounded-full overflow-hidden backdrop-blur-sm border border-white/10">
+                                                <div className="h-full bg-white rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(255,255,255,0.5)]" style={{ width: `${avgActivity}%` }} />
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -653,49 +657,52 @@ export function Reports() {
                             </div>
                         </Card>
 
-                        <div className="mt-12 bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
-                            <div className="px-10 py-8 border-b border-slate-50 flex items-center justify-between bg-white">
-                                <div className="space-y-1">
-                                    <h3 className="text-[14px] font-black text-slate-900 tracking-tight">Weekly Timesheet Matrix</h3>
-                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest opacity-60">Architectural breakdown of team performance</p>
+                        <div className="mt-12 bg-white rounded-3xl border border-slate-100 shadow-2xl shadow-slate-200/40 overflow-hidden">
+                            <div className="px-10 py-10 border-b border-slate-50 flex items-center justify-between bg-white relative">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-primary rounded-full translate-y-0" />
+                                <div className="space-y-1.5">
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="text-[16px] font-black text-slate-900 tracking-tight">Weekly Timesheet Matrix</h3>
+                                        <div className="bg-primary/5 text-primary text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-widest border border-primary/10">Architecture</div>
+                                    </div>
+                                    <p className="text-[11px] text-slate-400 font-bold uppercase tracking-[0.15em] opacity-70">Deep-dive into individual and team temporal performance</p>
                                 </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-2 border-r border-slate-100 pr-4 mr-2">
-                                        <button 
+                                <div className="flex items-center gap-6">
+                                    <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-100">
+                                        <button
                                             onClick={() => {
-                                                if (scrollRef.current) scrollRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+                                                if (scrollRef.current) scrollRef.current.scrollBy({ left: -400, behavior: 'smooth' });
                                             }}
-                                            className="p-2 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-primary transition-all border border-transparent hover:border-slate-100"
+                                            className="p-2.5 rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-primary transition-all group"
                                         >
-                                            <ChevronLeft className="w-4 h-4" />
+                                            <ChevronLeft className="w-4 h-4 group-hover:scale-110 transition-transform" />
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => {
-                                                if (scrollRef.current) scrollRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+                                                if (scrollRef.current) scrollRef.current.scrollBy({ left: 400, behavior: 'smooth' });
                                             }}
-                                            className="p-2 rounded-lg hover:bg-slate-50 text-slate-400 hover:text-primary transition-all border border-transparent hover:border-slate-100"
+                                            className="p-2.5 rounded-lg hover:bg-white hover:shadow-sm text-slate-400 hover:text-primary transition-all group"
                                         >
-                                            <ChevronRight className="w-4 h-4" />
+                                            <ChevronRight className="w-4 h-4 group-hover:scale-110 transition-transform" />
                                         </button>
                                     </div>
-                                    <div className="flex -space-x-2">
-                                    {tableData.rows.slice(0, 3).map((r, i) => (
-                                        <div key={i} className="w-8 h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-black text-slate-500 uppercase">
-                                            {r.fullName[0]}
-                                        </div>
-                                    ))}
-                                    {tableData.rows.length > 3 && (
-                                        <div className="w-8 h-8 rounded-full bg-primary/10 border-2 border-white flex items-center justify-center text-[10px] font-black text-primary uppercase">
-                                            +{tableData.rows.length - 3}
-                                        </div>
-                                    )}
+                                    <div className="flex -space-x-2.5">
+                                        {tableData.rows.slice(0, 4).map((r, i) => (
+                                            <div key={i} className="w-10 h-10 rounded-full bg-white border-2 border-slate-50 flex items-center justify-center text-[11px] font-black text-slate-700 uppercase shadow-sm ring-1 ring-slate-100">
+                                                {r.fullName[0]}
+                                            </div>
+                                        ))}
+                                        {tableData.rows.length > 4 && (
+                                            <div className="w-10 h-10 rounded-full bg-primary border-2 border-white flex items-center justify-center text-[11px] font-black text-white uppercase shadow-lg shadow-primary/20">
+                                                +{tableData.rows.length - 4}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                            <div ref={scrollRef} className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent pb-4">
-                                <table className="w-full border-collapse min-w-max table-auto">
+                            <div ref={scrollRef} className="overflow-x-auto scrollbar-thin scrollbar-thumb-slate-200 scrollbar-track-transparent">
+                                <table className="w-full border-collapse min-w-max">
                                     <thead>
                                         <tr className="bg-slate-50/50">
                                             <th className="sticky left-0 z-20 bg-slate-50/90 backdrop-blur-md py-6 px-10 text-[11px] font-black text-primary uppercase tracking-widest border-b border-slate-100 text-left w-[250px] min-w-[250px]">
@@ -716,9 +723,17 @@ export function Reports() {
                                     </thead>
                                     <tbody className="divide-y divide-slate-50">
                                         {tableData.rows.map(row => (
-                                            <tr key={row.memberId} className="group hover:bg-slate-50/50 transition-colors">
-                                                <td className="sticky left-0 z-20 bg-white group-hover:bg-slate-50/90 backdrop-blur-md py-5 px-10 text-[13px] font-bold text-slate-900 border-r border-slate-50 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)]">
-                                                    {row.fullName}
+                                            <tr key={row.memberId} className="group hover:bg-slate-50/40 transition-all duration-300">
+                                                <td className="sticky left-0 z-20 bg-white group-hover:bg-[#FDFDFF] backdrop-blur-md py-6 px-10 border-r border-slate-50 shadow-[8px_0_15px_-8px_rgba(0,0,0,0.05)]">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500 uppercase ring-2 ring-white group-hover:ring-primary/20 transition-all">
+                                                            {row.fullName[0]}
+                                                        </div>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-[13px] font-black text-slate-900 tracking-tight">{row.fullName}</span>
+                                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest opacity-60">Architectural Member</span>
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 {tableData.dates.map(date => (
                                                     <td key={date} className="py-5 px-4 text-[12px] font-medium text-slate-600 text-center tabular-nums">
@@ -737,7 +752,7 @@ export function Reports() {
                                                             {row.activityScore}%
                                                         </span>
                                                         <div className="w-16 h-1 bg-slate-100 rounded-full overflow-hidden">
-                                                            <div 
+                                                            <div
                                                                 className={clsx(
                                                                     "h-full rounded-full transition-all duration-500",
                                                                     row.activityScore > 70 ? "bg-emerald-500" : row.activityScore > 40 ? "bg-amber-500" : "bg-rose-500"
@@ -751,28 +766,28 @@ export function Reports() {
                                         ))}
                                     </tbody>
                                     <tfoot>
-                                        <tr className="bg-slate-50/30 font-bold">
-                                            <td className="sticky left-0 z-20 bg-slate-50/90 backdrop-blur-md py-6 px-10 text-[11px] font-black text-slate-400 uppercase tracking-widest border-t border-slate-100">
-                                                Daily total
+                                        <tr className="bg-slate-50/40 border-t-2 border-slate-100">
+                                            <td className="sticky left-0 z-20 bg-slate-50/95 backdrop-blur-md py-8 px-10 text-[12px] font-black text-slate-900 uppercase tracking-[0.2em]">
+                                                Temporal Totals
                                             </td>
                                             {tableData.dates.map(date => {
                                                 const dayTotal = tableData.rows.reduce((sum, r) => sum + (r.dailyMins[date] || 0), 0);
                                                 return (
-                                                    <td key={date} className="py-6 px-4 text-[12px] font-black text-slate-900 text-center tabular-nums border-t border-slate-100">
-                                                        {dayTotal > 0 ? formatDuration(dayTotal) : <span className="text-slate-200">—</span>}
+                                                    <td key={date} className="py-8 px-4 text-[13px] font-black text-primary text-center tabular-nums">
+                                                        {dayTotal > 0 ? formatDuration(dayTotal) : <span className="text-slate-300">—</span>}
                                                     </td>
                                                 );
                                             })}
-                                            <td className="py-6 px-8 border-t border-slate-100 bg-slate-50/50">
+                                            <td className="py-8 px-8 bg-primary/5">
                                                 <div className="text-right">
-                                                    <span className="text-[12px] font-black text-slate-900 tabular-nums">
+                                                    <span className="text-[14px] font-black text-primary tabular-nums drop-shadow-sm">
                                                         {formatDuration(tableData.rows.reduce((sum, r) => sum + r.totalMins, 0))}
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td className="py-6 px-8 border-t border-slate-100 bg-slate-50/50">
+                                            <td className="py-8 px-8 bg-primary/5">
                                                 <div className="text-right">
-                                                    <span className="text-[12px] font-black text-slate-900 tabular-nums">
+                                                    <span className="text-[14px] font-black text-primary tabular-nums drop-shadow-sm">
                                                         {tableData.rows.length > 0 ? Math.round(tableData.rows.reduce((sum, r) => sum + r.activityScore, 0) / tableData.rows.length) : 0}%
                                                     </span>
                                                 </div>
@@ -795,13 +810,14 @@ function FilterSelect({ icon, label, value, onChange, options }: { icon: React.R
 
     return (
         <div className="relative group">
-            <div className="flex items-center gap-4 bg-white border border-slate-200 rounded-xl px-4 py-2 hover:border-slate-400 hover:bg-slate-50 transition-all cursor-pointer shadow-sm group">
-                <div className="text-slate-300 group-hover:text-primary transition-colors">{icon}</div>
-                <div className="flex flex-col min-w-[120px]">
-                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">{label}</span>
-                    <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight truncate">{activeLabel}</span>
+            <div className="flex items-center gap-4 bg-white border border-slate-200 rounded-xl px-5 py-2.5 h-[46px] hover:border-primary hover:bg-primary/5 transition-all cursor-pointer shadow-sm group">
+                <div className="text-slate-400 group-hover:text-primary transition-colors shrink-0">{icon}</div>
+                <div className="flex items-center gap-2 min-w-[160px]">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest shrink-0">{label}</span>
+                    <span className="text-slate-200 mx-1">|</span>
+                    <span className="text-[11px] font-black text-slate-900 uppercase tracking-tight truncate group-hover:text-primary transition-colors">{activeLabel}</span>
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-300 group-hover:text-primary transition-colors ml-auto" />
+                <ChevronDown className="w-4 h-4 text-slate-300 group-hover:text-primary transition-all group-hover:translate-y-0.5 ml-auto" />
             </div>
 
             <select
@@ -917,10 +933,10 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
     const monthIdx = month.getMonth();
     const firstDay = new Date(year, monthIdx, 1).getDay();
     const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
-    
+
     // Adjust for Monday start: (day + 6) % 7
     const adjustedStart = (firstDay + 6) % 7;
-    
+
     const days = [];
     for (let i = 0; i < adjustedStart; i++) days.push(null);
     for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, monthIdx, i));
@@ -942,16 +958,16 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
                     if (!d) return <div key={i} className="py-3" />;
                     const selected = isSelected(d);
                     const inRange = isInRange(d);
-                    
+
                     return (
                         <button
                             key={i}
                             onClick={() => onDateClick(d)}
                             className={clsx(
                                 "py-3 text-[12px] font-medium transition-all rounded-lg relative z-10",
-                                selected ? "bg-primary text-white shadow-lg shadow-primary/30" : 
-                                inRange ? "bg-primary/5 text-primary" : 
-                                "text-slate-600 hover:bg-slate-50"
+                                selected ? "bg-primary text-white shadow-lg shadow-primary/30" :
+                                    inRange ? "bg-primary/5 text-primary" :
+                                        "text-slate-600 hover:bg-slate-50"
                             )}
                         >
                             {d.getDate()}
