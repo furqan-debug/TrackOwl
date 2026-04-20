@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import {
     Monitor, Camera,
     Clock, Activity as ActivityIcon, Users,
-    ChevronDown, Zap, Download, DollarSign,
+    ChevronDown, Zap, DollarSign,
     BarChart3,
     ArrowUpRight,
     ChevronLeft,
@@ -15,7 +15,7 @@ import {
     PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
 import {
-    PageLayout, Card, StatMetric, Button,
+    PageLayout, Card, StatMetric,
     LoadingState, EmptyState
 } from '../components/ui';
 import clsx from 'clsx';
