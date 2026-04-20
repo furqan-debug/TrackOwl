@@ -89,10 +89,51 @@ pub fn init_db() -> rusqlite::Result<Connection> {
             is_offline       INTEGER NOT NULL DEFAULT 0,
             synced           INTEGER NOT NULL DEFAULT 0
         );
-        CREATE INDEX IF NOT EXISTS idx_synced ON activity_samples(synced);",
+        CREATE INDEX IF NOT EXISTS idx_synced ON activity_samples(synced);
+        CREATE TABLE IF NOT EXISTS screenshot_log (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            captured_at INTEGER NOT NULL  -- Unix timestamp in milliseconds
+        );
+        CREATE INDEX IF NOT EXISTS idx_screenshot_time ON screenshot_log(captured_at);",
     )?;
     Ok(conn)
 }
+
+// ─── Screenshot Rate-Limit Helpers ────────────────────────────────────────────
+
+/// Record a screenshot capture timestamp (ms since UNIX epoch).
+pub fn log_screenshot_time(conn: &Connection, timestamp_ms: i64) -> rusqlite::Result<()> {
+    conn.execute(
+        "INSERT INTO screenshot_log (captured_at) VALUES (?1)",
+        params![timestamp_ms],
+    )?;
+    Ok(())
+}
+
+/// Count screenshots captured since `since_ms` (rolling-window query).
+pub fn count_screenshots_since(conn: &Connection, since_ms: i64) -> rusqlite::Result<usize> {
+    let count: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM screenshot_log WHERE captured_at >= ?1",
+        params![since_ms],
+        |row| row.get(0),
+    )?;
+    Ok(count as usize)
+}
+
+/// Delete screenshot_log rows older than 24 hours to keep the table lean.
+pub fn prune_screenshot_log(conn: &Connection) {
+    use std::time::{SystemTime, UNIX_EPOCH};
+    let cutoff = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as i64
+        - (24 * 60 * 60 * 1000);
+    let _ = conn.execute(
+        "DELETE FROM screenshot_log WHERE captured_at < ?1",
+        params![cutoff],
+    );
+}
+
 
 // ─── Public API ────────────────────────────────────────────────────────────────
 pub fn cache_sample(conn: &Connection, sample: &ActivitySample) -> rusqlite::Result<()> {

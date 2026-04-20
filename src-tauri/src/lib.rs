@@ -313,8 +313,8 @@ fn start_tracking(
 
 /// invoke('stop_tracking')
 #[tauri::command]
-fn stop_tracking(state: tauri::State<'_, Mutex<AppState>>) -> TrackingResult {
-    let (cfg, auth_arc, session_id, running, db_arc): (SupabaseConfig, Arc<Mutex<Option<String>>>, Option<String>, Arc<Mutex<bool>>, Arc<Mutex<Option<rusqlite::Connection>>>) = {
+fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>) -> TrackingResult {
+    let (cfg, auth_arc, session_id, running, db_arc, user_id, org_id) = {
         let mut s = state.lock().unwrap();
         (
             SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() },
@@ -322,10 +322,36 @@ fn stop_tracking(state: tauri::State<'_, Mutex<AppState>>) -> TrackingResult {
             s.active_session_id.take(),
             Arc::clone(&s.tracking_running),
             Arc::clone(&s.db),
+            s.user_id.clone(),
+            s.org_id.clone(),
         )
     };
 
     *running.lock().unwrap() = false;
+
+    // ── Mandatory STOP screenshot ─────────────────────────────────────────────
+    // Spawned in a background thread so the UI stop response isn't delayed.
+    // The session row still exists on the server at this point, so the
+    // screenshots table insert will succeed.
+    if let (Some(sid), Some(uid)) = (session_id.clone(), user_id.clone()) {
+        let app2      = app.clone();
+        let cfg2      = cfg.clone();
+        let auth2     = Arc::clone(&auth_arc);
+        let org2      = org_id.clone();
+        thread::spawn(move || {
+            let db_conn = cache::init_db().ok();
+            tracker::take_mandatory_screenshot(
+                &app2,
+                &sid,
+                &cfg2,
+                &auth2,
+                org2.as_deref(),
+                &uid,
+                "STOP",
+                db_conn.as_ref(),
+            );
+        });
+    }
 
     // Final sync from cache to Supabase
     cache::sync_from_arc(&db_arc, &cfg, &auth_arc);
