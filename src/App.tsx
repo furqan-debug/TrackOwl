@@ -279,7 +279,7 @@ function SettingsScreen({ user, onSave, onBack }: {
   const [notifyTracking, setNotifyTracking] = useState(user.custom_fields?.notification_settings?.tracking_alerts ?? true);
   const [notifyScreenshots, setNotifyScreenshots] = useState(user.custom_fields?.notification_settings?.screenshot_alerts ?? true);
   const [notifyReminders, setNotifyReminders] = useState(user.custom_fields?.notification_settings?.tracking_reminders ?? true);
-  const [closeBehavior, setCloseBehavior] = useState<'quit' | 'minimize'>(user.custom_fields?.close_behavior ?? 'quit');
+  const [closeBehavior] = useState<'quit' | 'minimize'>('quit');
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -330,7 +330,7 @@ function SettingsScreen({ user, onSave, onBack }: {
       avatar_url: avatarUrl,
       custom_fields: {
         ...updatedCustomFields,
-        close_behavior: closeBehavior
+        close_behavior: 'quit'
       }
     });
     trackerAPI.setCloseBehavior(closeBehavior);
@@ -431,30 +431,7 @@ function SettingsScreen({ user, onSave, onBack }: {
             </div>
           </div>
 
-          <div style={{ marginBottom: '1.5rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.25rem' }}>
-            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>Application Behavior</h3>
-            <div className="field-group">
-              <label className="field-label">On Close (X button)</label>
-              <div className="field-input-wrap">
-                <MonitorPlay size={14} className="field-icon" />
-                <select 
-                  value={closeBehavior} 
-                  onChange={e => setCloseBehavior(e.target.value as 'quit' | 'minimize')}
-                  className="field-input"
-                  style={{ appearance: 'none', background: 'var(--card-bg)' }}
-                >
-                  <option value="quit">Quit App (Stop Timer)</option>
-                  <option value="minimize">Minimize to Tray (Keep Timer Running)</option>
-                </select>
-                <ChevronDown size={14} style={{ position: 'absolute', right: '0.75rem', color: 'var(--text-tertiary)', pointerEvents: 'none' }} />
-              </div>
-              <p className="text-muted" style={{ fontSize: '0.625rem', marginTop: '0.375rem' }}>
-                {closeBehavior === 'quit' 
-                  ? 'Closing the window will fully exit the application and stop your timer.' 
-                  : 'Closing the window will hide it to the system tray. Use the tray icon to restore or quit.'}
-              </p>
-            </div>
-          </div>
+
 
           <button onClick={save} disabled={isSaving || uploading} className="btn btn-primary" style={{ width: '100%' }}>
             <Save size={16} />
@@ -662,10 +639,8 @@ export default function App() {
   }, [user?.custom_fields?.notification_settings]);
 
   useEffect(() => {
-    if (user?.custom_fields?.close_behavior) {
-      trackerAPI.setCloseBehavior(user.custom_fields.close_behavior);
-    }
-  }, [user?.custom_fields?.close_behavior]);
+    trackerAPI.setCloseBehavior('quit');
+  }, []);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
