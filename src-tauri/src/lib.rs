@@ -29,7 +29,6 @@ pub struct AppState {
     pub db: Arc<Mutex<Option<rusqlite::Connection>>>,
     pub is_idle_monitoring: Arc<Mutex<bool>>,
     pub last_idle_limit: Arc<Mutex<u32>>,
-    pub close_behavior: Arc<Mutex<String>>,
 }
 
 impl Default for AppState {
@@ -52,7 +51,6 @@ impl Default for AppState {
             db: Arc::new(Mutex::new(db)),
             is_idle_monitoring: Arc::new(Mutex::new(false)),
             last_idle_limit: Arc::new(Mutex::new(10)),
-            close_behavior: Arc::new(Mutex::new("quit".to_string())),
         }
     }
 }
@@ -506,11 +504,9 @@ fn get_location() -> Result<String, String> {
 }
 
 #[tauri::command]
-fn set_close_behavior(behavior: String, state: tauri::State<'_, Mutex<AppState>>) {
-    let s = state.lock().unwrap();
-    let mut b = s.close_behavior.lock().unwrap();
-    *b = behavior;
-    println!("[lib] ⚙️ Close behavior set to: {}", *b);
+fn set_close_behavior(_behavior: String) {
+    // No-op: Behavior is now forced to 'quit'
+    println!("[lib] ⚙️ Close behavior forced to 'quit'");
 }
 
 // ─── App entry point ──────────────────────────────────────────────────────────
@@ -624,23 +620,10 @@ pub fn run() {
         .on_window_event(|window: &tauri::Window, event: &tauri::WindowEvent| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let state_handle = window.state::<Mutex<AppState>>();
-                let behavior = {
-                    let s = state_handle.lock().unwrap();
-                    let b = s.close_behavior.lock().unwrap();
-                    b.clone()
-                };
-
-                if behavior == "minimize" {
-                    api.prevent_close();
-                    let _ = window.hide();
-                    println!("[lib] 🔽 Minimized to tray");
-                } else {
-                    // Default 'quit' behavior
-                    println!("[lib] 🛑 Closing requested (Quit behavior)");
-                    api.prevent_close(); // Prevent immediate close so we can sync
-                    stop_and_sync_internal(&state_handle);
-                    window.app_handle().exit(0); // Now exit
-                }
+                println!("[lib] 🛑 Closing requested (Forced Quit behavior)");
+                api.prevent_close(); // Prevent immediate close so we can sync
+                stop_and_sync_internal(&state_handle);
+                window.app_handle().exit(0); // Now exit
             }
         })
         .run(tauri::generate_context!())
