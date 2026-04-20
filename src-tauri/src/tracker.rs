@@ -341,8 +341,86 @@ pub fn start_sample_loop(
 }
 
 // ─── Screenshot loop ───────────────────────────────────────────────────────────
-const SCREENSHOT_WINDOW_MS: u64 = 10 * 60 * 1000; // 10 minutes
-const SCREENSHOTS_PER_WINDOW: usize = 3;
+// Rolling-window rate limiter:
+//   • Max 3 screenshots per any 10-minute rolling window per session.
+//   • Timestamps are persisted in SQLite — survives app restarts.
+//   • Checks every 1–4 minutes (random); captures only if under the limit.
+//   • 2 MANDATORY captures are always taken: on session START and on session STOP.
+//     These count against the rolling window so the loop adjusts accordingly.
+const SCREENSHOT_WINDOW_MS: i64 = 10 * 60 * 1000; // 10 minutes
+const MAX_SCREENSHOTS_PER_WINDOW: usize = 3;
+const SS_MIN_SLEEP_MS: u64 = 60_000;  // 1 minute  (minimum between checks)
+const SS_MAX_SLEEP_MS: u64 = 240_000; // 4 minutes (maximum between checks)
+
+/// Captures, uploads, and logs a single screenshot unconditionally.
+/// Used for mandatory start/stop captures. Logs the timestamp to the
+/// rolling-window DB so the loop accounts for it.
+pub fn take_mandatory_screenshot(
+    app: &AppHandle,
+    session_id: &str,
+    cfg: &crate::SupabaseConfig,
+    auth_token: &Arc<Mutex<Option<String>>>,
+    organization_id: Option<&str>,
+    user_id: &str,
+    label: &str, // e.g. "START" or "STOP"
+    db_conn: Option<&rusqlite::Connection>,
+) {
+    println!("[tracker] 📸 Mandatory {} screenshot — capturing...", label);
+
+    let Some(base64_data) = capture_screenshot() else {
+        eprintln!("[tracker] ❌ Mandatory {} screenshot: capture failed.", label);
+        return;
+    };
+
+    let captured_at  = chrono::Utc::now();
+    let recorded_at  = captured_at.to_rfc3339();
+    let captured_ms  = captured_at.timestamp_millis();
+    let org_slug     = organization_id.unwrap_or("unknown");
+    let filename     = format!("{}/{}/{}.jpg", org_slug, user_id, captured_ms);
+    let storage_url  = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
+
+    use base64::Engine;
+    let Ok(image_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) else {
+        eprintln!("[tracker] ❌ Mandatory {} screenshot: base64 decode failed.", label);
+        return;
+    };
+
+    let s_token = auth_token.lock().unwrap().clone();
+    let agent   = ureq::AgentBuilder::new()
+        .timeout(std::time::Duration::from_secs(15))
+        .build();
+    let mut req = agent.post(&storage_url)
+        .set("apikey", &cfg.anon_key)
+        .set("Content-Type", "image/jpeg");
+    if let Some(token) = &s_token {
+        req = req.set("Authorization", &format!("Bearer {}", token));
+    }
+
+    match req.send_bytes(image_bytes.as_slice()) {
+        Ok(resp) => {
+            println!(
+                "[tracker] ✅ Mandatory {} screenshot UPLOADED. Status: {} | Path: {}",
+                label, resp.status(), filename
+            );
+            let _ = app.emit("screenshot-captured", {});
+
+            // Log timestamp so the rolling window accounts for this capture
+            if let Some(conn) = db_conn {
+                let _ = crate::cache::log_screenshot_time(conn, captured_ms);
+            }
+
+            let body = serde_json::json!({
+                "session_id": session_id,
+                "recorded_at": recorded_at,
+                "file_url": filename,
+            }).to_string();
+            let _ = crate::supabase_post(cfg, "screenshots", &body, s_token.as_deref(), None);
+        }
+        Err(e) => {
+            eprintln!("[tracker] ❌ Mandatory {} screenshot UPLOAD FAILED: {}", label, e);
+        }
+    }
+}
 
 pub fn start_screenshot_loop(
     app: AppHandle,
@@ -354,141 +432,114 @@ pub fn start_screenshot_loop(
     user_id: String,
 ) {
     thread::spawn(move || {
-        // --- 1. Capture one screenshot immediately on start ---
-        if let Some(base64_data) = capture_screenshot() {
-            let captured_at = chrono::Utc::now();
-            let recorded_at = captured_at.to_rfc3339();
-            
-            // Hierarchical structure: organization_id / user_id / screenshots / session_id / filename
-            let org_slug = organization_id.clone().unwrap_or_else(|| "unknown".to_string());
-            let timestamp_num = captured_at.timestamp_millis();
-            let filename = format!("{}/{}/{}.jpg", org_slug, user_id, timestamp_num);
-            
-            let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
-            println!("[tracker] 📸 CAPTURING INITIAL SCREENSHOT: Path={}", filename);
-
-            use base64::Engine;
-            if let Ok(image_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
-                let s_token = auth_token.lock().unwrap().clone();
-                let agent = ureq::AgentBuilder::new()
-                    .timeout(std::time::Duration::from_secs(15))
-                    .build();
-                let mut req = agent.post(&storage_url)
-                    .set("apikey", &cfg.anon_key)
-                    .set("Content-Type", "image/jpeg");
-                
-                if let Some(token) = &s_token {
-                    req = req.set("Authorization", &format!("Bearer {}", token));
-                }
-
-                if let Ok(resp) = req.send_bytes(image_bytes.as_slice()) {
-                    println!("[tracker] ✅ Initial screenshot UPLOADED successfully. Status: {}", resp.status());
-                    let _ = app.emit("screenshot-captured", {});
-                    let body = serde_json::json!({
-                        "session_id": session_id,
-                        "recorded_at": recorded_at,
-                        "file_url": filename, // Store relative path
-                    }).to_string();
-                    let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
-                } else {
-                    eprintln!("[tracker] ❌ Initial screenshot UPLOAD FAILED for path: {}", filename);
-                }
-            }
+        // Each screenshot thread owns a private DB connection.
+        // This mirrors how start_sync_loop works and avoids mutex contention.
+        let db_conn = crate::cache::init_db().ok();
+        if db_conn.is_none() {
+            eprintln!("[tracker] ⚠️ Screenshot loop: could not open SQLite DB — rate limiting disabled.");
         }
 
-            // --- 2. Enter random capture loop ---
+        // ── Mandatory START screenshot (always captured, counts vs. rolling window) ──
+        take_mandatory_screenshot(
+            &app,
+            &session_id,
+            &cfg,
+            &auth_token,
+            organization_id.as_deref(),
+            &user_id,
+            "START",
+            db_conn.as_ref(),
+        );
+
         loop {
             if !*running.lock().unwrap() { break; }
-            let window_start = std::time::Instant::now();
 
-            // IMPROVED LOGIC: Divide 10-min window into 3 equal slots
-            // to ensure screenshots are distributed (e.g. one in each ~3.3 min segment)
-            // instead of potentially clumped at the start.
-            let slot_duration = SCREENSHOT_WINDOW_MS / SCREENSHOTS_PER_WINDOW as u64;
-            
-            // Generate one random offset for each slot
-            let mut capture_times = Vec::new();
-            for i in 0..SCREENSHOTS_PER_WINDOW {
-                let slot_start = i as u64 * slot_duration;
-                // Add a random offset within the slot, with a unique additive factor per loop
-                let offset = rand_ms(slot_duration, i as u32); 
-                capture_times.push(slot_start + offset);
+            // ── Random sleep before the next check (1–4 minutes) ──────────────
+            let jitter = rand_ms(SS_MAX_SLEEP_MS - SS_MIN_SLEEP_MS, 7);
+            let sleep_ms = SS_MIN_SLEEP_MS + jitter;
+            thread::sleep(Duration::from_millis(sleep_ms));
+
+            if !*running.lock().unwrap() { break; }
+
+            // ── Rolling-window check ──────────────────────────────────────────
+            use std::time::{SystemTime, UNIX_EPOCH};
+            let now_ms = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis() as i64;
+            let window_start = now_ms - SCREENSHOT_WINDOW_MS;
+
+            let count_in_window = db_conn.as_ref()
+                .and_then(|conn| crate::cache::count_screenshots_since(conn, window_start).ok())
+                .unwrap_or(0);
+
+            if count_in_window >= MAX_SCREENSHOTS_PER_WINDOW {
+                println!(
+                    "[tracker] 🚫 Screenshot rate limit hit: {} in last 10 min (max {}). Skipping.",
+                    count_in_window, MAX_SCREENSHOTS_PER_WINDOW
+                );
+                continue; // sleep again, re-check when window rolls forward
             }
-            
-            // capture_times is already roughly sorted, but let's be sure
-            capture_times.sort();
 
-            let mut last_sleep_end = 0;
+            // ── Capture & upload ──────────────────────────────────────────────
+            println!(
+                "[tracker] 📸 Capturing screenshot ({}/{} in rolling window)...",
+                count_in_window + 1, MAX_SCREENSHOTS_PER_WINDOW
+            );
 
-            for &time_ms in &capture_times {
-                if !*running.lock().unwrap() { break; }
-                
-                let to_sleep = time_ms.saturating_sub(last_sleep_end);
-                if to_sleep > 0 {
-                    thread::sleep(Duration::from_millis(to_sleep));
-                }
-                last_sleep_end = time_ms;
+            if let Some(base64_data) = capture_screenshot() {
+                let captured_at = chrono::Utc::now();
+                let recorded_at = captured_at.to_rfc3339();
+                let captured_ms = captured_at.timestamp_millis();
 
-                if !*running.lock().unwrap() { break; }
+                let org_slug = organization_id.clone().unwrap_or_else(|| "unknown".to_string());
+                let filename = format!("{}/{}/{}.jpg", org_slug, user_id, captured_ms);
+                let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
 
-                if let Some(base64_data) = capture_screenshot() {
-                    let captured_at = chrono::Utc::now();
-                    let recorded_at = captured_at.to_rfc3339();
-                    
-                    let org_slug = organization_id.clone().unwrap_or_else(|| "unknown".to_string());
-                    let timestamp_num = captured_at.timestamp_millis();
-                    let filename = format!("{}/{}/{}.jpg", org_slug, user_id, timestamp_num);
-                    
-                    let storage_url = format!("{}/storage/v1/object/screenshots/{}", cfg.url, filename);
-                    println!("[tracker] 📸 CAPTURING RANDOM SCREENSHOT ({} of {}): Path={}", 
-                        capture_times.iter().position(|&t| t == time_ms).unwrap_or(0) + 1,
-                        SCREENSHOTS_PER_WINDOW,
-                        filename
-                    );
+                use base64::Engine;
+                if let Ok(image_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
+                    let s_token = auth_token.lock().unwrap().clone();
+                    let agent = ureq::AgentBuilder::new()
+                        .timeout(std::time::Duration::from_secs(15))
+                        .build();
+                    let mut req = agent.post(&storage_url)
+                        .set("apikey", &cfg.anon_key)
+                        .set("Content-Type", "image/jpeg");
+                    if let Some(token) = &s_token {
+                        req = req.set("Authorization", &format!("Bearer {}", token));
+                    }
 
-                    {
-                        use base64::Engine;
-                        if let Ok(image_bytes) = base64::engine::general_purpose::STANDARD.decode(&base64_data) {
-                            let s_token = auth_token.lock().unwrap().clone();
+                    match req.send_bytes(image_bytes.as_slice()) {
+                        Ok(resp) => {
+                            println!(
+                                "[tracker] ✅ Screenshot UPLOADED. Status: {} | Path: {}",
+                                resp.status(), filename
+                            );
+                            let _ = app.emit("screenshot-captured", {});
 
-                            let agent = ureq::AgentBuilder::new()
-                                .timeout(std::time::Duration::from_secs(15))
-                                .build();
-                            let mut req = agent.post(&storage_url)
-                                .set("apikey", &cfg.anon_key)
-                                .set("Content-Type", "image/jpeg");
-                            
-                            if let Some(token) = &s_token {
-                                req = req.set("Authorization", &format!("Bearer {}", token));
+                            // Persist timestamp ONLY on successful upload
+                            if let Some(conn) = db_conn.as_ref() {
+                                if let Err(e) = crate::cache::log_screenshot_time(conn, captured_ms) {
+                                    eprintln!("[tracker] ⚠️ Failed to log screenshot timestamp: {}", e);
+                                }
+                                // Prune stale entries (> 24 h) to keep DB lean
+                                crate::cache::prune_screenshot_log(conn);
                             }
 
-                            let upload_res = req.send_bytes(image_bytes.as_slice());
-
-                            if let Ok(resp) = upload_res {
-                                println!("[tracker] ✅ Random screenshot UPLOADED. Status: {} | Path: {}", resp.status(), filename);
-                                let _ = app.emit("screenshot-captured", {});
-                                let body = serde_json::json!({
-                                    "session_id": session_id,
-                                    "recorded_at": recorded_at,
-                                    "file_url": filename,
-                                }).to_string();
-                                
-                                let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
-                            } else {
-                                eprintln!("[tracker] ❌ Random screenshot UPLOAD FAILED: {}", filename);
-                            }
+                            // Record metadata in screenshots table
+                            let body = serde_json::json!({
+                                "session_id": session_id,
+                                "recorded_at": recorded_at,
+                                "file_url": filename,
+                            }).to_string();
+                            let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
+                        }
+                        Err(e) => {
+                            eprintln!("[tracker] ❌ Screenshot UPLOAD FAILED for {}: {}", filename, e);
+                            // Do NOT log timestamp — failed upload shouldn't count against the limit
                         }
                     }
                 }
-            }
-
-            if !*running.lock().unwrap() { break; }
-
-            // Wait out the remainder of the window
-            let used = window_start.elapsed().as_millis() as u64;
-            let remaining = SCREENSHOT_WINDOW_MS.saturating_sub(used);
-            if remaining > 0 {
-                thread::sleep(Duration::from_millis(remaining));
             }
         }
     });
