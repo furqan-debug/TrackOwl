@@ -1263,15 +1263,27 @@ export default function App() {
     try {
       const sb = await getSupabase();
       const { data: authData, error: authError } = await sb.auth.signInWithPassword({ email, password });
-      if (authError || !authData.user) return authError?.message || 'Login failed';
+      if (authError || !authData.user) {
+        console.error('[Login] Auth failed:', authError?.message);
+        return authError?.message || 'Login failed';
+      }
+ 
+      console.log('[Login] Session established:', { 
+        id: authData.user.id, 
+        email: authData.user.email,
+        aud: authData.user.aud 
+      });
 
+      console.log('[Login] Fetching member profile for user:', authData.user.id);
       let { data: member, error: memberError } = await sb
         .from('members').select('*').eq('auth_user_id', authData.user.id).single();
 
       // Fallback: lookup by email if auth_user_id is not yet linked
       if ((memberError || !member) && authData.user.email) {
+        console.log('[Login] Profile not found by ID, attempting email fallback:', authData.user.email);
         const { data: byEmail } = await sb.from('members').select('*').eq('email', authData.user.email).single();
         if (byEmail && !byEmail.auth_user_id) {
+          console.log('[Login] Found unlinked profile by email, linking now...');
           const { error: updateError } = await sb.from('members').update({ auth_user_id: authData.user.id }).eq('id', byEmail.id);
           if (!updateError) {
             member = { ...byEmail, auth_user_id: authData.user.id };
@@ -1280,7 +1292,10 @@ export default function App() {
         }
       }
 
-      if (memberError || !member) return 'User profile not found in your organization.';
+      if (memberError || !member) {
+        console.error('[Login] Profile verification failed:', memberError?.message || 'No member record');
+        return `Trackora Error: Member profile not found for ${authData.user.email}. Please contact your administrator. (UID: ${authData.user.id.substring(0, 8)})`;
+      }
 
       const tz = await syncTimezone(sb, member.id, member.timezone);
       const userObj: User = {
