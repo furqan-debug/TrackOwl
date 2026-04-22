@@ -57,28 +57,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         try {
             // Use case-insensitive match just in case
             // Use maybeSingle to avoid errors if the member record doesn't exist yet
-            const { data, error } = await supabase
+            const { data, error, status } = await supabase
                 .from('members')
                 .select('*')
                 .ilike('email', email)
                 .maybeSingle();
 
+            console.log(`[AuthContext] Profile fetch result for ${email}:`, { 
+                found: !!data, 
+                error: error?.message, 
+                status,
+                role: data?.role,
+                org: data?.organization_id 
+            });
+
             if (error) {
-                console.warn('Profile fetch error for:', email, error.message);
-                setError(error.message);
+                console.error('[AuthContext] Critical profile fetch error:', email, error.message);
+                setError(`Profile Verification Failed: ${error.message}`);
                 setLoading(false);
                 return; 
             }
             
             if (!data) {
                 if (retries > 0) {
-                    console.log(`No member profile record found for ${email}, retrying in 1s... (${retries} left)`);
-                    setTimeout(() => fetchProfile(email, retries - 1), 1000);
+                    console.log(`[AuthContext] No profile found for ${email}, retrying... (${retries} left)`);
+                    setTimeout(() => fetchProfile(email, retries - 1), 1500);
                     return;
                 }
-                console.log('No member profile record found for:', email);
+                console.error('[AuthContext] Profile not found after retries:', email);
                 setProfile(null);
-                setError(null); 
+                setLoading(false);
+                return;
             } else {
                 setProfile(data);
                 setError(null);
