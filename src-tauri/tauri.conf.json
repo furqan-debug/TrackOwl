@@ -13,6 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
+        "label": "main",
         "title": "Trackora",
         "width": 440,
         "height": 700,
@@ -53,6 +54,7 @@
       ],
       "dialog": true,
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDgwMEY2QUE2MzI3MDgwMDIKa0Z0Z01HSXpDV0xvbHJ0aWxhVzYxeGdEUE1vc0I5Ymt6d0FzR1R3ZkR1WW1adUpjUll1NFhpdlQK"
-    }
+    },
+    "notification": null
   }
 }

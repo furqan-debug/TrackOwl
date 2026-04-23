@@ -7,13 +7,10 @@ mod cache;
 mod updater;
 
 use tauri::Manager;
-use tauri_plugin_notification::NotificationExt;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use chrono;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use std::time::Duration;
 
 // ─── Shared App State ─────────────────────────────────────────────────────────
 pub struct AppState {
@@ -25,7 +22,7 @@ pub struct AppState {
     pub user_id: Option<String>,
     pub org_id: Option<String>,
     pub tracking_running: Arc<Mutex<bool>>,
-    pub counts: Arc<Mutex<tracker::TrackerCounts>>,
+    pub counts: Arc<tracker::TrackerCounts>,
     pub db: Arc<Mutex<Option<rusqlite::Connection>>>,
     pub is_idle_monitoring: Arc<Mutex<bool>>,
     pub last_idle_limit: Arc<Mutex<u32>>,
@@ -47,7 +44,7 @@ impl Default for AppState {
             user_id: None,
             org_id: None,
             tracking_running: Arc::new(Mutex::new(false)),
-            counts: Arc::new(Mutex::new(tracker::TrackerCounts::default())),
+            counts: Arc::new(tracker::TrackerCounts::default()),
             db: Arc::new(Mutex::new(db)),
             is_idle_monitoring: Arc::new(Mutex::new(false)),
             last_idle_limit: Arc::new(Mutex::new(10)),
@@ -220,7 +217,7 @@ fn start_tracking(
         }
     }
     
-    let (cfg, counts, running, auth_arc, db_arc): (SupabaseConfig, Arc<Mutex<tracker::TrackerCounts>>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>) = {
+    let (cfg, counts, running, auth_arc, db_arc): (SupabaseConfig, Arc<tracker::TrackerCounts>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>) = {
         let mut s = state.lock().unwrap();
         *s.auth_token.lock().unwrap() = Some(token.clone());
         (
@@ -282,8 +279,9 @@ fn start_tracking(
                         *s.tracking_running.lock().unwrap() = true;
                     }
 
-                    // Reset counters
-                    { let mut c = counts.lock().unwrap(); c.mouse_count = 0; c.keyboard_count = 0; }
+                    // Reset counters atomics
+                    counts.mouse_count.store(0, std::sync::atomic::Ordering::Relaxed);
+                    counts.keyboard_count.store(0, std::sync::atomic::Ordering::Relaxed);
 
                     // Start native trackers
                     tracker::start_sample_loop(
@@ -378,7 +376,7 @@ fn resume_tracking(
     app: tauri::AppHandle,
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> TrackingResult {
-    let (cfg, session_id, counts, running, auth_arc, db_arc, user_id, org_id): (SupabaseConfig, Option<String>, Arc<Mutex<tracker::TrackerCounts>>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>, Option<String>, Option<String>) = {
+    let (cfg, session_id, counts, running, auth_arc, db_arc, user_id, org_id): (SupabaseConfig, Option<String>, Arc<tracker::TrackerCounts>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>, Option<String>, Option<String>) = {
         let s = state.lock().unwrap();
         // Guard against duplicate loops
         if *s.tracking_running.lock().unwrap() {
@@ -447,11 +445,9 @@ fn set_auth_token(state: tauri::State<'_, Mutex<AppState>>, token: String) -> Re
 #[tauri::command]
 fn get_inactivity_status(state: tauri::State<'_, Mutex<AppState>>) -> bool {
     let s = state.lock().unwrap();
-    let mut c = s.counts.lock().unwrap();
-    let active = c.mouse_count > 0 || c.keyboard_count > 0;
-    c.mouse_count = 0;
-    c.keyboard_count = 0;
-    active
+    let mouse = s.counts.mouse_count.swap(0, std::sync::atomic::Ordering::Relaxed);
+    let keyboard = s.counts.keyboard_count.swap(0, std::sync::atomic::Ordering::Relaxed);
+    mouse > 0 || keyboard > 0
 }
 
 /// invoke('show_idle_dialog')
@@ -482,9 +478,8 @@ fn start_idle_monitoring(state: tauri::State<'_, Mutex<AppState>>, limit: u32) {
     *s.is_idle_monitoring.lock().unwrap() = true;
     *s.last_idle_limit.lock().unwrap() = limit;
     // Reset counts so we only detect new movement
-    let mut c = s.counts.lock().unwrap();
-    c.mouse_count = 0;
-    c.keyboard_count = 0;
+    s.counts.mouse_count.store(0, std::sync::atomic::Ordering::Relaxed);
+    s.counts.keyboard_count.store(0, std::sync::atomic::Ordering::Relaxed);
 }
 
 /// invoke('stop_idle_monitoring')
@@ -548,6 +543,14 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            let _ = app.get_webview_window("main")
+                .map(|w| {
+                    let _ = w.unminimize();
+                    let _ = w.show();
+                    let _ = w.set_focus();
+                });
+        }))
         .setup(move |app: &mut tauri::App| {
             tracker::spawn_input_listener(Arc::clone(&counts));
 
@@ -587,7 +590,7 @@ pub fn run() {
             let app_handle_watcher = app.handle().clone();
             std::thread::spawn(move || {
                 loop {
-                    std::thread::sleep(std::time::Duration::from_millis(500));
+                    std::thread::sleep(std::time::Duration::from_millis(1000));
                     
                     let state = app_handle_watcher.state::<Mutex<AppState>>();
                     let (monitoring, limit) = {
@@ -600,13 +603,9 @@ pub fn run() {
                     if monitoring {
                         let active = {
                             let s = state.lock().unwrap();
-                            let mut c = s.counts.lock().unwrap();
-                            let active = c.mouse_count > 0 || c.keyboard_count > 0;
-                            if active {
-                                c.mouse_count = 0;
-                                c.keyboard_count = 0;
-                            }
-                            active
+                            let mouse = s.counts.mouse_count.swap(0, std::sync::atomic::Ordering::Relaxed);
+                            let keyboard = s.counts.keyboard_count.swap(0, std::sync::atomic::Ordering::Relaxed);
+                            mouse > 0 || keyboard > 0
                         };
 
                         if active {
