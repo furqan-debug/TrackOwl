@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import {
-    Mail, Lock, Eye, EyeOff, 
+    Mail, Lock, Eye, EyeOff,
     ArrowRight, AlertCircle, Activity
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import LogoIcon from '../assets/branding/icon.png';
 
 export function Login() {
     const navigate = useNavigate();
@@ -46,12 +47,12 @@ export function Login() {
 
     return (
         <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center">
-            
+
             {/* Header */}
             <div className="w-full max-w-[1200px] px-8 py-8 flex items-center justify-between animate-in fade-in duration-700">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-                    <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/10">
-                         <Activity className="w-5 h-5 text-white" />
+                    <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
+                        <img src={LogoIcon} alt="Trackora" className="w-full h-full object-contain" />
                     </div>
                     <span className="text-lg font-bold text-slate-900 tracking-tight">Trackora</span>
                 </div>
@@ -126,7 +127,7 @@ export function Login() {
 
                         <div className="mt-12 pt-8 border-t border-slate-100 text-center">
                             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Unregistered Operator?</p>
-                            <Button 
+                            <Button
                                 onClick={() => navigate('/signup')}
                                 variant="secondary"
                                 className="w-full py-4 rounded-xl text-sm font-bold border-slate-100 hover:bg-slate-50 text-slate-600"
