@@ -134,6 +134,62 @@ h4 {
   }
 }
 
+/* --- Trackora Premium Visual Assets --- */
+
+@utility bg-grid-premium {
+  background-image: radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.05) 1px, transparent 0);
+  background-size: 40px 40px;
+}
+
+@utility bg-gradient-mesh {
+  background: 
+    radial-gradient(at 0% 0%, rgba(64, 102, 211, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.03) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(64, 102, 211, 0.05) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.03) 0px, transparent 50%);
+}
+
+@utility bg-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  opacity: 0.015;
+  filter: contrast(120%) brightness(100%);
+}
+
+@utility bg-dot-grid {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+@utility text-gradient-premium {
+  background: linear-gradient(135deg, var(--color-text-main) 0%, var(--color-primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@utility shadow-glow-primary {
+  box-shadow: 0 0 20px rgba(64, 102, 211, 0.2), 0 0 40px rgba(64, 102, 211, 0.1);
+}
+
+@utility shadow-glow {
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05), 0 0 20px rgba(64, 102, 211, 0.03);
+}
+
+/* --- Animation System --- */
+@keyframes pulse-soft {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 8s infinite ease-in-out;
+}
+
+.stagger-1 { animation-delay: 100ms; }
+.stagger-2 { animation-delay: 200ms; }
+.stagger-3 { animation-delay: 300ms; }
+.stagger-4 { animation-delay: 400ms; }
+
 /* Smooth Reveal System */
 @keyframes fadeInUp {
   from {
