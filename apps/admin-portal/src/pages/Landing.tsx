@@ -4,13 +4,10 @@ import {
     ChevronRight,
     Check,
     Zap,
-    Download,
     Monitor,
     Shield,
     Clock,
-    Layout,
-    Activity,
-    Lock
+    Layout
 } from 'lucide-react';
 import LogoIcon from '../assets/branding/icon.png';
 import DashboardPreview from '../assets/branding/dashboard-preview.png';
