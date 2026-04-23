@@ -1668,7 +1668,7 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
       >
         <div className="brand-header">
           <div className="brand-logo">
-            <img src="/logo.svg" style={{ width: 64, height: 64, objectFit: 'contain' }} alt="Trackora" />
+            <img src="/logo.png" style={{ width: 64, height: 64, objectFit: 'contain' }} alt="Trackora" />
           </div>
           <div className="brand-header-text">
             <h1 className="heading-1">{forgotMode ? 'Reset Password' : 'Welcome back'}</h1>
@@ -1794,7 +1794,7 @@ function Topbar({ user, onLogout, onSettings, onSupport, todoBadge, disabled }: 
     <header className="app-topbar">
       <div className="topbar-brand">
         <div className="topbar-logo">
-          <img src="/logo.svg" style={{ width: 30, height: 30, objectFit: 'contain' }} alt="Trackora" />
+          <img src="/logo.png" style={{ width: 30, height: 30, objectFit: 'contain' }} alt="Trackora" />
         </div>
         <span className="topbar-title">Trackora</span>
       </div>

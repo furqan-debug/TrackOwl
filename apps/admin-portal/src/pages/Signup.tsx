@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Mail, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight, Activity } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
+import LogoIcon from '../assets/branding/icon.png';
 
 export function Signup() {
     const navigate = useNavigate();
@@ -52,8 +53,8 @@ export function Signup() {
             {/* Header */}
             <div className="w-full max-w-[1200px] px-8 py-8 flex items-center justify-between animate-in fade-in duration-700">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-                    <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/10">
-                         <Activity className="w-5 h-5 text-white" />
+                    <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
+                        <img src={LogoIcon} alt="Trackora" className="w-full h-full object-contain" />
                     </div>
                     <span className="text-lg font-bold text-slate-900 tracking-tight">Trackora</span>
                 </div>

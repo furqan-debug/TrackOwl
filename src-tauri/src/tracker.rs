@@ -10,6 +10,7 @@
 //     sent directly to the backend via HTTP (same as Electron)
 
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::thread;
 use std::time::Duration;
 use rdev::{listen, Event, EventType};
@@ -17,10 +18,18 @@ use tauri::{AppHandle, Emitter};
 use serde::{Deserialize, Serialize};
 
 // ─── Shared counts (accessed from rdev listener thread) ───────────────────────
-#[derive(Default)]
 pub struct TrackerCounts {
-    pub mouse_count: u32,
-    pub keyboard_count: u32,
+    pub mouse_count: AtomicU32,
+    pub keyboard_count: AtomicU32,
+}
+
+impl Default for TrackerCounts {
+    fn default() -> Self {
+        Self {
+            mouse_count: AtomicU32::new(0),
+            keyboard_count: AtomicU32::new(0),
+        }
+    }
 }
 
 // ─── Sample payload sent to React frontend ────────────────────────────────────
@@ -54,14 +63,10 @@ pub fn spawn_input_listener(counts: Arc<Mutex<TrackerCounts>>) {
         if let Err(e) = listen(move |event: Event| {
             match event.event_type {
                 EventType::KeyPress(_) => {
-                    if let Ok(mut c) = counts.lock() {
-                        c.keyboard_count += 1;
-                    }
+                    counts.keyboard_count.fetch_add(1, Ordering::Relaxed);
                 }
                 EventType::ButtonPress(_) => {
-                    if let Ok(mut c) = counts.lock() {
-                        c.mouse_count += 1;
-                    }
+                    counts.mouse_count.fetch_add(1, Ordering::Relaxed);
                 }
                 _ => {}
             }
@@ -86,7 +91,7 @@ pub fn get_active_window() -> (String, String) {
 
         let title = get_window_text(hwnd);
         let app_name = get_process_name(hwnd);
-        drop(ptr::null::<i32>()); // suppress unused import warning
+        let _ = ptr::null::<i32>(); // suppress unused import warning
         (app_name, title)
     }
 }
@@ -271,17 +276,27 @@ pub fn start_sample_loop(
         loop {
             if !*running.lock().unwrap() { break; }
 
-            let (mouse, keyboard) = {
-                let mut c = counts.lock().unwrap();
-                let m = c.mouse_count;
-                let k = c.keyboard_count;
-                c.mouse_count = 0;
-                c.keyboard_count = 0;
-                (m, k)
-            };
+            let (mouse, keyboard) = (
+                counts.mouse_count.swap(0, Ordering::Relaxed),
+                counts.keyboard_count.swap(0, Ordering::Relaxed),
+            );
 
             let (app_name, window_title) = get_active_window();
-            let domain = get_browser_domain(&app_name, &window_title);
+            
+            // Optimization: Only run heavy PowerShell lookup if the window title has changed
+            static mut LAST_TITLE: Option<String> = None;
+            static mut LAST_DOMAIN: Option<String> = None;
+            
+            let domain = unsafe {
+                if LAST_TITLE.as_ref() == Some(&window_title) {
+                    LAST_DOMAIN.clone().unwrap_or_default()
+                } else {
+                    let d = get_browser_domain(&app_name, &window_title);
+                    LAST_TITLE = Some(window_title.clone());
+                    LAST_DOMAIN = Some(d.clone());
+                    d
+                }
+            };
             let idle = mouse == 0 && keyboard == 0;
 
             // Granular activity calculation:
@@ -577,7 +592,7 @@ fn capture_screenshot() -> Option<String> {
     let resized_image = if orig_width > 2000 {
         let new_width = 2000;
         let new_height = (orig_height as f32 * (2000.0 / orig_width as f32)) as u32;
-        image::imageops::resize(&image, new_width, new_height, image::imageops::FilterType::Lanczos3)
+        image::imageops::resize(&image, new_width, new_height, image::imageops::FilterType::Triangle)
     } else {
         image
     };

@@ -10,7 +10,6 @@ import {
     Check,
     ShieldCheck,
     Users,
-    Activity,
     ChevronRight,
     Briefcase
 } from 'lucide-react';
@@ -18,6 +17,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import clsx from 'clsx';
+import LogoIcon from '../assets/branding/icon.png';
 
 export function Onboarding() {
     const navigate = useNavigate();
@@ -132,8 +132,8 @@ export function Onboarding() {
             
             <div className="w-full max-w-[1200px] px-8 pt-8 flex items-center justify-between">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-                    <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
-                         <Activity className="w-5 h-5 text-white" />
+                    <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
+                        <img src={LogoIcon} alt="Trackora" className="w-full h-full object-contain" />
                     </div>
                     <span className="text-lg font-bold text-slate-900 tracking-tight">Trackora</span>
                 </div>
