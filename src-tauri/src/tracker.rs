@@ -58,7 +58,7 @@ pub struct ScreenshotPayload {
 // ─── Global input hook — runs on a dedicated thread ─────────────────────────
 /// Spawns rdev listener in a background thread.
 /// All mouse/keyboard events are counted in `counts`.
-pub fn spawn_input_listener(counts: Arc<Mutex<TrackerCounts>>) {
+pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
     thread::spawn(move || {
         if let Err(e) = listen(move |event: Event| {
             match event.event_type {
@@ -264,7 +264,7 @@ fn regex_domain(s: &str) -> Option<String> {
 /// Writes to SQLite cache first, then syncs to Supabase /rest/v1/activity_samples.
 pub fn start_sample_loop(
     app: AppHandle,
-    counts: Arc<Mutex<TrackerCounts>>,
+    counts: Arc<TrackerCounts>,
     session_id: String,
     cfg: crate::SupabaseConfig,
     running: Arc<Mutex<bool>>,
