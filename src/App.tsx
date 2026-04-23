@@ -206,10 +206,10 @@ function LocalClock() {
 }
 
 // ── App Footer (Version & Location) ──────────────────────────────────────────
-function AppFooter({ lastSyncTime, isSyncing, onSync }: { 
-  lastSyncTime: Date | null, 
-  isSyncing: boolean, 
-  onSync: () => void 
+function AppFooter({ lastSyncTime, isSyncing, onSync }: {
+  lastSyncTime: Date | null,
+  isSyncing: boolean,
+  onSync: () => void
 }) {
   const [version, setVersion] = useState<string>('...');
   const [loc, setLoc] = useState<string | null>(null);
@@ -220,7 +220,7 @@ function AppFooter({ lastSyncTime, isSyncing, onSync }: {
     if (tauri?.app) {
       tauri.app.getVersion().then(setVersion);
     } else {
-      setVersion('1.1.7'); 
+      setVersion('1.1.7');
     }
 
     // 2. Get Location
@@ -232,18 +232,18 @@ function AppFooter({ lastSyncTime, isSyncing, onSync }: {
     fetchLoc();
   }, []);
 
-  const syncDateStr = lastSyncTime 
+  const syncDateStr = lastSyncTime
     ? lastSyncTime.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
     : '';
-  const syncTimeStr = lastSyncTime 
+  const syncTimeStr = lastSyncTime
     ? lastSyncTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
     : '';
 
   return (
     <footer className="app-footer">
       <div className="footer-sync-wrap">
-        <button 
-          className={`footer-sync-btn ${isSyncing ? 'syncing' : ''}`} 
+        <button
+          className={`footer-sync-btn ${isSyncing ? 'syncing' : ''}`}
           onClick={onSync}
           disabled={isSyncing}
           title="Sync unsynced data to server"
@@ -514,10 +514,10 @@ function SupportScreen({ user, onBack }: { user: User; onBack: () => void }) {
               exit={{ opacity: 0 }}
             >
               <div className="support-options" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
-                <div className="support-option-card" style={{ 
-                  background: 'var(--card-bg)', 
-                  border: '1px solid var(--border-light)', 
-                  padding: '1rem', 
+                <div className="support-option-card" style={{
+                  background: 'var(--card-bg)',
+                  border: '1px solid var(--border-light)',
+                  padding: '1rem',
                   borderRadius: '12px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -530,10 +530,10 @@ function SupportScreen({ user, onBack }: { user: User; onBack: () => void }) {
                   <h4 style={{ fontSize: '0.875rem', fontWeight: 600, margin: 0 }}>Guides</h4>
                   <p style={{ fontSize: '0.6875rem', color: 'var(--text-tertiary)', marginTop: '0.25rem' }}>Help documentation</p>
                 </div>
-                <div className="support-option-card" style={{ 
-                  background: 'var(--card-bg)', 
-                  border: '1px solid var(--border-light)', 
-                  padding: '1rem', 
+                <div className="support-option-card" style={{
+                  background: 'var(--card-bg)',
+                  border: '1px solid var(--border-light)',
+                  padding: '1rem',
                   borderRadius: '12px',
                   display: 'flex',
                   flexDirection: 'column',
@@ -1267,11 +1267,11 @@ export default function App() {
         console.error('[Login] Auth failed:', authError?.message);
         return authError?.message || 'Login failed';
       }
- 
-      console.log('[Login] Session established:', { 
-        id: authData.user.id, 
+
+      console.log('[Login] Session established:', {
+        id: authData.user.id,
         email: authData.user.email,
-        aud: authData.user.aud 
+        aud: authData.user.aud
       });
 
       console.log('[Login] Fetching member profile for user:', authData.user.id);
@@ -1598,10 +1598,10 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
-      <AppFooter 
-        lastSyncTime={lastSyncTime} 
-        isSyncing={isSyncing} 
-        onSync={handleManualSync} 
+      <AppFooter
+        lastSyncTime={lastSyncTime}
+        isSyncing={isSyncing}
+        onSync={handleManualSync}
       />
     </div>
   );

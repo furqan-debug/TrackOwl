@@ -53,51 +53,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return () => subscription.unsubscribe();
     }, []);
 
+    // Track the current fetch to prevent concurrent overlapping calls
+    const fetchInProgress = React.useRef<string | null>(null);
+
     async function fetchProfile(email: string, retries = 3) {
+        // If we're already fetching for this email, don't start another one
+        if (fetchInProgress.current === email && retries === 3) {
+            console.log(`[AuthContext] Fetch already in progress for ${email}, skipping duplicate call.`);
+            return;
+        }
+        
+        fetchInProgress.current = email;
+        setLoading(true); // Ensure we are in loading state
+
         try {
-            // Use case-insensitive match just in case
-            // Use maybeSingle to avoid errors if the member record doesn't exist yet
-            const { data, error, status } = await supabase
+            console.log(`[AuthContext] Fetching profile for ${email}... (Retries left: ${retries})`);
+            
+            const { data, error } = await supabase
                 .from('members')
                 .select('*')
                 .ilike('email', email)
                 .maybeSingle();
 
-            console.log(`[AuthContext] Profile fetch result for ${email}:`, { 
-                found: !!data, 
-                error: error?.message, 
-                status,
-                role: data?.role,
-                org: data?.organization_id 
-            });
-
             if (error) {
-                console.error('[AuthContext] Critical profile fetch error:', email, error.message);
+                console.error('[AuthContext] Profile fetch error:', email, error.message);
+                
+                // Retry on error too, as it might be a transient connection issue or RLS propagation delay
+                if (retries > 0) {
+                    setTimeout(() => fetchProfile(email, retries - 1), 2000);
+                    return;
+                }
+                
                 setError(`Profile Verification Failed: ${error.message}`);
                 setLoading(false);
+                fetchInProgress.current = null;
                 return; 
             }
             
             if (!data) {
                 if (retries > 0) {
-                    console.log(`[AuthContext] No profile found for ${email}, retrying... (${retries} left)`);
-                    setTimeout(() => fetchProfile(email, retries - 1), 1500);
+                    console.log(`[AuthContext] No profile found for ${email}, retrying in 2s...`);
+                    setTimeout(() => fetchProfile(email, retries - 1), 2000);
                     return;
                 }
                 console.error('[AuthContext] Profile not found after retries:', email);
                 setProfile(null);
                 setLoading(false);
+                fetchInProgress.current = null;
                 return;
             } else {
+                console.log('[AuthContext] Profile successfully loaded:', data.email);
                 setProfile(data);
                 setError(null);
                 setLoading(false);
+                fetchInProgress.current = null;
             }
         } catch (err: any) {
             console.error('Error fetching profile:', err);
+            if (retries > 0) {
+                setTimeout(() => fetchProfile(email, retries - 1), 2000);
+                return;
+            }
             setError(err.message || 'Unknown error fetching profile');
             setProfile(null);
             setLoading(false);
+            fetchInProgress.current = null;
         }
     }
 
