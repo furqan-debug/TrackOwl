@@ -10,9 +10,10 @@ import {
     Clock,
     Layout,
     Activity,
-    Globe
+    Lock
 } from 'lucide-react';
 import LogoIcon from '../assets/branding/icon.png';
+import DashboardPreview from '../assets/branding/dashboard-preview.png';
 
 export function Landing() {
     const navigate = useNavigate();
@@ -206,9 +207,14 @@ export function Landing() {
                                     <StepItem number="03" title="Visualize Flow" desc="Dashboard lights up with real-time activity and reports." />
                                 </div>
                             </div>
-                            <div className="glass-panel p-6 rounded-3xl shadow-elevated border-white/60">
-                                <div className="aspect-video bg-slate-50 rounded-2xl flex items-center justify-center text-text-muted text-xs font-medium border border-black/5">
-                                    Dashboard Preview
+                            <div className="glass-panel p-2 rounded-3xl shadow-elevated border-white/60 overflow-hidden group">
+                                <div className="aspect-video bg-slate-50 rounded-2xl flex items-center justify-center overflow-hidden relative">
+                                    <img 
+                                        src={DashboardPreview} 
+                                        alt="Trackora Dashboard" 
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                                 </div>
                             </div>
                         </div>
