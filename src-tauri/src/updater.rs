@@ -87,12 +87,14 @@ pub async fn install_update(app: AppHandle) -> Result<(), String> {
     };
 
     println!("[updater] Downloading v{}...", update.version);
-
+    
+    let mut downloaded = 0;
     let install_res: Result<(), tauri_plugin_updater::Error> = update
         .download_and_install(
             |chunk_length: usize, content_length: Option<u64>| {
+                downloaded += chunk_length;
                 if let Some(total) = content_length {
-                    let pct = (chunk_length as f64 / total as f64 * 100.0) as u32;
+                    let pct = (downloaded as f64 / total as f64 * 100.0) as u32;
                     let _ = app.emit("update-progress", pct);
                 }
             },

@@ -610,6 +610,7 @@ export default function App() {
   const realtimeRef = useRef<any>(null);
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [updateInstalling, setUpdateInstalling] = useState(false);
+  const [updateProgress, setUpdateProgress] = useState(0);
   const memberSubscriptionRef = useRef<any>(null);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(() => {
     const stored = localStorage.getItem('lastSyncTime');
@@ -1491,9 +1492,13 @@ export default function App() {
       }
     };
     setup();
+    // Listen for update progress
+    const unlistenProgress = trackerAPI.onUpdateProgress((p: number) => setUpdateProgress(p));
+    
     return () => {
       isMounted = false;
       if (unlisten) unlisten();
+      unlistenProgress.then((fn: any) => fn && fn());
     };
   }, []); // Only run once on mount
 
@@ -1536,10 +1541,19 @@ export default function App() {
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
               disabled={updateInstalling}
-              onClick={async () => { setUpdateInstalling(true); await trackerAPI.installUpdate(); }}
+              onClick={async () => { 
+                setUpdateInstalling(true); 
+                try {
+                  await trackerAPI.installUpdate(); 
+                } catch (e) {
+                  console.error('Update failed:', e);
+                  setUpdateInstalling(false);
+                  alert('Update failed to install. Please try again later.');
+                }
+              }}
               style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '4px', color: '#fff', fontSize: '11px', padding: '2px 7px', cursor: 'pointer' }}
             >
-              {updateInstalling ? '⏳ Installing…' : 'Install & Restart'}
+              {updateInstalling ? `⏳ ${updateProgress}%` : 'Install & Restart'}
             </button>
             <button
               onClick={() => setUpdateVersion(null)}
