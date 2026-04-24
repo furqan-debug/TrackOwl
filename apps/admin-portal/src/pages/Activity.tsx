@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { 
-    Mouse, Keyboard, Activity as ActivityIcon, 
-    Zap, Users, Calendar, 
-    Monitor, Clock, 
+import {
+    Mouse, Keyboard, Activity as ActivityIcon,
+    Zap, Users, Calendar,
+    Monitor, Clock,
     RefreshCw,
     ChevronLeft, ChevronRight,
     Search, Camera
@@ -60,7 +60,7 @@ export function Activity() {
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
     const [sessionMinutes, setSessionMinutes] = useState(0);
     const [searchTerm, setSearchTerm] = useState('');
-    
+
     // Pagination for screenshots
     const [screenshotLimit, setScreenshotLimit] = useState(10);
     const [hasMoreScreenshots, setHasMoreScreenshots] = useState(false);
@@ -125,7 +125,7 @@ export function Activity() {
                     .order('recorded_at', { ascending: false })
                     .limit(screenshotLimit)
             ]);
-            
+
             setHasMoreScreenshots((totalSS || 0) > screenshotLimit);
 
             const startMs = new Date(start).getTime();
@@ -161,7 +161,7 @@ export function Activity() {
 
     const loadMoreScreenshots = async () => {
         if (loadingMore || refreshing || !hasMoreScreenshots) return;
-        
+
         setLoadingMore(true);
         setScreenshotLimit(prev => prev + 10);
         // fetchData will be re-created due to screenshotLimit dependency and triggered by useEffect
@@ -202,161 +202,212 @@ export function Activity() {
     return (
         <PageLayout
             maxWidth="full"
-            title="Screen Captures"
-            description="Operational monitoring and visual work history review."
+            title="Screenshots"
+            description="Visual audit and activity timeline for workspace members."
             actions={
                 <div className="flex items-center gap-4">
-                    <FilterSelect
-                        icon={<Users className="w-4 h-4 text-primary" />}
-                        value={selectedMemberId}
-                        onChange={setSelectedMemberId}
-                        options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
-                    />
-                    <div className="flex items-center bg-white border border-slate-200 rounded-lg shadow-sm">
-                        <button onClick={() => navigateDate('prev')} className="p-2 hover:bg-slate-50 border-r border-slate-200 transition-colors">
-                            <ChevronLeft className="w-4 h-4 text-slate-500" />
+                    <div className="bg-white border border-slate-200 p-1 rounded-xl flex items-center shadow-sm">
+                        <FilterSelect
+                            icon={<Users className="w-3.5 h-3.5 text-slate-400" />}
+                            value={selectedMemberId}
+                            onChange={setSelectedMemberId}
+                            options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
+                            className="border-none bg-transparent hover:bg-slate-50 transition-all rounded-lg"
+                        />
+                    </div>
+
+                    <div className="flex items-center bg-white border border-slate-200 p-0.5 rounded-xl shadow-sm overflow-hidden">
+                        <button
+                            onClick={() => navigateDate('prev')}
+                            className="p-2.5 hover:bg-slate-50 text-slate-400 hover:text-slate-900 transition-all rounded-lg"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <div 
-                            className="relative px-4 py-1.5 min-w-[150px] text-center cursor-pointer hover:bg-slate-50 transition-colors group/date flex items-center justify-center gap-2"
+                        <div
+                            className="relative px-4 py-2 min-w-[150px] text-center cursor-pointer hover:bg-slate-50 transition-all group/date rounded-lg"
                             onClick={() => dateInputRef.current?.showPicker()}
                         >
-                            <Calendar className="w-3 h-3 text-slate-400 group-hover/date:text-primary transition-colors" />
-                            <span className="text-xs font-semibold text-slate-700">
-                                {isToday ? 'Today' : new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </span>
-                            <input 
+                            <div className="flex items-center justify-center gap-2">
+                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                <span className="text-[11px] font-bold text-slate-900 uppercase tracking-widest">
+                                    {isToday ? 'Today' : new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                </span>
+                            </div>
+                            <input
                                 ref={dateInputRef}
-                                type="date" 
+                                type="date"
                                 value={selectedDate}
                                 className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
                                 onChange={(e) => setSelectedDate(e.target.value)}
                             />
                         </div>
-                        <button 
-                            onClick={() => navigateDate('next')} 
-                            className="p-2 hover:bg-slate-50 border-l border-slate-200 transition-colors" 
+                        <button
+                            onClick={() => navigateDate('next')}
+                            className="p-2.5 hover:bg-slate-50 text-slate-400 hover:text-slate-900 transition-all rounded-lg disabled:opacity-20"
                             disabled={isToday}
                         >
-                            <ChevronRight className="w-4 h-4 text-slate-500" />
+                            <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
+
+                    <button
+                        onClick={() => fetchData(true)}
+                        className={clsx(
+                            "w-10 h-10 flex items-center justify-center border border-slate-200 rounded-xl transition-all",
+                            refreshing ? "text-primary bg-primary/5" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
+                        )}
+                    >
+                        <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
+                    </button>
                 </div>
             }
         >
-            <div className="flex flex-col gap-6 pb-20">
-                
-                {/* 📊 KPI Row: Standardized Spacing */}
+            <div className="flex flex-col gap-8 pb-20">
+
+                {/* 📊 Metrics Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <StatMetric icon={<Mouse className="w-5 h-5" />} label="Clicks" value={totalClicks.toLocaleString()} sub="Mouse events" />
-                    <StatMetric icon={<Keyboard className="w-5 h-5" />} label="Keystrokes" value={totalKeys.toLocaleString()} sub="Keyboard events" />
-                    <StatMetric icon={<Clock className="w-5 h-5" />} label="Productive" value={`${productiveMinutes}m`} sub="Estimated billable" />
-                    <StatMetric icon={<Zap className="w-5 h-5" />} label="Intensity" value={`${avgActivity}%`} sub="Avg activity score" />
+                    <StatMetric
+                        icon={<Mouse className="w-4 h-4" />}
+                        label="Clicks"
+                        value={totalClicks.toLocaleString()}
+                        sub="Mouse interactions"
+                        accent="primary"
+                    />
+                    <StatMetric
+                        icon={<Keyboard className="w-4 h-4" />}
+                        label="Keys"
+                        value={totalKeys.toLocaleString()}
+                        sub="Keyboard events"
+                        accent="amber"
+                    />
+                    <StatMetric
+                        icon={<Clock className="w-4 h-4" />}
+                        label="Duration"
+                        value={`${productiveMinutes}m`}
+                        sub="Total active time"
+                        accent="emerald"
+                    />
+                    <StatMetric
+                        icon={<Zap className="w-4 h-4" />}
+                        label="Activity"
+                        value={`${avgActivity}%`}
+                        sub="Average score"
+                        accent="rose"
+                    />
                 </div>
 
-                {/* 🏗️ Main Layout: Structured 12-Column Grid */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    
-                    {/* 🕒 Timeline & App Usage: Integrated Side-by-Side */}
+                {/* 🏗️ Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+                    {/* Heatmap */}
                     <div className="lg:col-span-8">
-                        <div className="bg-white border border-slate-200 rounded-xl shadow-sm h-full flex flex-col overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-primary shadow-sm">
+                        <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 h-full flex flex-col overflow-hidden">
+                            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-primary shadow-sm">
                                         <ActivityIcon className="w-4 h-4" />
                                     </div>
-                                    <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Daily Micro-Activity</h3>
+                                    <div>
+                                        <h3 className="text-[15px] font-bold text-slate-900 tracking-tight">Heatmap</h3>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">10-minute resolution</p>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-1.5">
-                                        <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">High</span>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Active</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
-                                        <div className="w-2 h-2 rounded-full bg-slate-200" />
-                                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Idle</span>
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-200" />
+                                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Idle</span>
                                     </div>
                                 </div>
                             </div>
-                            <div className="p-8 flex-1 overflow-auto">
+                            <div className="p-8 flex-1">
                                 <TimelineGrid samples={uniqueSamples} targetTz={selectedMember?.timezone} />
                             </div>
                         </div>
                     </div>
 
+                    {/* App Usage */}
                     <div className="lg:col-span-4">
-                        <div className="bg-white border border-slate-200 rounded-xl shadow-sm h-full flex flex-col overflow-hidden">
-                            <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3 shrink-0 bg-slate-50/50">
-                                <div className="w-9 h-9 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-primary shadow-sm">
+                        <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 h-full flex flex-col overflow-hidden">
+                            <div className="px-8 py-6 border-b border-slate-100 flex items-center gap-4 bg-white shrink-0">
+                                <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-500 shadow-sm">
                                     <Monitor className="w-4 h-4" />
                                 </div>
-                                <h3 className="text-sm font-black text-slate-900 uppercase tracking-tight">Application Usage</h3>
+                                <div>
+                                    <h3 className="text-[15px] font-bold text-slate-900 tracking-tight">App Usage</h3>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Top utilized software</p>
+                                </div>
                             </div>
-                            <div className="flex-1 overflow-auto">
+                            <div className="flex-1 overflow-y-auto no-scrollbar">
                                 <AppUsageList samples={samples} />
                             </div>
                         </div>
                     </div>
 
-                    {/* 📸 Screenshot Gallery: Full Width Container */}
-                    <div className="lg:col-span-12 mt-4">
-                        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden min-h-[500px] flex flex-col">
-                            <div className="px-8 py-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-primary shadow-sm">
+                    {/* Screenshots */}
+                    <div className="lg:col-span-12">
+                        <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                            <div className="px-8 py-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white shrink-0">
+                                <div className="flex items-center gap-5">
+                                    <div className="w-12 h-12 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-md">
                                         <Camera className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-base font-black text-slate-900 uppercase tracking-tight">Capture Feed</h3>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Visually verifying {screenshots.length} instances of work</p>
+                                        <h3 className="text-[16px] font-bold text-slate-900 tracking-tight">Captures</h3>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{screenshots.length} automated work captures</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
-                                    <div className="relative">
-                                        <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" />
-                                        <input 
-                                            type="text" 
-                                            placeholder="Search window title..." 
+                                    <div className="relative group/search w-[240px]">
+                                        <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="Search titles..."
                                             value={searchTerm}
                                             onChange={e => setSearchTerm(e.target.value)}
-                                            className="bg-white border border-slate-200 rounded-lg pl-9 pr-4 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all w-64"
+                                            className="w-full bg-slate-50/50 border border-slate-200 rounded-xl pl-10 pr-4 py-2 text-[12px] font-medium focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner"
                                         />
                                     </div>
-                                    <button onClick={() => fetchData(true)} className={clsx("p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all text-slate-500 shadow-sm", refreshing && "animate-spin text-primary")}>
-                                        <RefreshCw className="w-4 h-4" />
+                                    <button
+                                        onClick={() => fetchData(true)}
+                                        className={clsx(
+                                            "w-10 h-10 flex items-center justify-center border border-slate-200 rounded-xl transition-all",
+                                            refreshing ? "text-primary bg-primary/5" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
+                                        )}
+                                    >
+                                        <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
                                     </button>
                                 </div>
                             </div>
-                            <div className="p-8 flex-1">
-                                <ScreenshotGallery 
-                                    screenshots={screenshots} 
+                            <div className="p-8">
+                                <ScreenshotGallery
+                                    screenshots={screenshots}
                                     onSelectImage={(ss) => setEnlarged({
                                         id: ss.id,
                                         path: ss.file_url,
                                         recordedAt: ss.recorded_at,
                                         activityPercent: samples.find(samp => samp.recorded_at.substring(0, 16) === ss.recorded_at.substring(0, 16))?.activity_percent ?? 50
-                                    })} 
+                                    })}
                                 />
 
                                 {hasMoreScreenshots && (
-                                    <div className="mt-12 flex justify-center pb-4">
-                                        <button 
+                                    <div className="mt-12 flex justify-center">
+                                        <button
                                             onClick={loadMoreScreenshots}
                                             disabled={loadingMore || refreshing}
-                                            className="group relative flex items-center gap-3 px-8 py-3 bg-white border border-slate-200 rounded-xl hover:border-primary hover:bg-slate-50 transition-all duration-300 shadow-sm"
+                                            className="flex items-center gap-3 px-6 py-3 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all shadow-sm"
                                         >
                                             {loadingMore || refreshing ? (
                                                 <RefreshCw className="w-4 h-4 animate-spin text-primary" />
                                             ) : (
-                                                <Camera className="w-4 h-4 text-slate-400 group-hover:text-primary transition-colors" />
+                                                <Camera className="w-4 h-4 text-slate-400" />
                                             )}
-                                            <span className="text-xs font-black text-slate-900 uppercase tracking-widest">
-                                                {loadingMore || refreshing ? 'Syncing...' : 'Load More Captures'}
+                                            <span className="text-[11px] font-bold text-slate-900 uppercase tracking-widest">
+                                                Load More Captures
                                             </span>
-                                            
-                                            {/* Subtle indicator of how many are left */}
-                                            <div className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-[9px] font-black text-white rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-bounce">
-                                                +
-                                            </div>
                                         </button>
                                     </div>
                                 )}
@@ -367,9 +418,9 @@ export function Activity() {
                 </div>
             </div>
 
-            <ScreenshotModal 
-                screenshot={enlarged} 
-                onClose={() => setEnlarged(null)} 
+            <ScreenshotModal
+                screenshot={enlarged}
+                onClose={() => setEnlarged(null)}
             />
         </PageLayout>
     );

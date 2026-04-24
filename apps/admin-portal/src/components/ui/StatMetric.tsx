@@ -14,33 +14,55 @@ interface StatMetricProps {
 export function StatMetric({ icon, label, value, sub, trend, accent, className }: StatMetricProps) {
     return (
         <div className={clsx(
-            "bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 group",
+            "glass-panel rounded-[24px] p-6 transition-all duration-500 group relative overflow-hidden",
+            "hover:shadow-elevated hover:-translate-y-1 hover:border-primary/20",
             className
         )}>
-            <div className="flex items-center justify-between mb-4">
+            {/* Background Glow Effect */}
+            <div className={clsx(
+                "absolute -right-4 -top-4 w-24 h-24 blur-[40px] opacity-10 transition-opacity group-hover:opacity-20",
+                accent === 'emerald' && "bg-emerald-500",
+                accent === 'amber' && "bg-amber-500",
+                accent === 'rose' && "bg-rose-500",
+                (accent === 'primary' || !accent) && "bg-primary"
+            )} />
+
+            <div className="flex items-center justify-between mb-5 relative z-10">
                 <div className={clsx(
-                    "p-2 rounded-lg transition-colors",
-                    accent === 'emerald' && "bg-emerald-50 text-emerald-600",
-                    accent === 'amber' && "bg-amber-50 text-amber-600",
-                    accent === 'rose' && "bg-rose-50 text-rose-600",
-                    accent === 'primary' && "bg-primary/5 text-primary",
-                    !accent && "bg-slate-50 text-slate-500 group-hover:text-primary group-hover:bg-primary/5"
+                    "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm",
+                    accent === 'emerald' && "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100",
+                    accent === 'amber' && "bg-amber-50 text-amber-600 group-hover:bg-amber-100",
+                    accent === 'rose' && "bg-rose-50 text-rose-600 group-hover:bg-rose-100",
+                    accent === 'primary' && "bg-primary/5 text-primary group-hover:bg-primary/10",
+                    !accent && "bg-slate-50 text-slate-500 group-hover:bg-primary/5 group-hover:text-primary shadow-inner"
                 )}>
                     {icon}
                 </div>
                 {trend !== undefined && (
-                    <span className={clsx(
-                        "text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1",
-                        trend >= 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                    <div className={clsx(
+                        "text-[10px] font-bold px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-sm border border-transparent",
+                        trend >= 0 
+                            ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
+                            : "bg-rose-50 text-rose-600 border-rose-100"
                     )}>
+                        <div className={clsx(
+                            "w-1 h-1 rounded-full",
+                            trend >= 0 ? "bg-emerald-500 animate-pulse" : "bg-rose-500"
+                        )} />
                         {trend >= 0 ? "+" : ""}{trend}%
-                    </span>
+                    </div>
                 )}
             </div>
-            <div className="space-y-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
-                <div className="text-2xl font-bold text-slate-900 tracking-tight">{value}</div>
-                {sub && <p className="text-[11px] text-slate-500 font-medium">{sub}</p>}
+
+            <div className="space-y-1.5 relative z-10">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{label}</p>
+                <div className={clsx(
+                    "text-3xl font-bold tracking-tighter transition-all duration-300",
+                    accent === 'primary' ? "text-gradient-premium" : "text-slate-900 group-hover:text-primary"
+                )}>
+                    {value}
+                </div>
+                {sub && <p className="text-[11px] text-slate-500 font-medium tracking-tight opacity-70">{sub}</p>}
             </div>
         </div>
     );

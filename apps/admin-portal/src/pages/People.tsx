@@ -3,17 +3,15 @@ import { useNavigate } from 'react-router-dom';
 import {
     Users, Search, Filter, Download, UserPlus, Trash2,
     ChevronDown, MoreHorizontal, Pencil, RotateCcw,
-    Settings, Shield, User, AlertCircle, CheckCircle, MapPin, Globe2
+    Settings, AlertCircle, CheckCircle, MapPin, Globe2
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useAuth } from '../context/AuthContext';
 import {
-    Button,
     Card,
     PageLayout,
     Modal,
     StatusBadge,
-    EmptyState,
     LoadingState
 } from '../components/ui';
 import { SecureImage } from '../components/ui/SecureImage';
@@ -250,35 +248,33 @@ export function People() {
 
     return (
         <PageLayout
-            title="Members"
+            title="People"
             description="Manage your team members, roles, and compensation settings."
             maxWidth="full"
             actions={
                 <div className="flex items-center gap-3">
-                    <Button
-                        variant="primary"
-                        leftIcon={<UserPlus className="w-5 h-5" />}
+                    <button
                         onClick={() => { if (!isViewer) { resetAddForm(); setShowAddModal(true); } }}
                         disabled={isViewer}
+                        className="flex items-center gap-2 px-5 h-10 bg-primary text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Invite Member
-                    </Button>
-                    <Button
-                        variant="secondary"
-                        leftIcon={<Download className="w-4 h-4" />}
+                        <UserPlus className="w-4 h-4" /> Invite Member
+                    </button>
+                    <button
                         onClick={handleExportCsv}
+                        className="flex items-center gap-2 px-5 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all"
                     >
-                        Export CSV
-                    </Button>
+                        <Download className="w-3.5 h-3.5" /> Export CSV
+                    </button>
                 </div>
             }
         >
-            <div className="flex bg-surface-subtle p-1 rounded-lg border border-border w-fit mb-10">
+            <div className="flex bg-slate-100/50 p-1 rounded-xl border border-slate-200/50 w-fit mb-8 h-10">
                 <button
                     onClick={() => setActiveTab('Members')}
                     className={clsx(
-                        "px-6 py-2 text-xs font-semibold rounded-md transition-all",
-                        activeTab === 'Members' ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-primary"
+                        "px-6 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all h-full",
+                        activeTab === 'Members' ? "bg-white text-primary shadow-sm ring-1 ring-slate-200/50" : "text-slate-400 hover:text-slate-600"
                     )}
                 >
                     Members ({membersCount})
@@ -286,92 +282,90 @@ export function People() {
                 <button
                     onClick={() => setActiveTab('Invites')}
                     className={clsx(
-                        "px-6 py-2 text-xs font-semibold rounded-md transition-all",
-                        activeTab === 'Invites' ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-primary"
+                        "px-6 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all h-full",
+                        activeTab === 'Invites' ? "bg-white text-primary shadow-sm ring-1 ring-slate-200/50" : "text-slate-400 hover:text-slate-600"
                     )}
                 >
                     Pending Invites ({invitesCount})
                 </button>
             </div>
-            {/* Action Bar */}
-            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6 mb-8">
+
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 mb-6">
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
                     <div className="relative group lg:w-[400px]">
-                        <Search className="w-5 h-5 text-text-muted absolute left-5 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" />
+                        <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 group-focus-within:text-primary transition-colors" />
                         <input
                             type="text"
                             placeholder={`Search ${activeTab.toLowerCase()}...`}
                             value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="w-full pl-13 pr-6 py-3.5 bg-surface-solid border border-border rounded-xl text-sm font-semibold text-text-primary placeholder:text-text-muted outline-none focus:border-primary transition-all"
+                            className="w-full pl-11 pr-4 h-10 bg-white border border-slate-200 rounded-xl text-[12px] font-bold text-slate-900 placeholder:text-slate-400 outline-none focus:border-primary transition-all shadow-sm"
                         />
                     </div>
-                    <Button
-                        variant="secondary"
-                        leftIcon={<Filter className="w-4 h-4" />}
+                    <button
                         onClick={() => setShowFilters(!showFilters)}
-                        className={clsx(showFilters && "border-primary bg-primary/5")}
+                        className={clsx(
+                            "flex items-center gap-2 px-4 h-10 border rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm",
+                            showFilters ? "border-primary bg-primary/5 text-primary" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                        )}
                     >
-                        Filters
-                    </Button>
+                        <Filter className="w-3.5 h-3.5" /> Filter
+                    </button>
                 </div>
 
                 {selectedIds.size > 0 && (
-                    <div className="flex items-center gap-4 animate-in slide-in-from-right-4 duration-300">
-                        <span className="text-[10px] font-bold text-primary bg-primary/5 px-4 py-2 rounded-full border border-primary/10 uppercase tracking-wider">
+                    <div className="flex items-center gap-3 animate-in slide-in-from-right-2 duration-300">
+                        <span className="text-[10px] font-bold text-primary bg-primary/5 px-4 h-10 flex items-center rounded-xl border border-primary/10 uppercase tracking-widest">
                             {selectedIds.size} Selected
                         </span>
-                        <Button
-                            variant="danger"
-                            size="sm"
-                            leftIcon={<Trash2 className="w-4 h-4" />}
+                        <button
                             onClick={handleBatchDelete}
                             disabled={isViewer}
+                            className="flex items-center gap-2 px-4 h-10 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-bold uppercase tracking-widest border border-rose-100 hover:bg-rose-100 transition-all disabled:opacity-50"
                         >
-                            Batch Delete
-                        </Button>
+                            <Trash2 className="w-3.5 h-3.5" /> Batch Delete
+                        </button>
                     </div>
                 )}
             </div>
 
-            <Card noPadding className="border border-border/60 overflow-hidden shadow-sm">
+            <Card noPadding className="border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
                 <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left border-collapse">
+                    <table className="w-full text-left border-collapse min-w-[1000px]">
                         <thead>
-                            <tr className="border-b border-border bg-border/5">
-                                <th className="pl-10 py-5 w-16">
+                            <tr className="bg-slate-50/50">
+                                <th className="pl-8 py-4 w-12 border-b border-slate-100">
                                     <input
                                         type="checkbox"
                                         checked={selectedIds.size === filtered.length && filtered.length > 0}
                                         onChange={toggleSelectAll}
-                                        className="w-5 h-5 rounded-lg border-border bg-surface-solid checked:bg-primary transition-all cursor-pointer shadow-sm"
+                                        className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer transition-all"
                                     />
                                 </th>
-                                <th className="px-8 py-5 text-[11px] font-bold text-text-muted uppercase tracking-widest opacity-80">Member</th>
-                                <th className="px-8 py-5 text-[11px] font-bold text-text-muted uppercase tracking-widest opacity-80">Role</th>
-                                <th className="px-8 py-5 text-[11px] font-bold text-text-muted uppercase tracking-widest whitespace-nowrap opacity-80">Engagement</th>
-                                <th className="px-8 py-5 text-[11px] font-bold text-text-muted uppercase tracking-widest whitespace-nowrap opacity-80">Rates</th>
-                                <th className="px-8 py-5 text-[11px] font-bold text-text-muted uppercase tracking-widest whitespace-nowrap opacity-80">Limits</th>
-                                <th className="px-8 py-5 text-[11px] font-bold text-text-muted uppercase tracking-widest whitespace-nowrap opacity-80">Location</th>
-                                <th className="px-8 py-5 text-[11px] font-bold text-text-muted uppercase tracking-widest whitespace-nowrap opacity-80">Status</th>
-                                <th className="pr-10 py-5 text-right text-[11px] font-bold text-text-muted uppercase tracking-widest opacity-80">Actions</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Member</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Role</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Engagement</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Rates</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Limits</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Geography</th>
+                                <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Status</th>
+                                <th className="pr-8 py-4 text-right text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border/40">
+                        <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
                                     <td colSpan={10} className="py-24">
-                                        <LoadingState message="Loading members..." />
+                                        <LoadingState />
                                     </td>
                                 </tr>
                             ) : filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={10} className="py-24">
-                                        <EmptyState
-                                            title={`No ${activeTab.toLowerCase()} found`}
-                                            description="Check your search query or invite a new team member."
-                                            icon={<Users className="w-10 h-10" />}
-                                        />
+                                    <td colSpan={10} className="py-24 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <Users className="w-10 h-10 text-slate-200" />
+                                            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">No matching results</span>
+                                        </div>
                                     </td>
                                 </tr>
                             ) : (
@@ -394,18 +388,16 @@ export function People() {
                 </div>
             </Card>
 
-            {/* Pagination Placeholder */}
-            <div className="mt-8 flex items-center justify-between px-4">
-                <div className="text-xs font-semibold text-text-muted opacity-70">
-                    Showing {filtered.length} members
+            <div className="mt-8 flex items-center justify-between px-4 pb-20">
+                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                    Showing {filtered.length} of {membersCount + invitesCount} results
                 </div>
-                <div className="flex items-center gap-3">
-                    <Button variant="secondary" size="sm" disabled className="px-6 opacity-40">Previous</Button>
-                    <Button variant="secondary" size="sm" disabled className="px-6 opacity-40">Next</Button>
+                <div className="flex items-center gap-2">
+                    <button disabled className="px-4 h-9 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-widest text-slate-400 disabled:opacity-30">Prev</button>
+                    <button disabled className="px-4 h-9 border border-slate-200 rounded-lg text-[10px] font-bold uppercase tracking-widest text-slate-400 disabled:opacity-30">Next</button>
                 </div>
             </div>
 
-            {/* Modals & Popups */}
             {showAddModal && <InviteModal onClose={() => setShowAddModal(false)} onInvite={handleAddMember} form={{ addEmail, setAddEmail, addRole, setAddRole, addPayRate, setAddPayRate, addBillRate, setAddBillRate, addWeekly, setAddWeekly, addDaily, setAddDaily, adding, addError }} isViewer={isViewer} currentUserRole={profile?.role} />}
             {inviteSentTo && <InviteSentPopup email={inviteSentTo} onClose={() => setInviteSentTo(null)} />}
         </PageLayout>
@@ -425,23 +417,22 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
         document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h);
     }, []);
 
-
     return (
         <tr className={clsx(
-            "group/row transition-all border-b border-border/40 last:border-0",
-            isSelected ? "bg-primary/[0.04]" : "hover:bg-border/5"
+            "group/row transition-all",
+            isSelected ? "bg-primary/5" : "hover:bg-slate-50/50"
         )}>
-            <td className="pl-10 py-6">
+            <td className="pl-8 py-5">
                 <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={onToggle}
-                    className="w-5 h-5 rounded-lg border-border bg-surface-solid checked:bg-primary transition-all cursor-pointer shadow-sm"
+                    className="w-4 h-4 rounded border-slate-300 text-primary focus:ring-primary cursor-pointer transition-all"
                 />
             </td>
-            <td className="px-8 py-6">
-                <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary text-sm font-bold shadow-sm group-hover/row:scale-105 transition-transform duration-300 overflow-hidden">
+            <td className="px-6 py-5">
+                <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 text-[11px] font-bold shadow-sm group-hover/row:scale-105 transition-transform duration-300 overflow-hidden">
                         {m.avatar_url ? (
                             <SecureImage 
                                 path={m.avatar_url} 
@@ -449,119 +440,120 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                                 className="w-full h-full object-cover" 
                             />
                         ) : (
-                            initials || <Users className="w-5 h-5" />
+                            initials || <Users className="w-4 h-4" />
                         )}
                     </div>
                     <div className="min-w-0">
-                        <span onClick={onEdit} className="text-sm font-bold text-text-primary hover:text-primary cursor-pointer block tracking-tight transition-colors leading-none mb-1.5 truncate">
+                        <span onClick={onEdit} className="text-[13px] font-bold text-slate-900 hover:text-primary cursor-pointer block tracking-tight transition-colors truncate">
                             {m.full_name}
                         </span>
-                        <span className="text-[11px] font-medium text-text-muted opacity-80 block truncate">
+                        <span className="text-[11px] font-bold text-slate-400 block truncate">
                             {m.email}
                         </span>
                     </div>
                 </div>
             </td>
-            <td className="px-8 py-6">
+            <td className="px-6 py-5">
                 <StatusBadge
                     variant={m.role === 'Admin' ? 'success' : m.role === 'Manager' ? 'warning' : 'default'}
-                    icon={m.role === 'Admin' ? <Shield className="w-3 h-3" /> : m.role === 'Manager' ? <Shield className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                    className="text-[9px] h-6 px-2.5 font-bold uppercase tracking-widest"
                 >
                     {m.role === 'Admin' ? 'OWNER' : m.role.toUpperCase()}
                 </StatusBadge>
             </td>
-            <td className="px-8 py-6">
-                <div className="text-[11px] font-bold text-text-muted leading-relaxed whitespace-nowrap">
-                    <div className="flex items-center gap-3 mb-1">
-                        <span className="w-16 opacity-60 uppercase tracking-widest">Sessions</span>
-                        <span className="text-text-primary">{m.sessionCount || 0}</span>
+            <td className="px-6 py-5">
+                <div className="text-[11px] font-bold text-slate-400 space-y-0.5 whitespace-nowrap text-center">
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="opacity-60 text-[9px] uppercase tracking-widest w-12 text-right">SESS:</span>
+                        <span className="text-slate-900 tabular-nums">{m.sessionCount || 0}</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <span className="w-16 opacity-60 uppercase tracking-widest">Projects</span>
-                        <span className="text-text-primary">{m.projectsCount || 0}</span>
-                    </div>
-                </div>
-            </td>
-            <td className="px-8 py-6">
-                <div className="text-[11px] font-bold text-text-muted leading-relaxed whitespace-nowrap">
-                    <div className="flex items-center gap-3 mb-1">
-                        <span className="w-10 opacity-60 uppercase tracking-widest">Pay</span>
-                        <span className="text-primary font-bold">${m.pay_rate || 0}/h</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <span className="w-10 opacity-60 uppercase tracking-widest">Bill</span>
-                        <span className="text-purple-600 font-bold">${m.bill_rate || 0}/h</span>
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="opacity-60 text-[9px] uppercase tracking-widest w-12 text-right">PROJ:</span>
+                        <span className="text-slate-900 tabular-nums">{m.projectsCount || 0}</span>
                     </div>
                 </div>
             </td>
-            <td className="px-8 py-6">
-                <div className="text-[11px] font-bold text-text-muted leading-relaxed whitespace-nowrap">
-                    <div className="flex items-center gap-3 mb-1">
-                        <span className="w-12 opacity-60 uppercase tracking-widest">Weekly</span>
-                        <span className="text-text-primary">{m.weekly_limit}h</span>
+            <td className="px-6 py-5">
+                <div className="text-[11px] font-bold text-slate-400 space-y-0.5 whitespace-nowrap text-center">
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="opacity-60 text-[9px] uppercase tracking-widest w-10 text-right">PAY:</span>
+                        <span className="text-primary tabular-nums">${m.pay_rate || 0}/h</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                        <span className="w-12 opacity-60 uppercase tracking-widest">Daily</span>
-                        <span className="text-text-primary">{m.daily_limit}h</span>
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="opacity-60 text-[9px] uppercase tracking-widest w-10 text-right">BILL:</span>
+                        <span className="text-purple-600 tabular-nums">${m.bill_rate || 0}/h</span>
                     </div>
                 </div>
             </td>
-            <td className="px-8 py-6 text-text-primary">
+            <td className="px-6 py-5">
+                <div className="text-[11px] font-bold text-slate-400 space-y-0.5 whitespace-nowrap text-center">
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="opacity-60 text-[9px] uppercase tracking-widest w-12 text-right">WEEK:</span>
+                        <span className="text-slate-900 tabular-nums">{m.weekly_limit}h</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="opacity-60 text-[9px] uppercase tracking-widest w-12 text-right">DAY:</span>
+                        <span className="text-slate-900 tabular-nums">{m.daily_limit}h</span>
+                    </div>
+                </div>
+            </td>
+            <td className="px-6 py-5">
                 {m.location ? (
-                    <div className="flex items-center gap-2 text-[11px] font-bold whitespace-nowrap">
-                        <MapPin className="w-3 h-3 text-primary" />
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-slate-600 whitespace-nowrap">
+                        <MapPin className="w-3 h-3 text-primary/60" />
                         {m.location}
                     </div>
                 ) : m.timezone ? (
-                    <div className="flex items-center gap-2 text-[11px] font-bold whitespace-nowrap opacity-60">
-                        <Globe2 className="w-3 h-3 text-primary" />
+                    <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 whitespace-nowrap opacity-60">
+                        <Globe2 className="w-3 h-3" />
                         {m.timezone}
                     </div>
                 ) : (
-                    <span className="text-[10px] font-medium text-text-muted opacity-40 uppercase tracking-widest italic">Unknown</span>
+                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">—</span>
                 )}
             </td>
-            <td className="px-8 py-6">
+            <td className="px-6 py-5">
                 <StatusBadge
                     variant={m.status === 'Active' ? 'success' : m.status === 'Pending' ? 'warning' : 'default'}
+                    className="text-[9px] h-6 px-2.5 font-bold uppercase tracking-widest"
                 >
                     {m.status.toUpperCase()}
                 </StatusBadge>
             </td>
-            <td className="pr-10 py-6 text-right relative" ref={dropRef}>
+            <td className="pr-8 py-5 text-right relative" ref={dropRef}>
                 <button
                     onClick={() => setOpen(!open)}
-                    className="p-3 bg-white border border-border rounded-xl text-text-muted hover:text-text-primary hover:border-primary/30 transition-all shadow-sm active:scale-95 group/btn"
+                    className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-primary hover:border-primary/30 transition-all shadow-sm group/btn"
                 >
-                    <MoreHorizontal className={clsx("w-5 h-5 transition-transform duration-300", open && "rotate-90")} strokeWidth={2} />
+                    <MoreHorizontal className={clsx("w-4 h-4 transition-transform duration-300", open && "rotate-90")} />
                 </button>
                 {open && (
-                    <div className="absolute right-10 top-20 bg-surface-solid border border-border shadow-2xl rounded-2xl z-50 py-3 w-64 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="px-6 py-4 border-b border-border/40 mb-2">
-                            <p className="text-[9px] font-bold text-text-muted uppercase tracking-wider mb-1">Options</p>
-                            <p className="text-[12px] font-bold text-text-primary truncate">{m.full_name}</p>
+                    <div className="absolute right-8 top-16 bg-white border border-slate-200 shadow-xl rounded-2xl z-50 py-2 w-56 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="px-5 py-3 border-b border-slate-100 mb-1">
+                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Quick Actions</p>
+                            <p className="text-[12px] font-bold text-slate-900 truncate">{m.full_name}</p>
                         </div>
                         <DropItem
-                            icon={<Pencil className="w-4 h-4" />}
+                            icon={<Pencil className="w-3.5 h-3.5" />}
                             label={isRestricted ? 'View Profile' : 'Edit Member'}
                             onClick={() => { onEdit(); setOpen(false); }}
                         />
                         {m.status === 'Pending' && (
                             <DropItem
-                                icon={<RotateCcw className="w-4 h-4" />}
+                                icon={<RotateCcw className="w-3.5 h-3.5" />}
                                 label="Resend Invite"
                                 disabled={isRestricted}
                                 onClick={() => { if (!isRestricted) { onResendInvite(); setOpen(false); } }}
                             />
                         )}
                         <DropItem
-                            icon={<Settings className="w-4 h-4" />}
+                            icon={<Settings className="w-3.5 h-3.5" />}
                             label="Configuration"
                             onClick={() => { setOpen(false); onEdit('Limits'); }}
                         />
-                        <div className="my-2 border-t border-border/40" />
+                        <div className="my-1 border-t border-slate-100" />
                         <DropItem
-                            icon={<Trash2 className="w-4 h-4" />}
+                            icon={<Trash2 className="w-3.5 h-3.5" />}
                             label="Deactivate Member"
                             disabled={isRestricted}
                             onClick={() => { if (!isRestricted) { setOpen(false); onDelete(); } }}
@@ -580,18 +572,18 @@ function DropItem({ icon, label, onClick, danger, disabled }: any) {
             onClick={onClick}
             disabled={disabled}
             className={clsx(
-                "w-full flex items-center gap-4 px-6 py-3 text-xs font-semibold transition-all text-left group",
-                danger ? "text-rose-500 hover:bg-rose-500/10" : "text-text-muted hover:text-text-primary hover:bg-border/5",
+                "w-full flex items-center gap-3 px-5 py-2.5 text-[11px] font-bold transition-all text-left group",
+                danger ? "text-rose-500 hover:bg-rose-50" : "text-slate-600 hover:text-primary hover:bg-slate-50",
                 disabled && "opacity-30 cursor-not-allowed"
             )}
         >
-            <span className={clsx("transition-opacity", !disabled && "group-hover:scale-110")}>{icon}</span>
-            {label}
+            <span className={clsx("transition-transform", !disabled && "group-hover:scale-110")}>{icon}</span>
+            <span className="uppercase tracking-widest">{label}</span>
         </button>
     );
 }
 
-// ─── Modals (Polished for light theme) ────────────────────────────────
+// ─── Modals ───────────────────────────────────────────────────────────
 
 function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any) {
     const rolesAvailable = currentUserRole === 'Admin' ? ['User', 'Viewer', 'Manager', 'Admin'] : ['User', 'Viewer', 'Manager'];
@@ -604,24 +596,21 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
             subtitle="Send an invitation to join the team."
             maxWidth="max-w-md"
             footer={
-                <>
-                    <Button variant="secondary" onClick={onClose} className="px-8">
-                        Discard
-                    </Button>
-                    <Button
-                        variant="primary"
+                <div className="flex gap-3 justify-end w-full">
+                    <button onClick={onClose} className="px-6 h-11 border border-slate-200 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all">
+                        Cancel
+                    </button>
+                    <button
                         onClick={onInvite}
-                        loading={form.adding}
-                        disabled={!form.addEmail.trim() || isViewer}
-                        leftIcon={<UserPlus className="w-5 h-5" />}
-                        className="px-10 shadow-lg shadow-primary/20"
+                        disabled={!form.addEmail.trim() || isViewer || form.adding}
+                        className="px-8 h-11 bg-primary text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all flex items-center gap-2 disabled:opacity-50"
                     >
-                        Send Invite
-                    </Button>
-                </>
+                        {form.adding ? 'Sending...' : <><UserPlus className="w-4 h-4" /> Send Invite</>}
+                    </button>
+                </div>
             }
         >
-            <div className="space-y-6">
+            <div className="space-y-6 pt-4">
                 <FormField
                     label="Email Address"
                     value={form.addEmail}
@@ -630,33 +619,33 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
                     placeholder="email@company.com"
                 />
 
-                <div className="space-y-3">
-                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Role</label>
+                <div className="space-y-2">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Role Assignment</label>
                     <div className="relative group">
                         <select
                             value={form.addRole}
                             onChange={e => form.setAddRole(e.target.value)}
-                            className="w-full px-6 py-4 bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer"
+                            className="w-full h-11 px-4 bg-slate-50 border border-slate-200 rounded-xl text-[12px] font-bold text-slate-700 outline-none focus:border-primary transition-all appearance-none cursor-pointer"
                         >
-                            {rolesAvailable.map(r => <option key={r} value={r} className="bg-surface-solid text-text-primary">{r.toUpperCase()}</option>)}
+                            {rolesAvailable.map(r => <option key={r} value={r}>{r.toUpperCase()}</option>)}
                         </select>
-                        <ChevronDown className="w-5 h-5 text-primary absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none group-hover:scale-110 transition-transform" strokeWidth={3} />
+                        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-primary transition-colors" />
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-4">
                     <FormField label="Pay Rate ($/hr)" value={form.addPayRate} onChange={form.setAddPayRate} type="number" placeholder="0.00" />
                     <FormField label="Bill Rate ($/hr)" value={form.addBillRate} onChange={form.setAddBillRate} type="number" placeholder="0.00" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
-                    <FormField label="Weekly Limit (Hrs)" value={form.addWeekly} onChange={form.setAddWeekly} type="number" placeholder="40" />
-                    <FormField label="Daily Limit (Hrs)" value={form.addDaily} onChange={form.setAddDaily} type="number" placeholder="8" />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField label="Weekly Limit" value={form.addWeekly} onChange={form.setAddWeekly} type="number" placeholder="40" />
+                    <FormField label="Daily Limit" value={form.addDaily} onChange={form.setAddDaily} type="number" placeholder="8" />
                 </div>
 
                 {form.addError && (
-                    <div className="bg-rose-500/5 border border-rose-500/20 text-rose-600 text-[10px] font-bold uppercase tracking-[0.1em] p-5 rounded-2xl leading-relaxed font-mono flex items-start gap-4 animate-in slide-in-from-top-2">
-                        <AlertCircle className="w-5 h-5 shrink-0" />
+                    <div className="bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-bold uppercase tracking-widest p-4 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                        <AlertCircle className="w-4 h-4 shrink-0" />
                         {form.addError}
                     </div>
                 )}
@@ -667,8 +656,8 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
 
 function FormField({ label, value, onChange, type = 'text', placeholder, disabled }: any) {
     return (
-        <div className="space-y-4">
-            <label className="text-[11px] font-bold text-text-muted uppercase tracking-wider leading-none">{label}</label>
+        <div className="space-y-2">
+            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{label}</label>
             <input
                 type={type}
                 value={value}
@@ -676,8 +665,8 @@ function FormField({ label, value, onChange, type = 'text', placeholder, disable
                 placeholder={placeholder}
                 disabled={disabled}
                 className={clsx(
-                    "w-full px-6 py-4 bg-white border border-black/[0.1] rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/30 transition-all shadow-sm placeholder:text-text-muted tracking-tight",
-                    disabled && "bg-black/[0.02] cursor-not-allowed opacity-60"
+                    "w-full h-11 px-4 bg-white border border-slate-200 rounded-xl text-[12px] font-bold text-slate-900 outline-none focus:border-primary transition-all shadow-sm placeholder:text-slate-300 tabular-nums",
+                    disabled && "bg-slate-50 cursor-not-allowed opacity-60"
                 )}
             />
         </div>
@@ -686,20 +675,20 @@ function FormField({ label, value, onChange, type = 'text', placeholder, disable
 
 function InviteSentPopup({ email, onClose }: any) {
     return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-2xl flex items-center justify-center z-[200] p-4 animate-in fade-in duration-500">
-            <div className="bg-white/95 backdrop-blur-3xl rounded-[48px] w-full max-w-md p-12 text-center shadow-2xl border border-black/[0.05] animate-in zoom-in duration-300">
-                <div className="w-24 h-24 bg-emerald-500/10 border border-emerald-500/20 rounded-[32px] flex items-center justify-center mx-auto mb-10 shadow-inner">
-                    <CheckCircle className="w-12 h-12 text-emerald-500" strokeWidth={3} />
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center z-[200] p-4 animate-in fade-in duration-300">
+            <div className="bg-white rounded-[32px] w-full max-w-sm p-10 text-center shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-300">
+                <div className="w-16 h-16 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <CheckCircle className="w-8 h-8 text-emerald-500" />
                 </div>
-                <h2 className="text-3xl font-bold text-text-primary mb-4 tracking-tighter leading-none">Invite Sent</h2>
-                <p className="text-text-secondary text-base mb-12 leading-relaxed font-bold uppercase tracking-wider opacity-70">
-                    An invitation has been sent to <span className="text-primary">{email}</span>.
+                <h2 className="text-xl font-bold text-slate-900 mb-2 tracking-tight">Invite Sent</h2>
+                <p className="text-slate-500 text-[11px] font-bold uppercase tracking-widest leading-relaxed mb-8">
+                    Invitation has been dispatched to <br/><span className="text-primary">{email}</span>
                 </p>
                 <button
                     onClick={onClose}
-                    className="w-full bg-primary text-white py-5 rounded-[24px] text-[12px] font-bold uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-primary/20"
+                    className="w-full h-12 bg-primary text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all active:scale-95"
                 >
-                    CLOSE
+                    Dismiss
                 </button>
             </div>
         </div>

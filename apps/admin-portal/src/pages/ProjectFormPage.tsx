@@ -4,11 +4,10 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { 
     Save, Check,
-    Layout, Users, Target, Info, Clock
+    Layout, Users, Target, Info, Clock,
+    ChevronDown, Search, RefreshCw
 } from 'lucide-react';
 import { 
-    Button, 
-    Card, 
     PageLayout, 
     LoadingState,
     StatusBadge
@@ -171,7 +170,7 @@ export function ProjectFormPage() {
         }
     }
 
-    if (loading) return <div className="h-screen flex items-center justify-center"><LoadingState message="Synchronizing project parameters..." /></div>;
+    if (loading) return <div className="h-screen flex items-center justify-center"><LoadingState message="Loading project details..." /></div>;
 
     const filteredMembers = allMembers.filter(m => 
         m.full_name.toLowerCase().includes(memberSearch.toLowerCase()) ||
@@ -180,206 +179,244 @@ export function ProjectFormPage() {
 
     return (
         <PageLayout
-            title={isEdit ? "Update Project" : "Initialize Project"}
-            description="Adjust mission parameters and resource allocation"
+            maxWidth="full"
+            title={isEdit ? "Edit Project" : "New Project"}
+            description="Configure project settings, budget limits, and team assignments."
             backButton={{ onClick: () => navigate('/dashboard/projects'), label: 'Back to Projects' }}
             actions={
-                <Button 
-                    variant="primary" 
-                    onClick={handleSave} 
-                    loading={saving}
-                    leftIcon={<Save className="w-4 h-4" />}
-                    className="px-8 shadow-lg shadow-primary/20"
-                >
-                    {isEdit ? 'Save Changes' : 'Create Project'}
-                </Button>
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={handleSave} 
+                        disabled={saving}
+                        className={clsx(
+                            "h-10 px-8 bg-primary text-white rounded-xl font-bold text-[12px] shadow-sm hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 disabled:opacity-50 disabled:pointer-events-none",
+                            saving && "animate-pulse"
+                        )}
+                    >
+                        {saving ? (
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                        ) : (
+                            <Check className="w-4 h-4" />
+                        )}
+                        {isEdit ? 'Save Changes' : 'Create Project'}
+                    </button>
+                </div>
             }
         >
-            <div className="max-w-5xl mx-auto pb-20">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Left Column: Core Info */}
-                    <div className="lg:col-span-2 space-y-8">
-                        <Card className="p-8 border-border/60 shadow-sm overflow-visible">
-                            <div className="flex items-center gap-6 mb-8">
+            <div className="max-w-6xl mx-auto pb-20">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                    
+                    {/* 🛠️ Main Configuration */}
+                    <div className="lg:col-span-8 space-y-8">
+                        {/* Project Details */}
+                        <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 p-8">
+                            <div className="flex items-center gap-6 mb-10">
                                 <div 
-                                    className="w-16 h-16 rounded-2xl flex items-center justify-center border border-border shadow-sm transform -rotate-2 font-mono"
+                                    className="w-16 h-16 rounded-2xl flex items-center justify-center border shadow-sm shrink-0"
                                     style={{ 
-                                        background: `linear-gradient(135deg, ${color}08 0%, ${color}15 100%)`, 
+                                        backgroundColor: `${color}10`, 
                                         color,
                                         borderColor: `${color}20` 
                                     }}
                                 >
                                     <span className="font-bold text-2xl">{(name || 'P').charAt(0).toUpperCase()}</span>
                                 </div>
-                                <div className="flex-1">
-                                    <h3 className="text-lg font-bold text-text-primary tracking-tight mb-1">General Configuration</h3>
-                                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest font-mono">Standard identity and billing parameters</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1">Project Brand Name</label>
-                                        <input 
-                                            type="text" 
-                                            value={name} 
-                                            onChange={e => setName(e.target.value)}
-                                            placeholder="Enter project designation..."
-                                            className="w-full px-5 py-3.5 bg-surface-subtle border border-border rounded-xl text-sm font-semibold text-text-primary outline-none focus:border-primary transition-all placeholder:opacity-30"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1">Associated Client</label>
-                                        <select 
-                                            value={clientId} 
-                                            onChange={e => setClientId(e.target.value)}
-                                            className="w-full px-5 py-3.5 bg-surface-subtle border border-border rounded-xl text-sm font-semibold text-text-primary outline-none focus:border-primary transition-all appearance-none"
-                                        >
-                                            <option value="">Independent / Internal</option>
-                                            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1">Lifecycle Status</label>
-                                        <select 
-                                            value={status} 
-                                            onChange={e => setStatus(e.target.value as any)}
-                                            className="w-full px-5 py-3.5 bg-surface-subtle border border-border rounded-xl text-sm font-semibold text-text-primary outline-none focus:border-primary transition-all appearance-none"
-                                        >
-                                            {['Active', 'Archived', 'Completed'].map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
-                                        </select>
-                                    </div>
-                                    <div className="pt-8">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <span className="text-sm font-bold text-text-primary block">Billable Default</span>
-                                                <p className="text-[11px] text-text-muted font-medium mt-1">Mark time entries as billable</p>
-                                            </div>
-                                            <button 
-                                                onClick={() => setBillable(!billable)}
-                                                className={clsx(
-                                                    "relative w-12 h-6 rounded-full transition-all duration-300",
-                                                    billable ? 'bg-primary' : 'bg-border'
-                                                )}
-                                            >
-                                                <div className={clsx(
-                                                    "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
-                                                    billable ? 'left-7' : 'left-1'
-                                                )} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-3 pt-4 border-t border-border/40">
-                                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1">Aesthetic Token</label>
-                                    <div className="flex flex-wrap gap-3">
-                                        {COLORS.map(c => (
-                                            <button
-                                                key={c}
-                                                type="button"
-                                                onClick={() => setColor(c)}
-                                                className={clsx(
-                                                    "w-10 h-10 rounded-xl transition-all duration-300 border-2 flex items-center justify-center",
-                                                    color === c ? "scale-110 border-primary shadow-lg" : "border-transparent hover:scale-105"
-                                                )}
-                                                style={{ backgroundColor: c }}
-                                            >
-                                                {color === c && <Check className="w-5 h-5 text-white" />}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        </Card>
-
-                        <Card className="p-8 border-border/60 shadow-sm">
-                            <div className="flex items-center gap-4 mb-8">
-                                <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-500">
-                                    <Target className="w-5 h-5" />
-                                </div>
                                 <div>
-                                    <h3 className="text-lg font-bold text-text-primary tracking-tight">Resource Budgeting</h3>
-                                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest font-mono">Control allocation limits and oversight</p>
+                                    <h3 className="text-lg font-bold text-slate-900 tracking-tight">Project Details</h3>
+                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Basic identification and status</p>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Budget Type</label>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Project Name</label>
+                                    <input 
+                                        type="text" 
+                                        value={name} 
+                                        onChange={e => setName(e.target.value)}
+                                        placeholder="e.g. Website Redesign"
+                                        className="w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-[14px] font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner"
+                                    />
+                                </div>
+                                
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Client</label>
+                                    <div className="relative">
                                         <select 
-                                            value={budgetType} 
-                                            onChange={e => setBudgetType(e.target.value as BudgetType)}
-                                            className="w-full px-5 py-3.5 bg-surface-subtle border border-border rounded-xl text-sm font-semibold text-text-primary outline-none focus:border-primary transition-all"
+                                            value={clientId} 
+                                            onChange={e => setClientId(e.target.value)}
+                                            className="w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-[14px] font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner appearance-none cursor-pointer"
                                         >
-                                            {['No budget', 'Total hours', 'Total amount', 'Monthly hours', 'Monthly amount'].map(t => (
-                                                <option key={t} value={t}>{t}</option>
-                                            ))}
+                                            <option value="">No Client (Internal)</option>
+                                            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                         </select>
+                                        <ChevronDown className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                                     </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Status</label>
+                                    <div className="relative">
+                                        <select 
+                                            value={status} 
+                                            onChange={e => setStatus(e.target.value as any)}
+                                            className="w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-[14px] font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner appearance-none cursor-pointer"
+                                        >
+                                            {['Active', 'Archived', 'Completed'].map(s => <option key={s} value={s}>{s}</option>)}
+                                        </select>
+                                        <ChevronDown className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between p-5 bg-slate-50 border border-slate-200 rounded-xl">
+                                    <div>
+                                        <span className="text-[13px] font-bold text-slate-900 block">Billable</span>
+                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">Track financial allocation</p>
+                                    </div>
+                                    <button 
+                                        onClick={() => setBillable(!billable)}
+                                        className={clsx(
+                                            "relative w-12 h-6 rounded-full transition-all duration-300",
+                                            billable ? 'bg-primary' : 'bg-slate-300'
+                                        )}
+                                    >
+                                        <div className={clsx(
+                                            "absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 shadow-sm",
+                                            billable ? 'left-7' : 'left-1'
+                                        )} />
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="mt-10 pt-8 border-t border-slate-100">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1 mb-4 block">Project Color</label>
+                                <div className="flex flex-wrap gap-3">
+                                    {COLORS.map(c => (
+                                        <button
+                                            key={c}
+                                            type="button"
+                                            onClick={() => setColor(c)}
+                                            className={clsx(
+                                                "w-10 h-10 rounded-xl transition-all border-2 flex items-center justify-center",
+                                                color === c ? "scale-110 border-slate-900 shadow-md" : "border-transparent hover:scale-105"
+                                            )}
+                                            style={{ backgroundColor: c }}
+                                        >
+                                            {color === c && <div className="w-1.5 h-1.5 rounded-full bg-white shadow-sm" />}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Budget & Constraints */}
+                        <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 p-8">
+                            <div className="flex items-center gap-6 mb-10">
+                                <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 shadow-sm">
+                                    <Target className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 tracking-tight">Budget & Constraints</h3>
+                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Operational limits and tracking</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Budget Type</label>
+                                        <div className="relative">
+                                            <select 
+                                                value={budgetType} 
+                                                onChange={e => setBudgetType(e.target.value as BudgetType)}
+                                                className="w-full px-5 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-[14px] font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner appearance-none cursor-pointer"
+                                            >
+                                                {['No budget', 'Total hours', 'Total amount', 'Monthly hours', 'Monthly amount'].map(t => (
+                                                    <option key={t} value={t}>{t}</option>
+                                                ))}
+                                            </select>
+                                            <ChevronDown className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                                        </div>
+                                    </div>
+                                    
                                     {budgetType !== 'No budget' && (
-                                        <div className="space-y-2 animate-in slide-in-from-top-2">
-                                            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Limit Value</label>
+                                        <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
+                                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Budget Limit</label>
                                             <div className="relative">
-                                                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted font-bold text-sm">
-                                                    {budgetType.includes('amount') ? '$' : 'H'}
-                                                </span>
+                                                <div className="absolute left-5 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                                    <span className="text-slate-400 font-bold text-sm">
+                                                        {budgetType.includes('amount') ? '$' : <Clock className="w-4 h-4" />}
+                                                    </span>
+                                                    <div className="w-px h-4 bg-slate-200 mx-1" />
+                                                </div>
                                                 <input 
                                                     type="number" 
                                                     value={budgetLimit} 
                                                     onChange={e => setBudgetLimit(e.target.value)}
-                                                    className="w-full pl-10 pr-5 py-3.5 bg-surface-subtle border border-border rounded-xl text-sm font-semibold text-text-primary outline-none focus:border-primary transition-all"
+                                                    className="w-full pl-16 pr-5 py-3 bg-slate-50/50 border border-slate-200 rounded-xl text-[16px] font-bold text-slate-900 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner"
+                                                    placeholder="0.00"
                                                 />
                                             </div>
                                         </div>
                                     )}
                                 </div>
-                                <div className="space-y-4">
-                                    <div className="bg-primary/[0.02] border border-primary/5 rounded-2xl p-6 flex items-start gap-4">
-                                        <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                                        <p className="text-xs text-text-muted leading-relaxed">
-                                            Budget notifications will be dispatched to project managers when utilization reaches 80% and 100%.
-                                        </p>
+                                
+                                <div className="space-y-6">
+                                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
+                                        <div className="flex items-start gap-4">
+                                            <Info className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
+                                            <p className="text-[12px] text-slate-600 font-medium leading-relaxed">
+                                                Alerts will be sent to project managers when budget utilization reaches <span className="font-bold text-slate-900">80% and 100%</span>.
+                                            </p>
+                                        </div>
                                     </div>
+                                    
                                     {isEdit && (
-                                        <div className="p-6 bg-surface-subtle border border-border rounded-2xl flex items-center justify-between">
+                                        <div className="p-6 bg-white border border-slate-200 rounded-2xl shadow-sm flex items-center justify-between">
                                             <div>
-                                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest block">Current Utilization</span>
-                                                <span className="text-lg font-bold text-text-primary">{(trackedSeconds / 3600).toFixed(1)} <span className="text-xs font-semibold opacity-60">Hours</span></span>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1">Time Tracked</span>
+                                                <div className="flex items-end gap-1.5">
+                                                    <span className="text-2xl font-bold text-slate-900">{(trackedSeconds / 3600).toFixed(1)}</span>
+                                                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-1">Hours</span>
+                                                </div>
                                             </div>
-                                            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shadow-sm">
                                                 <Clock className="w-5 h-5" />
                                             </div>
                                         </div>
                                     )}
                                 </div>
                             </div>
-                        </Card>
+                        </div>
                     </div>
 
-                    {/* Right Column: Assignments */}
-                    <div className="space-y-8">
-                        <Card className="p-8 border-border/60 shadow-sm flex flex-col h-fit max-h-[1000px]">
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-500">
-                                    <Users className="w-5 h-5" />
+                    {/* 👥 Assignment Matrix */}
+                    <div className="lg:col-span-4 h-fit sticky top-8 space-y-8">
+                        <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden flex flex-col max-h-[800px]">
+                            <div className="p-8 border-b border-slate-100 shrink-0">
+                                <div className="flex items-center gap-4 mb-6">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 shadow-sm">
+                                        <Users className="w-5 h-5" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-[16px] font-bold text-slate-900 tracking-tight">Members</h3>
+                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Assign individuals</p>
+                                    </div>
                                 </div>
-                                <h3 className="text-lg font-bold text-text-primary tracking-tight">Team Access</h3>
-                            </div>
-                            
-                            <div className="relative mb-6">
-                                <input 
-                                    type="text" 
-                                    placeholder="Search members..."
-                                    value={memberSearch}
-                                    onChange={e => setMemberSearch(e.target.value)}
-                                    className="w-full pl-5 pr-5 py-3 bg-surface-subtle border border-border rounded-xl text-xs font-semibold text-text-primary outline-none focus:border-primary transition-all"
-                                />
+                                
+                                <div className="relative">
+                                    <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search members..."
+                                        value={memberSearch}
+                                        onChange={e => setMemberSearch(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50/50 border border-slate-200 rounded-xl text-[12px] font-semibold text-slate-900 outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner"
+                                    />
+                                </div>
                             </div>
 
-                            <div className="space-y-1 overflow-y-auto custom-scrollbar flex-1 pr-1">
+                            <div className="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-1.5">
                                 {filteredMembers.map(m => {
                                     const isSelected = userIds.has(m.id);
                                     return (
@@ -392,38 +429,52 @@ export function ProjectFormPage() {
                                             }}
                                             className={clsx(
                                                 "w-full flex items-center justify-between p-3 rounded-xl transition-all group",
-                                                isSelected ? "bg-primary/5 text-primary" : "hover:bg-surface-subtle text-text-muted"
+                                                isSelected 
+                                                    ? "bg-slate-900 text-white shadow-md" 
+                                                    : "hover:bg-slate-50 text-slate-600 border border-transparent"
                                             )}
                                         >
                                             <div className="flex items-center gap-3 min-w-0 text-left">
                                                 <div className={clsx(
-                                                    "w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold border shrink-0 transition-transform group-hover:scale-105",
-                                                    isSelected ? "bg-primary text-white border-primary shadow-sm" : "bg-white border-border text-text-muted"
+                                                    "w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold border shrink-0 transition-all shadow-sm",
+                                                    isSelected 
+                                                        ? "bg-white/10 border-white/20 text-white" 
+                                                        : "bg-white border-slate-200 text-slate-400"
                                                 )}>
                                                     {m.full_name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div className="truncate">
-                                                    <p className="text-xs font-bold leading-none mb-1">{m.full_name}</p>
-                                                    <p className="text-[10px] opacity-60 font-mono tracking-tight">{m.role}</p>
+                                                    <p className={clsx(
+                                                        "text-[12px] font-bold leading-none mb-1",
+                                                        isSelected ? "text-white" : "text-slate-900"
+                                                    )}>{m.full_name}</p>
+                                                    <p className={clsx(
+                                                        "text-[9px] font-bold uppercase tracking-widest opacity-60",
+                                                        isSelected ? "text-white/70" : "text-slate-400"
+                                                    )}>{m.role}</p>
                                                 </div>
                                             </div>
                                             <div className={clsx(
-                                                "w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all",
-                                                isSelected ? "bg-primary border-primary shadow-sm" : "border-border"
+                                                "w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all",
+                                                isSelected 
+                                                    ? "bg-white border-white text-slate-900 shadow-sm" 
+                                                    : "border-slate-200 group-hover:border-slate-300"
                                             )}>
-                                                {isSelected && <Check className="w-3 h-3 text-white stroke-[4]" />}
+                                                {isSelected && <Check className="w-3 h-3 stroke-[4]" />}
                                             </div>
                                         </button>
                                     )
                                 })}
                             </div>
 
-                            <div className="mt-8 pt-6 border-t border-border/40">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <Layout className="w-4 h-4 text-text-muted" />
-                                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Global Teams</span>
+                            <div className="p-8 border-t border-slate-100 bg-slate-50/30 shrink-0">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 shadow-sm">
+                                        <Layout className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Team Assignment</span>
                                 </div>
-                                <div className="space-y-2">
+                                <div className="grid grid-cols-1 gap-2">
                                     {teams.map(t => (
                                         <button
                                             key={t.id}
@@ -433,26 +484,33 @@ export function ProjectFormPage() {
                                                 setTeamIds(next);
                                             }}
                                             className={clsx(
-                                                "w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all",
-                                                teamIds.has(t.id) ? "bg-white border-primary text-primary shadow-sm" : "bg-surface-subtle border-transparent text-text-muted hover:border-border"
+                                                "w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all",
+                                                teamIds.has(t.id) 
+                                                    ? "bg-white border-slate-900 text-slate-900 shadow-sm" 
+                                                    : "bg-white/50 border-slate-100 text-slate-500 hover:border-slate-200"
                                             )}
                                         >
-                                            <span className="text-xs font-bold">{t.name}</span>
-                                            {teamIds.has(t.id) && <Check className="w-3.5 h-3.5" />}
+                                            <span className="text-[12px] font-bold tracking-tight">{t.name}</span>
+                                            {teamIds.has(t.id) && <Check className="w-3.5 h-3.5 text-primary" />}
                                         </button>
                                     ))}
                                 </div>
                             </div>
-                        </Card>
+                        </div>
+
+                        {error && (
+                            <div className="bg-rose-50 border border-rose-200 p-6 rounded-[24px] flex items-center gap-4 animate-in slide-in-from-top-2 shadow-sm">
+                                <div className="w-10 h-10 rounded-xl bg-rose-500 flex items-center justify-center text-white shadow-sm shrink-0">
+                                    <Info className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <span className="text-[9px] font-bold text-rose-500 uppercase tracking-widest block mb-0.5">Error</span>
+                                    <p className="text-xs font-bold text-rose-900 leading-tight">{error}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
-
-                {error && (
-                    <div className="mt-8 bg-rose-500/5 border border-rose-500/10 p-6 rounded-[24px] flex items-center gap-4 animate-in slide-in-from-top-4">
-                        <StatusBadge variant="error">System Error</StatusBadge>
-                        <p className="text-xs font-bold text-rose-600 uppercase tracking-widest font-mono">{error}</p>
-                    </div>
-                )}
             </div>
         </PageLayout>
     );

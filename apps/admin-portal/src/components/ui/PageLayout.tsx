@@ -25,37 +25,39 @@ export function PageLayout({
     backButton,
 }: PageLayoutProps) {
     const maxClass =
-        maxWidth === '7xl' ? 'max-w-7xl mx-auto' : maxWidth === '6xl' ? 'max-w-6xl mx-auto' : '';
+        maxWidth === '7xl' ? 'max-w-7xl mx-auto' : maxWidth === '6xl' ? 'max-w-6xl mx-auto' : 'max-w-[1600px] mx-auto';
 
     return (
-        <div className={clsx("p-6 md:px-10 md:py-10 w-full animate-in fade-in slide-in-from-top-4 duration-700", maxClass)}>
+        <div className={clsx("p-6 md:px-10 md:py-12 w-full animate-in fade-in slide-in-from-top-4 duration-1000", maxClass)}>
             {(title || actions) && (
-                <div className="mb-10 md:mb-12">
-                    <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-                        <div className="space-y-2">
+                <div className="mb-10 md:mb-16">
+                    <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+                        <div className="space-y-4">
                             {backButton && (
                                 <button
                                     onClick={backButton.onClick}
-                                    className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-primary transition-colors mb-6 group"
+                                    className="flex items-center gap-3 text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] hover:text-primary transition-all duration-300 group mb-2"
                                 >
-                                    <span className="p-1.5 rounded-lg bg-slate-50 border border-slate-200 group-hover:border-primary transition-colors">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center group-hover:border-primary group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                             <path d="M19 12H5M12 19l-7-7 7-7"/>
                                         </svg>
-                                    </span>
-                                    {backButton.label || 'Project Backtrack'}
+                                    </div>
+                                    {backButton.label || 'Go Back'}
                                 </button>
                             )}
-                            {title && (
-                                <h1 className="text-3xl md:text-[42px] font-black text-slate-900 tracking-tighter uppercase leading-[0.85] mb-2">
-                                    {title}
-                                </h1>
-                            )}
-                            {description && (
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] max-w-2xl leading-relaxed opacity-80">
-                                    {description}
-                                </p>
-                            )}
+                            <div className="space-y-2">
+                                {title && (
+                                    <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tighter leading-none">
+                                        {title}
+                                    </h1>
+                                )}
+                                {description && (
+                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] max-w-2xl leading-relaxed opacity-70">
+                                        {description}
+                                    </p>
+                                )}
+                            </div>
                         </div>
                         {actions && (
                             <div className="flex items-center gap-4 shrink-0 pb-1">

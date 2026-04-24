@@ -283,19 +283,22 @@ export function Timesheets() {
 
     return (
         <div className="flex flex-col min-h-screen bg-white font-sans text-slate-900">
-            <header className="px-8 py-6 flex items-center justify-between border-b border-slate-100">
-                <h1 className="text-xl font-medium text-slate-500">View & edit timesheets</h1>
+            <header className="px-8 py-6 flex items-center justify-between border-b border-slate-100 shrink-0">
+                <div className="space-y-1">
+                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">Timesheets</h1>
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Verify and refine team temporal records</p>
+                </div>
             </header>
 
-            <div className="px-8 py-5 flex flex-wrap items-center justify-between gap-6 border-b border-slate-50">
-                <div className="flex items-center gap-6">
-                    <div className="flex items-center bg-white border border-slate-200 rounded-lg p-1 shadow-sm gap-1">
-                        <button onClick={() => navigateDate(-1)} className="p-2 hover:bg-slate-50 rounded-lg transition-all">
-                             <ChevronLeft className="w-4 h-4 text-slate-400" />
+            <div className="px-8 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-slate-50 sticky top-0 bg-white/80 backdrop-blur-md z-30">
+                <div className="flex items-center gap-4">
+                    <div className="flex items-center bg-white border border-slate-200 rounded-xl p-0.5 shadow-sm h-10">
+                        <button onClick={() => navigateDate(-1)} className="p-2 hover:bg-slate-50 rounded-lg transition-all text-slate-400 hover:text-primary">
+                             <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <div className="flex items-center gap-4 px-2 relative cursor-pointer hover:bg-slate-50 rounded transition-all group">
-                             <span className="text-[11px] font-bold text-slate-700 tracking-tight">{formatRangeLabel()}</span>
-                             <CalendarIcon className="w-4 h-4 text-primary" />
+                        <div className="flex items-center gap-3 px-3 relative cursor-pointer hover:bg-slate-50 rounded-lg transition-all h-full">
+                             <span className="text-[11px] font-bold text-slate-700 uppercase tracking-widest tabular-nums">{formatRangeLabel()}</span>
+                             <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
                              <input 
                                 type="date"
                                 className="absolute inset-0 opacity-0 cursor-pointer"
@@ -307,17 +310,16 @@ export function Timesheets() {
                                 }}
                              />
                         </div>
-                        <button onClick={() => navigateDate(1)} className="p-2 hover:bg-slate-50 rounded-lg transition-all">
-                             <ChevronRight className="w-4 h-4 text-slate-400" />
+                        <button onClick={() => navigateDate(1)} className="p-2 hover:bg-slate-50 rounded-lg transition-all text-slate-400 hover:text-primary">
+                             <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
 
-                    <div className="relative group/tz">
-                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-700 cursor-pointer hover:bg-slate-50 px-2 py-1 rounded-md transition-all uppercase tracking-widest">
-                            {activeTimezone} <ChevronDown className="w-4 h-4 text-slate-400 group-hover/tz:rotate-180 transition-transform" />
-                        </div>
+                    <div className="relative group h-10 flex items-center bg-white border border-slate-200 rounded-xl px-4 hover:bg-slate-50 transition-all cursor-pointer">
+                        <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">{activeTimezone}</span>
+                        <ChevronDown className="w-3.5 h-3.5 text-slate-300 ml-2" />
                         <select 
-                            className="absolute inset-0 opacity-0 cursor-pointer"
+                            className="absolute inset-0 opacity-0 cursor-pointer w-full"
                             value={activeTimezone}
                             onChange={(e) => setActiveTimezone(e.target.value)}
                         >
@@ -330,14 +332,14 @@ export function Timesheets() {
                     </div>
                 </div>
 
-                <div className="flex bg-slate-100 p-1 rounded-full border border-slate-200 shadow-inner">
+                <div className="flex bg-slate-100/50 p-1 rounded-xl border border-slate-200/50 h-10 shrink-0">
                     {(['daily', 'weekly', 'calendar'] as const).map(mode => (
                         <button 
                             key={mode}
                             onClick={() => setViewMode(mode)}
                             className={clsx(
-                                "px-8 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] transition-all",
-                                viewMode === mode ? "bg-white text-slate-900 shadow-sm" : "text-slate-400 hover:text-slate-600"
+                                "px-6 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all h-full",
+                                viewMode === mode ? "bg-white text-primary shadow-sm ring-1 ring-slate-200/50" : "text-slate-400 hover:text-slate-600"
                             )}
                         >
                             {mode}
@@ -346,36 +348,36 @@ export function Timesheets() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm gap-3 min-w-[200px] group cursor-pointer hover:border-primary/30 transition-all relative">
-                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                            <Users className="w-3.5 h-3.5 text-primary" />
-                        </div>
-                        <span className="text-[11px] font-bold text-slate-700 tracking-tight flex-1">
-                            {selectedMember === 'all' ? 'All Members' : members.find((m: MemberInfo) => m.id === selectedMember)?.full_name || 'Unknown Member'}
+                    <div className="flex items-center bg-white border border-slate-200 rounded-xl px-4 h-10 shadow-sm gap-3 min-w-[180px] group cursor-pointer hover:border-primary/30 transition-all relative">
+                        <Users className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary transition-colors" />
+                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-widest flex-1">
+                            {selectedMember === 'all' ? 'All Members' : members.find((m: MemberInfo) => m.id === selectedMember)?.full_name || 'Member'}
                         </span>
                         <ChevronDown className="w-3.5 h-3.5 text-slate-300 group-hover:text-primary transition-colors" />
-                        <select className="absolute inset-0 opacity-0 cursor-pointer" value={selectedMember} onChange={(e) => setSelectedMember(e.target.value)}>
+                        <select className="absolute inset-0 opacity-0 cursor-pointer w-full" value={selectedMember} onChange={(e) => setSelectedMember(e.target.value)}>
                             <option value="all">All Members</option>
                             {members.map((m: MemberInfo) => <option key={m.id} value={m.id}>{m.full_name}</option>)}
                         </select>
                     </div>
-                    <button onClick={() => setShowFilters(true)} className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 text-primary rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all">
-                        <Filter className="w-4 h-4" /> Filters
+                    
+                    <button onClick={() => setShowFilters(true)} className="flex items-center gap-2 px-4 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all">
+                        <Filter className="w-3.5 h-3.5" /> Filter
                     </button>
-                    <button onClick={() => setShowAddTime(true)} className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all">
+                    
+                    <button onClick={() => setShowAddTime(true)} className="flex items-center gap-2 px-5 h-10 bg-primary text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all">
                         <Plus className="w-4 h-4" /> Add time
                     </button>
                 </div>
             </div>
 
-            <div className="px-8 py-3 flex justify-end gap-3 bg-white/50">
-                <button className="p-2 text-primary border border-slate-200 rounded-lg hover:bg-white shadow-sm transition-all"><LayoutIcon className="w-4 h-4" /></button>
-                <button className="p-2 text-primary border border-slate-200 rounded-lg hover:bg-white shadow-sm transition-all"><Download className="w-4 h-4" /></button>
+            <div className="px-8 py-2 flex justify-end gap-2 bg-slate-50/30 border-b border-slate-50 shrink-0">
+                <button className="p-2 text-slate-400 border border-slate-200 rounded-lg hover:bg-white hover:text-primary transition-all"><LayoutIcon className="w-3.5 h-3.5" /></button>
+                <button className="p-2 text-slate-400 border border-slate-200 rounded-lg hover:bg-white hover:text-primary transition-all"><Download className="w-3.5 h-3.5" /></button>
             </div>
 
-            <main className="flex-1 overflow-y-auto px-8 py-8">
+            <main className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar">
                 {loading ? <div className="flex items-center justify-center h-64"><LoadingState /></div> : (
-                    <div className="max-w-[1500px] mx-auto animate-in fade-in slide-in-from-bottom-2 duration-500">
+                    <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-1 duration-400">
                         {viewMode === 'daily' && <DailyView entries={entries} selectedMember={selectedMember} toProperCase={toProperCase} />}
                         {viewMode === 'weekly' && <WeeklyView entries={entries} onNavigate={(d) => { setSelectedDate(new Date(d + 'T12:00:00')); setViewMode('daily'); }} />}
                         {viewMode === 'calendar' && <CalendarView entries={entries} />}
@@ -383,11 +385,11 @@ export function Timesheets() {
                 )}
             </main>
 
-            <Modal isOpen={showFilters} onClose={() => setShowFilters(false)} title="Advanced Filters">
-                <div className="space-y-6 pt-4">
+            <Modal isOpen={showFilters} onClose={() => setShowFilters(false)} title="Filters">
+                <div className="space-y-6 py-4">
                     <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Filter by Project</label>
-                        <select className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-700 outline-none focus:border-primary transition-all" value={filterProjectId} onChange={(e) => setFilterProjectId(e.target.value)}>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Scope</label>
+                        <select className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[11px] font-bold text-slate-700 outline-none focus:border-primary transition-all uppercase tracking-widest" value={filterProjectId} onChange={(e) => setFilterProjectId(e.target.value)}>
                             <option value="all">All Projects</option>
                             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
@@ -395,38 +397,38 @@ export function Timesheets() {
                 </div>
             </Modal>
 
-            <Modal isOpen={showAddTime} onClose={() => setShowAddTime(false)} title="Add Manual Time">
-                <div className="space-y-6 pt-4">
+            <Modal isOpen={showAddTime} onClose={() => setShowAddTime(false)} title="Manual Time Entry">
+                <div className="space-y-5 py-4">
                     <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Select Member</label>
-                        <select className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.userId} onChange={(e) => setAddTimeData({...addTimeData, userId: e.target.value})}>
-                            <option value="">Select a member...</option>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Team Member</label>
+                        <select className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[11px] font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.userId} onChange={(e) => setAddTimeData({...addTimeData, userId: e.target.value})}>
+                            <option value="">Select member...</option>
                             {members.map(m => <option key={m.id} value={m.id}>{m.full_name}</option>)}
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Project</label>
-                        <select className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.projectId} onChange={(e) => setAddTimeData({...addTimeData, projectId: e.target.value})}>
-                            <option value="">Select a project...</option>
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project</label>
+                        <select className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[11px] font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.projectId} onChange={(e) => setAddTimeData({...addTimeData, projectId: e.target.value})}>
+                            <option value="">Select project...</option>
                             {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                         </select>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Date</label>
-                        <input type="date" className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.date} onChange={(e) => setAddTimeData({...addTimeData, date: e.target.value})} />
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date</label>
+                        <input type="date" className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[11px] font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.date} onChange={(e) => setAddTimeData({...addTimeData, date: e.target.value})} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Start Time</label>
-                            <input type="time" className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({...addTimeData, startTime: e.target.value})} />
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Start</label>
+                            <input type="time" className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[11px] font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({...addTimeData, startTime: e.target.value})} />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">End Time</label>
-                            <input type="time" className="w-full h-12 bg-slate-50 border border-slate-100 rounded-xl px-4 text-sm font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({...addTimeData, endTime: e.target.value})} />
+                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">End</label>
+                            <input type="time" className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[11px] font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({...addTimeData, endTime: e.target.value})} />
                         </div>
                     </div>
-                    <div className="flex justify-end pt-4">
-                        <button onClick={handleManualAddTime} className="px-10 py-3 bg-primary text-white rounded-xl text-[11px] font-bold uppercase tracking-widest shadow-lg shadow-primary/20 hover:scale-[1.02] transition-all">Save Manual Entry</button>
+                    <div className="flex justify-end pt-2">
+                        <button onClick={handleManualAddTime} className="px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all">Submit Entry</button>
                     </div>
                 </div>
             </Modal>
@@ -479,8 +481,6 @@ function DailyView({ entries, selectedMember, toProperCase }: {
             
             if (new Date(s.started_at) < new Date(row.min_start)) row.min_start = s.started_at;
             
-            // Only update max_end if the new session is NOT active
-            // If any session is active, row.is_active becomes true and row.max_end effectively becomes 'Now'
             if (s.is_active) {
                 row.is_active = true;
             } else if (s.ended_at && (!row.max_end || new Date(s.ended_at) > new Date(row.max_end))) {
@@ -492,7 +492,6 @@ function DailyView({ entries, selectedMember, toProperCase }: {
 
         if (selectedMember !== 'all') return day.sessions;
 
-        // For All Members view, return aggregated users (both active and inactive)
         return Object.values(userMap)
             .map(row => ({
                 ...row,
@@ -503,7 +502,7 @@ function DailyView({ entries, selectedMember, toProperCase }: {
             }));
     }, [day, selectedMember]);
 
-    if (!day) return <div className="flex flex-col items-center justify-center h-64"><EmptyState title="No entries found for this date" /></div>;
+    if (!day) return <div className="flex flex-col items-center justify-center h-64"><EmptyState title="No entries found" /></div>;
 
     const renderTimeDisplay = (s: any) => {
         const startTime = s.isAggregated ? s.min_start : s.started_at;
@@ -512,25 +511,29 @@ function DailyView({ entries, selectedMember, toProperCase }: {
 
         const start = new Date(startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase();
         
-        if (active) {
-            return `${start} – Now`;
-        }
+        if (active) return `${start} – Now`;
         
         const end = endTime ? 
             new Date(endTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase() : 
-            'Unfinished'; // Should not happen with current logic but as fallback
+            '...';
             
         return `${start} – ${end}`;
     };
 
     return (
-        <div className="space-y-6">
-            <h2 className="text-xl font-bold text-slate-800">Total: {formatDuration(day.totalMinutes)}</h2>
-            <div className="relative h-2 bg-slate-100 rounded-full my-12">
-                <div className="absolute -top-6 left-0 w-full flex justify-between px-1 text-[10px] font-bold text-slate-300 uppercase tracking-tighter">
-                    <span style={{ left: '25%' }} className="absolute">6am</span>
-                    <span style={{ left: '50%' }} className="absolute">12pm</span>
-                    <span style={{ left: '75%' }} className="absolute">6pm</span>
+        <div className="space-y-8 pb-20">
+            <div className="flex items-center justify-between">
+                <div className="flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-slate-900 tabular-nums">{formatDuration(day.totalMinutes)}</span>
+                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Total tracked today</span>
+                </div>
+            </div>
+
+            <div className="relative h-2.5 bg-slate-100 rounded-full my-12 overflow-hidden shadow-inner">
+                <div className="absolute inset-0 flex justify-between px-4 text-[9px] font-bold text-slate-400/50 uppercase tracking-widest items-center z-0">
+                    <span className="w-px h-full bg-slate-200/50" style={{ left: '25%' }} />
+                    <span className="w-px h-full bg-slate-200/50" style={{ left: '50%' }} />
+                    <span className="w-px h-full bg-slate-200/50" style={{ left: '75%' }} />
                 </div>
                 {day.sessions.map((s, i) => {
                     const d = new Date(s.started_at);
@@ -539,57 +542,53 @@ function DailyView({ entries, selectedMember, toProperCase }: {
                     const duration = s.duration_mins || 0;
                     const width = (duration / 1440) * 100;
                     return (
-                        <div key={i} className="absolute inset-y-0 bg-emerald-500 rounded-full" style={{ left: `${left}%`, width: `${Math.max(width, 0.5)}%` }} />
+                        <div key={i} className="absolute inset-y-0 bg-primary/80 rounded-full z-10 shadow-sm" style={{ left: `${left}%`, width: `${Math.max(width, 0.4)}%` }} />
                     );
                 })}
             </div>
-            <div className="bg-white border-t border-slate-50 overflow-x-auto">
+
+            <div className="bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
-                        <tr className="border-b border-slate-100">
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Project</th>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center">Activity</th>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center">Idle</th>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center">Manual</th>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-center">Duration</th>
-                            <th className="p-4 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Time</th>
+                        <tr className="bg-slate-50/50">
+                            <th className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Scope & Member</th>
+                            <th className="py-4 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Score</th>
+                            <th className="py-4 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Idle</th>
+                            <th className="py-4 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Duration</th>
+                            <th className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Window</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-50">
+                    <tbody className="divide-y divide-slate-100">
                         {displayRows.map((s, idx) => (
                             <tr key={idx} className="group hover:bg-slate-50/50 transition-all">
-                                <td className="p-4">
+                                <td className="py-5 px-8">
                                     <div className="flex flex-col">
-                                        <span className="text-[13px] font-bold text-slate-700 uppercase tracking-tight">{s.project_name}</span>
-                                        <span className={clsx(
-                                            "text-[11px] font-medium text-slate-400",
-                                            s.user_name?.includes('@') && "variant-caps-small-caps lowercase"
-                                        )}>
-                                            {s.user_name ? toProperCase(s.user_name) : 'Unknown User'}
+                                        <span className="text-[12px] font-bold text-slate-900 uppercase tracking-tight">{s.project_name}</span>
+                                        <span className="text-[11px] font-bold text-slate-400 group-hover:text-primary transition-colors">
+                                            {s.user_name ? toProperCase(s.user_name) : 'Unknown'}
                                         </span>
                                     </div>
                                 </td>
-                                <td className="p-4 text-center">
-                                    <div className="flex flex-col items-center gap-1">
-                                        <span className="text-[13px] font-bold text-slate-800">{s.activity_percent}%</span>
-                                        <div className="w-12 h-1 bg-slate-100 rounded-full overflow-hidden">
-                                            <div className="h-full bg-emerald-500" style={{ width: `${s.activity_percent}%` }} />
+                                <td className="py-5 px-4 text-center">
+                                    <div className="flex flex-col items-center gap-1.5">
+                                        <span className="text-[12px] font-bold text-slate-700 tabular-nums">{s.activity_percent}%</span>
+                                        <div className="w-10 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                            <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${s.activity_percent}%` }} />
                                         </div>
                                     </div>
                                 </td>
-                                <td className="p-4 text-center text-[13px] font-medium text-slate-400">{s.idle_percent}%</td>
-                                <td className="p-4 text-center text-[13px] font-medium text-slate-400">{s.manual_percent || 0}%</td>
-                                <td className="p-4 text-center text-[14px] font-bold text-slate-800">{formatDuration(s.duration_mins || 0)}</td>
-                                <td className="p-4 text-[12px] font-medium text-slate-500 italic">
-                                    <div className="flex flex-col">
-                                        <span>
+                                <td className="py-5 px-4 text-center text-[12px] font-bold text-slate-400 tabular-nums">{s.idle_percent}%</td>
+                                <td className="py-5 px-4 text-center text-[14px] font-bold text-slate-900 tabular-nums">{formatDuration(s.duration_mins || 0)}</td>
+                                <td className="py-5 px-8 text-right">
+                                    <div className="flex flex-col items-end">
+                                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest tabular-nums">
                                             {renderTimeDisplay(s)}
                                         </span>
-                                        {s.offline_mins && s.offline_mins > 0 ? (
-                                            <span className="text-[10px] text-slate-400 not-italic font-bold mt-1">
-                                                ({s.offline_mins} minutes tracked offline)
+                                        {s.offline_mins > 0 && (
+                                            <span className="text-[9px] text-primary font-bold uppercase tracking-tighter mt-0.5">
+                                                +{s.offline_mins}m offline
                                             </span>
-                                        ) : null}
+                                        )}
                                     </div>
                                 </td>
                             </tr>
@@ -603,14 +602,16 @@ function DailyView({ entries, selectedMember, toProperCase }: {
 
 function WeeklyView({ entries, onNavigate }: { entries: DailyEntry[], onNavigate: (d: string) => void }) {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-6">
             {entries.map((day, i) => (
-                <div key={i} className="bg-slate-50/50 border border-slate-100 rounded-2xl p-6 flex flex-col items-center gap-4 hover:bg-white hover:shadow-xl transition-all cursor-pointer group" onClick={() => onNavigate(day.date)}>
+                <div key={i} className="bg-white border border-slate-200 rounded-[24px] p-6 flex flex-col items-center gap-4 hover:border-primary/30 hover:shadow-lg hover:shadow-slate-200/40 transition-all cursor-pointer group" onClick={() => onNavigate(day.date)}>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{DAYS_SHORT[new Date(day.date + 'T12:00:00').getDay()]}</span>
-                    <span className="text-xl font-bold text-slate-800 group-hover:text-primary transition-colors">{new Date(day.date + 'T12:00:00').getDate()}</span>
-                    <div className="flex flex-col items-center">
-                        <span className="text-[13px] font-bold text-slate-600">{formatDuration(day.totalMinutes)}</span>
-                        <span className="text-[10px] font-medium text-emerald-500">{day.activityPercent}%</span>
+                    <span className="text-2xl font-bold text-slate-900 group-hover:text-primary transition-colors tabular-nums">{new Date(day.date + 'T12:00:00').getDate()}</span>
+                    <div className="flex flex-col items-center gap-1">
+                        <span className="text-[13px] font-bold text-slate-700 tabular-nums">{formatDuration(day.totalMinutes)}</span>
+                        {day.totalMinutes > 0 && (
+                            <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-lg">{day.activityPercent}%</span>
+                        )}
                     </div>
                 </div>
             ))}
@@ -620,20 +621,27 @@ function WeeklyView({ entries, onNavigate }: { entries: DailyEntry[], onNavigate
 
 function CalendarView({ entries }: { entries: DailyEntry[] }) {
     return (
-        <div className="grid grid-cols-7 gap-px bg-slate-100 border border-slate-100 rounded-2xl overflow-hidden">
-            {DAYS_SHORT.map(d => (
-                <div key={d} className="bg-white p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">{d}</div>
-            ))}
-            {entries.map((day, i) => (
-                <div key={i} className="bg-white min-h-[120px] p-4 flex flex-col gap-2 hover:bg-slate-50 transition-all">
-                    <span className="text-sm font-bold text-slate-400">{new Date(day.date + 'T12:00:00').getDate()}</span>
-                    {day.totalMinutes > 0 && (
-                        <div className="bg-emerald-500 text-white rounded-lg p-2 flex flex-col gap-1">
-                            <span className="text-[11px] font-bold">{formatDuration(day.totalMinutes)}</span>
-                        </div>
-                    )}
-                </div>
-            ))}
+        <div className="bg-white border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
+            <div className="grid grid-cols-7 border-b border-slate-100">
+                {DAYS_SHORT.map(d => (
+                    <div key={d} className="bg-slate-50/50 p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">{d}</div>
+                ))}
+            </div>
+            <div className="grid grid-cols-7 gap-px bg-slate-100">
+                {entries.map((day, i) => (
+                    <div key={i} className="bg-white min-h-[140px] p-4 flex flex-col gap-3 hover:bg-slate-50 transition-all group">
+                        <span className="text-[11px] font-bold text-slate-400 group-hover:text-slate-900 transition-colors">{new Date(day.date + 'T12:00:00').getDate()}</span>
+                        {day.totalMinutes > 0 && (
+                            <div className="bg-primary/5 border border-primary/10 text-primary rounded-xl p-3 flex flex-col gap-1.5 shadow-sm">
+                                <span className="text-[12px] font-bold tabular-nums">{formatDuration(day.totalMinutes)}</span>
+                                <div className="w-full h-1 bg-primary/10 rounded-full overflow-hidden">
+                                    <div className="h-full bg-primary" style={{ width: `${day.activityPercent}%` }} />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
