@@ -13,6 +13,8 @@ export interface KpiCardProps {
     variant?: 'positive' | 'negative' | 'neutral';
     /** Loading state */
     loading?: boolean;
+    /** Optional className */
+    className?: string;
 }
 
 export function KpiCard({
@@ -23,6 +25,7 @@ export function KpiCard({
     trend,
     variant,
     loading = false,
+    className,
 }: KpiCardProps) {
     const isPositive = trend !== undefined && trend >= 0;
     
@@ -36,7 +39,7 @@ export function KpiCard({
             : 'bg-black/5 text-text-muted border-black/5';
 
     return (
-        <div className="bg-white border border-slate-100 shadow-sm rounded-[1.5rem] p-6 flex flex-col relative overflow-hidden group transition-all duration-500 hover:shadow-xl hover:-translate-y-1">
+        <div className={clsx("bg-white border border-slate-100 shadow-sm rounded-[1.5rem] p-6 flex flex-col relative overflow-hidden group transition-all duration-500 hover:shadow-xl hover:-translate-y-1", className)}>
             {/* Subtle premium glow effect behind icon */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-50 transition-opacity duration-500 group-hover:opacity-100 mix-blend-multiply" />
             

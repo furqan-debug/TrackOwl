@@ -21,18 +21,22 @@ export function EmptyState({
 }: EmptyStateProps) {
     return (
         <div
-            className={`flex flex-col items-center justify-center gap-4 text-center py-16 ${className}`}
+            className={`flex flex-col items-center justify-center gap-6 text-center py-20 px-6 ${className}`}
         >
-            <div className="w-16 h-16 rounded-[24px] bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 mb-2">
-                {icon ?? <Inbox className="w-7 h-7" aria-hidden />}
+            <div className="relative">
+                {/* Subtle background glow */}
+                <div className="absolute inset-0 bg-primary/10 blur-2xl rounded-full scale-150 opacity-50" />
+                <div className="relative w-20 h-20 rounded-[28px] bg-white border border-slate-100 flex items-center justify-center text-slate-300 shadow-sm">
+                    {icon ?? <Inbox className="w-8 h-8 opacity-40" aria-hidden />}
+                </div>
             </div>
-            <div className="space-y-1">
-                <p className="text-base font-bold text-slate-900 leading-tight">{title || 'No Information Available'}</p>
+            <div className="space-y-2 relative z-10">
+                <p className="text-lg font-bold text-slate-900 tracking-tight leading-none">{title || 'Data Unavailable'}</p>
                 {description && (
-                    <p className="text-sm text-slate-500 max-w-xs mx-auto font-medium">{description}</p>
+                    <p className="text-[13px] text-slate-500 max-w-sm mx-auto font-medium leading-relaxed opacity-80">{description}</p>
                 )}
             </div>
-            {action && <div className="mt-4">{action}</div>}
+            {action && <div className="mt-4 relative z-10">{action}</div>}
         </div>
     );
 }

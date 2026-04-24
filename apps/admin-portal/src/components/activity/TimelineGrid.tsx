@@ -30,22 +30,22 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
 
     return (
         <div className="space-y-12">
-            <div className="grid grid-cols-1 gap-10">
+            <div className="grid grid-cols-1 gap-12">
                 {hourGroups.map(([hour, hourBlocks]) => (
                     <div key={hour} className="group relative">
-                        <div className="flex items-start gap-8">
+                        <div className="flex items-start gap-10">
                             {/* Time Pillar */}
-                            <div className="w-20 pt-1 border-r border-slate-100 flex flex-col items-end pr-8 shrink-0">
-                                <span className="text-[14px] font-black text-slate-900 tabular-nums leading-none">
+                            <div className="w-24 pt-2 border-r border-slate-100 flex flex-col items-end pr-10 shrink-0">
+                                <span className="text-[18px] font-bold text-slate-900 tabular-nums leading-none tracking-tight">
                                     {hour.toString().padStart(2, '0')}:00
                                 </span>
-                                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-tighter mt-1">
+                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mt-2">
                                     {hour < 12 ? 'AM' : 'PM'}
                                 </span>
                             </div>
                             
                             {/* Activity Blocks */}
-                            <div className="flex-1 grid grid-cols-6 gap-3 min-h-[56px]">
+                            <div className="flex-1 grid grid-cols-6 gap-4 min-h-[72px]">
                                 {[0, 1, 2, 3, 4, 5].map(index => {
                                     const blockStartMin = index * 10;
                                     const block = hourBlocks.find(b => parseInt(b.startTime.split(':')[1]) === blockStartMin);
@@ -57,26 +57,26 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
                                         <div 
                                             key={index}
                                             className={clsx(
-                                                "relative rounded-xl transition-all duration-300 flex flex-col items-center justify-center group/block overflow-hidden shadow-sm",
-                                                !hasData ? "bg-slate-50 border border-slate-100 border-dashed" : getBlockStyle(intensity)
+                                                "relative rounded-[20px] transition-all duration-500 flex flex-col items-center justify-center group/block overflow-hidden shadow-sm border",
+                                                !hasData ? "bg-slate-50/50 border-slate-100 border-dashed" : getBlockStyle(intensity)
                                             )}
                                         >
                                             {hasData && (
                                                 <>
-                                                    <span className="text-[12px] font-black text-white leading-none z-10 transition-transform group-hover/block:scale-110">
+                                                    <span className="text-[13px] font-bold text-white leading-none z-10 transition-transform group-hover/block:scale-125 duration-500">
                                                         {intensity}%
                                                     </span>
-                                                    <span className="text-[8px] font-bold text-white/60 uppercase tracking-tighter mt-1 z-10 opacity-0 group-hover/block:opacity-100 transition-opacity">
-                                                        {block.minutesTracked}m
+                                                    <span className="text-[8px] font-black text-white/50 uppercase tracking-[0.1em] mt-1.5 z-10 opacity-0 group-hover/block:opacity-100 translate-y-1 group-hover/block:translate-y-0 transition-all duration-500">
+                                                        {block.minutesTracked}m trace
                                                     </span>
                                                     {/* Background Glow */}
-                                                    <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/10 to-transparent pointer-events-none" />
+                                                    <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none opacity-50" />
                                                 </>
                                             )}
                                             
                                             {/* Tooltip HUD */}
                                             {hasData && (
-                                                <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[9px] font-bold px-2 py-1 rounded opacity-0 group-hover/block:opacity-100 transition-all pointer-events-none whitespace-nowrap z-20 shadow-xl border border-white/10 uppercase tracking-widest">
+                                                <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl opacity-0 group-hover/block:opacity-100 translate-y-2 group-hover/block:translate-y-0 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-2xl border border-white/10 uppercase tracking-widest">
                                                     {block.startTime} – {block.endTime}
                                                 </div>
                                             )}
@@ -93,8 +93,8 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
 }
 
 function getBlockStyle(percent: number): string {
-    if (percent === 0) return 'bg-slate-300 text-slate-500';
-    if (percent < 30) return 'bg-slate-900 text-white ring-1 ring-slate-800'; 
-    if (percent < 70) return 'bg-primary text-white shadow-[0_8px_20px_-8px_rgba(99,102,241,0.5)]';
-    return 'bg-indigo-600 text-white shadow-[0_8px_30px_-10px_rgba(79,70,229,0.7)]';
+    if (percent === 0) return 'bg-slate-300 border-slate-400/20 text-slate-500';
+    if (percent < 30) return 'bg-slate-900 border-slate-800 text-white shadow-lg'; 
+    if (percent < 70) return 'bg-primary border-primary/20 text-white shadow-glow-primary hover:shadow-elevated';
+    return 'bg-indigo-600 border-white/10 text-white shadow-[0_12px_40px_-12px_rgba(79,70,229,0.5)] hover:shadow-[0_20px_50px_-12px_rgba(79,70,229,0.7)]';
 }

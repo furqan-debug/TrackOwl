@@ -149,17 +149,19 @@ export function Projects() {
         <PageLayout
             maxWidth="full"
             title="Projects"
-            description="Manage your projects and see how much time is being spent on them."
+            description="Manage workspace projects, client allocations, and team assignments."
             actions={
                 <div className="flex items-center gap-4">
-                    <div className="flex bg-white border border-slate-200 rounded-lg p-1 shadow-sm">
+                    <div className="bg-white border border-slate-200 p-1 rounded-xl flex items-center shadow-sm">
                         {(['Active', 'Archived'] as ProjectStatus[]).map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => { setActiveTab(tab); setSelectedIds(new Set()); }}
                                 className={clsx(
-                                    "px-4 py-1.5 rounded-md text-[10px] font-black uppercase tracking-widest transition-all",
-                                    activeTab === tab ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
+                                    "px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all",
+                                    activeTab === tab 
+                                        ? "bg-slate-900 text-white shadow-sm" 
+                                        : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
                                 )}
                             >
                                 {tab}
@@ -167,92 +169,138 @@ export function Projects() {
                         ))}
                     </div>
                     {!isViewer && (
-                        <Button 
+                        <button 
                             onClick={() => navigate('/dashboard/projects/new')} 
-                            variant="primary" 
-                            className="shadow-sm px-6"
+                            className="h-10 px-6 bg-primary text-white rounded-xl font-bold text-[12px] shadow-sm hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"
                         >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Create Project
-                        </Button>
+                            <Plus className="w-4 h-4" />
+                            New Project
+                        </button>
                     )}
                 </div>
             }
         >
-            <div className="flex flex-col gap-6 pb-20">
+            <div className="flex flex-col gap-8 pb-20">
                 
-                {/* 📊 KPI Pulse */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <StatMetric icon={<Briefcase className="w-5 h-5" />} label="Total Projects" value={stats.total} sub={`${activeTab} projects`} />
-                    <StatMetric icon={<Building2 className="w-5 h-5" />} label="Clients" value={stats.uniqueClients} sub="Total clinical clients" />
-                    <StatMetric icon={<Check className="w-5 h-5" />} label="On Budget" value={`${projects.length - stats.overBudget}`} sub="Projects within time limits" />
-                </div>
+                {/* 📊 KPI Row: Operational Metrics */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <StatMetric 
+                        icon={<Briefcase className="w-4 h-4" />} 
+                        label="Total Projects" 
+                        value={stats.total} 
+                        sub={`${activeTab} status`} 
+                        accent="primary"
+                    />
+                    <StatMetric 
+                        icon={<Building2 className="w-4 h-4" />} 
+                        label="Active Clients" 
+                        value={stats.uniqueClients} 
+                        sub="Managed entities" 
+                        accent="amber"
+                    />
+                    <StatMetric 
+                        icon={<Check className="w-4 h-4" />} 
+                        label="In Budget" 
+                        value={`${projects.length - stats.overBudget}`} 
+                        sub="Operational health" 
+                        accent="emerald"
+                    />
+                    <StatMetric 
+                        icon={<Layers className="w-4 h-4" />} 
+                        label="Pending Tasks" 
+                        value={projects.reduce((acc, p) => acc + p.todoCount, 0)} 
+                        sub="Total deliverables" 
+                        accent="rose"
+                    />
                 </div>
 
-                {/* 🏗️ Project Ledger */}
-                <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col min-h-[600px]">
-                    <div className="px-8 py-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-50/30">
+                {/* 🏗️ Main Ledger */}
+                <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                    <div className="px-8 py-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white shrink-0">
                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-primary shadow-sm">
-                                <Search className="w-4 h-4 text-slate-400" />
-                            </div>
-                            <div className="relative group min-w-[320px]">
-                                <input
-                                    type="text"
-                                    placeholder="Search by name or client..."
+                            <div className="relative group/search w-[320px]">
+                                <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within/search:text-primary transition-colors" />
+                                <input 
+                                    type="text" 
+                                    placeholder="Search project or client..." 
                                     value={searchQuery}
                                     onChange={e => setSearchQuery(e.target.value)}
-                                    className="w-full bg-transparent border-none text-sm font-black text-slate-900 uppercase tracking-tight placeholder:text-slate-300 outline-none"
+                                    className="w-full bg-slate-50/50 border border-slate-200 rounded-xl pl-11 pr-5 py-2.5 text-[13px] font-medium focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner"
                                 />
                             </div>
+                            
+                            <button 
+                                onClick={() => fetchProjects(true)} 
+                                className={clsx(
+                                    "w-10 h-10 flex items-center justify-center border border-slate-200 rounded-xl transition-all",
+                                    refreshing ? "text-primary bg-primary/5" : "text-slate-400 hover:text-slate-900 hover:bg-slate-50"
+                                )}
+                            >
+                                <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
+                            </button>
                         </div>
 
                         <div className="flex items-center gap-3">
                             {selectedIds.size > 0 && (
-                                <div className="flex items-center gap-2 mr-2">
-                                    <span className="text-[10px] font-black text-primary uppercase tracking-widest px-3 py-1 bg-primary/5 rounded-lg border border-primary/10">
-                                        {selectedIds.size} Selected
-                                    </span>
-                                    <button 
-                                        onClick={handleBulkArchive}
-                                        className="p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 text-slate-600 transition-all shadow-sm"
-                                        title={activeTab === 'Active' ? 'Archive' : 'Restore'}
-                                    >
-                                        <Archive className="w-4 h-4" />
-                                    </button>
-                                </div>
+                                <button 
+                                    onClick={handleBulkArchive}
+                                    className="h-10 px-5 bg-slate-900 text-white rounded-xl text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 shadow-sm transition-all hover:brightness-110"
+                                >
+                                    <Archive className="w-4 h-4" />
+                                    {activeTab === 'Active' ? 'Archive' : 'Restore'} ({selectedIds.size})
+                                </button>
                             )}
-                            <button onClick={() => fetchProjects(true)} className={clsx("p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-all text-slate-500 shadow-sm", refreshing && "animate-spin text-primary")}>
-                                <RefreshCw className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-lg border border-emerald-100">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-[10px] font-bold uppercase tracking-widest">Online</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto flex-1">
+                    <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-slate-50/50 border-b border-slate-100">
-                                    <th className="pl-10 py-4 w-12">
-                                        <button onClick={toggleSelectAll} className={clsx("w-5 h-5 rounded border flex items-center justify-center transition-all", selectedIds.size === filteredProjects.length && filteredProjects.length > 0 ? "bg-primary border-primary text-white" : "bg-white border-slate-200 hover:border-slate-400")}>
+                                    <th className="pl-8 py-4 w-12">
+                                        <button 
+                                            onClick={toggleSelectAll} 
+                                            className={clsx(
+                                                "w-5 h-5 rounded-md border flex items-center justify-center transition-all", 
+                                                selectedIds.size === filteredProjects.length && filteredProjects.length > 0 
+                                                    ? "bg-slate-900 border-slate-900 text-white" 
+                                                    : "bg-white border-slate-300 hover:border-primary/40"
+                                            )}
+                                        >
                                             {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 && <Check className="w-3 h-3 stroke-[3]" />}
                                         </button>
                                     </th>
-                                    <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Project</th>
-                                    <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Teams & Tasks</th>
-                                    <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest text-center">Members</th>
-                                    <th className="px-8 py-4 text-[11px] font-black text-slate-400 uppercase tracking-widest">Budget Status</th>
-                                    <th className="pr-10 py-4 w-12"></th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Team</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Budget Utilization</th>
+                                    <th className="pr-8 py-4 w-12"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
                                 {filteredProjects.map(p => (
-                                    <ProjectRow key={p.id} project={p} isSelected={selectedIds.has(p.id)} onSelect={() => toggleSelect(p.id)} onEdit={() => navigate(`/dashboard/projects/${p.id}/edit`)} isViewer={isViewer} onRefresh={() => fetchProjects(true)} />
+                                    <ProjectRow 
+                                        key={p.id} 
+                                        project={p} 
+                                        isSelected={selectedIds.has(p.id)} 
+                                        onSelect={() => toggleSelect(p.id)} 
+                                        onEdit={() => navigate(`/dashboard/projects/${p.id}/edit`)} 
+                                        isViewer={isViewer} 
+                                        onRefresh={() => fetchProjects(true)} 
+                                    />
                                 ))}
                                 {filteredProjects.length === 0 && !loading && (
                                     <tr>
                                         <td colSpan={6} className="py-24">
-                                            <EmptyState icon={<Briefcase />} title="No projects detected" description="Initialize your first project to begin tracking resource allocation." />
+                                            <EmptyState 
+                                                icon={<Briefcase className="w-6 h-6" />} 
+                                                title="No Projects Found" 
+                                                description="Refine your search or create a new project to get started." 
+                                            />
                                         </td>
                                     </tr>
                                 )}
@@ -260,13 +308,12 @@ export function Projects() {
                         </table>
                     </div>
                 </div>
-
             </div>
         </PageLayout>
     );
 }
 
-function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer }: { project: Project; isSelected: boolean; onSelect: () => void; onEdit: () => void; onRefresh: () => void; isHeadsUp?: boolean; isViewer: boolean }) {
+function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer }: { project: Project; isSelected: boolean; onSelect: () => void; onEdit: () => void; onRefresh: () => void; isViewer: boolean }) {
     const [showMenu, setShowMenu] = useState(false);
     const dropRef = useRef<HTMLTableCellElement>(null);
 
@@ -284,7 +331,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
     }
 
     async function handleDelete() {
-        if (!confirm('Are you sure you want to delete this project? This cannot be undone.')) return;
+        if (!confirm('Delete this project?')) return;
         try {
             await supabase.from('projects').delete().eq('id', project.id);
             onRefresh();
@@ -297,98 +344,140 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
     const isOverBudget = limit > 0 && trackedHours > limit;
 
     return (
-        <tr className={clsx("group/row transition-all duration-200", isSelected ? "bg-slate-50/50" : "hover:bg-slate-50/30")}>
-            <td className="pl-10 py-6">
-                <button onClick={onSelect} className={clsx("w-5 h-5 rounded border flex items-center justify-center transition-all", isSelected ? "bg-primary border-primary text-white" : "bg-white border-slate-200 group-hover/row:border-slate-400")}>
+        <tr className={clsx(
+            "group/row transition-all", 
+            isSelected ? "bg-slate-50" : "hover:bg-slate-50/50"
+        )}>
+            <td className="pl-8 py-5">
+                <button 
+                    onClick={onSelect} 
+                    className={clsx(
+                        "w-5 h-5 rounded-md border flex items-center justify-center transition-all", 
+                        isSelected 
+                            ? "bg-slate-900 border-slate-900 text-white shadow-sm" 
+                            : "bg-white border-slate-300 group-hover/row:border-primary/40"
+                    )}
+                >
                     {isSelected && <Check className="w-3 h-3 stroke-[3]" />}
                 </button>
             </td>
-            <td className="px-8 py-6">
-                <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 rounded-xl border border-slate-200 flex items-center justify-center font-black text-lg shrink-0 shadow-sm transition-transform group-hover/row:scale-105" style={{ background: `linear-gradient(135deg, ${project.color}05 0%, ${project.color}20 100%)`, color: project.color, borderColor: `${project.color}30` }}>
+            <td className="px-6 py-5">
+                <div className="flex items-center gap-4">
+                    <div 
+                        className="w-12 h-12 rounded-xl border border-slate-100 flex items-center justify-center font-bold text-lg shrink-0 shadow-sm" 
+                        style={{ 
+                            backgroundColor: `${project.color}10`, 
+                            color: project.color,
+                            borderColor: `${project.color}20`
+                        }}
+                    >
                         {(project.name || 'P').charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                        <button onClick={onEdit} className="text-[14px] font-black text-slate-900 hover:text-primary transition-colors truncate block max-w-[200px] tracking-tight uppercase">
+                        <button 
+                            onClick={onEdit} 
+                            className="text-[14px] font-bold text-slate-900 hover:text-primary transition-all truncate block max-w-[240px] tracking-tight"
+                        >
                             {project.name}
                         </button>
                         <div className="flex items-center gap-2 mt-1">
-                            {project.client_name ? (
-                                <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{project.client_name}</span>
-                            ) : (
-                                <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest italic">Solo</span>
-                            )}
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                {project.client_name || 'Internal'}
+                            </span>
                             {project.billable && (
-                                <>
-                                    <div className="w-1 h-1 rounded-full bg-slate-200" />
-                                    <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Billable</span>
-                                </>
+                                <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 uppercase tracking-tight">Billable</span>
                             )}
                         </div>
                     </div>
                 </div>
             </td>
-            <td className="px-8 py-6">
-                <div className="flex flex-col gap-1.5">
+            <td className="px-6 py-5">
+                <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
-                        <Layers className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-[11px] font-black text-slate-700 uppercase tracking-tight">{project.teamCount} Teams</span>
+                        <span className="text-[12px] font-semibold text-slate-700">{project.teamCount} Teams</span>
                     </div>
-                    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest pl-5">{project.todoCount} Open Tasks</span>
+                    <span className="text-[10px] font-bold text-primary/70">{project.todoCount} Tasks</span>
                 </div>
             </td>
-            <td className="px-8 py-6 text-center">
+            <td className="px-6 py-5 text-center">
                 <div className="flex items-center justify-center -space-x-2">
                     {project.memberCount > 0 ? (
                         <>
                             {[0, 1, 2].slice(0, project.memberCount).map((_, i) => (
-                                <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[10px] font-black text-slate-500 shadow-sm">
-                                    <Users className="w-3.5 h-3.5" />
+                                <div 
+                                    key={i} 
+                                    className="w-8 h-8 rounded-lg border-2 border-white bg-slate-100 flex items-center justify-center text-slate-400 shadow-sm"
+                                >
+                                    <Users className="w-3 h-3" />
                                 </div>
                             ))}
                             {project.memberCount > 3 && (
-                                <div className="w-8 h-8 rounded-full border-2 border-white bg-primary flex items-center justify-center text-[9px] font-black text-white shadow-sm z-10">
+                                <div className="w-8 h-8 rounded-lg border-2 border-white bg-slate-900 flex items-center justify-center text-[9px] font-bold text-white shadow-sm">
                                     +{project.memberCount - 3}
                                 </div>
                             )}
                         </>
                     ) : (
-                        <div className="w-8 h-8 rounded-full border-2 border-dashed border-slate-200 flex items-center justify-center text-slate-300">
-                            <Plus className="w-3 h-3" />
-                        </div>
+                        <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">Unassigned</div>
                     )}
                 </div>
             </td>
-            <td className="px-8 py-6 min-w-[220px]">
+            <td className="px-6 py-5 min-w-[200px]">
                 <div className="flex flex-col gap-2">
                     <div className="flex justify-between items-end">
-                        <div className="flex items-center gap-1.5">
-                            <span className={clsx("text-sm font-black tracking-tight", isOverBudget ? "text-rose-500" : "text-slate-900")}>
-                                {trackedHours.toFixed(0)}h
+                        <div className="flex items-center gap-2">
+                            <span className={clsx("text-[14px] font-bold tracking-tight", isOverBudget ? "text-rose-500" : "text-slate-900")}>
+                                {trackedHours.toFixed(1)}h
                             </span>
-                            <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">/ {project.budget_limit || '∞'}h</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">/ {project.budget_limit || '∞'}</span>
                         </div>
-                        <span className="text-[10px] font-black text-slate-400">{progress.toFixed(0)}%</span>
+                        <span className={clsx("text-[10px] font-bold", isOverBudget ? "text-rose-500" : "text-slate-500")}>
+                            {progress.toFixed(0)}%
+                        </span>
                     </div>
-                    <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
-                        <div className={clsx("h-full transition-all duration-1000", isOverBudget ? "bg-rose-500" : "bg-primary")} style={{ width: `${progress}%` }} />
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                            className={clsx(
+                                "h-full transition-all duration-1000", 
+                                isOverBudget ? "bg-rose-500" : "bg-primary"
+                            )} 
+                            style={{ width: `${progress}%` }} 
+                        />
                     </div>
                 </div>
             </td>
-            <td className="pr-10 py-6 text-right relative" ref={dropRef}>
-                <button onClick={() => setShowMenu(!showMenu)} className="p-2 transition-all text-slate-300 hover:text-slate-600">
-                    <MoreHorizontal className="w-5 h-5" />
+            <td className="pr-8 py-5 text-right relative" ref={dropRef}>
+                <button 
+                    onClick={() => setShowMenu(!showMenu)} 
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-300 hover:text-slate-900 hover:bg-white hover:border hover:border-slate-200 transition-all"
+                >
+                    <MoreHorizontal className="w-4 h-4" />
                 </button>
                 {showMenu && (
-                    <div className="absolute right-10 top-14 w-48 bg-white border border-slate-200 shadow-2xl z-50 py-2 rounded-xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
-                        <button onClick={() => { setShowMenu(false); onEdit(); }} className="w-full px-5 py-2.5 text-left text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-50 flex items-center gap-3 transition-colors">
+                    <div className="absolute right-8 top-12 w-48 bg-white shadow-xl z-50 py-2 rounded-xl overflow-hidden border border-slate-200 text-left">
+                        <button 
+                            onClick={() => { setShowMenu(false); onEdit(); }} 
+                            className="w-full px-4 py-2 text-[11px] font-bold uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-primary flex items-center gap-3 transition-all"
+                        >
                             <ArrowUpRight className="w-3.5 h-3.5" /> Edit Project
                         </button>
-                        <button onClick={() => { if (!isViewer) { setShowMenu(false); handleArchive(); } }} className={clsx("w-full px-5 py-2.5 text-left text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-colors", isViewer ? "opacity-30 cursor-not-allowed" : "text-slate-600 hover:bg-slate-50")}>
+                        <button 
+                            onClick={() => { if (!isViewer) { setShowMenu(false); handleArchive(); } }} 
+                            className={clsx(
+                                "w-full px-4 py-2 text-[11px] font-bold uppercase tracking-widest flex items-center gap-3 transition-all", 
+                                isViewer ? "opacity-30 cursor-not-allowed" : "text-slate-600 hover:bg-slate-50"
+                            )}
+                        >
                             <Archive className="w-3.5 h-3.5" /> {project.status === 'Active' ? 'Archive' : 'Restore'}
                         </button>
-                        <div className="h-px bg-slate-50 my-1 mx-2" />
-                        <button onClick={() => { if (!isViewer) { setShowMenu(false); handleDelete(); } }} className={clsx("w-full px-5 py-2.5 text-left text-[10px] font-black uppercase tracking-widest flex items-center gap-3 transition-colors text-rose-500 hover:bg-rose-50", isViewer ? "opacity-30 cursor-not-allowed" : "")}>
+                        <div className="h-px bg-slate-100 my-1 mx-2" />
+                        <button 
+                            onClick={() => { if (!isViewer) { setShowMenu(false); handleDelete(); } }} 
+                            className={clsx(
+                                "w-full px-4 py-2 text-[11px] font-bold uppercase tracking-widest flex items-center gap-3 transition-all text-rose-500 hover:bg-rose-50", 
+                                isViewer ? "opacity-30 cursor-not-allowed" : ""
+                            )}
+                        >
                             <Trash2 className="w-3.5 h-3.5" /> Delete
                         </button>
                     </div>
