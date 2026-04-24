@@ -1,4 +1,4 @@
-import { Camera, ShieldCheck, Maximize2 } from 'lucide-react';
+import { Camera, ShieldCheck } from 'lucide-react';
 import { EmptyState } from '../ui';
 import { SecureImage } from '../ui/SecureImage';
 
