@@ -58,7 +58,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
                                             key={index}
                                             className={clsx(
                                                 "relative rounded-[20px] transition-all duration-500 flex flex-col items-center justify-center group/block overflow-hidden shadow-sm border",
-                                                !hasData ? "bg-slate-50/50 border-slate-100 border-dashed" : getBlockStyle(intensity)
+                                                !hasData ? "bg-black border-slate-900 border-dashed" : getBlockStyle(intensity)
                                             )}
                                         >
                                             {hasData && (
@@ -93,8 +93,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
 }
 
 function getBlockStyle(percent: number): string {
-    if (percent === 0) return 'bg-slate-300 border-slate-400/20 text-slate-500';
-    if (percent < 30) return 'bg-slate-900 border-slate-800 text-white shadow-lg'; 
-    if (percent < 70) return 'bg-primary border-primary/20 text-white shadow-glow-primary hover:shadow-elevated';
-    return 'bg-indigo-600 border-white/10 text-white shadow-[0_12px_40px_-12px_rgba(79,70,229,0.5)] hover:shadow-[0_20px_50px_-12px_rgba(79,70,229,0.7)]';
+    if (percent <= 20) return 'bg-red-600 border-red-700 text-white shadow-lg'; 
+    if (percent <= 50) return 'bg-sky-500 border-sky-400 text-white shadow-glow-primary';
+    return 'bg-blue-700 border-blue-800 text-white shadow-lg';
 }
