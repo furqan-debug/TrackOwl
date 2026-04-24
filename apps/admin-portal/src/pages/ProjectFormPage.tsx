@@ -3,14 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { 
-    Save, Check,
+    Check,
     Layout, Users, Target, Info, Clock,
     ChevronDown, Search, RefreshCw
 } from 'lucide-react';
 import { 
     PageLayout, 
     LoadingState,
-    StatusBadge
 } from '../components/ui';
 import clsx from 'clsx';
 

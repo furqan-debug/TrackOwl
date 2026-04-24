@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
-    Calendar as CalendarIcon, ChevronLeft, ChevronRight,
+    ChevronLeft, ChevronRight,
     Palmtree, AlertCircle, Info, RefreshCw
 } from 'lucide-react';
 import { PageLayout, LoadingState } from '../components/ui';
