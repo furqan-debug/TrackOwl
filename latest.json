@@ -1,11 +1,11 @@
 {
-  "version": "1.2.3",
-  "notes": "Trackora v1.2.3 - Login and project assignment stability fixes, enforced quit-on-close behavior to ensure session synchronization.",
-  "pub_date": "2026-04-22T19:14:11.087Z",
+  "version": "1.2.4",
+  "notes": "Trackora v1.2.4 - Performance and Stability Release: Single-instance protection, optimized input tracking, and fixed auto-updater progress reporting.",
+  "pub_date": "2026-04-23T20:20:34.152Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajhqS1IzQWQyTnRkWEZ6UmI2UHptcUpWMHF2eVNDTE1DV3JWYVd4UENma3JpNGg3STZrMGNDVzB0ZENQREo0WDBDR1N5Tmp6NGphdXhQMXUvVC81OGdVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2ODg1MjUwCWZpbGU6VHJhY2tvcmFfMS4yLjNfeDY0LXNldHVwLmV4ZQpQakRkSTdpQ0NVT1AwQ1JDQ09YaXdJQStSVG1WMGZpaGxrZ0VSMjdMRytmb0s1dkx2NnBiVFpWNmh0L1BaNnMyLzlFWEFJS2tqTDNmQjBKTWk0cFZCQT09Cg==",
-      "url": "https://github.com/furqan-debug/Trackora/releases/download/v1.2.3/Trackora_1.2.3_x64-setup.exe"
+      "signature": "Your file was signed successfully, You can find the signature here:\nC:\\Users\\Furqan\\DigiReps\\DigiReps Tracker\\src-tauri\\target\\release\\bundle\\nsis\\Trackora_1.2.4_x64-setup.exe.sig\n\nPublic signature:\ndW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajlNMU1aMDROQjBxUGdWaXUxZHVoT3NvYUdha1JQSEhobVpQVVpqdVBwaEdpQVp1d24wMUtWcS9GYlU2akZFRlQrVEVmcWVlUGk2MW9DdEF1N1hwOHdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2OTc1NjMzCWZpbGU6VHJhY2tvcmFfMS4yLjRfeDY0LXNldHVwLmV4ZQpoR054VkI0MXZDVVZnODVYZlJMUG9wbWRFeExXUGdqazRNZmdjTkppbU9lYXFQVVl2MnZRMVpMNkR6amV0K2kxbWQ5eTJ3K0UxczlTOWhMU1VVNEJBQT09Cg==\n\nMake sure to include this into the signature field of your update server.",
+      "url": "https://github.com/furqan-debug/Trackora/releases/download/v1.2.4/Trackora_1.2.4_x64-setup.exe"
     }
   }
 }
