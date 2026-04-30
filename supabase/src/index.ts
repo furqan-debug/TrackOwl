@@ -479,7 +479,10 @@ app.post('/api/members', requireAuth, async (req, res) => {
         const { data: inviteData, error: inviteError } = await db.auth.admin.generateLink({
             type: 'invite',
             email,
-            options: { redirectTo: `${adminPortalUrl}/accept-invite` }
+            options: { 
+                redirectTo: `${adminPortalUrl}/accept-invite`,
+                data: { organization_id: orgId }
+            }
         });
 
         if (inviteError) {
