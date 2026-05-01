@@ -42,7 +42,7 @@ export function Modal({
             }}
         >
             <div className={clsx(
-                "bg-white rounded-[32px] w-full shadow-2xl flex flex-col border border-border overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500",
+                "bg-surface rounded-[32px] w-full shadow-2xl flex flex-col border border-border overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500",
                 maxWidth
             )}
             onClick={(e) => e.stopPropagation()}
@@ -55,7 +55,7 @@ export function Modal({
                                 {title}
                             </h2>
                             {subtitle && (
-                                <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest font-mono">
+                                <p className="text-[10px] font-bold text-text-muted font-mono">
                                     {subtitle}
                                 </p>
                             )}

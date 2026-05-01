@@ -27,13 +27,13 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
     // If we have a profile and the role is 'User', they don't belong here.
     if (profile?.role === 'User') {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 text-center border border-slate-100">
+            <div className="min-h-screen bg-surface-hover flex items-center justify-center p-4">
+                <div className="bg-surface rounded-2xl shadow-xl w-full max-w-md p-8 text-center border border-border">
                     <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <span className="text-3xl">🚫</span>
                     </div>
-                    <h1 className="text-xl font-bold text-slate-900 mb-2">Admin Portal Access Restricted</h1>
-                    <p className="text-slate-500 text-sm mb-8">
+                    <h1 className="text-xl font-bold text-text-main mb-2">Admin Portal Access Restricted</h1>
+                    <p className="text-text-muted text-sm mb-8">
                         This portal is for Admins and Managers only. Please use the Trackora desktop app for tracking.
                     </p>
                     <button 
@@ -55,13 +55,13 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
     // 5. Handle cases where profile is missing/null (Identity failure)
     if (!profile && !loading) {
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 text-center border border-slate-100">
+            <div className="min-h-screen bg-surface-hover flex items-center justify-center p-4">
+                <div className="bg-surface rounded-2xl shadow-xl w-full max-w-md p-8 text-center border border-border">
                     <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <span className="text-3xl">⚠️</span>
                     </div>
-                    <h1 className="text-xl font-bold text-slate-900 mb-2">Profile Not Found</h1>
-                    <p className="text-slate-500 text-sm mb-8">
+                    <h1 className="text-xl font-bold text-text-main mb-2">Profile Not Found</h1>
+                    <p className="text-text-muted text-sm mb-8">
                         We couldn't find a management profile for your account. Please ensure your administrator has added you as an Admin or Viewer.
                     </p>
                     <button 
@@ -78,13 +78,13 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
     if (roles && profile && !roles.includes(profile.role)) {
         // Specific route role restriction
         return (
-            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-                <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 text-center border border-slate-100">
+            <div className="min-h-screen bg-surface-hover flex items-center justify-center p-4">
+                <div className="bg-surface rounded-2xl shadow-xl w-full max-w-md p-8 text-center border border-border">
                     <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
                         <span className="text-3xl">🚫</span>
                     </div>
-                    <h1 className="text-xl font-bold text-slate-900 mb-2">Access Denied</h1>
-                    <p className="text-slate-500 text-sm mb-8">
+                    <h1 className="text-xl font-bold text-text-main mb-2">Access Denied</h1>
+                    <p className="text-text-muted text-sm mb-8">
                         You do not have permission to view this specific page.
                     </p>
                     <button 

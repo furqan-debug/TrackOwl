@@ -183,12 +183,12 @@ export function Approvals() {
                 description="Review and approve tracked time for payroll"
                 icon={<CheckCircle className="w-8 h-8 text-primary" />}
                 actions={
-                    <div className="flex items-center gap-1 bg-surface-solid border border-border rounded-xl p-1 shadow-sm">
+                    <div className="flex items-center gap-1 bg-surface-solid border border-border rounded-xl p-1 shadow-shell-sm">
                         <button onClick={previousWeek} className="p-2 hover:bg-black/[0.03] rounded-lg transition-all text-text-muted hover:text-primary group">
                             <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" strokeWidth={3} />
                         </button>
                         <div className="px-6 flex items-center justify-center min-w-[200px]">
-                            <span className="text-[11px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono">
+                            <span className="text-[11px] font-bold text-text-primary tracking-[0.2em] font-mono">
                                 {monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                             </span>
                         </div>
@@ -209,7 +209,7 @@ export function Approvals() {
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
-                                    className={`pb-4 text-[10px] font-bold uppercase tracking-[0.2em] transition-all relative font-mono ${activeTab === tab ? 'text-primary' : 'text-text-muted hover:text-text-primary'}`}
+                                    className={`pb-4 text-[10px] font-bold tracking-[0.2em] transition-all relative font-mono ${activeTab === tab ? 'text-primary' : 'text-text-muted hover:text-text-primary'}`}
                                 >
                                     <div className="flex items-center gap-3">
                                         {tab}
@@ -230,17 +230,17 @@ export function Approvals() {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-surface-subtle/30 border-b border-border">
-                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Member</th>
-                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Pay Rate</th>
-                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Tracked Time</th>
-                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Total Amount</th>
-                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono text-right">Actions</th>
+                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted tracking-[0.3em] font-mono">Member</th>
+                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted tracking-[0.3em] font-mono">Pay Rate</th>
+                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted tracking-[0.3em] font-mono">Tracked Time</th>
+                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted tracking-[0.3em] font-mono">Total Amount</th>
+                                    <th className="px-10 py-8 text-[11px] font-bold text-text-muted tracking-[0.3em] font-mono text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/40">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={5} className="px-10 py-12 text-center text-text-muted font-mono text-[11px] tracking-widest uppercase">
+                                        <td colSpan={5} className="px-10 py-12 text-center text-text-muted font-mono text-[11px] ">
                                             Loading timesheets...
                                         </td>
                                     </tr>
@@ -251,7 +251,7 @@ export function Approvals() {
                                                 <div className="w-14 h-14 bg-surface-subtle rounded-2xl flex items-center justify-center border border-border">
                                                     <Clock className="w-6 h-6 text-text-muted opacity-50" />
                                                 </div>
-                                                <p className="text-[11px] font-mono font-bold uppercase tracking-widest opacity-80">No {activeTab.toLowerCase()} timesheets for this week</p>
+                                                <p className="text-[11px] font-mono font-bold opacity-80">No {activeTab.toLowerCase()} timesheets for this week</p>
                                             </div>
                                         </td>
                                     </tr>
@@ -269,12 +269,12 @@ export function Approvals() {
                                         <tr key={ts.id} className="hover:bg-primary/[0.01] transition-all group duration-500">
                                             <td className="px-10 py-8">
                                                 <div className="flex items-center gap-5">
-                                                    <div className="w-12 h-12 rounded-2xl bg-surface-subtle border border-border flex items-center justify-center text-text-primary font-bold text-[12px] group-hover:bg-primary group-hover:text-white group-hover:border-primary/20 transition-all duration-500 font-mono shadow-sm">
+                                                    <div className="w-12 h-12 rounded-2xl bg-surface-subtle border border-border flex items-center justify-center text-text-primary font-bold text-[12px] group-hover:bg-primary group-hover:text-white group-hover:border-primary/20 transition-all duration-500 font-mono shadow-shell-sm">
                                                         {ts.full_name.charAt(0).toUpperCase()}
                                                     </div>
                                                     <div className="flex flex-col">
                                                         <span className="font-bold text-text-primary text-[15px] tracking-tight group-hover:text-primary transition-colors duration-500">{ts.full_name}</span>
-                                                        <span className="text-[10px] text-text-muted font-mono tracking-wider opacity-60 mt-1">{ts.email}</span>
+                                                        <span className="text-[10px] text-text-muted font-mono opacity-60 mt-1">{ts.email}</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -284,9 +284,9 @@ export function Approvals() {
                                                 </span>
                                             </td>
                                             <td className="px-10 py-8">
-                                                <span className="inline-flex items-center gap-3 px-4 py-2 bg-surface-subtle border border-border rounded-xl shadow-sm">
+                                                <span className="inline-flex items-center gap-3 px-4 py-2 bg-surface-subtle border border-border rounded-xl shadow-shell-sm">
                                                     <Clock className="w-4 h-4 text-primary" />
-                                                    <span className="font-bold text-text-primary text-[11px] uppercase font-mono italic tracking-tight">{formatHours(ts.total_hours)}</span>
+                                                    <span className="font-bold text-text-primary text-[11px] font-mono italic tracking-tight">{formatHours(ts.total_hours)}</span>
                                                 </span>
                                             </td>
                                             <td className="px-10 py-8">
@@ -299,14 +299,14 @@ export function Approvals() {
                                                     <div className="flex items-center justify-end gap-3">
                                                         <button
                                                             onClick={() => handleAction(ts.id, 'Rejected')}
-                                                            className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-rose-600 hover:bg-rose-50 border border-rose-200 rounded-xl transition-colors shadow-sm font-mono"
+                                                            className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-bold text-rose-500 hover:bg-rose-50 border border-rose-200 rounded-xl transition-colors shadow-shell-sm font-mono"
                                                         >
                                                             <XCircle className="w-4 h-4" />
                                                             Reject
                                                         </button>
                                                         <button
                                                             onClick={() => handleAction(ts.id, 'Approved')}
-                                                            className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition-colors shadow-sm font-mono"
+                                                            className="flex items-center gap-1.5 px-4 py-2 text-[10px] font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition-colors shadow-shell-sm font-mono"
                                                         >
                                                             <CheckCircle className="w-4 h-4" />
                                                             Approve
@@ -314,13 +314,13 @@ export function Approvals() {
                                                     </div>
                                                 )}
                                                 {activeTab === 'Approved' && (
-                                                    <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 shadow-sm font-mono italic">
+                                                    <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-[10px] font-bold tracking-[0.2em] text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 shadow-shell-sm font-mono italic">
                                                         <CheckCircle className="w-4 h-4" />
                                                         Approved
                                                     </span>
                                                 )}
                                                 {activeTab === 'Rejected' && (
-                                                    <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-[0.2em] text-rose-600 bg-rose-500/10 border border-rose-500/20 shadow-sm font-mono italic">
+                                                    <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-[10px] font-bold tracking-[0.2em] text-rose-500 bg-rose-500/10 border border-rose-500/20 shadow-shell-sm font-mono italic">
                                                         <XCircle className="w-4 h-4" />
                                                         Rejected
                                                     </span>

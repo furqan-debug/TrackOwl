@@ -160,7 +160,7 @@ export function JobSites() {
                         <Button
                             onClick={() => navigate('/locations')}
                             variant="secondary"
-                            className="px-6 py-3.5 shadow-sm"
+                            className="px-6 py-3.5 shadow-shell-sm"
                         >
                             <Map className="w-4 h-4 mr-2" />
                             Global Map
@@ -189,7 +189,7 @@ export function JobSites() {
                 <StatsCard 
                     label="Stationed Members" 
                     value={sites.reduce((acc, s) => acc + s.assigned_members, 0)} 
-                    icon={<User className="w-5 h-5 text-emerald-600" strokeWidth={2.5} />} 
+                    icon={<User className="w-5 h-5 text-emerald-500" strokeWidth={2.5} />} 
                     description="Total field personnel"
                 />
                 <StatsCard 
@@ -210,7 +210,7 @@ export function JobSites() {
                             placeholder="Search site name or address identifier..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-13 pr-6 py-3.5 bg-surface-solid border border-border rounded-2xl text-[13px] font-bold text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono uppercase"
+                            className="w-full pl-13 pr-6 py-3.5 bg-surface-solid border border-border rounded-2xl text-[13px] font-bold text-text-primary placeholder:text-text-muted/40 outline-none focus:ring-4 focus:ring-primary/10 transition-all font-mono "
                         />
                     </div>
                     
@@ -220,8 +220,8 @@ export function JobSites() {
                                 key={s}
                                 onClick={() => setStatusFilter(s)}
                                 className={clsx(
-                                    "px-6 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all duration-300 font-mono",
-                                    statusFilter === s ? "bg-surface-solid text-primary shadow-sm border border-border" : "text-text-muted hover:text-text-primary"
+                                    "px-6 py-2.5 rounded-xl text-[10px] font-bold transition-all duration-300 font-mono",
+                                    statusFilter === s ? "bg-surface-solid text-primary shadow-shell-sm border border-border" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
                                 {s}
@@ -234,10 +234,10 @@ export function JobSites() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-surface-subtle/20">
-                                <th className="pl-12 pr-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border min-w-[350px]">Geographic Designation</th>
-                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border text-right">Geofence</th>
-                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border text-right">Stationed</th>
-                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-b border-border">Status</th>
+                                <th className="pl-12 pr-6 py-8 text-[11px] font-bold text-text-muted tracking-[0.3em] font-mono border-b border-border min-w-[350px]">Geographic Designation</th>
+                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted tracking-[0.3em] font-mono border-b border-border text-right">Geofence</th>
+                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted tracking-[0.3em] font-mono border-b border-border text-right">Stationed</th>
+                                <th className="px-6 py-8 text-[11px] font-bold text-text-muted tracking-[0.3em] font-mono border-b border-border">Status</th>
                                 <th className="pl-6 pr-12 py-8 text-right border-b border-border min-w-[150px]">Actions</th>
                             </tr>
                         </thead>
@@ -268,12 +268,12 @@ export function JobSites() {
                                     <tr key={site.id} className="hover:bg-primary/[0.01] transition-all group duration-500">
                                         <td className="px-12 py-8">
                                             <div className="flex items-center gap-6">
-                                                <div className="w-14 h-14 rounded-2xl bg-surface-solid border border-border flex items-center justify-center font-bold text-text-primary text-xl shadow-sm transition-all group-hover:scale-110 group-hover:rotate-3 group-hover:bg-primary group-hover:text-white group-hover:border-primary/20 font-mono italic shrink-0">
+                                                <div className="w-14 h-14 rounded-2xl bg-surface-solid border border-border flex items-center justify-center font-bold text-text-primary text-xl shadow-shell-sm transition-all group-hover:scale-110 group-hover:rotate-3 group-hover:bg-primary group-hover:text-white group-hover:border-primary/20 font-mono italic shrink-0">
                                                     <MapPin className="w-6 h-6" />
                                                 </div>
                                                 <div className="space-y-1 overflow-hidden">
                                                     <div className="font-bold text-text-primary text-lg tracking-tighter group-hover:text-primary transition-colors duration-500 italic truncate">{site.name}</div>
-                                                    <div className="text-[10px] font-bold text-text-muted uppercase tracking-[0.1em] font-mono opacity-60 flex items-center gap-2 truncate whitespace-nowrap">
+                                                    <div className="text-[10px] font-bold text-text-muted tracking-[0.1em] font-mono opacity-60 flex items-center gap-2 truncate whitespace-nowrap">
                                                         <Navigation className="w-3 h-3 shrink-0" />
                                                         {site.address}
                                                     </div>
@@ -299,7 +299,7 @@ export function JobSites() {
                                                     variant={site.status === 'Active' ? 'success' : 'default'}
                                                     className={clsx(
                                                         "px-5 py-2 transition-all font-mono italic",
-                                                        !isViewer && "cursor-pointer group-hover/toggle:scale-110 active:scale-95 shadow-sm"
+                                                        !isViewer && "cursor-pointer group-hover/toggle:scale-110 active:scale-95 shadow-shell-sm"
                                                     )}
                                                 >
                                                     {site.status}
@@ -340,7 +340,7 @@ export function JobSites() {
                 </div>
 
                 <div className="p-10 bg-surface-subtle/30 border-t border-border flex flex-col md:flex-row items-center justify-between gap-6">
-                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-50 text-center md:text-left">
+                    <p className="text-[10px] font-bold text-text-muted tracking-[0.2em] font-mono opacity-50 text-center md:text-left">
                         Total {sites.length} operational sites monitored within the geofencing ecosystem.
                     </p>
                     {sites.length > 5 && (
@@ -383,7 +383,7 @@ export function JobSites() {
                     
                     <div className="space-y-4">
                         <div className="flex justify-between items-center mb-1 px-1">
-                            <label className="text-[11px] font-bold text-text-muted uppercase tracking-[0.15em]">
+                            <label className="text-[11px] font-bold text-text-muted tracking-[0.15em]">
                                 Geofence Radius
                             </label>
                             <span className="text-[11px] font-bold text-primary font-mono bg-primary/5 px-3 py-1 rounded-lg">
@@ -399,7 +399,7 @@ export function JobSites() {
                             onChange={e => setFormData({ ...formData, radius: Number(e.target.value) })}
                             className="w-full h-2 bg-surface-subtle rounded-lg appearance-none cursor-pointer accent-primary"
                         />
-                        <div className="flex justify-between text-[9px] font-bold text-text-muted/40 uppercase tracking-widest font-mono">
+                        <div className="flex justify-between text-[9px] font-bold text-text-muted/40 font-mono">
                             <span>Precision (50m)</span>
                             <span>Wide (1000m)</span>
                         </div>
@@ -440,12 +440,12 @@ export function JobSites() {
                 >
                     <div className="text-center space-y-8">
                         <div className="w-24 h-24 bg-rose-500/10 rounded-[32px] flex items-center justify-center mx-auto shadow-inner border border-rose-500/10 rotate-3 group-hover:rotate-0 transition-transform">
-                            <Trash2 className="w-10 h-10 text-rose-600" strokeWidth={2.5} />
+                            <Trash2 className="w-10 h-10 text-rose-500" strokeWidth={2.5} />
                         </div>
                         <div className="space-y-4">
                             <p className="text-text-primary text-xl font-bold tracking-tight">Are you absolutely sure?</p>
-                            <p className="text-text-muted font-bold uppercase tracking-widest leading-relaxed text-[11px] font-mono opacity-80 px-4">
-                                This will permanently dissolve geofence <span className="text-rose-600">"{deletingSite.name.toUpperCase()}"</span>. Automated tracking for this area will be disabled.
+                            <p className="text-text-muted font-bold leading-relaxed text-[11px] font-mono opacity-80 px-4">
+                                This will permanently dissolve geofence <span className="text-rose-500">"{deletingSite.name.toUpperCase()}"</span>. Automated tracking for this area will be disabled.
                             </p>
                         </div>
                         <div className="flex gap-4 pt-4">
@@ -473,15 +473,15 @@ export function JobSites() {
 
 function StatsCard({ label, value, icon, description }: { label: string; value: number | string; icon: React.ReactNode; description: string }) {
     return (
-        <div className="bg-surface-solid p-10 rounded-[44px] border border-border hover:border-primary/20 transition-all group overflow-hidden relative shadow-sm hover:shadow-xl duration-700">
+        <div className="bg-surface-solid p-10 rounded-[44px] border border-border hover:border-primary/20 transition-all group overflow-hidden relative shadow-shell-sm hover:shadow-xl duration-700">
             <div className="absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-16 translate-x-16 group-hover:bg-primary/[0.03] transition-colors duration-1000" />
             <div className="flex items-center gap-6 mb-6">
-                <div className="w-12 h-12 rounded-[18px] bg-surface-subtle flex items-center justify-center border border-border shadow-sm group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
+                <div className="w-12 h-12 rounded-[18px] bg-surface-subtle flex items-center justify-center border border-border shadow-shell-sm group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
                     {icon}
                 </div>
                 <div>
-                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono mb-0.5">{label}</p>
-                    <p className="text-[9px] font-bold text-text-muted/40 uppercase tracking-widest font-mono italic">{description}</p>
+                    <p className="text-[10px] font-bold text-text-muted tracking-[0.3em] font-mono mb-0.5">{label}</p>
+                    <p className="text-[9px] font-bold text-text-muted/40 font-mono italic">{description}</p>
                 </div>
             </div>
             <h2 className="text-6xl font-bold text-text-primary tracking-tighter leading-none italic font-mono">{value}</h2>

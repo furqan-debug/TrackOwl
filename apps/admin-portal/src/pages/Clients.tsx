@@ -155,7 +155,7 @@ export function Clients() {
                     onClick={handleOpenCreate}
                     disabled={isViewer}
                     variant="primary"
-                    className="shadow-sm"
+                    className="shadow-shell-sm"
                 >
                     <Plus className="w-4 h-4 mr-2" />
                     Add Client
@@ -203,14 +203,14 @@ export function Clients() {
                         />
                     </div>
                     
-                    <div className="flex items-center bg-surface-solid border border-border rounded-lg p-1 shadow-sm">
+                    <div className="flex items-center bg-surface-solid border border-border rounded-lg p-1 shadow-shell-sm">
                         {['All', 'Active', 'Inactive'].map((s) => (
                             <button
                                 key={s}
                                 onClick={() => setStatusFilter(s)}
                                 className={clsx(
                                     "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
-                                    statusFilter === s ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text-primary"
+                                    statusFilter === s ? "bg-primary text-white shadow-shell-sm" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
                                 {s}
@@ -223,9 +223,9 @@ export function Clients() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-surface-subtle/20">
-                                <th className="pl-6 pr-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border min-w-[320px]">Client</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border">Email</th>
-                                <th className="px-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border">Status</th>
+                                <th className="pl-6 pr-6 py-4 text-xs font-semibold text-text-muted border-b border-border min-w-[320px]">Client</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-text-muted border-b border-border">Email</th>
+                                <th className="px-6 py-4 text-xs font-semibold text-text-muted border-b border-border">Status</th>
                                 <th className="pl-6 pr-6 py-4 text-right border-b border-border min-w-[150px]">Actions</th>
                             </tr>
                         </thead>
@@ -400,7 +400,7 @@ export function Clients() {
                     maxWidth="max-w-md"
                 >
                     <div className="text-center space-y-6">
-                        <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto border border-rose-100">
+                        <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto border border-rose-100">
                             <Trash2 className="w-8 h-8" />
                         </div>
                         <div className="space-y-2">
@@ -419,7 +419,7 @@ export function Clients() {
                             <Button
                                 onClick={handleDelete}
                                 variant="danger"
-                                className="flex-1 shadow-sm shadow-rose-100"
+                                className="flex-1 shadow-shell-sm shadow-rose-100"
                             >
                                 Delete Client
                             </Button>
@@ -439,7 +439,7 @@ function StatsCard({ label, value, icon, description }: { label: string; value: 
                     {icon}
                 </div>
                 <div>
-                    <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">{label}</h3>
+                    <h3 className="text-xs font-semibold text-text-muted ">{label}</h3>
                     <p className="text-[10px] text-text-muted/60">{description}</p>
                 </div>
             </div>

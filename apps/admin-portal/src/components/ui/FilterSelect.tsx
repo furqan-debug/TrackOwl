@@ -1,5 +1,5 @@
-import React from 'react';
-import { ChevronDown } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ChevronDown, Check } from 'lucide-react';
 import clsx from 'clsx';
 
 export interface FilterOption {
@@ -17,33 +17,68 @@ export interface FilterSelectProps {
 }
 
 export function FilterSelect({ icon, value, onChange, options, className, label }: FilterSelectProps) {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
     const activeLabel = options.find((o) => o.id === value)?.name || value;
-    
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     return (
-        <div className={clsx("relative group/select", className)}>
-            <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 shadow-sm hover:border-primary/50 cursor-pointer transition-colors h-full">
-                <div className="text-primary shrink-0">{icon}</div>
-                <div className="flex items-center gap-2">
+        <div ref={containerRef} className={clsx("relative", className)}>
+            <div 
+                onClick={() => setIsOpen(!isOpen)}
+                className={clsx(
+                    "flex items-center gap-3 px-4 py-2 cursor-pointer transition-all h-full rounded-xl select-none",
+                    isOpen 
+                        ? "bg-surface-hover border-[var(--border-hover)] shadow-inner" 
+                        : "bg-surface hover:bg-surface-hover hover:border-[var(--border-hover)] border border-border"
+                )}
+            >
+                <div className={clsx("shrink-0 transition-colors", isOpen ? "text-primary" : "text-text-muted")}>
+                    {icon}
+                </div>
+                <div className="flex items-center gap-2 flex-1">
                     {label && (
                         <>
-                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest shrink-0">{label}</span>
-                            <span className="text-slate-200 dark:text-slate-700">|</span>
+                            <span className="text-[10px] font-bold text-text-muted shrink-0">{label}</span>
+                            <span className="text-border">|</span>
                         </>
                     )}
-                    <span className="text-[11px] font-bold text-slate-900 dark:text-slate-100 min-w-[100px] truncate">{activeLabel}</span>
+                    <span className="text-[12px] font-bold text-text-main min-w-[80px] truncate">{activeLabel}</span>
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover/select:text-slate-600 transition-colors" strokeWidth={2.5} />
+                <ChevronDown 
+                    className={clsx("w-3.5 h-3.5 transition-transform duration-300", isOpen ? "text-primary rotate-180" : "text-text-muted")} 
+                    strokeWidth={2.5} 
+                />
             </div>
             
-            <select
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-            >
-                {options.map((o) => (
-                    <option key={o.id} value={o.id} className="bg-white text-slate-900">{o.name}</option>
-                ))}
-            </select>
+            {isOpen && (
+                <div className="absolute top-[calc(100%+8px)] left-0 min-w-[200px] w-full max-h-[300px] overflow-y-auto bg-main border border-border rounded-xl shadow-premium z-[100] p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                    {options.map((o) => (
+                        <div
+                            key={o.id}
+                            onClick={() => { onChange(o.id); setIsOpen(false); }}
+                            className={clsx(
+                                "flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all text-[12px] font-bold mb-0.5 last:mb-0",
+                                value === o.id 
+                                    ? "bg-primary/5 text-primary" 
+                                    : "text-text-main hover:bg-surface hover:text-text-main"
+                            )}
+                        >
+                            <span className="truncate pr-4">{o.name}</span>
+                            {value === o.id && <Check className="w-3.5 h-3.5 shrink-0" />}
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     );
 }

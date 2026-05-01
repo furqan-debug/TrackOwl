@@ -27,14 +27,14 @@ import {
     fetchAllActivitySamples
 } from '../lib/dataUtils';
 
-// Official Trackora Brand Palette
-const BRAND_PRIMARY = '#4066D3';
+// Official TrackOwl Brand Palette
+const BRAND_PRIMARY = 'var(--color-chart-main)';
 const CHART_COLORS = [
-    '#4066D3', // Brand Blue
-    '#597EE8',
-    '#7495FF',
-    '#8FB3FF',
-    '#A9D0FF'
+    'var(--color-chart-main)',
+    'var(--color-chart-highlight)',
+    'var(--color-chart-secondary)',
+    'var(--color-chart-4)',
+    'var(--color-chart-5)'
 ];
 
 const RANGES = ['Today', 'Yesterday', 'Last 7 Days', 'Last Week', 'Last 2 Weeks', 'This Month', 'Last Month', 'Custom'] as const;
@@ -403,10 +403,10 @@ export function Reports() {
             description="Detailed activity analytics and time distribution."
             actions={
                 <div className="flex items-center gap-3 w-full">
-                    <div className="flex items-center bg-white border border-slate-200 rounded-xl shadow-sm shrink-0 h-10">
+                    <div className="flex items-center bg-surface border border-border rounded-xl shadow-shell-sm shrink-0 h-10">
                         <button
                             onClick={() => shiftRange(-1)}
-                            className="p-2.5 hover:bg-slate-50 text-slate-400 hover:text-primary transition-all border-r border-slate-100 rounded-l-xl h-full"
+                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-primary transition-all border-r border-border rounded-l-xl h-full"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -414,12 +414,12 @@ export function Reports() {
                         <div className="relative group min-w-[100px]">
                             <div
                                 onClick={() => setShowRangeDropdown(!showRangeDropdown)}
-                                className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-slate-50 transition-all h-full"
+                                className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-surface-hover transition-all h-full"
                             >
-                                <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
-                                <span className="text-[11px] font-bold text-slate-900 uppercase tracking-widest">
+                                <CalendarIcon className="w-3.5 h-3.5 text-text-muted" />
+                                <span className="text-[11px] font-bold text-text-main ">
                                     {new Date(getDateRange().start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                    <span className="text-slate-300 mx-2">—</span>
+                                    <span className="text-text-muted mx-2">—</span>
                                     {new Date(getDateRange().end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </span>
                             </div>
@@ -444,7 +444,7 @@ export function Reports() {
 
                         <button
                             onClick={() => shiftRange(1)}
-                            className="p-2.5 hover:bg-slate-50 text-slate-400 hover:text-primary transition-all border-l border-slate-100 rounded-r-xl h-full"
+                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-primary transition-all border-l border-border rounded-r-xl h-full"
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>
@@ -452,7 +452,7 @@ export function Reports() {
 
                     <button
                         onClick={() => { setRange('Today'); setOffset(0); }}
-                        className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-600 hover:text-primary hover:bg-slate-50 transition-all shadow-sm uppercase tracking-widest h-10"
+                        className="px-4 py-2 bg-surface border border-border rounded-xl text-[11px] font-bold text-text-muted hover:text-primary hover:bg-surface-hover transition-all shadow-shell-sm h-10"
                     >
                         Today
                     </button>
@@ -481,30 +481,30 @@ export function Reports() {
             <div className="flex flex-col gap-8 pb-20">
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-                    <StatMetric icon={<Clock className="w-4 h-4" />} label="Time" value={formatDuration(totalMins)} sub="Worked" accent="primary" />
-                    <StatMetric icon={<ActivityIcon className="w-4 h-4" />} label="Activity" value={`${avgActivity}%`} sub="Score" accent="emerald" />
-                    <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Revenue" accent="amber" />
-                    <StatMetric icon={<Monitor className="w-4 h-4" />} label="Sessions" value={totalSessions.toString()} sub="Total" accent="primary" />
-                    <StatMetric icon={<Camera className="w-4 h-4" />} label="Captures" value={screenshotCount.toString()} sub="Proofs" accent="rose" />
-                    <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Expenses" accent="rose" />
+                    <StatMetric icon={<Clock className="w-4 h-4" />} label="Time" value={formatDuration(totalMins)} sub="Worked" accent="brown-gradient" />
+                    <StatMetric icon={<ActivityIcon className="w-4 h-4" />} label="Activity" value={`${avgActivity}%`} sub="Score" accent="brown-gradient" />
+                    <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Revenue" accent="brown-gradient" />
+                    <StatMetric icon={<Monitor className="w-4 h-4" />} label="Sessions" value={totalSessions.toString()} sub="Total" accent="brown-gradient" />
+                    <StatMetric icon={<Camera className="w-4 h-4" />} label="Captures" value={screenshotCount.toString()} sub="Proofs" accent="brown-gradient" />
+                    <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Expenses" accent="brown-gradient" />
                 </div>
 
                 {loading ? (
-                    <div className="h-[400px] flex items-center justify-center bg-white rounded-[24px] border border-slate-200">
+                    <div className="h-[400px] flex items-center justify-center bg-surface rounded-[24px] border border-border">
                         <LoadingState message="Loading..." />
                     </div>
                 ) : dailyActivity.length === 0 ? (
-                    <div className="h-[400px] flex items-center justify-center bg-white rounded-[24px] border border-slate-200 italic">
+                    <div className="h-[400px] flex items-center justify-center bg-surface rounded-[24px] border border-border italic">
                         <EmptyState title="No data found" description="Try adjusting filters." />
                     </div>
                 ) : (
                     <>
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                             <div className="lg:col-span-8">
-                                <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 p-8 h-full">
+                                <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border p-8 h-full">
                                     <div className="flex items-center justify-between mb-8">
-                                        <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest">Activity Trend</h3>
-                                        <TrendingUpIcon size={16} className="text-slate-300" />
+                                        <h3 className="text-[11px] font-bold text-text-main ">Activity Trend</h3>
+                                        <TrendingUpIcon size={16} className="text-text-muted" />
                                     </div>
                                     <div className="h-[320px] w-full">
                                         <ResponsiveContainer width="100%" height="100%">
@@ -546,8 +546,8 @@ export function Reports() {
                             </div>
 
                             <div className="lg:col-span-4 space-y-8">
-                                <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 p-8 h-full">
-                                    <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest mb-8">Top Apps</h3>
+                                <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border p-8 h-full">
+                                    <h3 className="text-[11px] font-bold text-text-main mb-8">Top Apps</h3>
                                     <div className="h-[180px] w-full relative mb-8">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
@@ -568,18 +568,18 @@ export function Reports() {
                                             </PieChart>
                                         </ResponsiveContainer>
                                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                            <span className="text-xl font-bold text-slate-900 leading-none">{appBreakdown.length}</span>
-                                            <span className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">Apps</span>
+                                            <span className="text-xl font-bold text-text-main leading-none">{appBreakdown.length}</span>
+                                            <span className="text-[8px] font-bold text-text-muted mt-1.5">Apps</span>
                                         </div>
                                     </div>
                                     <div className="space-y-1">
                                         {appBreakdown.slice(0, 5).map((item, i) => (
-                                            <div key={i} className="flex items-center justify-between p-2 rounded-xl hover:bg-slate-50 transition-all group">
+                                            <div key={i} className="flex items-center justify-between p-2 rounded-xl hover:bg-surface-hover transition-all group">
                                                 <div className="flex items-center gap-2.5">
                                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
-                                                    <span className="text-[11px] font-bold text-slate-700 truncate max-w-[120px] group-hover:text-primary transition-colors">{item.name}</span>
+                                                    <span className="text-[11px] font-bold text-text-main truncate max-w-[120px] group-hover:text-primary transition-colors">{item.name}</span>
                                                 </div>
-                                                <span className="text-[10px] font-bold text-slate-400 tabular-nums">
+                                                <span className="text-[10px] font-bold text-text-muted tabular-nums">
                                                     {item.value}
                                                 </span>
                                             </div>
@@ -589,10 +589,10 @@ export function Reports() {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 p-8">
+                        <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border p-8">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-[11px] font-bold text-slate-900 uppercase tracking-widest">Time Allocation</h3>
-                                <BarChart3 className="w-4 h-4 text-slate-300" />
+                                <h3 className="text-[11px] font-bold text-text-main ">Time Allocation</h3>
+                                <BarChart3 className="w-4 h-4 text-text-muted" />
                             </div>
                             <div className="h-[300px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
@@ -621,19 +621,19 @@ export function Reports() {
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-[24px] shadow-sm border border-slate-200 overflow-hidden">
-                            <div className="px-8 py-6 border-b border-slate-100 flex items-center justify-between bg-white shrink-0">
+                        <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border overflow-hidden">
+                            <div className="px-8 py-6 border-b border-border flex items-center justify-between bg-surface shrink-0">
                                 <div className="space-y-1">
-                                    <h3 className="text-[16px] font-bold text-slate-900 tracking-tight">Timesheet Matrix</h3>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Weekly performance distribution</p>
+                                    <h3 className="text-[16px] font-bold text-text-main tracking-tight">Timesheet Matrix</h3>
+                                    <p className="text-[10px] font-bold text-text-muted ">Weekly performance distribution</p>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-200">
+                                    <div className="flex items-center gap-2 bg-surface-hover p-1 rounded-xl border border-border">
                                         <button
                                             onClick={() => {
                                                 if (scrollRef.current) scrollRef.current.scrollBy({ left: -400, behavior: 'smooth' });
                                             }}
-                                            className="p-2 hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-900 transition-all rounded-lg"
+                                            className="p-2 hover:bg-surface-hover hover:shadow-sm text-text-muted hover:text-slate-900 transition-all rounded-lg"
                                         >
                                             <ChevronLeft className="w-4 h-4" />
                                         </button>
@@ -641,14 +641,14 @@ export function Reports() {
                                             onClick={() => {
                                                 if (scrollRef.current) scrollRef.current.scrollBy({ left: 400, behavior: 'smooth' });
                                             }}
-                                            className="p-2 hover:bg-white hover:shadow-sm text-slate-400 hover:text-slate-900 transition-all rounded-lg"
+                                            className="p-2 hover:bg-surface-hover hover:shadow-sm text-text-muted hover:text-slate-900 transition-all rounded-lg"
                                         >
                                             <ChevronRight className="w-4 h-4" />
                                         </button>
                                     </div>
                                     <div className="flex -space-x-2">
                                         {tableData.rows.slice(0, 4).map((r, i) => (
-                                            <div key={i} className="w-8 h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-600 uppercase shadow-sm">
+                                            <div key={i} className="w-8 h-8 rounded-full bg-main border-2 border-white flex items-center justify-center text-[10px] font-bold text-text-muted shadow-shell-sm">
                                                 {r.fullName[0]}
                                             </div>
                                         ))}
@@ -659,46 +659,46 @@ export function Reports() {
                             <div ref={scrollRef} className="overflow-x-auto custom-scrollbar">
                                 <table className="w-full border-collapse min-w-max">
                                     <thead>
-                                        <tr className="bg-slate-50/50">
-                                            <th className="sticky left-0 z-20 bg-slate-50/90 backdrop-blur-md py-4 px-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-left w-[220px]">
+                                        <tr className="bg-surface-hover/50">
+                                            <th className="sticky left-0 z-20 bg-surface-hover/90 backdrop-blur-md py-4 px-8 text-[11px] font-bold text-text-muted border-b border-border text-left w-[220px]">
                                                 Member
                                             </th>
                                             {tableData.dates.map(date => (
-                                                <th key={date} className="py-4 px-4 text-[10px] font-bold text-slate-600 border-b border-slate-100 text-center w-[120px]">
+                                                <th key={date} className="py-4 px-4 text-[10px] font-bold text-text-muted border-b border-border text-center w-[120px]">
                                                     {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                                 </th>
                                             ))}
-                                            <th className="py-4 px-6 text-[10px] font-bold text-slate-900 border-b border-slate-100 text-right w-[100px] uppercase tracking-widest">
+                                            <th className="py-4 px-6 text-[10px] font-bold text-text-main border-b border-border text-right w-[100px] ">
                                                 Total
                                             </th>
-                                            <th className="py-4 px-6 text-[10px] font-bold text-slate-900 border-b border-slate-100 text-right w-[100px] uppercase tracking-widest">
+                                            <th className="py-4 px-6 text-[10px] font-bold text-text-main border-b border-border text-right w-[100px] ">
                                                 Score
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
                                         {tableData.rows.map(row => (
-                                            <tr key={row.memberId} className="group hover:bg-slate-50/50 transition-all">
-                                                <td className="sticky left-0 z-20 bg-white group-hover:bg-slate-50/50 backdrop-blur-md py-4 px-8 border-r border-slate-100">
+                                            <tr key={row.memberId} className="group hover:bg-surface-hover/50 transition-all">
+                                                <td className="sticky left-0 z-20 bg-surface group-hover:bg-slate-50/50 backdrop-blur-md py-4 px-8 border-r border-border">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center text-[10px] font-bold text-slate-400 uppercase">
+                                                        <div className="w-7 h-7 rounded-lg bg-main flex items-center justify-center text-[10px] font-bold text-text-muted ">
                                                             {row.fullName[0]}
                                                         </div>
-                                                        <span className="text-[13px] font-bold text-slate-900 tracking-tight">{row.fullName}</span>
+                                                        <span className="text-[13px] font-bold text-text-main tracking-tight">{row.fullName}</span>
                                                     </div>
                                                 </td>
                                                 {tableData.dates.map(date => (
-                                                    <td key={date} className="py-4 px-4 text-[12px] font-medium text-slate-500 text-center tabular-nums">
-                                                        {row.dailyMins[date] ? formatDuration(row.dailyMins[date]) : <span className="text-slate-200">—</span>}
+                                                    <td key={date} className="py-4 px-4 text-[12px] font-medium text-text-muted text-center tabular-nums">
+                                                        {row.dailyMins[date] ? formatDuration(row.dailyMins[date]) : <span className="text-text-muted">—</span>}
                                                     </td>
                                                 ))}
-                                                <td className="py-4 px-6 text-[12px] font-bold text-slate-900 text-right tabular-nums">
+                                                <td className="py-4 px-6 text-[12px] font-bold text-text-main text-right tabular-nums">
                                                     {formatDuration(row.totalMins)}
                                                 </td>
                                                 <td className="py-4 px-6 text-right">
                                                     <span className={clsx(
                                                         "text-[12px] font-bold tabular-nums",
-                                                        row.activityScore > 70 ? "text-emerald-600" : row.activityScore > 40 ? "text-amber-600" : "text-rose-600"
+                                                        row.activityScore > 70 ? "text-emerald-500" : row.activityScore > 40 ? "text-amber-500" : "text-rose-500"
                                                     )}>
                                                         {row.activityScore}%
                                                     </span>
@@ -707,15 +707,15 @@ export function Reports() {
                                         ))}
                                     </tbody>
                                     <tfoot>
-                                        <tr className="bg-slate-50/50 border-t border-slate-200">
-                                            <td className="sticky left-0 z-20 bg-slate-50/90 backdrop-blur-md py-6 px-8 text-[11px] font-bold text-slate-900 uppercase tracking-widest">
+                                        <tr className="bg-surface-hover/50 border-t border-border">
+                                            <td className="sticky left-0 z-20 bg-surface-hover/90 backdrop-blur-md py-6 px-8 text-[11px] font-bold text-text-main ">
                                                 Totals
                                             </td>
                                             {tableData.dates.map(date => {
                                                 const dayTotal = tableData.rows.reduce((sum, r) => sum + (r.dailyMins[date] || 0), 0);
                                                 return (
                                                     <td key={date} className="py-6 px-4 text-[12px] font-bold text-primary text-center tabular-nums">
-                                                        {dayTotal > 0 ? formatDuration(dayTotal) : <span className="text-slate-300">—</span>}
+                                                        {dayTotal > 0 ? formatDuration(dayTotal) : <span className="text-text-muted">—</span>}
                                                     </td>
                                                 );
                                             })}
@@ -747,15 +747,15 @@ export function Reports() {
 function CustomTooltip({ active, payload, label, unit }: any) {
     if (active && payload && payload.length) {
         return (
-            <div className="p-4 bg-white/90 backdrop-blur-md rounded-2xl shadow-2xl border border-slate-100 min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3 pb-2 border-b border-slate-50">{label}</p>
+            <div className="p-4 bg-surface/90 backdrop-blur-md rounded-2xl shadow-2xl border border-border min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
+                <p className="text-[9px] font-black text-text-muted mb-3 pb-2 border-b border-slate-50">{label}</p>
                 <div className="flex items-center gap-4">
                     <div className="w-2 h-2 rounded-full bg-primary ring-4 ring-primary/10 shadow-[0_0_12px_rgba(64,102,211,0.4)]" />
                     <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-black text-slate-900 tracking-tighter tabular-nums">
+                        <span className="text-3xl font-black text-text-main tracking-tighter tabular-nums">
                             {payload[0].value}
                         </span>
-                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                        <span className="text-[10px] font-black text-text-muted ">
                             {unit === 'min' ? 'Mins Capture' : '% Activity'}
                         </span>
                     </div>
@@ -801,35 +801,35 @@ function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any)
     };
 
     return (
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-2xl flex p-1 overflow-hidden min-w-[850px]">
-            <div className="flex-1 flex border-r border-slate-100 p-2 gap-4">
+        <div className="bg-surface border border-border rounded-2xl shadow-2xl flex p-1 overflow-hidden min-w-[850px]">
+            <div className="flex-1 flex border-r border-border p-2 gap-4">
                 <MonthView month={leftMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
                 <MonthView month={rightMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
             </div>
-            <div className="w-56 p-4 flex flex-col gap-2 bg-slate-50/30">
+            <div className="w-56 p-4 flex flex-col gap-2 bg-surface-hover/30">
                 {RANGES.filter(r => r !== 'Custom').map(r => (
                     <button
                         key={r}
                         onClick={() => { setRange(r); setOffset(0); onCancel(); }}
                         className={clsx(
-                            "w-full text-left px-4 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all border",
-                            range === r ? "bg-white border-slate-200 text-primary shadow-sm" : "text-slate-400 border-transparent hover:text-slate-900 hover:bg-white"
+                            "w-full text-left px-4 py-2.5 rounded-xl text-[11px] font-black transition-all border",
+                            range === r ? "bg-surface border-border text-primary shadow-shell-sm" : "text-text-muted border-transparent hover:text-slate-900 hover:bg-surface-hover"
                         )}
                     >
                         {r}
                     </button>
                 ))}
-                <div className="mt-auto pt-4 border-t border-slate-100 flex flex-col gap-2">
+                <div className="mt-auto pt-4 border-t border-border flex flex-col gap-2">
                     <button
                         disabled={!selStart || !selEnd}
                         onClick={() => selStart && selEnd && onApply(selStart, selEnd)}
-                        className="w-full py-3 bg-[#4FC08D] hover:bg-[#3FA07D] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[12px] font-black uppercase tracking-widest rounded-xl transition-all"
+                        className="w-full py-3 bg-[#4FC08D] hover:bg-[#3FA07D] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[12px] font-black rounded-xl transition-all"
                     >
                         Apply
                     </button>
                     <button
                         onClick={onCancel}
-                        className="w-full py-3 bg-white border border-slate-200 text-slate-600 text-[12px] font-black uppercase tracking-widest rounded-xl hover:bg-slate-50 transition-all"
+                        className="w-full py-3 bg-surface border border-border text-text-muted text-[12px] font-black rounded-xl hover:bg-surface-hover transition-all"
                     >
                         Cancel
                     </button>
@@ -857,13 +857,13 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
     return (
         <div className="flex-1 min-w-[300px]">
             <div className="bg-primary p-4 rounded-xl flex items-center justify-between text-white mb-4">
-                <button onClick={onPrev} className="hover:bg-white/20 p-1 rounded-lg transition-colors"><ChevronLeft className="w-4 h-4" /></button>
-                <span className="text-[13px] font-black uppercase tracking-widest">{monthName}</span>
-                <button onClick={onNext} className="hover:bg-white/20 p-1 rounded-lg transition-colors"><ChevronRight className="w-4 h-4" /></button>
+                <button onClick={onPrev} className="hover:bg-surface-hover/20 p-1 rounded-lg transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+                <span className="text-[13px] font-black ">{monthName}</span>
+                <button onClick={onNext} className="hover:bg-surface-hover/20 p-1 rounded-lg transition-colors"><ChevronRight className="w-4 h-4" /></button>
             </div>
             <div className="grid grid-cols-7 gap-1 text-center">
                 {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
-                    <div key={d} className="py-2 text-[10px] font-black text-primary/60 uppercase tracking-widest">{d}</div>
+                    <div key={d} className="py-2 text-[10px] font-black text-primary/60 ">{d}</div>
                 ))}
                 {days.map((d, i) => {
                     if (!d) return <div key={i} className="py-3" />;
@@ -878,7 +878,7 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
                                 "py-3 text-[12px] font-medium transition-all rounded-lg relative z-10",
                                 selected ? "bg-primary text-white shadow-lg shadow-primary/30" :
                                     inRange ? "bg-primary/5 text-primary" :
-                                        "text-slate-600 hover:bg-slate-50"
+                                        "text-text-muted hover:bg-surface-hover"
                             )}
                         >
                             {d.getDate()}
@@ -887,7 +887,7 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
                 })}
             </div>
             <div className="mt-4 pt-4 border-t border-slate-50 text-center">
-                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-text-muted ">
                     {month.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                 </span>
             </div>

@@ -21,7 +21,7 @@ export function AppUsageList({ samples }: AppUsageListProps) {
             {list.map(({ app, count, percent }, i) => (
                 <div key={i} className="flex items-center justify-between px-8 py-5 hover:bg-surface-hover transition-all duration-200 group">
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-main border border-border flex items-center justify-center text-text-muted group-hover:bg-surface group-hover:border-primary/20 group-hover:text-primary transition-all shadow-sm">
+                        <div className="w-10 h-10 rounded-xl bg-main border border-border flex items-center justify-center text-text-muted group-hover:bg-surface group-hover:border-primary/20 group-hover:text-primary transition-all shadow-shell-sm">
                             {(app.toLowerCase().includes('chrome') || app.toLowerCase().includes('browser')) ? (
                                 <Globe className="w-5 h-5 text-sky-500" />
                             ) : (
@@ -29,15 +29,15 @@ export function AppUsageList({ samples }: AppUsageListProps) {
                             )}
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="text-sm font-black text-text-main leading-none truncate max-w-[180px] uppercase tracking-tight">
+                            <span className="text-sm font-black text-text-main leading-none truncate max-w-[180px] tracking-tight">
                                 {app}
                             </span>
                             <div className="flex items-center gap-2 mt-1.5">
-                                <span className="text-[10px] text-text-muted font-bold uppercase tracking-widest leading-none">
+                                <span className="text-[10px] text-text-muted font-bold leading-none">
                                     {count} samples
                                 </span>
                                 <span className="w-1 h-1 rounded-full bg-border" />
-                                <span className="text-[10px] text-primary/60 font-black uppercase tracking-widest leading-none">
+                                <span className="text-[10px] text-primary/60 font-black leading-none">
                                     Active
                                 </span>
                             </div>

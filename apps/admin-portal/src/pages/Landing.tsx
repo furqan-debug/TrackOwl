@@ -86,15 +86,15 @@ export function Landing() {
                     <div className="flex items-center gap-6">
                         <button
                             onClick={() => navigate('/login')}
-                            className="hidden sm:block text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary hover:text-primary transition-all active:scale-95"
+                            className="hidden sm:block text-[10px] font-bold tracking-[0.2em] text-text-secondary hover:text-primary transition-all active:scale-95"
                         >
                             Sign In
                         </button>
                         <button
                             onClick={() => navigate('/signup')}
-                            className="px-6 py-2.5 bg-primary text-white text-[10px] font-bold uppercase tracking-[0.2em] rounded-full shadow-glow-primary hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all relative overflow-hidden group"
+                            className="px-6 py-2.5 bg-primary text-white text-[10px] font-bold tracking-[0.2em] rounded-full shadow-glow-primary hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all relative overflow-hidden group"
                         >
-                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                            <div className="absolute inset-0 bg-surface/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                             <span className="relative z-10">Start Free</span>
                         </button>
                     </div>
@@ -105,9 +105,9 @@ export function Landing() {
                 {/* Hero Section */}
                 <section className="mx-auto max-w-6xl px-6 py-12 text-center md:py-20 lg:py-24">
                     <div className="flex flex-col items-center">
-                        <div className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-4 py-1.5 mb-8 shadow-sm backdrop-blur-md">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-primary/10 bg-primary/5 px-4 py-1.5 mb-8 shadow-shell-sm backdrop-blur-md">
                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
-                            <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-primary">Trusted by 200+ global teams</span>
+                            <span className="text-[9px] font-bold tracking-[0.15em] text-primary">Trusted by 200+ global teams</span>
                         </div>
 
                         <h1 className="max-w-4xl text-4xl font-extrabold tracking-tight leading-[1.1] sm:text-6xl lg:text-7xl mb-8">
@@ -122,20 +122,20 @@ export function Landing() {
                         <div className="flex flex-col sm:flex-row items-center gap-4">
                             <button
                                 onClick={() => navigate('/signup')}
-                                className="w-full sm:w-auto px-10 py-4 bg-primary text-white text-[12px] font-bold uppercase tracking-[0.1em] rounded-xl shadow-glow-primary hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
+                                className="w-full sm:w-auto px-10 py-4 bg-primary text-white text-[12px] font-bold tracking-[0.1em] rounded-xl shadow-glow-primary hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
                             >
                                 Start 14-Day Free Trial
                                 <ChevronRight className="w-4 h-4" />
                             </button>
                             <button
                                 onClick={() => document.getElementById('download')?.scrollIntoView({ behavior: 'smooth' })}
-                                className="w-full sm:w-auto px-10 py-4 glass-panel bg-white/40 backdrop-blur-md text-[12px] font-bold uppercase tracking-widest text-text-primary hover:bg-white transition-all active:scale-95 border border-black/5"
+                                className="w-full sm:w-auto px-10 py-4 glass-panel bg-surface/40 backdrop-blur-md text-[12px] font-bold text-text-primary hover:bg-surface-hover transition-all active:scale-95 border border-black/5"
                             >
                                 Download App
                             </button>
                         </div>
 
-                        <div className="mt-10 text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] opacity-40">
+                        <div className="mt-10 text-[9px] font-bold text-text-muted tracking-[0.2em] opacity-40">
                             No credit card · Setup in 5 minutes · Cancel anytime
                         </div>
                     </div>
@@ -161,7 +161,7 @@ export function Landing() {
                                 </div>
                             </div>
 
-                            <div className="md:col-span-4 glass-panel rounded-3xl p-8 flex flex-col justify-center gap-4 transition-all hover:bg-white">
+                            <div className="md:col-span-4 glass-panel rounded-3xl p-8 flex flex-col justify-center gap-4 transition-all hover:bg-surface-hover">
                                 <div className="w-10 h-10 rounded-xl bg-violet-500/10 text-violet-500 flex items-center justify-center">
                                     <Monitor size={20} />
                                 </div>
@@ -169,7 +169,7 @@ export function Landing() {
                                 <p className="text-text-secondary text-xs leading-relaxed">Contextual captures that provide clarity without invasive monitoring.</p>
                             </div>
 
-                            <div className="md:col-span-4 glass-panel rounded-3xl p-8 flex flex-col justify-center gap-4 transition-all hover:bg-white">
+                            <div className="md:col-span-4 glass-panel rounded-3xl p-8 flex flex-col justify-center gap-4 transition-all hover:bg-surface-hover">
                                 <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
                                     <Shield size={20} />
                                 </div>
@@ -192,7 +192,7 @@ export function Landing() {
                 </section>
 
                 {/* How it works section */}
-                <section id="how-it-works" className="py-20 bg-white/10">
+                <section id="how-it-works" className="py-20 bg-surface/10">
                     <div className="mx-auto max-w-6xl px-6">
                         <div className="grid md:grid-cols-2 gap-16 items-center">
                             <div>
@@ -204,7 +204,7 @@ export function Landing() {
                                 </div>
                             </div>
                             <div className="glass-panel p-2 rounded-3xl shadow-elevated border-white/60 overflow-hidden group">
-                                <div className="aspect-video bg-slate-50 rounded-2xl flex items-center justify-center overflow-hidden relative">
+                                <div className="aspect-video bg-surface-hover rounded-2xl flex items-center justify-center overflow-hidden relative">
                                     <img 
                                         src={DashboardPreview} 
                                         alt="Trackora Dashboard" 
@@ -231,15 +231,15 @@ export function Landing() {
                                     key={i}
                                     className={`relative flex flex-col rounded-3xl p-8 transition-all hover:scale-[1.02] ${plan.popular
                                         ? 'bg-primary text-white shadow-glow-primary scale-105 z-20'
-                                        : 'glass-panel text-text-primary shadow-glow hover:bg-white'
+                                        : 'glass-panel text-text-primary shadow-glow hover:bg-surface-hover'
                                         }`}
                                 >
                                     {plan.popular && (
-                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-emerald-500 text-white rounded-full text-[8px] font-bold uppercase tracking-[0.2em] shadow-lg">
+                                        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-emerald-500 text-white rounded-full text-[8px] font-bold tracking-[0.2em] shadow-lg">
                                             Most Popular
                                         </div>
                                     )}
-                                    <h3 className="text-[10px] font-extrabold uppercase tracking-widest mb-4 opacity-80">{plan.name}</h3>
+                                    <h3 className="text-[10px] font-extrabold mb-4 opacity-80">{plan.name}</h3>
                                     <div className="flex items-baseline gap-1 mb-4">
                                         <span className="text-4xl font-extrabold tracking-tighter">{plan.price}</span>
                                         <span className={`text-xs font-bold opacity-60 ${plan.popular ? 'text-white' : 'text-text-muted'}`}>{plan.period}</span>
@@ -257,8 +257,8 @@ export function Landing() {
 
                                     <button
                                         onClick={() => navigate('/signup')}
-                                        className={`w-full py-3.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.1em] transition-all active:scale-95 ${plan.popular
-                                            ? 'bg-white text-primary shadow-xl'
+                                        className={`w-full py-3.5 rounded-xl text-[10px] font-bold tracking-[0.1em] transition-all active:scale-95 ${plan.popular
+                                            ? 'bg-surface text-primary shadow-xl'
                                             : 'bg-primary text-white shadow-glow-primary'
                                             }`}
                                     >
@@ -271,9 +271,9 @@ export function Landing() {
                 </section>
 
                 {/* Download Section */}
-                <section id="download" className="py-24 bg-white/40 border-y border-black/[0.03]">
+                <section id="download" className="py-24 bg-surface/40 border-y border-black/[0.03]">
                     <div className="mx-auto max-w-6xl px-6 text-center">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[8px] font-bold uppercase tracking-[0.2em] mb-8">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[8px] font-bold tracking-[0.2em] mb-8">
                             Native Performance
                         </div>
                         <h2 className="text-3xl font-extrabold tracking-tight text-text-primary mb-4">Get the Agent</h2>
@@ -293,8 +293,8 @@ export function Landing() {
                                         <p className="text-sm text-text-secondary opacity-70">Version 2.4.0 · Stable Build</p>
                                     </div>
                                     <div className="flex flex-wrap gap-3">
-                                        <button className="px-6 py-3 bg-primary text-white text-[10px] font-bold uppercase tracking-[0.1em] rounded-xl shadow-glow-primary hover:scale-105 transition-all">Download for Windows</button>
-                                        <button className="px-6 py-3 glass-panel border border-black/5 text-[10px] font-bold uppercase tracking-[0.1em] rounded-xl hover:bg-white transition-all">Other Platforms</button>
+                                        <button className="px-6 py-3 bg-primary text-white text-[10px] font-bold tracking-[0.1em] rounded-xl shadow-glow-primary hover:scale-105 transition-all">Download for Windows</button>
+                                        <button className="px-6 py-3 glass-panel border border-black/5 text-[10px] font-bold tracking-[0.1em] rounded-xl hover:bg-surface-hover transition-all">Other Platforms</button>
                                     </div>
                                 </div>
                             </div>
@@ -303,7 +303,7 @@ export function Landing() {
                 </section>
 
                 {/* Footer */}
-                <footer className="py-12 bg-white/40">
+                <footer className="py-12 bg-surface/40">
                     <div className="mx-auto max-w-6xl px-6">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-t border-black/[0.03] pt-8">
                             <div className="flex items-center gap-2">
@@ -313,13 +313,13 @@ export function Landing() {
                                 <span className="text-lg font-extrabold tracking-tighter">Trackora</span>
                             </div>
 
-                            <div className="flex gap-8 text-[9px] font-bold uppercase tracking-[0.15em] text-text-muted">
+                            <div className="flex gap-8 text-[9px] font-bold tracking-[0.15em] text-text-muted">
                                 <a href="#" className="hover:text-primary transition-all">Privacy</a>
                                 <a href="#" className="hover:text-primary transition-all">Terms</a>
                                 <a href="#" className="hover:text-primary transition-all">Support</a>
                             </div>
 
-                            <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-text-muted opacity-40">
+                            <p className="text-[9px] font-bold tracking-[0.15em] text-text-muted opacity-40">
                                 © 2024 Trackora Inc.
                             </p>
                         </div>
@@ -348,7 +348,7 @@ function NavButton({ children, onClick }: { children: React.ReactNode; onClick: 
     return (
         <button
             onClick={onClick}
-            className="px-5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] text-text-secondary hover:text-primary hover:bg-white transition-all active:scale-95"
+            className="px-5 py-1.5 rounded-full text-[10px] font-bold tracking-[0.15em] text-text-secondary hover:text-primary hover:bg-surface-hover transition-all active:scale-95"
         >
             {children}
         </button>

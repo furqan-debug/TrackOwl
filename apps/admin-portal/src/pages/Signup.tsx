@@ -56,9 +56,9 @@ export function Signup() {
                     <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
                         <img src={LogoIcon} alt="Trackora" className="w-full h-full object-contain" />
                     </div>
-                    <span className="text-lg font-bold text-slate-900 tracking-tight">Trackora</span>
+                    <span className="text-lg font-bold text-text-main tracking-tight">Trackora</span>
                 </div>
-                <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.2em] bg-white px-4 py-2 rounded-full border border-slate-200">
+                <div className="text-[10px] font-extrabold text-text-muted tracking-[0.2em] bg-surface px-4 py-2 rounded-full border border-border">
                     Production Ready
                 </div>
             </div>
@@ -66,13 +66,13 @@ export function Signup() {
             <div className="flex-1 w-full max-w-[1210px] flex items-center justify-center p-8">
                 <div className="w-full max-w-[480px]">
                     <div className="mb-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-none mb-4">Join Trackora</h1>
-                        <p className="text-slate-500 font-medium text-lg leading-relaxed max-w-[340px] mx-auto">
+                        <h1 className="text-5xl font-black text-text-main tracking-tight leading-none mb-4">Join Trackora</h1>
+                        <p className="text-text-muted font-medium text-lg leading-relaxed max-w-[340px] mx-auto">
                             Start your 14-day trial on the <span className="text-blue-600 font-bold underline decoration-blue-600/30 underline-offset-4">{selectedPlan}</span> plan.
                         </p>
                     </div>
 
-                    <Card className="p-8 md:p-12 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] bg-white border-slate-200 rounded-[40px] animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                    <Card className="p-8 md:p-12 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] bg-surface border-border rounded-[40px] animate-in fade-in slide-in-from-bottom-8 duration-1000">
                         <form onSubmit={handleSignup} className="space-y-8">
                             <Input
                                 label="Full Name"
@@ -81,8 +81,8 @@ export function Signup() {
                                 value={fullName}
                                 onChange={e => setFullName(e.target.value)}
                                 placeholder="Enter your full name"
-                                className="h-14 rounded-2xl text-base px-5 bg-slate-50/50"
-                                leftIcon={<User className="w-5 h-5 text-slate-300" />}
+                                className="h-14 rounded-2xl text-base px-5 bg-surface-hover/50"
+                                leftIcon={<User className="w-5 h-5 text-text-muted" />}
                             />
 
                             <Input
@@ -92,12 +92,12 @@ export function Signup() {
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
                                 placeholder="name@company.com"
-                                className="h-14 rounded-2xl text-base px-5 bg-slate-50/50"
-                                leftIcon={<Mail className="w-5 h-5 text-slate-300" />}
+                                className="h-14 rounded-2xl text-base px-5 bg-surface-hover/50"
+                                leftIcon={<Mail className="w-5 h-5 text-text-muted" />}
                             />
 
                             <div className="space-y-4">
-                                <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Password</label>
+                                <label className="text-xs font-bold text-text-muted ml-1">Password</label>
                                 <div className="relative">
                                     <Input
                                         type={showPw ? 'text' : 'password'}
@@ -105,13 +105,13 @@ export function Signup() {
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
                                         placeholder="Minimum 8 characters"
-                                        className="h-14 rounded-2xl text-base px-5 bg-slate-50/50 pr-14"
-                                        leftIcon={<Lock className="w-5 h-5 text-slate-300" />}
+                                        className="h-14 rounded-2xl text-base px-5 bg-surface-hover/50 pr-14"
+                                        leftIcon={<Lock className="w-5 h-5 text-text-muted" />}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPw(!showPw)}
-                                        className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-blue-600 transition-colors"
+                                        className="absolute right-5 top-1/2 -translate-y-1/2 text-text-muted hover:text-blue-600 transition-colors"
                                     >
                                         {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                     </button>
@@ -135,19 +135,19 @@ export function Signup() {
                             </Button>
                         </form>
 
-                        <div className="mt-12 pt-8 border-t border-slate-100 text-center">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Already tracked?</p>
+                        <div className="mt-12 pt-8 border-t border-border text-center">
+                            <p className="text-xs font-bold text-text-muted mb-6">Already tracked?</p>
                             <Button 
                                 onClick={() => navigate('/login')}
                                 variant="secondary"
-                                className="w-full py-4 rounded-xl text-sm font-bold border-slate-100 hover:bg-slate-50 text-slate-600"
+                                className="w-full py-4 rounded-xl text-sm font-bold border-border hover:bg-surface-hover text-text-muted"
                             >
                                 Sign In to Console
                             </Button>
                         </div>
                     </Card>
 
-                    <p className="mt-12 text-center text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] opacity-60 leading-relaxed max-w-[340px] mx-auto">
+                    <p className="mt-12 text-center text-[10px] font-bold text-text-muted tracking-[0.2em] opacity-60 leading-relaxed max-w-[340px] mx-auto">
                         By continuing, you confirm adherence to the <a href="#" className="text-blue-600 hover:underline decoration-blue-600/30">Governance Terms</a> and <a href="#" className="text-blue-600 hover:underline decoration-blue-600/30">Privacy Standards</a>.
                     </p>
                 </div>

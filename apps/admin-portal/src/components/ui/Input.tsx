@@ -23,7 +23,7 @@ export function Input({
             {label && (
                 <label
                     htmlFor={inputId}
-                    className="block text-[11px] font-bold text-text-muted uppercase tracking-[0.15em] mb-2.5 ml-1 transition-colors group-focus-within:text-primary"
+                    className="block text-[11px] font-bold text-text-muted tracking-[0.15em] mb-2.5 ml-1 transition-colors group-focus-within:text-primary"
                 >
                     {label}
                 </label>
@@ -37,7 +37,7 @@ export function Input({
                 <input
                     id={inputId}
                     className={clsx(
-                        'w-full bg-white border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-muted/40 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm font-mono',
+                        'w-full bg-surface border border-border rounded-xl px-4 py-3.5 text-sm text-text-primary placeholder:text-text-muted/40 focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-shell-sm font-mono',
                         leftIcon && 'pl-11',
                         error && 'border-rose-500/50 focus:ring-rose-500/10 focus:border-rose-500/50',
                         className
@@ -46,7 +46,7 @@ export function Input({
                 />
             </div>
             {error && (
-                <p className="mt-2 text-[11px] font-bold text-rose-600 ml-1 uppercase tracking-wider">{error}</p>
+                <p className="mt-2 text-[11px] font-bold text-rose-500 ml-1 ">{error}</p>
             )}
         </div>
     );

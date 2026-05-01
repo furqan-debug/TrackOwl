@@ -29,7 +29,7 @@ const colorMap: Record<string, string> = {
     emerald: 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20',
     amber: 'bg-amber-500/10 text-amber-700 border-amber-500/20',
     indigo: 'bg-indigo-500/10 text-indigo-700 border-indigo-500/20',
-    slate: 'bg-slate-500/10 text-slate-600 border-slate-500/20',
+    slate: 'bg-slate-500/10 text-text-muted border-slate-500/20',
 };
 
 export function AllReports() {
@@ -50,12 +50,12 @@ export function AllReports() {
                         <Card className="h-full transition-all duration-500 group-hover:border-primary/30 group-hover:shadow-2xl group-hover:shadow-primary/[0.05] group-hover:-translate-y-1">
                             <div className="flex items-start justify-between mb-8">
                                 <div className={clsx(
-                                    "p-4 rounded-2xl border transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-sm",
+                                    "p-4 rounded-2xl border transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-shell-sm",
                                     colorMap[report.color]
                                 )}>
                                     <report.icon className="w-6 h-6" strokeWidth={2.5} />
                                 </div>
-                                <span className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] group-hover:text-primary transition-colors font-mono">
+                                <span className="text-[10px] font-bold text-text-muted tracking-[0.2em] group-hover:text-primary transition-colors font-mono">
                                     {report.category}
                                 </span>
                             </div>
@@ -67,7 +67,7 @@ export function AllReports() {
                                 {report.description}
                             </p>
 
-                            <div className="flex items-center gap-2 text-[10px] font-bold text-text-muted uppercase tracking-widest pt-5 border-t border-border/50 group-hover:text-text-primary transition-colors font-mono">
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-text-muted pt-5 border-t border-border/50 group-hover:text-text-primary transition-colors font-mono">
                                 Open Analytics
                                 <ChevronRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" strokeWidth={3} />
                             </div>
@@ -80,10 +80,10 @@ export function AllReports() {
                 <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-12">
                     <div className="text-center md:text-left space-y-4">
                         <div className="flex items-center gap-3 justify-center md:justify-start">
-                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-sm animate-bounce">
-                                <Star className="w-5 h-5 text-amber-600 fill-amber-600" />
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shadow-shell-sm animate-bounce">
+                                <Star className="w-5 h-5 text-amber-500 fill-amber-600" />
                             </div>
-                            <span className="text-[10px] font-bold tracking-[0.3em] uppercase text-text-muted font-mono italic opacity-60">Advanced Features</span>
+                            <span className="text-[10px] font-bold tracking-[0.3em] text-text-muted font-mono italic opacity-60">Advanced Features</span>
                         </div>
                         <h2 className="text-4xl font-bold tracking-tighter text-text-primary leading-none">Automated Insights</h2>
                         <p className="text-text-muted font-medium max-w-lg leading-relaxed italic opacity-80">

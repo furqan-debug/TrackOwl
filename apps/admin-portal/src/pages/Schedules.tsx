@@ -105,7 +105,7 @@ export function Schedules() {
                                 <ChevronLeft className="w-4 h-4" strokeWidth={3} />
                             </Button>
                             <div className="px-6 min-w-[220px] text-center">
-                                <span className="text-[10px] font-bold text-text-primary uppercase tracking-[0.2em] font-mono whitespace-nowrap">
+                                <span className="text-[10px] font-bold text-text-primary tracking-[0.2em] font-mono whitespace-nowrap">
                                     {formatHeader()}
                                 </span>
                             </div>
@@ -121,7 +121,7 @@ export function Schedules() {
                         <Button
                             onClick={() => setWeekOffset(0)}
                             variant="primary"
-                            className="px-8 py-3.5 shadow-lg font-mono text-[10px] tracking-widest"
+                            className="px-8 py-3.5 shadow-lg font-mono text-[10px] "
                         >
                             PRESENT
                         </Button>
@@ -154,16 +154,16 @@ export function Schedules() {
             <Card className="p-0 overflow-hidden border-border/60 shadow-xl">
                 <div className="p-8 border-b border-border bg-surface-subtle/30 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>
-                        <h2 className="text-xl font-bold text-text-primary tracking-tight mb-1 uppercase font-mono italic">Efficiency Heatmap</h2>
-                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-60">Distribution of operational velocity</p>
+                        <h2 className="text-xl font-bold text-text-primary tracking-tight mb-1 font-mono italic">Efficiency Heatmap</h2>
+                        <p className="text-[10px] font-bold text-text-muted tracking-[0.2em] font-mono opacity-60">Distribution of operational velocity</p>
                     </div>
-                    <div className="flex items-center gap-6 bg-surface-solid border border-border rounded-2xl px-6 py-3.5 shadow-sm">
-                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono italic opacity-60">Intensity:</span>
+                    <div className="flex items-center gap-6 bg-surface-solid border border-border rounded-2xl px-6 py-3.5 shadow-shell-sm">
+                        <span className="text-[9px] font-bold text-text-muted tracking-[0.2em] font-mono italic opacity-60">Intensity:</span>
                         <div className="flex items-center gap-1.5">
                             {[0.2, 0.4, 0.6, 0.8, 1].map(o => (
                                 <div 
                                     key={o} 
-                                    className="w-3.5 h-3.5 rounded-sm bg-primary shadow-sm transition-all hover:scale-125 cursor-help" 
+                                    className="w-3.5 h-3.5 rounded-sm bg-primary shadow-shell-sm transition-all hover:scale-125 cursor-help" 
                                     style={{ opacity: o }} 
                                 />
                             ))}
@@ -180,7 +180,7 @@ export function Schedules() {
                         <table className="w-full border-separate border-spacing-2">
                             <thead>
                                 <tr>
-                                    <th className="w-32 pb-6 text-right pr-6 text-[9px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono italic opacity-40">Timeline</th>
+                                    <th className="w-32 pb-6 text-right pr-6 text-[9px] font-bold text-text-muted tracking-[0.3em] font-mono italic opacity-40">Timeline</th>
                                     {weekDays.map((d, i) => {
                                         const isToday = d.toDateString() === today.toDateString();
                                         return (
@@ -192,7 +192,7 @@ export function Schedules() {
                                                         : "bg-surface-subtle border-border hover:bg-surface-solid"
                                                 )}>
                                                     <span className={clsx(
-                                                        "text-[9px] font-bold uppercase tracking-[0.2em] mb-1.5",
+                                                        "text-[9px] font-bold tracking-[0.2em] mb-1.5",
                                                         isToday ? "text-white/70" : "text-text-muted"
                                                     )}>
                                                         {DAYS_SHORT[d.getDay()]}
@@ -209,7 +209,7 @@ export function Schedules() {
                             <tbody>
                                 {HOURS.map(hour => (
                                     <tr key={hour} className="group/row">
-                                        <td className="py-3 text-right pr-6 font-mono text-[11px] font-bold text-text-muted group-hover/row:text-primary transition-all duration-500 uppercase tracking-tighter italic">
+                                        <td className="py-3 text-right pr-6 font-mono text-[11px] font-bold text-text-muted group-hover/row:text-primary transition-all duration-500 tracking-tighter italic">
                                             {hour < 12 ? `${hour}:00 AM` : hour === 12 ? '12:00 PM' : `${hour - 12}:00 PM`}
                                         </td>
                                         {weekDays.map((d, di) => {
@@ -243,7 +243,7 @@ export function Schedules() {
                 </div>
                 
                 <div className="p-8 bg-surface-subtle/20 border-t border-border flex items-center justify-between">
-                    <p className="text-[9px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono opacity-50 flex items-center gap-2">
+                    <p className="text-[9px] font-bold text-text-muted tracking-[0.2em] font-mono opacity-50 flex items-center gap-2">
                         <Calendar className="w-3 h-3" />
                         Historical activity depth analyzed for performance patterns.
                     </p>

@@ -2,8 +2,8 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import {
-    Clock, Users, FolderOpen, 
-    Camera, TrendingUp, BarChart3, 
+    Clock, Users, FolderOpen,
+    Camera, TrendingUp, BarChart3,
     Monitor, Globe, RefreshCw,
     ChevronLeft, ChevronRight,
     MoreHorizontal, Calendar as CalendarIcon,
@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { PageLayout, EmptyState, LoadingState, StatMetric, ScreenshotModal } from './ui';
 import { SecureImage } from './ui/SecureImage';
-import { 
+import {
     getEffectiveEnd,
     formatDuration,
     fetchAllActivitySamples
@@ -58,6 +58,11 @@ interface AppUsage {
     percent: number;
 }
 
+// Module-level cache to prevent re-fetching when switching sidebar tabs
+let dashboardCache: any = null;
+let dashboardCacheWeek: string | null = null;
+
+
 interface DashStats {
     totalProductiveMinutes: number;
     avgActivityScore: number;
@@ -81,7 +86,7 @@ export function Dashboard() {
         if (!str) return '';
         return str.toLowerCase();
     };
-    
+
     const [weekStart, setWeekStart] = useState(() => {
         const d = new Date();
         const day = d.getDay();
@@ -127,16 +132,28 @@ export function Dashboard() {
         setWeekStart(d);
     };
 
-    const fetchDashboardData = useCallback(async (isSilent = false) => {
+    const fetchDashboardData = useCallback(async (isSilent = false, forceRefresh = false) => {
+        const startIso = weekStart.toISOString();
+        const endIso = weekEnd.toISOString();
+
+        // 🚀 Instant Cache Return - Prevents auto-loading when switching tabs!
+        if (!forceRefresh && dashboardCache && dashboardCacheWeek === startIso) {
+            setStats(dashboardCache.stats);
+            setUserActivity(dashboardCache.userActivity);
+            setOnlineMembers(dashboardCache.onlineMembers);
+            setProjectActivity(dashboardCache.projectActivity);
+            setAppUsage(dashboardCache.appUsage);
+            setLoading(false);
+            return;
+        }
+
         try {
             if (!isSilent) setLoading(true);
             else setRefreshing(true);
 
-            const startIso = weekStart.toISOString();
-            const endIso = weekEnd.toISOString();
             const nowIso = new Date().toISOString();
             const todayStart = new Date();
-            todayStart.setHours(0,0,0,0);
+            todayStart.setHours(0, 0, 0, 0);
             const todayStartIso = todayStart.toISOString();
 
             const [
@@ -239,44 +256,63 @@ export function Dashboard() {
                 });
                 let status: 'working' | 'idle' | 'offline' = 'offline';
                 if (activeSession) {
-                    const latestSample = activitySamples.filter(s => s.session_id === activeSession.id).sort((a,b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())[0];
+                    const latestSample = activitySamples.filter(s => s.session_id === activeSession.id).sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())[0];
                     status = (latestSample && !latestSample.idle) ? 'working' : 'idle';
                 }
-                return { 
-                    id: m.id, 
-                    fullName: m.full_name, 
-                    email: m.email, 
+                return {
+                    id: m.id,
+                    fullName: m.full_name,
+                    email: m.email,
                     avatarUrl: m.avatar_url,
-                    projectName: activeSession ? (projectMap[activeSession.project_id]?.name || 'Unknown Project') : 'None', 
-                    timeWorkedToday: dailyMins, 
-                    status, 
-                    lastActive: activeSession ? activeSession.started_at : m.id 
+                    projectName: activeSession ? (projectMap[activeSession.project_id]?.name || 'Unknown Project') : 'None',
+                    timeWorkedToday: dailyMins,
+                    status,
+                    lastActive: activeSession ? activeSession.started_at : m.id
                 };
-            }).sort((a,b) => (a.status === 'offline' ? 1 : 0) - (b.status === 'offline' ? 1 : 0));
+            }).sort((a, b) => (a.status === 'offline' ? 1 : 0) - (b.status === 'offline' ? 1 : 0));
 
-            setStats({
+            const finalStats = {
                 totalProductiveMinutes: totalMins,
                 avgActivityScore: activityCount > 0 ? Math.round(activitySum / activityCount) : 0,
                 projectsWorked: projectsWorked.size,
                 activeMembers: activeMemberIds.size,
                 totalScreenshots: screenshots?.length || 0
-            });
+            };
 
-            setUserActivity(
-                Object.values(userRows)
-                    .filter(r => r.totalMinutes > 0 || r.screenshots.length > 0)
-                    .sort((a, b) => b.totalMinutes - a.totalMinutes)
-                    .slice(0, 4) // ONLY top 4 active users
-            );
-            setOnlineMembers(online);
-            setProjectActivity(Object.entries(projStats).map(([id, p]) => ({ id, name: projectMap[id]?.name || 'Unknown', minutes: p.mins, activityScore: p.activityCount > 0 ? Math.round(p.activitySum / p.activityCount) : 0, color: projectMap[id]?.color || '#6366f1' })).sort((a,b) => b.minutes - a.minutes));
-            
+            const finalUserActivity = Object.values(userRows)
+                .filter(r => r.totalMinutes > 0 || r.screenshots.length > 0)
+                .sort((a, b) => b.totalMinutes - a.totalMinutes)
+                .slice(0, 4);
+
+            const finalProjectActivity = Object.entries(projStats)
+                .map(([id, p]) => ({ id, name: projectMap[id]?.name || 'Unknown', minutes: p.mins, activityScore: p.activityCount > 0 ? Math.round(p.activitySum / p.activityCount) : 0, color: projectMap[id]?.color || 'var(--color-chart-main)' }))
+                .sort((a, b) => b.minutes - a.minutes);
+
             const totalSamplesForApps = Object.values(appStats).reduce((a, b) => a + b, 0);
-            setAppUsage(Object.entries(appStats).map(([name, count]) => ({ 
-                name, 
-                minutes: count, 
-                percent: totalSamplesForApps > 0 ? (count / totalSamplesForApps) * 100 : 0 
-            })).sort((a,b) => b.minutes - a.minutes).slice(0, 10));
+            const finalAppUsage = Object.entries(appStats)
+                .map(([name, count]) => ({
+                    name,
+                    minutes: count,
+                    percent: totalSamplesForApps > 0 ? (count / totalSamplesForApps) * 100 : 0
+                }))
+                .sort((a, b) => b.minutes - a.minutes).slice(0, 10);
+
+            // Update State
+            setStats(finalStats);
+            setUserActivity(finalUserActivity);
+            setOnlineMembers(online);
+            setProjectActivity(finalProjectActivity);
+            setAppUsage(finalAppUsage);
+
+            // Update Cache
+            dashboardCache = {
+                stats: finalStats,
+                userActivity: finalUserActivity,
+                onlineMembers: online,
+                projectActivity: finalProjectActivity,
+                appUsage: finalAppUsage
+            };
+            dashboardCacheWeek = startIso;
 
         } catch (error) {
             console.error('Dashboard error:', error);
@@ -288,7 +324,7 @@ export function Dashboard() {
 
     useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
-    if (loading) return <div className="h-screen flex items-center justify-center bg-white"><LoadingState /></div>;
+    if (loading) return <div className="h-screen flex items-center justify-center bg-surface"><LoadingState /></div>;
 
     return (
         <PageLayout
@@ -298,39 +334,39 @@ export function Dashboard() {
             actions={
                 <div className="flex items-center gap-4">
                     <div className="flex items-center glass-panel p-1 rounded-2xl shadow-premium overflow-hidden border border-border">
-                        <button 
-                            onClick={() => navigateWeek('prev')} 
+                        <button
+                            onClick={() => navigateWeek('prev')}
                             className="p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <div 
+                        <div
                             className="relative px-6 py-2 min-w-[220px] text-center cursor-pointer hover:bg-surface-hover/50 transition-all group/date rounded-xl"
                             onClick={() => dateInputRef.current?.showPicker()}
                         >
                             <div className="flex items-center justify-center gap-2">
                                 <CalendarIcon className="w-3.5 h-3.5 text-primary opacity-50" />
-                                <span className="text-[11px] font-bold text-text-main uppercase tracking-widest">
+                                <span className="text-[11px] font-bold text-text-main ">
                                     {weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </span>
                             </div>
-                            <input 
+                            <input
                                 ref={dateInputRef}
-                                type="date" 
+                                type="date"
                                 className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
                                 onChange={(e) => handleDateChange(e.target.value)}
                             />
                         </div>
-                        <button 
-                            onClick={() => navigateWeek('next')} 
-                            className="p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl disabled:opacity-30 disabled:hover:bg-transparent" 
+                        <button
+                            onClick={() => navigateWeek('next')}
+                            className="p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl disabled:opacity-30 disabled:hover:bg-transparent"
                             disabled={weekEnd > new Date()}
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
-                    <button 
-                        onClick={() => fetchDashboardData(true)} 
+                    <button
+                        onClick={() => fetchDashboardData(true, true)}
                         className={clsx(
                             "w-12 h-12 flex items-center justify-center glass-panel rounded-2xl transition-all duration-300 border border-border",
                             refreshing ? "text-primary shadow-glow-primary border-primary/20" : "text-text-muted hover:text-text-main"
@@ -341,60 +377,60 @@ export function Dashboard() {
                 </div>
             }
         >
-            <div className="flex flex-col gap-10 pb-24">
-                
+            <div className="flex flex-col gap-8 pb-24">
+
                 {/* 📊 KPI Architecture */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
-                    <StatMetric 
-                        icon={<TrendingUp className="w-5 h-5" />} 
-                        label="Team Focus" 
-                        value={`${stats.avgActivityScore}%`} 
-                        sub="Avg activity score this week" 
-                        trend={3} 
+                    <StatMetric
+                        icon={<TrendingUp className="w-5 h-5" />}
+                        label="Team Focus"
+                        value={`${stats.avgActivityScore}%`}
+                        sub="Avg activity score this week"
+                        trend={3}
                         accent="brown-gradient"
                     />
-                    <StatMetric 
-                        icon={<Clock className="w-5 h-5" />} 
-                        label="Productivity" 
-                        value={formatDuration(stats.totalProductiveMinutes)} 
-                        sub="Total hours tracked this week" 
-                        trend={5} 
+                    <StatMetric
+                        icon={<Clock className="w-5 h-5" />}
+                        label="Productivity"
+                        value={formatDuration(stats.totalProductiveMinutes)}
+                        sub="Total hours tracked this week"
+                        trend={5}
                         accent="brown-gradient"
                     />
-                    <StatMetric 
-                        icon={<FolderOpen className="w-5 h-5" />} 
-                        label="Utilization" 
-                        value={stats.projectsWorked} 
-                        sub="Projects with active progress" 
+                    <StatMetric
+                        icon={<FolderOpen className="w-5 h-5" />}
+                        label="Utilization"
+                        value={stats.projectsWorked}
+                        sub="Projects with active progress"
                         accent="brown-gradient"
                     />
-                    <StatMetric 
-                        icon={<Users className="w-5 h-5" />} 
-                        label="Live Presence" 
-                        value={onlineMembers.filter(m => m.status !== 'offline').length} 
-                        sub="Members currently active" 
+                    <StatMetric
+                        icon={<Users className="w-5 h-5" />}
+                        label="Live Presence"
+                        value={onlineMembers.filter(m => m.status !== 'offline').length}
+                        sub="Members currently active"
                         accent="brown-gradient"
                     />
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-                    
+
                     {/* 🖥️ Left Content: Activity Stream (70%) */}
-                    <div className="lg:col-span-8 flex flex-col h-[820px]">
-                        <div className="glass-panel rounded-[32px] overflow-hidden flex flex-col h-full shadow-premium border border-border">
+                    <div className="lg:col-span-7 flex flex-col h-[820px]">
+                        <div className="glass-panel rounded-[12px] overflow-hidden flex flex-col h-full shadow-premium border border-border">
                             <div className="px-10 py-8 border-b border-border flex items-center justify-between bg-surface/50 shrink-0">
                                 <div>
                                     <h3 className="text-[14px] font-bold text-text-main tracking-tight mb-1">Visual Activity Stream</h3>
-                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Showing top 4 most active team members</p>
+                                    <p className="text-[10px] font-bold text-text-muted ">Showing top 4 most active team members</p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => navigate('/dashboard/activity')}
-                                    className="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-primary transition-all duration-300 shadow-md flex items-center gap-2 group"
+                                    className="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-[10px] font-bold hover:bg-primary transition-all duration-300 shadow-md flex items-center gap-2 group"
                                 >
                                     Explore All <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                                 </button>
                             </div>
-                            
+
                             <div className="flex-1 overflow-y-auto no-scrollbar divide-y divide-border">
                                 {userActivity.length === 0 ? (
                                     <EmptyState icon={<Camera />} title="No activity recorded yet" description="Tracking samples will appear here once the team starts working." className="py-32" />
@@ -416,13 +452,13 @@ export function Dashboard() {
                                                             )}>
                                                                 {user.fullName.includes('@') ? user.fullName.toLowerCase() : toProperCase(user.fullName)}
                                                             </p>
-                                                            <div className="px-2.5 py-1 bg-primary/5 text-primary text-[10px] font-bold rounded-lg uppercase tracking-widest border border-primary/10">
+                                                            <div className="px-2.5 py-1 bg-primary/5 text-primary text-[10px] font-bold rounded-lg border border-primary/10">
                                                                 {formatDuration(user.totalMinutes)}
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{user.activityScore}% Focus Level</span>
+                                                            <span className="text-[10px] font-bold text-text-muted ">{user.activityScore}% Focus Level</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -434,21 +470,21 @@ export function Dashboard() {
                                                     <div key={ss.id} className="relative group/ss" onClick={() => setEnlargedScreenshot(ss)}>
                                                         <div className="aspect-video bg-slate-100 border border-slate-100 rounded-[20px] overflow-hidden relative cursor-zoom-in transition-all duration-500 group-hover/ss:border-primary/40 group-hover/ss:shadow-elevated shadow-sm">
                                                             <SecureImage path={ss.path} className="w-full h-full object-cover opacity-95 group-hover/ss:opacity-100 group-hover/ss:scale-105 transition-all duration-700" />
-                                                            
+
                                                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/ss:opacity-100 transition-opacity duration-300" />
-                                                            
+
                                                             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/ss:opacity-100 transition-all duration-300 scale-90 group-hover/ss:scale-100">
-                                                                <div className="px-4 py-2 rounded-xl glass-panel text-[11px] font-bold text-slate-900 uppercase tracking-widest shadow-xl border-white/40">Inspect</div>
+                                                                <div className="px-4 py-2 rounded-xl glass-panel text-[11px] font-bold text-slate-900 shadow-xl border-white/40">Inspect</div>
                                                             </div>
 
                                                             <div className="absolute bottom-3 right-3 translate-y-1 group-hover/ss:translate-y-0 transition-transform duration-300">
-                                                                <span className="px-3 py-1.5 rounded-lg bg-black/60 text-white text-[9px] font-bold uppercase tracking-widest backdrop-blur-md border border-white/10">
+                                                                <span className="px-3 py-1.5 rounded-lg bg-black/60 text-white text-[9px] font-bold backdrop-blur-md border border-white/10">
                                                                     {new Date(ss.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                                 </span>
                                                             </div>
                                                             <div className="absolute top-3 left-3 -translate-y-1 group-hover/ss:translate-y-0 transition-transform duration-300">
                                                                 <span className={clsx(
-                                                                    "px-3 py-1.5 rounded-lg text-white text-[9px] font-bold uppercase tracking-widest backdrop-blur-md border border-white/10 shadow-lg",
+                                                                    "px-3 py-1.5 rounded-lg text-white text-[9px] font-bold backdrop-blur-md border border-white/10 shadow-lg",
                                                                     ss.activityPercent > 70 ? "bg-emerald-500/80" : ss.activityPercent > 30 ? "bg-amber-500/80" : "bg-rose-500/80"
                                                                 )}>
                                                                     {ss.activityPercent}%
@@ -463,7 +499,7 @@ export function Dashboard() {
                                                         <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center shadow-sm text-text-muted">
                                                             <Camera className="w-5 h-5" />
                                                         </div>
-                                                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-widest">Awaiting Capture</span>
+                                                        <span className="text-[9px] font-bold text-text-muted ">Awaiting Capture</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -475,25 +511,25 @@ export function Dashboard() {
                     </div>
 
                     {/* 👥 Right Content: Who's Online (30%) */}
-                    <div className="lg:col-span-4 flex flex-col h-[820px]">
-                        <div className="glass-panel rounded-[32px] shadow-premium overflow-hidden flex flex-col h-full border border-border">
+                    <div className="lg:col-span-5 flex flex-col h-[820px]">
+                        <div className="glass-panel rounded-[12px] shadow-premium overflow-hidden flex flex-col h-full border border-border">
                             <div className="px-8 py-8 border-b border-border flex items-center justify-between bg-surface/50 shrink-0">
                                 <div>
                                     <h3 className="text-[14px] font-bold text-text-main tracking-tight mb-1">Live Directory</h3>
-                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Real-time status updates</p>
+                                    <p className="text-[10px] font-bold text-text-muted ">Real-time status updates</p>
                                 </div>
                                 <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                    <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Live</span>
+                                    <span className="text-[9px] font-bold text-emerald-500 ">Live</span>
                                 </div>
                             </div>
-                            
+
                             <div className="flex-1 overflow-y-auto no-scrollbar">
                                 <table className="w-full text-left">
                                     <thead className="sticky top-0 bg-surface/90 backdrop-blur-md z-10">
                                         <tr className="border-b border-border">
-                                            <th className="px-8 py-5 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Team Member</th>
-                                            <th className="px-8 py-5 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] text-right">Performance</th>
+                                            <th className="px-8 py-5 text-[10px] font-bold text-text-muted tracking-[0.2em]">Team Member</th>
+                                            <th className="px-8 py-5 text-[10px] font-bold text-text-muted tracking-[0.2em] text-right">Performance</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border">
@@ -502,7 +538,7 @@ export function Dashboard() {
                                                 <td className="px-8 py-5">
                                                     <div className="flex items-center gap-4">
                                                         <div className="relative shrink-0">
-                                                            <div className="w-11 h-11 rounded-2xl bg-surface border border-border flex items-center justify-center text-[12px] font-bold text-text-muted uppercase shadow-sm group-hover:border-primary/30 transition-all duration-500 overflow-hidden ring-4 ring-transparent group-hover:ring-primary/5">
+                                                            <div className="w-11 h-11 rounded-2xl bg-surface border border-border flex items-center justify-center text-[12px] font-bold text-text-muted shadow-sm group-hover:border-primary/30 transition-all duration-500 overflow-hidden ring-4 ring-transparent group-hover:ring-primary/5">
                                                                 {member.avatarUrl ? (
                                                                     <SecureImage path={member.avatarUrl} bucket="avatars" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                                 ) : member.fullName.charAt(0)}
@@ -519,7 +555,7 @@ export function Dashboard() {
                                                             )}>
                                                                 {member.fullName ? toProperCase(member.fullName) : toEmailCase(member.email || '')}
                                                             </span>
-                                                            <span className="text-[10px] text-text-muted font-bold tracking-tight mt-1.5 truncate max-w-[140px] uppercase opacity-70">
+                                                            <span className="text-[10px] text-text-muted font-bold tracking-tight mt-1.5 truncate max-w-[140px] opacity-70">
                                                                 {member.projectName}
                                                             </span>
                                                         </div>
@@ -531,7 +567,7 @@ export function Dashboard() {
                                                             {formatDuration(member.timeWorkedToday)}
                                                         </span>
                                                         <span className={clsx(
-                                                            "text-[9px] font-bold uppercase tracking-[0.15em] mt-2 px-2 py-0.5 rounded-md",
+                                                            "text-[9px] font-bold tracking-[0.15em] mt-2 px-2 py-0.5 rounded-md",
                                                             member.status === 'working' ? "text-emerald-500 bg-emerald-500/10" : member.status === 'idle' ? "text-amber-500 bg-amber-500/10" : "text-text-muted bg-surface-hover"
                                                         )}>
                                                             {member.status}
@@ -543,11 +579,11 @@ export function Dashboard() {
                                     </tbody>
                                 </table>
                             </div>
-                            
+
                             <div className="p-8 bg-main/30 border-t border-border shrink-0">
-                                <button 
+                                <button
                                     onClick={() => navigate('/dashboard/people')}
-                                    className="w-full py-4 bg-surface border border-border rounded-2xl text-[11px] font-bold text-text-muted uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary hover:shadow-glow-primary transition-all duration-300 shadow-sm"
+                                    className="w-full py-4 bg-surface border border-border rounded-2xl text-[11px] font-bold text-text-muted hover:bg-primary hover:text-white hover:border-primary hover:shadow-glow-primary transition-all duration-300 shadow-sm"
                                 >
                                     Manage Workspace Team
                                 </button>
@@ -559,11 +595,11 @@ export function Dashboard() {
                 {/* 📊 Secondary Metrics Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Project Velocity Chart */}
-                    <div className="glass-panel rounded-[32px] shadow-premium p-10 border border-border">
+                    <div className="glass-panel rounded-[12px] shadow-premium p-10 border border-border">
                         <div className="flex items-center justify-between mb-10">
                             <div>
                                 <h3 className="text-[14px] font-bold text-text-main tracking-tight mb-1">Time Distribution</h3>
-                                <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Active hours per project</p>
+                                <p className="text-[10px] font-bold text-text-muted ">Active hours per project</p>
                             </div>
                             <div className="w-12 h-12 rounded-2xl bg-main flex items-center justify-center text-text-muted border border-border">
                                 <BarChart3 className="w-5 h-5" />
@@ -577,15 +613,14 @@ export function Dashboard() {
                                     <div key={proj.id} className="space-y-4 group/bar">
                                         <div className="flex items-center justify-between">
                                             <span className="text-[12px] font-bold text-text-main tracking-tight group-hover:text-primary transition-colors">{proj.name}</span>
-                                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{proj.activityScore}% Focus</span>
+                                            <span className="text-[10px] font-bold text-text-muted ">{proj.activityScore}% Focus</span>
                                         </div>
                                         <div className="h-2.5 bg-main/80 border border-border rounded-full overflow-hidden shadow-inner">
-                                            <motion.div 
+                                            <motion.div
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${Math.min(100, (proj.minutes / (stats.totalProductiveMinutes || 1)) * 100)}%` }}
                                                 transition={{ duration: 1, ease: "easeOut" }}
-                                                className="h-full rounded-full relative group-hover:brightness-110 transition-all" 
-                                                style={{ backgroundColor: proj.color }} 
+                                                className="h-full rounded-full relative group-hover:brightness-110 transition-all bg-primary"
                                             >
                                                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent" />
                                             </motion.div>
@@ -603,11 +638,11 @@ export function Dashboard() {
                     </div>
 
                     {/* App ecosystem Ledger */}
-                    <div className="glass-panel rounded-[32px] shadow-premium overflow-hidden flex flex-col border border-border">
+                    <div className="glass-panel rounded-[12px] shadow-premium overflow-hidden flex flex-col border border-border">
                         <div className="px-10 py-8 border-b border-border bg-surface/50 flex items-center justify-between">
                             <div>
                                 <h3 className="text-[14px] font-bold text-text-main tracking-tight mb-1">Application Ecosystem</h3>
-                                <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Most utilized tools and platforms</p>
+                                <p className="text-[10px] font-bold text-text-muted ">Most utilized tools and platforms</p>
                             </div>
                             <div className="w-12 h-12 rounded-2xl bg-main flex items-center justify-center text-text-muted border border-border">
                                 <Monitor className="w-5 h-5" />
@@ -629,7 +664,7 @@ export function Dashboard() {
                                             </div>
                                             <div className="flex flex-col min-w-0">
                                                 <span className="text-[13px] font-bold text-text-main tracking-tight truncate group-hover:text-primary transition-colors">{app.name}</span>
-                                                <span className="text-[9px] text-text-muted font-bold uppercase tracking-widest mt-1 opacity-60">System Process</span>
+                                                <span className="text-[9px] text-text-muted font-bold mt-1 opacity-60">System Process</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-6">
@@ -639,16 +674,16 @@ export function Dashboard() {
                                             </div>
                                         </div>
                                     </div>
-                                ))
+                                )) // light theme
                             )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            <ScreenshotModal 
-                screenshot={enlargedScreenshot} 
-                onClose={() => setEnlargedScreenshot(null)} 
+            <ScreenshotModal
+                screenshot={enlargedScreenshot}
+                onClose={() => setEnlargedScreenshot(null)}
             />
         </PageLayout>
     );

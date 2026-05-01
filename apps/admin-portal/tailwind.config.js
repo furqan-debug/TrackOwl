@@ -7,10 +7,10 @@ export default {
     theme: {
         extend: {
             colors: {
-                // TrackOwl Official Palette
-                primary: '#965123',
-                'dark-brown': '#472D1F',
-                'base-white': '#FAFAFA',
+                primary: 'var(--color-primary)',
+                secondary: 'var(--color-secondary)',
+                accent: 'var(--color-accent)',
+                'chart-main': 'var(--color-chart-main)',
                 
                 // Semantic Mapping
                 background: 'var(--bg-main)',

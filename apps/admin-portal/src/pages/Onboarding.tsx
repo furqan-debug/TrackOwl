@@ -135,9 +135,9 @@ export function Onboarding() {
                     <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
                         <img src={LogoIcon} alt="Trackora" className="w-full h-full object-contain" />
                     </div>
-                    <span className="text-lg font-bold text-slate-900 tracking-tight">Trackora</span>
+                    <span className="text-lg font-bold text-text-main tracking-tight">Trackora</span>
                 </div>
-                <div className="text-xs font-semibold text-slate-400 bg-white px-3 py-1 rounded-full border border-slate-200">
+                <div className="text-xs font-semibold text-text-muted bg-surface px-3 py-1 rounded-full border border-border">
                     Step {step} of 3
                 </div>
             </div>
@@ -146,10 +146,10 @@ export function Onboarding() {
                 
                 <div className="hidden lg:flex flex-col space-y-8 pr-12">
                     <div className="space-y-4">
-                        <h1 className="text-5xl font-extrabold text-slate-900 leading-[1.1] tracking-tight">
+                        <h1 className="text-5xl font-extrabold text-text-main leading-[1.1] tracking-tight">
                             Build your workspace <br/>in minutes.
                         </h1>
-                        <p className="text-lg text-slate-500 leading-relaxed max-w-[440px]">
+                        <p className="text-lg text-text-muted leading-relaxed max-w-[440px]">
                             Join 2,000+ teams using Trackora to streamline their operations and boost performance.
                         </p>
                     </div>
@@ -164,26 +164,26 @@ export function Onboarding() {
                                 <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
                                     <feat.icon className="w-3.5 h-3.5" strokeWidth={3} />
                                 </div>
-                                <span className="text-sm font-semibold text-slate-700">{feat.text}</span>
+                                <span className="text-sm font-semibold text-text-main">{feat.text}</span>
                             </div>
                         ))}
                     </div>
 
-                    <div className="pt-8 mt-8 border-t border-slate-200">
-                        <div className="flex items-center gap-4 p-4 rounded-3xl bg-white border border-slate-200 max-w-[340px] shadow-sm">
-                            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
+                    <div className="pt-8 mt-8 border-t border-border">
+                        <div className="flex items-center gap-4 p-4 rounded-3xl bg-surface border border-border max-w-[340px] shadow-shell-sm">
+                            <div className="w-12 h-12 rounded-2xl bg-surface-hover flex items-center justify-center text-text-muted">
                                 <Rocket className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest leading-none mb-1">Trial Plan</p>
-                                <p className="text-sm font-bold text-slate-900">{selectedPlan} Plan (14 Days)</p>
+                                <p className="text-[10px] font-bold text-blue-600 leading-none mb-1">Trial Plan</p>
+                                <p className="text-sm font-bold text-text-main">{selectedPlan} Plan (14 Days)</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div className="w-full max-w-[520px] mx-auto">
-                    <Card className="p-8 md:p-12 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] bg-white border-slate-200 rounded-[40px] relative overflow-hidden">
+                    <Card className="p-8 md:p-12 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] bg-surface border-border rounded-[40px] relative overflow-hidden">
                         
                         <div className="flex items-center gap-4 mb-10 overflow-x-auto pb-1 no-scrollbar">
                             {steps.map((s) => (
@@ -193,8 +193,8 @@ export function Onboarding() {
                                         step === s.id ? "bg-blue-600 w-6" : step > s.id ? "bg-slate-900" : "bg-slate-200"
                                     )} />
                                     <span className={clsx(
-                                        "text-[10px] font-extrabold uppercase tracking-widest",
-                                        step === s.id ? "text-blue-600" : step > s.id ? "text-slate-900" : "text-slate-300"
+                                        "text-[10px] font-extrabold ",
+                                        step === s.id ? "text-blue-600" : step > s.id ? "text-text-main" : "text-text-muted"
                                     )}>
                                         {s.label}
                                     </span>
@@ -205,8 +205,8 @@ export function Onboarding() {
                         {step === 1 && (
                             <form onSubmit={handleOrgSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="space-y-2">
-                                    <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none">Your Organization</h2>
-                                    <p className="text-slate-500 text-sm">Tell us about your company to tailor your dashboard.</p>
+                                    <h2 className="text-3xl font-extrabold text-text-main tracking-tight leading-none">Your Organization</h2>
+                                    <p className="text-text-muted text-sm">Tell us about your company to tailor your dashboard.</p>
                                 </div>
 
                                 <div className="space-y-6">
@@ -216,40 +216,40 @@ export function Onboarding() {
                                         value={orgName}
                                         onChange={e => setOrgName(e.target.value)}
                                         placeholder="e.g. Acme Corp"
-                                        className="h-14 rounded-2xl text-base px-5 bg-slate-50/50"
+                                        className="h-14 rounded-2xl text-base px-5 bg-surface-hover/50"
                                     />
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Industry</label>
+                                            <label className="text-xs font-bold text-text-muted ml-1">Industry</label>
                                             <div className="relative">
                                                 <select
                                                     required
                                                     value={industry}
                                                     onChange={e => setIndustry(e.target.value)}
-                                                    className="w-full bg-slate-50/50 border border-slate-200 h-14 rounded-2xl px-5 text-slate-900 text-sm appearance-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all outline-none"
+                                                    className="w-full bg-surface-hover/50 border border-border h-14 rounded-2xl px-5 text-text-main text-sm appearance-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all outline-none"
                                                 >
                                                     <option value="">Choose...</option>
                                                     {industries.map(i => <option key={i} value={i}>{i}</option>)}
                                                 </select>
-                                                <Briefcase className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
+                                                <Briefcase className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
                                             </div>
                                         </div>
                                         
                                         <div className="space-y-2">
-                                            <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Team Size</label>
+                                            <label className="text-xs font-bold text-text-muted ml-1">Team Size</label>
                                             <div className="relative">
                                                 <select
                                                     value={orgSize}
                                                     onChange={e => setOrgSize(e.target.value)}
-                                                    className="w-full bg-slate-50/50 border border-slate-200 h-14 rounded-2xl px-5 text-slate-900 text-sm appearance-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all outline-none"
+                                                    className="w-full bg-surface-hover/50 border border-border h-14 rounded-2xl px-5 text-text-main text-sm appearance-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all outline-none"
                                                 >
                                                     <option value="1-10">1-10</option>
                                                     <option value="11-50">11-50</option>
                                                     <option value="51-200">51-200</option>
                                                     <option value="201+">201+</option>
                                                 </select>
-                                                <Users className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 pointer-events-none" />
+                                                <Users className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
                                             </div>
                                         </div>
                                     </div>
@@ -268,8 +268,8 @@ export function Onboarding() {
                         {step === 2 && (
                             <form onSubmit={handlePaymentSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 <div className="space-y-2">
-                                    <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight leading-none">Access Granted</h2>
-                                    <p className="text-slate-500 text-sm">Review your 14-day free trial on the {selectedPlan} plan.</p>
+                                    <h2 className="text-3xl font-extrabold text-text-main tracking-tight leading-none">Access Granted</h2>
+                                    <p className="text-text-muted text-sm">Review your 14-day free trial on the {selectedPlan} plan.</p>
                                 </div>
 
                                 <div className="rounded-3xl bg-slate-900 p-8 text-white relative overflow-hidden group shadow-2xl">
@@ -277,31 +277,31 @@ export function Onboarding() {
                                     <div className="relative z-10 space-y-6">
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1">Plan</p>
+                                                <p className="text-[10px] font-bold text-text-muted mb-1">Plan</p>
                                                 <p className="text-2xl font-black">{selectedPlan} Trial</p>
                                             </div>
-                                            <div className="px-3 py-1 bg-blue-600 rounded-full text-[10px] font-bold uppercase tracking-widest">Active</div>
+                                            <div className="px-3 py-1 bg-blue-600 rounded-full text-[10px] font-bold ">Active</div>
                                         </div>
                                         <div className="flex items-baseline gap-2">
                                             <span className="text-4xl font-extrabold">$0.00</span>
-                                            <span className="text-slate-400 text-sm">/ first 14 days</span>
+                                            <span className="text-text-muted text-sm">/ first 14 days</span>
                                         </div>
-                                        <div className="flex items-center gap-3 pt-6 border-t border-white/5 text-xs text-slate-400">
+                                        <div className="flex items-center gap-3 pt-6 border-t border-white/5 text-xs text-text-muted">
                                             <ShieldCheck className="w-4 h-4 text-blue-500" />
                                             No commitment. Cancel anytime.
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="p-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50 flex items-center gap-4 group hover:border-blue-600 transition-all cursor-pointer">
-                                    <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-300 group-hover:text-blue-600 transition-colors">
+                                <div className="p-6 rounded-2xl border border-dashed border-border bg-surface-hover flex items-center gap-4 group hover:border-blue-600 transition-all cursor-pointer">
+                                    <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-text-muted group-hover:text-blue-600 transition-colors">
                                         <CreditCard className="w-5 h-5" />
                                     </div>
                                     <div className="flex-1">
-                                        <p className="text-xs font-bold text-slate-900 mb-0.5">Stripe Secure Connection</p>
-                                        <p className="text-[10px] text-slate-500 uppercase tracking-widest">Connect to finalize setup</p>
+                                        <p className="text-xs font-bold text-text-main mb-0.5">Stripe Secure Connection</p>
+                                        <p className="text-[10px] text-text-muted ">Connect to finalize setup</p>
                                     </div>
-                                    <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
+                                    <ChevronRight className="w-5 h-5 text-text-muted group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
                                 </div>
 
                                 <Button
@@ -324,14 +324,14 @@ export function Onboarding() {
                                     </div>
                                 </div>
                                 
-                                <h1 className="text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">Organization Created</h1>
-                                <p className="text-slate-500 mb-8 text-lg font-medium">
+                                <h1 className="text-4xl font-extrabold text-text-main mb-3 tracking-tight">Organization Created</h1>
+                                <p className="text-text-muted mb-8 text-lg font-medium">
                                     Welcome home. <br/>
                                     <strong>{orgName || 'Your Workspace'}</strong> is ready for action.
                                 </p>
 
                                 {syncError && (
-                                    <div className="mb-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 text-amber-600 text-[10px] font-bold uppercase tracking-widest animate-in shake duration-500">
+                                    <div className="mb-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 text-amber-500 text-[10px] font-bold animate-in shake duration-500">
                                         Sync delay detected. Please try again in a moment.
                                     </div>
                                 )}
@@ -345,7 +345,7 @@ export function Onboarding() {
                                     {!loading && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />}
                                 </Button>
                                 
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Operational Sync Complete</p>
+                                <p className="text-[10px] font-bold text-text-muted tracking-[0.2em]">Operational Sync Complete</p>
                             </div>
                         )}
 

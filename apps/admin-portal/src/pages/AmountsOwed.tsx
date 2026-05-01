@@ -142,14 +142,14 @@ export function AmountsOwed() {
             description="Review and manage outstanding payments for team members."
             actions={
                 <div className="flex flex-wrap items-center gap-4">
-                    <div className="flex items-center gap-1 bg-surface-solid border border-border p-1 rounded-lg shadow-sm">
+                    <div className="flex items-center gap-1 bg-surface-solid border border-border p-1 rounded-lg shadow-shell-sm">
                         {(['This Week', 'This Month', 'All Time'] as const).map(r => (
                             <button
                                 key={r}
                                 onClick={() => setRange(r)}
                                 className={clsx(
                                     "px-4 py-1.5 rounded-md text-xs font-medium transition-all",
-                                    range === r ? "bg-primary text-white shadow-sm" : "text-text-muted hover:text-text-primary"
+                                    range === r ? "bg-primary text-white shadow-shell-sm" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
                                 {r}
@@ -164,26 +164,26 @@ export function AmountsOwed() {
         >
 
             {/* Total Highlight */}
-            <div className="bg-surface-solid border border-border rounded-xl p-8 mb-10 shadow-sm relative overflow-hidden">
+            <div className="bg-surface-solid border border-border rounded-xl p-8 mb-10 shadow-shell-sm relative overflow-hidden">
                 <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
                     <div className="text-center md:text-left space-y-2">
                         <div className="flex items-center gap-2 justify-center md:justify-start">
-                            <TrendingUp className="w-4 h-4 text-emerald-600" />
-                            <h3 className="text-xs font-semibold text-text-muted uppercase tracking-wider">Total Payments Due</h3>
+                            <TrendingUp className="w-4 h-4 text-emerald-500" />
+                            <h3 className="text-xs font-semibold text-text-muted ">Total Payments Due</h3>
                         </div>
                         <div className="flex items-baseline gap-2 justify-center md:justify-start">
                             <span className="text-5xl font-bold text-text-primary">${totalOwed.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                            <span className="text-sm font-semibold text-text-muted/60 uppercase">USD</span>
+                            <span className="text-sm font-semibold text-text-muted/60 ">USD</span>
                         </div>
                     </div>
                     
                     <div className="flex gap-4 w-full md:w-auto">
                         <div className="bg-surface-subtle/50 border border-border px-6 py-4 rounded-lg flex-1 text-center">
-                            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">Members</p>
+                            <p className="text-[10px] font-semibold text-text-muted mb-1">Members</p>
                             <p className="text-2xl font-bold text-text-primary">{data.length}</p>
                         </div>
                         <div className="bg-surface-subtle/50 border border-border px-6 py-4 rounded-lg flex-1 text-center">
-                            <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mb-1">Avg. Payment</p>
+                            <p className="text-[10px] font-semibold text-text-muted mb-1">Avg. Payment</p>
                             <p className="text-2xl font-bold text-text-primary">${(totalOwed / (data.length || 1)).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                         </div>
                     </div>
@@ -194,11 +194,11 @@ export function AmountsOwed() {
                 <div className="p-6 border-b border-border bg-surface-subtle/30 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <BadgeDollarSign className="w-5 h-5 text-text-muted" />
-                        <h3 className="text-xs font-semibold text-text-primary uppercase tracking-wider">Breakdown</h3>
+                        <h3 className="text-xs font-semibold text-text-primary ">Breakdown</h3>
                     </div>
                     <div className="flex items-center gap-4">
                         <div className="relative group">
-                            <div className="flex items-center gap-2 bg-surface-solid border border-border rounded-lg px-3 py-1.5 shadow-sm cursor-pointer">
+                            <div className="flex items-center gap-2 bg-surface-solid border border-border rounded-lg px-3 py-1.5 shadow-shell-sm cursor-pointer">
                                 <Filter className="w-3.5 h-3.5 text-text-muted" />
                                 <span className="text-xs font-medium text-text-primary min-w-[120px] truncate pb-0.5">Sort: Highest Amount</span>
                                 <ChevronDown className="w-3.5 h-3.5 text-text-muted" />
@@ -216,11 +216,11 @@ export function AmountsOwed() {
                     <table className="w-full text-left border-collapse">
                         <thead>
                             <tr className="bg-surface-subtle/20">
-                                <th className="pl-6 pr-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border min-w-[280px]">Member</th>
-                                <th className="px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border">Rate</th>
-                                <th className="px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border">Hours</th>
-                                <th className="px-4 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border">Last Tracked</th>
-                                <th className="pl-4 pr-6 py-4 text-xs font-semibold text-text-muted uppercase tracking-wider border-b border-border text-right min-w-[160px]">Balance</th>
+                                <th className="pl-6 pr-4 py-4 text-xs font-semibold text-text-muted border-b border-border min-w-[280px]">Member</th>
+                                <th className="px-4 py-4 text-xs font-semibold text-text-muted border-b border-border">Rate</th>
+                                <th className="px-4 py-4 text-xs font-semibold text-text-muted border-b border-border">Hours</th>
+                                <th className="px-4 py-4 text-xs font-semibold text-text-muted border-b border-border">Last Tracked</th>
+                                <th className="pl-4 pr-6 py-4 text-xs font-semibold text-text-muted border-b border-border text-right min-w-[160px]">Balance</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/40">
@@ -245,12 +245,12 @@ export function AmountsOwed() {
                                     <tr key={row.member_id} className="hover:bg-surface-subtle transition-all group">
                                         <td className="pl-6 pr-4 py-4">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-lg bg-surface-subtle border border-border flex items-center justify-center font-bold text-text-primary text-sm shadow-sm transition-all group-hover:bg-primary group-hover:text-white">
+                                                <div className="w-10 h-10 rounded-lg bg-surface-subtle border border-border flex items-center justify-center font-bold text-text-primary text-sm shadow-shell-sm transition-all group-hover:bg-primary group-hover:text-white">
                                                     {row.full_name.charAt(0)}
                                                 </div>
                                                 <div className="flex flex-col">
                                                     <span className="font-semibold text-text-primary text-sm">{row.full_name}</span>
-                                                    <span className="text-[10px] text-text-muted uppercase font-medium">Verified Member</span>
+                                                    <span className="text-[10px] text-text-muted font-medium">Verified Member</span>
                                                 </div>
                                             </div>
                                         </td>
@@ -263,7 +263,7 @@ export function AmountsOwed() {
                                         <td className="px-4 py-4">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-text-primary">{row.totalHours}</span>
-                                                <span className="text-[10px] text-text-muted uppercase font-medium">Hours</span>
+                                                <span className="text-[10px] text-text-muted font-medium">Hours</span>
                                             </div>
                                         </td>
                                         <td className="px-4 py-4">
@@ -274,7 +274,7 @@ export function AmountsOwed() {
                                         </td>
                                         <td className="pl-4 pr-6 py-4 text-right">
                                             <div className="flex flex-col items-end gap-1.5">
-                                                <span className="font-bold text-emerald-600 text-lg">
+                                                <span className="font-bold text-emerald-500 text-lg">
                                                     ${row.amountOwed.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                 </span>
                                                 <div className="flex items-center gap-2">
@@ -300,11 +300,11 @@ export function AmountsOwed() {
                 <div className="p-6 bg-surface-subtle/40 border-t border-border flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex items-start gap-3 max-w-lg">
                         <Shield className="w-4 h-4 text-text-muted mt-0.5" />
-                        <p className="text-[10px] font-medium text-text-muted uppercase leading-relaxed tracking-wider">
+                        <p className="text-[10px] font-medium text-text-muted leading-relaxed ">
                             Hours are calculated as <strong>Productive Time = Total Tracked − Idle Time</strong>. Idle minutes are excluded from pay calculations. Actual payouts may vary by tax obligations and approved deductions.
                         </p>
                     </div>
-                    <Button variant="primary" className="w-full md:w-auto px-8 py-3 shadow-sm hover:shadow-md">
+                    <Button variant="primary" className="w-full md:w-auto px-8 py-3 shadow-shell-sm hover:shadow-md">
                         Process Payments
                         <TrendingUp className="w-4 h-4 ml-2" />
                     </Button>

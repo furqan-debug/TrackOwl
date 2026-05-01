@@ -47,16 +47,16 @@ export function ScreenshotLightbox({ enlarged, setEnlarged }: ScreenshotLightbox
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">
                                 <div className="h-1 w-1 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
-                                <span className="text-[10px] font-mono text-white/40 tracking-[0.2em] uppercase">
+                                <span className="text-[10px] font-mono text-white/40 tracking-[0.2em] ">
                                     Live_Capture_Stream // ID:{enlarged.id}
                                 </span>
                             </div>
                         </div>
 
-                        <div className="hidden lg:block h-8 w-px bg-white/10 mx-2" />
+                        <div className="hidden lg:block h-8 w-px bg-surface/10 mx-2" />
 
                         <div className="hidden lg:block">
-                            <p className="text-[9px] font-black text-primary/60 uppercase tracking-[0.3em]">Source Node</p>
+                            <p className="text-[9px] font-black text-primary/60 tracking-[0.3em]">Source Node</p>
                             <p className="text-xs font-mono text-white/70">{enlarged.session_id}</p>
                         </div>
                     </div>
@@ -64,7 +64,7 @@ export function ScreenshotLightbox({ enlarged, setEnlarged }: ScreenshotLightbox
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setIsMaximized(!isMaximized)}
-                            className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white transition-all"
+                            className="p-2.5 rounded-xl bg-surface/5 hover:bg-surface-hover/10 border border-white/10 text-white/50 hover:text-white transition-all"
                         >
                             {isMaximized ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
                         </button>
@@ -97,7 +97,7 @@ export function ScreenshotLightbox({ enlarged, setEnlarged }: ScreenshotLightbox
                                 <Clock className="text-primary w-5 h-5" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-primary uppercase tracking-tighter">Capture Timestamp</p>
+                                <p className="text-[10px] font-black text-primary tracking-tighter">Capture Timestamp</p>
                                 <p className="text-lg font-bold text-white leading-none">
                                     {new Date(enlarged.recorded_at).toLocaleTimeString()}
                                 </p>
@@ -110,28 +110,28 @@ export function ScreenshotLightbox({ enlarged, setEnlarged }: ScreenshotLightbox
                 <div className="px-8 py-4 flex justify-between items-center bg-[#08080a] border-t border-white/5 shrink-0">
                     <div className="flex gap-6">
                         <div className="flex flex-col">
-                            <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Integrity Check</span>
+                            <span className="text-[8px] font-bold text-white/30 ">Integrity Check</span>
                             <span className="text-[10px] text-emerald-500/80 font-mono">SECURE_SSL_VERIFIED</span>
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-[8px] font-bold text-white/30 uppercase tracking-widest">Engine</span>
+                            <span className="text-[8px] font-bold text-white/30 ">Engine</span>
                             <span className="text-[10px] text-white/60 font-mono">VISION_AI_V4.2</span>
                         </div>
                     </div>
 
-                    <div className="hidden md:flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/5">
+                    <div className="hidden md:flex items-center gap-3 px-4 py-1.5 rounded-full bg-surface/5 border border-white/5">
                         <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                        <span className="text-[9px] font-bold text-white/40 uppercase tracking-[0.2em]">
+                        <span className="text-[9px] font-bold text-white/40 tracking-[0.2em]">
                             System Active // Monitoring Source
                         </span>
                     </div>
 
                     <div className="flex items-center gap-3">
                         <div className="flex items-center gap-2 text-white/20 mr-4">
-                            <kbd className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[9px] font-mono">ESC</kbd>
-                            <span className="text-[9px] font-bold uppercase tracking-widest">Exit_View</span>
+                            <kbd className="px-1.5 py-0.5 rounded bg-surface/5 border border-white/10 text-[9px] font-mono">ESC</kbd>
+                            <span className="text-[9px] font-bold ">Exit_View</span>
                         </div>
-                        <button className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold text-white/80 transition-all">
+                        <button className="flex items-center gap-2 px-4 py-2 bg-surface/5 hover:bg-surface-hover/10 border border-white/10 rounded-xl text-xs font-bold text-white/80 transition-all">
                             <Download size={14} />
                             Archive
                         </button>

@@ -23,7 +23,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
     if (samples.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-24 text-text-muted">
-                <p className="text-sm font-bold uppercase tracking-widest italic opacity-40">Operational silence detected.</p>
+                <p className="text-sm font-bold italic opacity-40">Operational silence detected.</p>
             </div>
         );
     }
@@ -39,7 +39,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
                                 <span className="text-[18px] font-bold text-text-main tabular-nums leading-none tracking-tight">
                                     {hour.toString().padStart(2, '0')}:00
                                 </span>
-                                <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mt-2">
+                                <span className="text-[10px] font-black text-text-muted tracking-[0.2em] mt-2">
                                     {hour < 12 ? 'AM' : 'PM'}
                                 </span>
                             </div>
@@ -57,7 +57,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
                                         <div
                                             key={index}
                                             className={clsx(
-                                                "relative rounded-[20px] transition-all duration-500 flex flex-col items-center justify-center group/block overflow-hidden shadow-sm border",
+                                                "relative rounded-[20px] transition-all duration-500 flex flex-col items-center justify-center group/block overflow-hidden shadow-shell-sm border",
                                                 !hasData ? "bg-black/20 border-border border-dashed" : getBlockStyle(intensity)
                                             )}
                                         >
@@ -66,7 +66,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
                                                     <span className="text-[13px] font-bold text-white leading-none z-10 transition-transform group-hover/block:scale-125 duration-500">
                                                         {intensity}%
                                                     </span>
-                                                    <span className="text-[8px] font-black text-white/50 uppercase tracking-[0.1em] mt-1.5 z-10 opacity-0 group-hover/block:opacity-100 translate-y-1 group-hover/block:translate-y-0 transition-all duration-500">
+                                                    <span className="text-[8px] font-black text-white/50 tracking-[0.1em] mt-1.5 z-10 opacity-0 group-hover/block:opacity-100 translate-y-1 group-hover/block:translate-y-0 transition-all duration-500">
                                                         {block.minutesTracked}m trace
                                                     </span>
                                                     {/* Background Glow */}
@@ -76,7 +76,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
 
                                             {/* Tooltip HUD */}
                                             {hasData && (
-                                                <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-surface text-text-main text-[10px] font-bold px-3 py-1.5 rounded-xl opacity-0 group-hover/block:opacity-100 translate-y-2 group-hover/block:translate-y-0 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-2xl border border-border uppercase tracking-widest">
+                                                <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-surface text-text-main text-[10px] font-bold px-3 py-1.5 rounded-xl opacity-0 group-hover/block:opacity-100 translate-y-2 group-hover/block:translate-y-0 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-2xl border border-border ">
                                                     {block.startTime} – {block.endTime}
                                                 </div>
                                             )}

@@ -75,12 +75,12 @@ function CustomTooltip({ active, payload, label }: any) {
     if (active && payload && payload.length) {
         return (
             <div className="bg-surface border border-border p-4 rounded-xl shadow-lg animate-in zoom-in-95 duration-200">
-                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 border-b border-border pb-2">{label}</p>
+                <p className="text-xs font-semibold text-text-muted mb-3 border-b border-border pb-2">{label}</p>
                 <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-bold text-text-main tracking-tight">
                         {payload[0].value}%
                     </span>
-                    <span className="text-xs font-medium text-primary uppercase tracking-wide">Activity Rate</span>
+                    <span className="text-xs font-medium text-primary tracking-wide">Activity Rate</span>
                 </div>
             </div>
         );

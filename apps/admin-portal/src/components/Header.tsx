@@ -69,14 +69,14 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                         <img
                             src={theme === 'dark' ? logoDark : logoLight}
                             alt="TrackOwl"
-                            className="h-10 w-auto object-contain"
+                            className="h-19 w-auto object-contain"
                         />
                     </Link>
 
                     <div className="hidden lg:block h-5 w-px bg-[var(--border-color)]" />
 
                     <div className="hidden lg:flex flex-col">
-                        <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest leading-none mb-0.5">Admin</span>
+                        <span className="text-[9px] font-bold text-[var(--text-muted)] leading-none mb-0.5">Admin</span>
                         <span className="text-[12px] font-bold text-[var(--text-main)] tracking-tight">Portal</span>
                     </div>
                 </div>
@@ -97,8 +97,8 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                     <button
                                         onMouseEnter={() => setActiveDropdown(group.name)}
                                         className={clsx(
-                                            "relative flex items-center gap-1.5 px-4 h-9 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all duration-300",
-                                            isActive || isDropdownOpen ? "text-primary bg-primary/5 shadow-sm ring-1 ring-primary/10" : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-primary/5"
+                                            "relative flex items-center gap-1.5 px-4 h-9 rounded-xl text-[11px] font-bold transition-all duration-300",
+                                            isActive || isDropdownOpen ? "text-primary bg-primary/5 shadow-shell-sm ring-1 ring-primary/10" : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-primary/5"
                                         )}
                                     >
                                         {group.name}
@@ -109,8 +109,8 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                         to={group.path!}
                                         onMouseEnter={() => setActiveDropdown(null)}
                                         className={clsx(
-                                            "relative flex items-center gap-1.5 px-4 h-9 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all duration-300",
-                                            isActive ? "text-primary bg-primary/5 shadow-sm ring-1 ring-primary/10" : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-primary/5"
+                                            "relative flex items-center gap-1.5 px-4 h-9 rounded-xl text-[11px] font-bold transition-all duration-300",
+                                            isActive ? "text-primary bg-primary/5 shadow-shell-sm ring-1 ring-primary/10" : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-primary/5"
                                         )}
                                     >
                                         {group.name}
@@ -125,7 +125,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                         onMouseLeave={() => setActiveDropdown(null)}
                                     >
                                         <div className="px-4 py-2.5 mb-1 border-b border-[var(--border-color)] opacity-50">
-                                            <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{group.name}</span>
+                                            <span className="text-[9px] font-bold text-[var(--text-muted)] ">{group.name}</span>
                                         </div>
                                         <div className="grid gap-1">
                                             {group.children!.map((child) => (
@@ -133,15 +133,15 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                                     key={child.path}
                                                     to={child.path}
                                                     className={clsx(
-                                                        "flex items-center justify-between px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all duration-200",
+                                                        "flex items-center justify-between px-4 py-2 rounded-xl text-[11px] font-bold transition-all duration-200",
                                                         matchActive(location.pathname, child.path)
-                                                            ? "bg-primary text-white shadow-sm"
+                                                            ? "bg-primary text-white shadow-shell-sm"
                                                             : "text-[var(--text-muted)] hover:bg-primary/5 hover:text-primary"
                                                     )}
                                                 >
                                                     {child.name}
                                                     {matchActive(location.pathname, child.path) && (
-                                                        <div className="w-1 h-1 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                                                        <div className="w-1 h-1 rounded-full bg-surface shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
                                                     )}
                                                 </Link>
                                             ))}
@@ -155,11 +155,11 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
 
                 {/* 👤 Right Section: Profile & Actions */}
                 <div className="flex items-center justify-end gap-3" ref={menuRef}>
-                    
+
                     {/* Theme Toggle */}
                     <button
                         onClick={toggleTheme}
-                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-primary hover:bg-primary/5 transition-all shadow-sm"
+                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-primary hover:bg-primary/5 transition-all shadow-shell-sm"
                         aria-label="Toggle theme"
                     >
                         <AnimatePresence mode="wait">
@@ -182,7 +182,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                             className={clsx(
                                 "flex items-center gap-2.5 pl-3 pr-1.5 h-10 rounded-xl transition-all duration-300 group border",
                                 showProfileMenu
-                                    ? "bg-[var(--bg-surface)] border-primary shadow-md scale-[1.02]"
+                                    ? "bg-[var(--bg-surface)] border-primary shadow-shell-md scale-[1.02]"
                                     : "bg-[var(--bg-surface)] border-transparent hover:border-[var(--border-color)] hover:shadow-sm"
                             )}
                         >
@@ -192,12 +192,12 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                 </span>
                                 <div className="flex items-center gap-1 mt-0.5">
                                     <div className="w-1 h-1 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
-                                    <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Online</span>
+                                    <span className="text-[8px] font-bold text-emerald-500 ">Online</span>
                                 </div>
                             </div>
 
                             <div className="relative">
-                                <div className="w-7 h-7 rounded-lg bg-dark-brown flex items-center justify-center text-white text-[11px] font-bold overflow-hidden shadow-sm ring-1 ring-[var(--border-color)]">
+                                <div className="w-7 h-7 rounded-lg bg-dark-brown flex items-center justify-center text-white text-[11px] font-bold overflow-hidden shadow-shell-sm ring-1 ring-[var(--border-color)]">
                                     {profile?.avatar_url ? (
                                         <SecureImage path={profile.avatar_url} bucket="avatars" alt="" className="w-full h-full object-cover" />
                                     ) : (
@@ -220,7 +220,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                         </div>
                                         <div className="flex flex-col overflow-hidden">
                                             <p className="text-[13px] font-bold text-[var(--text-main)] tracking-tight truncate">{profile?.full_name || 'Legacy Operator'}</p>
-                                            <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest truncate">{profile?.role || 'Guest'}</p>
+                                            <p className="text-[10px] text-[var(--text-muted)] font-bold truncate">{profile?.role || 'Guest'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -228,7 +228,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                 <div className="p-1.5 space-y-0.5">
                                     <Link
                                         to="/dashboard/profile"
-                                        className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:bg-primary/5 hover:text-primary rounded-xl transition-all group"
+                                        className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-[var(--text-muted)] hover:bg-primary/5 hover:text-primary rounded-xl transition-all group"
                                     >
                                         <UserIcon className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
                                         My Profile
@@ -238,7 +238,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
 
                                     <button
                                         onClick={handleLogout}
-                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all group"
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all group"
                                     >
                                         <LogOut className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
                                         Sign Out

@@ -54,9 +54,9 @@ export function Login() {
                     <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
                         <img src={LogoIcon} alt="Trackora" className="w-full h-full object-contain" />
                     </div>
-                    <span className="text-lg font-bold text-slate-900 tracking-tight">Trackora</span>
+                    <span className="text-lg font-bold text-text-main tracking-tight">Trackora</span>
                 </div>
-                <div className="text-[10px] font-extrabold text-slate-400 uppercase tracking-[0.2em] bg-white px-4 py-2 rounded-full border border-slate-200">
+                <div className="text-[10px] font-extrabold text-text-muted tracking-[0.2em] bg-surface px-4 py-2 rounded-full border border-border">
                     Secure Gateway
                 </div>
             </div>
@@ -64,13 +64,13 @@ export function Login() {
             <div className="flex-1 w-full max-w-[1210px] flex items-center justify-center p-8">
                 <div className="w-full max-w-[480px]">
                     <div className="mb-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-none mb-4">Welcome Back</h1>
-                        <p className="text-slate-500 font-medium text-lg leading-relaxed max-w-[340px] mx-auto">
+                        <h1 className="text-5xl font-black text-text-main tracking-tight leading-none mb-4">Welcome Back</h1>
+                        <p className="text-text-muted font-medium text-lg leading-relaxed max-w-[340px] mx-auto">
                             Sign in to the <span className="text-blue-600 font-bold underline decoration-blue-600/30 underline-offset-4">Control Console</span> to manage your workspace.
                         </p>
                     </div>
 
-                    <Card className="p-8 md:p-12 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] bg-white border-slate-200 rounded-[40px] animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                    <Card className="p-8 md:p-12 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] bg-surface border-border rounded-[40px] animate-in fade-in slide-in-from-bottom-8 duration-1000">
                         <form onSubmit={handleLogin} className="space-y-8">
                             <Input
                                 label="Admin Email"
@@ -79,14 +79,14 @@ export function Login() {
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
                                 placeholder="name@company.com"
-                                className="h-14 rounded-2xl text-base px-5 bg-slate-50/50"
-                                leftIcon={<Mail className="w-5 h-5 text-slate-300" />}
+                                className="h-14 rounded-2xl text-base px-5 bg-surface-hover/50"
+                                leftIcon={<Mail className="w-5 h-5 text-text-muted" />}
                             />
 
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between px-1">
-                                    <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Password</label>
-                                    <Link to="/forgot-password" title="Forgot Password" className="text-[10px] font-bold text-blue-600 hover:text-black uppercase tracking-widest transition-colors">Recovery Required?</Link>
+                                    <label className="text-xs font-bold text-text-muted ">Password</label>
+                                    <Link to="/forgot-password" title="Forgot Password" className="text-[10px] font-bold text-blue-600 hover:text-black transition-colors">Recovery Required?</Link>
                                 </div>
                                 <div className="relative">
                                     <Input
@@ -95,13 +95,13 @@ export function Login() {
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
                                         placeholder="••••••••••••"
-                                        className="h-14 rounded-2xl text-base px-5 bg-slate-50/50 pr-14"
-                                        leftIcon={<Lock className="w-5 h-5 text-slate-300" />}
+                                        className="h-14 rounded-2xl text-base px-5 bg-surface-hover/50 pr-14"
+                                        leftIcon={<Lock className="w-5 h-5 text-text-muted" />}
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPw(!showPw)}
-                                        className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-blue-600 transition-colors"
+                                        className="absolute right-5 top-1/2 -translate-y-1/2 text-text-muted hover:text-blue-600 transition-colors"
                                     >
                                         {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                                     </button>
@@ -125,20 +125,20 @@ export function Login() {
                             </Button>
                         </form>
 
-                        <div className="mt-12 pt-8 border-t border-slate-100 text-center">
-                            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Unregistered Operator?</p>
+                        <div className="mt-12 pt-8 border-t border-border text-center">
+                            <p className="text-xs font-bold text-text-muted mb-6">Unregistered Operator?</p>
                             <Button
                                 onClick={() => navigate('/signup')}
                                 variant="secondary"
-                                className="w-full py-4 rounded-xl text-sm font-bold border-slate-100 hover:bg-slate-50 text-slate-600"
+                                className="w-full py-4 rounded-xl text-sm font-bold border-border hover:bg-surface-hover text-text-muted"
                             >
                                 Activate New Workspace
                             </Button>
                         </div>
                     </Card>
 
-                    <p className="mt-12 text-center text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] opacity-60 leading-relaxed max-w-[340px] mx-auto">
-                        Authentication provided by <span className="text-slate-900">Trackora Guard Pro</span>. Site integrity verified 2026.
+                    <p className="mt-12 text-center text-[10px] font-bold text-text-muted tracking-[0.2em] opacity-60 leading-relaxed max-w-[340px] mx-auto">
+                        Authentication provided by <span className="text-text-main">Trackora Guard Pro</span>. Site integrity verified 2026.
                     </p>
                 </div>
             </div>
