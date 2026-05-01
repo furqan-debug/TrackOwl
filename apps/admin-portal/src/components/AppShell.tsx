@@ -24,7 +24,7 @@ export function AppShell({ children }: AppShellProps) {
     }, []);
 
     return (
-        <div className="flex flex-col h-screen bg-background text-text-secondary overflow-hidden font-sans">
+        <div className="flex flex-col h-screen bg-[var(--bg-main)] text-[var(--text-main)] overflow-hidden font-sans">
             <Header onOpenMobileMenu={() => setMobileMenuOpen(true)} />
 
             <div className="flex-1 flex flex-col min-h-0 relative">
@@ -33,7 +33,7 @@ export function AppShell({ children }: AppShellProps) {
                     <MobileNav onClose={() => setMobileMenuOpen(false)} />
                 )}
 
-                <main className="flex-1 overflow-y-auto shell-scrollbar bg-white/40">
+                <main className="flex-1 overflow-y-auto shell-scrollbar">
                     <div className="max-w-[1600px] mx-auto w-full min-h-full">
                         {children}
                     </div>

@@ -19,13 +19,13 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
     primary:
-        'bg-primary text-white shadow-lg shadow-primary/20 hover:bg-primary-hover hover:scale-[1.02] active:scale-[0.98]',
+        'bg-primary text-base-white shadow-md shadow-primary/20 hover:brightness-110 active:scale-[0.98]',
     secondary:
-        'bg-white border border-border text-text-primary hover:bg-surface-hover shadow-sm',
+        'bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-main)] hover:bg-primary/5 shadow-sm',
     ghost:
-        'bg-transparent text-text-secondary hover:bg-black/5 hover:text-text-primary',
+        'bg-transparent text-[var(--text-muted)] hover:bg-primary/10 hover:text-primary',
     danger:
-        'bg-rose-600 text-white shadow-lg shadow-rose-600/20 hover:bg-rose-700 hover:scale-[1.02] active:scale-[0.98]',
+        'bg-rose-600 text-white shadow-md shadow-rose-600/20 hover:bg-rose-700 active:scale-[0.98]',
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -51,7 +51,7 @@ export function Button({
             type={type}
             disabled={disabled || loading}
             className={clsx(
-                'inline-flex items-center justify-center gap-2 rounded-xl font-bold uppercase tracking-[0.15em] transition-all focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50 disabled:pointer-events-none font-mono',
+                'inline-flex items-center justify-center gap-2 rounded-shell-md font-semibold tracking-tight transition-all focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50 disabled:pointer-events-none font-sans',
                 variantClasses[variant],
                 sizeClasses[size],
                 className

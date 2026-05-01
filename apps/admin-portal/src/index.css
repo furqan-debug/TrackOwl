@@ -1,246 +1,107 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap');
-
 @import "tailwindcss";
 
 @theme {
-  /* --- Trackora Official Branding 2024 --- */
-  --color-primary: #4066D3;
-  --color-primary-dark: #3453B3;
-  --color-primary-soft: rgba(64, 102, 211, 0.08);
+  /* Brand Colors - TrackOwl Official Palette */
+  --color-primary: #965123;
+  --color-dark-brown: #472D1F;
+  --color-base-white: #FAFAFA;
+  
+  /* Layout Colors */
+  --color-sidebar-bg: var(--color-dark-brown);
+  --color-active-link: var(--color-primary);
+  
+  /* Semantic Tokens for Utility Mapping */
+  --color-main: var(--bg-main);
+  --color-surface: var(--bg-surface);
+  --color-surface-hover: var(--bg-surface-hover, #F8FAFC);
+  --color-border: var(--border-color);
+  --color-border-hover: var(--border-hover, #CBD5E1);
+  --color-text-main: var(--text-main);
+  --color-text-muted: var(--text-muted);
 
-  --color-background: #F2F6FC;
-  --color-surface: #FFFFFF;
-  --color-surface-muted: #F8FAFD;
+  /* Typography - Poppins & Helvetica */
+  --font-sans: "Poppins", "Helvetica", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-poppins: "Poppins", sans-serif;
+  --font-helvetica: "Helvetica", Arial, sans-serif;
 
-  /* Refined Borders - Using Slate-200 equivalent for clean separation */
-  --color-border: #e2e8f0;
-  --color-border-strong: #cbd5e1;
-
-  /* Typography - Optimized for readability and hierarchy */
-  --color-text-main: #0f172a;
-  /* Slate 900 */
-  --color-text-subtle: #475569;
-  /* Slate 600 */
-  --color-text-disabled: #94a3b8;
-  /* Slate 400 */
-
-  /* Radius - More unified 'Apple-style' curves */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
-  --radius-2xl: 28px;
-
-  /* Shadows - More "Floating" than "Heavy" */
-  --shadow-flat: 0 0 0 1px rgba(0, 0, 0, 0.05);
-  --shadow-premium: 0 10px 30px -10px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
-  --shadow-elevated: 0 20px 50px -12px rgba(15, 23, 42, 0.12);
+  /* Shadows & Radius - Refined Premium Curves */
+  --radius-shell-sm: 6px;
+  --radius-shell-md: 10px;
+  --radius-shell-lg: 14px;
+  --radius-shell-xl: 20px;
+  
+  --shadow-shell-sm: 0 1px 2px 0 rgba(71, 45, 31, 0.05);
+  --shadow-shell-md: 0 4px 6px -1px rgba(71, 45, 31, 0.1), 0 2px 4px -2px rgba(71, 45, 31, 0.1);
+  --shadow-premium: 0 20px 25px -5px rgba(71, 45, 31, 0.05), 0 10px 10px -5px rgba(71, 45, 31, 0.02);
+  --shadow-soft: 0 4px 20px -2px rgba(71, 45, 31, 0.08);
 }
 
-/* --- Premium Utility Layer --- */
+@layer base {
+  :root {
+    --bg-main: #FAFAFA;
+    --bg-surface: #FFFFFF;
+    --bg-surface-hover: #F8FAFC;
+    --text-main: #472D1F;
+    --text-muted: #64748B;
+    --border-color: #E2E8F0;
+    --border-hover: #CBD5E1;
+    --sidebar-text: rgba(250, 250, 250, 0.7);
+    --sidebar-text-active: #FAFAFA;
+  }
 
-@utility bento-grid {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-}
+  .dark {
+    --bg-main: #1A1412;
+    --bg-surface: #261E1B;
+    --bg-surface-hover: #2F2623;
+    --text-main: #FAFAFA;
+    --text-muted: #A3A3A3;
+    --border-color: #3F322E;
+    --border-hover: #4F403B;
+    --sidebar-text: rgba(250, 250, 250, 0.6);
+    --sidebar-text-active: #965123;
+  }
 
-@utility glass-panel {
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(12px) saturate(180%);
-  -webkit-backdrop-filter: blur(12px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: var(--shadow-premium);
-}
+  body {
+    @apply font-sans bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-200 antialiased;
+  }
 
-@utility card-interactive {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-poppins font-semibold;
+  }
 
-  &:hover {
-    border-color: var(--color-primary);
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-elevated);
+  /* Secondary/Meta Typography */
+  table, caption, .meta-text, .secondary-text {
+    @apply font-helvetica;
+  }
+
+  /* Premium Utilities */
+  .card-premium {
+    @apply bg-[var(--bg-surface)] rounded-shell-lg border border-[var(--border-color)] shadow-soft transition-all duration-300;
+  }
+
+  .btn-primary {
+    @apply bg-primary hover:brightness-110 text-base-white px-5 py-2.5 rounded-shell-md font-medium transition-all duration-200 shadow-md active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-primary/10 text-primary px-4 py-2 rounded-shell-md font-medium transition-all duration-200;
   }
 }
 
-@utility text-balance {
-  text-wrap: balance;
-}
-
-@utility bg-mesh {
-  background-color: var(--color-background);
-  background-image:
-    radial-gradient(at 0% 0%, rgba(64, 102, 211, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(64, 102, 211, 0.05) 0px, transparent 50%);
-}
-
-@utility glass-header {
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-@utility shadow-dropdown {
-  box-shadow: 
-    0 10px 15px -3px rgba(0, 0, 0, 0.1), 
-    0 4px 6px -2px rgba(0, 0, 0, 0.05),
-    0 0 0 1px rgba(0, 0, 0, 0.05);
-}
-
-
-/* --- Base Enhancements --- */
-
-body {
-  background-color: var(--color-background);
-  color: var(--color-text-subtle);
-  font-family: 'Poppins', system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  scroll-behavior: smooth;
-}
-
-h1,
-h2,
-h3,
-h4 {
-  color: var(--color-text-main);
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  text-wrap: balance;
-}
-
-/* Sophisticated Button State */
-.btn-premium {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  background: var(--color-primary);
-  color: white;
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 12px rgba(64, 102, 211, 0.25);
-
-  &:hover {
-    background: var(--color-primary-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(64, 102, 211, 0.35);
-  }
-
-  &:active {
-    transform: translateY(0);
-  }
-}
-
-/* --- Trackora Premium Visual Assets --- */
-
-@utility bg-grid-premium {
-  background-image: radial-gradient(circle at 1px 1px, rgba(0, 0, 0, 0.05) 1px, transparent 0);
-  background-size: 40px 40px;
-}
-
-@utility bg-gradient-mesh {
-  background: 
-    radial-gradient(at 0% 0%, rgba(64, 102, 211, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.03) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(64, 102, 211, 0.05) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.03) 0px, transparent 50%);
-}
-
-@utility bg-noise {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  opacity: 0.015;
-  filter: contrast(120%) brightness(100%);
-}
-
-@utility bg-dot-grid {
-  background-image: radial-gradient(rgba(0, 0, 0, 0.08) 1px, transparent 0);
-  background-size: 24px 24px;
-}
-
-@utility text-gradient-premium {
-  background: linear-gradient(135deg, var(--color-text-main) 0%, var(--color-primary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-@utility shadow-glow-primary {
-  box-shadow: 0 0 20px rgba(64, 102, 211, 0.2), 0 0 40px rgba(64, 102, 211, 0.1);
-}
-
-@utility shadow-glow {
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05), 0 0 20px rgba(64, 102, 211, 0.03);
-}
-
-/* --- Animation System --- */
-@keyframes pulse-soft {
-  0%, 100% { opacity: 0.4; transform: scale(1); }
-  50% { opacity: 0.6; transform: scale(1.05); }
-}
-
-.animate-pulse-soft {
-  animation: pulse-soft 8s infinite ease-in-out;
-}
-
-.stagger-1 { animation-delay: 100ms; }
-.stagger-2 { animation-delay: 200ms; }
-.stagger-3 { animation-delay: 300ms; }
-.stagger-4 { animation-delay: 400ms; }
-
-/* Smooth Reveal System */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.reveal {
-  animation: fadeInUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.delay-1 {
-  animation-delay: 100ms;
-}
-
-.delay-2 {
-  animation-delay: 200ms;
-}
-
-.delay-3 {
-  animation-delay: 300ms;
-}
-
-/* Scrollbar Refinement - High-Contrast Custom Style */
+/* Scrollbar Refinement */
 ::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
+  width: 8px;
+  height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 100px;
+  @apply bg-transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #94a3b8;
-  border-radius: 100px;
-  border: 3px solid #f1f5f9;
+  @apply bg-dark-brown/10 rounded-full hover:bg-dark-brown/20;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #64748b;
-}
-
-* {
-  scrollbar-width: auto;
-  scrollbar-color: #94a3b8 #f1f5f9;
+.dark ::-webkit-scrollbar-thumb {
+  @apply bg-base-white/10 hover:bg-base-white/20;
 }

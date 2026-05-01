@@ -26,26 +26,26 @@ export function Card({
     return (
         <div
             className={clsx(
-                'bg-white rounded-xl overflow-hidden relative group transition-all duration-300 border border-slate-200 shadow-sm',
+                'bg-[var(--bg-surface)] rounded-shell-lg overflow-hidden relative group transition-all duration-300 border border-[var(--border-color)] shadow-soft',
                 !noPadding && 'p-6 md:p-8',
                 className
             )}
         >
             {(title || finalActions) && (
                 <div className={clsx(
-                    "flex items-center justify-between border-b border-slate-100",
+                    "flex items-center justify-between border-b border-[var(--border-color)]",
                     noPadding
                         ? "px-6 py-4 mb-4"
                         : "mb-6 pb-4"
                 )}>
                     <div className="space-y-0.5">
                         {title && (
-                            <h2 className="text-xs font-bold text-text-primary uppercase tracking-wider">
+                            <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
                                 {title}
                             </h2>
                         )}
                         {subtitle && (
-                            <p className="text-[10px] font-medium text-text-muted opacity-60 uppercase tracking-widest">
+                            <p className="text-[10px] font-medium text-[var(--text-muted)] opacity-60 uppercase tracking-widest">
                                 {subtitle}
                             </p>
                         )}
@@ -53,7 +53,7 @@ export function Card({
                     {finalActions ? (
                         <div className="ml-4 flex items-center gap-3">{finalActions}</div>
                     ) : (
-                        <div className="flex-1 h-px bg-slate-100 ml-4" aria-hidden />
+                        <div className="flex-1 h-px bg-[var(--border-color)] ml-4 opacity-50" aria-hidden />
                     )}
                 </div>
             )}

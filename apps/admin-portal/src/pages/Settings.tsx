@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { PageLayout, Card } from '../components/ui';
 import clsx from 'clsx';
 
-const SETTINGS_KEY = 'trackora_settings';
+const SETTINGS_KEY = 'trackowl_settings';
 
 interface AppSettings {
     screenshotIntervalMin: number;
@@ -87,9 +87,9 @@ export function SettingsPage() {
                         onClick={handleSave}
                         disabled={isViewer}
                         className={clsx(
-                            "flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all shadow-sm active:scale-95",
-                            isViewer ? "bg-black/10 text-text-muted cursor-not-allowed" : 
-                            (saved ? "bg-emerald-600 text-white" : "bg-primary text-white hover:bg-primary/90")
+                            "flex items-center gap-2 px-5 py-2.5 rounded-shell-md text-sm font-semibold transition-all shadow-sm active:scale-95",
+                            isViewer ? "bg-black/10 text-[var(--text-muted)] cursor-not-allowed" : 
+                            (saved ? "bg-emerald-600 text-white" : "bg-primary text-white hover:brightness-110")
                         )}
                     >
                         {saved ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />}
@@ -111,7 +111,7 @@ export function SettingsPage() {
                             value={settings.screenshotBlur}
                             onChange={v => update('screenshotBlur', v)}
                         />
-                        <div className="bg-primary/5 border border-primary/10 rounded-xl p-6 text-xs text-text-primary flex items-start gap-4 shadow-sm mt-8">
+                        <div className="bg-primary/10 border border-primary/20 rounded-xl p-6 text-xs text-text-main flex items-start gap-4 shadow-sm mt-8">
                             <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                             <p className="leading-relaxed font-medium">
                                 Screenshots are currently being captured at a frequency of <span className="text-primary font-bold">{settings.screenshotIntervalMin}-{settings.screenshotIntervalMax} minutes</span>.
@@ -208,15 +208,15 @@ export function SettingsPage() {
                 </div>
 
                 <div className="lg:col-span-4 space-y-10">
-                    <Card className="p-8 shadow-sm bg-surface-solid border-border rounded-xl relative overflow-hidden group">
+                    <Card className="p-8 shadow-sm bg-[var(--bg-surface)] border-[var(--border-color)] rounded-xl relative overflow-hidden group">
                         <div className="relative z-10">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20 transition-transform duration-500">
                                     <Zap className="w-6 h-6" />
                                 </div>
                                 <div className="flex flex-col">
-                                    <h3 className="text-lg font-bold text-text-primary tracking-tight">Active Configuration</h3>
-                                    <p className="text-xs font-medium text-text-muted mt-1">Status: <span className="text-emerald-600 font-semibold text-[10px] uppercase ml-1">Live</span></p>
+                                    <h3 className="text-lg font-bold text-text-main tracking-tight">Active Configuration</h3>
+                                    <p className="text-xs font-medium text-text-muted mt-1">Status: <span className="text-emerald-500 font-semibold text-[10px] uppercase ml-1">Live</span></p>
                                 </div>
                             </div>
                             
@@ -225,7 +225,7 @@ export function SettingsPage() {
                                 <ConfigValue label="Idle Timeout" value={`${settings.idleThresholdSeconds}s`} />
                                 <ConfigValue label="Daily Limit" value={`${settings.dailyHoursLimit}h`} />
                                 <ConfigValue label="Weekly Limit" value={`${settings.weeklyHoursLimit}h`} />
-                                <div className="h-px bg-border my-2" />
+                                <div className="h-px bg-[var(--border-color)] my-2" />
                                 <ConfigValue label="Privacy Mode" value={settings.screenshotBlur ? 'Enabled' : 'Disabled'} color={settings.screenshotBlur ? 'emerald' : 'rose'} />
                                 <ConfigValue label="URL Tracking" value={settings.trackUrls ? 'Active' : 'Inactive'} color={settings.trackUrls ? 'emerald' : 'rose'} />
                                 <ConfigValue label="App Tracking" value={settings.trackApps ? 'Active' : 'Inactive'} color={settings.trackApps ? 'emerald' : 'rose'} />
@@ -245,7 +245,7 @@ export function SettingsPage() {
                                 value={settings.notifyIdle}
                                 onChange={v => update('notifyIdle', v)}
                             />
-                            <div className="h-px bg-border" />
+                            <div className="h-px bg-[var(--border-color)]" />
                             <ToggleField
                                 label="Daily Limit Alerts"
                                 description="Alert when daily limit is exceeded"
@@ -255,8 +255,8 @@ export function SettingsPage() {
                         </div>
                     </SettingsSection>
                     
-                    <div className="bg-surface-solid border border-rose-500/10 rounded-xl p-8 flex flex-col items-center text-center group transition-all hover:bg-rose-500/[0.02] shadow-sm relative overflow-hidden">
-                        <h4 className="text-lg font-bold text-text-primary tracking-tight mb-2">Reset Settings</h4>
+                    <div className="bg-surface border border-rose-500/10 rounded-xl p-8 flex flex-col items-center text-center group transition-all hover:bg-rose-500/[0.02] shadow-sm relative overflow-hidden">
+                        <h4 className="text-lg font-bold text-text-main tracking-tight mb-2">Reset Settings</h4>
                         <p className="text-xs font-medium text-text-muted leading-relaxed mb-8 px-4">
                             Reverting to default values will clear all your custom configurations.
                         </p>
@@ -276,13 +276,13 @@ export function SettingsPage() {
 
 function SettingsSection({ icon, title, subtitle, children }: { icon: React.ReactNode; title: string; subtitle: string; children: React.ReactNode }) {
     return (
-        <Card className="p-0 overflow-hidden bg-surface-solid border-border shadow-sm group/section transition-all hover:border-primary/20 duration-300 rounded-xl">
-            <div className="px-8 py-6 border-b border-border bg-surface-subtle/30 flex items-center gap-6">
-                <div className="w-12 h-12 rounded-xl bg-surface-solid border border-border flex items-center justify-center text-primary shadow-sm transition-all duration-500">
+        <Card className="p-0 overflow-hidden bg-surface border-border shadow-sm group/section transition-all hover:border-primary/20 duration-300 rounded-xl">
+            <div className="px-8 py-6 border-b border-border bg-primary/10 flex items-center gap-6">
+                <div className="w-12 h-12 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shadow-sm transition-all duration-500">
                     {icon}
                 </div>
                 <div>
-                    <h2 className="text-lg font-bold text-text-primary tracking-tight mb-1">{title}</h2>
+                    <h2 className="text-lg font-bold text-text-main tracking-tight mb-1">{title}</h2>
                     <p className="text-[11px] font-medium text-text-muted opacity-70 leading-none">{subtitle}</p>
                 </div>
             </div>
@@ -307,10 +307,10 @@ function RangeField({ label, description, value, unit, min, max, step = 1, onCha
         <div className="space-y-6">
             <div className="flex justify-between items-start">
                 <div className="space-y-1">
-                    <p className="text-sm font-bold text-text-primary tracking-tight">{label}</p>
+                    <p className="text-sm font-bold text-text-main tracking-tight">{label}</p>
                     <p className="text-xs font-medium text-text-muted opacity-70 leading-relaxed">{description}</p>
                 </div>
-                <div className="flex items-baseline gap-1.5 bg-surface-subtle px-4 py-2 rounded-lg border border-border shadow-sm">
+                <div className="flex items-baseline gap-1.5 bg-surface px-4 py-2 rounded-lg border border-border shadow-sm">
                     <span className="text-xl font-bold text-primary">{value}</span>
                     <span className="text-[10px] font-bold text-text-muted uppercase">{unit}</span>
                 </div>
@@ -322,7 +322,7 @@ function RangeField({ label, description, value, unit, min, max, step = 1, onCha
                     className={clsx("w-full h-1.5 rounded-full appearance-none cursor-pointer bg-border transition-all", accColors[color])}
                 />
             </div>
-            <div className="flex justify-between px-1 text-[9px] font-bold text-text-muted/30 uppercase tracking-widest">
+            <div className="flex justify-between px-1 text-[9px] font-bold text-text-muted opacity-30 uppercase tracking-widest">
                 <span>{min}{unit}</span>
                 <span>{max}{unit}</span>
             </div>
@@ -334,7 +334,7 @@ function ToggleField({ label, description, value, onChange }: { label: string; d
     return (
         <div className="flex items-center justify-between group/toggle">
             <div className="space-y-1 flex-1 pr-8">
-                <p className="text-sm font-bold text-text-primary tracking-tight">{label}</p>
+                <p className="text-sm font-bold text-text-main tracking-tight">{label}</p>
                 <p className="text-xs font-medium text-text-muted opacity-70 leading-relaxed">{description}</p>
             </div>
             <button
@@ -359,8 +359,8 @@ function ToggleField({ label, description, value, onChange }: { label: string; d
 function ConfigValue({ label, value, color = 'primary' }: { label: string; value: string; color?: 'primary' | 'emerald' | 'rose' }) {
     const textColors = {
         primary: 'text-primary',
-        emerald: 'text-emerald-600',
-        rose: 'text-rose-600'
+        emerald: 'text-emerald-500',
+        rose: 'text-rose-500'
     };
     
     return (

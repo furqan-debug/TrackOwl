@@ -88,7 +88,7 @@ export function Calendar() {
     const monthName = currentDate.toLocaleString('default', { month: 'long' });
     const year = currentDate.getFullYear();
 
-    if (loading) return <div className="h-screen flex items-center justify-center bg-white"><LoadingState message="Syncing operational schedule..." /></div>;
+    if (loading) return <div className="h-screen flex items-center justify-center bg-[var(--bg-main)]"><LoadingState message="Syncing operational schedule..." /></div>;
 
     return (
         <PageLayout
@@ -97,7 +97,7 @@ export function Calendar() {
             description="Operational schedule of approved leave and corporate milestones."
             actions={
                 <div className="flex items-center gap-4">
-                    <div className="glass-panel p-1 rounded-xl flex items-center shadow-sm border-slate-200/60 overflow-hidden bg-white/50">
+                    <div className="p-1 rounded-xl flex items-center shadow-sm border border-[var(--border-color)] overflow-hidden bg-[var(--bg-surface)]">
                         <button 
                             onClick={prevMonth} 
                             className="p-2.5 hover:bg-slate-50 text-slate-400 hover:text-slate-900 transition-all rounded-lg"
@@ -133,11 +133,11 @@ export function Calendar() {
                 
                 {/* 📅 Compact Grid Shell (9/12) */}
                 <div className="lg:col-span-9">
-                    <div className="glass-panel rounded-[24px] shadow-premium overflow-hidden border-slate-200/60 bg-white/50">
-                        <div className="grid grid-cols-7 bg-slate-50/50 border-b border-slate-100">
+                    <div className="rounded-[24px] shadow-premium overflow-hidden border border-[var(--border-color)] bg-[var(--bg-surface)]">
+                        <div className="grid grid-cols-7 bg-primary/5 border-b border-[var(--border-color)]">
                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
                                 <div key={d} className="py-4 text-center">
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{d}</span>
+                                    <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">{d}</span>
                                 </div>
                             ))}
                         </div>
@@ -160,16 +160,16 @@ export function Calendar() {
                                     <div 
                                         key={day} 
                                         className={clsx(
-                                            "border-r border-b border-slate-50 p-3 hover:bg-white transition-all group relative overflow-hidden last:border-r-0",
-                                            dayRequests.length > 0 && "bg-indigo-50/10"
+                                            "border-r border-b border-[var(--border-color)] p-3 hover:bg-primary/5 transition-all group relative overflow-hidden last:border-r-0",
+                                            dayRequests.length > 0 && "bg-primary/5"
                                         )}
                                     >
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className="text-[11px] font-bold text-slate-400 group-hover:text-slate-900 transition-colors uppercase tracking-tight">
+                                            <span className="text-[11px] font-bold text-[var(--text-muted)] group-hover:text-[var(--text-main)] transition-colors uppercase tracking-tight">
                                                 {day}
                                             </span>
                                             {dayHolidays.length > 0 && (
-                                                <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-glow-rose" />
+                                                <div className="w-1.5 h-1.5 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]" />
                                             )}
                                         </div>
                                         
@@ -180,7 +180,7 @@ export function Calendar() {
                                                 </div>
                                             ))}
                                             {dayRequests.map(r => (
-                                                <div key={r.id} className="bg-indigo-600 text-white text-[9px] font-bold uppercase tracking-tight px-2 py-1 rounded-md shadow-sm truncate">
+                                                <div key={r.id} className="bg-primary text-white text-[9px] font-bold uppercase tracking-tight px-2 py-1 rounded-md shadow-sm truncate">
                                                     {r.member_name}
                                                 </div>
                                             ))}
@@ -195,13 +195,13 @@ export function Calendar() {
                 {/* 📋 Operational Sidebar (3/12) */}
                 <div className="lg:col-span-3 space-y-6">
                     {/* Holiday Roll */}
-                    <div className="glass-panel rounded-[24px] shadow-premium p-8 border-slate-200/60 bg-slate-900 text-white overflow-hidden relative group">
+                    <div className="rounded-[24px] shadow-premium p-8 border border-[var(--border-color)] bg-dark-brown text-white overflow-hidden relative group">
                         <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/5 rounded-full blur-3xl" />
                         <div className="flex items-center gap-3 mb-8 relative z-10">
-                            <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-white shadow-glow-primary">
+                            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
                                 <AlertCircle className="w-4 h-4" />
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-indigo-200">Upcoming Holidays</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Upcoming Holidays</span>
                         </div>
                         
                         <div className="space-y-5 relative z-10">
@@ -223,12 +223,12 @@ export function Calendar() {
                     </div>
 
                     {/* Schedule Legend */}
-                    <div className="glass-panel rounded-[24px] shadow-premium p-8 border-slate-200/60 bg-white/50">
+                    <div className="rounded-[24px] shadow-premium p-8 border border-[var(--border-color)] bg-[var(--bg-surface)]">
                         <div className="flex items-center gap-3 mb-8">
-                            <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/10">
                                 <Info className="w-4 h-4" />
                             </div>
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Operational Legend</span>
+                            <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">Operational Legend</span>
                         </div>
                         
                         <div className="space-y-4">
