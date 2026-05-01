@@ -23,7 +23,7 @@ export function ActivityChart({ loading, samples }: ActivityChartProps) {
                     <Loader2 className="w-8 h-8 text-primary animate-spin" />
                 </div>
             ) : samples.length === 0 ? (
-                <div className="h-[400px] flex flex-col items-center justify-center text-slate-400">
+                <div className="h-[400px] flex flex-col items-center justify-center text-text-muted">
                     <ActivityIcon className="w-12 h-12 mb-4 opacity-50" />
                     <p className="text-sm font-medium">No activity data available</p>
                 </div>
@@ -33,16 +33,16 @@ export function ActivityChart({ loading, samples }: ActivityChartProps) {
                         <AreaChart data={chartData}>
                             <defs>
                                 <linearGradient id="actGrad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#506ef8" stopOpacity={0.2} />
-                                    <stop offset="95%" stopColor="#506ef8" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(41, 61, 99, 0.05)" />
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" opacity={0.3} />
                             <XAxis
                                 dataKey="hour"
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#5c6b8a', fontSize: 10, fontWeight: 900 }}
+                                tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }}
                                 dy={15}
                                 interval={2}
                             />
@@ -50,15 +50,15 @@ export function ActivityChart({ loading, samples }: ActivityChartProps) {
                                 domain={[0, 100]}
                                 axisLine={false}
                                 tickLine={false}
-                                tick={{ fill: '#5c6b8a', fontSize: 10, fontWeight: 900 }}
+                                tick={{ fill: 'var(--text-muted)', fontSize: 10, fontWeight: 900 }}
                                 unit="%"
                                 dx={-10}
                             />
-                            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(80, 110, 248, 0.1)', strokeWidth: 2 }} />
+                            <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'var(--primary)', strokeOpacity: 0.1, strokeWidth: 2 }} />
                             <Area
                                 type="monotone"
                                 dataKey="activity"
-                                stroke="#506ef8"
+                                stroke="var(--primary)"
                                 strokeWidth={4}
                                 fill="url(#actGrad)"
                                 animationDuration={2000}
@@ -74,10 +74,10 @@ export function ActivityChart({ loading, samples }: ActivityChartProps) {
 function CustomTooltip({ active, payload, label }: any) {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-xl shadow-lg animate-in zoom-in-95 duration-200">
-                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 border-b border-slate-100 dark:border-slate-800 pb-2">{label}</p>
+            <div className="bg-surface border border-border p-4 rounded-xl shadow-lg animate-in zoom-in-95 duration-200">
+                <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 border-b border-border pb-2">{label}</p>
                 <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+                    <span className="text-3xl font-bold text-text-main tracking-tight">
                         {payload[0].value}%
                     </span>
                     <span className="text-xs font-medium text-primary uppercase tracking-wide">Activity Rate</span>

@@ -297,20 +297,20 @@ export function Dashboard() {
             description="Real-time visibility into team performance, project distribution, and active focus."
             actions={
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center glass-panel p-1 rounded-2xl shadow-premium overflow-hidden">
+                    <div className="flex items-center glass-panel p-1 rounded-2xl shadow-premium overflow-hidden border border-border">
                         <button 
                             onClick={() => navigateWeek('prev')} 
-                            className="p-3 hover:bg-slate-50 text-slate-400 hover:text-primary transition-all rounded-xl"
+                            className="p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
                         <div 
-                            className="relative px-6 py-2 min-w-[220px] text-center cursor-pointer hover:bg-slate-50/50 transition-all group/date rounded-xl"
+                            className="relative px-6 py-2 min-w-[220px] text-center cursor-pointer hover:bg-surface-hover/50 transition-all group/date rounded-xl"
                             onClick={() => dateInputRef.current?.showPicker()}
                         >
                             <div className="flex items-center justify-center gap-2">
                                 <CalendarIcon className="w-3.5 h-3.5 text-primary opacity-50" />
-                                <span className="text-[11px] font-bold text-slate-900 uppercase tracking-widest">
+                                <span className="text-[11px] font-bold text-text-main uppercase tracking-widest">
                                     {weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </span>
                             </div>
@@ -323,7 +323,7 @@ export function Dashboard() {
                         </div>
                         <button 
                             onClick={() => navigateWeek('next')} 
-                            className="p-3 hover:bg-slate-50 text-slate-400 hover:text-primary transition-all rounded-xl disabled:opacity-30 disabled:hover:bg-transparent" 
+                            className="p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl disabled:opacity-30 disabled:hover:bg-transparent" 
                             disabled={weekEnd > new Date()}
                         >
                             <ChevronRight className="w-4 h-4" />
@@ -332,8 +332,8 @@ export function Dashboard() {
                     <button 
                         onClick={() => fetchDashboardData(true)} 
                         className={clsx(
-                            "w-12 h-12 flex items-center justify-center glass-panel rounded-2xl transition-all duration-300",
-                            refreshing ? "text-primary shadow-glow-primary border-primary/20" : "text-slate-400 hover:text-slate-900"
+                            "w-12 h-12 flex items-center justify-center glass-panel rounded-2xl transition-all duration-300 border border-border",
+                            refreshing ? "text-primary shadow-glow-primary border-primary/20" : "text-text-muted hover:text-text-main"
                         )}
                     >
                         <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
@@ -381,11 +381,11 @@ export function Dashboard() {
                     
                     {/* 🖥️ Left Content: Activity Stream (70%) */}
                     <div className="lg:col-span-8 flex flex-col h-[820px]">
-                        <div className="glass-panel rounded-[32px] overflow-hidden flex flex-col h-full shadow-premium">
-                            <div className="px-10 py-8 border-b border-slate-50 flex items-center justify-between bg-white/50 shrink-0">
+                        <div className="glass-panel rounded-[32px] overflow-hidden flex flex-col h-full shadow-premium border border-border">
+                            <div className="px-10 py-8 border-b border-border flex items-center justify-between bg-surface/50 shrink-0">
                                 <div>
-                                    <h3 className="text-[14px] font-bold text-slate-900 tracking-tight mb-1">Visual Activity Stream</h3>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Showing top 4 most active team members</p>
+                                    <h3 className="text-[14px] font-bold text-text-main tracking-tight mb-1">Visual Activity Stream</h3>
+                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Showing top 4 most active team members</p>
                                 </div>
                                 <button 
                                     onClick={() => navigate('/dashboard/activity')}
@@ -395,15 +395,15 @@ export function Dashboard() {
                                 </button>
                             </div>
                             
-                            <div className="flex-1 overflow-y-auto no-scrollbar divide-y divide-slate-50">
+                            <div className="flex-1 overflow-y-auto no-scrollbar divide-y divide-border">
                                 {userActivity.length === 0 ? (
                                     <EmptyState icon={<Camera />} title="No activity recorded yet" description="Tracking samples will appear here once the team starts working." className="py-32" />
                                 ) : (
                                     userActivity.map((user) => (
-                                        <div key={user.userId} className="p-10 space-y-8 hover:bg-slate-50/30 transition-all group">
+                                        <div key={user.userId} className="p-10 space-y-8 hover:bg-surface-hover/30 transition-all group">
                                             <div className="flex items-center justify-between">
                                                 <div className="flex items-center gap-5">
-                                                    <div className="w-12 h-12 rounded-[18px] bg-white border border-slate-200 shadow-sm flex items-center justify-center text-[15px] font-bold text-slate-400 overflow-hidden shrink-0 group-hover:border-primary/30 transition-all duration-500">
+                                                    <div className="w-12 h-12 rounded-[18px] bg-surface border border-border shadow-sm flex items-center justify-center text-[15px] font-bold text-text-muted overflow-hidden shrink-0 group-hover:border-primary/30 transition-all duration-500">
                                                         {user.avatarUrl ? (
                                                             <SecureImage path={user.avatarUrl} bucket="avatars" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                         ) : user.fullName.charAt(0)}
@@ -411,7 +411,7 @@ export function Dashboard() {
                                                     <div className="space-y-1">
                                                         <div className="flex items-center gap-3">
                                                             <p className={clsx(
-                                                                "text-[16px] font-bold text-slate-900 tracking-tight",
+                                                                "text-[16px] font-bold text-text-main tracking-tight",
                                                                 user.fullName.includes('@') && "lowercase opacity-80"
                                                             )}>
                                                                 {user.fullName.includes('@') ? user.fullName.toLowerCase() : toProperCase(user.fullName)}
@@ -422,11 +422,11 @@ export function Dashboard() {
                                                         </div>
                                                         <div className="flex items-center gap-2">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{user.activityScore}% Focus Level</span>
+                                                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{user.activityScore}% Focus Level</span>
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <button className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-300 hover:text-slate-900 hover:bg-white hover:shadow-sm transition-all"><MoreHorizontal className="w-5 h-5" /></button>
+                                                <button className="w-10 h-10 flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface hover:shadow-sm transition-all"><MoreHorizontal className="w-5 h-5" /></button>
                                             </div>
 
                                             <div className="grid grid-cols-3 gap-6">
@@ -459,11 +459,11 @@ export function Dashboard() {
                                                 ))}
                                                 {/* Placeholder for empty screen spots to keep alignment */}
                                                 {Array.from({ length: Math.max(0, 3 - user.screenshots.length) }).map((_, i) => (
-                                                    <div key={`empty-${i}`} className="aspect-video bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-[20px] flex flex-col items-center justify-center gap-3 opacity-60">
-                                                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm text-slate-200">
+                                                    <div key={`empty-${i}`} className="aspect-video bg-main/50 border-2 border-dashed border-border rounded-[20px] flex flex-col items-center justify-center gap-3 opacity-60">
+                                                        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center shadow-sm text-text-muted">
                                                             <Camera className="w-5 h-5" />
                                                         </div>
-                                                        <span className="text-[9px] font-bold text-slate-300 uppercase tracking-widest">Awaiting Capture</span>
+                                                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-widest">Awaiting Capture</span>
                                                     </div>
                                                 ))}
                                             </div>
@@ -476,50 +476,50 @@ export function Dashboard() {
 
                     {/* 👥 Right Content: Who's Online (30%) */}
                     <div className="lg:col-span-4 flex flex-col h-[820px]">
-                        <div className="glass-panel rounded-[32px] shadow-premium overflow-hidden flex flex-col h-full border-slate-200/60">
-                            <div className="px-8 py-8 border-b border-slate-50 flex items-center justify-between bg-white/50 shrink-0">
+                        <div className="glass-panel rounded-[32px] shadow-premium overflow-hidden flex flex-col h-full border border-border">
+                            <div className="px-8 py-8 border-b border-border flex items-center justify-between bg-surface/50 shrink-0">
                                 <div>
-                                    <h3 className="text-[14px] font-bold text-slate-900 tracking-tight mb-1">Live Directory</h3>
-                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Real-time status updates</p>
+                                    <h3 className="text-[14px] font-bold text-text-main tracking-tight mb-1">Live Directory</h3>
+                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Real-time status updates</p>
                                 </div>
-                                <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100">
+                                <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
                                     <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                    <span className="text-[9px] font-bold text-emerald-600 uppercase tracking-widest">Live</span>
+                                    <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">Live</span>
                                 </div>
                             </div>
                             
                             <div className="flex-1 overflow-y-auto no-scrollbar">
                                 <table className="w-full text-left">
-                                    <thead className="sticky top-0 bg-white/90 backdrop-blur-md z-10">
-                                        <tr className="border-b border-slate-100">
-                                            <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Team Member</th>
-                                            <th className="px-8 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] text-right">Performance</th>
+                                    <thead className="sticky top-0 bg-surface/90 backdrop-blur-md z-10">
+                                        <tr className="border-b border-border">
+                                            <th className="px-8 py-5 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">Team Member</th>
+                                            <th className="px-8 py-5 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] text-right">Performance</th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-50">
+                                    <tbody className="divide-y divide-border">
                                         {onlineMembers.map((member) => (
-                                            <tr key={member.id} className="hover:bg-slate-50/50 transition-all duration-300 group">
+                                            <tr key={member.id} className="hover:bg-surface-hover/50 transition-all duration-300 group">
                                                 <td className="px-8 py-5">
                                                     <div className="flex items-center gap-4">
                                                         <div className="relative shrink-0">
-                                                            <div className="w-11 h-11 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-[12px] font-bold text-slate-400 uppercase shadow-sm group-hover:border-primary/30 transition-all duration-500 overflow-hidden ring-4 ring-transparent group-hover:ring-primary/5">
+                                                            <div className="w-11 h-11 rounded-2xl bg-surface border border-border flex items-center justify-center text-[12px] font-bold text-text-muted uppercase shadow-sm group-hover:border-primary/30 transition-all duration-500 overflow-hidden ring-4 ring-transparent group-hover:ring-primary/5">
                                                                 {member.avatarUrl ? (
                                                                     <SecureImage path={member.avatarUrl} bucket="avatars" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                                 ) : member.fullName.charAt(0)}
                                                             </div>
                                                             <div className={clsx(
-                                                                "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[3px] border-white shadow-md",
-                                                                member.status === 'working' ? "bg-emerald-500 shadow-emerald-500/20" : member.status === 'idle' ? "bg-amber-500 shadow-amber-500/20" : "bg-slate-300"
+                                                                "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[3px] border-surface shadow-md",
+                                                                member.status === 'working' ? "bg-emerald-500 shadow-emerald-500/20" : member.status === 'idle' ? "bg-amber-500 shadow-amber-500/20" : "bg-text-muted"
                                                             )} />
                                                         </div>
                                                         <div className="flex flex-col min-w-0">
                                                             <span className={clsx(
-                                                                "text-[14px] font-bold text-slate-900 leading-none tracking-tight truncate group-hover:text-primary transition-colors",
+                                                                "text-[14px] font-bold text-text-main leading-none tracking-tight truncate group-hover:text-primary transition-colors",
                                                                 (!member.fullName || member.fullName.includes('@')) && "lowercase opacity-80"
                                                             )}>
                                                                 {member.fullName ? toProperCase(member.fullName) : toEmailCase(member.email || '')}
                                                             </span>
-                                                            <span className="text-[10px] text-slate-400 font-bold tracking-tight mt-1.5 truncate max-w-[140px] uppercase opacity-70">
+                                                            <span className="text-[10px] text-text-muted font-bold tracking-tight mt-1.5 truncate max-w-[140px] uppercase opacity-70">
                                                                 {member.projectName}
                                                             </span>
                                                         </div>
@@ -527,12 +527,12 @@ export function Dashboard() {
                                                 </td>
                                                 <td className="px-8 py-5 text-right">
                                                     <div className="flex flex-col items-end">
-                                                        <span className="text-[13px] font-bold text-slate-900 tabular-nums leading-none tracking-tight">
+                                                        <span className="text-[13px] font-bold text-text-main tabular-nums leading-none tracking-tight">
                                                             {formatDuration(member.timeWorkedToday)}
                                                         </span>
                                                         <span className={clsx(
                                                             "text-[9px] font-bold uppercase tracking-[0.15em] mt-2 px-2 py-0.5 rounded-md",
-                                                            member.status === 'working' ? "text-emerald-600 bg-emerald-50" : member.status === 'idle' ? "text-amber-600 bg-amber-50" : "text-slate-400 bg-slate-50"
+                                                            member.status === 'working' ? "text-emerald-500 bg-emerald-500/10" : member.status === 'idle' ? "text-amber-500 bg-amber-500/10" : "text-text-muted bg-surface-hover"
                                                         )}>
                                                             {member.status}
                                                         </span>
@@ -544,10 +544,10 @@ export function Dashboard() {
                                 </table>
                             </div>
                             
-                            <div className="p-8 bg-slate-50/30 border-t border-slate-50 shrink-0">
+                            <div className="p-8 bg-main/30 border-t border-border shrink-0">
                                 <button 
                                     onClick={() => navigate('/dashboard/people')}
-                                    className="w-full py-4 bg-white border border-slate-200 rounded-2xl text-[11px] font-bold text-slate-600 uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary hover:shadow-glow-primary transition-all duration-300 shadow-sm"
+                                    className="w-full py-4 bg-surface border border-border rounded-2xl text-[11px] font-bold text-text-muted uppercase tracking-widest hover:bg-primary hover:text-white hover:border-primary hover:shadow-glow-primary transition-all duration-300 shadow-sm"
                                 >
                                     Manage Workspace Team
                                 </button>
@@ -559,13 +559,13 @@ export function Dashboard() {
                 {/* 📊 Secondary Metrics Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Project Velocity Chart */}
-                    <div className="glass-panel rounded-[32px] shadow-premium p-10 border-slate-200/60">
+                    <div className="glass-panel rounded-[32px] shadow-premium p-10 border border-border">
                         <div className="flex items-center justify-between mb-10">
                             <div>
-                                <h3 className="text-[14px] font-bold text-slate-900 tracking-tight mb-1">Time Distribution</h3>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active hours per project</p>
+                                <h3 className="text-[14px] font-bold text-text-main tracking-tight mb-1">Time Distribution</h3>
+                                <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Active hours per project</p>
                             </div>
-                            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
+                            <div className="w-12 h-12 rounded-2xl bg-main flex items-center justify-center text-text-muted border border-border">
                                 <BarChart3 className="w-5 h-5" />
                             </div>
                         </div>
@@ -576,10 +576,10 @@ export function Dashboard() {
                                 projectActivity.map((proj) => (
                                     <div key={proj.id} className="space-y-4 group/bar">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-[12px] font-bold text-slate-900 tracking-tight group-hover:text-primary transition-colors">{proj.name}</span>
-                                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{proj.activityScore}% Focus</span>
+                                            <span className="text-[12px] font-bold text-text-main tracking-tight group-hover:text-primary transition-colors">{proj.name}</span>
+                                            <span className="text-[10px] font-bold text-text-muted uppercase tracking-widest">{proj.activityScore}% Focus</span>
                                         </div>
-                                        <div className="h-2.5 bg-slate-50/80 border border-slate-100 rounded-full overflow-hidden shadow-inner">
+                                        <div className="h-2.5 bg-main/80 border border-border rounded-full overflow-hidden shadow-inner">
                                             <motion.div 
                                                 initial={{ width: 0 }}
                                                 animate={{ width: `${Math.min(100, (proj.minutes / (stats.totalProductiveMinutes || 1)) * 100)}%` }}
@@ -591,8 +591,8 @@ export function Dashboard() {
                                             </motion.div>
                                         </div>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-[11px] font-bold text-slate-400 tracking-tight">{formatDuration(proj.minutes)} tracked</span>
-                                            <div className="px-2 py-1 rounded-lg bg-slate-50 text-[10px] font-bold text-slate-900 border border-slate-100">
+                                            <span className="text-[11px] font-bold text-text-muted tracking-tight">{formatDuration(proj.minutes)} tracked</span>
+                                            <div className="px-2 py-1 rounded-lg bg-main text-[10px] font-bold text-text-main border border-border">
                                                 {Math.round((proj.minutes / (stats.totalProductiveMinutes || 1)) * 100)}%
                                             </div>
                                         </div>
@@ -603,24 +603,24 @@ export function Dashboard() {
                     </div>
 
                     {/* App ecosystem Ledger */}
-                    <div className="glass-panel rounded-[32px] shadow-premium overflow-hidden flex flex-col border-slate-200/60">
-                        <div className="px-10 py-8 border-b border-slate-50 bg-white/50 flex items-center justify-between">
+                    <div className="glass-panel rounded-[32px] shadow-premium overflow-hidden flex flex-col border border-border">
+                        <div className="px-10 py-8 border-b border-border bg-surface/50 flex items-center justify-between">
                             <div>
-                                <h3 className="text-[14px] font-bold text-slate-900 tracking-tight mb-1">Application Ecosystem</h3>
-                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Most utilized tools and platforms</p>
+                                <h3 className="text-[14px] font-bold text-text-main tracking-tight mb-1">Application Ecosystem</h3>
+                                <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Most utilized tools and platforms</p>
                             </div>
-                            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400">
+                            <div className="w-12 h-12 rounded-2xl bg-main flex items-center justify-center text-text-muted border border-border">
                                 <Monitor className="w-5 h-5" />
                             </div>
                         </div>
-                        <div className="flex-1 max-h-[300px] overflow-y-auto no-scrollbar divide-y divide-slate-50">
+                        <div className="flex-1 max-h-[300px] overflow-y-auto no-scrollbar divide-y divide-border">
                             {appUsage.length === 0 ? (
                                 <EmptyState icon={<Monitor />} title="Awaiting application data" className="py-12" />
                             ) : (
                                 appUsage.map((app, i) => (
-                                    <div key={i} className="flex items-center justify-between px-10 py-5 hover:bg-slate-50/50 transition-all duration-300 group">
+                                    <div key={i} className="flex items-center justify-between px-10 py-5 hover:bg-surface-hover/50 transition-all duration-300 group">
                                         <div className="flex items-center gap-4 min-w-0">
-                                            <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-sm shrink-0 group-hover:border-primary/20 transition-all duration-500">
+                                            <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-text-muted shadow-sm shrink-0 group-hover:border-primary/20 transition-all duration-500">
                                                 {(app.name.toLowerCase().includes('chrome') || app.name.toLowerCase().includes('browser')) ? (
                                                     <Globe className="w-5 h-5 text-sky-500 opacity-70 group-hover:opacity-100 transition-opacity" />
                                                 ) : (
@@ -628,13 +628,13 @@ export function Dashboard() {
                                                 )}
                                             </div>
                                             <div className="flex flex-col min-w-0">
-                                                <span className="text-[13px] font-bold text-slate-900 tracking-tight truncate group-hover:text-primary transition-colors">{app.name}</span>
-                                                <span className="text-[9px] text-slate-400 font-bold uppercase tracking-widest mt-1 opacity-60">System Process</span>
+                                                <span className="text-[13px] font-bold text-text-main tracking-tight truncate group-hover:text-primary transition-colors">{app.name}</span>
+                                                <span className="text-[9px] text-text-muted font-bold uppercase tracking-widest mt-1 opacity-60">System Process</span>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-6">
-                                            <span className="text-[11px] text-slate-400 font-bold tracking-tight">{formatDuration(app.minutes)}</span>
-                                            <div className="text-[12px] font-bold text-slate-900 w-12 h-9 flex items-center justify-center bg-slate-50 border border-slate-100 rounded-xl group-hover:bg-primary/5 group-hover:border-primary/20 group-hover:text-primary transition-all tabular-nums">
+                                            <span className="text-[11px] text-text-muted font-bold tracking-tight">{formatDuration(app.minutes)}</span>
+                                            <div className="text-[12px] font-bold text-text-main w-12 h-9 flex items-center justify-center bg-main border border-border rounded-xl group-hover:bg-primary/5 group-hover:border-primary/20 group-hover:text-primary transition-all tabular-nums">
                                                 {Math.round(app.percent)}%
                                             </div>
                                         </div>

@@ -1,13 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { LogOut, Menu, ChevronDown, User as UserIcon } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { LogOut, Menu, ChevronDown, User as UserIcon, Sun, Moon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { navStructure, matchActive, type Role } from '../nav/navModel';
 import { useAuth } from '../context/AuthContext';
 import { SecureImage } from './ui/SecureImage';
-import logoFull from '../assets/branding/logo-full.png';
+import { useTheme } from '../hooks/useTheme';
+import logoLight from '../assets/branding/logo-light.svg';
+import logoDark from '../assets/branding/logo-dark.svg';
 
 export interface HeaderProps {
     onOpenMobileMenu?: () => void;
@@ -17,6 +19,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
     const location = useLocation();
     const navigate = useNavigate();
     const { profile } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
@@ -57,24 +60,24 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
     });
 
     return (
-        <header className="sticky top-0 z-[60] w-full h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/60 transition-all duration-300">
+        <header className="sticky top-0 z-[60] w-full h-16 bg-[var(--bg-surface)] backdrop-blur-md border-b border-[var(--border-color)] transition-all duration-300">
             <div className="max-w-[1600px] mx-auto h-full flex items-center justify-between px-6 lg:px-10 relative">
 
                 {/* 💎 Brand Section */}
                 <div className="flex items-center gap-6">
                     <Link to="/dashboard" className="flex items-center group transition-transform duration-300 hover:scale-[1.02]">
                         <img
-                            src={logoFull}
-                            alt="Trackora"
-                            className="h-20 w-auto object-contain"
+                            src={theme === 'dark' ? logoDark : logoLight}
+                            alt="TrackOwl"
+                            className="h-10 w-auto object-contain"
                         />
                     </Link>
 
-                    <div className="hidden lg:block h-5 w-px bg-slate-200/60" />
+                    <div className="hidden lg:block h-5 w-px bg-[var(--border-color)]" />
 
                     <div className="hidden lg:flex flex-col">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-none mb-0.5">Admin</span>
-                        <span className="text-[12px] font-bold text-slate-900 tracking-tight">Workspace</span>
+                        <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest leading-none mb-0.5">Admin</span>
+                        <span className="text-[12px] font-bold text-[var(--text-main)] tracking-tight">Portal</span>
                     </div>
                 </div>
 
@@ -95,7 +98,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                         onMouseEnter={() => setActiveDropdown(group.name)}
                                         className={clsx(
                                             "relative flex items-center gap-1.5 px-4 h-9 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all duration-300",
-                                            isActive || isDropdownOpen ? "text-primary bg-primary/5 shadow-sm ring-1 ring-primary/10" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                                            isActive || isDropdownOpen ? "text-primary bg-primary/5 shadow-sm ring-1 ring-primary/10" : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-primary/5"
                                         )}
                                     >
                                         {group.name}
@@ -107,7 +110,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                         onMouseEnter={() => setActiveDropdown(null)}
                                         className={clsx(
                                             "relative flex items-center gap-1.5 px-4 h-9 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all duration-300",
-                                            isActive ? "text-primary bg-primary/5 shadow-sm ring-1 ring-primary/10" : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+                                            isActive ? "text-primary bg-primary/5 shadow-sm ring-1 ring-primary/10" : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-primary/5"
                                         )}
                                     >
                                         {group.name}
@@ -118,11 +121,11 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                     <motion.div
                                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-1.5 bg-white border border-slate-200 rounded-[24px] shadow-xl z-50"
+                                        className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-56 p-1.5 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-[24px] shadow-xl z-50"
                                         onMouseLeave={() => setActiveDropdown(null)}
                                     >
-                                        <div className="px-4 py-2.5 mb-1 border-b border-slate-100">
-                                            <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{group.name}</span>
+                                        <div className="px-4 py-2.5 mb-1 border-b border-[var(--border-color)] opacity-50">
+                                            <span className="text-[9px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{group.name}</span>
                                         </div>
                                         <div className="grid gap-1">
                                             {group.children!.map((child) => (
@@ -133,7 +136,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                                         "flex items-center justify-between px-4 py-2 rounded-xl text-[11px] font-bold uppercase tracking-widest transition-all duration-200",
                                                         matchActive(location.pathname, child.path)
                                                             ? "bg-primary text-white shadow-sm"
-                                                            : "text-slate-600 hover:bg-slate-50 hover:text-primary"
+                                                            : "text-[var(--text-muted)] hover:bg-primary/5 hover:text-primary"
                                                     )}
                                                 >
                                                     {child.name}
@@ -152,6 +155,26 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
 
                 {/* 👤 Right Section: Profile & Actions */}
                 <div className="flex items-center justify-end gap-3" ref={menuRef}>
+                    
+                    {/* Theme Toggle */}
+                    <button
+                        onClick={toggleTheme}
+                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-muted)] hover:text-primary hover:bg-primary/5 transition-all shadow-sm"
+                        aria-label="Toggle theme"
+                    >
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={theme}
+                                initial={{ opacity: 0, rotate: -45, scale: 0.8 }}
+                                animate={{ opacity: 1, rotate: 0, scale: 1 }}
+                                exit={{ opacity: 0, rotate: 45, scale: 0.8 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+                            </motion.div>
+                        </AnimatePresence>
+                    </button>
+
                     <div className="relative">
                         <button
                             type="button"
@@ -159,22 +182,22 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                             className={clsx(
                                 "flex items-center gap-2.5 pl-3 pr-1.5 h-10 rounded-xl transition-all duration-300 group border",
                                 showProfileMenu
-                                    ? "bg-white border-slate-200 shadow-md scale-[1.02]"
-                                    : "bg-white/50 border-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm"
+                                    ? "bg-[var(--bg-surface)] border-primary shadow-md scale-[1.02]"
+                                    : "bg-[var(--bg-surface)] border-transparent hover:border-[var(--border-color)] hover:shadow-sm"
                             )}
                         >
                             <div className="flex flex-col items-end">
-                                <span className="text-[12px] font-bold text-slate-900 tracking-tight leading-none truncate max-w-[100px]">
+                                <span className="text-[12px] font-bold text-[var(--text-main)] tracking-tight leading-none truncate max-w-[100px]">
                                     {profile?.full_name?.split(' ')[0] || 'Member'}
                                 </span>
                                 <div className="flex items-center gap-1 mt-0.5">
                                     <div className="w-1 h-1 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
-                                    <span className="text-[8px] font-bold text-emerald-600 uppercase tracking-widest">Online</span>
+                                    <span className="text-[8px] font-bold text-emerald-500 uppercase tracking-widest">Online</span>
                                 </div>
                             </div>
 
                             <div className="relative">
-                                <div className="w-7 h-7 rounded-lg bg-slate-900 flex items-center justify-center text-white text-[11px] font-bold overflow-hidden shadow-sm ring-1 ring-slate-100">
+                                <div className="w-7 h-7 rounded-lg bg-dark-brown flex items-center justify-center text-white text-[11px] font-bold overflow-hidden shadow-sm ring-1 ring-[var(--border-color)]">
                                     {profile?.avatar_url ? (
                                         <SecureImage path={profile.avatar_url} bucket="avatars" alt="" className="w-full h-full object-cover" />
                                     ) : (
@@ -188,16 +211,16 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                             <motion.div
                                 initial={{ opacity: 0, y: 15, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                                className="absolute right-0 top-full mt-3 w-64 bg-white border border-slate-200 rounded-[24px] shadow-2xl py-1.5 z-[70] origin-top-right overflow-hidden"
+                                className="absolute right-0 top-full mt-3 w-64 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-[24px] shadow-2xl py-1.5 z-[70] origin-top-right overflow-hidden"
                             >
-                                <div className="px-5 py-5 border-b border-slate-100 bg-slate-50/50">
+                                <div className="px-5 py-5 border-b border-[var(--border-color)] bg-primary/5">
                                     <div className="flex items-center gap-3 mb-3">
                                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-[14px] font-bold border border-primary/5">
                                             {profile?.full_name?.charAt(0) || 'U'}
                                         </div>
                                         <div className="flex flex-col overflow-hidden">
-                                            <p className="text-[13px] font-bold text-slate-900 tracking-tight truncate">{profile?.full_name || 'Legacy Operator'}</p>
-                                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest truncate">{profile?.role || 'Guest'}</p>
+                                            <p className="text-[13px] font-bold text-[var(--text-main)] tracking-tight truncate">{profile?.full_name || 'Legacy Operator'}</p>
+                                            <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest truncate">{profile?.role || 'Guest'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -205,17 +228,17 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                 <div className="p-1.5 space-y-0.5">
                                     <Link
                                         to="/dashboard/profile"
-                                        className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-600 hover:bg-slate-50 hover:text-primary rounded-xl transition-all group"
+                                        className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-[var(--text-muted)] hover:bg-primary/5 hover:text-primary rounded-xl transition-all group"
                                     >
                                         <UserIcon className="w-3.5 h-3.5 opacity-40 group-hover:opacity-100" />
                                         My Profile
                                     </Link>
 
-                                    <div className="h-px bg-slate-100 my-1 mx-2" />
+                                    <div className="h-px bg-[var(--border-color)] my-1 mx-2" />
 
                                     <button
                                         onClick={handleLogout}
-                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-rose-500 hover:bg-rose-50 rounded-xl transition-all group"
+                                        className="w-full flex items-center gap-3 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-rose-500 hover:bg-rose-500/10 rounded-xl transition-all group"
                                     >
                                         <LogOut className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
                                         Sign Out
@@ -228,9 +251,9 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                     {onOpenMobileMenu && (
                         <button
                             onClick={onOpenMobileMenu}
-                            className="xl:hidden w-9 h-9 flex items-center justify-center rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all"
+                            className="xl:hidden w-10 h-10 flex items-center justify-center rounded-xl text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-primary/5 border border-transparent hover:border-[var(--border-color)] transition-all"
                         >
-                            <Menu className="w-4 h-4" />
+                            <Menu className="w-4.5 h-4.5" />
                         </button>
                     )}
                 </div>

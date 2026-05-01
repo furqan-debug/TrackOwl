@@ -22,7 +22,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
 
     if (samples.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-24 text-slate-300">
+            <div className="flex flex-col items-center justify-center py-24 text-text-muted">
                 <p className="text-sm font-bold uppercase tracking-widest italic opacity-40">Operational silence detected.</p>
             </div>
         );
@@ -35,11 +35,11 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
                     <div key={hour} className="group relative">
                         <div className="flex items-start gap-10">
                             {/* Time Pillar */}
-                            <div className="w-24 pt-2 border-r border-slate-100 flex flex-col items-end pr-10 shrink-0">
-                                <span className="text-[18px] font-bold text-slate-900 tabular-nums leading-none tracking-tight">
+                            <div className="w-24 pt-2 border-r border-border flex flex-col items-end pr-10 shrink-0">
+                                <span className="text-[18px] font-bold text-text-main tabular-nums leading-none tracking-tight">
                                     {hour.toString().padStart(2, '0')}:00
                                 </span>
-                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mt-2">
+                                <span className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mt-2">
                                     {hour < 12 ? 'AM' : 'PM'}
                                 </span>
                             </div>
@@ -58,7 +58,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
                                             key={index}
                                             className={clsx(
                                                 "relative rounded-[20px] transition-all duration-500 flex flex-col items-center justify-center group/block overflow-hidden shadow-sm border",
-                                                !hasData ? "bg-black border-slate-900 border-dashed" : getBlockStyle(intensity)
+                                                !hasData ? "bg-black/20 border-border border-dashed" : getBlockStyle(intensity)
                                             )}
                                         >
                                             {hasData && (
@@ -76,7 +76,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
                                             
                                             {/* Tooltip HUD */}
                                             {hasData && (
-                                                <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] font-bold px-3 py-1.5 rounded-xl opacity-0 group-hover/block:opacity-100 translate-y-2 group-hover/block:translate-y-0 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-2xl border border-white/10 uppercase tracking-widest">
+                                                <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-surface text-text-main text-[10px] font-bold px-3 py-1.5 rounded-xl opacity-0 group-hover/block:opacity-100 translate-y-2 group-hover/block:translate-y-0 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-2xl border border-border uppercase tracking-widest">
                                                     {block.startTime} – {block.endTime}
                                                 </div>
                                             )}

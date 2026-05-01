@@ -36,9 +36,9 @@ export function PageLayout({
                             {backButton && (
                                 <button
                                     onClick={backButton.onClick}
-                                    className="flex items-center gap-3 text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] hover:text-primary transition-all duration-300 group mb-2"
+                                    className="flex items-center gap-3 text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-[0.2em] hover:text-primary transition-all duration-300 group mb-2"
                                 >
-                                    <div className="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center group-hover:border-primary group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                                    <div className="w-8 h-8 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-color)] flex items-center justify-center group-hover:border-primary group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                                             <path d="M19 12H5M12 19l-7-7 7-7"/>
                                         </svg>
@@ -48,12 +48,12 @@ export function PageLayout({
                             )}
                             <div className="space-y-2">
                                 {title && (
-                                    <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tighter leading-none">
+                                    <h1 className="text-4xl md:text-5xl font-bold text-[var(--text-main)] tracking-tighter leading-none">
                                         {title}
                                     </h1>
                                 )}
                                 {description && (
-                                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.15em] max-w-2xl leading-relaxed opacity-70">
+                                    <p className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-[0.15em] max-w-2xl leading-relaxed opacity-70">
                                         {description}
                                     </p>
                                 )}

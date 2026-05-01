@@ -5,7 +5,9 @@ import { ChevronDown, ChevronLeft, Star, Zap, LogOut } from 'lucide-react';
 import { navStructure, matchActive, type BadgeType, type Role } from '../nav/navModel';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
-import logoFull from '../assets/branding/logo-full.png';
+import { useTheme } from '../hooks/useTheme';
+import logoLight from '../assets/branding/logo-light.svg';
+import logoDark from '../assets/branding/logo-dark.svg';
 
 const SIDEBAR_WIDTH_EXPANDED = 240;
 const SIDEBAR_WIDTH_COLLAPSED = 68;
@@ -23,6 +25,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
     const location = useLocation();
     const { favorites } = useFavorites();
     const { profile, signOut } = useAuth();
+    const { theme } = useTheme();
     const userRole = (profile?.role || 'User') as Role;
     
     const effectiveCollapsed = overlay ? false : isCollapsed;
@@ -76,7 +79,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
         if (!badge || effectiveCollapsed) return null;
         if (badge === 'new') {
             return (
-                <span className="flex items-center gap-1 bg-primary/10 text-primary text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ml-2 shrink-0 tracking-widest">
+                <span className="flex items-center gap-1 bg-primary text-white text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ml-2 shrink-0 tracking-widest">
                     New
                 </span>
             );
@@ -90,7 +93,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
     return (
         <aside
             className={clsx(
-                "h-full bg-[#f8f9fa] border-r border-black/[0.04] flex flex-col overflow-y-auto shell-scrollbar",
+                "h-full bg-[var(--color-sidebar-bg)] border-r border-white/[0.05] flex flex-col overflow-y-auto shell-scrollbar",
                 overlay ? "w-[260px]" : "sticky top-0 transition-[width] duration-300 ease-in-out"
             )}
             style={overlay ? undefined : { width: effectiveCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED }}
@@ -100,16 +103,16 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
             <Link 
                 to="/dashboard"
                 className={clsx(
-                    "flex items-center sticky top-0 z-20 bg-[#f8f9fa]/80 backdrop-blur-md border-b border-black/[0.03] hover:opacity-80 transition-opacity", 
+                    "flex items-center sticky top-0 z-20 bg-[var(--color-sidebar-bg)]/80 backdrop-blur-md border-b border-white/[0.05] hover:opacity-80 transition-opacity", 
                     effectiveCollapsed ? "justify-center px-0 py-5" : "px-6 py-5"
                 )}
             >
                 {effectiveCollapsed ? (
                     <div className="w-11 h-11 flex items-center justify-center shrink-0">
-                        <img src={logoFull} alt="" className="w-full h-full object-contain" />
+                        <img src={theme === 'dark' ? logoDark : logoLight} alt="" className="w-full h-full object-contain" />
                     </div>
                 ) : (
-                    <img src={logoFull} alt="Trackora" className="h-11 w-auto object-contain" />
+                    <img src={theme === 'dark' ? logoDark : logoLight} alt="TrackOwl" className="h-10 w-auto object-contain" />
                 )}
             </Link>
 
@@ -120,15 +123,15 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                         <button
                             type="button"
                             onClick={() => setFavoritesExpanded(!favoritesExpanded)}
-                            className="w-full flex items-center justify-between py-2 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] hover:text-text-primary transition-colors group px-2"
+                            className="w-full flex items-center justify-between py-2 text-[10px] font-bold text-[var(--sidebar-text)] uppercase tracking-[0.2em] hover:text-[var(--sidebar-text-active)] transition-colors group px-2"
                             aria-expanded={favoritesExpanded}
                         >
                             <div className="flex items-center gap-2">
-                                <Star className={clsx("w-3.5 h-3.5 transition-colors", favorites.length > 0 ? "text-primary fill-primary/10" : "text-text-muted group-hover:text-text-secondary")} aria-hidden />
+                                <Star className={clsx("w-3.5 h-3.5 transition-colors", favorites.length > 0 ? "text-primary fill-primary/10" : "text-[var(--sidebar-text)] group-hover:text-[var(--sidebar-text-active)]")} aria-hidden />
                                 Favorites
-                                <span className="text-[10px] text-text-muted/50 font-mono ml-1">({favorites.length})</span>
+                                <span className="text-[10px] opacity-40 font-mono ml-1">({favorites.length})</span>
                             </div>
-                            <ChevronDown className={clsx("w-3 h-3 text-text-muted transition-transform duration-300", !favoritesExpanded && "-rotate-90")} />
+                            <ChevronDown className={clsx("w-3 h-3 text-[var(--sidebar-text)] transition-transform duration-300", !favoritesExpanded && "-rotate-90")} />
                         </button>
 
                         <div className={clsx(
@@ -144,16 +147,16 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         className={clsx(
                                             "flex items-center gap-3 px-3 py-2.5 text-[13px] rounded-xl transition-all group",
                                             location.pathname === fav.path
-                                                ? "bg-primary/5 text-primary font-bold shadow-sm border border-primary/10"
-                                                : "text-text-secondary hover:text-text-primary hover:bg-black/[0.02]"
+                                                ? "bg-primary/10 text-primary font-bold border border-primary/20"
+                                                : "text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-white/[0.03]"
                                         )}
                                     >
-                                        <div className={clsx("w-2 h-2 rounded-full", location.pathname === fav.path ? "bg-primary" : "bg-black/10 group-hover:bg-primary/30")} />
+                                        <div className={clsx("w-2 h-2 rounded-full", location.pathname === fav.path ? "bg-primary" : "bg-white/10 group-hover:bg-primary/30")} />
                                         <span className="truncate tracking-tight font-bold">{fav.name}</span>
                                     </Link>
                                 ))
                             ) : (
-                                <p className="px-3 py-2.5 text-[11px] text-text-muted italic opacity-60 font-medium">No identified clusters.</p>
+                                <p className="px-3 py-2.5 text-[11px] text-[var(--sidebar-text)] italic opacity-40 font-medium">No identified clusters.</p>
                             )}
                         </div>
                     </div>
@@ -162,7 +165,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 {/* Main Navigation */}
                 <nav className="space-y-1" aria-label="Primary">
                     {!effectiveCollapsed && (
-                        <p className="px-4 text-[10px] font-bold text-text-muted uppercase tracking-[0.2em] mb-4 opacity-30 text-left">Navigation</p>
+                        <p className="px-4 text-[10px] font-bold text-[var(--sidebar-text)] uppercase tracking-[0.2em] mb-4 opacity-20 text-left">Navigation</p>
                     )}
                     {filteredNav.map((group) => {
                         const hasChildren = group.children && group.children.length > 0;
@@ -180,19 +183,19 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                             'group flex items-center rounded-xl text-[13px] font-bold transition-all',
                                             effectiveCollapsed ? 'justify-center p-3 w-full' : 'justify-between px-3.5 py-2.5 w-full',
                                             isChildActive && !isExpanded ? 'bg-primary text-white shadow-sm' : 
-                                            isExpanded ? 'text-text-primary bg-black/[0.03]' : 'text-text-secondary hover:text-text-primary hover:bg-black/[0.03]'
+                                            isExpanded ? 'text-[var(--sidebar-text-active)] bg-white/[0.05]' : 'text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-white/[0.05]'
                                         )}
                                         aria-expanded={isExpanded}
                                     >
                                         <div className={clsx("flex items-center gap-3", effectiveCollapsed && "justify-center")}>
                                             <group.icon className={clsx("w-[18px] h-[18px] shrink-0 transition-colors", 
                                                 isChildActive && !isExpanded ? "text-white" : 
-                                                isChildActive || isExpanded ? "text-primary" : "text-text-muted group-hover:text-primary")} 
+                                                isChildActive || isExpanded ? "text-primary" : "text-[var(--sidebar-text)] group-hover:text-primary")} 
                                                 strokeWidth={2} aria-hidden />
                                             {!effectiveCollapsed && <span className="tracking-tight">{group.name}</span>}
                                         </div>
                                         {!effectiveCollapsed && (
-                                            <ChevronDown className={clsx("w-3.5 h-3.5 text-text-muted shrink-0 transition-transform duration-300", !isExpanded && "-rotate-90")} />
+                                            <ChevronDown className={clsx("w-3.5 h-3.5 text-[var(--sidebar-text)] shrink-0 transition-transform duration-300", !isExpanded && "-rotate-90")} />
                                         )}
                                     </button>
                                 ) : (
@@ -204,18 +207,18 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                             effectiveCollapsed ? 'justify-center p-3' : 'px-3.5 py-2.5 gap-3',
                                             isDirectlyActive 
                                                 ? 'bg-primary text-white shadow-sm' 
-                                                : 'text-text-secondary hover:text-text-primary hover:bg-black/[0.03]'
+                                                : 'text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-white/[0.05]'
                                         )}
                                     >
                                         <group.icon className={clsx("w-[18px] h-[18px] shrink-0 transition-colors", 
-                                            isDirectlyActive ? "text-white" : "text-text-muted group-hover:text-primary")} 
+                                            isDirectlyActive ? "text-white" : "text-[var(--sidebar-text)] group-hover:text-primary")} 
                                             strokeWidth={2} aria-hidden />
                                         {!effectiveCollapsed && <span className="tracking-tight">{group.name}</span>}
                                     </Link>
                                 )}
 
                                 {hasChildren && isExpanded && (
-                                    <div className="mt-1 pb-1 space-y-0.5 relative ml-8 border-l border-black/[0.04] pl-3 animate-in slide-in-from-top-1 duration-200">
+                                    <div className="mt-1 pb-1 space-y-0.5 relative ml-8 border-l border-white/[0.05] pl-3 animate-in slide-in-from-top-1 duration-200">
                                         {group.children!.map((child) => {
                                             const isActive = matchActive(location.pathname, child.path);
                                             return (
@@ -227,7 +230,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                                         'flex items-center justify-between px-3 py-2 text-[12px] rounded-lg transition-all group',
                                                         isActive 
                                                             ? 'text-primary font-bold bg-primary/5' 
-                                                            : 'text-text-secondary hover:bg-black/[0.02] hover:text-text-primary'
+                                                            : 'text-[var(--sidebar-text)] hover:bg-white/[0.03] hover:text-[var(--sidebar-text-active)]'
                                                     )}
                                                 >
                                                     <span className="truncate tracking-tight font-medium">{child.name}</span>
@@ -244,18 +247,18 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
             </div>
 
             {/* Profile Area */}
-            <div className="mt-auto border-t border-black/[0.03] bg-white/50 p-4 relative z-20">
-                 <div className={clsx("flex items-center gap-3 p-1.5 rounded-xl transition-all hover:bg-black/[0.02] cursor-pointer group mb-2", effectiveCollapsed ? "justify-center" : "")}>
+            <div className="mt-auto border-t border-white/[0.05] bg-black/10 p-4 relative z-20">
+                 <div className={clsx("flex items-center gap-3 p-1.5 rounded-xl transition-all hover:bg-white/[0.03] cursor-pointer group mb-2", effectiveCollapsed ? "justify-center" : "")}>
                     <div className="relative shrink-0">
-                        <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-xs shadow-sm uppercase font-head">
+                        <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-xs shadow-sm uppercase">
                             {profile?.full_name?.charAt(0) || '?'}
                         </div>
-                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[var(--color-sidebar-bg)] rounded-full" />
                     </div>
                     {!effectiveCollapsed && (
                         <div className="min-w-0 flex-1">
-                            <p className="text-[13px] font-bold text-text-primary truncate font-head leading-none mb-1">{profile?.full_name}</p>
-                            <p className="text-[9px] text-text-muted font-bold uppercase tracking-widest opacity-60 font-mono">Role: {profile?.role}</p>
+                            <p className="text-[13px] font-bold text-[var(--sidebar-text-active)] truncate leading-none mb-1">{profile?.full_name}</p>
+                            <p className="text-[9px] text-[var(--sidebar-text)] font-bold uppercase tracking-widest opacity-40">Role: {profile?.role}</p>
                         </div>
                     )}
                 </div>
@@ -264,22 +267,22 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                     type="button"
                     onClick={() => signOut()}
                     className={clsx(
-                        "w-full flex items-center rounded-xl text-[11px] font-bold uppercase tracking-[0.2em] text-rose-500 hover:bg-rose-500/5 transition-all group py-1",
+                        "w-full flex items-center rounded-xl text-[11px] font-bold uppercase tracking-[0.2em] text-rose-400 hover:bg-rose-400/10 transition-all group py-1",
                         effectiveCollapsed ? "justify-center p-3" : "px-3 py-2.5 gap-3"
                     )}
                 >
                     <LogOut className="w-[16px] h-[16px] shrink-0 group-hover:-translate-x-0.5 transition-transform" strokeWidth={2} />
-                    {!effectiveCollapsed && <span className="font-mono">Log out</span>}
+                    {!effectiveCollapsed && <span>Log out</span>}
                 </button>
             </div>
 
             {/* Collapse toggle */}
             {!overlay && (
-                 <div className="border-t border-black/[0.03] bg-white/50 px-4 py-3 shrink-0">
+                 <div className="border-t border-white/[0.05] bg-black/10 px-4 py-3 shrink-0">
                     <button
                         type="button"
                         onClick={() => onToggle?.()}
-                        className="w-full flex items-center justify-center p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-black/[0.02] transition-all"
+                        className="w-full flex items-center justify-center p-2 rounded-lg text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-white/[0.05] transition-all"
                     >
                         <ChevronLeft className={clsx("w-3.5 h-3.5 transition-transform duration-500", effectiveCollapsed && "rotate-180")} strokeWidth={2} />
                     </button>

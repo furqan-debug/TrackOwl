@@ -40,12 +40,6 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-/**
- * Detects Supabase auth tokens in the URL hash (invite / password-reset)
- * and redirects to the correct page before anything else renders.
- * Supabase always appends the token to the Site URL root, so this
- * component must live at the root route.
- */
 function AuthRedirect() {
   const navigate = useNavigate();
 
@@ -53,7 +47,6 @@ function AuthRedirect() {
     const hash = window.location.hash;
     if (!hash) return;
 
-    // Parse hash parameters
     const params = new URLSearchParams(hash.replace(/^#/, ''));
     const type = params.get('type');
     const accessToken = params.get('access_token');
@@ -61,7 +54,6 @@ function AuthRedirect() {
     const errorCode = params.get('error_code');
 
     if (error || errorCode) {
-      // e.g. expired link — show a friendly error on accept-invite page
       navigate(`/accept-invite${hash}`, { replace: true });
       return;
     }
@@ -71,7 +63,6 @@ function AuthRedirect() {
     } else if (accessToken && type === 'recovery') {
       navigate(`/update-password${hash}`, { replace: true });
     } else if (accessToken && type === 'signup') {
-      // Email confirmation from self-signup
       navigate(`/dashboard${hash}`, { replace: true });
     }
   }, []);
@@ -85,7 +76,6 @@ function App() {
       <FavoritesProvider>
         <Router>
           <Routes>
-            {/* ── Auth token interceptor: runs on root URL, catches Supabase redirects ── */}
             <Route path="/" element={<><AuthRedirect /><Landing /></>} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
@@ -94,7 +84,6 @@ function App() {
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
 
-            {/* ── Protected Main Admin Shell ── */}
             <Route path="/dashboard/*" element={
               <ProtectedRoute>
                 <AppShell>
@@ -114,48 +103,33 @@ function App() {
                     <Route path="/member-timeline" element={<MemberTimeline />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
-
-                    {/* --- NEW FEATURES --- */}
                     <Route path="/timesheets/approvals" element={<Approvals />} />
                     <Route path="/activity/apps" element={<AppUsage />} />
-
-                    {/* --- NEW LOCATIONS FEATURE --- */}
                     <Route path="/locations" element={<Locations />} />
                     <Route path="/locations/job-sites" element={<JobSites />} />
-
                     <Route path="/projects/todos" element={<Todos />} />
                     <Route path="/projects/clients" element={<Clients />} />
-
                     <Route path="/calendar" element={<Calendar />} />
-
                     <Route path="/reports/legacy" element={<ReportsLegacy />} />
                     <Route path="/reports/daily" element={<DailyTotals />} />
                     <Route path="/reports/owed" element={<AmountsOwed />} />
                     <Route path="/reports/payments" element={<PaymentsReport />} />
                     <Route path="/reports/all" element={<PlaceholderPage title="All Reports" />} />
                     <Route path="/reports/custom" element={<PlaceholderPage title="Customized Reports" />} />
-
                     <Route path="/people/teams" element={<Teams />} />
-
                     <Route path="/financials/create" element={<PlaceholderPage title="Create Payments" />} />
                     <Route path="/financials/past" element={<PlaceholderPage title="Past Payments" />} />
                     <Route path="/financials/invoices" element={<PlaceholderPage title="Invoices" />} />
                     <Route path="/financials/expenses" element={<PlaceholderPage title="Expenses" />} />
-
                     <Route path="/silent/how-it-works" element={<PlaceholderPage title="Silent App: How it works" />} />
-
                     <Route path="/settings/tracking" element={<PlaceholderPage title="Activity & Tracking Settings" />} />
                     <Route path="/settings/integrations" element={<PlaceholderPage title="Integrations" />} />
                     <Route path="/settings/billing" element={<PlaceholderPage title="Billing" />} />
-                    
-                    {/* Fallback within dashboard */}
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </AppShell>
               </ProtectedRoute>
             } />
-
-            {/* Global Fallback */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Router>

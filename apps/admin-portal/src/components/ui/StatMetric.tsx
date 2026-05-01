@@ -30,11 +30,11 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
             <div className="flex items-center justify-between mb-5 relative z-10">
                 <div className={clsx(
                     "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-sm",
-                    accent === 'emerald' && "bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100",
-                    accent === 'amber' && "bg-amber-50 text-amber-600 group-hover:bg-amber-100",
-                    accent === 'rose' && "bg-rose-50 text-rose-600 group-hover:bg-rose-100",
-                    accent === 'primary' && "bg-primary/5 text-primary group-hover:bg-primary/10",
-                    !accent && "bg-slate-50 text-slate-500 group-hover:bg-primary/5 group-hover:text-primary shadow-inner"
+                    accent === 'emerald' && "bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20",
+                    accent === 'amber' && "bg-amber-500/10 text-amber-500 group-hover:bg-amber-500/20",
+                    accent === 'rose' && "bg-rose-500/10 text-rose-500 group-hover:bg-rose-500/20",
+                    accent === 'primary' && "bg-primary/10 text-primary group-hover:bg-primary/20",
+                    !accent && "bg-surface-hover text-text-muted group-hover:bg-primary/5 group-hover:text-primary shadow-inner"
                 )}>
                     {icon}
                 </div>
@@ -42,8 +42,8 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
                     <div className={clsx(
                         "text-[10px] font-bold px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-sm border border-transparent",
                         trend >= 0 
-                            ? "bg-emerald-50 text-emerald-600 border-emerald-100" 
-                            : "bg-rose-50 text-rose-600 border-rose-100"
+                            ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/20" 
+                            : "bg-rose-500/10 text-rose-500 border-rose-500/20"
                     )}>
                         <div className={clsx(
                             "w-1 h-1 rounded-full",
@@ -55,14 +55,14 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
             </div>
 
             <div className="space-y-1.5 relative z-10">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">{label}</p>
+                <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.2em]">{label}</p>
                 <div className={clsx(
                     "text-3xl font-bold tracking-tighter transition-all duration-300",
-                    accent === 'primary' ? "text-gradient-premium" : "text-slate-900 group-hover:text-primary"
+                    accent === 'primary' ? "text-gradient-premium" : "text-text-main group-hover:text-primary"
                 )}>
                     {value}
                 </div>
-                {sub && <p className="text-[11px] text-slate-500 font-medium tracking-tight opacity-70">{sub}</p>}
+                {sub && <p className="text-[11px] text-text-muted font-medium tracking-tight opacity-70">{sub}</p>}
             </div>
         </div>
     );
