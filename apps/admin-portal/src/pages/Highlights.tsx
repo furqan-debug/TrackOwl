@@ -110,8 +110,8 @@ export function Highlights() {
         <div className="p-8 max-w-[1200px] mx-auto w-full fade-in">
             <div className="flex justify-between items-end mb-8 relative z-20">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-2">Team Highlights</h1>
-                    <p className="text-slate-500">A quick executive summary of team performance.</p>
+                    <h1 className="text-2xl font-bold text-text-main tracking-tight mb-2">Team Highlights</h1>
+                    <p className="text-text-muted">A quick executive summary of team performance.</p>
                 </div>
 
                 <div className="flex items-center gap-4">
@@ -119,15 +119,15 @@ export function Highlights() {
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
-                        className="px-4 py-2 border border-slate-200 rounded-lg text-sm font-medium text-slate-700 shadow-sm bg-white hover:bg-slate-50 transition-colors"
+                        className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-text-main shadow-shell-sm bg-surface hover:bg-surface-hover transition-colors"
                     />
                 </div>
             </div>
 
             {loading ? (
-                <div className="text-center py-20 text-slate-500">Calculating organization trends...</div>
+                <div className="text-center py-20 text-text-muted">Calculating organization trends...</div>
             ) : stats.length === 0 ? (
-                <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-500 shadow-sm">
+                <div className="bg-surface border border-border rounded-2xl p-12 text-center text-text-muted shadow-shell-sm">
                     No activity recorded for this date.
                 </div>
             ) : (
@@ -135,23 +135,23 @@ export function Highlights() {
                     {/* Top KPIs */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {/* Most Active Widget */}
-                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
+                        <div className="bg-surface border border-border rounded-2xl p-6 shadow-shell-sm relative overflow-hidden group">
                             <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-emerald-100/50 to-transparent rounded-bl-full -z-10 transition-transform group-hover:scale-110" />
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
+                                <div className="w-10 h-10 bg-emerald-50 text-emerald-500 rounded-lg flex items-center justify-center">
                                     <Trophy className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-slate-800">Most Active</h3>
-                                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Highest Avg Score</p>
+                                    <h3 className="font-semibold text-text-main">Most Active</h3>
+                                    <p className="text-xs text-text-muted font-medium ">Highest Avg Score</p>
                                 </div>
                             </div>
                             <div className="mt-2">
-                                <div className="text-2xl font-bold text-slate-900 truncate">
+                                <div className="text-2xl font-bold text-text-main truncate">
                                     {mostActive?.name || 'N/A'}
                                 </div>
                                 <div className="mt-1 flex items-center gap-2">
-                                    <div className="text-emerald-600 font-semibold text-sm">
+                                    <div className="text-emerald-500 font-semibold text-sm">
                                         {mostActive ? mostActive.avgActivity.toFixed(0) : 0}% Avg
                                     </div>
                                 </div>
@@ -159,19 +159,19 @@ export function Highlights() {
                         </div>
 
                         {/* Most Hours Widget */}
-                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
+                        <div className="bg-surface border border-border rounded-2xl p-6 shadow-shell-sm relative overflow-hidden group">
                             <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-blue-100/50 to-transparent rounded-bl-full -z-10 transition-transform group-hover:scale-110" />
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="w-10 h-10 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
                                     <Clock className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-slate-800">Most Hours</h3>
-                                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Highest Time Tracked</p>
+                                    <h3 className="font-semibold text-text-main">Most Hours</h3>
+                                    <p className="text-xs text-text-muted font-medium ">Highest Time Tracked</p>
                                 </div>
                             </div>
                             <div className="mt-2">
-                                <div className="text-2xl font-bold text-slate-900 truncate">
+                                <div className="text-2xl font-bold text-text-main truncate">
                                     {mostHours?.name || 'N/A'}
                                 </div>
                                 <div className="mt-1 flex items-center gap-2">
@@ -183,19 +183,19 @@ export function Highlights() {
                         </div>
 
                         {/* Top Typist/Clicker */}
-                        <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm relative overflow-hidden group">
+                        <div className="bg-surface border border-border rounded-2xl p-6 shadow-shell-sm relative overflow-hidden group">
                             <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-purple-100/50 to-transparent rounded-bl-full -z-10 transition-transform group-hover:scale-110" />
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center">
                                     <TrendingUp className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-slate-800">Highest Output</h3>
-                                    <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Most Keystrokes & Clicks</p>
+                                    <h3 className="font-semibold text-text-main">Highest Output</h3>
+                                    <p className="text-xs text-text-muted font-medium ">Most Keystrokes & Clicks</p>
                                 </div>
                             </div>
                             <div className="mt-2">
-                                <div className="text-2xl font-bold text-slate-900 truncate">
+                                <div className="text-2xl font-bold text-text-main truncate">
                                     {mostClicks?.name || 'N/A'}
                                 </div>
                                 <div className="mt-1 flex items-center gap-2">
@@ -209,7 +209,7 @@ export function Highlights() {
 
                     {/* Low Activity Warning */}
                     {lowActivity.length > 0 && (
-                        <div className="bg-orange-50/50 border border-orange-200 rounded-2xl p-6 shadow-sm">
+                        <div className="bg-orange-50/50 border border-orange-200 rounded-2xl p-6 shadow-shell-sm">
                             <div className="flex items-center gap-2 mb-4">
                                 <AlertCircle className="w-5 h-5 text-orange-500" />
                                 <h3 className="font-semibold text-orange-800">Attention Required</h3>
@@ -218,19 +218,19 @@ export function Highlights() {
 
                             <div className="grid gap-3">
                                 {lowActivity.map(m => (
-                                    <div key={m.id} className="flex items-center justify-between bg-white border border-orange-100 rounded-lg p-3 shadow-sm">
+                                    <div key={m.id} className="flex items-center justify-between bg-surface border border-orange-100 rounded-lg p-3 shadow-shell-sm">
                                         <div className="flex items-center gap-3">
-                                            <div className="font-medium text-slate-800">{m.name}</div>
-                                            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                            <div className="font-medium text-text-main">{m.name}</div>
+                                            <span className="text-xs px-2 py-0.5 rounded-full bg-main text-text-muted">
                                                 {formatHours(m.totalMs)} tracked
                                             </span>
                                         </div>
                                         <div className="flex items-center gap-4">
-                                            <div className="flex items-center gap-1.5 text-sm text-slate-600">
+                                            <div className="flex items-center gap-1.5 text-sm text-text-muted">
                                                 <Activity className="w-3.5 h-3.5 text-orange-400" />
                                                 <span className="font-semibold text-orange-600">{m.avgActivity.toFixed(0)}% Avg</span>
                                             </div>
-                                            <div className="flex items-center gap-3 text-xs text-slate-400">
+                                            <div className="flex items-center gap-3 text-xs text-text-muted">
                                                 <span className="flex items-center gap-1"><MousePointer2 className="w-3 h-3" /> {m.totalClicks}</span>
                                                 <span className="flex items-center gap-1"><MousePointer2 className="w-3 h-3" /> {m.totalKeys}</span>
                                             </div>

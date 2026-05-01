@@ -58,7 +58,7 @@ export function MobileNav({ onClose }: MobileNavProps) {
                                         className={clsx(
                                             "flex items-center justify-between px-4 py-3 rounded-xl text-[14px] font-bold transition-all",
                                             location.pathname === group.path 
-                                                ? "bg-primary text-white shadow-md shadow-primary/20" 
+                                                ? "bg-primary text-white shadow-shell-md shadow-primary/20" 
                                                 : "text-[var(--text-muted)] hover:bg-primary/5 hover:text-primary"
                                         )}
                                     >
@@ -69,7 +69,7 @@ export function MobileNav({ onClose }: MobileNavProps) {
                                     </Link>
                                 ) : (
                                     <div className="pt-2">
-                                        <div className="px-4 py-2 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest opacity-50">
+                                        <div className="px-4 py-2 text-[10px] font-bold text-[var(--text-muted)] opacity-50">
                                             {group.name}
                                         </div>
                                         <div className="space-y-1 mt-1">
@@ -99,7 +99,7 @@ export function MobileNav({ onClose }: MobileNavProps) {
                     {/* Favorites */}
                     {favorites.length > 0 && (
                         <div className="space-y-3">
-                            <div className="px-4 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest opacity-50 flex items-center gap-2">
+                            <div className="px-4 text-[10px] font-bold text-[var(--text-muted)] opacity-50 flex items-center gap-2">
                                 <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
                                 Favorites
                             </div>
@@ -128,12 +128,12 @@ export function MobileNav({ onClose }: MobileNavProps) {
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-[var(--text-main)] truncate">{profile?.full_name}</p>
-                            <p className="text-[10px] text-[var(--text-muted)] font-bold uppercase tracking-widest opacity-60">{profile?.role}</p>
+                            <p className="text-[10px] text-[var(--text-muted)] font-bold opacity-60">{profile?.role}</p>
                         </div>
                     </div>
                     <button
                         onClick={() => signOut()}
-                        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-rose-500/10 text-rose-500 text-[13px] font-bold uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20"
+                        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-rose-500/10 text-rose-500 text-[13px] font-bold hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20"
                     >
                         <LogOut className="w-4 h-4" strokeWidth={2.5} />
                         Sign Out

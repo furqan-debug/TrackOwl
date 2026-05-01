@@ -87,7 +87,7 @@ export function SettingsPage() {
                         onClick={handleSave}
                         disabled={isViewer}
                         className={clsx(
-                            "flex items-center gap-2 px-5 py-2.5 rounded-shell-md text-sm font-semibold transition-all shadow-sm active:scale-95",
+                            "flex items-center gap-2 px-5 py-2.5 rounded-shell-md text-sm font-semibold transition-all shadow-shell-sm active:scale-95",
                             isViewer ? "bg-black/10 text-[var(--text-muted)] cursor-not-allowed" : 
                             (saved ? "bg-emerald-600 text-white" : "bg-primary text-white hover:brightness-110")
                         )}
@@ -111,7 +111,7 @@ export function SettingsPage() {
                             value={settings.screenshotBlur}
                             onChange={v => update('screenshotBlur', v)}
                         />
-                        <div className="bg-primary/10 border border-primary/20 rounded-xl p-6 text-xs text-text-main flex items-start gap-4 shadow-sm mt-8">
+                        <div className="bg-primary/10 border border-primary/20 rounded-xl p-6 text-xs text-text-main flex items-start gap-4 shadow-shell-sm mt-8">
                             <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                             <p className="leading-relaxed font-medium">
                                 Screenshots are currently being captured at a frequency of <span className="text-primary font-bold">{settings.screenshotIntervalMin}-{settings.screenshotIntervalMax} minutes</span>.
@@ -208,7 +208,7 @@ export function SettingsPage() {
                 </div>
 
                 <div className="lg:col-span-4 space-y-10">
-                    <Card className="p-8 shadow-sm bg-[var(--bg-surface)] border-[var(--border-color)] rounded-xl relative overflow-hidden group">
+                    <Card className="p-8 shadow-shell-sm bg-[var(--bg-surface)] border-[var(--border-color)] rounded-xl relative overflow-hidden group">
                         <div className="relative z-10">
                             <div className="flex items-center gap-4 mb-8">
                                 <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20 transition-transform duration-500">
@@ -216,7 +216,7 @@ export function SettingsPage() {
                                 </div>
                                 <div className="flex flex-col">
                                     <h3 className="text-lg font-bold text-text-main tracking-tight">Active Configuration</h3>
-                                    <p className="text-xs font-medium text-text-muted mt-1">Status: <span className="text-emerald-500 font-semibold text-[10px] uppercase ml-1">Live</span></p>
+                                    <p className="text-xs font-medium text-text-muted mt-1">Status: <span className="text-emerald-500 font-semibold text-[10px] ml-1">Live</span></p>
                                 </div>
                             </div>
                             
@@ -255,7 +255,7 @@ export function SettingsPage() {
                         </div>
                     </SettingsSection>
                     
-                    <div className="bg-surface border border-rose-500/10 rounded-xl p-8 flex flex-col items-center text-center group transition-all hover:bg-rose-500/[0.02] shadow-sm relative overflow-hidden">
+                    <div className="bg-surface border border-rose-500/10 rounded-xl p-8 flex flex-col items-center text-center group transition-all hover:bg-rose-500/[0.02] shadow-shell-sm relative overflow-hidden">
                         <h4 className="text-lg font-bold text-text-main tracking-tight mb-2">Reset Settings</h4>
                         <p className="text-xs font-medium text-text-muted leading-relaxed mb-8 px-4">
                             Reverting to default values will clear all your custom configurations.
@@ -263,7 +263,7 @@ export function SettingsPage() {
                         <button 
                             disabled={isViewer}
                             onClick={handleReset}
-                            className="w-full py-3 border border-rose-500/20 text-rose-600 text-[11px] font-bold uppercase tracking-wider rounded-lg hover:bg-rose-600 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
+                            className="w-full py-3 border border-rose-500/20 text-rose-500 text-[11px] font-bold rounded-lg hover:bg-rose-600 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed active:scale-95"
                         >
                             Reset All Settings
                         </button>
@@ -276,9 +276,9 @@ export function SettingsPage() {
 
 function SettingsSection({ icon, title, subtitle, children }: { icon: React.ReactNode; title: string; subtitle: string; children: React.ReactNode }) {
     return (
-        <Card className="p-0 overflow-hidden bg-surface border-border shadow-sm group/section transition-all hover:border-primary/20 duration-300 rounded-xl">
+        <Card className="p-0 overflow-hidden bg-surface border-border shadow-shell-sm group/section transition-all hover:border-primary/20 duration-300 rounded-xl">
             <div className="px-8 py-6 border-b border-border bg-primary/10 flex items-center gap-6">
-                <div className="w-12 h-12 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shadow-sm transition-all duration-500">
+                <div className="w-12 h-12 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shadow-shell-sm transition-all duration-500">
                     {icon}
                 </div>
                 <div>
@@ -310,9 +310,9 @@ function RangeField({ label, description, value, unit, min, max, step = 1, onCha
                     <p className="text-sm font-bold text-text-main tracking-tight">{label}</p>
                     <p className="text-xs font-medium text-text-muted opacity-70 leading-relaxed">{description}</p>
                 </div>
-                <div className="flex items-baseline gap-1.5 bg-surface px-4 py-2 rounded-lg border border-border shadow-sm">
+                <div className="flex items-baseline gap-1.5 bg-surface px-4 py-2 rounded-lg border border-border shadow-shell-sm">
                     <span className="text-xl font-bold text-primary">{value}</span>
-                    <span className="text-[10px] font-bold text-text-muted uppercase">{unit}</span>
+                    <span className="text-[10px] font-bold text-text-muted ">{unit}</span>
                 </div>
             </div>
             <div className="px-1">
@@ -322,7 +322,7 @@ function RangeField({ label, description, value, unit, min, max, step = 1, onCha
                     className={clsx("w-full h-1.5 rounded-full appearance-none cursor-pointer bg-border transition-all", accColors[color])}
                 />
             </div>
-            <div className="flex justify-between px-1 text-[9px] font-bold text-text-muted opacity-30 uppercase tracking-widest">
+            <div className="flex justify-between px-1 text-[9px] font-bold text-text-muted opacity-30 ">
                 <span>{min}{unit}</span>
                 <span>{max}{unit}</span>
             </div>
@@ -347,7 +347,7 @@ function ToggleField({ label, description, value, onChange }: { label: string; d
             >
                 <span 
                     className={clsx(
-                        "pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out transform",
+                        "pointer-events-none inline-block h-5 w-5 rounded-full bg-surface shadow ring-0 transition duration-200 ease-in-out transform",
                         value ? "translate-x-5" : "translate-x-0"
                     )} 
                 />
@@ -365,8 +365,8 @@ function ConfigValue({ label, value, color = 'primary' }: { label: string; value
     
     return (
         <div className="flex justify-between items-center text-[11px]">
-            <span className="text-text-muted font-bold tracking-wider uppercase opacity-80">{label}</span>
-            <span className={clsx("font-bold uppercase", textColors[color])}>{value}</span>
+            <span className="text-text-muted font-bold opacity-80">{label}</span>
+            <span className={clsx("font-bold ", textColors[color])}>{value}</span>
         </div>
     );
 }

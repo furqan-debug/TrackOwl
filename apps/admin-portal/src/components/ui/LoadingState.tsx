@@ -25,7 +25,7 @@ export function LoadingState({
                         <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-primary animate-spin shadow-glow-primary" />
                         <div className="absolute inset-2 rounded-full border-4 border-transparent border-b-primary opacity-40 animate-[spin_1.5s_linear_infinite_reverse]" />
                     </div>
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.2em] animate-pulse">
+                    <span className="text-[11px] font-bold text-text-muted tracking-[0.2em] animate-pulse">
                         {message}
                     </span>
                 </>

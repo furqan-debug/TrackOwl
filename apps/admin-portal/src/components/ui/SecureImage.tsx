@@ -73,7 +73,7 @@ export function SecureImage({ path, bucket = 'screenshots', className, ...props 
 
     if (loading) {
         return (
-            <div className={`flex items-center justify-center bg-slate-50/50 ${className}`}>
+            <div className={`flex items-center justify-center bg-surface-hover/50 ${className}`}>
                 <Loader2 className="w-5 h-5 animate-spin text-blue-600/20" />
             </div>
         );
@@ -81,7 +81,7 @@ export function SecureImage({ path, bucket = 'screenshots', className, ...props 
 
     if (error || !url) {
         return (
-            <div className={`flex items-center justify-center bg-slate-100 text-slate-300 ${className}`}>
+            <div className={`flex items-center justify-center bg-main text-text-muted ${className}`}>
                 <ImageOff className="w-5 h-5" />
             </div>
         );

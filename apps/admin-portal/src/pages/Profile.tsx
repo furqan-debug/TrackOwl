@@ -95,7 +95,7 @@ export function ProfilePage() {
                     onClick={handleSave}
                     disabled={loading}
                     className={clsx(
-                        "flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-semibold transition-all shadow-sm active:scale-95",
+                        "flex items-center gap-2 px-6 py-2.5 rounded-lg text-xs font-semibold transition-all shadow-shell-sm active:scale-95",
                         success ? "bg-emerald-600 text-white" : "bg-primary text-white hover:bg-primary/90"
                     )}
                 >
@@ -107,7 +107,7 @@ export function ProfilePage() {
         >
             <div className="space-y-10 mb-20">
                 {error && (
-                    <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-4 flex items-start gap-3 text-rose-600">
+                    <div className="bg-rose-500/5 border border-rose-500/10 rounded-xl p-4 flex items-start gap-3 text-rose-500">
                         <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5" />
                         <div className="space-y-1">
                             <p className="font-bold text-xs">Error</p>
@@ -117,9 +117,9 @@ export function ProfilePage() {
                 )}
 
                 {/* Avatar Section */}
-                <Card className="p-10 border-border bg-surface-solid shadow-sm rounded-xl flex flex-col items-center text-center relative overflow-hidden group">
+                <Card className="p-10 border-border bg-surface-solid shadow-shell-sm rounded-xl flex flex-col items-center text-center relative overflow-hidden group">
                     <div className="relative mb-6">
-                        <div className="w-32 h-32 rounded-xl bg-surface-subtle p-1 shadow-sm overflow-hidden group/avatar border border-border">
+                        <div className="w-32 h-32 rounded-xl bg-surface-subtle p-1 shadow-shell-sm overflow-hidden group/avatar border border-border">
                             <div className="w-full h-full rounded-lg bg-surface-solid overflow-hidden relative">
                                 {profile?.avatar_url ? (
                                     <SecureImage 
@@ -144,12 +144,12 @@ export function ProfilePage() {
                                         className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white"
                                     >
                                         <Camera className="w-8 h-8 mb-2" />
-                                        <span className="text-[10px] font-bold uppercase tracking-wider">Update Photo</span>
+                                        <span className="text-[10px] font-bold ">Update Photo</span>
                                     </button>
                                 )}
                             </div>
                         </div>
-                        <div className="absolute -bottom-1.5 -right-1.5 w-8 h-8 bg-surface-solid border border-border rounded-lg flex items-center justify-center shadow-sm">
+                        <div className="absolute -bottom-1.5 -right-1.5 w-8 h-8 bg-surface-solid border border-border rounded-lg flex items-center justify-center shadow-shell-sm">
                             <Diamond className="w-4 h-4 text-primary" />
                         </div>
                     </div>
@@ -165,7 +165,7 @@ export function ProfilePage() {
                     <h2 className="text-2xl font-bold text-text-primary tracking-tight mb-2">{profile?.full_name || 'No Name Set'}</h2>
                     <div className="flex items-center gap-2 mb-4">
                         <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest leading-none">Active Profile</span>
+                        <span className="text-[10px] font-bold text-emerald-500 leading-none">Active Profile</span>
                     </div>
 
                     <p className="text-xs font-medium text-text-muted max-w-sm leading-relaxed opacity-80">
@@ -175,9 +175,9 @@ export function ProfilePage() {
 
                 {/* Details Section */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                    <Card className="p-8 border-border bg-surface-solid shadow-sm rounded-xl space-y-8 group">
+                    <Card className="p-8 border-border bg-surface-solid shadow-shell-sm rounded-xl space-y-8 group">
                         <div className="flex items-center gap-4 border-b border-border pb-6">
-                            <div className="w-12 h-12 rounded-xl bg-surface-subtle border border-border flex items-center justify-center text-primary shadow-sm">
+                            <div className="w-12 h-12 rounded-xl bg-surface-subtle border border-border flex items-center justify-center text-primary shadow-shell-sm">
                                 <User className="w-5 h-5" />
                             </div>
                             <div className="flex flex-col">
@@ -188,91 +188,91 @@ export function ProfilePage() {
 
                         <div className="space-y-3">
                             <div className="flex items-center justify-between px-1">
-                                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wide">Full Name</label>
+                                <label className="text-[11px] font-bold text-text-muted tracking-wide">Full Name</label>
                             </div>
                             <input
                                 type="text"
                                 value={fullName}
                                 onChange={e => setFullName(e.target.value)}
                                 placeholder="Enter your full name"
-                                className="w-full bg-surface-subtle border border-border rounded-lg px-4 py-3 text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-surface-solid transition-all shadow-sm"
+                                className="w-full bg-surface-subtle border border-border rounded-lg px-4 py-3 text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-surface-solid transition-all shadow-shell-sm"
                             />
                         </div>
 
                         <div className="space-y-3">
                             <div className="flex items-center justify-between px-1">
-                                <label className="text-[11px] font-bold text-text-muted uppercase tracking-wide">Location</label>
+                                <label className="text-[11px] font-bold text-text-muted tracking-wide">Location</label>
                             </div>
                             <input
                                 type="text"
                                 value={location}
                                 onChange={e => setLocation(e.target.value)}
                                 placeholder="e.g. London, UK"
-                                className="w-full bg-surface-subtle border border-border rounded-lg px-4 py-3 text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-surface-solid transition-all shadow-sm"
+                                className="w-full bg-surface-subtle border border-border rounded-lg px-4 py-3 text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-surface-solid transition-all shadow-shell-sm"
                             />
                         </div>
                     </Card>
 
-                    <Card className="p-8 border-border bg-surface-solid shadow-sm rounded-xl space-y-8 group">
+                    <Card className="p-8 border-border bg-surface-solid shadow-shell-sm rounded-xl space-y-8 group">
                          <div className="flex items-center gap-4 border-b border-border pb-6">
-                            <div className="w-12 h-12 rounded-xl bg-surface-subtle border border-border flex items-center justify-center text-primary shadow-sm">
+                            <div className="w-12 h-12 rounded-xl bg-surface-subtle border border-border flex items-center justify-center text-primary shadow-shell-sm">
                                 <Smartphone className="w-5 h-5" />
                             </div>
                             <div className="flex flex-col">
-                                <h3 className="text-lg font-bold text-text-primary uppercase tracking-tight">Contact Details</h3>
-                                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mt-1 opacity-60">How we can reach you</p>
+                                <h3 className="text-lg font-bold text-text-primary tracking-tight">Contact Details</h3>
+                                <p className="text-[10px] font-semibold text-text-muted mt-1 opacity-60">How we can reach you</p>
                             </div>
                         </div>
 
                         <div className="space-y-3">
                              <div className="flex items-center justify-between px-1">
-                                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Phone Number</label>
+                                <label className="text-[10px] font-bold text-text-muted ">Phone Number</label>
                             </div>
                             <input
                                 type="tel"
                                 value={phone}
                                 onChange={e => setPhone(e.target.value)}
                                 placeholder="+1 (000) 000-0000"
-                                className="w-full bg-surface-subtle border border-border rounded-lg px-4 py-3 text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-surface-solid transition-all shadow-sm"
+                                className="w-full bg-surface-subtle border border-border rounded-lg px-4 py-3 text-sm font-semibold text-text-primary focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-surface-solid transition-all shadow-shell-sm"
                             />
                         </div>
                     </Card>
 
-                    <Card className="p-8 border-border bg-surface-solid shadow-sm rounded-xl space-y-6">
+                    <Card className="p-8 border-border bg-surface-solid shadow-shell-sm rounded-xl space-y-6">
                          <div className="flex items-center gap-4 border-b border-border pb-6">
-                            <div className="w-12 h-12 rounded-xl bg-surface-subtle border border-border flex items-center justify-center text-text-muted shadow-sm">
+                            <div className="w-12 h-12 rounded-xl bg-surface-subtle border border-border flex items-center justify-center text-text-muted shadow-shell-sm">
                                 <Mail className="w-5 h-5" />
                             </div>
                             <div className="flex flex-col">
-                                <h3 className="text-lg font-bold text-text-primary uppercase tracking-tight">Email Address</h3>
-                                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mt-1 opacity-60">Primary login email</p>
+                                <h3 className="text-lg font-bold text-text-primary tracking-tight">Email Address</h3>
+                                <p className="text-[10px] font-semibold text-text-muted mt-1 opacity-60">Primary login email</p>
                             </div>
                         </div>
 
-                        <div className="bg-surface-subtle rounded-lg px-4 py-3 flex items-center gap-3 border border-border shadow-sm">
+                        <div className="bg-surface-subtle rounded-lg px-4 py-3 flex items-center gap-3 border border-border shadow-shell-sm">
                             <div className="w-5 h-5 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-                                <Shield className="w-3 h-3 text-emerald-600" />
+                                <Shield className="w-3 h-3 text-emerald-500" />
                             </div>
                             <span className="text-sm font-semibold text-text-primary truncate">{user?.email}</span>
                         </div>
                     </Card>
 
-                    <Card className="p-8 border-border bg-surface-solid shadow-sm rounded-xl space-y-6">
+                    <Card className="p-8 border-border bg-surface-solid shadow-shell-sm rounded-xl space-y-6">
                          <div className="flex items-center gap-4 border-b border-border pb-6">
-                            <div className="w-12 h-12 rounded-xl bg-surface-subtle border border-border flex items-center justify-center text-text-muted shadow-sm">
+                            <div className="w-12 h-12 rounded-xl bg-surface-subtle border border-border flex items-center justify-center text-text-muted shadow-shell-sm">
                                 <Shield className="w-5 h-5" />
                             </div>
                             <div className="flex flex-col">
-                                <h3 className="text-lg font-bold text-text-primary uppercase tracking-tight">Account Role</h3>
-                                <p className="text-[10px] font-semibold text-text-muted uppercase tracking-wider mt-1 opacity-60">System permissions level</p>
+                                <h3 className="text-lg font-bold text-text-primary tracking-tight">Account Role</h3>
+                                <p className="text-[10px] font-semibold text-text-muted mt-1 opacity-60">System permissions level</p>
                             </div>
                         </div>
 
                         <div className="flex flex-wrap gap-2">
-                            <div className="px-4 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-widest leading-none">
+                            <div className="px-4 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary text-[10px] font-bold leading-none">
                                 Role: {profile?.role}
                             </div>
-                            <div className="px-4 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-[10px] font-bold uppercase tracking-widest leading-none">
+                            <div className="px-4 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold leading-none">
                                 Status: Verified
                             </div>
                         </div>

@@ -97,21 +97,21 @@ export function Calendar() {
             description="Operational schedule of approved leave and corporate milestones."
             actions={
                 <div className="flex items-center gap-4">
-                    <div className="p-1 rounded-xl flex items-center shadow-sm border border-[var(--border-color)] overflow-hidden bg-[var(--bg-surface)]">
+                    <div className="p-1 rounded-xl flex items-center shadow-shell-sm border border-[var(--border-color)] overflow-hidden bg-[var(--bg-surface)]">
                         <button 
                             onClick={prevMonth} 
-                            className="p-2.5 hover:bg-slate-50 text-slate-400 hover:text-slate-900 transition-all rounded-lg"
+                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-slate-900 transition-all rounded-lg"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
                         <div className="px-6 min-w-[160px] text-center">
-                            <span className="text-[12px] font-bold text-slate-900 uppercase tracking-widest whitespace-nowrap">
+                            <span className="text-[12px] font-bold text-text-main whitespace-nowrap">
                                 {monthName} {year}
                             </span>
                         </div>
                         <button 
                             onClick={nextMonth} 
-                            className="p-2.5 hover:bg-slate-50 text-slate-400 hover:text-slate-900 transition-all rounded-lg"
+                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-slate-900 transition-all rounded-lg"
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>
@@ -120,8 +120,8 @@ export function Calendar() {
                     <button 
                         onClick={() => fetchData(true)} 
                         className={clsx(
-                            "w-10 h-10 flex items-center justify-center glass-panel rounded-xl transition-all shadow-sm",
-                            refreshing ? "text-primary animate-spin" : "text-slate-400 hover:text-slate-900"
+                            "w-10 h-10 flex items-center justify-center glass-panel rounded-xl transition-all shadow-shell-sm",
+                            refreshing ? "text-primary animate-spin" : "text-text-muted hover:text-slate-900"
                         )}
                     >
                         <RefreshCw className="w-4 h-4" />
@@ -137,7 +137,7 @@ export function Calendar() {
                         <div className="grid grid-cols-7 bg-primary/5 border-b border-[var(--border-color)]">
                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
                                 <div key={d} className="py-4 text-center">
-                                    <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">{d}</span>
+                                    <span className="text-[10px] font-black text-[var(--text-muted)] tracking-[0.2em]">{d}</span>
                                 </div>
                             ))}
                         </div>
@@ -145,7 +145,7 @@ export function Calendar() {
                         <div className="grid grid-cols-7 auto-rows-[120px]">
                             {days.map((day, idx) => {
                                 if (day === null) return (
-                                    <div key={`empty-${idx}`} className="border-r border-b border-slate-50 bg-slate-50/20 last:border-r-0" />
+                                    <div key={`empty-${idx}`} className="border-r border-b border-slate-50 bg-surface-hover/20 last:border-r-0" />
                                 );
 
                                 const dateStr = `${year}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -165,7 +165,7 @@ export function Calendar() {
                                         )}
                                     >
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className="text-[11px] font-bold text-[var(--text-muted)] group-hover:text-[var(--text-main)] transition-colors uppercase tracking-tight">
+                                            <span className="text-[11px] font-bold text-[var(--text-muted)] group-hover:text-[var(--text-main)] transition-colors tracking-tight">
                                                 {day}
                                             </span>
                                             {dayHolidays.length > 0 && (
@@ -175,12 +175,12 @@ export function Calendar() {
                                         
                                         <div className="space-y-1 overflow-y-auto max-h-[80px] no-scrollbar pr-1">
                                             {dayHolidays.map(h => (
-                                                <div key={h.id} className="bg-rose-50 text-rose-600 text-[9px] font-bold uppercase tracking-tight px-2 py-1 rounded-md border border-rose-100 flex items-center gap-1.5 shadow-sm">
+                                                <div key={h.id} className="bg-rose-50 text-rose-500 text-[9px] font-bold tracking-tight px-2 py-1 rounded-md border border-rose-100 flex items-center gap-1.5 shadow-shell-sm">
                                                     {h.name}
                                                 </div>
                                             ))}
                                             {dayRequests.map(r => (
-                                                <div key={r.id} className="bg-primary text-white text-[9px] font-bold uppercase tracking-tight px-2 py-1 rounded-md shadow-sm truncate">
+                                                <div key={r.id} className="bg-primary text-white text-[9px] font-bold tracking-tight px-2 py-1 rounded-md shadow-shell-sm truncate">
                                                     {r.member_name}
                                                 </div>
                                             ))}
@@ -196,23 +196,23 @@ export function Calendar() {
                 <div className="lg:col-span-3 space-y-6">
                     {/* Holiday Roll */}
                     <div className="rounded-[24px] shadow-premium p-8 border border-[var(--border-color)] bg-dark-brown text-white overflow-hidden relative group">
-                        <div className="absolute -top-12 -right-12 w-32 h-32 bg-white/5 rounded-full blur-3xl" />
+                        <div className="absolute -top-12 -right-12 w-32 h-32 bg-surface/5 rounded-full blur-3xl" />
                         <div className="flex items-center gap-3 mb-8 relative z-10">
                             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
                                 <AlertCircle className="w-4 h-4" />
                             </div>
-                            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Upcoming Holidays</span>
+                            <span className="text-[10px] font-black tracking-[0.2em] text-white/60">Upcoming Holidays</span>
                         </div>
                         
                         <div className="space-y-5 relative z-10">
                             {holidays.length === 0 ? (
-                                <div className="p-4 bg-white/5 rounded-xl border border-white/10">
-                                    <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest text-center italic">No corporate milestones</p>
+                                <div className="p-4 bg-surface/5 rounded-xl border border-white/10">
+                                    <p className="text-[10px] text-white/40 font-bold text-center italic">No corporate milestones</p>
                                 </div>
                             ) : (
                                 holidays.slice(0, 4).map(h => (
                                     <div key={h.id} className="group/item flex flex-col gap-1 border-l-2 border-indigo-500/30 pl-4 py-1 hover:border-indigo-400 transition-colors">
-                                        <span className="text-[9px] font-bold text-indigo-400 uppercase tracking-widest">
+                                        <span className="text-[9px] font-bold text-indigo-400 ">
                                             {new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                         </span>
                                         <p className="text-sm font-bold text-white tracking-tight leading-tight">{h.name}</p>
@@ -228,35 +228,35 @@ export function Calendar() {
                             <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/10">
                                 <Info className="w-4 h-4" />
                             </div>
-                            <span className="text-[10px] font-black text-[var(--text-muted)] uppercase tracking-[0.2em]">Operational Legend</span>
+                            <span className="text-[10px] font-black text-[var(--text-muted)] tracking-[0.2em]">Operational Legend</span>
                         </div>
                         
                         <div className="space-y-4">
-                            <div className="flex items-center gap-4 p-3 hover:bg-white rounded-xl transition-all border border-transparent hover:border-slate-100 group">
-                                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm group-hover:scale-105 transition-transform">
+                            <div className="flex items-center gap-4 p-3 hover:bg-surface-hover rounded-xl transition-all border border-transparent hover:border-slate-100 group">
+                                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-shell-sm group-hover:scale-105 transition-transform">
                                     <Palmtree className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <p className="text-[11px] font-bold text-slate-900 uppercase tracking-widest leading-none mb-1">Approved Leave</p>
-                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Time-off records</p>
+                                    <p className="text-[11px] font-bold text-text-main leading-none mb-1">Approved Leave</p>
+                                    <p className="text-[9px] text-text-muted font-bold tracking-tight">Time-off records</p>
                                 </div>
                             </div>
                             
-                            <div className="flex items-center gap-4 p-3 hover:bg-white rounded-xl transition-all border border-transparent hover:border-slate-100 group">
-                                <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-600 shadow-sm group-hover:scale-105 transition-transform">
+                            <div className="flex items-center gap-4 p-3 hover:bg-surface-hover rounded-xl transition-all border border-transparent hover:border-slate-100 group">
+                                <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 shadow-shell-sm group-hover:scale-105 transition-transform">
                                     <AlertCircle className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <p className="text-[11px] font-bold text-slate-900 uppercase tracking-widest leading-none mb-1">Holiday Event</p>
-                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tight">Corporate non-working</p>
+                                    <p className="text-[11px] font-bold text-text-main leading-none mb-1">Holiday Event</p>
+                                    <p className="text-[9px] text-text-muted font-bold tracking-tight">Corporate non-working</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Quick Insight */}
-                    <div className="p-6 bg-slate-50 border border-slate-100 rounded-[24px] text-center">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed">
+                    <div className="p-6 bg-surface-hover border border-border rounded-[24px] text-center">
+                        <p className="text-[10px] font-bold text-text-muted leading-relaxed">
                             Team attendance is synchronized with <br/> global workspace policies.
                         </p>
                     </div>

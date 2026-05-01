@@ -19,12 +19,12 @@ export function PageHeader({
     className,
 }: PageHeaderProps) {
     return (
-        <div className={clsx("px-10 py-10 border-b border-border bg-white/50 mb-10", className)}>
+        <div className={clsx("px-10 py-10 border-b border-border bg-surface/50 mb-10", className)}>
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
                 <div className="space-y-3">
                     <div className="flex items-center gap-5">
                         {icon && (
-                            <div className="w-14 h-14 rounded-2xl bg-primary/5 flex items-center justify-center border border-primary/10 shadow-sm text-primary">
+                            <div className="w-14 h-14 rounded-2xl bg-primary/5 flex items-center justify-center border border-primary/10 shadow-shell-sm text-primary">
                                 {icon}
                             </div>
                         )}
@@ -33,7 +33,7 @@ export function PageHeader({
                                 {title}
                             </h1>
                             {description && (
-                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-wider opacity-80 max-w-2xl">
+                                <p className="text-[11px] font-bold text-text-muted opacity-80 max-w-2xl">
                                     {description}
                                 </p>
                             )}

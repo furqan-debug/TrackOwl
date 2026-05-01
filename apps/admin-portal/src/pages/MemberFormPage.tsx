@@ -194,14 +194,14 @@ export function MemberFormPage() {
             }
         >
             <div className="max-w-4xl mx-auto pb-20">
-                <div className="flex bg-surface-subtle p-1.5 rounded-2xl border border-border w-fit mb-10 shadow-sm overflow-x-auto custom-scrollbar">
+                <div className="flex bg-surface-subtle p-1.5 rounded-2xl border border-border w-fit mb-10 shadow-shell-sm overflow-x-auto custom-scrollbar">
                     {tabs.map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={clsx(
-                                "px-6 py-2.5 text-[10px] font-bold rounded-xl transition-all uppercase tracking-widest whitespace-nowrap",
-                                activeTab === tab ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-primary"
+                                "px-6 py-2.5 text-[10px] font-bold rounded-xl transition-all whitespace-nowrap",
+                                activeTab === tab ? "bg-surface text-primary shadow-shell-sm" : "text-text-muted hover:text-text-primary"
                             )}
                         >
                             {tab}
@@ -211,7 +211,7 @@ export function MemberFormPage() {
 
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {activeTab === 'General' && (
-                        <Card className="p-10 border-border/60 shadow-sm overflow-visible">
+                        <Card className="p-10 border-border/60 shadow-shell-sm overflow-visible">
                             <div className="flex items-center gap-6 mb-10 pb-10 border-b border-border/40">
                                 <div className="w-20 h-20 rounded-[28px] bg-primary/5 flex items-center justify-center text-primary text-2xl font-bold border border-primary/10 shadow-inner overflow-hidden">
                                     {avatarUrl ? (
@@ -226,7 +226,7 @@ export function MemberFormPage() {
                                 </div>
                                 <div className="flex-1">
                                     <h3 className="text-xl font-bold text-text-primary tracking-tight mb-1">{fullName || 'Unknown Member'}</h3>
-                                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em] font-mono">{email}</p>
+                                    <p className="text-[11px] font-bold text-text-muted tracking-[0.2em] font-mono">{email}</p>
                                 </div>
                                 <StatusBadge variant={role === 'Admin' ? 'success' : 'default'}>{role.toUpperCase()}</StatusBadge>
                             </div>
@@ -240,7 +240,7 @@ export function MemberFormPage() {
                                     placeholder="Enter full name..."
                                 />
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1">Access Protocol (Role)</label>
+                                    <label className="text-[10px] font-bold text-text-muted ml-1">Access Protocol (Role)</label>
                                     <div className="relative group">
                                         <select
                                             value={role}
@@ -273,7 +273,7 @@ export function MemberFormPage() {
                                     placeholder="e.g. EMP-101..."
                                 />
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1">Employment Type</label>
+                                    <label className="text-[10px] font-bold text-text-muted ml-1">Employment Type</label>
                                     <select
                                         value={employeeType}
                                         onChange={e => setEmployeeType(e.target.value)}
@@ -283,7 +283,7 @@ export function MemberFormPage() {
                                     </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1">Timezone Context</label>
+                                    <label className="text-[10px] font-bold text-text-muted ml-1">Timezone Context</label>
                                     <select
                                         value={timezone}
                                         onChange={e => setTimezone(e.target.value)}
@@ -307,14 +307,14 @@ export function MemberFormPage() {
                     )}
 
                     {activeTab === 'Compensation' && (
-                        <Card className="p-10 border-border/60 shadow-sm">
+                        <Card className="p-10 border-border/60 shadow-shell-sm">
                             <div className="flex items-center gap-4 mb-10">
                                 <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
                                     <DollarSign className="w-6 h-6" />
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold text-text-primary tracking-tight">Compensation Model</h3>
-                                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest font-mono">Hourly rates and resource valuation</p>
+                                    <p className="text-[11px] font-bold text-text-muted font-mono">Hourly rates and resource valuation</p>
                                 </div>
                             </div>
 
@@ -351,14 +351,14 @@ export function MemberFormPage() {
 
                     {activeTab === 'Limits' && (
                         <div className="space-y-8">
-                            <Card className="p-10 border-border/60 shadow-sm">
+                            <Card className="p-10 border-border/60 shadow-shell-sm">
                                 <div className="flex items-center gap-4 mb-10">
                                     <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
                                         <Clock className="w-6 h-6" />
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-text-primary tracking-tight">Working Boundaries</h3>
-                                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest font-mono">Time thresholds and activity limits</p>
+                                        <p className="text-[11px] font-bold text-text-muted font-mono">Time thresholds and activity limits</p>
                                     </div>
                                 </div>
 
@@ -392,14 +392,14 @@ export function MemberFormPage() {
                                 </div>
                             </Card>
 
-                            <Card className="p-10 border-border/60 shadow-sm">
+                            <Card className="p-10 border-border/60 shadow-shell-sm">
                                 <div className="flex items-center gap-4 mb-10">
                                     <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                                         <Smartphone className="w-6 h-6" />
                                     </div>
                                     <div>
                                         <h3 className="text-xl font-bold text-text-primary tracking-tight">Tracking Control</h3>
-                                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest font-mono">Behavioral monitoring and idle detection</p>
+                                        <p className="text-[11px] font-bold text-text-muted font-mono">Behavioral monitoring and idle detection</p>
                                     </div>
                                 </div>
 
@@ -417,7 +417,7 @@ export function MemberFormPage() {
                                             )}
                                         >
                                             <div className={clsx(
-                                                "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
+                                                "absolute top-1 w-4 h-4 bg-surface rounded-full transition-all",
                                                 trackingEnabled ? 'left-7' : 'left-1'
                                             )} />
                                         </button>
@@ -436,7 +436,7 @@ export function MemberFormPage() {
                                             )}
                                         >
                                             <div className={clsx(
-                                                "absolute top-1 w-4 h-4 bg-white rounded-full transition-all",
+                                                "absolute top-1 w-4 h-4 bg-surface rounded-full transition-all",
                                                 idleEnabled ? 'left-7' : 'left-1'
                                             )} />
                                         </button>
@@ -452,7 +452,7 @@ export function MemberFormPage() {
                                                 <select
                                                     value={keepIdleMode}
                                                     onChange={e => setKeepIdleMode(e.target.value as any)}
-                                                    className="pl-6 pr-10 py-2.5 bg-white border border-border rounded-xl text-[11px] font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer uppercase tracking-wider shadow-sm"
+                                                    className="pl-6 pr-10 py-2.5 bg-surface border border-border rounded-xl text-[11px] font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer shadow-shell-sm"
                                                 >
                                                     <option value="prompt">PROMPT (USER DECIDES)</option>
                                                     <option value="always">ALWAYS KEEP</option>
@@ -461,7 +461,7 @@ export function MemberFormPage() {
                                                 <ChevronLeft className="w-3 h-3 text-primary absolute right-4 top-1/2 -translate-y-1/2 -rotate-90 pointer-events-none" />
                                             </div>
                                         </div>
-                                        <div className="bg-white/40 p-3 rounded-lg border border-border/40">
+                                        <div className="bg-surface/40 p-3 rounded-lg border border-border/40">
                                             <p className="text-[10px] text-text-muted font-medium italic">
                                                 {keepIdleMode === 'prompt' && "The user will be asked if they want to keep or discard the idle time when they return."}
                                                 {keepIdleMode === 'always' && "All idle time is automatically recorded as billable working hours."}
@@ -488,14 +488,14 @@ export function MemberFormPage() {
                     )}
 
                     {activeTab === 'Dates' && (
-                        <Card className="p-10 border-border/60 shadow-sm">
+                        <Card className="p-10 border-border/60 shadow-shell-sm">
                             <div className="flex items-center gap-4 mb-10">
                                 <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
                                     <Calendar className="w-6 h-6" />
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold text-text-primary tracking-tight">Temporal Milestones</h3>
-                                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest font-mono">Employment lifecycle and personal dates</p>
+                                    <p className="text-[11px] font-bold text-text-muted font-mono">Employment lifecycle and personal dates</p>
                                 </div>
                             </div>
 
@@ -533,14 +533,14 @@ export function MemberFormPage() {
                     )}
 
                     {activeTab === 'Contact' && (
-                        <Card className="p-10 border-border/60 shadow-sm">
+                        <Card className="p-10 border-border/60 shadow-shell-sm">
                             <div className="flex items-center gap-4 mb-10">
                                 <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
                                     <Smartphone className="w-6 h-6" />
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold text-text-primary tracking-tight">Contact Matrix</h3>
-                                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest font-mono">Communication channels and physical locations</p>
+                                    <p className="text-[11px] font-bold text-text-muted font-mono">Communication channels and physical locations</p>
                                 </div>
                             </div>
 
@@ -587,14 +587,14 @@ export function MemberFormPage() {
                     )}
 
                     {activeTab === 'Additional' && (
-                        <Card className="p-10 border-border/60 shadow-sm">
+                        <Card className="p-10 border-border/60 shadow-shell-sm">
                             <div className="flex items-center gap-4 mb-10">
                                 <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
                                     <Shield className="w-6 h-6" />
                                 </div>
                                 <div>
                                     <h3 className="text-xl font-bold text-text-primary tracking-tight">Legacy & Metadata</h3>
-                                    <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest font-mono">Sensitive identification and supplemental data</p>
+                                    <p className="text-[11px] font-bold text-text-muted font-mono">Sensitive identification and supplemental data</p>
                                 </div>
                             </div>
 
@@ -615,7 +615,7 @@ export function MemberFormPage() {
                                     placeholder="Name and Phone Number..."
                                 />
                                 <div className="md:col-span-2 space-y-2">
-                                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1">Professional Skills & Observations</label>
+                                    <label className="text-[10px] font-bold text-text-muted ml-1">Professional Skills & Observations</label>
                                     <textarea
                                         value={skillsNotes}
                                         onChange={e => setSkillsNotes(e.target.value)}
@@ -631,7 +631,7 @@ export function MemberFormPage() {
                 {error && (
                     <div className="mt-8 bg-rose-500/5 border border-rose-500/10 p-6 rounded-3xl flex items-center gap-4 animate-in slide-in-from-top-4">
                         <AlertCircle className="w-6 h-6 text-rose-500" />
-                        <p className="text-xs font-bold text-rose-600 uppercase tracking-widest font-mono">{error}</p>
+                        <p className="text-xs font-bold text-rose-500 font-mono">{error}</p>
                     </div>
                 )}
             </div>
@@ -642,7 +642,7 @@ export function MemberFormPage() {
 function FormField({ label, value, onChange, type = 'text', icon, placeholder }: any) {
     return (
         <div className="space-y-2 group">
-            <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider ml-1 transition-colors group-focus-within:text-primary">{label}</label>
+            <label className="text-[10px] font-bold text-text-muted ml-1 transition-colors group-focus-within:text-primary">{label}</label>
             <div className="relative">
                 {icon && (
                     <div className="absolute left-6 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors">

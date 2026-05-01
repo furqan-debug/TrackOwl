@@ -147,16 +147,16 @@ export function Locations() {
             {/* Header */}
             <div className="flex items-center justify-between mb-8 relative z-20">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight mb-2">Locations Map</h1>
-                    <p className="text-slate-500">Track where your team is working from in real-time.</p>
+                    <h1 className="text-2xl font-bold text-text-main tracking-tight mb-2">Locations Map</h1>
+                    <p className="text-text-muted">Track where your team is working from in real-time.</p>
                 </div>
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-3 bg-white p-1.5 rounded-xl border border-slate-200">
-                        <Users className="w-4 h-4 text-slate-400 ml-2" />
+                    <div className="flex items-center gap-3 bg-surface p-1.5 rounded-xl border border-border">
+                        <Users className="w-4 h-4 text-text-muted ml-2" />
                         <select
                             value={selectedMemberId}
                             onChange={(e) => setSelectedMemberId(e.target.value)}
-                            className="bg-transparent text-sm font-semibold text-slate-700 outline-none pr-4 min-w-[140px]"
+                            className="bg-transparent text-sm font-semibold text-text-main outline-none pr-4 min-w-[140px]"
                         >
                             <option value="all">Every Member</option>
                             {members.map(m => (
@@ -182,9 +182,9 @@ export function Locations() {
             </div>
 
             {/* World Map Placeholder */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm mb-6 overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100">
-                    <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Team Locations</h2>
+            <div className="bg-surface rounded-xl border border-border shadow-shell-sm mb-6 overflow-hidden">
+                <div className="px-6 py-4 border-b border-border">
+                    <h2 className="text-sm font-semibold text-text-muted ">Team Locations</h2>
                 </div>
                 <div className="relative bg-gradient-to-br from-slate-50 to-blue-50 h-64 flex items-center justify-center overflow-hidden">
                     {/* SVG World Map Dots */}
@@ -210,37 +210,37 @@ export function Locations() {
                         );
                     })}
                     {locations.length === 0 && !loading && (
-                        <div className="text-center text-slate-500 z-10">
-                            <Globe2 className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+                        <div className="text-center text-text-muted z-10">
+                            <Globe2 className="w-12 h-12 text-text-muted mx-auto mb-3" />
                             <p className="font-medium">No location data yet</p>
-                            <p className="text-sm text-slate-400 mt-1">Start tracking sessions to see team locations</p>
+                            <p className="text-sm text-text-muted mt-1">Start tracking sessions to see team locations</p>
                         </div>
                     )}
                 </div>
             </div>
 
             {/* Members Table */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100">
-                    <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">Member Locations</h2>
+            <div className="bg-surface rounded-xl border border-border shadow-shell-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-border">
+                    <h2 className="text-sm font-semibold text-text-muted ">Member Locations</h2>
                 </div>
                 {loading ? (
-                    <div className="p-8 text-center text-slate-400">Resolving locations...</div>
+                    <div className="p-8 text-center text-text-muted">Resolving locations...</div>
                 ) : locations.length === 0 ? (
-                    <div className="p-12 flex flex-col items-center gap-3 text-slate-400">
-                        <MapPin className="w-10 h-10 text-slate-200" />
+                    <div className="p-12 flex flex-col items-center gap-3 text-text-muted">
+                        <MapPin className="w-10 h-10 text-text-muted" />
                         <p className="font-medium">No members tracked yet</p>
                         <p className="text-sm">Start the Electron tracker and begin a session to appear here.</p>
                     </div>
                 ) : (
                     <table className="w-full text-sm">
                         <thead>
-                            <tr className="border-b border-slate-100 bg-slate-50/50">
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Member</th>
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Location</th>
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">IP Address</th>
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Sessions</th>
-                                <th className="text-left px-6 py-3 text-xs font-semibold text-slate-500 uppercase">Last Active</th>
+                            <tr className="border-b border-border bg-surface-hover/50">
+                                <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted ">Member</th>
+                                <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted ">Location</th>
+                                <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted ">IP Address</th>
+                                <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted ">Sessions</th>
+                                <th className="text-left px-6 py-3 text-xs font-semibold text-text-muted ">Last Active</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -248,27 +248,27 @@ export function Locations() {
                                 const flag = COUNTRY_FLAGS[loc.flag] || '🌐';
                                 const initials = (loc.full_name || '??').slice(0, 2).toUpperCase();
                                 return (
-                                    <tr key={loc.user_id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                                    <tr key={loc.user_id} className="border-b border-slate-50 hover:bg-surface-hover/50 transition-colors">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 text-xs font-bold ring-1 ring-blue-100">
                                                     {initials}
                                                 </div>
-                                                <span className="font-semibold text-slate-800 truncate max-w-[160px]">{loc.full_name}</span>
+                                                <span className="font-semibold text-text-main truncate max-w-[160px]">{loc.full_name}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-lg">{flag}</span>
                                                 <div>
-                                                    <p className="font-medium text-slate-700">{loc.city}</p>
-                                                    <p className="text-xs text-slate-400">{loc.country}</p>
+                                                    <p className="font-medium text-text-main">{loc.city}</p>
+                                                    <p className="text-xs text-text-muted">{loc.country}</p>
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 font-mono text-xs text-slate-500">{loc.ip}</td>
-                                        <td className="px-6 py-4 text-slate-600">{loc.sessionCount}</td>
-                                        <td className="px-6 py-4 text-slate-500 text-sm">{timeAgo(loc.lastSeen)}</td>
+                                        <td className="px-6 py-4 font-mono text-xs text-text-muted">{loc.ip}</td>
+                                        <td className="px-6 py-4 text-text-muted">{loc.sessionCount}</td>
+                                        <td className="px-6 py-4 text-text-muted text-sm">{timeAgo(loc.lastSeen)}</td>
                                     </tr>
                                 );
                             })}
@@ -278,7 +278,7 @@ export function Locations() {
             </div>
 
             {/* Note */}
-            <p className="text-xs text-slate-400 mt-4 flex items-center gap-1.5">
+            <p className="text-xs text-text-muted mt-4 flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5" />
                 IP-based geolocation. For precise locations, capture coordinates client-side and store in the sessions table.
             </p>
@@ -288,11 +288,11 @@ export function Locations() {
 
 function KpiCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
-        <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg bg-slate-50 flex items-center justify-center">{icon}</div>
+        <div className="bg-surface rounded-xl border border-border p-5 shadow-shell-sm flex items-center gap-4">
+            <div className="w-10 h-10 rounded-lg bg-surface-hover flex items-center justify-center">{icon}</div>
             <div>
-                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider">{label}</p>
-                <p className="text-xl font-semibold text-slate-800 mt-0.5">{value}</p>
+                <p className="text-xs text-text-muted font-semibold ">{label}</p>
+                <p className="text-xl font-semibold text-text-main mt-0.5">{value}</p>
             </div>
         </div>
     );

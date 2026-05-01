@@ -3,13 +3,13 @@ import { supabase } from '../lib/supabase';
 import {
     ChevronLeft, ChevronRight,
     Users,
-    ChevronDown,
     Calendar as CalendarIcon,
     Plus, Filter,
     Download,
-    Layout as LayoutIcon
+    Layout as LayoutIcon,
+    Clock, FolderOpen
 } from 'lucide-react';
-import { LoadingState, Modal, EmptyState } from '../components/ui';
+import { LoadingState, Modal, EmptyState, FilterSelect } from '../components/ui';
 import clsx from 'clsx';
 import {
     formatDuration,
@@ -282,23 +282,23 @@ export function Timesheets() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-white font-sans text-slate-900">
-            <header className="px-8 py-6 flex items-center justify-between border-b border-slate-100 shrink-0">
+        <div className="flex flex-col min-h-screen bg-surface font-sans text-text-main">
+            <header className="px-8 py-6 flex items-center justify-between border-b border-border shrink-0">
                 <div className="space-y-1">
-                    <h1 className="text-xl font-bold text-slate-900 tracking-tight">Timesheets</h1>
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Verify and refine team temporal records</p>
+                    <h1 className="text-xl font-bold text-text-main tracking-tight">Timesheets</h1>
+                    <p className="text-[11px] font-bold text-text-muted ">Verify and refine team temporal records</p>
                 </div>
             </header>
 
-            <div className="px-8 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-slate-50 sticky top-0 bg-white/80 backdrop-blur-md z-30">
+            <div className="px-8 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-slate-50 sticky top-0 bg-surface/80 backdrop-blur-md z-30">
                 <div className="flex items-center gap-4">
-                    <div className="flex items-center bg-white border border-slate-200 rounded-xl p-0.5 shadow-sm h-10">
-                        <button onClick={() => navigateDate(-1)} className="p-2 hover:bg-slate-50 rounded-lg transition-all text-slate-400 hover:text-primary">
+                    <div className="flex items-center bg-surface border border-border rounded-xl p-0.5 shadow-shell-sm h-10">
+                        <button onClick={() => navigateDate(-1)} className="p-2 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary">
                              <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <div className="flex items-center gap-3 px-3 relative cursor-pointer hover:bg-slate-50 rounded-lg transition-all h-full">
-                             <span className="text-[11px] font-bold text-slate-700 uppercase tracking-widest tabular-nums">{formatRangeLabel()}</span>
-                             <CalendarIcon className="w-3.5 h-3.5 text-slate-400" />
+                        <div className="flex items-center gap-3 px-3 relative cursor-pointer hover:bg-surface-hover rounded-lg transition-all h-full">
+                             <span className="text-[11px] font-bold text-text-main tabular-nums">{formatRangeLabel()}</span>
+                             <CalendarIcon className="w-3.5 h-3.5 text-text-muted" />
                              <input 
                                 type="date"
                                 className="absolute inset-0 opacity-0 cursor-pointer"
@@ -310,36 +310,33 @@ export function Timesheets() {
                                 }}
                              />
                         </div>
-                        <button onClick={() => navigateDate(1)} className="p-2 hover:bg-slate-50 rounded-lg transition-all text-slate-400 hover:text-primary">
+                        <button onClick={() => navigateDate(1)} className="p-2 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary">
                              <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
 
-                    <div className="relative group h-10 flex items-center bg-white border border-slate-200 rounded-xl px-4 hover:bg-slate-50 transition-all cursor-pointer">
-                        <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">{activeTimezone}</span>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-300 ml-2" />
-                        <select 
-                            className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                    <div className="h-10 min-w-[200px]">
+                        <FilterSelect
+                            icon={<Clock className="w-3.5 h-3.5" />}
                             value={activeTimezone}
-                            onChange={(e) => setActiveTimezone(e.target.value)}
-                        >
-                            <option value="User Local">User Local (Auto)</option>
-                            <option value="UTC">UTC (Universal)</option>
-                            {Array.from(new Set(members.map(m => m.timezone).filter(Boolean))).sort().map(tz => (
-                                <option key={tz} value={tz}>{tz}</option>
-                            ))}
-                        </select>
+                            onChange={setActiveTimezone}
+                            options={[
+                                { id: 'User Local', name: 'User Local (Auto)' },
+                                { id: 'UTC', name: 'UTC (Universal)' },
+                                ...Array.from(new Set(members.map(m => m.timezone).filter(Boolean))).sort().map(tz => ({ id: tz as string, name: tz as string }))
+                            ]}
+                        />
                     </div>
                 </div>
 
-                <div className="flex bg-slate-100/50 p-1 rounded-xl border border-slate-200/50 h-10 shrink-0">
+                <div className="flex bg-main/50 p-1 rounded-xl border border-border/50 h-10 shrink-0">
                     {(['daily', 'weekly', 'calendar'] as const).map(mode => (
                         <button 
                             key={mode}
                             onClick={() => setViewMode(mode)}
                             className={clsx(
-                                "px-6 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all h-full",
-                                viewMode === mode ? "bg-white text-primary shadow-sm ring-1 ring-slate-200/50" : "text-slate-400 hover:text-slate-600"
+                                "px-6 rounded-lg text-[10px] font-bold transition-all h-full",
+                                viewMode === mode ? "bg-surface text-primary shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
                             )}
                         >
                             {mode}
@@ -348,31 +345,31 @@ export function Timesheets() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center bg-white border border-slate-200 rounded-xl px-4 h-10 shadow-sm gap-3 min-w-[180px] group cursor-pointer hover:border-primary/30 transition-all relative">
-                        <Users className="w-3.5 h-3.5 text-slate-400 group-hover:text-primary transition-colors" />
-                        <span className="text-[11px] font-bold text-slate-700 uppercase tracking-widest flex-1">
-                            {selectedMember === 'all' ? 'All Members' : members.find((m: MemberInfo) => m.id === selectedMember)?.full_name || 'Member'}
-                        </span>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-300 group-hover:text-primary transition-colors" />
-                        <select className="absolute inset-0 opacity-0 cursor-pointer w-full" value={selectedMember} onChange={(e) => setSelectedMember(e.target.value)}>
-                            <option value="all">All Members</option>
-                            {members.map((m: MemberInfo) => <option key={m.id} value={m.id}>{m.full_name}</option>)}
-                        </select>
+                    <div className="h-10 min-w-[180px]">
+                        <FilterSelect
+                            icon={<Users className="w-3.5 h-3.5" />}
+                            value={selectedMember}
+                            onChange={setSelectedMember}
+                            options={[
+                                { id: 'all', name: 'All Members' },
+                                ...members.map((m: MemberInfo) => ({ id: m.id, name: m.full_name }))
+                            ]}
+                        />
                     </div>
                     
-                    <button onClick={() => setShowFilters(true)} className="flex items-center gap-2 px-4 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all">
+                    <button onClick={() => setShowFilters(true)} className="flex items-center gap-2 px-4 h-10 bg-surface border border-border text-text-muted rounded-xl text-[10px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all">
                         <Filter className="w-3.5 h-3.5" /> Filter
                     </button>
                     
-                    <button onClick={() => setShowAddTime(true)} className="flex items-center gap-2 px-5 h-10 bg-primary text-white rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all">
+                    <button onClick={() => setShowAddTime(true)} className="flex items-center gap-2 px-5 h-10 bg-primary text-white rounded-xl text-[10px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">
                         <Plus className="w-4 h-4" /> Add time
                     </button>
                 </div>
             </div>
 
-            <div className="px-8 py-2 flex justify-end gap-2 bg-slate-50/30 border-b border-slate-50 shrink-0">
-                <button className="p-2 text-slate-400 border border-slate-200 rounded-lg hover:bg-white hover:text-primary transition-all"><LayoutIcon className="w-3.5 h-3.5" /></button>
-                <button className="p-2 text-slate-400 border border-slate-200 rounded-lg hover:bg-white hover:text-primary transition-all"><Download className="w-3.5 h-3.5" /></button>
+            <div className="px-8 py-2 flex justify-end gap-2 bg-surface-hover/30 border-b border-slate-50 shrink-0">
+                <button className="p-2 text-text-muted border border-border rounded-lg hover:bg-surface-hover hover:text-primary transition-all"><LayoutIcon className="w-3.5 h-3.5" /></button>
+                <button className="p-2 text-text-muted border border-border rounded-lg hover:bg-surface-hover hover:text-primary transition-all"><Download className="w-3.5 h-3.5" /></button>
             </div>
 
             <main className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar">
@@ -388,11 +385,18 @@ export function Timesheets() {
             <Modal isOpen={showFilters} onClose={() => setShowFilters(false)} title="Filters">
                 <div className="space-y-6 py-4">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project Scope</label>
-                        <select className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[11px] font-bold text-slate-700 outline-none focus:border-primary transition-all uppercase tracking-widest" value={filterProjectId} onChange={(e) => setFilterProjectId(e.target.value)}>
-                            <option value="all">All Projects</option>
-                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                        </select>
+                        <label className="text-[10px] font-bold text-text-muted ">Project Scope</label>
+                        <div className="h-11">
+                            <FilterSelect
+                                icon={<FolderOpen className="w-3.5 h-3.5" />}
+                                value={filterProjectId}
+                                onChange={setFilterProjectId}
+                                options={[
+                                    { id: 'all', name: 'All Projects' },
+                                    ...projects.map(p => ({ id: p.id, name: p.name }))
+                                ]}
+                            />
+                        </div>
                     </div>
                 </div>
             </Modal>
@@ -400,35 +404,49 @@ export function Timesheets() {
             <Modal isOpen={showAddTime} onClose={() => setShowAddTime(false)} title="Manual Time Entry">
                 <div className="space-y-5 py-4">
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Team Member</label>
-                        <select className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[11px] font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.userId} onChange={(e) => setAddTimeData({...addTimeData, userId: e.target.value})}>
-                            <option value="">Select member...</option>
-                            {members.map(m => <option key={m.id} value={m.id}>{m.full_name}</option>)}
-                        </select>
+                        <label className="text-[10px] font-bold text-text-muted ">Team Member</label>
+                        <div className="h-11">
+                            <FilterSelect
+                                icon={<Users className="w-3.5 h-3.5" />}
+                                value={addTimeData.userId}
+                                onChange={(val) => setAddTimeData({...addTimeData, userId: val})}
+                                options={[
+                                    { id: '', name: 'Select member...' },
+                                    ...members.map(m => ({ id: m.id, name: m.full_name }))
+                                ]}
+                            />
+                        </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Project</label>
-                        <select className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[11px] font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.projectId} onChange={(e) => setAddTimeData({...addTimeData, projectId: e.target.value})}>
-                            <option value="">Select project...</option>
-                            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                        </select>
+                        <label className="text-[10px] font-bold text-text-muted ">Project</label>
+                        <div className="h-11">
+                            <FilterSelect
+                                icon={<FolderOpen className="w-3.5 h-3.5" />}
+                                value={addTimeData.projectId}
+                                onChange={(val) => setAddTimeData({...addTimeData, projectId: val})}
+                                options={[
+                                    { id: '', name: 'Select project...' },
+                                    ...projects.map(p => ({ id: p.id, name: p.name }))
+                                ]}
+                            />
+                        </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Date</label>
-                        <input type="date" className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[11px] font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.date} onChange={(e) => setAddTimeData({...addTimeData, date: e.target.value})} />
+                        <label className="text-[10px] font-bold text-text-muted ">Date</label>
+                        <input type="date" className="w-full h-11 bg-surface-hover border border-border rounded-xl px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.date} onChange={(e) => setAddTimeData({...addTimeData, date: e.target.value})} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Start</label>
-                            <input type="time" className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[11px] font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({...addTimeData, startTime: e.target.value})} />
+                            <label className="text-[10px] font-bold text-text-muted ">Start</label>
+                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-xl px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({...addTimeData, startTime: e.target.value})} />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">End</label>
-                            <input type="time" className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-[11px] font-bold text-slate-700 outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({...addTimeData, endTime: e.target.value})} />
+                            <label className="text-[10px] font-bold text-text-muted ">End</label>
+                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-xl px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({...addTimeData, endTime: e.target.value})} />
                         </div>
                     </div>
                     <div className="flex justify-end pt-2">
-                        <button onClick={handleManualAddTime} className="px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold uppercase tracking-widest shadow-sm hover:bg-primary/90 transition-all">Submit Entry</button>
+                        <button onClick={handleManualAddTime} className="px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">Submit Entry</button>
                     </div>
                 </div>
             </Modal>
@@ -524,13 +542,13 @@ function DailyView({ entries, selectedMember, toProperCase }: {
         <div className="space-y-8 pb-20">
             <div className="flex items-center justify-between">
                 <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-slate-900 tabular-nums">{formatDuration(day.totalMinutes)}</span>
-                    <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Total tracked today</span>
+                    <span className="text-3xl font-bold text-text-main tabular-nums">{formatDuration(day.totalMinutes)}</span>
+                    <span className="text-[11px] font-bold text-text-muted ">Total tracked today</span>
                 </div>
             </div>
 
-            <div className="relative h-2.5 bg-slate-100 rounded-full my-12 overflow-hidden shadow-inner">
-                <div className="absolute inset-0 flex justify-between px-4 text-[9px] font-bold text-slate-400/50 uppercase tracking-widest items-center z-0">
+            <div className="relative h-2.5 bg-main rounded-full my-12 overflow-hidden shadow-inner">
+                <div className="absolute inset-0 flex justify-between px-4 text-[9px] font-bold text-text-muted/50 items-center z-0">
                     <span className="w-px h-full bg-slate-200/50" style={{ left: '25%' }} />
                     <span className="w-px h-full bg-slate-200/50" style={{ left: '50%' }} />
                     <span className="w-px h-full bg-slate-200/50" style={{ left: '75%' }} />
@@ -542,50 +560,50 @@ function DailyView({ entries, selectedMember, toProperCase }: {
                     const duration = s.duration_mins || 0;
                     const width = (duration / 1440) * 100;
                     return (
-                        <div key={i} className="absolute inset-y-0 bg-primary/80 rounded-full z-10 shadow-sm" style={{ left: `${left}%`, width: `${Math.max(width, 0.4)}%` }} />
+                        <div key={i} className="absolute inset-y-0 bg-primary/80 rounded-full z-10 shadow-shell-sm" style={{ left: `${left}%`, width: `${Math.max(width, 0.4)}%` }} />
                     );
                 })}
             </div>
 
-            <div className="bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-surface rounded-[24px] border border-border shadow-shell-sm overflow-hidden">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
-                        <tr className="bg-slate-50/50">
-                            <th className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Scope & Member</th>
-                            <th className="py-4 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Score</th>
-                            <th className="py-4 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Idle</th>
-                            <th className="py-4 px-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-center">Duration</th>
-                            <th className="py-4 px-8 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Window</th>
+                        <tr className="bg-surface-hover/50">
+                            <th className="py-4 px-8 text-[10px] font-bold text-text-muted border-b border-border">Scope & Member</th>
+                            <th className="py-4 px-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Score</th>
+                            <th className="py-4 px-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Idle</th>
+                            <th className="py-4 px-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Duration</th>
+                            <th className="py-4 px-8 text-[10px] font-bold text-text-muted border-b border-border text-right">Window</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {displayRows.map((s, idx) => (
-                            <tr key={idx} className="group hover:bg-slate-50/50 transition-all">
+                            <tr key={idx} className="group hover:bg-surface-hover/50 transition-all">
                                 <td className="py-5 px-8">
                                     <div className="flex flex-col">
-                                        <span className="text-[12px] font-bold text-slate-900 uppercase tracking-tight">{s.project_name}</span>
-                                        <span className="text-[11px] font-bold text-slate-400 group-hover:text-primary transition-colors">
+                                        <span className="text-[12px] font-bold text-text-main tracking-tight">{s.project_name}</span>
+                                        <span className="text-[11px] font-bold text-text-muted group-hover:text-primary transition-colors">
                                             {s.user_name ? toProperCase(s.user_name) : 'Unknown'}
                                         </span>
                                     </div>
                                 </td>
                                 <td className="py-5 px-4 text-center">
                                     <div className="flex flex-col items-center gap-1.5">
-                                        <span className="text-[12px] font-bold text-slate-700 tabular-nums">{s.activity_percent}%</span>
-                                        <div className="w-10 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                        <span className="text-[12px] font-bold text-text-main tabular-nums">{s.activity_percent}%</span>
+                                        <div className="w-10 h-1 bg-main rounded-full overflow-hidden">
                                             <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${s.activity_percent}%` }} />
                                         </div>
                                     </div>
                                 </td>
-                                <td className="py-5 px-4 text-center text-[12px] font-bold text-slate-400 tabular-nums">{s.idle_percent}%</td>
-                                <td className="py-5 px-4 text-center text-[14px] font-bold text-slate-900 tabular-nums">{formatDuration(s.duration_mins || 0)}</td>
+                                <td className="py-5 px-4 text-center text-[12px] font-bold text-text-muted tabular-nums">{s.idle_percent}%</td>
+                                <td className="py-5 px-4 text-center text-[14px] font-bold text-text-main tabular-nums">{formatDuration(s.duration_mins || 0)}</td>
                                 <td className="py-5 px-8 text-right">
                                     <div className="flex flex-col items-end">
-                                        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-widest tabular-nums">
+                                        <span className="text-[11px] font-bold text-text-muted tabular-nums">
                                             {renderTimeDisplay(s)}
                                         </span>
                                         {s.offline_mins > 0 && (
-                                            <span className="text-[9px] text-primary font-bold uppercase tracking-tighter mt-0.5">
+                                            <span className="text-[9px] text-primary font-bold tracking-tighter mt-0.5">
                                                 +{s.offline_mins}m offline
                                             </span>
                                         )}
@@ -604,11 +622,11 @@ function WeeklyView({ entries, onNavigate }: { entries: DailyEntry[], onNavigate
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-6">
             {entries.map((day, i) => (
-                <div key={i} className="bg-white border border-slate-200 rounded-[24px] p-6 flex flex-col items-center gap-4 hover:border-primary/30 hover:shadow-lg hover:shadow-slate-200/40 transition-all cursor-pointer group" onClick={() => onNavigate(day.date)}>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{DAYS_SHORT[new Date(day.date + 'T12:00:00').getDay()]}</span>
-                    <span className="text-2xl font-bold text-slate-900 group-hover:text-primary transition-colors tabular-nums">{new Date(day.date + 'T12:00:00').getDate()}</span>
+                <div key={i} className="bg-surface border border-border rounded-[24px] p-6 flex flex-col items-center gap-4 hover:border-primary/30 hover:shadow-lg hover:shadow-slate-200/40 transition-all cursor-pointer group" onClick={() => onNavigate(day.date)}>
+                    <span className="text-[10px] font-bold text-text-muted ">{DAYS_SHORT[new Date(day.date + 'T12:00:00').getDay()]}</span>
+                    <span className="text-2xl font-bold text-text-main group-hover:text-primary transition-colors tabular-nums">{new Date(day.date + 'T12:00:00').getDate()}</span>
                     <div className="flex flex-col items-center gap-1">
-                        <span className="text-[13px] font-bold text-slate-700 tabular-nums">{formatDuration(day.totalMinutes)}</span>
+                        <span className="text-[13px] font-bold text-text-main tabular-nums">{formatDuration(day.totalMinutes)}</span>
                         {day.totalMinutes > 0 && (
                             <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-lg">{day.activityPercent}%</span>
                         )}
@@ -621,18 +639,18 @@ function WeeklyView({ entries, onNavigate }: { entries: DailyEntry[], onNavigate
 
 function CalendarView({ entries }: { entries: DailyEntry[] }) {
     return (
-        <div className="bg-white border border-slate-200 rounded-[24px] overflow-hidden shadow-sm">
-            <div className="grid grid-cols-7 border-b border-slate-100">
+        <div className="bg-surface border border-border rounded-[24px] overflow-hidden shadow-shell-sm">
+            <div className="grid grid-cols-7 border-b border-border">
                 {DAYS_SHORT.map(d => (
-                    <div key={d} className="bg-slate-50/50 p-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">{d}</div>
+                    <div key={d} className="bg-surface-hover/50 p-4 text-[10px] font-bold text-text-muted text-center">{d}</div>
                 ))}
             </div>
-            <div className="grid grid-cols-7 gap-px bg-slate-100">
+            <div className="grid grid-cols-7 gap-px bg-main">
                 {entries.map((day, i) => (
-                    <div key={i} className="bg-white min-h-[140px] p-4 flex flex-col gap-3 hover:bg-slate-50 transition-all group">
-                        <span className="text-[11px] font-bold text-slate-400 group-hover:text-slate-900 transition-colors">{new Date(day.date + 'T12:00:00').getDate()}</span>
+                    <div key={i} className="bg-surface min-h-[140px] p-4 flex flex-col gap-3 hover:bg-surface-hover transition-all group">
+                        <span className="text-[11px] font-bold text-text-muted group-hover:text-slate-900 transition-colors">{new Date(day.date + 'T12:00:00').getDate()}</span>
                         {day.totalMinutes > 0 && (
-                            <div className="bg-primary/5 border border-primary/10 text-primary rounded-xl p-3 flex flex-col gap-1.5 shadow-sm">
+                            <div className="bg-primary/5 border border-primary/10 text-primary rounded-xl p-3 flex flex-col gap-1.5 shadow-shell-sm">
                                 <span className="text-[12px] font-bold tabular-nums">{formatDuration(day.totalMinutes)}</span>
                                 <div className="w-full h-1 bg-primary/10 rounded-full overflow-hidden">
                                     <div className="h-full bg-primary" style={{ width: `${day.activityPercent}%` }} />

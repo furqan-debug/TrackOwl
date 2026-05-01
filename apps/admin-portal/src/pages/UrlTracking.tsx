@@ -186,7 +186,7 @@ export function UrlTracking() {
                                 onClick={() => setRange(r)}
                                 className={clsx(
                                     "px-4 py-1.5 rounded-md text-xs font-semibold transition-all",
-                                    range === r ? "bg-white text-primary shadow-sm" : "text-text-muted hover:text-text-primary"
+                                    range === r ? "bg-surface text-primary shadow-shell-sm" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
                                 {r}
@@ -207,7 +207,7 @@ export function UrlTracking() {
             {/* Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
                 {/* Hourly activity */}
-                <Card title="Traffic Over Time" className="lg:col-span-2 min-h-[300px] shadow-sm">
+                <Card title="Traffic Over Time" className="lg:col-span-2 min-h-[300px] shadow-shell-sm">
                     {loading ? <Skeleton /> : domains.length === 0 ? <EmptyChart /> : (
                         <div className="h-[250px] w-full mt-4">
                             <ResponsiveContainer width="100%" height="100%">
@@ -217,7 +217,7 @@ export function UrlTracking() {
                                     <YAxis tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontWeight: 'bold' }} axisLine={false} tickLine={false} />
                                     <Tooltip
                                         formatter={(v?: number) => [`${v ?? 0} visits`, 'Count']}
-                                        contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', textTransform: 'uppercase' }}
+                                        contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', textTransform: '' }}
                                     />
                                     <Bar dataKey="count" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
                                 </BarChart>
@@ -227,7 +227,7 @@ export function UrlTracking() {
                 </Card>
 
                 {/* Category Pie */}
-                <Card title="Categories" className="min-h-[300px] shadow-sm">
+                <Card title="Categories" className="min-h-[300px] shadow-shell-sm">
                     {loading ? <Skeleton /> : pieData.length === 0 ? <EmptyChart /> : (
                         <div className="h-[250px] w-full mt-4">
                             <ResponsiveContainer width="100%" height="100%">
@@ -235,8 +235,8 @@ export function UrlTracking() {
                                     <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value" stroke="none">
                                         {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                                     </Pie>
-                                    <Tooltip formatter={(v?: number) => [`${v ?? 0}`, 'Visits']} contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', textTransform: 'uppercase' }} />
-                                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--color-text-muted)' }} />
+                                    <Tooltip formatter={(v?: number) => [`${v ?? 0}`, 'Visits']} contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', textTransform: '' }} />
+                                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, fontWeight: 'bold', textTransform: '', color: 'var(--color-text-muted)' }} />
                                 </PieChart>
                             </ResponsiveContainer>
                         </div>
@@ -246,34 +246,34 @@ export function UrlTracking() {
 
             {/* Domain Table */}
             {/* Domain Table */}
-            <Card noPadding title="Top Domains" className="shadow-sm overflow-hidden" 
+            <Card noPadding title="Top Domains" className="shadow-shell-sm overflow-hidden" 
                 actions={
                     <div className="relative border border-border bg-surface-solid rounded-xl flex items-center">
                         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                         <input type="text" placeholder="Filter domains..." value={search}
                             onChange={e => setSearch(e.target.value)}
-                            className="bg-transparent pl-11 pr-4 py-2 text-[10px] font-bold uppercase tracking-wider text-text-primary outline-none focus:border-primary/50 w-64 h-full" />
+                            className="bg-transparent pl-11 pr-4 py-2 text-[10px] font-bold text-text-primary outline-none focus:border-primary/50 w-64 h-full" />
                     </div>
                 }
             >
                 {loading ? (
-                    <div className="px-8 py-10 text-center text-text-muted text-[10px] font-bold uppercase tracking-wider">Loading...</div>
+                    <div className="px-8 py-10 text-center text-text-muted text-[10px] font-bold ">Loading...</div>
                 ) : filtered.length === 0 ? (
                     <div className="p-16 flex flex-col items-center gap-4 text-text-muted">
                         <div className="w-12 h-12 bg-surface-subtle rounded-xl flex items-center justify-center border border-border">
                             <Globe className="w-6 h-6 text-text-muted opacity-50" />
                         </div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider opacity-60">No URL data found</p>
+                        <p className="text-[10px] font-bold opacity-60">No URL data found</p>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-surface-subtle/30 border-b border-border">
-                                    <th className="px-8 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Domain</th>
-                                    <th className="px-8 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Category</th>
-                                    <th className="px-8 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Visits</th>
-                                    <th className="px-8 py-4 text-[10px] font-bold text-text-muted uppercase tracking-wider">Share</th>
+                                    <th className="px-8 py-4 text-[10px] font-bold text-text-muted ">Domain</th>
+                                    <th className="px-8 py-4 text-[10px] font-bold text-text-muted ">Category</th>
+                                    <th className="px-8 py-4 text-[10px] font-bold text-text-muted ">Visits</th>
+                                    <th className="px-8 py-4 text-[10px] font-bold text-text-muted ">Share</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/40">
@@ -281,7 +281,7 @@ export function UrlTracking() {
                                     <tr key={d.domain} className="hover:bg-primary/[0.01] transition-colors group">
                                         <td className="px-8 py-4">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-8 h-8 rounded-lg bg-surface-solid border border-border flex items-center justify-center shadow-sm shrink-0">
+                                                <div className="w-8 h-8 rounded-lg bg-surface-solid border border-border flex items-center justify-center shadow-shell-sm shrink-0">
                                                     <img src={`https://www.google.com/s2/favicons?domain=${d.domain}&sz=16`}
                                                         alt="" className="w-4 h-4 rounded" onError={e => (e.currentTarget.style.display = 'none')} />
                                                 </div>
@@ -289,13 +289,13 @@ export function UrlTracking() {
                                             </div>
                                         </td>
                                         <td className="px-8 py-4">
-                                            <span className={`inline-flex px-2.5 py-1 rounded-md text-[9px] font-bold uppercase tracking-wider border
+                                            <span className={`inline-flex px-2.5 py-1 rounded-md text-[9px] font-bold border
                                                 ${d.category === 'Development' ? 'bg-indigo-500/5 text-indigo-600 border-indigo-500/10' :
                                                     d.category === 'Search' ? 'bg-sky-500/5 text-sky-600 border-sky-500/10' :
-                                                        d.category === 'Communication' ? 'bg-emerald-500/5 text-emerald-600 border-emerald-500/10' :
-                                                            d.category === 'Productivity' ? 'bg-amber-500/5 text-amber-600 border-amber-500/10' :
+                                                        d.category === 'Communication' ? 'bg-emerald-500/5 text-emerald-500 border-emerald-500/10' :
+                                                            d.category === 'Productivity' ? 'bg-amber-500/5 text-amber-500 border-amber-500/10' :
                                                                 d.category === 'Social' ? 'bg-fuchsia-500/5 text-fuchsia-600 border-fuchsia-500/10' :
-                                                                    d.category === 'Media' ? 'bg-rose-500/5 text-rose-600 border-rose-500/10' :
+                                                                    d.category === 'Media' ? 'bg-rose-500/5 text-rose-500 border-rose-500/10' :
                                                                         'bg-surface-subtle text-text-muted border-border'}`}
                                             >
                                                 {d.category}
@@ -323,12 +323,12 @@ export function UrlTracking() {
 
 function KpiCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
-        <div className="bg-surface-solid border border-border rounded-2xl p-6 shadow-sm flex items-center gap-5">
+        <div className="bg-surface-solid border border-border rounded-2xl p-6 shadow-shell-sm flex items-center gap-5">
             <div className="w-12 h-12 bg-primary/10 text-primary rounded-xl flex items-center justify-center shrink-0">
                 {icon}
             </div>
             <div className="flex flex-col">
-                <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider mb-1">{label}</p>
+                <p className="text-[10px] text-text-muted font-bold mb-1">{label}</p>
                 <p className="text-2xl font-bold text-text-primary tracking-tight">{value}</p>
             </div>
         </div>
@@ -336,7 +336,7 @@ function KpiCard({ icon, label, value }: { icon: React.ReactNode; label: string;
 }
 
 function Skeleton() { 
-    return <div className="h-64 flex items-center justify-center text-text-muted text-[10px] font-bold uppercase tracking-wider">Loading...</div>; 
+    return <div className="h-64 flex items-center justify-center text-text-muted text-[10px] font-bold ">Loading...</div>; 
 }
 
 function EmptyChart() {
@@ -345,7 +345,7 @@ function EmptyChart() {
             <div className="w-12 h-12 bg-surface-subtle border border-border rounded-xl flex items-center justify-center">
                 <BarChart2 className="w-6 h-6 text-text-muted opacity-50" />
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider opacity-60">No data for this period</span>
+            <span className="text-[10px] font-bold opacity-60">No data for this period</span>
         </div>
     );
 }

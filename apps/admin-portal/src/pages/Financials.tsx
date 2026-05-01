@@ -137,21 +137,21 @@ export function Financials() {
             maxWidth="full"
             actions={
                 <div className="flex items-center gap-3">
-                    <div className="flex bg-slate-100/50 p-1 rounded-xl border border-slate-200/50 h-10 shrink-0">
+                    <div className="flex bg-main/50 p-1 rounded-xl border border-border/50 h-10 shrink-0">
                         {(['This Week', 'This Month', 'All Time'] as const).map(r => (
                             <button 
                                 key={r} 
                                 onClick={() => setRange(r)}
                                 className={clsx(
-                                    "px-4 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all h-full",
-                                    range === r ? "bg-white text-primary shadow-sm ring-1 ring-slate-200/50" : "text-slate-400 hover:text-slate-600"
+                                    "px-4 rounded-lg text-[10px] font-bold transition-all h-full",
+                                    range === r ? "bg-surface text-primary shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
                                 )}
                             >
                                 {r}
                             </button>
                         ))}
                     </div>
-                    <button onClick={exportCsv} className="flex items-center gap-2 px-5 h-10 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest shadow-sm hover:bg-slate-50 transition-all">
+                    <button onClick={exportCsv} className="flex items-center gap-2 px-5 h-10 bg-surface border border-border text-text-muted rounded-xl text-[10px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all">
                         <Download className="w-3.5 h-3.5" /> Export CSV
                     </button>
                 </div>
@@ -163,28 +163,28 @@ export function Financials() {
                     label="Total Pay Cost" 
                     value={`$${totals.cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                     sub={range} 
-                    className="rounded-[24px] border-slate-200"
+                    className="rounded-[24px] border-border"
                 />
                 <KpiCard 
                     icon={<Clock className="w-4 h-4 text-primary" />}
                     label="Total Tracked" 
                     value={fmtTime(totals.minutes)} 
                     sub="Cumulative duration" 
-                    className="rounded-[24px] border-slate-200"
+                    className="rounded-[24px] border-border"
                 />
                 <KpiCard 
                     icon={<TrendingUp className="w-4 h-4 text-primary" />}
                     label="Active Sessions" 
                     value={totals.sessions.toString()} 
                     sub="Recorded events" 
-                    className="rounded-[24px] border-slate-200"
+                    className="rounded-[24px] border-border"
                 />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 pb-20">
-                <Card className="rounded-[24px] border-slate-200 shadow-sm flex flex-col">
+                <Card className="rounded-[24px] border-border shadow-shell-sm flex flex-col">
                     <div className="mb-6">
-                        <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cost allocation</h2>
+                        <h2 className="text-[10px] font-bold text-text-muted ">Cost allocation</h2>
                     </div>
                     {loading ? (
                         <div className="flex-1 flex items-center justify-center min-h-[240px]"><LoadingState /></div>
@@ -203,7 +203,7 @@ export function Financials() {
                                         contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 10, fontWeight: 700 }}
                                     />
                                     <Bar dataKey="totalCost" radius={[0, 4, 4, 0]}>
-                                        {members.slice(0, 6).map((_, i) => <Cell key={i} fill={i === 0 ? '#4066D3' : '#94a3b8'} />)}
+                                        {members.slice(0, 6).map((_, i) => <Cell key={i} fill={i === 0 ? 'var(--color-chart-main)' : '#94a3b8'} />)}
                                     </Bar>
                                 </BarChart>
                             </ResponsiveContainer>
@@ -211,16 +211,16 @@ export function Financials() {
                     )}
                 </Card>
 
-                <Card noPadding className="lg:col-span-4 rounded-[24px] border-slate-200 shadow-sm overflow-hidden">
-                    <div className="px-8 py-5 border-b border-slate-100 bg-slate-50/30">
-                        <h2 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Financial breakdown by member</h2>
+                <Card noPadding className="lg:col-span-4 rounded-[24px] border-border shadow-shell-sm overflow-hidden">
+                    <div className="px-8 py-5 border-b border-border bg-surface-hover/30">
+                        <h2 className="text-[10px] font-bold text-text-muted ">Financial breakdown by member</h2>
                     </div>
                     {loading ? (
                         <div className="py-24"><LoadingState /></div>
                     ) : members.length === 0 ? (
                         <div className="py-24 text-center">
                             <EmptyState
-                                icon={<CircleDollarSign className="w-8 h-8 text-slate-200" />}
+                                icon={<CircleDollarSign className="w-8 h-8 text-text-muted" />}
                                 title="No data recorded"
                                 description="Member financial statistics will populate once sessions are logged."
                             />
@@ -229,31 +229,31 @@ export function Financials() {
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
-                                    <tr className="bg-slate-50/50">
-                                        <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">Team Member</th>
-                                        <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Pay Rate</th>
-                                        <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Duration</th>
-                                        <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Events</th>
-                                        <th className="px-8 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100 text-right">Total Cost</th>
+                                    <tr className="bg-surface-hover/50">
+                                        <th className="px-8 py-4 text-[10px] font-bold text-text-muted border-b border-border">Team Member</th>
+                                        <th className="px-8 py-4 text-[10px] font-bold text-text-muted border-b border-border text-right">Pay Rate</th>
+                                        <th className="px-8 py-4 text-[10px] font-bold text-text-muted border-b border-border text-right">Duration</th>
+                                        <th className="px-8 py-4 text-[10px] font-bold text-text-muted border-b border-border text-right">Events</th>
+                                        <th className="px-8 py-4 text-[10px] font-bold text-text-muted border-b border-border text-right">Total Cost</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-100">
                                     {members.map((m, i) => (
-                                        <tr key={m.member_id} className="hover:bg-slate-50/50 transition-colors group/row">
+                                        <tr key={m.member_id} className="hover:bg-surface-hover/50 transition-colors group/row">
                                             <td className="px-8 py-5">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[11px] font-bold shrink-0 shadow-sm transition-transform group-hover/row:scale-105"
-                                                        style={{ backgroundColor: i === 0 ? '#4066D3' : '#94a3b8' }}>
+                                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-[11px] font-bold shrink-0 shadow-shell-sm transition-transform group-hover/row:scale-105"
+                                                        style={{ backgroundColor: i === 0 ? 'var(--color-chart-main)' : '#94a3b8' }}>
                                                         {m.full_name.charAt(0).toUpperCase()}
                                                     </div>
-                                                    <span className="text-[13px] font-bold text-slate-900 tracking-tight">{m.full_name}</span>
+                                                    <span className="text-[13px] font-bold text-text-main tracking-tight">{m.full_name}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-8 py-5 text-right text-[12px] font-bold text-slate-400 tabular-nums">
+                                            <td className="px-8 py-5 text-right text-[12px] font-bold text-text-muted tabular-nums">
                                                 {m.pay_rate > 0 ? `$${m.pay_rate.toFixed(2)}/h` : <span className="opacity-40">—</span>}
                                             </td>
-                                            <td className="px-8 py-5 text-right text-[13px] font-bold text-slate-700 tabular-nums">{fmtTime(m.totalMinutes)}</td>
-                                            <td className="px-8 py-5 text-right text-[12px] font-bold text-slate-400 tabular-nums">{m.sessions}</td>
+                                            <td className="px-8 py-5 text-right text-[13px] font-bold text-text-main tabular-nums">{fmtTime(m.totalMinutes)}</td>
+                                            <td className="px-8 py-5 text-right text-[12px] font-bold text-text-muted tabular-nums">{m.sessions}</td>
                                             <td className="px-8 py-5 text-right">
                                                 <span className="text-[14px] font-bold text-primary tabular-nums">${m.totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                                             </td>

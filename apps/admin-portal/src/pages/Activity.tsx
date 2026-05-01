@@ -197,7 +197,7 @@ export function Activity() {
         setSelectedDate(formatLocalDate(d));
     };
 
-    if (loading) return <div className="h-screen flex items-center justify-center bg-white"><LoadingState /></div>;
+    if (loading) return <div className="h-screen flex items-center justify-center bg-surface"><LoadingState /></div>;
 
     return (
         <PageLayout
@@ -206,7 +206,7 @@ export function Activity() {
             description="Visual audit and activity timeline for workspace members."
             actions={
                 <div className="flex items-center gap-4">
-                    <div className="bg-surface border border-border p-1 rounded-xl flex items-center shadow-sm">
+                    <div className="bg-surface border border-border p-1 rounded-xl flex items-center shadow-shell-sm">
                         <FilterSelect
                             icon={<Users className="w-3.5 h-3.5 text-text-muted" />}
                             value={selectedMemberId}
@@ -216,7 +216,7 @@ export function Activity() {
                         />
                     </div>
 
-                    <div className="flex items-center bg-surface border border-border p-0.5 rounded-xl shadow-sm overflow-hidden">
+                    <div className="flex items-center bg-surface border border-border p-0.5 rounded-xl shadow-shell-sm overflow-hidden">
                         <button
                             onClick={() => navigateDate('prev')}
                             className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
@@ -229,7 +229,7 @@ export function Activity() {
                         >
                             <div className="flex items-center justify-center gap-2">
                                 <Calendar className="w-3.5 h-3.5 text-text-muted" />
-                                <span className="text-[11px] font-bold text-text-main uppercase tracking-widest">
+                                <span className="text-[11px] font-bold text-text-main ">
                                     {isToday ? 'Today' : new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </span>
                             </div>
@@ -271,28 +271,28 @@ export function Activity() {
                         label="Clicks"
                         value={totalClicks.toLocaleString()}
                         sub="Mouse interactions"
-                        accent="primary"
+                        accent="brown-gradient"
                     />
                     <StatMetric
                         icon={<Keyboard className="w-4 h-4" />}
                         label="Keys"
                         value={totalKeys.toLocaleString()}
                         sub="Keyboard events"
-                        accent="amber"
+                        accent="brown-gradient"
                     />
                     <StatMetric
                         icon={<Clock className="w-4 h-4" />}
                         label="Duration"
                         value={`${productiveMinutes}m`}
                         sub="Total active time"
-                        accent="emerald"
+                        accent="brown-gradient"
                     />
                     <StatMetric
                         icon={<Zap className="w-4 h-4" />}
                         label="Activity"
                         value={`${avgActivity}%`}
                         sub="Average score"
-                        accent="rose"
+                        accent="brown-gradient"
                     />
                 </div>
 
@@ -301,25 +301,25 @@ export function Activity() {
 
                     {/* Heatmap */}
                     <div className="lg:col-span-8">
-                        <div className="bg-surface rounded-[24px] shadow-sm border border-border h-full flex flex-col overflow-hidden">
+                        <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border h-full flex flex-col overflow-hidden">
                             <div className="px-8 py-6 border-b border-border flex items-center justify-between bg-surface shrink-0">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-main border border-border flex items-center justify-center text-primary shadow-sm">
+                                    <div className="w-10 h-10 rounded-xl bg-main border border-border flex items-center justify-center text-primary shadow-shell-sm">
                                         <ActivityIcon className="w-4 h-4" />
                                     </div>
                                     <div>
                                         <h3 className="text-[15px] font-bold text-text-main tracking-tight">Heatmap</h3>
-                                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mt-0.5">10-minute resolution</p>
+                                        <p className="text-[10px] font-bold text-text-muted mt-0.5">10-minute resolution</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-widest">Active</span>
+                                        <span className="text-[9px] font-bold text-text-muted ">Active</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-1.5 h-1.5 rounded-full bg-border" />
-                                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-widest">Idle</span>
+                                        <span className="text-[9px] font-bold text-text-muted ">Idle</span>
                                     </div>
                                 </div>
                             </div>
@@ -331,14 +331,14 @@ export function Activity() {
 
                     {/* App Usage */}
                     <div className="lg:col-span-4">
-                        <div className="bg-surface rounded-[24px] shadow-sm border border-border h-full flex flex-col overflow-hidden">
+                        <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border h-full flex flex-col overflow-hidden">
                             <div className="px-8 py-6 border-b border-border flex items-center gap-4 bg-surface shrink-0">
-                                <div className="w-10 h-10 rounded-xl bg-main border border-border flex items-center justify-center text-text-muted shadow-sm">
+                                <div className="w-10 h-10 rounded-xl bg-main border border-border flex items-center justify-center text-text-muted shadow-shell-sm">
                                     <Monitor className="w-4 h-4" />
                                 </div>
                                 <div>
                                     <h3 className="text-[15px] font-bold text-text-main tracking-tight">App Usage</h3>
-                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mt-0.5">Top utilized software</p>
+                                    <p className="text-[10px] font-bold text-text-muted mt-0.5">Top utilized software</p>
                                 </div>
                             </div>
                             <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -349,15 +349,15 @@ export function Activity() {
 
                     {/* Screenshots */}
                     <div className="lg:col-span-12">
-                        <div className="bg-surface rounded-[24px] shadow-sm border border-border overflow-hidden flex flex-col">
+                        <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border overflow-hidden flex flex-col">
                             <div className="px-8 py-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface shrink-0">
                                 <div className="flex items-center gap-5">
-                                    <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white shadow-md">
+                                    <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white shadow-shell-md">
                                         <Camera className="w-5 h-5" />
                                     </div>
                                     <div>
                                         <h3 className="text-[16px] font-bold text-text-main tracking-tight">Captures</h3>
-                                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mt-0.5">{screenshots.length} automated work captures</p>
+                                        <p className="text-[10px] font-bold text-text-muted mt-0.5">{screenshots.length} automated work captures</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -398,14 +398,14 @@ export function Activity() {
                                         <button
                                             onClick={loadMoreScreenshots}
                                             disabled={loadingMore || refreshing}
-                                            className="flex items-center gap-3 px-6 py-3 bg-surface border border-border rounded-xl hover:bg-surface-hover transition-all shadow-sm"
+                                            className="flex items-center gap-3 px-6 py-3 bg-surface border border-border rounded-xl hover:bg-surface-hover transition-all shadow-shell-sm"
                                         >
                                             {loadingMore || refreshing ? (
                                                 <RefreshCw className="w-4 h-4 animate-spin text-primary" />
                                             ) : (
                                                 <Camera className="w-4 h-4 text-text-muted" />
                                             )}
-                                            <span className="text-[11px] font-bold text-text-main uppercase tracking-widest">
+                                            <span className="text-[11px] font-bold text-text-main ">
                                                 Load More Captures
                                             </span>
                                         </button>

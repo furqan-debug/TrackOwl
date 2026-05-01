@@ -79,7 +79,7 @@ export function PaymentsReport() {
                                 <button
                                     key={s}
                                     onClick={() => setFilterStatus(s as any)}
-                                    className={`px-5 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all font-mono ${filterStatus === s ? 'bg-surface-solid text-primary shadow-sm border border-border' : 'text-text-muted hover:text-text-primary'
+                                    className={`px-5 py-2 rounded-lg text-[10px] font-bold transition-all font-mono ${filterStatus === s ? 'bg-surface-solid text-primary shadow-shell-sm border border-border' : 'text-text-muted hover:text-text-primary'
                                         }`}
                                 >
                                     {s}
@@ -100,20 +100,20 @@ export function PaymentsReport() {
                 <Card noPadding title="Transaction Log" className="shadow-2xl overflow-hidden"
                     actions={
                         <div className="flex items-center gap-4">
-                            <div className="relative border border-border bg-surface-solid rounded-xl flex items-center shadow-sm w-full sm:w-80">
+                            <div className="relative border border-border bg-surface-solid rounded-xl flex items-center shadow-shell-sm w-full sm:w-80">
                                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                                 <input
                                     type="text"
                                     placeholder="Search by member or reference..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
-                                    className="bg-transparent pl-11 pr-4 py-2.5 text-[10px] font-bold uppercase tracking-widest font-mono text-text-primary outline-none focus:border-primary/50 w-full"
+                                    className="bg-transparent pl-11 pr-4 py-2.5 text-[10px] font-bold font-mono text-text-primary outline-none focus:border-primary/50 w-full"
                                 />
                             </div>
-                            <Button variant="secondary" leftIcon={<Calendar className="w-4 h-4" />} className="px-6 py-2.5 text-[10px] uppercase tracking-widest">
+                            <Button variant="secondary" leftIcon={<Calendar className="w-4 h-4" />} className="px-6 py-2.5 text-[10px] ">
                                 Date Range
                             </Button>
-                            <Button variant="primary" leftIcon={<Download className="w-4 h-4" />} className="px-6 py-2.5 text-[10px] uppercase tracking-widest">
+                            <Button variant="primary" leftIcon={<Download className="w-4 h-4" />} className="px-6 py-2.5 text-[10px] ">
                                 Report
                             </Button>
                         </div>
@@ -123,28 +123,28 @@ export function PaymentsReport() {
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-surface-subtle/30 border-b border-border">
-                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono border-r border-border/10">Recipient</th>
-                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Method & Reference</th>
-                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Date</th>
-                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono">Status</th>
-                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono text-right">Amount</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted tracking-[0.3em] font-mono border-r border-border/10">Recipient</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted tracking-[0.3em] font-mono">Method & Reference</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted tracking-[0.3em] font-mono">Date</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted tracking-[0.3em] font-mono">Status</th>
+                                    <th className="px-10 py-6 text-[10px] font-bold text-text-muted tracking-[0.3em] font-mono text-right">Amount</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/40">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={5} className="py-20 text-center text-text-muted font-mono text-[11px] tracking-widest uppercase">Loading payments...</td>
+                                        <td colSpan={5} className="py-20 text-center text-text-muted font-mono text-[11px] ">Loading payments...</td>
                                     </tr>
                                 ) : filtered.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="py-20 text-center text-text-muted font-mono text-[11px] tracking-widest uppercase">No payments found.</td>
+                                        <td colSpan={5} className="py-20 text-center text-text-muted font-mono text-[11px] ">No payments found.</td>
                                     </tr>
                                 ) : (
                                     filtered.map((p) => (
                                         <tr key={p.id} className="hover:bg-primary/[0.01] transition-all group cursor-pointer duration-500">
                                             <td className="px-10 py-6 border-r border-border/10">
                                                 <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-2xl bg-surface-solid flex items-center justify-center font-bold text-text-primary text-sm border border-border group-hover:bg-primary group-hover:text-white group-hover:scale-110 transition-all shadow-sm">
+                                                    <div className="w-10 h-10 rounded-2xl bg-surface-solid flex items-center justify-center font-bold text-text-primary text-sm border border-border group-hover:bg-primary group-hover:text-white group-hover:scale-110 transition-all shadow-shell-sm">
                                                         {p.member.charAt(0)}
                                                     </div>
                                                     <span className="text-sm font-bold text-text-primary tracking-tighter italic">{p.member}</span>
@@ -153,16 +153,16 @@ export function PaymentsReport() {
                                             <td className="px-10 py-6">
                                                 <div className="flex flex-col">
                                                     <span className="text-[12px] font-bold text-text-primary font-mono">{p.method}</span>
-                                                    <span className="text-[10px] text-text-muted font-bold tracking-[0.2em] uppercase font-mono bg-surface-subtle border border-border px-2 py-0.5 rounded-md mt-1 w-fit">{p.reference}</span>
+                                                    <span className="text-[10px] text-text-muted font-bold tracking-[0.2em] font-mono bg-surface-subtle border border-border px-2 py-0.5 rounded-md mt-1 w-fit">{p.reference}</span>
                                                 </div>
                                             </td>
-                                            <td className="px-10 py-6 text-[11px] text-text-muted font-bold uppercase tracking-widest font-mono">{p.date}</td>
+                                            <td className="px-10 py-6 text-[11px] text-text-muted font-bold font-mono">{p.date}</td>
                                             <td className="px-10 py-6">
                                                 <PaymentStatusBadge status={p.status} />
                                             </td>
                                             <td className="px-10 py-6 text-right">
                                                 <div className="flex items-center justify-end gap-5">
-                                                    <span className="text-lg font-bold text-emerald-600 tracking-tighter italic font-mono">
+                                                    <span className="text-lg font-bold text-emerald-500 tracking-tighter italic font-mono">
                                                         ${p.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                                     </span>
                                                     <button className="p-2 opacity-0 group-hover:opacity-100 hover:bg-surface-subtle border border-transparent hover:border-border rounded-xl transition-all">
@@ -185,14 +185,14 @@ export function PaymentsReport() {
 function PaymentStatCard({ label, value, sub, color }: { label: string; value: string; sub: string; color: 'primary' | 'amber' | 'emerald' }) {
     const bgMap = { primary: 'bg-primary/10 text-primary border-primary/20', amber: 'bg-amber-500/10 text-amber-500 border-amber-500/20', emerald: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' };
     return (
-        <div className="bg-surface-solid p-6 rounded-[2rem] border border-border shadow-sm flex items-center gap-5 transition-transform hover:-translate-y-1 duration-300">
+        <div className="bg-surface-solid p-6 rounded-[2rem] border border-border shadow-shell-sm flex items-center gap-5 transition-transform hover:-translate-y-1 duration-300">
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border shadow-inner ${bgMap[color]}`}>
                 <ArrowUpRight className="w-6 h-6" />
             </div>
             <div>
-                <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest mb-1 font-mono">{label}</p>
+                <p className="text-[10px] font-bold text-text-muted mb-1 font-mono">{label}</p>
                 <p className="text-3xl font-bold text-text-primary tracking-tighter italic">{value}</p>
-                <p className="text-[10px] font-bold text-text-muted/60 uppercase tracking-widest font-mono mt-1">{sub}</p>
+                <p className="text-[10px] font-bold text-text-muted/60 font-mono mt-1">{sub}</p>
             </div>
         </div>
     );

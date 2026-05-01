@@ -42,25 +42,25 @@ export function ForgotPassword() {
                 <Card className="p-12 shadow-2xl bg-surface-solid border-border rounded-[56px] space-y-10 relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/[0.03] rounded-full translate-x-16 -translate-y-16" />
                     
-                    <div className="w-24 h-24 bg-emerald-500/5 border border-emerald-500/10 rounded-[40px] flex items-center justify-center mx-auto shadow-sm rotate-3 transition-transform hover:rotate-0 duration-700">
-                        <CheckCircle2 className="w-12 h-12 text-emerald-600" strokeWidth={2.5} />
+                    <div className="w-24 h-24 bg-emerald-500/5 border border-emerald-500/10 rounded-[40px] flex items-center justify-center mx-auto shadow-shell-sm rotate-3 transition-transform hover:rotate-0 duration-700">
+                        <CheckCircle2 className="w-12 h-12 text-emerald-500" strokeWidth={2.5} />
                     </div>
                     
                     <div className="space-y-4">
-                        <h1 className="text-4xl font-black text-text-primary tracking-tight font-mono uppercase italic">Transmission <span className="text-emerald-600">Complete</span></h1>
-                        <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono leading-relaxed opacity-60">
+                        <h1 className="text-4xl font-black text-text-primary tracking-tight font-mono italic">Transmission <span className="text-emerald-500">Complete</span></h1>
+                        <p className="text-[10px] font-bold text-text-muted tracking-[0.3em] font-mono leading-relaxed opacity-60">
                             A recovery vector has been dispatched to:<br/>
                             <span className="text-primary underline underline-offset-8 decoration-primary/30 mt-4 inline-block">{email.toUpperCase()}</span>
                         </p>
                     </div>
 
                     <div className="pt-10 border-t border-border/50">
-                        <p className="text-[9px] font-bold text-text-muted mb-8 uppercase tracking-[0.2em] font-mono opacity-40 italic">
+                        <p className="text-[9px] font-bold text-text-muted mb-8 tracking-[0.2em] font-mono opacity-40 italic">
                             No dispatch received? Conduct a verification of your junk directory or initialize a secondary request.
                         </p>
                         <Button
                             variant="secondary"
-                            className="w-full py-4 rounded-xl text-[10px] font-mono font-bold uppercase tracking-[0.2em]"
+                            className="w-full py-4 rounded-xl text-[10px] font-mono font-bold tracking-[0.2em]"
                             onClick={() => { setStep('form'); setFormError(null); }}
                         >
                             Retry Transmission
@@ -70,7 +70,7 @@ export function ForgotPassword() {
                 
                 <button
                     onClick={() => navigate('/login')}
-                    className="mt-12 inline-flex items-center gap-4 text-[10px] font-bold text-text-muted hover:text-primary transition-all tracking-[0.3em] uppercase font-mono group opacity-40 hover:opacity-100"
+                    className="mt-12 inline-flex items-center gap-4 text-[10px] font-bold text-text-muted hover:text-primary transition-all tracking-[0.3em] font-mono group opacity-40 hover:opacity-100"
                 >
                     <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" strokeWidth={3} />
                     Return to Operator Login
@@ -90,16 +90,16 @@ export function ForgotPassword() {
                     <button
                         type="button"
                         onClick={() => navigate('/login')}
-                        className="inline-flex items-center gap-4 px-6 py-3 rounded-2xl bg-surface-solid border border-border shadow-sm hover:shadow-xl hover:scale-105 transition-all mb-10 group"
+                        className="inline-flex items-center gap-4 px-6 py-3 rounded-2xl bg-surface-solid border border-border shadow-shell-sm hover:shadow-xl hover:scale-105 transition-all mb-10 group"
                     >
                         <ArrowLeft className="w-4 h-4 text-primary group-hover:-translate-x-1 transition-transform" strokeWidth={3} />
-                        <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-text-primary font-mono italic">Back to Identity Verification</span>
+                        <span className="text-[10px] font-bold tracking-[0.3em] text-text-primary font-mono italic">Back to Identity Verification</span>
                     </button>
                     
-                    <h1 className="text-4xl font-black tracking-tight text-text-primary mb-4 italic font-mono uppercase">
+                    <h1 className="text-4xl font-black tracking-tight text-text-primary mb-4 italic font-mono ">
                         Credential <span className="text-primary">Recovery</span>
                     </h1>
-                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono leading-relaxed opacity-60">
+                    <p className="text-[10px] font-bold text-text-muted tracking-[0.3em] font-mono leading-relaxed opacity-60">
                         Initialize password override protocol via secure email linkage
                     </p>
                 </div>
@@ -115,13 +115,13 @@ export function ForgotPassword() {
                             value={email}
                             onChange={e => setEmail(e.target.value)}
                             placeholder="OPERATOR@TRACKORA.AI"
-                            className="font-mono text-[13px] font-bold uppercase"
+                            className="font-mono text-[13px] font-bold "
                             leftIcon={<Mail className="w-5 h-5 text-primary" strokeWidth={2.5} />}
                             autoFocus
                         />
 
                         {formError && (
-                            <div className="flex items-start gap-4 p-5 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-rose-600 text-[10px] font-bold uppercase tracking-wider font-mono italic">
+                            <div className="flex items-start gap-4 p-5 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-rose-500 text-[10px] font-bold font-mono italic">
                                 <ShieldAlert className="w-5 h-5 shrink-0" strokeWidth={2.5} />
                                 <p className="leading-relaxed">{formError}</p>
                             </div>
@@ -130,7 +130,7 @@ export function ForgotPassword() {
                         <Button
                             type="submit"
                             disabled={submitting || !email.trim()}
-                            className="w-full py-5 rounded-2xl text-[11px] font-mono font-bold uppercase tracking-[0.3em] shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all italic"
+                            className="w-full py-5 rounded-2xl text-[11px] font-mono font-bold tracking-[0.3em] shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all italic"
                         >
                             {submitting ? 'Authenticating...' : 'Initialize Dispatch'}
                             <ArrowRight className="w-5 h-5 ml-4 group-hover:translate-x-1 transition-transform" strokeWidth={3} />
@@ -138,7 +138,7 @@ export function ForgotPassword() {
                     </form>
                 </Card>
                 
-                <p className="mt-12 text-center text-[9px] font-bold text-text-muted uppercase tracking-[0.3em] font-mono px-12 leading-relaxed opacity-40">
+                <p className="mt-12 text-center text-[9px] font-bold text-text-muted tracking-[0.3em] font-mono px-12 leading-relaxed opacity-40">
                     Security override links expire in 3600 seconds. <br/>
                     Verified operator access required.
                 </p>

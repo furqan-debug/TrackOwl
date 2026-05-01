@@ -116,7 +116,7 @@ export function AcceptInvite() {
                 <div className="absolute inset-0 bg-gradient-mesh z-0" />
                 <div className="flex flex-col items-center gap-4 text-text-secondary">
                     <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                    <p className="text-sm font-bold tracking-widest uppercase opacity-60">Verifying invite...</p>
+                    <p className="text-sm font-bold opacity-60">Verifying invite...</p>
                 </div>
             </div>
         );
@@ -156,7 +156,7 @@ export function AcceptInvite() {
                         <div className="bg-gradient-to-br from-indigo-600 to-violet-700 px-8 py-12 text-center text-white relative overflow-hidden">
                             <div className="absolute inset-0 bg-black/10" />
                             <div className="relative z-10">
-                                <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl border border-white/20">
+                                <div className="w-20 h-20 bg-surface/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl border border-white/20">
                                     <Rocket className="w-10 h-10" />
                                 </div>
                                 <h1 className="text-4xl font-bold tracking-tight mb-2 font-head">Account Activated!</h1>
@@ -168,14 +168,14 @@ export function AcceptInvite() {
                             {role === 'User' ? (
                                 <div className="space-y-8">
                                     <div className="space-y-4 text-center">
-                                        <h2 className="text-xl font-bold text-text-primary font-head uppercase tracking-wider">Next Steps</h2>
+                                        <h2 className="text-xl font-bold text-text-primary font-head ">Next Steps</h2>
                                         <div className="grid gap-4 text-left">
                                             {[
                                                 { icon: <Download className="w-5 h-5" />, title: 'Download Tracker', desc: 'Install the Trackora app to begin tracking your work.' },
                                                 { icon: <User className="w-5 h-5" />, title: 'Sign In', desc: 'Use your work email and the new password to log in.' },
                                                 { icon: <Rocket className="w-5 h-5" />, title: 'Start Working', desc: 'Select your project and click "Start" to begin your shift.' },
                                             ].map((step, i) => (
-                                                <div key={i} className="flex gap-4 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-colors">
+                                                <div key={i} className="flex gap-4 p-4 rounded-xl bg-surface/5 border border-white/10 hover:border-white/20 transition-colors">
                                                     <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0 border border-indigo-500/20">
                                                         {step.icon}
                                                     </div>
@@ -194,7 +194,7 @@ export function AcceptInvite() {
                             ) : (
                                 <div className="space-y-6 text-center">
                                     <div className="space-y-3">
-                                        <h2 className="text-xl font-bold text-text-primary font-head uppercase tracking-wider">Manager Access</h2>
+                                        <h2 className="text-xl font-bold text-text-primary font-head ">Manager Access</h2>
                                         <p className="text-sm text-text-secondary leading-relaxed max-w-sm mx-auto">
                                             As a <span className="text-indigo-400 font-bold">{role}</span>, you have full access to manage teams, review activity, and view reports.
                                         </p>
@@ -210,7 +210,7 @@ export function AcceptInvite() {
                             )}
 
                             <div className="pt-8 border-t border-border text-center">
-                                <p className="text-[11px] text-text-muted font-medium uppercase tracking-widest">
+                                <p className="text-[11px] text-text-muted font-medium ">
                                     Need help? Contact support@trackora.ai
                                 </p>
                             </div>
@@ -233,7 +233,7 @@ export function AcceptInvite() {
                         <div className="w-5 h-5 rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
                              <div className="w-2.5 h-2.5 border-2 border-white rounded-[1px] rotate-45" />
                         </div>
-                        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-text-secondary">Trackora Invitation</span>
+                        <span className="text-[10px] font-bold tracking-[0.2em] text-text-secondary">Trackora Invitation</span>
                     </div>
                     
                     <h1 className="text-3xl font-bold tracking-tight text-text-primary mb-3 font-head">
@@ -266,7 +266,7 @@ export function AcceptInvite() {
                         />
 
                         <div className="space-y-1.5 border-t border-border pt-5 mt-5">
-                            <label className="text-xs font-bold text-text-secondary uppercase tracking-wider opacity-80 pl-0.5">Secure Password</label>
+                            <label className="text-xs font-bold text-text-secondary opacity-80 pl-0.5">Secure Password</label>
                             <div className="relative">
                                 <Input
                                     type={showPw ? 'text' : 'password'}

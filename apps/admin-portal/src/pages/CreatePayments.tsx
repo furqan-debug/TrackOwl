@@ -61,25 +61,25 @@ export function CreatePayments() {
     return (
         <div className="p-8 max-w-[800px] mx-auto w-full">
             <div className="mb-8">
-                <Link to="/financials" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-slate-800 transition-colors mb-4">
+                <Link to="/financials" className="inline-flex items-center text-sm font-medium text-text-muted hover:text-slate-800 transition-colors mb-4">
                     <ChevronLeft className="w-4 h-4 mr-1" /> Back to Financials
                 </Link>
-                <h1 className="text-2xl font-semibold text-slate-900 tracking-tight flex items-center gap-3">
+                <h1 className="text-2xl font-semibold text-text-main tracking-tight flex items-center gap-3">
                     <CreditCard className="w-6 h-6 text-indigo-500" />
                     Issue Payment
                 </h1>
-                <p className="text-slate-500 text-sm mt-1">Record a new payment made to a team member</p>
+                <p className="text-text-muted text-sm mt-1">Record a new payment made to a team member</p>
             </div>
 
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="bg-surface rounded-xl border border-border shadow-shell-sm overflow-hidden">
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Recipient Member *</label>
+                        <label className="block text-sm font-medium text-text-main mb-1.5">Recipient Member *</label>
                         <select
                             required
                             value={selectedMember}
                             onChange={(e) => setSelectedMember(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                            className="w-full bg-surface-hover border border-border rounded-lg px-3 py-2 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                         >
                             <option value="">Select a member...</option>
                             {members.map(m => (
@@ -90,7 +90,7 @@ export function CreatePayments() {
 
                     <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1.5">Amount ($) *</label>
+                            <label className="block text-sm font-medium text-text-main mb-1.5">Amount ($) *</label>
                             <input
                                 type="number"
                                 step="0.01"
@@ -98,17 +98,17 @@ export function CreatePayments() {
                                 required
                                 value={amount}
                                 onChange={(e) => setAmount(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono"
+                                className="w-full bg-surface-hover border border-border rounded-lg px-3 py-2 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-mono"
                                 placeholder="0.00"
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-700 mb-1.5">Payment Method *</label>
+                            <label className="block text-sm font-medium text-text-main mb-1.5">Payment Method *</label>
                             <select
                                 required
                                 value={method}
                                 onChange={(e) => setMethod(e.target.value)}
-                                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                                className="w-full bg-surface-hover border border-border rounded-lg px-3 py-2 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                             >
                                 <option value="">Select method...</option>
                                 <option value="Bank Transfer">Bank Transfer</option>
@@ -121,24 +121,24 @@ export function CreatePayments() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700 mb-1.5">Reference / Notes</label>
+                        <label className="block text-sm font-medium text-text-main mb-1.5">Reference / Notes</label>
                         <input
                             type="text"
                             value={reference}
                             onChange={(e) => setReference(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                            className="w-full bg-surface-hover border border-border rounded-lg px-3 py-2 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                             placeholder="e.g. Transaction ID, Check #, or brief note"
                         />
                     </div>
 
-                    <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                        <Link to="/financials" className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 rounded-lg transition-colors">
+                    <div className="pt-4 border-t border-border flex justify-end gap-3">
+                        <Link to="/financials" className="px-4 py-2 text-sm font-medium text-text-muted hover:bg-surface-hover rounded-lg transition-colors">
                             Cancel
                         </Link>
                         <button
                             type="submit"
                             disabled={loading || fetching || isViewer}
-                            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all shadow-sm active:scale-95 ${isViewer ? 'bg-slate-300 text-slate-100 cursor-not-allowed grayscale opacity-60 shadow-none' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100'}`}
+                            className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all shadow-shell-sm active:scale-95 ${isViewer ? 'bg-slate-300 text-slate-100 cursor-not-allowed grayscale opacity-60 shadow-none' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100'}`}
                         >
                             {loading ? 'Processing...' : (isViewer ? 'Read-only' : <><Check className="w-4 h-4" /> Issue Payment</>)}
                         </button>

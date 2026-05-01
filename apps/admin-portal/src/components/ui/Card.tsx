@@ -40,12 +40,12 @@ export function Card({
                 )}>
                     <div className="space-y-0.5">
                         {title && (
-                            <h2 className="text-xs font-bold text-[var(--text-main)] uppercase tracking-widest">
+                            <h2 className="text-xs font-bold text-[var(--text-main)] ">
                                 {title}
                             </h2>
                         )}
                         {subtitle && (
-                            <p className="text-[10px] font-medium text-[var(--text-muted)] opacity-60 uppercase tracking-widest">
+                            <p className="text-[10px] font-medium text-[var(--text-muted)] opacity-60 ">
                                 {subtitle}
                             </p>
                         )}
