@@ -351,7 +351,7 @@ export function Dashboard() {
                         value={`${stats.avgActivityScore}%`} 
                         sub="Avg activity score this week" 
                         trend={3} 
-                        accent="primary"
+                        accent="brown-gradient"
                     />
                     <StatMetric 
                         icon={<Clock className="w-5 h-5" />} 
@@ -359,21 +359,21 @@ export function Dashboard() {
                         value={formatDuration(stats.totalProductiveMinutes)} 
                         sub="Total hours tracked this week" 
                         trend={5} 
-                        accent="amber"
+                        accent="brown-gradient"
                     />
                     <StatMetric 
                         icon={<FolderOpen className="w-5 h-5" />} 
                         label="Utilization" 
                         value={stats.projectsWorked} 
                         sub="Projects with active progress" 
-                        accent="rose"
+                        accent="brown-gradient"
                     />
                     <StatMetric 
                         icon={<Users className="w-5 h-5" />} 
                         label="Live Presence" 
                         value={onlineMembers.filter(m => m.status !== 'offline').length} 
                         sub="Members currently active" 
-                        accent="emerald"
+                        accent="brown-gradient"
                     />
                 </div>
 
