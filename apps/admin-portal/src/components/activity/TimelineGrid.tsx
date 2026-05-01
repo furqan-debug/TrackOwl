@@ -43,18 +43,18 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
                                     {hour < 12 ? 'AM' : 'PM'}
                                 </span>
                             </div>
-                            
+
                             {/* Activity Blocks */}
                             <div className="flex-1 grid grid-cols-6 gap-4 min-h-[72px]">
                                 {[0, 1, 2, 3, 4, 5].map(index => {
                                     const blockStartMin = index * 10;
                                     const block = hourBlocks.find(b => parseInt(b.startTime.split(':')[1]) === blockStartMin);
-                                    
+
                                     const hasData = !!block;
                                     const intensity = block?.activityPercent ?? 0;
 
                                     return (
-                                        <div 
+                                        <div
                                             key={index}
                                             className={clsx(
                                                 "relative rounded-[20px] transition-all duration-500 flex flex-col items-center justify-center group/block overflow-hidden shadow-sm border",
@@ -73,7 +73,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
                                                     <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none opacity-50" />
                                                 </>
                                             )}
-                                            
+
                                             {/* Tooltip HUD */}
                                             {hasData && (
                                                 <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-surface text-text-main text-[10px] font-bold px-3 py-1.5 rounded-xl opacity-0 group-hover/block:opacity-100 translate-y-2 group-hover/block:translate-y-0 transition-all duration-300 pointer-events-none whitespace-nowrap z-20 shadow-2xl border border-border uppercase tracking-widest">
@@ -93,7 +93,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
 }
 
 function getBlockStyle(percent: number): string {
-    if (percent <= 20) return 'bg-red-600 border-red-700 text-white shadow-lg'; 
+    if (percent <= 20) return 'bg-red-600 border-red-700 text-white shadow-lg';
     if (percent <= 50) return 'bg-sky-500 border-sky-400 text-white shadow-glow-primary';
     return 'bg-blue-700 border-blue-800 text-white shadow-lg';
 }
