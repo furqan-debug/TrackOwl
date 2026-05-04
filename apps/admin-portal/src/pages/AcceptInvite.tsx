@@ -171,7 +171,7 @@ export function AcceptInvite() {
                                         <h2 className="text-xl font-bold text-text-primary font-head ">Next Steps</h2>
                                         <div className="grid gap-4 text-left">
                                             {[
-                                                { icon: <Download className="w-5 h-5" />, title: 'Download Tracker', desc: 'Install the Trackora app to begin tracking your work.' },
+                                                { icon: <Download className="w-5 h-5" />, title: 'Download Tracker', desc: 'Install the TrackOwl app to begin tracking your work.' },
                                                 { icon: <User className="w-5 h-5" />, title: 'Sign In', desc: 'Use your work email and the new password to log in.' },
                                                 { icon: <Rocket className="w-5 h-5" />, title: 'Start Working', desc: 'Select your project and click "Start" to begin your shift.' },
                                             ].map((step, i) => (
@@ -211,7 +211,7 @@ export function AcceptInvite() {
 
                             <div className="pt-8 border-t border-border text-center">
                                 <p className="text-[11px] text-text-muted font-medium ">
-                                    Need help? Contact support@trackora.ai
+                                    Need help? Contact support@TrackOwl.ai
                                 </p>
                             </div>
                         </div>
@@ -233,7 +233,7 @@ export function AcceptInvite() {
                         <div className="w-5 h-5 rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
                              <div className="w-2.5 h-2.5 border-2 border-white rounded-[1px] rotate-45" />
                         </div>
-                        <span className="text-[10px] font-bold tracking-[0.2em] text-text-secondary">Trackora Invitation</span>
+                        <span className="text-[10px] font-bold tracking-[0.2em] text-text-secondary">TrackOwl Invitation</span>
                     </div>
                     
                     <h1 className="text-3xl font-bold tracking-tight text-text-primary mb-3 font-head">
@@ -317,7 +317,7 @@ export function AcceptInvite() {
                 </Card>
 
                 <p className="mt-8 text-center text-[11px] text-text-muted font-medium px-4 leading-relaxed">
-                    By activating, you agree to your organization's data policies and Trackora's <a href="#" className="underline">Terms of Service</a>.
+                    By activating, you agree to your organization's data policies and TrackOwl's <a href="#" className="underline">Terms of Service</a>.
                 </p>
             </div>
         </div>

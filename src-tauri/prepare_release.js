@@ -4,7 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const baseDir = 'h:/DigiReps/DigiReps Tracker';
-const nsisPath = path.join(baseDir, 'src-tauri/target/release/bundle/nsis/Trackora_1.0.9_x64-setup.exe');
+const nsisPath = path.join(baseDir, 'src-tauri/target/release/bundle/nsis/TrackOwl_1.0.9_x64-setup.exe');
 const keyEncodedPath = path.join(baseDir, 'src-tauri/signing.key');
 const rawKeyPath = path.join(baseDir, 'src-tauri/rsign_final.key');
 
@@ -16,7 +16,7 @@ try {
   console.log('Decoded key written to rsign_final.key');
 
   console.log('--- Step 2: Sign binary ---');
-  const env = { ...process.env, TAURI_SIGNING_PRIVATE_KEY_PASSWORD: 'Trackora2026!' };
+  const env = { ...process.env, TAURI_SIGNING_PRIVATE_KEY_PASSWORD: 'TrackOwl2026!' };
   
   // Try signing with npx tauri
   const cmd = `npx tauri signer sign -k "${rawKeyPath}" "${nsisPath}"`;

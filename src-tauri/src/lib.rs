@@ -1,4 +1,4 @@
-// lib.rs — Trackora (Tauri v2)
+// lib.rs — TrackOwl (Tauri v2)
 // Phases 2-5: IPC, native tracking, SQLite cache, notifications, auto-updater
 // Phase 6+: Direct Supabase REST API — no Express backend needed
 
@@ -282,6 +282,7 @@ fn start_tracking(
                     // Reset counters atomics
                     counts.mouse_count.store(0, std::sync::atomic::Ordering::Relaxed);
                     counts.keyboard_count.store(0, std::sync::atomic::Ordering::Relaxed);
+                    counts.active_seconds.store(0, std::sync::atomic::Ordering::Relaxed);
 
                     // Start native trackers
                     tracker::start_sample_loop(
@@ -480,6 +481,7 @@ fn start_idle_monitoring(state: tauri::State<'_, Mutex<AppState>>, limit: u32) {
     // Reset counts so we only detect new movement
     s.counts.mouse_count.store(0, std::sync::atomic::Ordering::Relaxed);
     s.counts.keyboard_count.store(0, std::sync::atomic::Ordering::Relaxed);
+    s.counts.active_seconds.store(0, std::sync::atomic::Ordering::Relaxed);
 }
 
 /// invoke('stop_idle_monitoring')
@@ -557,7 +559,7 @@ pub fn run() {
             let app_handle = app.handle().clone();
             
             // --- System Tray ---
-            let quit_i = tauri::menu::MenuItem::with_id(app, "quit", "Quit Trackora", true, None::<&str>)?;
+            let quit_i = tauri::menu::MenuItem::with_id(app, "quit", "Quit TrackOwl", true, None::<&str>)?;
             let show_i = tauri::menu::MenuItem::with_id(app, "show", "Show Window", true, None::<&str>)?;
             let menu = tauri::menu::Menu::with_items(app, &[&show_i, &quit_i])?;
 
@@ -652,5 +654,5 @@ pub fn run() {
             }
         })
         .run(tauri::generate_context!())
-        .expect("error while running Trackora");
+        .expect("error while running TrackOwl");
 }

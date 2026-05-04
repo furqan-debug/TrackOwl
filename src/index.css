@@ -57,8 +57,8 @@ button {
 }
 
 button:focus-visible {
-  outline: 2px solid #6366f1;
-  /* Indigo 500 */
+  outline: 2px solid #D4A373;
+  /* TrackOwl Gold */
   outline-offset: 2px;
 }
 

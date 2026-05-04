@@ -42,7 +42,7 @@ export function ScreenshotLightbox({ enlarged, setEnlarged }: ScreenshotLightbox
                             <div className="flex items-center gap-2">
                                 <Shield className="w-4 h-4 text-primary animate-pulse" />
                                 <h2 className="text-xl font-bold text-white tracking-tight flex items-center">
-                                    TRACKORA <span className="text-primary italic ml-1">VISION</span>
+                                    TrackOwl <span className="text-primary italic ml-1">VISION</span>
                                 </h2>
                             </div>
                             <div className="flex items-center gap-2 mt-0.5">

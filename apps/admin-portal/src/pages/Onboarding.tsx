@@ -133,9 +133,9 @@ export function Onboarding() {
             <div className="w-full max-w-[1200px] px-8 pt-8 flex items-center justify-between">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
                     <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
-                        <img src={LogoIcon} alt="Trackora" className="w-full h-full object-contain" />
+                        <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
                     </div>
-                    <span className="text-lg font-bold text-text-main tracking-tight">Trackora</span>
+                    <span className="text-lg font-bold text-text-main tracking-tight">TrackOwl</span>
                 </div>
                 <div className="text-xs font-semibold text-text-muted bg-surface px-3 py-1 rounded-full border border-border">
                     Step {step} of 3
@@ -150,7 +150,7 @@ export function Onboarding() {
                             Build your workspace <br/>in minutes.
                         </h1>
                         <p className="text-lg text-text-muted leading-relaxed max-w-[440px]">
-                            Join 2,000+ teams using Trackora to streamline their operations and boost performance.
+                            Join 2,000+ teams using TrackOwl to streamline their operations and boost performance.
                         </p>
                     </div>
 

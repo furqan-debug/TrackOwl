@@ -3,8 +3,8 @@ import fs from 'fs';
 import path from 'path';
 
 const baseDir = 'c:/Users/Furqan/DigiReps/DigiReps Tracker';
-const nsisPath = path.join(baseDir, 'src-tauri/target/release/bundle/nsis/Trackora_1.2.4_x64-setup.exe');
-const msiPath  = path.join(baseDir, 'src-tauri/target/release/bundle/msi/Trackora_1.2.4_x64_en-US.msi');
+const nsisPath = path.join(baseDir, 'src-tauri/target/release/bundle/nsis/TrackOwl_1.2.4_x64-setup.exe');
+const msiPath  = path.join(baseDir, 'src-tauri/target/release/bundle/msi/TrackOwl_1.2.4_x64_en-US.msi');
 const keyDecodedPath = path.join(baseDir, 'src-tauri/decoded_signing.key');
 
 try {
@@ -17,7 +17,7 @@ try {
 
   const env = { 
     ...process.env, 
-    TAURI_SIGNING_PRIVATE_KEY_PASSWORD: 'Trackora2026!'
+    TAURI_SIGNING_PRIVATE_KEY_PASSWORD: 'TrackOwl2026!'
   };
 
   console.log('--- Step 2: Sign binaries ---');
@@ -41,12 +41,12 @@ try {
   const latest = JSON.parse(fs.readFileSync(latestJsonPath, 'utf8'));
   
   latest.version = '1.2.4';
-  latest.notes = 'Trackora v1.2.4 - Performance and Stability Release: Single-instance protection, optimized input tracking, and fixed auto-updater progress reporting.';
+  latest.notes = 'TrackOwl v1.2.4 - Performance and Stability Release: Single-instance protection, optimized input tracking, and fixed auto-updater progress reporting.';
   latest.pub_date = new Date().toISOString();
   
   // Use the NSIS signature for the windows-x86_64 platform
   latest.platforms['windows-x86_64'].signature = stdoutNsis.trim();
-  latest.platforms['windows-x86_64'].url = `https://github.com/furqan-debug/Trackora/releases/download/v1.2.4/Trackora_1.2.4_x64-setup.exe`;
+  latest.platforms['windows-x86_64'].url = `https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.4/TrackOwl_1.2.4_x64-setup.exe`;
 
   fs.writeFileSync(latestJsonPath, JSON.stringify(latest, null, 2));
   console.log('latest.json updated with v1.2.4!');

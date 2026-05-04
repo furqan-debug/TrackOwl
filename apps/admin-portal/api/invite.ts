@@ -64,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         // 3. Invite the user via Supabase Auth (This securely sends the email via the configured SMTP/Resend)
-        const redirectTo = `${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://trackora-ai.vercel.app'}/accept-invite`;
+        const redirectTo = `${process.env.VERCEL_URL ? 'https://' + process.env.VERCEL_URL : 'https://TrackOwl-ai.vercel.app'}/accept-invite`;
         const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, { 
             redirectTo,
             data: { 

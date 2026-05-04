@@ -34,7 +34,7 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
                     </div>
                     <h1 className="text-xl font-bold text-text-main mb-2">Admin Portal Access Restricted</h1>
                     <p className="text-text-muted text-sm mb-8">
-                        This portal is for Admins and Managers only. Please use the Trackora desktop app for tracking.
+                        This portal is for Admins and Managers only. Please use the TrackOwl desktop app for tracking.
                     </p>
                     <button 
                         onClick={() => signOut()}
