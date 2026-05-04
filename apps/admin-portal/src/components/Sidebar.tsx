@@ -112,7 +112,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                         <img src={theme === 'dark' ? logoDark : logoLight} alt="" className="w-full h-full object-contain" />
                     </div>
                 ) : (
-                    <img src={theme === 'dark' ? logoDark : logoLight} alt="TrackOwl" className="h-14 w-auto object-contain" />
+                    <img src={theme === 'dark' ? logoDark : logoLight} alt="TrackOwl" className="h-20 w-auto object-contain" />
                 )}
             </Link>
 
