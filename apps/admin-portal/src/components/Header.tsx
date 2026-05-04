@@ -60,24 +60,24 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
     });
 
     return (
-        <header className="sticky top-0 z-[60] w-full h-16 bg-[var(--bg-surface)] backdrop-blur-md border-b border-[var(--border-color)] transition-all duration-300">
+        <header className="sticky top-0 z-[60] w-full h-20 bg-[var(--bg-surface)] backdrop-blur-md border-b border-[var(--border-color)] transition-all duration-300">
             <div className="max-w-[1600px] mx-auto h-full flex items-center justify-between px-6 lg:px-10 relative">
 
                 {/* 💎 Brand Section */}
                 <div className="flex items-center gap-6">
-                    <Link to="/dashboard" className="flex items-center group transition-transform duration-300 hover:scale-[1.02]">
+                    <Link to="/dashboard" className="flex items-center group transition-transform duration-300 hover:scale-[1.05]">
                         <img
                             src={theme === 'dark' ? logoDark : logoLight}
                             alt="TrackOwl"
-                            className="h-19 w-auto object-contain"
+                            className="h-30 w-auto object-contain"
                         />
                     </Link>
 
-                    <div className="hidden lg:block h-5 w-px bg-[var(--border-color)]" />
+                    <div className="hidden lg:block h-8 w-px bg-[var(--border-color)]" />
 
                     <div className="hidden lg:flex flex-col">
-                        <span className="text-[9px] font-bold text-[var(--text-muted)] leading-none mb-0.5">Admin</span>
-                        <span className="text-[12px] font-bold text-[var(--text-main)] tracking-tight">Portal</span>
+                        <span className="text-[11px] font-bold text-[var(--text-muted)] leading-none mb-0.5">Admin</span>
+                        <span className="text-[15px] font-bold text-[var(--text-main)] tracking-tight">Portal</span>
                     </div>
                 </div>
 

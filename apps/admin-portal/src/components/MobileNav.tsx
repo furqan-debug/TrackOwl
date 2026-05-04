@@ -36,7 +36,7 @@ export function MobileNav({ onClose }: MobileNavProps) {
             <div className="fixed inset-y-0 left-0 w-[300px] bg-[var(--bg-surface)] shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
                 <div className="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
                     <div className="flex items-center">
-                        <img src={theme === 'dark' ? logoDark : logoLight} alt="TrackOwl" className="h-10 w-auto object-contain" />
+                        <img src={theme === 'dark' ? logoDark : logoLight} alt="TrackOwl" className="h-14 w-auto object-contain" />
                     </div>
                     <button 
                         onClick={onClose}
