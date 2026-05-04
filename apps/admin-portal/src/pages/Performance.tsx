@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Clock, Activity, MousePointer2, Keyboard, Search, ArrowUpDown } from 'lucide-react';
+import { Clock, Activity, MousePointer2, Keyboard, Search, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { fetchAllActivitySamples, calculateActivityScore } from '../lib/dataUtils';
 
 interface MemberPerformance {
     id: string;
@@ -14,7 +16,13 @@ interface MemberPerformance {
 type SortField = 'name' | 'totalMs' | 'avgActivity' | 'totalKeys' | 'totalClicks';
 type SortDirection = 'asc' | 'desc';
 
+// Module-level cache
+let perfCache: any = null;
+let perfCacheKey: string | null = null;
+
 export function Performance() {
+    const { profile } = useAuth();
+    const organizationId = profile?.organization_id;
     const [loading, setLoading] = useState(true);
     const [performanceData, setPerformanceData] = useState<MemberPerformance[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -33,14 +41,26 @@ export function Performance() {
         fetchData();
     }, [selectedDate]);
 
-    async function fetchData() {
+    async function fetchData(forceRefresh = false) {
+        const cacheKey = selectedDate;
+        if (!forceRefresh && perfCache && perfCacheKey === cacheKey) {
+            setPerformanceData(perfCache.data);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
 
         const start = `${selectedDate}T00:00:00`;
         const end = `${selectedDate}T23:59:59`;
 
         // 1. Get all active members
-        const { data: members } = await supabase.from('members').select('id, full_name, email').eq('status', 'Active');
+        const { data: members } = await supabase.from('members')
+            .select('id, full_name, email, idle_limit')
+            .eq('organization_id', organizationId)
+            .eq('status', 'Active')
+            .order('full_name', { ascending: true });
+
         if (!members) {
             setLoading(false);
             return;
@@ -50,6 +70,7 @@ export function Performance() {
         const { data: sessions } = await supabase
             .from('sessions')
             .select('id, user_id, started_at, ended_at')
+            .eq('organization_id', organizationId)
             .gte('started_at', start)
             .lte('started_at', end)
             .not('ended_at', 'is', null);
@@ -59,31 +80,79 @@ export function Performance() {
         // 3. Get activity samples
         let samples: any[] = [];
         if (sessionIds.length > 0) {
-            const { data: acts } = await supabase
-                .from('activity_samples')
-                .select('session_id, activity_percent, key_presses, mouse_clicks')
-                .in('session_id', sessionIds);
-            if (acts) samples = acts;
+            samples = await fetchAllActivitySamples(supabase, start, end, 'session_id, activity_percent, key_presses, mouse_clicks', {
+                organizationId: organizationId ?? undefined,
+                sessionIds
+            });
         }
 
-        // 4. Calculate member stats
+        // 4. Index data for fast lookup
+        const sessionsByUser = new Map<string, any[]>();
+        (sessions || []).forEach(s => {
+            if (!sessionsByUser.has(s.user_id)) sessionsByUser.set(s.user_id, []);
+            sessionsByUser.get(s.user_id)!.push(s);
+        });
+
+        const samplesBySession = new Map<string, any[]>();
+        samples.forEach(s => {
+            if (!samplesBySession.has(s.session_id)) samplesBySession.set(s.session_id, []);
+            samplesBySession.get(s.session_id)!.push(s);
+        });
+
+        // 5. Calculate member stats
         const memberStats: MemberPerformance[] = members.map(m => {
-            const mSessions = (sessions || []).filter(s => s.user_id === m.id);
-            const mSessionIds = new Set(mSessions.map(s => s.id));
-            const mSamples = samples.filter(s => mSessionIds.has(s.session_id));
+            const mSessions = sessionsByUser.get(m.id) || [];
+            const rawSamples: any[] = [];
+            mSessions.forEach(sess => {
+                const sessSamples = samplesBySession.get(sess.id);
+                if (sessSamples) rawSamples.push(...sessSamples);
+            });
 
-            // Time
-            const totalMs = mSessions.reduce((acc, s) => {
-                return acc + (new Date(s.ended_at!).getTime() - new Date(s.started_at).getTime());
-            }, 0);
+            // Deduplicate samples by minute
+            const seen = new Set();
+            const mSamples: any[] = [];
+            rawSamples.sort((a,b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()).forEach(s => {
+                const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
+                if (seen.has(minute)) return;
+                seen.add(minute);
+                mSamples.push(s);
+            });
 
-            // Averages and sums
-            const totalKeys = mSamples.reduce((acc, s) => acc + (s.key_presses || 0), 0);
-            const totalClicks = mSamples.reduce((acc, s) => acc + (s.mouse_clicks || 0), 0);
+            const limit = m.idle_limit ?? 0;
+            const productiveSamples: any[] = [];
+            if (limit <= 1) {
+                productiveSamples.push(...mSamples);
+            } else {
+                let currentBlock: any[] = [];
+                for (let i = 0; i < mSamples.length; i++) {
+                    const s = mSamples[i];
+                    const prev = i > 0 ? mSamples[i-1] : null;
+                    const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
+                    const isContiguous = prev && gapMs <= 125000;
 
-            const avgActivity = mSamples.length > 0
-                ? mSamples.reduce((acc, s) => acc + (s.activity_percent || 0), 0) / mSamples.length
-                : 0;
+                    if (s.idle && isContiguous) {
+                        currentBlock.push(s);
+                    } else if (s.idle && !prev) {
+                        currentBlock = [s];
+                    } else if (s.idle && !isContiguous) {
+                        if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
+                        currentBlock = [s];
+                    } else {
+                        productiveSamples.push(s);
+                        if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
+                        currentBlock = [];
+                    }
+                }
+                if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
+            }
+
+            // Sums
+            const totalKeys = productiveSamples.reduce((acc, s) => acc + (s.key_presses || 0), 0);
+            const totalClicks = productiveSamples.reduce((acc, s) => acc + (s.mouse_clicks || 0), 0);
+            const avgActivity = calculateActivityScore(productiveSamples);
+
+            // Time: Use productive samples as the source of truth for "active" time
+            const totalMs = productiveSamples.length * 60000;
 
             return {
                 id: m.id,
@@ -96,8 +165,13 @@ export function Performance() {
         });
 
         // Filter out empty people unless we want to see everyone (for now, only those who tracked time)
-        setPerformanceData(memberStats.filter(m => m.totalMs > 0 || m.totalKeys > 0));
+        const filteredData = memberStats.filter(m => m.totalMs > 0 || m.totalKeys > 0);
+        setPerformanceData(filteredData);
         setLoading(false);
+
+        // Update cache
+        perfCache = { data: filteredData };
+        perfCacheKey = cacheKey;
     }
 
     const formatHours = (ms: number) => {
@@ -148,15 +222,24 @@ export function Performance() {
             <div className="bg-surface border border-border rounded-xl shadow-shell-sm overflow-hidden">
                 <div className="p-4 border-b border-border bg-surface-hover/50 flex justify-between items-center">
                     <h2 className="font-semibold text-text-main">Team Rankings</h2>
-                    <div className="relative">
-                        <Search className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
-                        <input
-                            type="text"
-                            placeholder="Find member..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="bg-surface border border-border rounded-md pl-9 pr-4 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 w-64"
-                        />
+                    <div className="flex items-center gap-3">
+                        <div className="relative">
+                            <Search className="w-4 h-4 text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
+                            <input
+                                type="text"
+                                placeholder="Find member..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="bg-surface border border-border rounded-md pl-9 pr-4 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary/20 w-64"
+                            />
+                        </div>
+                        <button
+                            onClick={() => fetchData(true)}
+                            className="p-2 hover:bg-surface-solid border border-border rounded-md text-text-muted hover:text-primary transition-all"
+                            title="Refresh Data"
+                        >
+                            <RefreshCw className={loading ? "w-4 h-4 animate-spin text-primary" : "w-4 h-4"} />
+                        </button>
                     </div>
                 </div>
 

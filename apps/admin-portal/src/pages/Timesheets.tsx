@@ -17,6 +17,7 @@ import {
     getGroupingDateInTz,
     fetchAllActivitySamples
 } from '../lib/dataUtils';
+import { useAuth } from '../context/AuthContext';
 
 interface Session {
     id: string;
@@ -54,7 +55,13 @@ interface MemberInfo {
 
 const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+// Module-level cache
+let timesheetsCache: any = null;
+let timesheetsCacheKey: string | null = null;
+
 export function Timesheets() {
+    const { profile } = useAuth();
+    const organizationId = profile?.organization_id;
     const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'calendar'>('daily');
     const [entries, setEntries] = useState<DailyEntry[]>([]);
     const [members, setMembers] = useState<MemberInfo[]>([]);
@@ -100,23 +107,44 @@ export function Timesheets() {
         return { start, end };
     }, [selectedDate, viewMode]);
 
-    useEffect(() => { fetchMembers(); fetchProjects(); }, []);
+    useEffect(() => { 
+        if (organizationId) {
+            fetchMembers(); 
+            fetchProjects(); 
+        }
+    }, [organizationId]);
     
     useEffect(() => { 
-        fetchTimesheets(); 
-    }, [range, selectedMember, filterProjectId, activeTimezone, members, projects]);
+        if (organizationId) {
+            fetchTimesheets(); 
+        }
+    }, [range, selectedMember, filterProjectId, activeTimezone, members, projects, organizationId]);
 
     async function fetchMembers() {
-        const { data } = await supabase.from('members').select('id, auth_user_id, full_name, timezone, idle_limit').order('full_name');
+        const { data } = await supabase.from('members')
+            .select('id, auth_user_id, full_name, timezone, idle_limit')
+            .eq('organization_id', organizationId)
+            .order('full_name');
         setMembers(data as MemberInfo[] || []);
     }
 
     async function fetchProjects() {
-        const { data } = await supabase.from('projects').select('id, name').eq('status', 'Active').order('name');
+        const { data } = await supabase.from('projects')
+            .select('id, name')
+            .eq('organization_id', organizationId)
+            .eq('status', 'Active')
+            .order('name');
         setProjects(data || []);
     }
 
-    async function fetchTimesheets() {
+    async function fetchTimesheets(forceRefresh = false) {
+        const cacheKey = `${range.start.toISOString()}_${range.end.toISOString()}_${selectedMember}_${filterProjectId}_${activeTimezone}`;
+        if (!forceRefresh && timesheetsCache && timesheetsCacheKey === cacheKey) {
+            setEntries(timesheetsCache.entries);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
             const fetchStart = new Date(range.start.getTime() - 24 * 60 * 60 * 1000);
@@ -124,6 +152,7 @@ export function Timesheets() {
 
             let query = supabase.from('sessions')
                 .select('id, user_id, project_id, started_at, ended_at')
+                .eq('organization_id', organizationId)
                 .lt('started_at', fetchEnd.toISOString())
                 .or(`ended_at.is.null,ended_at.gt.${fetchStart.toISOString()}`)
                 .order('started_at', { ascending: false });
@@ -142,9 +171,16 @@ export function Timesheets() {
             const { data: rawSessions, error: sessionErr } = await query;
             if (sessionErr) throw sessionErr;
 
+            const projectMap = new Map(projects.map(p => [p.id, p.name]));
+            const memberMap = new Map();
+            members.forEach(m => {
+                memberMap.set(m.id, m);
+                if (m.auth_user_id) memberMap.set(m.auth_user_id, m);
+            });
+
             const sessions = (rawSessions || []).map((s: any) => ({
                 ...s,
-                project_name: projects.find(p => p.id === s.project_id)?.name || 'No Project'
+                project_name: projectMap.get(s.project_id) || 'No Project'
             })) as Session[];
 
             const sessionIds = sessions.map((s: Session) => s.id);
@@ -157,7 +193,10 @@ export function Timesheets() {
                         fetchStart.toISOString(), 
                         fetchEnd.toISOString(), 
                         'session_id, recorded_at, idle, activity_percent, is_offline',
-                        { sessionIds }
+                        { 
+                            organizationId: organizationId ?? undefined, 
+                            sessionIds 
+                        }
                     );
                 } catch (actErr) {
                     console.error('Activity fetch failed (non-blocking):', actErr);
@@ -180,7 +219,7 @@ export function Timesheets() {
             });
 
             sessions.forEach((s: Session) => {
-                const member = members.find(m => m.id === s.user_id || m.auth_user_id === s.user_id);
+                const member = memberMap.get(s.user_id);
                 const tz = activeTimezone === 'User Local' ? (member?.timezone || undefined) : activeTimezone;
                 const dayKey = getGroupingDateInTz(s.started_at, tz);
                 const key = dailyMap[dayKey] ? dayKey : null;
@@ -236,6 +275,10 @@ export function Timesheets() {
             });
 
             setEntries(result);
+            
+            // Update cache
+            timesheetsCache = { entries: result };
+            timesheetsCacheKey = cacheKey;
         } catch (error) {
             console.error('Error fetching timesheets:', error);
             setEntries([]);

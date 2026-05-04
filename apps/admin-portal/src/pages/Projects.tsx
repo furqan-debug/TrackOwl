@@ -47,6 +47,10 @@ interface Project {
 }
 
 
+// Module-level cache
+let projectsCache: any = null;
+let projectsCacheKey: string | null = null;
+
 export function Projects() {
     const { profile } = useAuth();
     const isViewer = profile?.role === 'Viewer';
@@ -59,7 +63,14 @@ export function Projects() {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-    const fetchProjects = useCallback(async (isSilent = false) => {
+    const fetchProjects = useCallback(async (isSilent = false, forceRefresh = false) => {
+        const cacheKey = activeTab;
+        if (!forceRefresh && projectsCache && projectsCacheKey === cacheKey) {
+            setProjects(projectsCache.data);
+            setLoading(false);
+            return;
+        }
+
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
         
@@ -89,6 +100,10 @@ export function Projects() {
             }));
 
             setProjects(formatted);
+
+            // Update cache
+            projectsCache = { data: formatted };
+            projectsCacheKey = cacheKey;
         } catch (err) {
             console.error(err);
         } finally {
@@ -229,7 +244,7 @@ export function Projects() {
                             </div>
                             
                             <button 
-                                onClick={() => fetchProjects(true)} 
+                                onClick={() => fetchProjects(true, true)} 
                                 className={clsx(
                                     "w-10 h-10 flex items-center justify-center border border-border rounded-xl transition-all",
                                     refreshing ? "text-primary bg-primary/5" : "text-text-muted hover:text-slate-900 hover:bg-surface-hover"

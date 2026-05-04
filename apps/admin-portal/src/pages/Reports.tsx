@@ -8,6 +8,7 @@ import {
     ArrowUpRight,
     ChevronLeft,
     ChevronRight,
+    RefreshCw,
     Calendar as CalendarIcon
 } from 'lucide-react';
 import {
@@ -26,6 +27,7 @@ import {
     getEffectiveEnd,
     fetchAllActivitySamples
 } from '../lib/dataUtils';
+import { useAuth } from '../context/AuthContext';
 
 // Official TrackOwl Brand Palette
 const BRAND_PRIMARY = 'var(--color-chart-main)';
@@ -40,7 +42,13 @@ const CHART_COLORS = [
 const RANGES = ['Today', 'Yesterday', 'Last 7 Days', 'Last Week', 'Last 2 Weeks', 'This Month', 'Last Month', 'Custom'] as const;
 type Range = typeof RANGES[number];
 
+// Module-level cache to prevent re-fetching when switching tabs
+let reportsCache: any = null;
+let reportsCacheKey: string | null = null;
+
 export function Reports() {
+    const { profile } = useAuth();
+    const organizationId = profile?.organization_id;
     const [range, setRange] = useState<Range>('Last 7 Days');
     const [offset, setOffset] = useState(0); // offset in days
     const [showRangeDropdown, setShowRangeDropdown] = useState(false);
@@ -94,12 +102,16 @@ export function Reports() {
     }
 
     async function fetchTeams() {
-        const { data } = await supabase.from('teams').select('id, name');
+        const { data } = await supabase.from('teams').select('id, name').eq('organization_id', organizationId);
         if (data) setTeams(data);
     }
 
     async function fetchMembers() {
-        const { data } = await supabase.from('members').select('id, auth_user_id, email, full_name, pay_rate, bill_rate, timezone').eq('status', 'Active');
+        const { data } = await supabase.from('members')
+            .select('id, auth_user_id, email, full_name, pay_rate, bill_rate, timezone, idle_limit')
+            .eq('organization_id', organizationId)
+            .eq('status', 'Active')
+            .order('full_name', { ascending: true });
         if (data) setMembers(data);
     }
 
@@ -161,15 +173,32 @@ export function Reports() {
         return { start: start.toISOString(), end: end.toISOString() };
     }
 
-    async function fetchReports() {
-        setLoading(true);
+    async function fetchReports(forceRefresh = false) {
         const { start, end } = getDateRange();
+        const cacheKey = `${start}_${end}_${selectedTeamId}_${selectedMemberId}`;
+
+        if (!forceRefresh && reportsCache && reportsCacheKey === cacheKey) {
+            setDailyActivity(reportsCache.dailyActivity);
+            setAppBreakdown(reportsCache.appBreakdown);
+            setScreenshotCount(reportsCache.screenshotCount);
+            setTotalSessions(reportsCache.totalSessions);
+            setTotalMins(reportsCache.totalMins);
+            setAvgActivity(reportsCache.avgActivity);
+            setTotalCosts(reportsCache.totalCosts);
+            setTotalBilled(reportsCache.totalBilled);
+            setTableData(reportsCache.tableData);
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
 
         const membersForLookup = members.length > 0
             ? members
             : (await supabase
                 .from('members')
                 .select('id, auth_user_id, email, full_name, pay_rate, bill_rate, timezone')
+                .eq('organization_id', organizationId)
                 .eq('status', 'Active')).data || [];
 
         const allMemberSessionUserIds = Array.from(
@@ -213,6 +242,7 @@ export function Reports() {
             let sessionsQuery = supabase
                 .from('sessions')
                 .select('id, user_id, started_at, ended_at')
+                .eq('organization_id', organizationId)
                 .lt('started_at', end)
                 .or(`ended_at.is.null,ended_at.gt.${start}`);
 
@@ -239,14 +269,16 @@ export function Reports() {
             if (activeSessionIds.length > 0) ssQuery = ssQuery.in('session_id', activeSessionIds);
 
             const [samples, { count: ssCount }] = await Promise.all([
-                fetchAllActivitySamples(supabase, start, end, 'session_id, recorded_at, activity_percent, idle, app_name', { sessionIds: activeSessionIds.length > 0 ? activeSessionIds : undefined }),
+                fetchAllActivitySamples(supabase, start, end, 'session_id, recorded_at, activity_percent, idle, app_name', { 
+                    organizationId: organizationId ?? undefined,
+                    sessionIds: activeSessionIds.length > 0 ? activeSessionIds : undefined 
+                }),
                 ssQuery,
             ]);
 
             const allSamples = samples || [];
             const activeSessionIdsSet = new Set(activeSessionIds);
             const inScopeSamples = allSamples.filter(s => activeSessionIdsSet.has(s.session_id));
-            const productiveSamples = inScopeSamples.filter(s => s.idle !== true);
 
             const membersMap = new Map<string, any>();
             const memberTzs = new Map<string, string | undefined>();
@@ -260,10 +292,10 @@ export function Reports() {
                 }
             });
 
+            const sessionToUserId = new Map(filteredSessions.map(sess => [sess.id, sess.user_id]));
             const seen = new Set<string>();
             const dedupedSamples: any[] = [];
             [...inScopeSamples].sort((a, b) => (b.activity_percent ?? 0) - (a.activity_percent ?? 0)).forEach(s => {
-                const sessionToUserId = new Map(filteredSessions.map(sess => [sess.id, sess.user_id]));
                 const uid = sessionToUserId.get(s.session_id);
                 if (!uid) return;
                 const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
@@ -273,19 +305,63 @@ export function Reports() {
                 dedupedSamples.push(s);
             });
 
-            const dailyMap: Record<string, { active: number; total_samples: number; total_minutes: number }> = {};
+            const dailyMap: Record<string, { activitySum: number; total_samples: number; total_minutes: number }> = {};
             let costs = 0;
             let billed = 0;
+            const productiveSamples: any[] = [];
 
+            // Group deduped samples by user to apply idle threshold
+            const samplesByUser = new Map<string, any[]>();
             dedupedSamples.forEach(s => {
-                const sessionToUserId = new Map(filteredSessions.map(sess => [sess.id, sess.user_id]));
+                const uid = sessionToUserId.get(s.session_id);
+                if (!uid) return;
+                if (!samplesByUser.has(uid)) samplesByUser.set(uid, []);
+                samplesByUser.get(uid)!.push(s);
+            });
+
+            samplesByUser.forEach((userSamps, uid) => {
+                const member = membersMap.get(uid);
+                const limit = member?.idle_limit ?? 0;
+                
+                if (limit <= 1) {
+                    productiveSamples.push(...userSamps);
+                } else {
+                    // Apply Hubstaff-style block logic: 
+                    // samples in idle blocks >= limit are truly idle (ignored)
+                    const sorted = userSamps.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+                    let currentBlock: any[] = [];
+                    
+                    for (let i = 0; i < sorted.length; i++) {
+                        const s = sorted[i];
+                        const prev = i > 0 ? sorted[i - 1] : null;
+                        const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
+                        const isContiguous = prev && gapMs <= 125000;
+
+                        if (s.idle && isContiguous) {
+                            currentBlock.push(s);
+                        } else if (s.idle && !prev) {
+                            currentBlock = [s];
+                        } else if (s.idle && !isContiguous) {
+                            if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
+                            currentBlock = [s];
+                        } else {
+                            productiveSamples.push(s); // Not idle
+                            if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
+                            currentBlock = [];
+                        }
+                    }
+                    if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
+                }
+            });
+
+            productiveSamples.forEach(s => {
                 const uid = sessionToUserId.get(s.session_id);
                 if (!uid) return;
 
                 const day = getGroupingDateInTz(s.recorded_at, memberTzs.get(uid));
-                if (!dailyMap[day]) dailyMap[day] = { active: 0, total_samples: 0, total_minutes: 0 };
+                if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
 
-                if (s.activity_percent && s.activity_percent > 0) dailyMap[day].active++;
+                dailyMap[day].activitySum += (s.activity_percent || 0);
                 dailyMap[day].total_samples++;
                 dailyMap[day].total_minutes++;
 
@@ -296,22 +372,20 @@ export function Reports() {
                 }
             });
 
-            setDailyActivity(
-                Object.entries(dailyMap).sort().map(([date, v]) => ({
-                    date: new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                    activity: v.total_samples > 0 ? Math.round((v.active / v.total_samples) * 100) : 0,
-                    minutes: Math.round(v.total_minutes),
-                }))
-            );
+            const dailyActivityList = Object.entries(dailyMap).sort().map(([date, v]) => ({
+                date: new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                activity: v.total_samples > 0 ? Math.round(v.activitySum / v.total_samples) : 0,
+                minutes: Math.round(v.total_minutes),
+            }));
+            setDailyActivity(dailyActivityList);
 
             const appMap: Record<string, number> = {};
-            inScopeSamples.forEach(s => {
+            productiveSamples.forEach(s => {
                 const app = s.app_name || 'Unknown';
                 appMap[app] = (appMap[app] || 0) + 1;
             });
-            setAppBreakdown(
-                Object.entries(appMap).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name, value }))
-            );
+            const appBreakdownList = Object.entries(appMap).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name, value }));
+            setAppBreakdown(appBreakdownList);
 
             let totalSessionMins = 0;
             filteredSessions.forEach(s => {
@@ -319,10 +393,12 @@ export function Reports() {
                 totalSessionMins += (endMs - new Date(s.started_at).getTime()) / 60000;
             });
 
+            const calculatedTotalMins = Math.max(productiveSamples.length, Math.round(totalSessionMins));
+            const calculatedAvgActivity = calculateActivityScore(productiveSamples);
             setTotalSessions(filteredSessions.length);
             setScreenshotCount(ssCount || 0);
-            setTotalMins(Math.max(dedupedSamples.length, Math.round(totalSessionMins)));
-            setAvgActivity(calculateActivityScore(productiveSamples));
+            setTotalMins(calculatedTotalMins);
+            setAvgActivity(calculatedAvgActivity);
             setTotalCosts(costs);
             setTotalBilled(billed);
             // --- Build Weekly Table Data (Aligned to Monday) ---
@@ -353,13 +429,11 @@ export function Reports() {
                 };
             });
 
-            // Populate daily minutes and activity from samples
-            dedupedSamples.forEach(s => {
-                const sessionToUserId = new Map(filteredSessions.map(sess => [sess.id, sess.user_id]));
+            // Populate daily minutes and activity from productive samples
+            productiveSamples.forEach(s => {
                 const uid = sessionToUserId.get(s.session_id);
                 if (!uid) return;
 
-                // Find which member record this uid corresponds to
                 const member = membersMap.get(uid);
                 if (!member || !memberRows[member.id]) return;
 
@@ -369,7 +443,7 @@ export function Reports() {
                 row.dailyMins[day] = (row.dailyMins[day] || 0) + 1;
                 row.totalMins++;
 
-                if (s.activity_percent !== undefined && s.activity_percent !== null && s.idle !== true) {
+                if (s.activity_percent !== undefined && s.activity_percent !== null) {
                     row.activitySum += s.activity_percent;
                     row.activitySamples++;
                 }
@@ -387,6 +461,20 @@ export function Reports() {
                 .sort((a, b) => b.totalMins - a.totalMins);
 
             setTableData({ dates: dateList, rows: finalRows });
+
+            // Update cache
+            reportsCache = {
+                dailyActivity: dailyActivityList,
+                appBreakdown: appBreakdownList,
+                screenshotCount: ssCount || 0,
+                totalSessions: filteredSessions.length,
+                totalMins: calculatedTotalMins,
+                avgActivity: calculatedAvgActivity,
+                totalCosts: costs,
+                totalBilled: billed,
+                tableData: { dates: dateList, rows: finalRows }
+            };
+            reportsCacheKey = cacheKey;
 
         } catch (err) {
             console.error("fetchReports error:", err);
@@ -475,6 +563,17 @@ export function Reports() {
                         options={[{ id: 'All', name: 'All Members' }, ...members].map((m: any) => ({ id: m.id, name: m.full_name || m.email || m.name || 'Unknown' }))}
                         className="h-10"
                     />
+
+                    <button
+                        onClick={() => fetchReports(true)}
+                        className={clsx(
+                            "p-2.5 bg-surface border border-border rounded-xl text-text-muted hover:text-primary hover:bg-surface-hover transition-all shadow-shell-sm h-10",
+                            loading && "animate-spin text-primary"
+                        )}
+                        title="Refresh Data"
+                    >
+                        <RefreshCw className="w-4 h-4" />
+                    </button>
                 </div>
             }
         >
