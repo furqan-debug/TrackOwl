@@ -14,7 +14,8 @@ import clsx from 'clsx';
 import { AppUsageList } from '../components/activity/AppUsageList';
 import { ScreenshotGallery } from '../components/activity/ScreenshotGallery';
 import { TimelineGrid } from '../components/activity/TimelineGrid';
-import { calculateActivityScore, calculateProductiveMinutes } from '../lib/dataUtils';
+import { calculateActivityScore } from '../lib/dataUtils';
+import { useAuth } from '../context/AuthContext';
 
 interface ActivitySample {
     id: number;
@@ -43,13 +44,20 @@ interface MemberInfo {
     keep_idle?: boolean;
     email?: string;
     avatar_url?: string;
+    idle_limit?: number | null;
 }
 
 function formatLocalDate(date: Date): string {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
+// Module-level cache
+let activityCache: any = null;
+let activityCacheKey: string | null = null;
+
 export function Activity() {
+    const { profile } = useAuth();
+    const organizationId = profile?.organization_id;
     const [samples, setSamples] = useState<ActivitySample[]>([]);
     const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
     const [loading, setLoading] = useState(false);
@@ -69,12 +77,28 @@ export function Activity() {
     const dateInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        supabase.from('members').select('id, auth_user_id, full_name, timezone, keep_idle, email, avatar_url').eq('status', 'Active').then(({ data }) => {
-            if (data) setMembers(data);
-        });
-    }, []);
+        if (!organizationId) return;
+        supabase.from('members')
+            .select('id, auth_user_id, full_name, timezone, keep_idle, email, avatar_url, idle_limit')
+            .eq('organization_id', organizationId)
+            .eq('status', 'Active')
+            .order('full_name', { ascending: true })
+            .then(({ data }) => {
+                if (data) setMembers(data);
+            });
+    }, [organizationId]);
 
-    const fetchData = useCallback(async (isSilent = false) => {
+    const fetchData = useCallback(async (isSilent = false, forceRefresh = false) => {
+        const cacheKey = `${selectedDate}_${selectedMemberId}`;
+        if (!forceRefresh && activityCache && activityCacheKey === cacheKey) {
+            setSamples(activityCache.samples);
+            setScreenshots(activityCache.screenshots);
+            setSessionMinutes(activityCache.sessionMinutes);
+            setHasMoreScreenshots(activityCache.hasMoreScreenshots);
+            setLoading(false);
+            return;
+        }
+
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
 
@@ -97,6 +121,7 @@ export function Activity() {
             let sessionsQuery = supabase
                 .from('sessions')
                 .select('id, user_id, started_at, ended_at')
+                .eq('organization_id', organizationId)
                 .lt('started_at', end)
                 .or(`ended_at.is.null,ended_at.gt.${start}`);
 
@@ -116,9 +141,16 @@ export function Activity() {
             }
 
             const [{ data: actData }, { data: ssData, count: totalSS }] = await Promise.all([
-                supabase.from('activity_samples').select('*').in('session_id', sessionIds).gte('recorded_at', start).lte('recorded_at', end).order('recorded_at', { ascending: true }),
+                supabase.from('activity_samples')
+                    .select('id, session_id, recorded_at, mouse_clicks, key_presses, app_name, window_title, idle, activity_percent')
+                    .eq('organization_id', organizationId)
+                    .in('session_id', sessionIds)
+                    .gte('recorded_at', start)
+                    .lte('recorded_at', end)
+                    .order('recorded_at', { ascending: true }),
                 supabase.from('screenshots')
-                    .select('*', { count: 'exact' })
+                    .select('id, session_id, recorded_at, file_url', { count: 'exact' })
+                    .eq('organization_id', organizationId)
                     .in('session_id', sessionIds)
                     .gte('recorded_at', start)
                     .lte('recorded_at', end)
@@ -140,6 +172,15 @@ export function Activity() {
             setSamples(actData || []);
             setScreenshots(ssData || []);
             setSessionMinutes(mins);
+
+            // Update cache
+            activityCache = {
+                samples: actData || [],
+                screenshots: ssData || [],
+                sessionMinutes: mins,
+                hasMoreScreenshots: (totalSS || 0) > screenshotLimit
+            };
+            activityCacheKey = cacheKey;
         } catch (error) {
             console.error('Activity fetch error:', error);
         } finally {
@@ -183,12 +224,44 @@ export function Activity() {
     });
 
     const uniqueSamples = Array.from(uniqueMinMap.values());
+    const selectedMember = members.find(m => m.id === selectedMemberId);
+    const idleLimit = selectedMember?.idle_limit ?? 0;
+
     const totalClicks = uniqueSamples.reduce((a, b) => a + b.mouse_clicks, 0);
     const totalKeys = uniqueSamples.reduce((a, b) => a + b.key_presses, 0);
-    const avgActivity = calculateActivityScore(uniqueSamples);
-    const productiveMinutes = uniqueSamples.length > 0 ? calculateProductiveMinutes(uniqueSamples) : Math.max(0, Math.round(sessionMinutes));
+    
+    // Use block-based logic for productive time and activity score
+    const productiveSamples: ActivitySample[] = [];
+    if (idleLimit <= 1) {
+        productiveSamples.push(...uniqueSamples);
+    } else {
+        const sorted = uniqueSamples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+        let currentBlock: ActivitySample[] = [];
+        for (let i = 0; i < sorted.length; i++) {
+            const s = sorted[i];
+            const prev = i > 0 ? sorted[i-1] : null;
+            const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
+            const isContiguous = prev && gapMs <= 125000;
 
-    const selectedMember = members.find(m => m.id === selectedMemberId);
+            if (s.idle && isContiguous) {
+                currentBlock.push(s);
+            } else if (s.idle && !prev) {
+                currentBlock = [s];
+            } else if (s.idle && !isContiguous) {
+                if (currentBlock.length < idleLimit) productiveSamples.push(...currentBlock);
+                currentBlock = [s];
+            } else {
+                productiveSamples.push(s);
+                if (currentBlock.length < idleLimit) productiveSamples.push(...currentBlock);
+                currentBlock = [];
+            }
+        }
+        if (currentBlock.length < idleLimit) productiveSamples.push(...currentBlock);
+    }
+
+    const avgActivity = calculateActivityScore(productiveSamples);
+    const productiveMinutes = uniqueSamples.length > 0 ? productiveSamples.length : Math.max(0, Math.round(sessionMinutes));
+
     const isToday = selectedDate === formatLocalDate(new Date());
 
     const navigateDate = (dir: 'prev' | 'next') => {
@@ -251,7 +324,7 @@ export function Activity() {
                     </div>
 
                     <button
-                        onClick={() => fetchData(true)}
+                        onClick={() => fetchData(false, true)}
                         className={clsx(
                             "w-10 h-10 flex items-center justify-center border border-border rounded-xl transition-all",
                             refreshing ? "text-primary bg-primary/5" : "text-text-muted hover:text-text-main hover:bg-surface-hover"
@@ -324,7 +397,7 @@ export function Activity() {
                                 </div>
                             </div>
                             <div className="p-8 flex-1">
-                                <TimelineGrid samples={uniqueSamples} targetTz={selectedMember?.timezone} />
+                                <TimelineGrid samples={productiveSamples} targetTz={selectedMember?.timezone} />
                             </div>
                         </div>
                     </div>
@@ -342,7 +415,7 @@ export function Activity() {
                                 </div>
                             </div>
                             <div className="flex-1 overflow-y-auto no-scrollbar">
-                                <AppUsageList samples={samples} />
+                                <AppUsageList samples={productiveSamples} />
                             </div>
                         </div>
                     </div>

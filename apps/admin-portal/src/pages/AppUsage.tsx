@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
+import { fetchAllActivitySamples } from '../lib/dataUtils';
+import { useAuth } from '../context/AuthContext';
 import { 
     AppWindow, Monitor, Users, Search, 
     Clock, Calendar, ChevronLeft, 
@@ -22,6 +24,7 @@ interface MemberInfo {
     auth_user_id?: string | null;
     full_name: string;
     email?: string;
+    idle_limit?: number | null;
 }
 
 const COLORS = ['var(--color-chart-main)', '#4f46e5', '#4338ca', '#3730a3', '#312e81', '#1e1b4b'];
@@ -40,7 +43,13 @@ function formatLocalDate(date: Date): string {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
+// Module-level cache
+let appUsageCache: any = null;
+let appUsageCacheKey: string | null = null;
+
 export function AppUsage() {
+    const { profile } = useAuth();
+    const organizationId = profile?.organization_id;
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [apps, setApps] = useState<AppEntry[]>([]);
@@ -52,12 +61,25 @@ export function AppUsage() {
     const [selectedDate, setSelectedDate] = useState(formatLocalDate(new Date()));
 
     useEffect(() => {
-        supabase.from('members').select('id, auth_user_id, full_name, email').eq('status', 'Active').then(({ data }) => {
-            if (data) setMembers(data);
-        });
-    }, []);
+        if (!organizationId) return;
+        supabase.from('members')
+            .select('id, auth_user_id, full_name, email, idle_limit')
+            .eq('organization_id', organizationId)
+            .eq('status', 'Active')
+            .order('full_name', { ascending: true })
+            .then(({ data }) => {
+                if (data) setMembers(data);
+            });
+    }, [organizationId]);
 
-    const fetchData = useCallback(async (isSilent = false) => {
+    const fetchData = useCallback(async (isSilent = false, forceRefresh = false) => {
+        const cacheKey = `${selectedDate}_${selectedMemberId}`;
+        if (!forceRefresh && appUsageCache && appUsageCacheKey === cacheKey) {
+            setApps(appUsageCache.apps);
+            setLoading(false);
+            return;
+        }
+
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
 
@@ -70,7 +92,7 @@ export function AppUsage() {
                 ? Array.from(new Set([selectedMember?.id, selectedMember?.auth_user_id].filter(Boolean) as string[]))
                 : [];
 
-            let sessionsQuery = supabase.from('sessions').select('id').lt('started_at', end).or(`ended_at.is.null,ended_at.gt.${start}`);
+            let sessionsQuery = supabase.from('sessions').select('id, user_id').eq('organization_id', organizationId).lt('started_at', end).or(`ended_at.is.null,ended_at.gt.${start}`);
             if (scopedUserIds.length > 0) sessionsQuery = sessionsQuery.in('user_id', scopedUserIds);
 
             const { data: userSessions } = await sessionsQuery;
@@ -81,14 +103,57 @@ export function AppUsage() {
                 return;
             }
 
-            const { data: samples } = await supabase.from('activity_samples').select('app_name').in('session_id', sessionIds).gte('recorded_at', start).lte('recorded_at', end).not('app_name', 'is', null);
+            const samples = await fetchAllActivitySamples(supabase, start, end, 'session_id, app_name, recorded_at, idle', {
+                organizationId: organizationId ?? undefined,
+                sessionIds: sessionIds.length > 0 ? sessionIds : undefined
+            });
 
             if (!samples) return;
+
+            const membersMap = new Map(members.map(m => [m.id, m]));
+            const samplesByUser = new Map<string, any[]>();
+            samples.forEach(s => {
+                const uid = userSessions?.find(sess => sess.id === s.session_id)?.user_id;
+                if (!uid) return;
+                if (!samplesByUser.has(uid)) samplesByUser.set(uid, []);
+                samplesByUser.get(uid)!.push(s);
+            });
 
             const appCounts: Record<string, number> = {};
             let total = 0;
 
-            samples.forEach(s => {
+            const productiveSamples: any[] = [];
+            samplesByUser.forEach((userSamps, uid) => {
+                const limit = membersMap.get(uid)?.idle_limit ?? 0;
+                if (limit <= 1) {
+                    productiveSamples.push(...userSamps);
+                } else {
+                    const sorted = userSamps.sort((a,b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+                    let currentBlock: any[] = [];
+                    for (let i = 0; i < sorted.length; i++) {
+                        const s = sorted[i];
+                        const prev = i > 0 ? sorted[i-1] : null;
+                        const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
+                        const isContiguous = prev && gapMs <= 125000;
+
+                        if (s.idle && isContiguous) {
+                            currentBlock.push(s);
+                        } else if (s.idle && !prev) {
+                            currentBlock = [s];
+                        } else if (s.idle && !isContiguous) {
+                            if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
+                            currentBlock = [s];
+                        } else {
+                            productiveSamples.push(s);
+                            if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
+                            currentBlock = [];
+                        }
+                    }
+                    if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
+                }
+            });
+
+            productiveSamples.forEach(s => {
                 const name = s.app_name?.trim();
                 if (!name || name.toLowerCase() === 'program manager') return;
                 appCounts[name] = (appCounts[name] || 0) + 1;
@@ -103,6 +168,10 @@ export function AppUsage() {
             })).sort((a, b) => b.count - a.count);
 
             setApps(appArray);
+
+            // Update cache
+            appUsageCache = { apps: appArray };
+            appUsageCacheKey = cacheKey;
         } catch (err) {
             console.error(err);
         } finally {
@@ -187,6 +256,17 @@ export function AppUsage() {
                             <ChevronRight className="w-4 h-4 text-text-muted" />
                         </button>
                     </div>
+
+                    <button
+                        onClick={() => fetchData(false, true)}
+                        className={clsx(
+                            "p-2.5 bg-surface border border-border rounded-lg text-text-muted hover:text-primary hover:bg-surface-hover transition-all shadow-shell-sm h-10",
+                            loading && "animate-spin text-primary"
+                        )}
+                        title="Refresh Data"
+                    >
+                        <RefreshCw className="w-4 h-4" />
+                    </button>
                 </div>
             }
         >

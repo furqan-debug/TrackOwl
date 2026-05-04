@@ -282,8 +282,11 @@ export function getHubstaffBlocks(samples: any[], targetTz?: string | null): Hub
 
     sortedKeys.forEach(key => {
         const blockSamples = blocks.get(key)!;
+        // Activity rate for a 10-minute segment is: Active seconds / 600
+        // Since each activity_percent is (active seconds in 1 min / 60), 
+        // sum(activity_percent) / 10 is equivalent to (total active seconds / 600).
         const totalActivity = blockSamples.reduce((acc, s) => acc + (s.activity_percent || 0), 0);
-        const avgActivity = Math.round(totalActivity / blockSamples.length);
+        const avgActivity = Math.round(totalActivity / 10);
         
         // Duration is number of 1-minute samples in this block
         const minutes = blockSamples.length;
@@ -396,42 +399,52 @@ export async function fetchAllSessions(
     organizationId?: string,
     userId?: string
 ): Promise<any[]> {
-    let allSessions: any[] = [];
     const PAGE_SIZE = 1000;
-    const MAX_PAGES = 50; // 50k sessions max safety limit
+    
+    // 1. Get total count
+    let countQuery = supabase
+        .from('sessions')
+        .select('*', { count: 'exact', head: true })
+        .lt('started_at', end.toISOString())
+        .or(`ended_at.is.null,ended_at.gt.${start.toISOString()}`);
 
-    for (let page = 0; page < MAX_PAGES; page++) {
-        let query = supabase
-            .from('sessions')
-            .select('id, user_id, project_id, started_at, ended_at')
-            .lt('started_at', end.toISOString())
-            .or(`ended_at.is.null,ended_at.gt.${start.toISOString()}`)
-            .order('started_at', { ascending: false })
-            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    if (organizationId) countQuery = countQuery.eq('organization_id', organizationId);
+    if (userId && userId.toLowerCase() !== 'all') countQuery = countQuery.eq('user_id', userId);
 
-        if (organizationId) {
-            query = query.eq('organization_id', organizationId);
+    const { count, error: countErr } = await countQuery;
+    if (countErr || count === null) {
+        console.error("Error fetching session count:", countErr);
+        return [];
+    }
+
+    if (count === 0) return [];
+
+    const totalPages = Math.ceil(count / PAGE_SIZE);
+    const BATCH_SIZE = 5;
+    let allSessions: any[] = [];
+
+    for (let i = 0; i < totalPages; i += BATCH_SIZE) {
+        const batchPromises = [];
+        for (let j = i; j < Math.min(i + BATCH_SIZE, totalPages); j++) {
+            let query = supabase
+                .from('sessions')
+                .select('id, user_id, project_id, started_at, ended_at')
+                .lt('started_at', end.toISOString())
+                .or(`ended_at.is.null,ended_at.gt.${start.toISOString()}`)
+                .order('started_at', { ascending: false })
+                .range(j * PAGE_SIZE, (j + 1) * PAGE_SIZE - 1);
+
+            if (organizationId) query = query.eq('organization_id', organizationId);
+            if (userId && userId.toLowerCase() !== 'all') query = query.eq('user_id', userId);
+
+            batchPromises.push(query);
         }
-        if (userId && userId.toLowerCase() !== 'all') {
-            query = query.eq('user_id', userId);
-        }
 
-        const { data, error } = await query;
-
-        if (error) {
-            console.error("Error fetching paginated sessions:", error);
-            break;
-        }
-        
-        if (!data || data.length === 0) {
-            break;
-        }
-
-        allSessions.push(...data);
-
-        if (data.length < PAGE_SIZE) {
-            break;
-        }
+        const results = await Promise.all(batchPromises);
+        results.forEach(res => {
+            if (res.data) allSessions.push(...res.data);
+            if (res.error) console.error("Error fetching session batch:", res.error);
+        });
     }
 
     return allSessions;
@@ -452,53 +465,60 @@ export async function fetchAllActivitySamples(
         userId?: string;
     }
 ): Promise<any[]> {
-    let allSamples: any[] = [];
     const PAGE_SIZE = 1000;
-    const MAX_PAGES = 200; // 200k samples max safety limit (increased for larger organizations)
+    
+    // 1. First, get the total count efficiently
+    let countQuery = supabase
+        .from('activity_samples')
+        .select('*', { count: 'exact', head: true })
+        .gte('recorded_at', startIso)
+        .lte('recorded_at', endIso);
 
-    for (let page = 0; page < MAX_PAGES; page++) {
-        let query = supabase
-            .from('activity_samples')
-            .select(selectQuery)
-            .gte('recorded_at', startIso)
-            .lte('recorded_at', endIso)
-            .order('recorded_at', { ascending: true })
-            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+    if (filters?.organizationId) {
+        countQuery = countQuery.eq('organization_id', filters.organizationId);
+    }
+    if (filters?.sessionIds && filters.sessionIds.length > 0) {
+        countQuery = countQuery.in('session_id', filters.sessionIds);
+    }
 
-        // Note: activity_samples does NOT have organization_id, it relies on session_id links.
-        // We handle organization filtering via sessionIds or by omitting the check if not needed.
+    const { count, error: countErr } = await countQuery;
+    if (countErr || count === null) {
+        console.error("Error fetching sample count:", countErr);
+        return [];
+    }
 
-        // If we have specific session IDs, filter by them
-        if (filters?.sessionIds && filters.sessionIds.length > 0) {
-            query = query.in('session_id', filters.sessionIds);
-        }
+    if (count === 0) return [];
 
-        // If we have a specific user ID, we can join with sessions to filter
-        // Note: This requires sessions to be available in the select query or use !inner
-        if (filters?.userId && filters.userId !== 'all') {
-            // If sessionIds is already provided, we don't need this
-            if (!filters.sessionIds || filters.sessionIds.length === 0) {
-                // We use a subquery-like approach or join if the selectQuery supports it
-                // For simplicity, we assume sessionIds is passed if userId is filtered
+    const totalPages = Math.ceil(count / PAGE_SIZE);
+    const BATCH_SIZE = 5; // Fetch 5 pages in parallel at a time
+    let allSamples: any[] = [];
+
+    for (let i = 0; i < totalPages; i += BATCH_SIZE) {
+        const batchPromises = [];
+        for (let j = i; j < Math.min(i + BATCH_SIZE, totalPages); j++) {
+            let query = supabase
+                .from('activity_samples')
+                .select(selectQuery)
+                .gte('recorded_at', startIso)
+                .lte('recorded_at', endIso)
+                .order('recorded_at', { ascending: true })
+                .range(j * PAGE_SIZE, (j + 1) * PAGE_SIZE - 1);
+
+            if (filters?.organizationId) {
+                query = query.eq('organization_id', filters.organizationId);
             }
+            if (filters?.sessionIds && filters.sessionIds.length > 0) {
+                query = query.in('session_id', filters.sessionIds);
+            }
+
+            batchPromises.push(query);
         }
 
-        const { data, error } = await query;
-
-        if (error) {
-            console.error("Error fetching paginated samples:", error);
-            break;
-        }
-        
-        if (!data || data.length === 0) {
-            break;
-        }
-
-        allSamples.push(...data);
-
-        if (data.length < PAGE_SIZE) {
-            break; // Fetched the last partial page
-        }
+        const results = await Promise.all(batchPromises);
+        results.forEach(res => {
+            if (res.data) allSamples.push(...res.data);
+            if (res.error) console.error("Error fetching batch page:", res.error);
+        });
     }
 
     return allSamples;

@@ -18,6 +18,7 @@ import {
     formatDuration,
     fetchAllActivitySamples
 } from '../lib/dataUtils';
+import { useAuth } from '../context/AuthContext';
 
 interface UserActivityRow {
     userId: string;
@@ -71,6 +72,8 @@ interface DashStats {
     totalScreenshots: number;
 }
 export function Dashboard() {
+    const { profile } = useAuth();
+    const organizationId = profile?.organization_id;
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -132,11 +135,11 @@ export function Dashboard() {
         setWeekStart(d);
     };
 
-    const fetchDashboardData = useCallback(async (isSilent = false, forceRefresh = false) => {
+    const fetchDashboardData = useCallback(async (forceRefresh = false, isSilent = false) => {
+        if (!organizationId) return;
         const startIso = weekStart.toISOString();
         const endIso = weekEnd.toISOString();
 
-        // 🚀 Instant Cache Return - Prevents auto-loading when switching tabs!
         if (!forceRefresh && dashboardCache && dashboardCacheWeek === startIso) {
             setStats(dashboardCache.stats);
             setUserActivity(dashboardCache.userActivity);
@@ -163,11 +166,11 @@ export function Dashboard() {
                 { data: screenshots },
                 activitySamples
             ] = await Promise.all([
-                supabase.from('members').select('id, full_name, avatar_url, status, email'),
-                supabase.from('projects').select('id, name, color'),
-                supabase.from('sessions').select('*').gte('started_at', startIso).lte('started_at', endIso),
-                supabase.from('screenshots').select('*').gte('recorded_at', startIso).lte('recorded_at', endIso).order('recorded_at', { ascending: false }),
-                fetchAllActivitySamples(supabase, startIso, endIso, 'session_id, recorded_at, activity_percent, idle, app_name')
+                supabase.from('members').select('id, full_name, avatar_url, status, email, idle_limit').eq('organization_id', organizationId),
+                supabase.from('projects').select('id, name, color').eq('organization_id', organizationId),
+                supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').eq('organization_id', organizationId).gte('started_at', startIso).lte('started_at', endIso),
+                supabase.from('screenshots').select('id, session_id, file_url, recorded_at').eq('organization_id', organizationId).gte('recorded_at', startIso).lte('recorded_at', endIso).order('recorded_at', { ascending: false }).limit(300),
+                fetchAllActivitySamples(supabase, startIso, endIso, 'session_id, recorded_at, activity_percent, idle, app_name', { organizationId })
             ]);
 
             if (!members || !projects || !sessions) return;
@@ -197,13 +200,53 @@ export function Dashboard() {
                 };
             });
 
-            activitySamples.forEach(sample => {
+            const membersMap = new Map(members.map(m => [m.id, m]));
+            const samplesByUser = new Map<string, any[]>();
+            activitySamples.forEach(s => {
+                const uid = sessionToUserMap[s.session_id];
+                if (!uid) return;
+                if (!samplesByUser.has(uid)) samplesByUser.set(uid, []);
+                samplesByUser.get(uid)!.push(s);
+            });
+
+            const productiveSamples: any[] = [];
+            samplesByUser.forEach((userSamps, uid) => {
+                const limit = membersMap.get(uid)?.idle_limit ?? 0;
+                if (limit <= 1) {
+                    productiveSamples.push(...userSamps);
+                } else {
+                    const sorted = userSamps.sort((a,b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+                    let currentBlock: any[] = [];
+                    for (let i = 0; i < sorted.length; i++) {
+                        const s = sorted[i];
+                        const prev = i > 0 ? sorted[i-1] : null;
+                        const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
+                        const isContiguous = prev && gapMs <= 125000;
+
+                        if (s.idle && isContiguous) {
+                            currentBlock.push(s);
+                        } else if (s.idle && !prev) {
+                            currentBlock = [s];
+                        } else if (s.idle && !isContiguous) {
+                            if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
+                            currentBlock = [s];
+                        } else {
+                            productiveSamples.push(s);
+                            if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
+                            currentBlock = [];
+                        }
+                    }
+                    if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
+                }
+            });
+
+            productiveSamples.forEach(sample => {
                 const userId = sessionToUserMap[sample.session_id];
                 const projectId = sessionToProjectMap[sample.session_id];
                 if (!userId) return;
 
-                const score = sample.activity_percent ?? (sample.idle ? 0 : 50);
-                if (!sample.idle) totalMins++;
+                const score = sample.activity_percent ?? 50;
+                totalMins++;
                 activitySum += score;
                 activityCount++;
                 if (projectId) projectsWorked.add(projectId);
@@ -211,7 +254,7 @@ export function Dashboard() {
 
                 if (projectId) {
                     if (!projStats[projectId]) projStats[projectId] = { mins: 0, activitySum: 0, activityCount: 0 };
-                    if (!sample.idle) projStats[projectId].mins++;
+                    projStats[projectId].mins++;
                     projStats[projectId].activitySum += score;
                     projStats[projectId].activityCount++;
                 }
@@ -221,27 +264,53 @@ export function Dashboard() {
                 }
             });
 
+            // 2. Pre-index samples for faster lookup
+            const samplesBySession = new Map<string, any[]>();
+            activitySamples.forEach(s => {
+                if (!samplesBySession.has(s.session_id)) samplesBySession.set(s.session_id, []);
+                samplesBySession.get(s.session_id)!.push(s);
+            });
+
             screenshots?.forEach(ss => {
                 const userId = sessionToUserMap[ss.session_id];
                 if (userId && userRows[userId]) {
                     // Limit to 3 screenshots per user
                     if (userRows[userId].screenshots.length < 3) {
+                        const sessSamples = samplesBySession.get(ss.session_id) || [];
+                        const ssTime = new Date(ss.recorded_at).getTime();
+                        
+                        // Find activity percent for this screenshot (within 10m window)
+                        const activityPercent = sessSamples.find(s => Math.abs(new Date(s.recorded_at).getTime() - ssTime) < 600000)?.activity_percent ?? 50;
+
                         userRows[userId].screenshots.push({
                             id: ss.id,
                             path: ss.file_url,
                             recordedAt: ss.recorded_at,
-                            activityPercent: activitySamples.find(s => s.session_id === ss.session_id && Math.abs(new Date(s.recorded_at).getTime() - new Date(ss.recorded_at).getTime()) < 600000)?.activity_percent ?? 50
+                            activityPercent: activityPercent
                         });
                     }
                 }
             });
 
+            // Index sessions by user for fast lookup
+            const sessionsByUser = new Map<string, any[]>();
+            sessions.forEach(s => {
+                if (!sessionsByUser.has(s.user_id)) sessionsByUser.set(s.user_id, []);
+                sessionsByUser.get(s.user_id)!.push(s);
+            });
+
             Object.entries(userRows).forEach(([uId, row]) => {
-                const userSamples = activitySamples.filter(s => sessionToUserMap[s.session_id] === uId);
+                const userSessions = sessionsByUser.get(uId) || [];
+                const userSessionIds = userSessions.map(s => s.id);
+                const userSamples: any[] = [];
+                userSessionIds.forEach(sid => {
+                    const sessSamples = samplesBySession.get(sid);
+                    if (sessSamples) userSamples.push(...sessSamples);
+                });
+
                 if (userSamples.length > 0) {
                     const sum = userSamples.reduce((acc, s) => acc + (s.activity_percent ?? (s.idle ? 0 : 50)), 0);
                     row.activityScore = Math.round(sum / userSamples.length);
-                    // Each sample is approx 1 minute of work if not idle
                     row.totalMinutes = userSamples.filter(s => !s.idle).length;
                 }
             });

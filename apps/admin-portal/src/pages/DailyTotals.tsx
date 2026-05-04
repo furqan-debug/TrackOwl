@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { 
     Calendar, ChevronLeft, ChevronRight, 
     Users, Download, Filter, 
-    Shield
+    Shield, RefreshCw
 } from 'lucide-react';
 import { 
     PageHeader, Card, Button, StatusBadge, 
@@ -12,9 +12,10 @@ import {
 import clsx from 'clsx';
 import { 
     getDayIndexInTz,
-    fetchAllActivitySamples,
-    getEffectiveEnd
+    getEffectiveEnd,
+    fetchAllActivitySamples
 } from '../lib/dataUtils';
+import { useAuth } from '../context/AuthContext';
 
 interface DayTotal {
     member: string;
@@ -22,7 +23,13 @@ interface DayTotal {
     weeklyTotal: number;
 }
 
+// Module-level cache
+let dailyTotalsCache: any = null;
+let dailyTotalsCacheKey: string | null = null;
+
 export function DailyTotals() {
+    const { profile } = useAuth();
+    const organizationId = profile?.organization_id;
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<DayTotal[]>([]);
     const [weekOffset, setWeekOffset] = useState(0);
@@ -40,7 +47,15 @@ export function DailyTotals() {
         fetchDailyTotals();
     }, [weekOffset, selectedMemberId]);
 
-    async function fetchDailyTotals() {
+    async function fetchDailyTotals(forceRefresh = false) {
+        const cacheKey = `${weekDates[0].toISOString()}_${weekDates[6].toISOString()}_${selectedMemberId}`;
+        if (!forceRefresh && dailyTotalsCache && dailyTotalsCacheKey === cacheKey) {
+            setData(dailyTotalsCache.data);
+            setAllMembers(dailyTotalsCache.members);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
             const start = new Date(weekDates[0]);
@@ -49,13 +64,17 @@ export function DailyTotals() {
             end.setHours(23, 59, 59, 999);
 
             // Fetch members
-            const { data: members } = await supabase.from('members').select('id, full_name, timezone, idle_limit');
+            const { data: members } = await supabase.from('members')
+                .select('id, full_name, timezone, idle_limit')
+                .eq('organization_id', organizationId)
+                .order('full_name', { ascending: true });
             if (members) {
                 setAllMembers(members);
             }
 
             let sessQuery = supabase.from('sessions')
                 .select('id, user_id, started_at, ended_at')
+                .eq('organization_id', organizationId)
                 .lt('started_at', end.toISOString())
                 .or(`ended_at.is.null,ended_at.gt.${start.toISOString()}`);
             
@@ -74,7 +93,10 @@ export function DailyTotals() {
                 start.toISOString(),
                 end.toISOString(),
                 'session_id, recorded_at, idle, activity_percent',
-                filteredSessionIds.length > 0 ? { sessionIds: filteredSessionIds } : undefined
+                { 
+                    organizationId: organizationId ?? undefined, 
+                    sessionIds: filteredSessionIds.length > 0 ? filteredSessionIds : undefined 
+                }
             );
 
             if (members && sessions) {
@@ -111,12 +133,19 @@ export function DailyTotals() {
                 });
 
                 const stats: Record<string, number[]> = {};
+                members.forEach(m => stats[m.id] = [0,0,0,0,0,0,0]);
+
+                // Create a member detail map for fast access
+                const memberDetailMap = new Map(members.map(m => [m.id, m]));
 
                 userSamples.forEach((samples, uid) => {
-                    // Use the locally fetched members data (not stale state) for idle_limit
-                    const limit = members?.find(m => m.id === uid)?.idle_limit ?? 10;
+                    const limit = memberDetailMap.get(uid)?.idle_limit ?? 10;
                     const sorted = samples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
                     
+                    // Index samples by minute for fast lookup in productiveMinutes.forEach
+                    const sampleByMinute = new Map();
+                    sorted.forEach(s => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
+
                     let currentBlock: any[] = [];
                     const productiveMinutes = new Set<string>();
 
@@ -149,7 +178,7 @@ export function DailyTotals() {
 
                     if (productiveMinutes.size > 0) {
                         productiveMinutes.forEach(minuteStr => {
-                            const s = sorted.find(samp => samp.recorded_at.startsWith(minuteStr));
+                            const s = sampleByMinute.get(minuteStr);
                             if (s) {
                                 const dayIdxRaw = getDayIndexInTz(s.recorded_at, memberMap[uid].tz);
                                 const dayIdx = (dayIdxRaw + 6) % 7; 
@@ -178,6 +207,10 @@ export function DailyTotals() {
                 })).sort((a, b) => b.weeklyTotal - a.weeklyTotal);
 
                 setData(result);
+
+                // Update cache
+                dailyTotalsCache = { data: result, members: members };
+                dailyTotalsCacheKey = cacheKey;
             }
         } catch (err) {
             console.error("Error fetching daily totals:", err);
@@ -232,6 +265,17 @@ export function DailyTotals() {
                                 <ChevronRight className="w-4 h-4" strokeWidth={3} />
                             </button>
                         </div>
+
+                        <button
+                            onClick={() => fetchDailyTotals(true)}
+                            className={clsx(
+                                "p-2.5 bg-surface border border-border rounded-xl text-text-muted hover:text-primary hover:bg-surface-hover transition-all shadow-shell-sm h-10",
+                                loading && "animate-spin text-primary"
+                            )}
+                            title="Refresh Data"
+                        >
+                            <RefreshCw className="w-4 h-4" />
+                        </button>
 
                         <Button variant="primary" className="shadow-lg shadow-primary/20 group">
                             <Download className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
