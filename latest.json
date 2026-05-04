@@ -1,10 +1,10 @@
 {
   "version": "1.2.5",
-  "notes": "TrackOwl v1.2.5 - Connectivity improvements and Daily Work Limit enforcement. The sync status indicator now accurately reflects server reachability, and organization work policies are strictly enforced in real-time.",
-  "pub_date": "2026-05-04T18:34:00Z",
+  "notes": "TrackOwl v1.2.5 - Official Brand Update & Security Patch. This version introduces the new TrackOwl branding and critical daily work limit enforcement. Direct installation is required for this version to transition from the legacy Trackora app.",
+  "pub_date": "2026-05-04T18:40:00Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajJ5ekwwTGQyZlJxQ1MxaHE2WEVWNzQ4eFk4RitWQXMxZ1J3ZWFqejllM0hFVnZRVjdaak8xT2lQV0FySkhEendNS2xvMXdTQXN5MStJTlpHODBVQndFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3OTE4NDIyCWZpbGU6VHJhY2tPd2xfMS4yLjVfeDY0X2VuLVVTLm1zaQozVEZNZ2pPTjZjWDFmK0xQMjV4Ylh3dnMrT1dld2dmTm1jQ0dTS2RBU3J2TDJPOEFTSzhRTnBMQVV6azl6MTR3Q0l6c1F5OU00c3ZrYnJqbkRNNmhDUT09Cg==",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajBsWG0vRnRnR2hET1ZxWGdRQm1KSng2U01ZYzRVb0RhRE5BU2l4UUl2RzI3bmI3ZUhjTHhVbktESG1ld3kyT1RiZXVNUXlQd2Y0NDJwM0tiVm9sR3drPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3OTE5OTY4CWZpbGU6VHJhY2tPd2xfMS4yLjVfeDY0X2VuLVVTLm1zaQo5MTh2cnJmUStZUm45WVM2YnlHeWNYMDlNdm1wZWJsT1FJZTJReDB1ZHZFbFpRL2NWVWVZNXh2OXVHN09SN3o4UjU4c05kK1BEejlaOHY0bVhjeTBCUT09Cg==",
       "url": "https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.5/TrackOwl_1.2.5_x64_en-US.msi"
     }
   }
