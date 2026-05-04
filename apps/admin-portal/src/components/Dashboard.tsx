@@ -215,11 +215,11 @@ export function Dashboard() {
                 if (limit <= 1) {
                     productiveSamples.push(...userSamps);
                 } else {
-                    const sorted = userSamps.sort((a,b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+                    const sorted = userSamps.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
                     let currentBlock: any[] = [];
                     for (let i = 0; i < sorted.length; i++) {
                         const s = sorted[i];
-                        const prev = i > 0 ? sorted[i-1] : null;
+                        const prev = i > 0 ? sorted[i - 1] : null;
                         const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
                         const isContiguous = prev && gapMs <= 125000;
 
@@ -278,7 +278,7 @@ export function Dashboard() {
                     if (userRows[userId].screenshots.length < 3) {
                         const sessSamples = samplesBySession.get(ss.session_id) || [];
                         const ssTime = new Date(ss.recorded_at).getTime();
-                        
+
                         // Find activity percent for this screenshot (within 10m window)
                         const activityPercent = sessSamples.find(s => Math.abs(new Date(s.recorded_at).getTime() - ssTime) < 600000)?.activity_percent ?? 50;
 
@@ -398,7 +398,7 @@ export function Dashboard() {
     return (
         <PageLayout
             maxWidth="full"
-            title="Operational Insights"
+            title="Team Overview"
             description="Real-time visibility into team performance, project distribution, and active focus."
             actions={
                 <div className="flex items-center gap-4">

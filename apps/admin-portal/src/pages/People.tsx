@@ -248,7 +248,7 @@ export function People() {
 
     return (
         <PageLayout
-            title="People"
+            title="Team Members"
             description="Manage your team members, roles, and compensation settings."
             maxWidth="full"
             actions={
@@ -434,10 +434,10 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                 <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-main border border-border flex items-center justify-center text-text-muted text-[11px] font-bold shadow-shell-sm group-hover/row:scale-105 transition-transform duration-300 overflow-hidden">
                         {m.avatar_url ? (
-                            <SecureImage 
-                                path={m.avatar_url} 
-                                bucket="avatars" 
-                                className="w-full h-full object-cover" 
+                            <SecureImage
+                                path={m.avatar_url}
+                                bucket="avatars"
+                                className="w-full h-full object-cover"
                             />
                         ) : (
                             initials || <Users className="w-4 h-4" />
@@ -682,7 +682,7 @@ function InviteSentPopup({ email, onClose }: any) {
                 </div>
                 <h2 className="text-xl font-bold text-text-main mb-2 tracking-tight">Invite Sent</h2>
                 <p className="text-text-muted text-[11px] font-bold leading-relaxed mb-8">
-                    Invitation has been dispatched to <br/><span className="text-primary">{email}</span>
+                    Invitation has been dispatched to <br /><span className="text-primary">{email}</span>
                 </p>
                 <button
                     onClick={onClose}
