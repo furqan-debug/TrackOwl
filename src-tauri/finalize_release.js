@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 const baseDir = 'h:/DigiReps/DigiReps Tracker';
-const nsisPath = path.join(baseDir, 'src-tauri/target/release/bundle/nsis/Trackora_1.0.9_x64-setup.exe');
+const nsisPath = path.join(baseDir, 'src-tauri/target/release/bundle/nsis/TrackOwl_1.0.9_x64-setup.exe');
 const keyEncodedPath = path.join(baseDir, 'src-tauri/signing.key');
 const latestJsonPath = path.join(baseDir, 'latest.json');
 
@@ -20,7 +20,7 @@ try {
   const env = { 
     ...process.env, 
     TAURI_SIGNING_PRIVATE_KEY: rawKey,
-    TAURI_SIGNING_PRIVATE_KEY_PASSWORD: 'Trackora2026!' 
+    TAURI_SIGNING_PRIVATE_KEY_PASSWORD: 'TrackOwl2026!' 
   };
   
   const cmd = `npx tauri signer sign "${nsisPath}"`;
@@ -44,14 +44,14 @@ try {
   const latest = JSON.parse(fs.readFileSync(latestJsonPath, 'utf8'));
   
   latest.version = '1.0.9';
-  latest.notes = 'Trackora v1.0.9 - Time Tracking Logic Refinement & Password Privacy';
+  latest.notes = 'TrackOwl v1.0.9 - Time Tracking Logic Refinement & Password Privacy';
   latest.pub_date = new Date().toISOString();
   
   if (!latest.platforms) latest.platforms = {};
   if (!latest.platforms['windows-x86_64']) latest.platforms['windows-x86_64'] = {};
   
   latest.platforms['windows-x86_64'].signature = signatureBase64;
-  latest.platforms['windows-x86_64'].url = `https://github.com/furqan-debug/Trackora/releases/download/v1.0.9/Trackora_1.0.9_x64-setup.exe`;
+  latest.platforms['windows-x86_64'].url = `https://github.com/furqan-debug/TrackOwl/releases/download/v1.0.9/TrackOwl_1.0.9_x64-setup.exe`;
 
   fs.writeFileSync(latestJsonPath, JSON.stringify(latest, null, 2));
   console.log('latest.json updated successfully!');

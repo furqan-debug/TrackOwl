@@ -5,8 +5,9 @@ import {
   ChevronRight, LogOut, CheckCircle2,
   ShieldAlert, Eye, EyeOff, MapPin, MonitorPlay, MousePointerClick,
   ClipboardList, Calendar, Circle, ChevronDown, ChevronUp,
-  User as UserIcon, Camera, Save, RefreshCcw,
-  Clock, Activity, HelpCircle, LifeBuoy, MessageSquare, Send, ArrowLeft
+  User as UserIcon, Save, RefreshCcw,
+  Clock, Activity, HelpCircle, LifeBuoy, MessageSquare, Send, ArrowLeft,
+  Bell, ShieldCheck, Smartphone
 } from 'lucide-react';
 import { trackerAPI } from './tauri-ipc';
 import './App.css';
@@ -45,6 +46,8 @@ interface User {
   tracking_enabled?: boolean;
   avatar_url?: string;
   phone?: string;
+  work_phone?: string;
+  personal_phone?: string;
   organization_id?: string;
   timezone?: string;
   keep_idle?: boolean;
@@ -268,10 +271,11 @@ function AppFooter({ lastSyncTime, isSyncing, onSync }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Settings
 // ─────────────────────────────────────────────────────────────────────────────
-function SettingsScreen({ user, onSave, onBack }: {
+function SettingsScreen({ user, onSave, onBack, onLogout }: {
   user: User;
   onSave: (updated: Partial<User>) => Promise<void>;
   onBack: () => void;
+  onLogout: () => void;
 }) {
   const [fullName, setFullName] = useState(user.full_name);
   const [phone, setPhone] = useState(user.phone || '');
@@ -319,6 +323,7 @@ function SettingsScreen({ user, onSave, onBack }: {
     const updatedCustomFields = {
       ...(user.custom_fields || {}),
       notification_settings: {
+        ...(user.custom_fields?.notification_settings || {}),
         tracking_alerts: notifyTracking,
         screenshot_alerts: notifyScreenshots,
         tracking_reminders: notifyReminders
@@ -327,6 +332,8 @@ function SettingsScreen({ user, onSave, onBack }: {
     await onSave({
       full_name: fullName,
       phone,
+      work_phone: phone,
+      personal_phone: phone,
       avatar_url: avatarUrl,
       custom_fields: {
         ...updatedCustomFields,
@@ -341,102 +348,135 @@ function SettingsScreen({ user, onSave, onBack }: {
     <div className="settings-screen">
       <header className="settings-header">
         <button onClick={onBack} className="settings-back-btn">
-          <img src="/back-button.png" alt="Back" className="settings-back-logo" />
+          <ArrowLeft size={20} />
         </button>
-        <div>
-          <h2 className="heading-2">Profile Settings</h2>
-          <p className="text-muted" style={{ fontSize: '0.6875rem', marginTop: '0.125rem' }}>Manage your account details</p>
+        <div className="settings-header-titles">
+          <h2 className="heading-2">Settings</h2>
+          <p className="text-muted">Personalize your experience</p>
         </div>
       </header>
 
       <div className="settings-content">
-        <div className="avatar-section">
-          <div className="avatar-preview-container">
-            {avatarUrl ? (
-              <SignedImage path={avatarUrl} bucket="avatars" className="avatar-preview-large" />
-            ) : (
-              <div className="avatar-placeholder-large">
-                <UserIcon size={32} />
-              </div>
-            )}
-            <button className="btn-avatar-edit" onClick={() => fileInputRef.current?.click()}>
-              {uploading ? '...' : <Camera size={16} strokeWidth={2.5} />}
-            </button>
-            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
+        {/* Profile Card */}
+        <div className="settings-card profile-card">
+          <div className="avatar-section">
+            <div className="avatar-preview-container">
+              {avatarUrl ? (
+                <SignedImage path={avatarUrl} bucket="avatars" className="avatar-preview-large" />
+              ) : (
+                <div className="avatar-placeholder-large">
+                  <UserIcon size={32} />
+                </div>
+              )}
+              <button className="btn-avatar-edit" onClick={() => fileInputRef.current?.click()} title="Change Avatar">
+                {uploading ? '...' : (
+                  <img
+                    src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4'/%3E%3Cpolyline points='17 8 12 3 7 8'/%3E%3Cline x1='12' y1='3' x2='12' y2='15'/%3E%3C/svg%3E"
+                    alt="Upload"
+                    style={{ width: '16px', height: '16px', display: 'block', margin: 'auto' }}
+                  />
+                )}
+              </button>
+              <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" style={{ display: 'none' }} />
+            </div>
+            <div className="profile-identity">
+              <h3 className="profile-name">{fullName || 'Your Name'}</h3>
+              <p className="profile-email">{user.email}</p>
+            </div>
           </div>
-          <p style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--text-primary)', marginTop: '0.75rem' }}>{fullName || 'Your Name'}</p>
-          <p className="label" style={{ marginTop: '0.125rem' }}>{user.email}</p>
         </div>
 
-        <div className="settings-form">
-          <div className="field-group">
-            <label className="field-label">Full Name</label>
-            <div className="field-input-wrap">
-              <UserIcon size={14} className="field-icon" />
-              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="field-input" placeholder="John Doe" />
+        {/* Form Sections */}
+        <div className="settings-form-container">
+          <div className="settings-section">
+            <div className="section-header">
+              <UserIcon size={16} className="section-icon" />
+              <h3 className="section-title">Personal Information</h3>
             </div>
-          </div>
 
-          <div className="field-group">
-            <label className="field-label">Phone Number</label>
-            <div className="field-input-wrap">
-              <span className="field-icon" style={{ fontSize: '14px' }}>📞</span>
-              <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="field-input" placeholder="+1 (555) 000-0000" />
-            </div>
-          </div>
-
-          <div className="field-group">
-            <label className="field-label">Email Address</label>
-            <div className="field-input-wrap disabled">
-              <Mail size={14} className="field-icon" />
-              <input type="email" value={user.email} disabled className="field-input" />
-              <span style={{ position: 'absolute', right: '0.75rem', fontSize: '0.625rem', fontWeight: 600, color: 'var(--success)', background: 'var(--success-bg)', padding: '0.125rem 0.4rem', borderRadius: '999px', letterSpacing: '0.03em' }}>VERIFIED</span>
-            </div>
-          </div>
-
-          <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.25rem' }}>
-            <h3 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '1rem' }}>Desktop Notifications</h3>
-
-            <div className="field-group" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-              <div style={{ flex: 1 }}>
-                <label className="field-label" style={{ marginBottom: 0 }}>Tracking Alerts</label>
-                <p className="text-muted" style={{ fontSize: '0.625rem' }}>Notify when tracking starts or stops</p>
+            <div className="settings-group">
+              <div className="field-group">
+                <label className="field-label">Full Name</label>
+                <div className="field-input-wrap">
+                  <UserIcon size={14} className="field-icon" />
+                  <input type="text" value={fullName} onChange={e => setFullName(e.target.value)} className="field-input" placeholder="John Doe" />
+                </div>
               </div>
-              <label className="switch">
-                <input type="checkbox" checked={notifyTracking} onChange={e => setNotifyTracking(e.target.checked)} />
-                <span className="slider round"></span>
-              </label>
-            </div>
 
-            <div className="field-group" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginTop: '1rem' }}>
-              <div style={{ flex: 1 }}>
-                <label className="field-label" style={{ marginBottom: 0 }}>Screenshot Alerts</label>
-                <p className="text-muted" style={{ fontSize: '0.625rem' }}>Notify when a screenshot is captured</p>
+              <div className="field-group">
+                <label className="field-label">Phone Number</label>
+                <div className="field-input-wrap">
+                  <Smartphone size={14} className="field-icon" />
+                  <input type="tel" value={phone} onChange={e => setPhone(e.target.value)} className="field-input" placeholder="+1 (555) 000-0000" />
+                </div>
               </div>
-              <label className="switch">
-                <input type="checkbox" checked={notifyScreenshots} onChange={e => setNotifyScreenshots(e.target.checked)} />
-                <span className="slider round"></span>
-              </label>
-            </div>
 
-            <div className="field-group" style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginTop: '1rem' }}>
-              <div style={{ flex: 1 }}>
-                <label className="field-label" style={{ marginBottom: 0 }}>Tracking Reminders</label>
-                <p className="text-muted" style={{ fontSize: '0.625rem' }}>Remind me to track if I'm inactive</p>
+              <div className="field-group">
+                <label className="field-label">Email Address</label>
+                <div className="field-input-wrap disabled">
+                  <Mail size={14} className="field-icon" />
+                  <input type="email" value={user.email} disabled className="field-input" />
+                  <div className="verified-badge">
+                    <ShieldCheck size={10} />
+                    <span>VERIFIED</span>
+                  </div>
+                </div>
               </div>
-              <label className="switch">
-                <input type="checkbox" checked={notifyReminders} onChange={e => setNotifyReminders(e.target.checked)} />
-                <span className="slider round"></span>
-              </label>
             </div>
           </div>
 
+          <div className="settings-section">
+            <div className="section-header">
+              <Bell size={16} className="section-icon" />
+              <h3 className="section-title">Notifications</h3>
+            </div>
 
+            <div className="settings-group">
+              <div className="toggle-row">
+                <div className="toggle-info">
+                  <span className="toggle-label">Tracking Alerts</span>
+                  <span className="toggle-desc">Notify when tracking starts/stops</span>
+                </div>
+                <label className="switch">
+                  <input type="checkbox" checked={notifyTracking} onChange={e => setNotifyTracking(e.target.checked)} />
+                  <span className="slider round"></span>
+                </label>
+              </div>
 
-          <button onClick={save} disabled={isSaving || uploading} className="btn btn-primary" style={{ width: '100%' }}>
-            <Save size={16} />
-            {isSaving ? 'Saving...' : 'Save Changes'}
-          </button>
+              <div className="toggle-row">
+                <div className="toggle-info">
+                  <span className="toggle-label">Screenshot Alerts</span>
+                  <span className="toggle-desc">Notify on every screen capture</span>
+                </div>
+                <label className="switch">
+                  <input type="checkbox" checked={notifyScreenshots} onChange={e => setNotifyScreenshots(e.target.checked)} />
+                  <span className="slider round"></span>
+                </label>
+              </div>
+
+              <div className="toggle-row">
+                <div className="toggle-info">
+                  <span className="toggle-label">Tracking Reminders</span>
+                  <span className="toggle-desc">Nudge if I'm not tracking time</span>
+                </div>
+                <label className="switch">
+                  <input type="checkbox" checked={notifyReminders} onChange={e => setNotifyReminders(e.target.checked)} />
+                  <span className="slider round"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="settings-footer">
+            <button onClick={save} disabled={isSaving || uploading} className="btn btn-primary btn-save">
+              <Save size={18} />
+              <span>{isSaving ? 'Saving Changes...' : 'Save Changes'}</span>
+            </button>
+            <button onClick={() => { onBack(); onLogout(); }} className="btn-logout-settings">
+              <LogOut size={16} />
+              <span>Log Out</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -905,7 +945,9 @@ export default function App() {
           avatar_url: member.avatar_url,
           organization_id: member.organization_id,
           timezone: tz || undefined,
-          keep_idle: member.keep_idle
+          keep_idle: member.keep_idle,
+          phone: member.phone,
+          custom_fields: member.custom_fields || {}
         };
         console.log('USER LOADED (Session):', userObj);
         setUser(userObj);
@@ -1295,7 +1337,7 @@ export default function App() {
 
       if (memberError || !member) {
         console.error('[Login] Profile verification failed:', memberError?.message || 'No member record');
-        return `Trackora Error: Member profile not found for ${authData.user.email}. Please contact your administrator. (UID: ${authData.user.id.substring(0, 8)})`;
+        return `TrackOwl Error: Member profile not found for ${authData.user.email}. Please contact your administrator. (UID: ${authData.user.id.substring(0, 8)})`;
       }
 
       const tz = await syncTimezone(sb, member.id, member.timezone);
@@ -1313,7 +1355,9 @@ export default function App() {
         avatar_url: member.avatar_url,
         organization_id: member.organization_id,
         timezone: tz || undefined,
-        keep_idle: member.keep_idle
+        keep_idle: member.keep_idle,
+        phone: member.phone,
+        custom_fields: member.custom_fields || {}
       };
       const { data: projectsData } = await sb.from('projects').select('*');
       const token = authData.session.access_token;
@@ -1494,7 +1538,7 @@ export default function App() {
     setup();
     // Listen for update progress
     const unlistenProgress = trackerAPI.onUpdateProgress((p: number) => setUpdateProgress(p));
-    
+
     return () => {
       isMounted = false;
       if (unlisten) unlisten();
@@ -1533,7 +1577,7 @@ export default function App() {
       {updateVersion && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
-          background: '#4f46e5', color: '#fff', fontSize: '11px',
+          background: 'var(--primary-brand)', color: '#fff', fontSize: '11px',
           padding: '5px 12px', display: 'flex',
           alignItems: 'center', justifyContent: 'space-between',
         }}>
@@ -1541,10 +1585,10 @@ export default function App() {
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
               disabled={updateInstalling}
-              onClick={async () => { 
-                setUpdateInstalling(true); 
+              onClick={async () => {
+                setUpdateInstalling(true);
                 try {
-                  await trackerAPI.installUpdate(); 
+                  await trackerAPI.installUpdate();
                 } catch (e) {
                   console.error('Update failed:', e);
                   setUpdateInstalling(false);
@@ -1603,7 +1647,7 @@ export default function App() {
         )}
         {screen === 'settings' && user && (
           <motion.div key="settings" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
-            <SettingsScreen user={user} onSave={handleUpdateProfile} onBack={() => setScreen('projects')} />
+            <SettingsScreen user={user} onSave={handleUpdateProfile} onBack={() => setScreen('projects')} onLogout={handleLogout} />
           </motion.div>
         )}
         {screen === 'support' && user && (
@@ -1682,11 +1726,11 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
       >
         <div className="brand-header">
           <div className="brand-logo">
-            <img src="/logo.png" style={{ width: 64, height: 64, objectFit: 'contain' }} alt="Trackora" />
+            <img src="/logo.png" style={{ width: 64, height: 64, objectFit: 'contain' }} alt="TrackOwl" />
           </div>
           <div className="brand-header-text">
             <h1 className="heading-1">{forgotMode ? 'Reset Password' : 'Welcome back'}</h1>
-            <p className="text-muted">{forgotMode ? 'Enter your email for a reset link' : 'Sign in to Trackora'}</p>
+            <p className="text-muted">{forgotMode ? 'Enter your email for a reset link' : 'Sign in to TrackOwl'}</p>
           </div>
         </div>
 
@@ -1808,9 +1852,8 @@ function Topbar({ user, onLogout, onSettings, onSupport, todoBadge, disabled }: 
     <header className="app-topbar">
       <div className="topbar-brand">
         <div className="topbar-logo">
-          <img src="/logo.png" style={{ width: 30, height: 30, objectFit: 'contain' }} alt="Trackora" />
+          <img src="/header.svg" style={{ height: 85, width: 'auto', objectFit: 'contain' }} alt="TrackOwl" />
         </div>
-        <span className="topbar-title">Trackora</span>
       </div>
       {user && <LocalClock />}
       {user && onLogout && (
@@ -1874,8 +1917,8 @@ function MyTasksPanel({ todos, onDone, disabled }: { todos: Todo[]; onDone: (id:
                   <span className="task-title">{todo.title}</span>
                   {todo.projectName && (
                     <span className="task-project-tag" style={{
-                      background: todo.projectColor ? `${todo.projectColor}1a` : 'var(--accent-light)',
-                      color: todo.projectColor || 'var(--accent)',
+                      background: 'var(--accent-light)',
+                      color: 'var(--accent)',
                     }}>{todo.projectName}</span>
                   )}
                 </div>
@@ -2191,7 +2234,7 @@ function TrackerScreen({ user, project, isPaused = false, idlePaused = false, on
           </div>
 
           <div className="tracker-project-pill">
-            <div className="tracker-project-dot" style={{ backgroundColor: project.color }} />
+            <div className="tracker-project-dot" style={{ backgroundColor: 'var(--accent)' }} />
             <span className="tracker-project-name">{project.name}</span>
           </div>
 

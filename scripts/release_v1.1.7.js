@@ -5,8 +5,8 @@ import path from 'path';
 const VERSION = '1.1.7';
 const BASE_DIR = 'c:/Users/Furqan/DigiReps/DigiReps Tracker';
 const KEY_PATH = path.join(BASE_DIR, 'src-tauri/signing.key');
-const NSIS_PATH = path.join(BASE_DIR, `src-tauri/target/release/bundle/nsis/Trackora_${VERSION}_x64-setup.exe`);
-const MSI_PATH  = path.join(BASE_DIR, `src-tauri/target/release/bundle/msi/Trackora_${VERSION}_x64_en-US.msi`);
+const NSIS_PATH = path.join(BASE_DIR, `src-tauri/target/release/bundle/nsis/TrackOwl_${VERSION}_x64-setup.exe`);
+const MSI_PATH  = path.join(BASE_DIR, `src-tauri/target/release/bundle/msi/TrackOwl_${VERSION}_x64_en-US.msi`);
 const RELEASE_DIR = path.join(BASE_DIR, `releases/v${VERSION}`);
 
 function log(msg) { console.log(`\n\x1b[36m[*]  ${msg}\x1b[0m`); }
@@ -20,7 +20,7 @@ function sign(filePath) {
   const env = {
     ...process.env,
     TAURI_SIGNING_PRIVATE_KEY: encodedKey,
-    TAURI_SIGNING_PRIVATE_KEY_PASSWORD: 'Trackora2026!'
+    TAURI_SIGNING_PRIVATE_KEY_PASSWORD: 'TrackOwl2026!'
   };
 
   const cmd = `npx tauri signer sign "${filePath}"`;
@@ -83,12 +83,12 @@ try {
 
   const latest = {
     version: VERSION,
-    notes: `Trackora v${VERSION} - Critical fix for screenshot encoding and storage. Upgraded to RGB JPEG with optimized downscaling.`,
+    notes: `TrackOwl v${VERSION} - Critical fix for screenshot encoding and storage. Upgraded to RGB JPEG with optimized downscaling.`,
     pub_date: new Date().toISOString(),
     platforms: {
       'windows-x86_64': {
         signature: exeSigText,
-        url: `https://github.com/furqan-debug/Trackora/releases/download/v${VERSION}/Trackora_${VERSION}_x64-setup.exe`
+        url: `https://github.com/furqan-debug/TrackOwl/releases/download/v${VERSION}/TrackOwl_${VERSION}_x64-setup.exe`
       }
     }
   };
@@ -105,13 +105,13 @@ try {
 
   // 7. Done
   console.log('\n\x1b[32m================================================================================');
-  console.log(`  SUCCESS! Trackora v${VERSION} release packaged!`);
+  console.log(`  SUCCESS! TrackOwl v${VERSION} release packaged!`);
   console.log('================================================================================\x1b[0m');
   console.log('\nFiles ready in: releases/v' + VERSION);
-  console.log(`  [ ] Trackora_${VERSION}_x64-setup.exe`);
-  console.log(`  [ ] Trackora_${VERSION}_x64-setup.exe.sig`);
-  console.log(`  [ ] Trackora_${VERSION}_x64_en-US.msi`);
-  console.log(`  [ ] Trackora_${VERSION}_x64_en-US.msi.sig`);
+  console.log(`  [ ] TrackOwl_${VERSION}_x64-setup.exe`);
+  console.log(`  [ ] TrackOwl_${VERSION}_x64-setup.exe.sig`);
+  console.log(`  [ ] TrackOwl_${VERSION}_x64_en-US.msi`);
+  console.log(`  [ ] TrackOwl_${VERSION}_x64_en-US.msi.sig`);
   console.log(`  [ ] latest.json`);
 
 } catch (err) {

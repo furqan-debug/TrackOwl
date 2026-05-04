@@ -54,9 +54,9 @@ export function Signup() {
             <div className="w-full max-w-[1200px] px-8 py-8 flex items-center justify-between animate-in fade-in duration-700">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
                     <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
-                        <img src={LogoIcon} alt="Trackora" className="w-full h-full object-contain" />
+                        <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
                     </div>
-                    <span className="text-lg font-bold text-text-main tracking-tight">Trackora</span>
+                    <span className="text-lg font-bold text-text-main tracking-tight">TrackOwl</span>
                 </div>
                 <div className="text-[10px] font-extrabold text-text-muted tracking-[0.2em] bg-surface px-4 py-2 rounded-full border border-border">
                     Production Ready
@@ -66,7 +66,7 @@ export function Signup() {
             <div className="flex-1 w-full max-w-[1210px] flex items-center justify-center p-8">
                 <div className="w-full max-w-[480px]">
                     <div className="mb-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
-                        <h1 className="text-5xl font-black text-text-main tracking-tight leading-none mb-4">Join Trackora</h1>
+                        <h1 className="text-5xl font-black text-text-main tracking-tight leading-none mb-4">Join TrackOwl</h1>
                         <p className="text-text-muted font-medium text-lg leading-relaxed max-w-[340px] mx-auto">
                             Start your 14-day trial on the <span className="text-blue-600 font-bold underline decoration-blue-600/30 underline-offset-4">{selectedPlan}</span> plan.
                         </p>

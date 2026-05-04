@@ -6,7 +6,7 @@ import https from 'https';
 const VERSION     = '1.1.2';
 const TAG         = `v${VERSION}`;
 const OWNER       = 'furqan-debug';
-const REPO        = 'Trackora';
+const REPO        = 'TrackOwl';
 const BASE_DIR    = 'c:/Users/Furqan/DigiReps/DigiReps Tracker';
 const RELEASE_DIR = path.join(BASE_DIR, `releases/v${VERSION}`);
 
@@ -35,7 +35,7 @@ function apiRequest(method, path, body = null, extraHeaders = {}) {
       headers: {
         'Authorization': `Bearer ${TOKEN}`,
         'Accept': 'application/vnd.github+json',
-        'User-Agent': 'Trackora-Release-Script/1.0',
+        'User-Agent': 'TrackOwl-Release-Script/1.0',
         'X-GitHub-Api-Version': '2022-11-28',
         ...(data ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) } : {}),
         ...extraHeaders
@@ -72,7 +72,7 @@ function uploadAsset(uploadUrl, filePath) {
       headers: {
         'Authorization': `Bearer ${TOKEN}`,
         'Accept': 'application/vnd.github+json',
-        'User-Agent': 'Trackora-Release-Script/1.0',
+        'User-Agent': 'TrackOwl-Release-Script/1.0',
         'X-GitHub-Api-Version': '2022-11-28',
         'Content-Type': contentType,
         'Content-Length': fileData.length
@@ -102,7 +102,7 @@ function fail(msg){ console.error(`\x1b[31m✘ ${msg}\x1b[0m`); process.exit(1);
   log(`Creating GitHub release ${TAG}...`);
   const releaseRes = await apiRequest('POST', `/repos/${OWNER}/${REPO}/releases`, {
     tag_name: TAG,
-    name: `Trackora v${VERSION}`,
+    name: `TrackOwl v${VERSION}`,
     body: [
       `## What's New in v${VERSION}`,
       '',
@@ -136,10 +136,10 @@ function fail(msg){ console.error(`\x1b[31m✘ ${msg}\x1b[0m`); process.exit(1);
 
   // 2. Upload assets
   const assets = [
-    `Trackora_${VERSION}_x64-setup.exe`,
-    `Trackora_${VERSION}_x64-setup.exe.sig`,
-    `Trackora_${VERSION}_x64_en-US.msi`,
-    `Trackora_${VERSION}_x64_en-US.msi.sig`,
+    `TrackOwl_${VERSION}_x64-setup.exe`,
+    `TrackOwl_${VERSION}_x64-setup.exe.sig`,
+    `TrackOwl_${VERSION}_x64_en-US.msi`,
+    `TrackOwl_${VERSION}_x64_en-US.msi.sig`,
     'latest.json'
   ];
 

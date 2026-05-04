@@ -1,11 +1,11 @@
 {
   "version": "1.2.4",
-  "notes": "Trackora v1.2.4 - Performance and Stability Release: Single-instance protection, optimized input tracking, and fixed auto-updater progress reporting.",
+  "notes": "TrackOwl v1.2.4 - Performance and Stability Release: Single-instance protection, optimized input tracking, and fixed auto-updater progress reporting.",
   "pub_date": "2026-04-23T20:20:34.152Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "Your file was signed successfully, You can find the signature here:\nC:\\Users\\Furqan\\DigiReps\\DigiReps Tracker\\src-tauri\\target\\release\\bundle\\nsis\\Trackora_1.2.4_x64-setup.exe.sig\n\nPublic signature:\ndW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajlNMU1aMDROQjBxUGdWaXUxZHVoT3NvYUdha1JQSEhobVpQVVpqdVBwaEdpQVp1d24wMUtWcS9GYlU2akZFRlQrVEVmcWVlUGk2MW9DdEF1N1hwOHdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2OTc1NjMzCWZpbGU6VHJhY2tvcmFfMS4yLjRfeDY0LXNldHVwLmV4ZQpoR054VkI0MXZDVVZnODVYZlJMUG9wbWRFeExXUGdqazRNZmdjTkppbU9lYXFQVVl2MnZRMVpMNkR6amV0K2kxbWQ5eTJ3K0UxczlTOWhMU1VVNEJBQT09Cg==\n\nMake sure to include this into the signature field of your update server.",
-      "url": "https://github.com/furqan-debug/Trackora/releases/download/v1.2.4/Trackora_1.2.4_x64-setup.exe"
+      "signature": "Your file was signed successfully, You can find the signature here:\nC:\\Users\\Furqan\\DigiReps\\DigiReps Tracker\\src-tauri\\target\\release\\bundle\\nsis\\TrackOwl_1.2.4_x64-setup.exe.sig\n\nPublic signature:\ndW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajlNMU1aMDROQjBxUGdWaXUxZHVoT3NvYUdha1JQSEhobVpQVVpqdVBwaEdpQVp1d24wMUtWcS9GYlU2akZFRlQrVEVmcWVlUGk2MW9DdEF1N1hwOHdjPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2OTc1NjMzCWZpbGU6VHJhY2tvcmFfMS4yLjRfeDY0LXNldHVwLmV4ZQpoR054VkI0MXZDVVZnODVYZlJMUG9wbWRFeExXUGdqazRNZmdjTkppbU9lYXFQVVl2MnZRMVpMNkR6amV0K2kxbWQ5eTJ3K0UxczlTOWhMU1VVNEJBQT09Cg==\n\nMake sure to include this into the signature field of your update server.",
+      "url": "https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.4/TrackOwl_1.2.4_x64-setup.exe"
     }
   }
 }

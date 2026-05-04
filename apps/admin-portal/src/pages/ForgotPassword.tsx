@@ -114,7 +114,7 @@ export function ForgotPassword() {
                             required
                             value={email}
                             onChange={e => setEmail(e.target.value)}
-                            placeholder="OPERATOR@TRACKORA.AI"
+                            placeholder="OPERATOR@TrackOwl.AI"
                             className="font-mono text-[13px] font-bold "
                             leftIcon={<Mail className="w-5 h-5 text-primary" strokeWidth={2.5} />}
                             autoFocus

@@ -1,7 +1,7 @@
 import { execSync } from 'child_process';
 import { writeFileSync } from 'fs';
 
-const password = 'Trackora2026!';
+const password = 'TrackOwl2026!';
 console.log('Generating keys...');
 
 try {

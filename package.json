@@ -1,9 +1,9 @@
 {
-  "name": "trackora",
+  "name": "TrackOwl",
   "private": true,
   "version": "1.2.3",
   "type": "module",
-  "description": "Trackora Time Tracker — Desktop App",
+  "description": "TrackOwl Time Tracker — Desktop App",
   "author": {
     "name": "DigiReps",
     "email": "support@yourapp.com"

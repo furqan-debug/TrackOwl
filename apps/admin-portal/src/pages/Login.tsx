@@ -52,9 +52,9 @@ export function Login() {
             <div className="w-full max-w-[1200px] px-8 py-8 flex items-center justify-between animate-in fade-in duration-700">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
                     <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
-                        <img src={LogoIcon} alt="Trackora" className="w-full h-full object-contain" />
+                        <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
                     </div>
-                    <span className="text-lg font-bold text-text-main tracking-tight">Trackora</span>
+                    <span className="text-lg font-bold text-text-main tracking-tight">TrackOwl</span>
                 </div>
                 <div className="text-[10px] font-extrabold text-text-muted tracking-[0.2em] bg-surface px-4 py-2 rounded-full border border-border">
                     Secure Gateway
@@ -138,7 +138,7 @@ export function Login() {
                     </Card>
 
                     <p className="mt-12 text-center text-[10px] font-bold text-text-muted tracking-[0.2em] opacity-60 leading-relaxed max-w-[340px] mx-auto">
-                        Authentication provided by <span className="text-text-main">Trackora Guard Pro</span>. Site integrity verified 2026.
+                        Authentication provided by <span className="text-text-main">TrackOwl Guard Pro</span>. Site integrity verified 2026.
                     </p>
                 </div>
             </div>

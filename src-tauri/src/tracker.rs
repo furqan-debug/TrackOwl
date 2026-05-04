@@ -10,7 +10,7 @@
 //     sent directly to the backend via HTTP (same as Electron)
 
 use std::sync::{Arc, Mutex};
-use std::sync::atomic::{AtomicU32, Ordering};
+use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::thread;
 use std::time::Duration;
 use rdev::{listen, Event, EventType};
@@ -21,6 +21,8 @@ use serde::{Deserialize, Serialize};
 pub struct TrackerCounts {
     pub mouse_count: AtomicU32,
     pub keyboard_count: AtomicU32,
+    pub active_seconds: AtomicU32,
+    pub last_active_second: AtomicU64,
 }
 
 impl Default for TrackerCounts {
@@ -28,6 +30,8 @@ impl Default for TrackerCounts {
         Self {
             mouse_count: AtomicU32::new(0),
             keyboard_count: AtomicU32::new(0),
+            active_seconds: AtomicU32::new(0),
+            last_active_second: AtomicU64::new(0),
         }
     }
 }
@@ -61,14 +65,38 @@ pub struct ScreenshotPayload {
 pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
     thread::spawn(move || {
         if let Err(e) = listen(move |event: Event| {
+            let mut is_active = false;
             match event.event_type {
                 EventType::KeyPress(_) => {
                     counts.keyboard_count.fetch_add(1, Ordering::Relaxed);
+                    is_active = true;
                 }
                 EventType::ButtonPress(_) => {
                     counts.mouse_count.fetch_add(1, Ordering::Relaxed);
+                    is_active = true;
+                }
+                EventType::MouseMove { .. } | EventType::Wheel { .. } => {
+                    is_active = true;
                 }
                 _ => {}
+            }
+
+            if is_active {
+                let current_sec = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs();
+                let last_sec = counts.last_active_second.load(Ordering::Relaxed);
+                if last_sec != current_sec {
+                    if counts.last_active_second.compare_exchange(
+                        last_sec,
+                        current_sec,
+                        Ordering::Acquire,
+                        Ordering::Relaxed
+                    ).is_ok() {
+                        counts.active_seconds.fetch_add(1, Ordering::Relaxed);
+                    }
+                }
             }
         }) {
             eprintln!("[tracker] rdev listen error: {:?}", e);
@@ -276,9 +304,10 @@ pub fn start_sample_loop(
         loop {
             if !*running.lock().unwrap() { break; }
 
-            let (mouse, keyboard) = (
+            let (mouse, keyboard, active_secs) = (
                 counts.mouse_count.swap(0, Ordering::Relaxed),
                 counts.keyboard_count.swap(0, Ordering::Relaxed),
+                counts.active_seconds.swap(0, Ordering::Relaxed),
             );
 
             let (app_name, window_title) = get_active_window();
@@ -297,11 +326,12 @@ pub fn start_sample_loop(
                     d
                 }
             };
-            let idle = mouse == 0 && keyboard == 0;
+            let idle = active_secs == 0;
 
-            // Granular activity calculation:
-            // 60-second window, 20 combined events (clicks/keys) = 100% activity
-            let activity_percent = (((mouse + keyboard) as f32 / 20.0) * 100.0).min(100.0) as i32;
+            // Hubstaff activity calculation:
+            // Active seconds / Total seconds in window
+            let interval_secs = (interval_ms / 1000) as f32;
+            let activity_percent = ((active_secs as f32 / interval_secs) * 100.0).min(100.0) as i32;
 
             let sample = ActivitySample {
                 session_id: session_id.clone(),

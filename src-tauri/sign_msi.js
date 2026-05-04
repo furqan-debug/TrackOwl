@@ -6,7 +6,7 @@ import path from 'path';
 const BASE_DIR = 'H:/DigiReps/DigiReps Tracker';
 const KEY_PATH = `${BASE_DIR}/src-tauri/signing.key`;
 const MSI_DIR = `${BASE_DIR}/src-tauri/target/release/bundle/msi`;
-const ORIGINAL_MSI_NAME = 'Trackora_1.0.9_x64_en-US.msi';
+const ORIGINAL_MSI_NAME = 'TrackOwl_1.0.9_x64_en-US.msi';
 const TEMP_MSI_NAME = 'v109.msi';
 const TEMP_KEY_NAME = 'k.key';
 
@@ -35,7 +35,7 @@ try {
     cwd: `${BASE_DIR}/src-tauri`,
     env: {
       ...process.env,
-      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: 'Trackora2026!'
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD: 'TrackOwl2026!'
     }
   });
 

@@ -35,7 +35,7 @@ fn db_path() -> std::path::PathBuf {
     let base = std::env::var("APPDATA")
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|_| std::env::temp_dir());
-    base.join("trackora").join("tracker_cache.sqlite")
+    base.join("TrackOwl").join("tracker_cache.sqlite")
 }
 
 // ─── Initialize DB ────────────────────────────────────────────────────────────

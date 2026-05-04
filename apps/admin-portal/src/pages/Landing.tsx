@@ -72,9 +72,9 @@ export function Landing() {
                 <nav className="mx-auto flex max-w-6xl items-center justify-between px-8 py-4 lg:py-5">
                     <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
                         <div className="flex h-12 w-12 items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-110">
-                            <img src={LogoIcon} alt="Trackora" className="w-full h-full object-contain" />
+                            <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
                         </div>
-                        <span className="text-xl font-black tracking-tighter bg-gradient-to-br from-text-main to-primary bg-clip-text text-transparent">Trackora</span>
+                        <span className="text-xl font-black tracking-tighter bg-gradient-to-br from-text-main to-primary bg-clip-text text-transparent">TrackOwl</span>
                     </div>
 
                     <div className="hidden items-center gap-1.5 p-1.5 rounded-full bg-black/[0.03] border border-black/[0.03] md:flex">
@@ -116,7 +116,7 @@ export function Landing() {
                         </h1>
 
                         <p className="max-w-2xl text-lg font-medium text-text-secondary leading-relaxed mb-12 opacity-80">
-                            Trackora automatically tracks time, captures screenshots, and measures activity — <br className="hidden md:block" /> giving you complete visibility without the micromanagement.
+                            TrackOwl automatically tracks time, captures screenshots, and measures activity — <br className="hidden md:block" /> giving you complete visibility without the micromanagement.
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -207,7 +207,7 @@ export function Landing() {
                                 <div className="aspect-video bg-surface-hover rounded-2xl flex items-center justify-center overflow-hidden relative">
                                     <img 
                                         src={DashboardPreview} 
-                                        alt="Trackora Dashboard" 
+                                        alt="TrackOwl Dashboard" 
                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
@@ -278,7 +278,7 @@ export function Landing() {
                         </div>
                         <h2 className="text-3xl font-extrabold tracking-tight text-text-primary mb-4">Get the Agent</h2>
                         <p className="max-w-xl mx-auto text-text-secondary text-sm font-medium leading-relaxed opacity-70 mb-12">
-                            The lightweight Trackora agent runs silently in your tray. Setup takes under 60 seconds.
+                            The lightweight TrackOwl agent runs silently in your tray. Setup takes under 60 seconds.
                         </p>
 
                         <div className="max-w-3xl mx-auto">
@@ -289,7 +289,7 @@ export function Landing() {
                                 </div>
                                 <div className="flex-1 space-y-6 relative z-10">
                                     <div>
-                                        <h3 className="text-xl font-extrabold text-text-primary tracking-tight">Trackora for Desktop</h3>
+                                        <h3 className="text-xl font-extrabold text-text-primary tracking-tight">TrackOwl for Desktop</h3>
                                         <p className="text-sm text-text-secondary opacity-70">Version 2.4.0 · Stable Build</p>
                                     </div>
                                     <div className="flex flex-wrap gap-3">
@@ -308,9 +308,9 @@ export function Landing() {
                         <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-t border-black/[0.03] pt-8">
                             <div className="flex items-center gap-2">
                                 <div className="flex h-8 w-8 items-center justify-center overflow-hidden">
-                                    <img src={LogoIcon} alt="Trackora" className="w-full h-full object-contain" />
+                                    <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
                                 </div>
-                                <span className="text-lg font-extrabold tracking-tighter">Trackora</span>
+                                <span className="text-lg font-extrabold tracking-tighter">TrackOwl</span>
                             </div>
 
                             <div className="flex gap-8 text-[9px] font-bold tracking-[0.15em] text-text-muted">
@@ -320,7 +320,7 @@ export function Landing() {
                             </div>
 
                             <p className="text-[9px] font-bold tracking-[0.15em] text-text-muted opacity-40">
-                                © 2024 Trackora Inc.
+                                © 2024 TrackOwl Inc.
                             </p>
                         </div>
                     </div>
