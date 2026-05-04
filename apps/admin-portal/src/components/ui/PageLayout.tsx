@@ -35,8 +35,8 @@ export function PageLayout({
                         <div className="space-y-4">
                             {backButton && (
                                 <button
-                                    onClick={backButton.onClick}
-                                    className="flex items-center gap-3 text-[11px] font-bold text-[var(--text-muted)] tracking-[0.2em] hover:text-primary transition-all duration-300 group mb-2"
+                                     onClick={backButton.onClick}
+                                     className="flex items-center gap-3 text-[13px] font-bold text-[var(--text-muted)] hover:text-primary transition-all duration-300 group mb-2"
                                 >
                                     <div className="w-8 h-8 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-color)] flex items-center justify-center group-hover:border-primary group-hover:bg-primary group-hover:text-white transition-all shadow-shell-sm">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -48,12 +48,12 @@ export function PageLayout({
                             )}
                             <div className="space-y-2">
                                 {title && (
-                                    <h1 className="text-4xl md:text-5xl font-bold tracking-tighter leading-none heading-gradient pb-1 lg:pb-2">
+                                    <h1 className="text-4xl md:text-5xl font-bold leading-tight heading-gradient pb-1 lg:pb-2">
                                         {title}
                                     </h1>
                                 )}
                                 {description && (
-                                    <p className="text-[11px] font-bold text-[var(--text-muted)] tracking-[0.15em] max-w-2xl leading-relaxed opacity-70">
+                                    <p className="text-[14px] font-medium text-[var(--text-muted)] max-w-2xl leading-relaxed opacity-80">
                                         {description}
                                     </p>
                                 )}

@@ -51,7 +51,7 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
                 </div>
                 {trend !== undefined && (
                     <div className={clsx(
-                        "text-[10px] font-bold px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-shell-sm border border-transparent",
+                        "text-[12px] font-bold px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-shell-sm border border-transparent",
                         trend >= 0
                             ? (isBrownGradient ? "bg-primary/10 text-primary border-primary/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20")
                             : (isBrownGradient ? "bg-primary/10 text-primary border-primary/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20")
@@ -66,14 +66,14 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
             </div>
 
             <div className="space-y-1.5 relative z-10">
-                <p className="text-[10px] font-bold tracking-[0.2em] text-text-muted">{label}</p>
+                <p className="text-[12px] font-bold text-text-muted uppercase">{label}</p>
                 <div className={clsx(
-                    "text-3xl font-bold tracking-tighter transition-all duration-300",
+                    "text-3xl font-bold transition-all duration-300",
                     (isBrownGradient || accent === 'primary') ? "text-gradient-premium" : "text-text-main group-hover:text-primary"
                 )}>
                     {value}
                 </div>
-                {sub && <p className="text-[11px] font-medium tracking-tight text-text-muted opacity-70">{sub}</p>}
+                {sub && <p className="text-[13px] font-medium text-text-muted opacity-80">{sub}</p>}
             </div>
         </div>
     );

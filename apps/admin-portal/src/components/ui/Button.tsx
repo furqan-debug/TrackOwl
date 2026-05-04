@@ -29,9 +29,9 @@ const variantClasses: Record<ButtonVariant, string> = {
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-    sm: 'px-6 py-3 text-[10px]',
-    md: 'px-8 py-4 text-[11px]',
-    lg: 'px-10 py-5 text-[12px]',
+    sm: 'px-4 py-2 text-[12px]',
+    md: 'px-6 py-3 text-[13px]',
+    lg: 'px-8 py-4 text-[15px]',
 };
 
 export function Button({
@@ -51,7 +51,7 @@ export function Button({
             type={type}
             disabled={disabled || loading}
             className={clsx(
-                'inline-flex items-center justify-center gap-2 rounded-shell-md font-semibold tracking-tight transition-all focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50 disabled:pointer-events-none font-sans',
+                'inline-flex items-center justify-center gap-2 rounded-shell-md font-bold transition-all focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50 disabled:pointer-events-none font-sans',
                 variantClasses[variant],
                 sizeClasses[size],
                 className

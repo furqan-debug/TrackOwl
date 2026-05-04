@@ -76,8 +76,8 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                     <div className="hidden lg:block h-8 w-px bg-[var(--border-color)]" />
 
                     <div className="hidden lg:flex flex-col">
-                        <span className="text-[11px] font-bold text-[var(--text-muted)] leading-none mb-0.5">Admin</span>
-                        <span className="text-[15px] font-bold text-[var(--text-main)] tracking-tight">Portal</span>
+                        <span className="text-[13px] font-bold text-[var(--text-muted)] leading-tight mb-0.5">Admin</span>
+                        <span className="text-[18px] font-bold text-[var(--text-main)]">Portal</span>
                     </div>
                 </div>
 
@@ -97,7 +97,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                     <button
                                         onMouseEnter={() => setActiveDropdown(group.name)}
                                         className={clsx(
-                                            "relative flex items-center gap-1.5 px-4 h-9 rounded-xl text-[11px] font-bold transition-all duration-300",
+                                            "relative flex items-center gap-1.5 px-4 h-9 rounded-xl text-[13px] font-bold transition-all duration-300",
                                             isActive || isDropdownOpen ? "text-primary bg-primary/5 shadow-shell-sm ring-1 ring-primary/10" : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-primary/5"
                                         )}
                                     >
@@ -109,7 +109,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                         to={group.path!}
                                         onMouseEnter={() => setActiveDropdown(null)}
                                         className={clsx(
-                                            "relative flex items-center gap-1.5 px-4 h-9 rounded-xl text-[11px] font-bold transition-all duration-300",
+                                            "relative flex items-center gap-1.5 px-4 h-9 rounded-xl text-[13px] font-bold transition-all duration-300",
                                             isActive ? "text-primary bg-primary/5 shadow-shell-sm ring-1 ring-primary/10" : "text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-primary/5"
                                         )}
                                     >
@@ -133,7 +133,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                                     key={child.path}
                                                     to={child.path}
                                                     className={clsx(
-                                                        "flex items-center justify-between px-4 py-2 rounded-xl text-[11px] font-bold transition-all duration-200",
+                                                        "flex items-center justify-between px-4 py-2 rounded-xl text-[13px] font-bold transition-all duration-200",
                                                         matchActive(location.pathname, child.path)
                                                             ? "bg-primary text-white shadow-shell-sm"
                                                             : "text-[var(--text-muted)] hover:bg-primary/5 hover:text-primary"

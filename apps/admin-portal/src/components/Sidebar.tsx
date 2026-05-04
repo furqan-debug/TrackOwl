@@ -79,7 +79,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
         if (!badge || effectiveCollapsed) return null;
         if (badge === 'new') {
             return (
-                <span className="flex items-center gap-1 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full ml-2 shrink-0 ">
+                <span className="flex items-center gap-1 bg-primary text-white text-[11px] font-bold px-2 py-0.5 rounded-full ml-2 shrink-0 ">
                     New
                 </span>
             );
@@ -123,7 +123,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                         <button
                             type="button"
                             onClick={() => setFavoritesExpanded(!favoritesExpanded)}
-                            className="w-full flex items-center justify-between py-2 text-[10px] font-bold text-[var(--sidebar-text)] tracking-[0.2em] hover:text-[var(--sidebar-text-active)] transition-colors group px-2"
+                            className="w-full flex items-center justify-between py-2 text-[12px] font-bold text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] transition-colors group px-2"
                             aria-expanded={favoritesExpanded}
                         >
                             <div className="flex items-center gap-2">
@@ -152,7 +152,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         )}
                                     >
                                         <div className={clsx("w-2 h-2 rounded-full", location.pathname === fav.path ? "bg-primary" : "bg-surface/10 group-hover:bg-primary/30")} />
-                                        <span className="truncate tracking-tight font-bold">{fav.name}</span>
+                                        <span className="truncate font-bold">{fav.name}</span>
                                     </Link>
                                 ))
                             ) : (
@@ -165,7 +165,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 {/* Main Navigation */}
                 <nav className="space-y-1" aria-label="Primary">
                     {!effectiveCollapsed && (
-                        <p className="px-4 text-[10px] font-bold text-[var(--sidebar-text)] tracking-[0.2em] mb-4 opacity-20 text-left">Navigation</p>
+                        <p className="px-4 text-[12px] font-bold text-[var(--sidebar-text)] mb-4 opacity-20 text-left uppercase">Navigation</p>
                     )}
                     {filteredNav.map((group) => {
                         const hasChildren = group.children && group.children.length > 0;
@@ -180,7 +180,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         type="button"
                                         onClick={() => toggleGroup(group.name)}
                                         className={clsx(
-                                            'group flex items-center rounded-xl text-[13px] font-bold transition-all',
+                                            'group flex items-center rounded-xl text-[14px] font-bold transition-all',
                                             effectiveCollapsed ? 'justify-center p-3 w-full' : 'justify-between px-3.5 py-2.5 w-full',
                                             isChildActive && !isExpanded ? 'bg-primary/10 text-primary shadow-sm' : 
                                             isExpanded ? 'text-[var(--sidebar-text-active)] bg-surface/[0.05]' : 'text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-surface-hover/[0.05]'
@@ -203,7 +203,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         to={group.path!}
                                         onClick={() => onOverlayClose?.()}
                                         className={clsx(
-                                            'group flex items-center rounded-xl text-[13px] font-bold transition-all relative overflow-hidden',
+                                            'group flex items-center rounded-xl text-[14px] font-bold transition-all relative overflow-hidden',
                                             effectiveCollapsed ? 'justify-center p-3' : 'px-3.5 py-2.5 gap-3',
                                             isDirectlyActive 
                                                 ? 'bg-primary/10 text-primary shadow-sm' 
