@@ -208,11 +208,12 @@ function LocalClock() {
   );
 }
 
-// ── App Footer (Version & Location) ──────────────────────────────────────────
-function AppFooter({ lastSyncTime, isSyncing, onSync }: {
+// ── App Footer (Auto-sync & Location) ──────────────────────────────────────────
+function AppFooter({ lastSyncTime, isSyncing, onSync, isOnline }: {
   lastSyncTime: Date | null,
   isSyncing: boolean,
-  onSync: () => void
+  onSync: () => void,
+  isOnline: boolean
 }) {
   const [version, setVersion] = useState<string>('...');
   const [loc, setLoc] = useState<string | null>(null);
@@ -235,34 +236,40 @@ function AppFooter({ lastSyncTime, isSyncing, onSync }: {
     fetchLoc();
   }, []);
 
-  const syncDateStr = lastSyncTime
-    ? lastSyncTime.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
-    : '';
   const syncTimeStr = lastSyncTime
     ? lastSyncTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
     : '';
 
   return (
     <footer className="app-footer">
-      <div className="footer-sync-wrap">
-        <button
-          className={`footer-sync-btn ${isSyncing ? 'syncing' : ''}`}
-          onClick={onSync}
-          disabled={isSyncing}
-          title="Sync unsynced data to server"
-        >
-          <RefreshCcw size={14} className={isSyncing ? 'animate-spin' : ''} />
-        </button>
-        {lastSyncTime && (
+      <div className="footer-left">
+        <div className={`footer-sync-wrap ${!isOnline ? 'is-offline' : ''}`}>
+          <button
+            className={`footer-sync-btn ${isSyncing ? 'syncing' : ''} ${!isOnline ? 'disconnected' : ''}`}
+            onClick={onSync}
+            disabled={isSyncing}
+            title={isOnline ? "Force refresh data from server" : "Offline - Click to try reconnecting"}
+          >
+            <RefreshCcw size={14} className={isSyncing ? 'animate-spin' : ''} />
+          </button>
           <div className="footer-sync-text">
-            Last updated at: {syncDateStr} {syncTimeStr}
+            <span className={`sync-status-indicator ${!isOnline ? 'offline' : ''}`}></span>
+            {!isOnline ? 'Offline - Waiting for connection' : (lastSyncTime ? `Synced at ${syncTimeStr}` : 'Syncing...')}
           </div>
-        )}
+        </div>
       </div>
 
       <div className="footer-right">
-        <div className="footer-version">Version {version}</div>
-        {loc && <div className="footer-location">{loc}</div>}
+        <div className="footer-meta-item">
+          <Smartphone size={12} className="meta-icon" />
+          <span className="footer-version">v{version}</span>
+        </div>
+        {loc && (
+          <div className="footer-meta-item">
+            <MapPin size={12} className="meta-icon" />
+            <span className="footer-location">{loc}</span>
+          </div>
+        )}
       </div>
     </footer>
   );
@@ -632,6 +639,19 @@ function SupportScreen({ user, onBack }: { user: User; onBack: () => void }) {
 }
 
 export default function App() {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const [screen, setScreen] = useState<Screen>('login');
   const [user, setUser] = useState<User | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -642,6 +662,12 @@ export default function App() {
   const [elapsed, setElapsed] = useState(0);
   const [rememberMe, setRememberMe] = useState(true);
   const [trackingError, setTrackingError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOnline && (trackingError?.includes('offline') || trackingError?.includes('Network error'))) {
+      setTrackingError(null);
+    }
+  }, [isOnline, trackingError]);
   const [todos, setTodos] = useState<Todo[]>([]);
   const idleMinutesRef = useRef(0);
   const [idlePaused, setIdlePaused] = useState(false);
@@ -663,11 +689,17 @@ export default function App() {
     setIsSyncing(true);
     try {
       await trackerAPI.syncNow();
+      if (user) await fetchDashboardStats(user.id, projects);
+      setIsOnline(true);
       const now = new Date();
       setLastSyncTime(now);
       localStorage.setItem('lastSyncTime', now.toISOString());
-    } catch (e) {
+    } catch (e: any) {
       console.error('[App] Sync failed:', e);
+      const errMsg = e.toString();
+      if (errMsg.includes('transport error') || errMsg.includes('Dns Failed')) {
+        setIsOnline(false);
+      }
     } finally {
       setIsSyncing(false);
     }
@@ -897,8 +929,16 @@ export default function App() {
         } : { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, activityPercent: 0, rawTodaySeconds: 0, keptIdleSeconds: 0 }
       }));
       setProjects(updatedProjects);
-    } catch (err) {
+      setIsOnline(true);
+
+      setLastSyncTime(now);
+      localStorage.setItem('lastSyncTime', now.toISOString());
+    } catch (err: any) {
       console.error('fetchStats error:', err);
+      const errMsg = err.toString();
+      if (errMsg.includes('transport error') || errMsg.includes('Dns Failed')) {
+        setIsOnline(false);
+      }
     }
   }
 
@@ -1280,14 +1320,18 @@ export default function App() {
   }, [isTracking, isPaused]);
 
   useEffect(() => {
-    if (isTracking && !isPaused && user) {
-      // Use productive time (elapsed already represents productive seconds)
-      const currentToday = elapsed;
-      const initialWeek = projects.reduce((s, p) => {
-        const pWeekly = Math.max(0, (p.stats?.weeklySeconds || 0) - (p.stats?.weeklyIdleSeconds || 0));
-        return s + pWeekly;
-      }, 0);
-      const currentWeek = initialWeek + elapsed;
+    if (isTracking && !isPaused && user && activeProject) {
+      // Calculate total today: (Sum of productive time for ALL OTHER projects today) + current elapsed
+      const otherProjectsToday = projects
+        .filter(p => p.id !== activeProject.id)
+        .reduce((s, p) => s + Math.max(0, (p.stats?.todaySeconds || 0) - (p.stats?.keptIdleSeconds || 0)), 0);
+      const currentToday = otherProjectsToday + elapsed;
+
+      // Calculate total week: (Sum of productive time for ALL OTHER projects this week) + current elapsed
+      const otherProjectsWeek = projects
+        .filter(p => p.id !== activeProject.id)
+        .reduce((s, p) => s + Math.max(0, (p.stats?.weeklySeconds || 0) - (p.stats?.weeklyIdleSeconds || 0)), 0);
+      const currentWeek = otherProjectsWeek + elapsed;
 
       const weeklyLimitSecs = (user.weekly_limit || 40) * 3600;
       const dailyLimitSecs = (user.daily_limit || 8) * 3600;
@@ -1407,6 +1451,12 @@ export default function App() {
     setTrackingError(null);
 
     try {
+      if (!isOnline) {
+        setTrackingError('You are currently offline. Please check your internet connection to start tracking.');
+        setActiveProject(null);
+        setScreen('projects');
+        return;
+      }
       const sb = await getSupabase();
 
       if (user?.tracking_enabled === false) {
@@ -1416,6 +1466,26 @@ export default function App() {
         setScreen('projects');
         return;
       }
+
+      // Enforcement: Daily & Weekly Limits
+      const totalToday = projects.reduce((s, p) => s + Math.max(0, (p.stats?.todaySeconds || 0) - (p.stats?.keptIdleSeconds || 0)), 0);
+      const totalWeek = projects.reduce((s, p) => s + Math.max(0, (p.stats?.weeklySeconds || 0) - (p.stats?.weeklyIdleSeconds || 0)), 0);
+      const dailyLimitSecs = (user?.daily_limit || 8) * 3600;
+      const weeklyLimitSecs = (user?.weekly_limit || 40) * 3600;
+
+      if (totalToday >= dailyLimitSecs) {
+        setTrackingError(`Daily limit (${user?.daily_limit || 8}h) reached. Please contact your manager.`);
+        setActiveProject(null);
+        setScreen('projects');
+        return;
+      }
+      if (totalWeek >= weeklyLimitSecs) {
+        setTrackingError(`Weekly limit (${user?.weekly_limit || 40}h) reached. Please contact your manager.`);
+        setActiveProject(null);
+        setScreen('projects');
+        return;
+      }
+
       console.log('TRACKING ALLOWED: tracking_enabled is', user?.tracking_enabled);
 
       const { data: { session } } = await sb.auth.getSession();
@@ -1423,7 +1493,13 @@ export default function App() {
 
       const res: any = await trackerAPI.startTracking(project.id, user?.id ?? '', token);
       if (res?.status === 'error') {
-        setTrackingError(res.error || 'Failed to start tracking. Is the backend running?');
+        const rawErr = res.error || '';
+        if (rawErr.includes('transport error') || rawErr.includes('Dns Failed')) {
+          setTrackingError('Network error: Unable to reach the server. Please check your internet connection.');
+          setIsOnline(false);
+        } else {
+          setTrackingError(rawErr || 'Failed to start tracking. Is the backend running?');
+        }
         setActiveProject(null);
         setScreen('projects');
         return;
@@ -1437,7 +1513,13 @@ export default function App() {
         trackerAPI.showNotification('Tracking Started', `Now tracking for ${project.name}`);
       }
     } catch (err: any) {
-      setTrackingError(err.toString());
+      const errMsg = err.toString();
+      if (errMsg.includes('transport error') || errMsg.includes('Dns Failed')) {
+        setTrackingError('Network error: Unable to reach the server. Please check your internet connection.');
+        setIsOnline(false);
+      } else {
+        setTrackingError(errMsg);
+      }
       setActiveProject(null);
       setScreen('projects');
     }
@@ -1660,6 +1742,7 @@ export default function App() {
         lastSyncTime={lastSyncTime}
         isSyncing={isSyncing}
         onSync={handleManualSync}
+        isOnline={isOnline}
       />
     </div>
   );
