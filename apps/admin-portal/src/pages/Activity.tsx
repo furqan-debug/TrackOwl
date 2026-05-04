@@ -381,18 +381,18 @@ export function Activity() {
                                         <ActivityIcon className="w-4 h-4" />
                                     </div>
                                     <div>
-                                        <h3 className="text-[15px] font-bold text-text-main tracking-tight">Heatmap</h3>
-                                        <p className="text-[10px] font-bold text-text-muted mt-0.5">10-minute resolution</p>
+                                        <h3 className="text-[18px] font-bold text-text-main">Heatmap</h3>
+                                        <p className="text-[13px] font-medium text-text-muted mt-0.5">10-minute resolution</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                        <span className="text-[9px] font-bold text-text-muted ">Active</span>
+                                        <span className="text-[12px] font-medium text-text-muted ">Active</span>
                                     </div>
                                     <div className="flex items-center gap-1.5">
                                         <div className="w-1.5 h-1.5 rounded-full bg-border" />
-                                        <span className="text-[9px] font-bold text-text-muted ">Idle</span>
+                                        <span className="text-[12px] font-medium text-text-muted ">Idle</span>
                                     </div>
                                 </div>
                             </div>
@@ -410,8 +410,8 @@ export function Activity() {
                                     <Monitor className="w-4 h-4" />
                                 </div>
                                 <div>
-                                    <h3 className="text-[15px] font-bold text-text-main tracking-tight">App Usage</h3>
-                                    <p className="text-[10px] font-bold text-text-muted mt-0.5">Top utilized software</p>
+                                    <h3 className="text-[18px] font-bold text-text-main">App Usage</h3>
+                                    <p className="text-[13px] font-medium text-text-muted mt-0.5">Top utilized software</p>
                                 </div>
                             </div>
                             <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -429,8 +429,8 @@ export function Activity() {
                                         <Camera className="w-5 h-5" />
                                     </div>
                                     <div>
-                                        <h3 className="text-[16px] font-bold text-text-main tracking-tight">Captures</h3>
-                                        <p className="text-[10px] font-bold text-text-muted mt-0.5">{screenshots.length} automated work captures</p>
+                                        <h3 className="text-[18px] font-bold text-text-main">Captures</h3>
+                                        <p className="text-[13px] font-medium text-text-muted mt-0.5">{screenshots.length} automated work captures</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">

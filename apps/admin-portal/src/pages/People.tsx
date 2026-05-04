@@ -256,13 +256,13 @@ export function People() {
                     <button
                         onClick={() => { if (!isViewer) { resetAddForm(); setShowAddModal(true); } }}
                         disabled={isViewer}
-                        className="flex items-center gap-2 px-5 h-10 bg-primary text-white rounded-xl text-[10px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-5 h-10 bg-primary text-white rounded-xl text-[12px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <UserPlus className="w-4 h-4" /> Invite Member
                     </button>
                     <button
                         onClick={handleExportCsv}
-                        className="flex items-center gap-2 px-5 h-10 bg-surface border border-border text-text-muted rounded-xl text-[10px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all"
+                        className="flex items-center gap-2 px-5 h-10 bg-surface border border-border text-text-muted rounded-xl text-[12px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all"
                     >
                         <Download className="w-3.5 h-3.5" /> Export CSV
                     </button>
@@ -273,7 +273,7 @@ export function People() {
                 <button
                     onClick={() => setActiveTab('Members')}
                     className={clsx(
-                        "px-6 rounded-lg text-[10px] font-bold transition-all h-full",
+                        "px-6 rounded-lg text-[12px] font-bold transition-all h-full",
                         activeTab === 'Members' ? "bg-surface text-primary shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
                     )}
                 >
@@ -282,7 +282,7 @@ export function People() {
                 <button
                     onClick={() => setActiveTab('Invites')}
                     className={clsx(
-                        "px-6 rounded-lg text-[10px] font-bold transition-all h-full",
+                        "px-6 rounded-lg text-[12px] font-bold transition-all h-full",
                         activeTab === 'Invites' ? "bg-surface text-primary shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
                     )}
                 >
@@ -444,10 +444,10 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                         )}
                     </div>
                     <div className="min-w-0">
-                        <span onClick={onEdit} className="text-[13px] font-bold text-text-main hover:text-primary cursor-pointer block tracking-tight transition-colors truncate">
+                        <span onClick={onEdit} className="text-[15px] font-bold text-text-main hover:text-primary cursor-pointer block transition-colors truncate">
                             {m.full_name}
                         </span>
-                        <span className="text-[11px] font-bold text-text-muted block truncate">
+                        <span className="text-[12px] font-medium text-text-muted block truncate">
                             {m.email}
                         </span>
                     </div>

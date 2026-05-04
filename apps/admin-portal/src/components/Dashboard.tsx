@@ -415,7 +415,7 @@ export function Dashboard() {
                         >
                             <div className="flex items-center justify-center gap-2">
                                 <CalendarIcon className="w-3.5 h-3.5 text-primary opacity-50" />
-                                <span className="text-[11px] font-bold text-text-main ">
+                                <span className="text-[13px] font-bold text-text-main ">
                                     {weekStart.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </span>
                             </div>
@@ -489,8 +489,8 @@ export function Dashboard() {
                         <div className="glass-panel rounded-[12px] overflow-hidden flex flex-col h-full shadow-premium border border-border">
                             <div className="px-10 py-8 border-b border-border flex items-center justify-between bg-surface/50 shrink-0">
                                 <div>
-                                    <h3 className="text-[14px] font-bold text-text-main tracking-tight mb-1">Visual Activity Stream</h3>
-                                    <p className="text-[10px] font-bold text-text-muted ">Showing top 4 most active team members</p>
+                                    <h3 className="text-[18px] font-bold text-text-main mb-1">Visual Activity Stream</h3>
+                                    <p className="text-[12px] font-medium text-text-muted ">Showing top 4 most active team members</p>
                                 </div>
                                 <button
                                     onClick={() => navigate('/dashboard/activity')}
