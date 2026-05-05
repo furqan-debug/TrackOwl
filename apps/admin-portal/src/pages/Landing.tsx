@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import clsx from 'clsx';
 import {
     ChevronRight,
     Check,
@@ -6,13 +8,23 @@ import {
     Monitor,
     Shield,
     Clock,
-    Layout
+    Layout,
+    Camera
 } from 'lucide-react';
-import LogoIcon from '../assets/branding/icon.png';
+import LogoIcon from '../assets/branding/3.svg';
 import DashboardPreview from '../assets/branding/dashboard-preview.png';
 
 export function Landing() {
     const navigate = useNavigate();
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     const plans = [
         {
@@ -68,16 +80,22 @@ export function Landing() {
             <div className="fixed inset-0 bg-noise z-0 pointer-events-none" />
 
             {/* Navigation */}
-            <header className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 glass-header border-b border-white/20">
-                <nav className="mx-auto flex max-w-6xl items-center justify-between px-8 py-4 lg:py-5">
+            <header className={clsx(
+                "fixed top-0 left-0 right-0 z-[100] transition-all duration-500",
+                isScrolled ? "bg-white/90 backdrop-blur-xl shadow-sm border-b border-black/5 py-3" : "bg-transparent py-6"
+            )}>
+                <nav className="mx-auto flex max-w-6xl items-center justify-between px-8">
                     <div className="flex items-center gap-3 cursor-pointer group" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
-                        <div className="flex h-12 w-12 items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-110">
+                        <div className="flex h-24 w-auto items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-110">
                             <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
                         </div>
-                        <span className="text-xl font-black tracking-tighter bg-gradient-to-br from-text-main to-primary bg-clip-text text-transparent">TrackOwl</span>
+                        {/* Brand name is included in the SVG asset */}
                     </div>
 
-                    <div className="hidden items-center gap-1.5 p-1.5 rounded-full bg-black/[0.03] border border-black/[0.03] md:flex">
+                    <div className={clsx(
+                        "hidden items-center gap-1.5 p-1.5 rounded-full border transition-all duration-500 md:flex",
+                        isScrolled ? "bg-black/[0.03] border-black/[0.03]" : "bg-white/10 border-white/20 backdrop-blur-md"
+                    )}>
                         <NavButton onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>Features</NavButton>
                         <NavButton onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>How it works</NavButton>
                         <NavButton onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}>Pricing</NavButton>
@@ -115,8 +133,23 @@ export function Landing() {
                             <span className="text-gradient-premium italic">remote team</span> is doing.
                         </h1>
 
-                        <p className="max-w-2xl text-lg font-medium text-text-secondary leading-relaxed mb-12 opacity-80">
-                            TrackOwl automatically tracks time, captures screenshots, and measures activity — <br className="hidden md:block" /> giving you complete visibility without the micromanagement.
+                        <div className="flex flex-wrap justify-center gap-x-12 gap-y-6 mb-10 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
+                            {[
+                                { label: 'Time Tracking', icon: Clock },
+                                { label: 'Screenshots', icon: Camera },
+                                { label: 'Activity Analytics', icon: Layout }
+                            ].map((pill, i) => (
+                                <div key={i} className="flex items-center gap-3">
+                                    <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center">
+                                        <pill.icon className="w-4 h-4 text-primary opacity-70" strokeWidth={2.5} />
+                                    </div>
+                                    <span className="text-[11px] font-bold tracking-[0.1em] text-text-primary uppercase">{pill.label}</span>
+                                </div>
+                            ))}
+                        </div>
+
+                        <p className="max-w-2xl text-xl font-medium text-text-secondary leading-relaxed mb-12 opacity-90 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
+                            Get <span className="text-text-main font-extrabold decoration-primary/30 decoration-4 underline-offset-4 underline">complete visibility</span> into your team's workflow without the friction of micromanagement.
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -205,10 +238,10 @@ export function Landing() {
                             </div>
                             <div className="glass-panel p-2 rounded-3xl shadow-elevated border-white/60 overflow-hidden group">
                                 <div className="aspect-video bg-surface-hover rounded-2xl flex items-center justify-center overflow-hidden relative">
-                                    <img 
-                                        src={DashboardPreview} 
-                                        alt="TrackOwl Dashboard" 
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                                    <img
+                                        src={DashboardPreview}
+                                        alt="TrackOwl Dashboard"
+                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                                 </div>
@@ -307,10 +340,10 @@ export function Landing() {
                     <div className="mx-auto max-w-6xl px-6">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-8 border-t border-black/[0.03] pt-8">
                             <div className="flex items-center gap-2">
-                                <div className="flex h-8 w-8 items-center justify-center overflow-hidden">
+                                <div className="flex h-20 w-20 items-center justify-center overflow-hidden">
                                     <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
                                 </div>
-                                <span className="text-lg font-extrabold tracking-tighter">TrackOwl</span>
+                                {/* Name removed as per request */}
                             </div>
 
                             <div className="flex gap-8 text-[9px] font-bold tracking-[0.15em] text-text-muted">

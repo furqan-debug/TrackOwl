@@ -5,8 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../context/FavoritesContext';
 import { useTheme } from '../hooks/useTheme';
 import clsx from 'clsx';
-import logoLight from '../assets/branding/logo-light.svg';
-import logoDark from '../assets/branding/logo-dark.svg';
+import logoLight from '../assets/branding/3.svg';
+import logoDark from '../assets/branding/4.svg';
 
 interface MobileNavProps {
     onClose: () => void;
@@ -27,18 +27,18 @@ export function MobileNav({ onClose }: MobileNavProps) {
     return (
         <div className="fixed inset-0 z-[100] md:hidden">
             {/* Backdrop */}
-            <div 
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" 
+            <div
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300"
                 onClick={onClose}
             />
-            
+
             {/* Drawer */}
             <div className="fixed inset-y-0 left-0 w-[300px] bg-[var(--bg-surface)] shadow-2xl animate-in slide-in-from-left duration-300 flex flex-col">
                 <div className="flex items-center justify-between p-6 border-b border-[var(--border-color)]">
                     <div className="flex items-center">
-                        <img src={theme === 'dark' ? logoDark : logoLight} alt="TrackOwl" className="h-14 w-auto object-contain" />
+                        <img src={theme === 'dark' ? logoDark : logoLight} alt="TrackOwl" className="h-24 w-auto object-contain" />
                     </div>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="p-2 rounded-xl hover:bg-primary/5 text-[var(--text-muted)] transition-colors"
                     >
@@ -57,8 +57,8 @@ export function MobileNav({ onClose }: MobileNavProps) {
                                         onClick={onClose}
                                         className={clsx(
                                             "flex items-center justify-between px-4 py-3 rounded-xl text-[14px] font-bold transition-all",
-                                            location.pathname === group.path 
-                                                ? "bg-primary text-white shadow-shell-md shadow-primary/20" 
+                                            location.pathname === group.path
+                                                ? "bg-primary text-white shadow-shell-md shadow-primary/20"
                                                 : "text-[var(--text-muted)] hover:bg-primary/5 hover:text-primary"
                                         )}
                                     >
