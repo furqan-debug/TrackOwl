@@ -88,8 +88,10 @@ export function Activity() {
             });
     }, [organizationId]);
 
-    const fetchData = useCallback(async (isSilent = false, forceRefresh = false) => {
-        const cacheKey = `${selectedDate}_${selectedMemberId}`;
+    const fetchData = useCallback(async (isSilent = false, forceRefresh = false, overrideLimit?: number) => {
+        const currentLimit = overrideLimit ?? screenshotLimit;
+        const cacheKey = `${selectedDate}_${selectedMemberId}_${currentLimit}`;
+        
         if (!forceRefresh && activityCache && activityCacheKey === cacheKey) {
             setSamples(activityCache.samples);
             setScreenshots(activityCache.screenshots);
@@ -155,10 +157,10 @@ export function Activity() {
                     .gte('recorded_at', start)
                     .lte('recorded_at', end)
                     .order('recorded_at', { ascending: false })
-                    .limit(screenshotLimit)
+                    .limit(currentLimit)
             ]);
 
-            setHasMoreScreenshots((totalSS || 0) > screenshotLimit);
+            setHasMoreScreenshots((totalSS || 0) > currentLimit);
 
             const startMs = new Date(start).getTime();
             const endMs = new Date(end).getTime();
@@ -178,7 +180,7 @@ export function Activity() {
                 samples: actData || [],
                 screenshots: ssData || [],
                 sessionMinutes: mins,
-                hasMoreScreenshots: (totalSS || 0) > screenshotLimit
+                hasMoreScreenshots: (totalSS || 0) > currentLimit
             };
             activityCacheKey = cacheKey;
         } catch (error) {
@@ -204,8 +206,11 @@ export function Activity() {
         if (loadingMore || refreshing || !hasMoreScreenshots) return;
 
         setLoadingMore(true);
-        setScreenshotLimit(prev => prev + 10);
-        // fetchData will be re-created due to screenshotLimit dependency and triggered by useEffect
+        const newLimit = screenshotLimit + 12; // Load in batches of 12 for better grid alignment
+        setScreenshotLimit(newLimit);
+        
+        // Trigger a silent fetch immediately with the new limit
+        await fetchData(true, false, newLimit);
         setLoadingMore(false);
     };
 
