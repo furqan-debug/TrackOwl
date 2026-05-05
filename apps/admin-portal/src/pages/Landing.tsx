@@ -9,10 +9,17 @@ import {
     Shield,
     Clock,
     Layout,
-    Camera
+    Camera,
+    Quote
 } from 'lucide-react';
 import LogoIcon from '../assets/branding/3.svg';
 import DashboardPreview from '../assets/branding/dashboard-preview.png';
+import JasonAvatar from '../assets/branding/jason.png';
+import ElenaAvatar from '../assets/branding/elena.png';
+import SarahAvatar from '../assets/branding/sarah.png';
+import MarcusAvatar from '../assets/branding/marcus.png';
+import DavidAvatar from '../assets/branding/david.png';
+
 
 export function Landing() {
     const navigate = useNavigate();
@@ -89,7 +96,6 @@ export function Landing() {
                         <div className="flex h-24 w-auto items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-110">
                             <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
                         </div>
-                        {/* Brand name is included in the SVG asset */}
                     </div>
 
                     <div className={clsx(
@@ -249,6 +255,143 @@ export function Landing() {
                         </div>
                     </div>
                 </section>
+                {/* Professional Moving Testimonials Section */}
+                <section className="py-24 relative overflow-hidden bg-surface/5">
+                    <div className="mx-auto max-w-6xl px-6 mb-16 text-center">
+                        <h2 className="text-3xl font-extrabold tracking-tight text-text-primary mb-4">Driving Success for Modern Teams</h2>
+                        <p className="text-text-secondary font-medium text-md opacity-70">Join hundreds of companies optimizing their remote operations.</p>
+                    </div>
+
+                    <div className="relative flex overflow-x-hidden">
+                        <div className="animate-marquee flex gap-8 py-4">
+                            {[
+                                {
+                                    savings: "Saved $15,200",
+                                    period: "Annual Overhead",
+                                    quote: "TrackOwl payed for itself in the first 48 hours. We identified massive resource leakage in our dev cycle.",
+                                    author: "Jason Riva",
+                                    role: "COO",
+                                    company: "NexaSystems",
+                                    avatar: JasonAvatar
+                                },
+                                {
+                                    savings: "+22% Efficiency",
+                                    period: "Creative Output",
+                                    quote: "No more status meetings. We watch the flow and jump in when needed. Billable hours have never been more accurate.",
+                                    author: "Elena Moretti",
+                                    role: "Director",
+                                    company: "PixelPerfect",
+                                    avatar: ElenaAvatar
+                                },
+                                {
+                                    savings: "100% Trust",
+                                    period: "Built-in Accountability",
+                                    quote: "Our employees feel safer knowing their hard work is recorded fairly. It's ended all micromanagement friction.",
+                                    author: "Sarah Jenkins",
+                                    role: "Head of HR",
+                                    company: "GlobalLink",
+                                    avatar: SarahAvatar
+                                },
+                                {
+                                    savings: "Saved $8,500/mo",
+                                    period: "Billable Leakage",
+                                    quote: "We recovered hours that were previously uncaptured. Our monthly revenue increased immediately after deployment.",
+                                    author: "Marcus Thorne",
+                                    role: "CFO",
+                                    company: "Titan Logistics",
+                                    avatar: MarcusAvatar
+                                },
+                                {
+                                    savings: "12 hrs/wk Saved",
+                                    period: "Payroll Admin",
+                                    quote: "Automating timesheet verification has freed up our HR team for higher-level strategic work. Simple and effective.",
+                                    author: "David Chen",
+                                    role: "CTO",
+                                    company: "NexaFlow",
+                                    avatar: DavidAvatar
+                                }
+                            ].concat([
+                                {
+                                    savings: "Saved $15,200",
+                                    period: "Annual Overhead",
+                                    quote: "TrackOwl payed for itself in the first 48 hours. We identified massive resource leakage in our dev cycle.",
+                                    author: "Jason Riva",
+                                    role: "COO",
+                                    company: "NexaSystems",
+                                    avatar: JasonAvatar
+                                },
+                                {
+                                    savings: "+22% Efficiency",
+                                    period: "Creative Output",
+                                    quote: "No more status meetings. We watch the flow and jump in when needed. Billable hours have never been more accurate.",
+                                    author: "Elena Moretti",
+                                    role: "Director",
+                                    company: "PixelPerfect",
+                                    avatar: ElenaAvatar
+                                },
+                                {
+                                    savings: "100% Trust",
+                                    period: "Built-in Accountability",
+                                    quote: "Our employees feel safer knowing their hard work is recorded fairly. It's ended all micromanagement friction.",
+                                    author: "Sarah Jenkins",
+                                    role: "Head of HR",
+                                    company: "GlobalLink",
+                                    avatar: SarahAvatar
+                                },
+                                {
+                                    savings: "Saved $8,500/mo",
+                                    period: "Billable Leakage",
+                                    quote: "We recovered hours that were previously uncaptured. Our monthly revenue increased immediately after deployment.",
+                                    author: "Marcus Thorne",
+                                    role: "CFO",
+                                    company: "Titan Logistics",
+                                    avatar: MarcusAvatar
+                                },
+                                {
+                                    savings: "12 hrs/wk Saved",
+                                    period: "Payroll Admin",
+                                    quote: "Automating timesheet verification has freed up our HR team for higher-level strategic work. Simple and effective.",
+                                    author: "David Chen",
+                                    role: "CTO",
+                                    company: "NexaFlow",
+                                    avatar: DavidAvatar
+                                }
+                            ]).map((t, i) => (
+                                <div key={i} className="w-[380px] flex-shrink-0 bg-white p-10 rounded-[2.5rem] flex flex-col gap-6 relative group testimonial-card-pop border border-black/5 shadow-sm">
+
+                                    <div className="flex items-start justify-between">
+                                        <div className="space-y-1">
+                                            <div className="text-xl font-black text-primary tracking-tight">{t.savings}</div>
+                                            <div className="text-[9px] font-bold text-text-muted uppercase tracking-widest">{t.period}</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="relative">
+                                        <Quote size={24} className="text-primary/5 absolute -top-4 -left-2" />
+                                        <p className="text-xs text-text-primary font-medium leading-relaxed opacity-90 relative z-10 italic">
+                                            "{t.quote}"
+                                        </p>
+                                    </div>
+
+                                    <div className="mt-auto pt-6 border-t border-black/[0.03] flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-primary/10 shadow-sm flex-shrink-0">
+                                            <img src={t.avatar} alt={t.author} className="w-full h-full object-cover" />
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-extrabold text-text-primary tracking-tight">{t.author}</span>
+                                            <span className="text-[8px] font-bold text-text-muted uppercase tracking-[0.1em]">{t.role} · {t.company}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Gradient Fades for Smooth Scroll Edge */}
+                        <div className="absolute inset-y-0 left-0 w-32 bg-gradient-to-r from-[#FDFCFB] to-transparent z-20 pointer-events-none" />
+                        <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-l from-[#FDFCFB] to-transparent z-20 pointer-events-none" />
+                    </div>
+                </section>
+
 
                 {/* Pricing Section */}
                 <section id="pricing" className="py-20">
