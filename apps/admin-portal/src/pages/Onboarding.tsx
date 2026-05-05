@@ -17,7 +17,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
 import clsx from 'clsx';
-import LogoIcon from '../assets/branding/icon.png';
+import LogoIcon from '../assets/branding/3.svg';
 
 export function Onboarding() {
     const navigate = useNavigate();
@@ -132,10 +132,10 @@ export function Onboarding() {
             
             <div className="w-full max-w-[1200px] px-8 pt-8 flex items-center justify-between">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-                    <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
+                    <div className="w-32 h-32 flex items-center justify-center overflow-hidden">
                         <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
                     </div>
-                    <span className="text-lg font-bold text-text-main tracking-tight">TrackOwl</span>
+                    {/* Name removed as per request */}
                 </div>
                 <div className="text-xs font-semibold text-text-muted bg-surface px-3 py-1 rounded-full border border-border">
                     Step {step} of 3

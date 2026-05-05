@@ -5,7 +5,7 @@ import { Mail, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-r
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
-import LogoIcon from '../assets/branding/icon.png';
+import LogoIcon from '../assets/branding/3.svg';
 
 export function Signup() {
     const navigate = useNavigate();
@@ -53,10 +53,10 @@ export function Signup() {
             {/* Header */}
             <div className="w-full max-w-[1200px] px-8 py-8 flex items-center justify-between animate-in fade-in duration-700">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-                    <div className="w-12 h-12 flex items-center justify-center overflow-hidden">
+                    <div className="w-32 h-32 flex items-center justify-center overflow-hidden">
                         <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
                     </div>
-                    <span className="text-lg font-bold text-text-main tracking-tight">TrackOwl</span>
+                    {/* Name removed as per request */}
                 </div>
                 <div className="text-[10px] font-extrabold text-text-muted tracking-[0.2em] bg-surface px-4 py-2 rounded-full border border-border">
                     Production Ready

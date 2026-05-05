@@ -8,8 +8,8 @@ import { navStructure, matchActive, type Role } from '../nav/navModel';
 import { useAuth } from '../context/AuthContext';
 import { SecureImage } from './ui/SecureImage';
 import { useTheme } from '../hooks/useTheme';
-import logoLight from '../assets/branding/logo-light.svg';
-import logoDark from '../assets/branding/logo-dark.svg';
+import logoLight from '../assets/branding/3.svg';
+import logoDark from '../assets/branding/4.svg';
 
 export interface HeaderProps {
     onOpenMobileMenu?: () => void;
@@ -69,7 +69,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                         <img
                             src={theme === 'dark' ? logoDark : logoLight}
                             alt="TrackOwl"
-                            className="h-30 w-auto object-contain"
+                            className="h-40 w-auto object-contain"
                         />
                     </Link>
 
