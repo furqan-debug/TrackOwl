@@ -153,3 +153,31 @@
 .dark ::-webkit-scrollbar-thumb {
   @apply bg-base-white/10 hover:bg-base-white/20;
 }
+
+/* Marquee Animation */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 60s linear infinite;
+  padding: 20px 0;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+.testimonial-card-pop {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.testimonial-card-pop:hover {
+  transform: translateY(-12px) scale(1.05);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  z-index: 50;
+  border-color: var(--color-primary);
+}
