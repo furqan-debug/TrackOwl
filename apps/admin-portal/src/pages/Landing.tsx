@@ -10,7 +10,9 @@ import {
     Clock,
     Layout,
     Camera,
-    Quote
+    Quote,
+    ShieldCheck,
+    ShieldAlert
 } from 'lucide-react';
 import LogoIcon from '../assets/branding/3.svg';
 import DashboardPreview from '../assets/branding/dashboard-preview.png';
@@ -369,7 +371,7 @@ export function Landing() {
                                             <div className="text-[9px] font-bold text-text-muted uppercase tracking-widest">{t.period}</div>
                                         </div>
                                     </div>
-                                    
+
                                     <div className="relative">
                                         <Quote size={24} className="text-primary/5 absolute -top-4 -left-2" />
                                         <p className="text-xs text-text-primary font-medium leading-relaxed opacity-90 relative z-10 italic">
@@ -453,12 +455,12 @@ export function Landing() {
                 {/* Download Section */}
                 <section id="download" className="py-24 bg-surface/40 border-y border-black/[0.03]">
                     <div className="mx-auto max-w-6xl px-6 text-center">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-[8px] font-bold tracking-[0.2em] mb-8">
-                            Native Performance
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 text-[8px] font-bold tracking-[0.2em] mb-8">
+                            <ShieldCheck size={10} /> Verified & Secure
                         </div>
-                        <h2 className="text-3xl font-extrabold tracking-tight text-text-primary mb-4">Get the Agent</h2>
+                        <h2 className="text-3xl font-extrabold tracking-tight text-text-primary mb-4">Get the App</h2>
                         <p className="max-w-xl mx-auto text-text-secondary text-sm font-medium leading-relaxed opacity-70 mb-12">
-                            The lightweight TrackOwl agent runs silently in your tray. Setup takes under 60 seconds.
+                            Our lightweight app runs silently in your tray. Setup takes under 60 seconds.
                         </p>
 
                         <div className="max-w-3xl mx-auto">
@@ -470,13 +472,31 @@ export function Landing() {
                                 <div className="flex-1 space-y-6 relative z-10">
                                     <div>
                                         <h3 className="text-xl font-extrabold text-text-primary tracking-tight">TrackOwl for Desktop</h3>
-                                        <p className="text-sm text-text-secondary opacity-70">Version 2.4.0 · Stable Build</p>
+                                        <p className="text-sm text-text-secondary opacity-70">Version 1.2.5 · Stable Build</p>
                                     </div>
                                     <div className="flex flex-wrap gap-3">
-                                        <button className="px-6 py-3 bg-primary text-white text-[10px] font-bold tracking-[0.1em] rounded-xl shadow-glow-primary hover:scale-105 transition-all">Download for Windows</button>
+                                        <a
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.5/TrackOwl_1.2.5_x64-setup.exe"
+                                            className="px-6 py-3 bg-primary text-white text-[10px] font-bold tracking-[0.1em] rounded-xl shadow-glow-primary hover:scale-105 transition-all text-center inline-block"
+                                        >
+                                            Download for Windows
+                                        </a>
                                         <button className="px-6 py-3 glass-panel border border-black/5 text-[10px] font-bold tracking-[0.1em] rounded-xl hover:bg-surface-hover transition-all">Other Platforms</button>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Security Education Note */}
+                        <div className="mt-12 p-6 bg-amber-500/5 border border-amber-500/10 rounded-3xl flex gap-5 items-start text-left mx-auto max-w-2xl animate-in fade-in slide-in-from-bottom-2 duration-700 delay-300">
+                            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 flex-shrink-0">
+                                <ShieldAlert size={20} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <p className="text-[10px] font-black text-amber-900 uppercase tracking-[0.15em]">Important Installation Note</p>
+                                <p className="text-[11px] text-amber-800/90 font-medium leading-relaxed">
+                                    As a growing platform, Windows may show a "SmartScreen" warning during the first install. To proceed, simply click <span className="font-black underline underline-offset-2">"More Info"</span> and then <span className="font-black">"Run Anyway"</span>. This will disappear permanently as our verified reputation grows.
+                                </p>
                             </div>
                         </div>
                     </div>
