@@ -96,6 +96,10 @@ export function Landing() {
                         <div className="flex h-24 w-auto items-center justify-center overflow-hidden transition-transform duration-500 group-hover:scale-110">
                             <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
                         </div>
+                        <div className="h-4 w-[1px] bg-black/10 mx-1 hidden sm:block" />
+                        <span className="hidden sm:block text-[8px] font-black tracking-[0.2em] text-text-muted opacity-40 uppercase group-hover:opacity-60 transition-opacity">
+                            By <a href="https://digireps.co/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}>DigiReps</a>
+                        </span>
                     </div>
 
                     <div className={clsx(
@@ -155,7 +159,7 @@ export function Landing() {
                         </div>
 
                         <p className="max-w-2xl text-xl font-medium text-text-secondary leading-relaxed mb-12 opacity-90 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-500">
-                            Get <span className="text-text-main font-extrabold decoration-primary/30 decoration-4 underline-offset-4 underline">complete visibility</span> into your team's workflow without the friction of micromanagement.
+                            See how your team <span className="text-text-main font-extrabold decoration-primary/30 decoration-4 underline-offset-4 underline">really works</span> without the stress of micromanagement.
                         </p>
 
                         <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -184,8 +188,8 @@ export function Landing() {
                 <section id="features" className="py-20">
                     <div className="mx-auto max-w-6xl px-6">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl font-extrabold tracking-tight text-text-primary mb-4">Precision Visibility</h2>
-                            <p className="text-text-secondary font-medium max-w-xl mx-auto text-md opacity-70">Maintain clarity and momentum across your entire organization.</p>
+                            <h2 className="text-3xl font-extrabold tracking-tight text-text-primary mb-4">Clear Insights</h2>
+                            <p className="text-text-secondary font-medium max-w-xl mx-auto text-md opacity-70">Know exactly what's happening and keep your team moving forward.</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
@@ -195,8 +199,8 @@ export function Landing() {
                                     <Zap size={20} />
                                 </div>
                                 <div className="relative z-10">
-                                    <h3 className="text-2xl font-extrabold text-text-primary mb-3">Live Pulse <span className="text-primary italic">Sync</span></h3>
-                                    <p className="text-text-secondary text-sm leading-relaxed max-w-sm">Experience zero-latency syncing between work and dashboard. See exactly what happens in real-time.</p>
+                                    <h3 className="text-2xl font-extrabold text-text-primary mb-3">Instant <span className="text-primary italic">Updates</span></h3>
+                                    <p className="text-text-secondary text-sm leading-relaxed max-w-sm">See work as it happens. Your dashboard updates instantly so you're always in the loop.</p>
                                 </div>
                             </div>
 
@@ -205,7 +209,7 @@ export function Landing() {
                                     <Monitor size={20} />
                                 </div>
                                 <h3 className="text-lg font-extrabold text-text-primary">Smart Screenshots</h3>
-                                <p className="text-text-secondary text-xs leading-relaxed">Contextual captures that provide clarity without invasive monitoring.</p>
+                                <p className="text-text-secondary text-xs leading-relaxed">See what's being worked on without feeling like you're watching over their shoulder.</p>
                             </div>
 
                             <div className="md:col-span-4 glass-panel rounded-3xl p-8 flex flex-col justify-center gap-4 transition-all hover:bg-surface-hover">
@@ -213,13 +217,13 @@ export function Landing() {
                                     <Shield size={20} />
                                 </div>
                                 <h3 className="text-lg font-extrabold text-text-primary">Privacy First</h3>
-                                <p className="text-text-secondary text-xs leading-relaxed">Enterprise-grade encryption with granular privacy controls for every member.</p>
+                                <p className="text-text-secondary text-xs leading-relaxed">Safe and private for everyone. You choose exactly what gets shared with the team.</p>
                             </div>
 
                             <div className="md:col-span-8 glass-panel rounded-3xl p-8 flex items-center justify-between transition-all hover:border-primary/20">
                                 <div className="space-y-2">
-                                    <h3 className="text-2xl font-extrabold text-text-primary">Activity Analysis</h3>
-                                    <p className="text-text-secondary text-sm leading-relaxed max-w-xs">Deep analysis of application usage to understand your team's flow state.</p>
+                                    <h3 className="text-2xl font-extrabold text-text-primary">Work Insights</h3>
+                                    <p className="text-text-secondary text-sm leading-relaxed max-w-xs">See which apps your team uses most to help them do their best work.</p>
                                 </div>
                                 <div className="hidden sm:flex gap-3">
                                     <div className="w-12 h-12 glass-panel rounded-xl flex items-center justify-center text-primary"><Clock size={20} /></div>
@@ -235,11 +239,11 @@ export function Landing() {
                     <div className="mx-auto max-w-6xl px-6">
                         <div className="grid md:grid-cols-2 gap-16 items-center">
                             <div>
-                                <h2 className="text-3xl font-extrabold tracking-tight text-text-primary mb-8">Simple Setup. <span className="text-primary italic">Instant Insights.</span></h2>
+                                <h2 className="text-3xl font-extrabold tracking-tight text-text-primary mb-8">Quick to Start. <span className="text-primary italic">Easy to Use.</span></h2>
                                 <div className="space-y-8">
-                                    <StepItem number="01" title="Create Workspace" desc="Launch your workspace in seconds. Seamless onboarding." />
-                                    <StepItem number="02" title="Install Agent" desc="Lightweight agent runs in the background with zero distraction." />
-                                    <StepItem number="03" title="Visualize Flow" desc="Dashboard lights up with real-time activity and reports." />
+                                    <StepItem number="01" title="Create Workspace" desc="Set up your workspace in seconds. No complex forms." />
+                                    <StepItem number="02" title="Get the App" desc="Our small app runs quietly in the background without slowing you down." />
+                                    <StepItem number="03" title="See Progress" desc="Your dashboard updates instantly with real-time work and simple reports." />
                                 </div>
                             </div>
                             <div className="glass-panel p-2 rounded-3xl shadow-elevated border-white/60 overflow-hidden group">
@@ -495,9 +499,14 @@ export function Landing() {
                                 <a href="#" className="hover:text-primary transition-all">Support</a>
                             </div>
 
-                            <p className="text-[9px] font-bold tracking-[0.15em] text-text-muted opacity-40">
-                                © 2024 TrackOwl Inc.
-                            </p>
+                            <div className="text-right flex flex-col items-end gap-1">
+                                <p className="text-[9px] font-bold tracking-[0.15em] text-text-muted opacity-40 uppercase">
+                                    © 2024 TrackOwl
+                                </p>
+                                <p className="text-[9px] font-bold tracking-[0.15em] text-text-muted opacity-60">
+                                    A product by <a href="https://digireps.co/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline transition-all">DigiReps</a>
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </footer>
