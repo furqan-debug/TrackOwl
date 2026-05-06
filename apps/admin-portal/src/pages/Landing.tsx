@@ -34,6 +34,7 @@ import VisualProofImg from '../assets/branding/visual-proof.png';
 export function Landing() {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isMonthly, setIsMonthly] = useState(false);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -46,7 +47,7 @@ export function Landing() {
     const plans = [
         {
             name: 'Basic',
-            price: '$2.99',
+            price: isMonthly ? '$3.99' : '$2.99',
             period: '/seat/mo',
             description: 'Essential tracking tools for small teams and solo founders.',
             features: [
@@ -61,7 +62,7 @@ export function Landing() {
         },
         {
             name: 'Premium',
-            price: '$5.99',
+            price: isMonthly ? '$6.99' : '$4.99',
             period: '/seat/mo',
             description: 'The complete toolkit for modern teams seeking absolute transparency.',
             features: [
@@ -544,11 +545,34 @@ export function Landing() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.6 }}
-                            className="text-center mb-20"
+                            className="text-center mb-10"
                         >
                             <h2 className="text-[11px] font-bold tracking-[0.3em] text-[var(--text-muted)] uppercase mb-4">Transparent Pricing</h2>
                             <h3 className="text-4xl md:text-5xl font-black tracking-tight">Invest in <span className="text-primary italic">Better Results.</span></h3>
                         </motion.div>
+
+                        {/* Pricing Toggle */}
+                        <div className="flex justify-center items-center gap-6 mb-20">
+                            <div className="flex items-center gap-3">
+                                <span className={twMerge("text-sm font-bold tracking-tight transition-colors", !isMonthly ? "text-[var(--text-main)]" : "text-[var(--text-muted)]")}>Yearly</span>
+                                <div className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">
+                                    Save 25%
+                                </div>
+                            </div>
+                            
+                            <button
+                                onClick={() => setIsMonthly(!isMonthly)}
+                                className="group relative w-16 h-8 rounded-full bg-[var(--bg-surface)] border border-[var(--border-color)] p-1.5 transition-all hover:border-primary/30"
+                            >
+                                <motion.div
+                                    animate={{ x: isMonthly ? 32 : 0 }}
+                                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                                    className="w-5 h-5 rounded-full bg-primary shadow-glow-primary"
+                                />
+                            </button>
+
+                            <span className={twMerge("text-sm font-bold tracking-tight transition-colors", isMonthly ? "text-[var(--text-main)]" : "text-[var(--text-muted)]")}>Monthly</span>
+                        </div>
 
                         <div className="grid gap-8 md:grid-cols-3 max-w-7xl mx-auto">
                             {plans.map((plan, i) => (
