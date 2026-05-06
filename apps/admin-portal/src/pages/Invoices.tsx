@@ -60,7 +60,7 @@ export function Invoices() {
                     <p className="text-text-muted text-sm mt-1">Manage bills to your clients and track payments</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button 
+                    <button
                         disabled={isViewer}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-shell-sm ${isViewer ? 'bg-slate-300 text-slate-100 cursor-not-allowed grayscale opacity-60' : 'bg-indigo-600 hover:bg-indigo-700 text-white'}`}
                     >
@@ -164,7 +164,7 @@ export function Invoices() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button 
+                                            <button
                                                 disabled={isViewer}
                                                 className={`p-1.5 rounded-md transition-all ${isViewer ? 'text-text-muted cursor-default' : 'text-text-muted hover:text-indigo-600 hover:bg-surface-hover'}`}
                                             >

@@ -50,7 +50,7 @@
   --r-2xl: 20px;
 
   /* Font */
-  font-family: "Poppins", "Helvetica", -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: "DM Sans", "Helvetica", -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -86,6 +86,7 @@ body,
    TYPOGRAPHY
    ═══════════════ */
 .heading-1 {
+  font-family: 'Poppins', sans-serif;
   font-size: 1.375rem;
   /* 22px — was 1.875rem, too big for 440px */
   font-weight: 700;
@@ -95,6 +96,7 @@ body,
 }
 
 .heading-2 {
+  font-family: 'Poppins', sans-serif;
   font-size: 1.125rem;
   /* 18px */
   font-weight: 600;
@@ -103,6 +105,7 @@ body,
 }
 
 .heading-3 {
+  font-family: 'Poppins', sans-serif;
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-primary);

@@ -79,7 +79,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
         if (!badge || effectiveCollapsed) return null;
         if (badge === 'new') {
             return (
-                <span className="flex items-center gap-1 bg-primary text-white text-[11px] font-bold px-2 py-0.5 rounded-full ml-2 shrink-0 ">
+                <span className="flex items-center gap-1 bg-primary text-white text-[12px] font-bold px-2.5 py-1 rounded-full ml-2 shrink-0 ">
                     New
                 </span>
             );
@@ -127,9 +127,9 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                             aria-expanded={favoritesExpanded}
                         >
                             <div className="flex items-center gap-2">
-                                <Star className={clsx("w-3.5 h-3.5 transition-colors", favorites.length > 0 ? "text-primary fill-primary/10" : "text-[var(--sidebar-text)] group-hover:text-[var(--sidebar-text-active)]")} aria-hidden />
+                                <Star className={clsx("w-4 h-4 transition-colors", favorites.length > 0 ? "text-primary fill-primary/10" : "text-[var(--sidebar-text)] group-hover:text-[var(--sidebar-text-active)]")} aria-hidden />
                                 Favorites
-                                <span className="text-[10px] opacity-40 font-mono ml-1">({favorites.length})</span>
+                                <span className="text-[11px] opacity-40 font-mono ml-1">({favorites.length})</span>
                             </div>
                             <ChevronDown className={clsx("w-3 h-3 text-[var(--sidebar-text)] transition-transform duration-300", !favoritesExpanded && "-rotate-90")} />
                         </button>
@@ -151,8 +151,8 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                                 : "text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-surface-hover/[0.03]"
                                         )}
                                     >
-                                        <div className={clsx("w-2 h-2 rounded-full", location.pathname === fav.path ? "bg-primary" : "bg-surface/10 group-hover:bg-primary/30")} />
-                                        <span className="truncate font-bold">{fav.name}</span>
+                                        <div className={clsx("w-2 h-2 rounded-full", location.pathname === fav.path ? "bg-primary" : "bg-surface/20 group-hover:bg-primary/30")} />
+                                        <span className="truncate font-bold text-[14px]">{fav.name}</span>
                                     </Link>
                                 ))
                             ) : (
@@ -165,7 +165,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 {/* Main Navigation */}
                 <nav className="space-y-1" aria-label="Primary">
                     {!effectiveCollapsed && (
-                        <p className="px-4 text-[12px] font-bold text-[var(--sidebar-text)] mb-4 opacity-20 text-left uppercase">Navigation</p>
+                        <p className="px-4 text-[13px] font-bold text-[var(--sidebar-text)] mb-6 opacity-20 text-left uppercase tracking-widest">Navigation</p>
                     )}
                     {filteredNav.map((group) => {
                         const hasChildren = group.children && group.children.length > 0;
@@ -210,10 +210,10 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                                 : 'text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-surface-hover/[0.05]'
                                         )}
                                     >
-                                        <group.icon className={clsx("w-[18px] h-[18px] shrink-0 transition-colors",
+                                        <group.icon className={clsx("w-[20px] h-[20px] shrink-0 transition-colors",
                                             isDirectlyActive ? "text-primary" : "text-[var(--sidebar-text)] group-hover:text-primary")}
                                             strokeWidth={2} aria-hidden />
-                                        {!effectiveCollapsed && <span className="tracking-tight">{group.name}</span>}
+                                        {!effectiveCollapsed && <span className="tracking-tight text-[15px]">{group.name}</span>}
                                     </Link>
                                 )}
 
@@ -233,7 +233,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                                             : 'text-[var(--sidebar-text)] hover:bg-surface-hover/[0.03] hover:text-[var(--sidebar-text-active)]'
                                                     )}
                                                 >
-                                                    <span className="truncate tracking-tight font-medium">{child.name}</span>
+                                                    <span className="truncate tracking-tight font-medium text-[13px]">{child.name}</span>
                                                     {renderBadge(child.badge)}
                                                 </Link>
                                             );
@@ -257,8 +257,8 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                     </div>
                     {!effectiveCollapsed && (
                         <div className="min-w-0 flex-1">
-                            <p className="text-[13px] font-bold text-[var(--sidebar-text-active)] truncate leading-none mb-1">{profile?.full_name}</p>
-                            <p className="text-[9px] text-[var(--sidebar-text)] font-bold opacity-40">Role: {profile?.role}</p>
+                            <p className="text-[14px] font-bold text-[var(--sidebar-text-active)] truncate leading-none mb-1.5">{profile?.full_name}</p>
+                            <p className="text-[11px] text-[var(--sidebar-text)] font-bold opacity-40">Access: {profile?.role}</p>
                         </div>
                     )}
                 </div>

@@ -107,16 +107,16 @@ export function Timesheets() {
         return { start, end };
     }, [selectedDate, viewMode]);
 
-    useEffect(() => { 
+    useEffect(() => {
         if (organizationId) {
-            fetchMembers(); 
-            fetchProjects(); 
+            fetchMembers();
+            fetchProjects();
         }
     }, [organizationId]);
-    
-    useEffect(() => { 
+
+    useEffect(() => {
         if (organizationId) {
-            fetchTimesheets(); 
+            fetchTimesheets();
         }
     }, [range, selectedMember, filterProjectId, activeTimezone, members, projects, organizationId]);
 
@@ -185,17 +185,17 @@ export function Timesheets() {
 
             const sessionIds = sessions.map((s: Session) => s.id);
             let activityData: any[] = [];
-            
+
             if (sessionIds.length > 0) {
                 try {
                     activityData = await fetchAllActivitySamples(
-                        supabase, 
-                        fetchStart.toISOString(), 
-                        fetchEnd.toISOString(), 
+                        supabase,
+                        fetchStart.toISOString(),
+                        fetchEnd.toISOString(),
                         'session_id, recorded_at, idle, activity_percent, is_offline',
-                        { 
-                            organizationId: organizationId ?? undefined, 
-                            sessionIds 
+                        {
+                            organizationId: organizationId ?? undefined,
+                            sessionIds
                         }
                     );
                 } catch (actErr) {
@@ -223,18 +223,18 @@ export function Timesheets() {
                 const tz = activeTimezone === 'User Local' ? (member?.timezone || undefined) : activeTimezone;
                 const dayKey = getGroupingDateInTz(s.started_at, tz);
                 const key = dailyMap[dayKey] ? dayKey : null;
-                
+
                 if (key) {
                     const samples = sessionSamplesMap[s.id] || [];
                     const score = calculateActivityScore(samples);
-                    
+
                     // Improved duration calculation:
                     // If ended_at is null, check if the last sample is recent.
                     // If the last sample is > 10 mins ago, use the last sample's time as the effective end.
                     const lastSample = samples.length > 0 ? samples.sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())[0] : null;
                     const lastSampleTime = lastSample ? new Date(lastSample.recorded_at).getTime() : new Date(s.started_at).getTime();
                     const nowMs = new Date().getTime();
-                    
+
                     let effectiveEndMs = nowMs;
                     if (s.ended_at) {
                         effectiveEndMs = new Date(s.ended_at).getTime();
@@ -245,7 +245,7 @@ export function Timesheets() {
 
                     const durationMins = (effectiveEndMs - new Date(s.started_at).getTime()) / 60000;
                     const offlineMins = samples.filter(samp => samp.is_offline).length;
-                    
+
                     const isTrulyActive = !s.ended_at && (nowMs - lastSampleTime < 15 * 60000);
 
                     dailyMap[key].sessions.push({
@@ -275,7 +275,7 @@ export function Timesheets() {
             });
 
             setEntries(result);
-            
+
             // Update cache
             timesheetsCache = { entries: result };
             timesheetsCacheKey = cacheKey;
@@ -327,22 +327,22 @@ export function Timesheets() {
     return (
         <div className="flex flex-col min-h-screen bg-surface font-sans text-text-main">
             <header className="px-8 py-6 flex items-center justify-between border-b border-border shrink-0">
-                <div className="space-y-1">
-                    <h1 className="text-xl font-bold text-text-main tracking-tight">Timesheets</h1>
-                    <p className="text-[11px] font-bold text-text-muted ">Verify and refine team temporal records</p>
+                <div className="space-y-2">
+                    <h1 className="text-4xl font-bold text-text-main tracking-tight font-heading">Timesheets</h1>
+                    <p className="text-[14px] font-bold text-text-muted tracking-tight">Verify and refine team temporal records</p>
                 </div>
             </header>
 
             <div className="px-8 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-slate-50 sticky top-0 bg-surface/80 backdrop-blur-md z-30">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center bg-surface border border-border rounded-xl p-0.5 shadow-shell-sm h-10">
-                        <button onClick={() => navigateDate(-1)} className="p-2 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary">
-                             <ChevronLeft className="w-4 h-4" />
+                <div className="flex items-center gap-6">
+                    <div className="flex items-center bg-surface border border-border rounded-2xl p-1 shadow-shell-sm h-12">
+                        <button onClick={() => navigateDate(-1)} className="p-3 hover:bg-surface-hover rounded-xl transition-all text-text-muted hover:text-primary">
+                            <ChevronLeft className="w-5 h-5" />
                         </button>
-                        <div className="flex items-center gap-3 px-3 relative cursor-pointer hover:bg-surface-hover rounded-lg transition-all h-full">
-                             <span className="text-[11px] font-bold text-text-main tabular-nums">{formatRangeLabel()}</span>
-                             <CalendarIcon className="w-3.5 h-3.5 text-text-muted" />
-                             <input 
+                        <div className="flex items-center gap-4 px-4 relative cursor-pointer hover:bg-surface-hover rounded-xl transition-all h-full">
+                            <span className="text-[13px] font-bold text-text-main tabular-nums">{formatRangeLabel()}</span>
+                            <CalendarIcon className="w-4 h-4 text-text-muted" />
+                            <input
                                 type="date"
                                 className="absolute inset-0 opacity-0 cursor-pointer"
                                 value={getGroupingDateInTz(selectedDate, undefined)}
@@ -351,16 +351,16 @@ export function Timesheets() {
                                         setSelectedDate(new Date(e.target.value + 'T12:00:00'));
                                     }
                                 }}
-                             />
+                            />
                         </div>
-                        <button onClick={() => navigateDate(1)} className="p-2 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary">
-                             <ChevronRight className="w-4 h-4" />
+                        <button onClick={() => navigateDate(1)} className="p-3 hover:bg-surface-hover rounded-xl transition-all text-text-muted hover:text-primary">
+                            <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
 
-                    <div className="h-10 min-w-[200px]">
+                    <div className="h-12 min-w-[240px]">
                         <FilterSelect
-                            icon={<Clock className="w-3.5 h-3.5" />}
+                            icon={<Clock className="w-4 h-4" />}
                             value={activeTimezone}
                             onChange={setActiveTimezone}
                             options={[
@@ -372,25 +372,25 @@ export function Timesheets() {
                     </div>
                 </div>
 
-                <div className="flex bg-main/50 p-1 rounded-xl border border-border/50 h-10 shrink-0">
+                <div className="flex bg-main/50 p-1.5 rounded-2xl border border-border/50 h-12 shrink-0">
                     {(['daily', 'weekly', 'calendar'] as const).map(mode => (
-                        <button 
+                        <button
                             key={mode}
                             onClick={() => setViewMode(mode)}
                             className={clsx(
-                                "px-6 rounded-lg text-[10px] font-bold transition-all h-full",
+                                "px-8 rounded-xl text-[12px] font-bold transition-all h-full",
                                 viewMode === mode ? "bg-surface text-primary shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
                             )}
                         >
-                            {mode}
+                            {mode.charAt(0).toUpperCase() + mode.slice(1)}
                         </button>
                     ))}
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <div className="h-10 min-w-[180px]">
+                <div className="flex items-center gap-4">
+                    <div className="h-12 min-w-[220px]">
                         <FilterSelect
-                            icon={<Users className="w-3.5 h-3.5" />}
+                            icon={<Users className="w-4 h-4" />}
                             value={selectedMember}
                             onChange={setSelectedMember}
                             options={[
@@ -399,13 +399,13 @@ export function Timesheets() {
                             ]}
                         />
                     </div>
-                    
-                    <button onClick={() => setShowFilters(true)} className="flex items-center gap-2 px-4 h-10 bg-surface border border-border text-text-muted rounded-xl text-[10px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all">
-                        <Filter className="w-3.5 h-3.5" /> Filter
+
+                    <button onClick={() => setShowFilters(true)} className="flex items-center gap-3 px-6 h-12 bg-surface border border-border text-text-muted rounded-2xl text-[13px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all">
+                        <Filter className="w-4 h-4" /> Filter
                     </button>
-                    
-                    <button onClick={() => setShowAddTime(true)} className="flex items-center gap-2 px-5 h-10 bg-primary text-white rounded-xl text-[10px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">
-                        <Plus className="w-4 h-4" /> Add time
+
+                    <button onClick={() => setShowAddTime(true)} className="flex items-center gap-3 px-8 h-12 bg-primary text-white rounded-2xl text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">
+                        <Plus className="w-5 h-5" /> Add time
                     </button>
                 </div>
             </div>
@@ -452,7 +452,7 @@ export function Timesheets() {
                             <FilterSelect
                                 icon={<Users className="w-3.5 h-3.5" />}
                                 value={addTimeData.userId}
-                                onChange={(val) => setAddTimeData({...addTimeData, userId: val})}
+                                onChange={(val) => setAddTimeData({ ...addTimeData, userId: val })}
                                 options={[
                                     { id: '', name: 'Select member...' },
                                     ...members.map(m => ({ id: m.id, name: m.full_name }))
@@ -466,7 +466,7 @@ export function Timesheets() {
                             <FilterSelect
                                 icon={<FolderOpen className="w-3.5 h-3.5" />}
                                 value={addTimeData.projectId}
-                                onChange={(val) => setAddTimeData({...addTimeData, projectId: val})}
+                                onChange={(val) => setAddTimeData({ ...addTimeData, projectId: val })}
                                 options={[
                                     { id: '', name: 'Select project...' },
                                     ...projects.map(p => ({ id: p.id, name: p.name }))
@@ -476,16 +476,16 @@ export function Timesheets() {
                     </div>
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold text-text-muted ">Date</label>
-                        <input type="date" className="w-full h-11 bg-surface-hover border border-border rounded-xl px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.date} onChange={(e) => setAddTimeData({...addTimeData, date: e.target.value})} />
+                        <input type="date" className="w-full h-11 bg-surface-hover border border-border rounded-xl px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.date} onChange={(e) => setAddTimeData({ ...addTimeData, date: e.target.value })} />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-muted ">Start</label>
-                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-xl px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({...addTimeData, startTime: e.target.value})} />
+                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-xl px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({ ...addTimeData, startTime: e.target.value })} />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-muted ">End</label>
-                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-xl px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({...addTimeData, endTime: e.target.value})} />
+                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-xl px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({ ...addTimeData, endTime: e.target.value })} />
                         </div>
                     </div>
                     <div className="flex justify-end pt-2">
@@ -497,26 +497,26 @@ export function Timesheets() {
     );
 }
 
-function DailyView({ entries, selectedMember, toProperCase }: { 
-    entries: DailyEntry[], 
+function DailyView({ entries, selectedMember, toProperCase }: {
+    entries: DailyEntry[],
     selectedMember: string,
     toProperCase: (s: string) => string
 }) {
     const day = entries[0];
-    
+
     const displayRows = useMemo(() => {
         if (!day) return [];
-        
+
         const userMap: Record<string, any> = {};
 
         day.sessions.forEach(s => {
             const userId = s.user_id;
-            
+
             // For Single User view, return individual sessions
             if (selectedMember !== 'all') {
                 return;
             }
-            
+
             // For All Members view, aggregate by user
             if (!userMap[userId]) {
                 userMap[userId] = {
@@ -539,15 +539,15 @@ function DailyView({ entries, selectedMember, toProperCase }: {
             row.weighted_idle += (s.idle_percent || 0) * dur;
             row.weighted_manual += (s.manual_percent || 0) * dur;
             row.offline_mins += (s.offline_mins || 0);
-            
+
             if (new Date(s.started_at) < new Date(row.min_start)) row.min_start = s.started_at;
-            
+
             if (s.is_active) {
                 row.is_active = true;
             } else if (s.ended_at && (!row.max_end || new Date(s.ended_at) > new Date(row.max_end))) {
                 row.max_end = s.ended_at;
             }
-            
+
             if (row.project_id !== s.project_id) row.project_name = 'Multiple Projects';
         });
 
@@ -571,30 +571,30 @@ function DailyView({ entries, selectedMember, toProperCase }: {
         const active = s.is_active;
 
         const start = new Date(startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase();
-        
+
         if (active) return `${start} – Now`;
-        
-        const end = endTime ? 
-            new Date(endTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase() : 
+
+        const end = endTime ?
+            new Date(endTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase() :
             '...';
-            
+
         return `${start} – ${end}`;
     };
 
     return (
         <div className="space-y-8 pb-20">
             <div className="flex items-center justify-between">
-                <div className="flex items-baseline gap-2">
-                    <span className="text-3xl font-bold text-text-main tabular-nums">{formatDuration(day.totalMinutes)}</span>
-                    <span className="text-[11px] font-bold text-text-muted ">Total tracked today</span>
+                <div className="flex items-baseline gap-4">
+                    <span className="text-5xl font-bold text-text-main tabular-nums tracking-tight">{formatDuration(day.totalMinutes)}</span>
+                    <span className="text-[13px] font-bold text-text-muted tracking-wide uppercase opacity-60">Total tracked today</span>
                 </div>
             </div>
 
-            <div className="relative h-2.5 bg-main rounded-full my-12 overflow-hidden shadow-inner">
-                <div className="absolute inset-0 flex justify-between px-4 text-[9px] font-bold text-text-muted/50 items-center z-0">
-                    <span className="w-px h-full bg-slate-200/50" style={{ left: '25%' }} />
-                    <span className="w-px h-full bg-slate-200/50" style={{ left: '50%' }} />
-                    <span className="w-px h-full bg-slate-200/50" style={{ left: '75%' }} />
+            <div className="relative h-2.5 bg-black/[0.03] dark:bg-white/[0.05] rounded-full my-12 overflow-hidden ring-1 ring-black/[0.03] dark:ring-white/[0.03]">
+                <div className="absolute inset-0 z-0 pointer-events-none">
+                    <span className="absolute w-px h-full bg-black/[0.05] dark:bg-white/[0.05] left-1/4" />
+                    <span className="absolute w-px h-full bg-black/[0.05] dark:bg-white/[0.05] left-1/2" />
+                    <span className="absolute w-px h-full bg-black/[0.05] dark:bg-white/[0.05] left-3/4" />
                 </div>
                 {day.sessions.map((s, i) => {
                     const d = new Date(s.started_at);
@@ -603,7 +603,7 @@ function DailyView({ entries, selectedMember, toProperCase }: {
                     const duration = s.duration_mins || 0;
                     const width = (duration / 1440) * 100;
                     return (
-                        <div key={i} className="absolute inset-y-0 bg-primary/80 rounded-full z-10 shadow-shell-sm" style={{ left: `${left}%`, width: `${Math.max(width, 0.4)}%` }} />
+                        <div key={i} className="absolute inset-y-0 bg-primary rounded-full z-10 shadow-sm transition-all" style={{ left: `${left}%`, width: `${Math.max(width, 0.5)}%` }} />
                     );
                 })}
             </div>
@@ -611,42 +611,42 @@ function DailyView({ entries, selectedMember, toProperCase }: {
             <div className="bg-surface rounded-[24px] border border-border shadow-shell-sm overflow-hidden">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
-                        <tr className="bg-surface-hover/50">
-                            <th className="py-4 px-8 text-[10px] font-bold text-text-muted border-b border-border">Scope & Member</th>
-                            <th className="py-4 px-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Score</th>
-                            <th className="py-4 px-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Idle</th>
-                            <th className="py-4 px-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Duration</th>
-                            <th className="py-4 px-8 text-[10px] font-bold text-text-muted border-b border-border text-right">Window</th>
+                        <tr className="bg-surface-hover/30">
+                            <th className="py-6 px-10 text-[11px] font-bold text-text-muted border-b border-border uppercase tracking-widest">Scope & Member</th>
+                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest">Score</th>
+                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest">Idle</th>
+                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest">Duration</th>
+                            <th className="py-6 px-10 text-[11px] font-bold text-text-muted border-b border-border text-right uppercase tracking-widest">Window</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {displayRows.map((s, idx) => (
                             <tr key={idx} className="group hover:bg-surface-hover/50 transition-all">
-                                <td className="py-5 px-8">
-                                    <div className="flex flex-col">
-                                        <span className="text-[12px] font-bold text-text-main tracking-tight">{s.project_name}</span>
-                                        <span className="text-[11px] font-bold text-text-muted group-hover:text-primary transition-colors">
+                                <td className="py-8 px-10">
+                                    <div className="flex flex-col gap-1.5">
+                                        <span className="text-[16px] font-bold text-text-main tracking-tight">{s.project_name}</span>
+                                        <span className="text-[14px] font-bold text-text-muted group-hover:text-primary transition-colors">
                                             {s.user_name ? toProperCase(s.user_name) : 'Unknown'}
                                         </span>
                                     </div>
                                 </td>
-                                <td className="py-5 px-4 text-center">
-                                    <div className="flex flex-col items-center gap-1.5">
-                                        <span className="text-[12px] font-bold text-text-main tabular-nums">{s.activity_percent}%</span>
-                                        <div className="w-10 h-1 bg-main rounded-full overflow-hidden">
+                                <td className="py-8 px-6 text-center">
+                                    <div className="flex flex-col items-center gap-2.5">
+                                        <span className="text-[15px] font-bold text-text-main tabular-nums">{s.activity_percent}%</span>
+                                        <div className="w-14 h-1.5 bg-main rounded-full overflow-hidden">
                                             <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${s.activity_percent}%` }} />
                                         </div>
                                     </div>
                                 </td>
-                                <td className="py-5 px-4 text-center text-[12px] font-bold text-text-muted tabular-nums">{s.idle_percent}%</td>
-                                <td className="py-5 px-4 text-center text-[14px] font-bold text-text-main tabular-nums">{formatDuration(s.duration_mins || 0)}</td>
-                                <td className="py-5 px-8 text-right">
-                                    <div className="flex flex-col items-end">
-                                        <span className="text-[11px] font-bold text-text-muted tabular-nums">
+                                <td className="py-8 px-6 text-center text-[15px] font-bold text-text-muted tabular-nums">{s.idle_percent}%</td>
+                                <td className="py-8 px-6 text-center text-[18px] font-bold text-text-main tabular-nums">{formatDuration(s.duration_mins || 0)}</td>
+                                <td className="py-8 px-10 text-right">
+                                    <div className="flex flex-col items-end gap-1">
+                                        <span className="text-[14px] font-bold text-text-muted tabular-nums">
                                             {renderTimeDisplay(s)}
                                         </span>
                                         {s.offline_mins > 0 && (
-                                            <span className="text-[9px] text-primary font-bold tracking-tighter mt-0.5">
+                                            <span className="text-[11px] text-primary font-bold tracking-tight bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10">
                                                 +{s.offline_mins}m offline
                                             </span>
                                         )}

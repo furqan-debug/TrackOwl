@@ -20,9 +20,10 @@
   --color-text-main: var(--text-main);
   --color-text-muted: var(--text-muted);
 
-  /* Typography - Inter & Outfit */
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-heading: "Outfit", sans-serif;
+  /* Typography - Poppins & DM Sans */
+  --font-sans: "DM Sans", sans-serif;
+  --font-heading: "Poppins", sans-serif;
+  --font-body: "DM Sans", sans-serif;
 
   /* Shadows & Radius - Refined Premium Curves */
   --radius-shell-sm: 6px;
@@ -58,6 +59,7 @@
     --sidebar-text: #6B5B53;
     --sidebar-text-active: #3B2A23;
     --color-sidebar-bg: var(--bg-main);
+    font-family: var(--font-sans);
   }
 
   .dark {
@@ -84,7 +86,8 @@
   }
 
   body {
-    @apply font-sans bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-200 antialiased leading-relaxed tracking-normal;
+    @apply font-sans bg-[var(--bg-main)] text-[var(--text-main)] transition-colors duration-200 antialiased leading-[1.6] tracking-tight;
+    font-size: 16px;
   }
 
   .heading-gradient {
@@ -93,7 +96,14 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
     color: transparent;
-    @apply font-heading tracking-tight;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    @apply tracking-[-0.02em] leading-[1.1];
+  }
+
+  h1 {
+    font-family: var(--font-heading);
+    @apply font-bold tracking-[-0.02em] leading-[1.1];
   }
 
   .dark .heading-gradient {
@@ -102,7 +112,7 @@
     background-clip: initial;
     -webkit-text-fill-color: initial;
     color: var(--text-main);
-    @apply font-heading;
+    font-family: var(--font-heading);
   }
 
   h1,
@@ -111,7 +121,13 @@
   h4,
   h5,
   h6 {
-    @apply font-heading font-bold;
+    font-family: var(--font-heading);
+    font-weight: 700;
+  }
+
+  /* Force font inheritance for the whole app */
+  #root {
+    font-family: var(--font-sans);
   }
 
   /* Secondary/Meta Typography */
@@ -156,8 +172,13 @@
 
 /* Marquee Animation */
 @keyframes marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
 }
 
 .animate-marquee {

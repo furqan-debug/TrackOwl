@@ -18,9 +18,8 @@ export default {
                 border: 'var(--border-color)',
             },
             fontFamily: {
-                sans: ['Poppins', 'Helvetica', 'sans-serif'],
-                poppins: ['Poppins', 'sans-serif'],
-                helvetica: ['Helvetica', 'sans-serif'],
+                sans: ['"DM Sans"', 'sans-serif'],
+                heading: ['Poppins', 'sans-serif'],
             },
             borderRadius: {
                 'shell-sm': '6px',

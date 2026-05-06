@@ -3,6 +3,7 @@ import clsx from 'clsx';
 
 export interface PageLayoutProps {
     title?: string;
+    eyebrow?: string;
     description?: string;
     children: ReactNode;
     /** Max width: '7xl' (1280px) default, or 'full' for no max */
@@ -18,6 +19,7 @@ export interface PageLayoutProps {
 
 export function PageLayout({
     title,
+    eyebrow,
     description,
     children,
     maxWidth = '7xl',
@@ -35,8 +37,8 @@ export function PageLayout({
                         <div className="space-y-4">
                             {backButton && (
                                 <button
-                                     onClick={backButton.onClick}
-                                     className="flex items-center gap-3 text-[13px] font-bold text-[var(--text-muted)] hover:text-primary transition-all duration-300 group mb-2"
+                                    onClick={backButton.onClick}
+                                    className="flex items-center gap-3 text-[13px] font-bold text-[var(--text-muted)] hover:text-primary transition-all duration-300 group mb-2"
                                 >
                                     <div className="w-8 h-8 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-color)] flex items-center justify-center group-hover:border-primary group-hover:bg-primary group-hover:text-white transition-all shadow-shell-sm">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -46,14 +48,19 @@ export function PageLayout({
                                     {backButton.label || 'Go Back'}
                                 </button>
                             )}
-                            <div className="space-y-2">
+                            <div className="space-y-1">
+                                {eyebrow && (
+                                    <span className="text-[10px] md:text-[11px] font-bold tracking-[0.2em] text-text-muted uppercase block">
+                                        {eyebrow}
+                                    </span>
+                                )}
                                 {title && (
-                                    <h1 className="text-4xl md:text-5xl font-bold leading-tight heading-gradient pb-1 lg:pb-2">
+                                    <h1 className="text-3xl md:text-4xl font-bold heading-gradient">
                                         {title}
                                     </h1>
                                 )}
                                 {description && (
-                                    <p className="text-[14px] font-medium text-[var(--text-muted)] max-w-2xl leading-relaxed opacity-80">
+                                    <p className="text-[14px] md:text-[16px] font-medium text-text-muted max-w-2xl leading-relaxed">
                                         {description}
                                     </p>
                                 )}

@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { 
-    Search, Building2, Mail, 
-    Plus, Globe, 
+import {
+    Search, Building2, Mail,
+    Plus, Globe,
     Trash2, ShieldCheck, Activity
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { 
-    PageLayout, Card, Button, StatusBadge, 
-    LoadingState, EmptyState, Modal, Input 
+import {
+    PageLayout, Card, Button, StatusBadge,
+    LoadingState, EmptyState, Modal, Input
 } from '../components/ui';
 import clsx from 'clsx';
 
@@ -56,7 +56,7 @@ export function Clients() {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setSaving(true);
-        
+
         const payload = {
             name: formData.name,
             email: formData.email,
@@ -93,7 +93,7 @@ export function Clients() {
 
     async function handleDelete() {
         if (!deletingClient) return;
-        
+
         const { error } = await supabase
             .from('clients')
             .delete()
@@ -165,26 +165,26 @@ export function Clients() {
 
             {/* KPI Grid */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatsCard 
-                    label="Total Clients" 
-                    value={clients.length} 
-                    icon={<Building2 className="w-5 h-5 text-text-muted" />} 
+                <StatsCard
+                    label="Total Clients"
+                    value={clients.length}
+                    icon={<Building2 className="w-5 h-5 text-text-muted" />}
                     description="Registered clients"
                 />
-                <StatsCard 
-                    label="Active" 
-                    value={clients.filter(c => c.status === 'Active').length} 
-                    icon={<Activity className="w-5 h-5 text-text-muted" />} 
+                <StatsCard
+                    label="Active"
+                    value={clients.filter(c => c.status === 'Active').length}
+                    icon={<Activity className="w-5 h-5 text-text-muted" />}
                     description="Currently active"
                 />
-                <StatsCard 
-                    label="Recent" 
+                <StatsCard
+                    label="Recent"
                     value={clients.filter(c => {
                         const created = new Date(c.created_at).getTime();
                         const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
                         return created > thirtyDaysAgo;
-                    }).length} 
-                    icon={<Globe className="w-5 h-5 text-text-muted" />} 
+                    }).length}
+                    icon={<Globe className="w-5 h-5 text-text-muted" />}
                     description="Last 30 days"
                 />
             </div>
@@ -202,7 +202,7 @@ export function Clients() {
                             className="w-full pl-11 pr-4 py-2 bg-surface-solid border border-border rounded-lg text-sm text-text-primary outline-none focus:border-primary transition-all"
                         />
                     </div>
-                    
+
                     <div className="flex items-center bg-surface-solid border border-border rounded-lg p-1 shadow-shell-sm">
                         {['All', 'Active', 'Inactive'].map((s) => (
                             <button
@@ -239,10 +239,10 @@ export function Clients() {
                             ) : filteredClients.length === 0 ? (
                                 <tr>
                                     <td colSpan={4} className="py-20">
-                                        <EmptyState 
+                                        <EmptyState
                                             icon={<Building2 className="w-12 h-12 text-text-muted/20" />}
-                                            title="No clients found" 
-                                            description="Your client list is currently empty." 
+                                            title="No clients found"
+                                            description="Your client list is currently empty."
                                             action={!isViewer && (
                                                 <Button onClick={handleOpenCreate} variant="secondary" size="sm">
                                                     Add First Client
@@ -275,11 +275,11 @@ export function Clients() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <button 
+                                            <button
                                                 onClick={() => toggleStatus(client)}
                                                 disabled={isViewer}
                                             >
-                                                <StatusBadge 
+                                                <StatusBadge
                                                     variant={client.status === 'Active' ? 'success' : 'default'}
                                                     className={clsx(
                                                         "px-3 py-0.5",
@@ -292,7 +292,7 @@ export function Clients() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                                                <Button 
+                                                <Button
                                                     onClick={() => handleOpenEdit(client)}
                                                     variant="ghost"
                                                     size="sm"
@@ -300,7 +300,7 @@ export function Clients() {
                                                 >
                                                     <ShieldCheck className="w-4 h-4" />
                                                 </Button>
-                                                <Button 
+                                                <Button
                                                     onClick={() => { if (!isViewer) setDeletingClient(client); }}
                                                     disabled={isViewer}
                                                     variant="ghost"

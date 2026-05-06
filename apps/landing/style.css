@@ -24,8 +24,8 @@
   --radius-xl: 24px;
 
   /* Typography Scale */
-  --font-main: 'Inter', sans-serif;
-  --font-head: 'Inter Tight', sans-serif;
+  --font-main: 'DM Sans', sans-serif;
+  --font-head: 'Poppins', sans-serif;
 }
 
 /* ── Reset & Core ──────────────────────────────────────── */
