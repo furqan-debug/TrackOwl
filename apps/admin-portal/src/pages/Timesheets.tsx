@@ -5,8 +5,6 @@ import {
     Users,
     Calendar as CalendarIcon,
     Plus, Filter,
-    Download,
-    Layout as LayoutIcon,
     Clock, FolderOpen
 } from 'lucide-react';
 import { LoadingState, Modal, EmptyState, FilterSelect } from '../components/ui';
@@ -410,10 +408,7 @@ export function Timesheets() {
                 </div>
             </div>
 
-            <div className="px-8 py-2 flex justify-end gap-2 bg-surface-hover/30 border-b border-slate-50 shrink-0">
-                <button className="p-2 text-text-muted border border-border rounded-lg hover:bg-surface-hover hover:text-primary transition-all"><LayoutIcon className="w-3.5 h-3.5" /></button>
-                <button className="p-2 text-text-muted border border-border rounded-lg hover:bg-surface-hover hover:text-primary transition-all"><Download className="w-3.5 h-3.5" /></button>
-            </div>
+
 
             <main className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar">
                 {loading ? <div className="flex items-center justify-center h-64"><LoadingState /></div> : (

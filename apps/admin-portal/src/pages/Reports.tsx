@@ -579,7 +579,7 @@ export function Reports() {
         >
             <div className="flex flex-col gap-8 pb-20">
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8 lg:gap-10">
                     <StatMetric icon={<Clock className="w-4 h-4" />} label="Time" value={formatDuration(totalMins)} sub="Worked" accent="brown-gradient" />
                     <StatMetric icon={<ActivityIcon className="w-4 h-4" />} label="Activity" value={`${avgActivity}%`} sub="Score" accent="brown-gradient" />
                     <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Revenue" accent="brown-gradient" />
