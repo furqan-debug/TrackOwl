@@ -555,7 +555,12 @@ export function Landing() {
                         <div className="flex justify-center items-center gap-6 mb-20">
                             <div className="flex items-center gap-3">
                                 <span className={twMerge("text-sm font-bold tracking-tight transition-colors", !isMonthly ? "text-[var(--text-main)]" : "text-[var(--text-muted)]")}>Yearly</span>
-                                <div className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-widest border border-emerald-500/20">
+                                <div className={twMerge(
+                                    "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors duration-300",
+                                    isMonthly 
+                                        ? "bg-rose-500/10 text-rose-500 border-rose-500/20" 
+                                        : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
+                                )}>
                                     Save 25%
                                 </div>
                             </div>
