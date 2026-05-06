@@ -91,7 +91,7 @@
   }
 
   .heading-gradient {
-    background: linear-gradient(to right, #A47551, #3B2A23);
+    background: linear-gradient(to right, #3B2A23, #A47551);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;

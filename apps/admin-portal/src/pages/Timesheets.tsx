@@ -328,7 +328,7 @@ export function Timesheets() {
         <div className="flex flex-col min-h-screen bg-surface font-sans text-text-main">
             <header className="px-8 py-6 flex items-center justify-between border-b border-border shrink-0">
                 <div className="space-y-2">
-                    <h1 className="text-4xl font-bold text-text-main tracking-tight font-heading">Timesheets</h1>
+                    <h1 className="text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
                     <p className="text-[14px] font-bold text-text-muted tracking-tight">Verify and refine team temporal records</p>
                 </div>
             </header>
