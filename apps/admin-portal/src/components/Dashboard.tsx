@@ -398,8 +398,9 @@ export function Dashboard() {
     return (
         <PageLayout
             maxWidth="full"
+            eyebrow="WORKSPACE ANALYTICS & INSIGHTS"
             title="Team Overview"
-            description="Real-time visibility into team performance, project distribution, and active focus."
+            description="Building the future of global work. Strategic leadership for the modern enterprise."
             actions={
                 <div className="flex items-center gap-4">
                     <div className="flex items-center glass-panel p-1 rounded-2xl shadow-premium overflow-hidden border border-border">
@@ -446,10 +447,10 @@ export function Dashboard() {
                 </div>
             }
         >
-            <div className="flex flex-col gap-8 pb-24">
+            <div className="flex flex-col gap-12 pb-32">
 
                 {/* 📊 KPI Architecture */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
                     <StatMetric
                         icon={<TrendingUp className="w-5 h-5" />}
                         label="Team Focus"
@@ -487,16 +488,16 @@ export function Dashboard() {
                     {/* 🖥️ Left Content: Activity Stream (70%) */}
                     <div className="lg:col-span-7 flex flex-col h-[820px]">
                         <div className="glass-panel rounded-[12px] overflow-hidden flex flex-col h-full shadow-premium border border-border">
-                            <div className="px-10 py-8 border-b border-border flex items-center justify-between bg-surface/50 shrink-0">
+                            <div className="px-12 py-10 border-b border-border flex items-center justify-between bg-surface/50 shrink-0">
                                 <div>
-                                    <h3 className="text-[18px] font-bold text-text-main mb-1">Visual Activity Stream</h3>
-                                    <p className="text-[12px] font-medium text-text-muted ">Showing top 4 most active team members</p>
+                                    <h3 className="text-[22px] font-bold text-text-main mb-2">Visual Activity Stream</h3>
+                                    <p className="text-[14px] font-medium text-text-muted ">Showing top 4 most active team members</p>
                                 </div>
                                 <button
                                     onClick={() => navigate('/dashboard/activity')}
-                                    className="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-[10px] font-bold hover:bg-primary transition-all duration-300 shadow-md flex items-center gap-2 group"
+                                    className="px-6 py-3 rounded-xl bg-slate-900 text-white text-[12px] font-bold hover:bg-primary transition-all duration-300 shadow-md flex items-center gap-2 group"
                                 >
-                                    Explore All <ArrowUpRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                    Explore All <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                                 </button>
                             </div>
 
@@ -513,21 +514,21 @@ export function Dashboard() {
                                                             <SecureImage path={user.avatarUrl} bucket="avatars" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                         ) : user.fullName.charAt(0)}
                                                     </div>
-                                                    <div className="space-y-1">
-                                                        <div className="flex items-center gap-3">
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center gap-4">
                                                             <p className={clsx(
-                                                                "text-[16px] font-bold text-text-main tracking-tight",
+                                                                "text-[18px] font-bold text-text-main tracking-tight",
                                                                 user.fullName.includes('@') && "lowercase opacity-80"
                                                             )}>
                                                                 {user.fullName.includes('@') ? user.fullName.toLowerCase() : toProperCase(user.fullName)}
                                                             </p>
-                                                            <div className="px-2.5 py-1 bg-primary/5 text-primary text-[10px] font-bold rounded-lg border border-primary/10">
+                                                            <div className="px-3 py-1 bg-primary/5 text-primary text-[12px] font-bold rounded-lg border border-primary/10">
                                                                 {formatDuration(user.totalMinutes)}
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center gap-2">
-                                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                                            <span className="text-[10px] font-bold text-text-muted ">{user.activityScore}% Focus Level</span>
+                                                            <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                                            <span className="text-[13px] font-bold text-text-muted ">{user.activityScore}% Focus Level</span>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -553,7 +554,7 @@ export function Dashboard() {
                                                             </div>
                                                             <div className="absolute top-3 left-3 -translate-y-1 group-hover/ss:translate-y-0 transition-transform duration-300">
                                                                 <span className={clsx(
-                                                                    "px-3 py-1.5 rounded-lg text-white text-[9px] font-bold backdrop-blur-md border border-white/10 shadow-lg",
+                                                                    "px-4 py-2 rounded-lg text-white text-[11px] font-bold backdrop-blur-md border border-white/10 shadow-lg",
                                                                     ss.activityPercent > 70 ? "bg-emerald-500/80" : ss.activityPercent > 30 ? "bg-amber-500/80" : "bg-rose-500/80"
                                                                 )}>
                                                                     {ss.activityPercent}%
@@ -584,12 +585,12 @@ export function Dashboard() {
                         <div className="glass-panel rounded-[12px] shadow-premium overflow-hidden flex flex-col h-full border border-border">
                             <div className="px-8 py-8 border-b border-border flex items-center justify-between bg-surface/50 shrink-0">
                                 <div>
-                                    <h3 className="text-[14px] font-bold text-text-main tracking-tight mb-1">Live Directory</h3>
-                                    <p className="text-[10px] font-bold text-text-muted ">Real-time status updates</p>
+                                    <h3 className="text-[18px] font-bold text-text-main tracking-tight mb-2">Live Directory</h3>
+                                    <p className="text-[13px] font-bold text-text-muted ">Real-time status updates</p>
                                 </div>
-                                <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                    <span className="text-[9px] font-bold text-emerald-500 ">Live</span>
+                                <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                    <span className="text-[11px] font-bold text-emerald-500 ">Live Now</span>
                                 </div>
                             </div>
 
@@ -597,8 +598,8 @@ export function Dashboard() {
                                 <table className="w-full text-left">
                                     <thead className="sticky top-0 bg-surface/90 backdrop-blur-md z-10">
                                         <tr className="border-b border-border">
-                                            <th className="px-8 py-5 text-[10px] font-bold text-text-muted tracking-[0.2em]">Team Member</th>
-                                            <th className="px-8 py-5 text-[10px] font-bold text-text-muted tracking-[0.2em] text-right">Performance</th>
+                                            <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Team Member</th>
+                                            <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-right">Performance</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border">
@@ -619,12 +620,12 @@ export function Dashboard() {
                                                         </div>
                                                         <div className="flex flex-col min-w-0">
                                                             <span className={clsx(
-                                                                "text-[14px] font-bold text-text-main leading-none tracking-tight truncate group-hover:text-primary transition-colors",
+                                                                "text-[15px] font-bold text-text-main leading-none tracking-tight truncate group-hover:text-primary transition-colors",
                                                                 (!member.fullName || member.fullName.includes('@')) && "lowercase opacity-80"
                                                             )}>
                                                                 {member.fullName ? toProperCase(member.fullName) : toEmailCase(member.email || '')}
                                                             </span>
-                                                            <span className="text-[10px] text-text-muted font-bold tracking-tight mt-1.5 truncate max-w-[140px] opacity-70">
+                                                            <span className="text-[12px] text-text-muted font-bold tracking-tight mt-2 truncate max-w-[140px] opacity-70">
                                                                 {member.projectName}
                                                             </span>
                                                         </div>
@@ -632,11 +633,11 @@ export function Dashboard() {
                                                 </td>
                                                 <td className="px-8 py-5 text-right">
                                                     <div className="flex flex-col items-end">
-                                                        <span className="text-[13px] font-bold text-text-main tabular-nums leading-none tracking-tight">
+                                                        <span className="text-[15px] font-bold text-text-main tabular-nums leading-none tracking-tight">
                                                             {formatDuration(member.timeWorkedToday)}
                                                         </span>
                                                         <span className={clsx(
-                                                            "text-[9px] font-bold tracking-[0.15em] mt-2 px-2 py-0.5 rounded-md",
+                                                            "text-[11px] font-bold tracking-[0.15em] mt-2.5 px-3 py-1 rounded-lg",
                                                             member.status === 'working' ? "text-emerald-500 bg-emerald-500/10" : member.status === 'idle' ? "text-amber-500 bg-amber-500/10" : "text-text-muted bg-surface-hover"
                                                         )}>
                                                             {member.status}

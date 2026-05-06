@@ -204,7 +204,7 @@ export function Performance() {
         <div className="p-8 max-w-[1200px] mx-auto w-full fade-in">
             <div className="flex justify-between items-end mb-8 relative z-20">
                 <div>
-                    <h1 className="text-2xl font-bold text-text-main tracking-tight mb-2">Performance</h1>
+                    <h1 className="text-4xl font-bold text-text-main tracking-tight mb-2">Performance</h1>
                     <p className="text-text-muted">Analyze and rank individual team productivity.</p>
                 </div>
 
