@@ -12,6 +12,7 @@ interface MemberProfile {
     status: 'Active' | 'Inactive' | 'Pending';
     organization_id: string | null;
     location: string | null;
+    created_at: string;
 }
 
 interface AuthContextType {

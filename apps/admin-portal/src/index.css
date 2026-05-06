@@ -150,6 +150,20 @@
   .btn-ghost {
     @apply hover:bg-primary/10 text-primary px-4 py-2 rounded-shell-md font-medium transition-all duration-200;
   }
+
+  .glass-panel {
+    background: rgba(245, 230, 202, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(164, 117, 81, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(71, 45, 31, 0.05);
+  }
+
+  .dark .glass-panel {
+    background: rgba(31, 26, 23, 0.6);
+    border-color: rgba(212, 175, 55, 0.1);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  }
 }
 
 /* Scrollbar Refinement */
