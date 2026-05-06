@@ -815,7 +815,7 @@ export function Landing() {
 
                         <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-10 border-t border-[var(--border-color)]">
                             <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
-                                © 2024 TrackOwl · A product by <a href="https://digireps.co/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">DigiReps</a>
+                                © 2026 TrackOwl · A product by <a href="https://digireps.co/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">DigiReps</a>
                             </p>
                             <div className="flex gap-8 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
                                 <a href="#" className="hover:text-primary transition-all">Twitter</a>
