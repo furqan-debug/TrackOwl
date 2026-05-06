@@ -198,34 +198,34 @@ export function Projects() {
             <div className="flex flex-col gap-8 pb-20">
 
                 {/* 📊 KPI Row: Operational Metrics */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
                     <StatMetric
-                        icon={<Briefcase className="w-4 h-4" />}
+                        icon={<Briefcase className="w-5 h-5" />}
                         label="Total Projects"
                         value={stats.total}
                         sub={`${activeTab} status`}
-                        accent="primary"
+                        accent="brown-gradient"
                     />
                     <StatMetric
-                        icon={<Building2 className="w-4 h-4" />}
+                        icon={<Building2 className="w-5 h-5" />}
                         label="Active Clients"
                         value={stats.uniqueClients}
                         sub="Managed entities"
-                        accent="amber"
+                        accent="brown-gradient"
                     />
                     <StatMetric
-                        icon={<Check className="w-4 h-4" />}
+                        icon={<Check className="w-5 h-5" />}
                         label="In Budget"
                         value={`${projects.length - stats.overBudget}`}
                         sub="Operational health"
-                        accent="emerald"
+                        accent="brown-gradient"
                     />
                     <StatMetric
-                        icon={<Layers className="w-4 h-4" />}
+                        icon={<Layers className="w-5 h-5" />}
                         label="Pending Tasks"
                         value={projects.reduce((acc, p) => acc + p.todoCount, 0)}
                         sub="Total deliverables"
-                        accent="rose"
+                        accent="brown-gradient"
                     />
                 </div>
 
