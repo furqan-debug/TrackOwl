@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { Card } from '../components/ui/Card';
+
 import LogoIcon from '../assets/branding/3.svg';
 
 export function Signup() {
