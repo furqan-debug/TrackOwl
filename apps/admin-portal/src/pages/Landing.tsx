@@ -557,14 +557,14 @@ export function Landing() {
                                 <span className={twMerge("text-sm font-bold tracking-tight transition-colors", !isMonthly ? "text-[var(--text-main)]" : "text-[var(--text-muted)]")}>Yearly</span>
                                 <div className={twMerge(
                                     "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors duration-300",
-                                    isMonthly 
-                                        ? "bg-rose-500/10 text-rose-500 border-rose-500/20" 
+                                    isMonthly
+                                        ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
                                         : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
                                 )}>
                                     Save 25%
                                 </div>
                             </div>
-                            
+
                             <button
                                 onClick={() => setIsMonthly(!isMonthly)}
                                 className="group relative w-16 h-8 rounded-full bg-[var(--bg-surface)] border border-[var(--border-color)] p-1.5 transition-all hover:border-primary/30"
@@ -768,7 +768,7 @@ export function Landing() {
                     <div className="mx-auto max-w-7xl px-6 md:px-10">
                         <div className="grid md:grid-cols-4 gap-12 mb-20">
                             <div className="col-span-1 md:col-span-1 space-y-6">
-                                <div className="relative h-20 mb-6">
+                                <div className="relative h-20 mb-8 -ml-7">
                                     <div className="absolute -top-12 left-0 w-64 h-48">
                                         <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain object-left" />
                                     </div>
