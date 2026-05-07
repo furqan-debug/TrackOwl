@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Lock, Mail, ArrowRight, Play, Square, Pause,
+  Lock, Mail, ArrowRight, Square,
   ChevronRight, LogOut, CheckCircle2,
   ShieldAlert, Eye, EyeOff, MapPin, MonitorPlay, MousePointerClick,
   ClipboardList, Calendar, Circle, ChevronDown, ChevronUp,
   User as UserIcon, Save, RefreshCcw,
-  Clock, Activity, HelpCircle, LifeBuoy, MessageSquare, Send, ArrowLeft,
+  HelpCircle, LifeBuoy, MessageSquare, Send, ArrowLeft,
   Bell, ShieldCheck, Smartphone
 } from 'lucide-react';
 import { trackerAPI } from './tauri-ipc';
@@ -224,7 +224,7 @@ function AppFooter({ lastSyncTime, isSyncing, onSync, isOnline }: {
     if (tauri?.app) {
       tauri.app.getVersion().then(setVersion);
     } else {
-      setVersion('1.1.7');
+      setVersion('1.2.6');
     }
 
     // 2. Get Location
@@ -727,7 +727,10 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isTracking]);
 
+  let isFetchingStats = false;
   async function fetchDashboardStats(userId: string, currentProjects: Project[]) {
+    if (isFetchingStats) return;
+    isFetchingStats = true;
     try {
       const sb = await getSupabase();
 
@@ -835,16 +838,16 @@ export default function App() {
 
 
 
-      const seen = new Set<string>();
-      const dedupedSamples: any[] = [];
-      const sortedSamples = [...(samples || [])].sort((a, b) => (b.activity_percent ?? 0) - (a.activity_percent ?? 0));
-
-      sortedSamples.forEach(s => {
-        const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
-        if (seen.has(minute)) return;
-        seen.add(minute);
-        dedupedSamples.push(s);
+      const minuteMap = new Map<string, any>();
+      (samples || []).forEach(s => {
+        const minute = s.recorded_at ? s.recorded_at.substring(0, 16) : '';
+        if (!minute) return;
+        const existing = minuteMap.get(minute);
+        if (!existing || (s.activity_percent ?? 0) > (existing.activity_percent ?? 0)) {
+          minuteMap.set(minute, s);
+        }
       });
+      const dedupedSamples = Array.from(minuteMap.values());
 
       // Use the user's idle_limit (default to 10)
       const idleLimit = user?.idle_limit ?? 10;
@@ -939,6 +942,8 @@ export default function App() {
       if (errMsg.includes('transport error') || errMsg.includes('Dns Failed')) {
         setIsOnline(false);
       }
+    } finally {
+      isFetchingStats = false;
     }
   }
 
@@ -1449,10 +1454,13 @@ export default function App() {
     idleMinutesRef.current = 0; // reset inactivity counter for new session
     setIsPaused(false);
     setTrackingError(null);
+    setIsTracking(true);
+    setScreen('tracker');
 
     try {
       if (!isOnline) {
         setTrackingError('You are currently offline. Please check your internet connection to start tracking.');
+        setIsTracking(false);
         setActiveProject(null);
         setScreen('projects');
         return;
@@ -1462,6 +1470,7 @@ export default function App() {
       if (user?.tracking_enabled === false) {
         console.log('TRACKING BLOCKED: tracking_enabled is false', user);
         setTrackingError('Tracking has been disabled for your account by an administrator.');
+        setIsTracking(false);
         setActiveProject(null);
         setScreen('projects');
         return;
@@ -1475,12 +1484,14 @@ export default function App() {
 
       if (totalToday >= dailyLimitSecs) {
         setTrackingError(`Daily limit (${user?.daily_limit || 8}h) reached. Please contact your manager.`);
+        setIsTracking(false);
         setActiveProject(null);
         setScreen('projects');
         return;
       }
       if (totalWeek >= weeklyLimitSecs) {
         setTrackingError(`Weekly limit (${user?.weekly_limit || 40}h) reached. Please contact your manager.`);
+        setIsTracking(false);
         setActiveProject(null);
         setScreen('projects');
         return;
@@ -1500,13 +1511,14 @@ export default function App() {
         } else {
           setTrackingError(rawErr || 'Failed to start tracking. Is the backend running?');
         }
+        setIsTracking(false);
         setActiveProject(null);
         setScreen('projects');
         return;
       }
       setIsTracking(true);
       setSessionId(res?.session_id ?? null);
-      setScreen('tracker');
+      // setScreen('tracker'); // already set at start for responsiveness
 
       // Notification Alert
       if (settingsRef.current?.tracking_alerts !== false) {
@@ -1520,6 +1532,7 @@ export default function App() {
       } else {
         setTrackingError(errMsg);
       }
+      setIsTracking(false);
       setActiveProject(null);
       setScreen('projects');
     }
@@ -1711,14 +1724,11 @@ export default function App() {
               user={user!}
               project={activeProject!}
               sessionId={sessionId}
-              isPaused={isPaused}
               idlePaused={idlePaused}
               onResumeFromIdle={() => { setIdlePaused(false); (trackerAPI as any).stopIdleMonitoring(); handleResume(); }}
               elapsed={elapsed}
               liveIdleSeconds={liveIdleSeconds}
               onStop={handleStop}
-              onPause={handlePause}
-              onResume={handleResume}
               onSettings={() => setScreen('settings')}
               onSupport={() => setScreen('support')}
               todos={todos}
@@ -2216,18 +2226,15 @@ function ConsentItem({ icon, title, desc }: { icon: React.ReactNode; title: stri
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Tracker
 // ─────────────────────────────────────────────────────────────────────────────
-function TrackerScreen({ user, project, isPaused = false, idlePaused = false, onResumeFromIdle, elapsed, liveIdleSeconds = 0, onStop, onPause, onResume, onSettings, onSupport, todos, onTodoDone, projects }: {
+function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, elapsed, liveIdleSeconds = 0, onStop, onSettings, onSupport, todos, onTodoDone, projects }: {
   user: User;
   project: Project;
   sessionId?: string | null;
-  isPaused?: boolean;
   idlePaused?: boolean;
   onResumeFromIdle?: () => void;
   elapsed: number;
   liveIdleSeconds?: number;
   onStop: () => void;
-  onPause: () => void;
-  onResume: () => void;
   onSettings: () => void;
   onSupport: () => void;
   todos: Todo[];
@@ -2311,57 +2318,42 @@ function TrackerScreen({ user, project, isPaused = false, idlePaused = false, on
               )}
             </div>
           )}
-          <div className={`status-pill ${isPaused ? 'status-paused' : 'status-live'}`}>
-            <div className="status-dot" />
-            {isPaused ? 'Paused' : 'Tracking Live'}
+          <div className="tw-header">
+            <div className="status-pill status-live">
+              <div className="status-dot" />
+              Live
+            </div>
+            <div className="tracker-project-pill">
+              <div className="tracker-project-dot" style={{ backgroundColor: project.color || 'var(--accent)' }} />
+              <span className="tracker-project-name">{project.name}</span>
+            </div>
           </div>
 
-          <div className="tracker-project-pill">
-            <div className="tracker-project-dot" style={{ backgroundColor: 'var(--accent)' }} />
-            <span className="tracker-project-name">{project.name}</span>
-          </div>
-
-          <div className={`timer-display ${isPaused ? 'timer-paused' : ''}`}>
+          <div className="timer-display">
             {fmt(hrs)}:{fmt(mins)}:{fmt(secs)}
           </div>
 
-          <p className="timer-subtext" style={{ marginBottom: '0.75rem' }}>
-            {isPaused
-              ? 'Activity is not being recorded.'
-              : 'Screenshots and metrics are securely recorded.'}
-          </p>
-
-          <div style={{ marginTop: '1rem', padding: '0.625rem 0.875rem', background: 'var(--bg-secondary)', borderRadius: '0.75rem', fontSize: '0.8125rem', display: 'grid', gridTemplateColumns: 'min-content 1fr min-content', gap: '0.5rem 0.75rem', textAlign: 'left', minWidth: '240px', margin: '0 auto 1.5rem auto', border: '1px solid var(--border-light)' }}>
-            <div style={{ color: 'var(--primary)', alignSelf: 'center' }}><Clock size={14} /></div>
-            <div style={{ color: 'var(--text-secondary)' }}>Productive Time</div>
-            <div style={{ fontFamily: 'monospace', color: 'var(--text-primary)', fontWeight: 600 }}>
-              {fmt(Math.floor(displayProductive / 3600))}:{fmt(Math.floor((displayProductive % 3600) / 60))}
+          <div className="stats-dashboard">
+            <div className="stat-item">
+              <span className="stat-label">Productive</span>
+              <span className="stat-value">{fmt(Math.floor(displayProductive / 3600))}:{fmt(Math.floor((displayProductive % 3600) / 60))}</span>
             </div>
-
-            <div style={{ color: 'var(--amber)', alignSelf: 'center' }}><Activity size={14} /></div>
-            <div style={{ color: 'var(--text-secondary)' }}>Idle Time</div>
-            <div style={{ fontFamily: 'monospace', color: 'var(--text-primary)', fontWeight: 600 }}>
-              {fmt(Math.floor(displayIdle / 3600))}:{fmt(Math.floor((displayIdle % 3600) / 60))}
+            <div className="stat-item">
+              <span className="stat-label">Idle</span>
+              <span className="stat-value">{fmt(Math.floor(displayIdle / 3600))}:{fmt(Math.floor((displayIdle % 3600) / 60))}</span>
             </div>
           </div>
 
           <div className="tracker-controls">
-            {isPaused ? (
-              <button className="control-btn active-resume" onClick={onResume}>
-                <Play className="control-icon" size={18} fill="currentColor" />
-                Resume
-              </button>
-            ) : (
-              <button className="control-btn active-pause" onClick={onPause}>
-                <Pause className="control-icon" size={18} fill="currentColor" />
-                Break
-              </button>
-            )}
             <button className="control-btn action-stop" onClick={onStop}>
-              <Square className="control-icon" size={18} fill="currentColor" />
-              Stop
+              <Square size={14} fill="currentColor" />
+              Stop Session
             </button>
           </div>
+
+          <p className="timer-subtext">
+            TrackOwl
+          </p>
         </motion.div>
       </div>
 

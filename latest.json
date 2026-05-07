@@ -1,11 +1,11 @@
 {
-  "version": "1.2.5",
-  "notes": "TrackOwl v1.2.5 - Official Brand Update & Security Patch. This version introduces the new TrackOwl branding and critical daily work limit enforcement. Direct installation is required for this version to transition from the legacy Trackora app.",
-  "pub_date": "2026-05-04T18:40:00Z",
+  "version": "1.2.6",
+  "notes": "TrackOwl v1.2.6 - Performance & Responsiveness Update. This release significantly improves project start times with Optimistic UI updates and refactored statistics processing for a smoother tracking experience.",
+  "pub_date": "2026-05-07T21:18:00+05:00",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajBsWG0vRnRnR2hET1ZxWGdRQm1KSng2U01ZYzRVb0RhRE5BU2l4UUl2RzI3bmI3ZUhjTHhVbktESG1ld3kyT1RiZXVNUXlQd2Y0NDJwM0tiVm9sR3drPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3OTE5OTY4CWZpbGU6VHJhY2tPd2xfMS4yLjVfeDY0X2VuLVVTLm1zaQo5MTh2cnJmUStZUm45WVM2YnlHeWNYMDlNdm1wZWJsT1FJZTJReDB1ZHZFbFpRL2NWVWVZNXh2OXVHN09SN3o4UjU4c05kK1BEejlaOHY0bVhjeTBCUT09Cg==",
-      "url": "https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.5/TrackOwl_1.2.5_x64_en-US.msi"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajlvNE1neG14ZHI4STFJYUJ3U25DdmpXNFJlSWJMMFZaRXRJTHZFZkJwZlNLRnBPdEo3VGIvU0dSaHJUd3U2MjZqbUljN2lMbWtCY1Z5VjhvUGFiNndVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc4MTcwNjY4CWZpbGU6VHJhY2tPd2xfMS4yLjZfeDY0X2VuLVVTLm1zaQp0NVRwLzgyRE5YbXFPaEZyRGtVbXlmOG1SYk1IVkNVeStuWEwybkY3OTQ4dmhOOC9nVzNIaTRBV21lZC9pQXpYQ3NCZUhPWEg1MGdrbTVtS3hrbldCQT09Cg==",
+      "url": "https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.6/TrackOwl_1.2.6_x64_en-US.msi"
     }
   }
 }

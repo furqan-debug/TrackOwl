@@ -53,7 +53,7 @@ interface MemberInfo {
 
 const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-// Module-level cache
+// Module-level cache (cleared on unmount)
 let timesheetsCache: any = null;
 let timesheetsCacheKey: string | null = null;
 
@@ -112,10 +112,22 @@ export function Timesheets() {
         }
     }, [organizationId]);
 
+    // Clear cache on unmount so stale data doesn't bleed across navigation
     useEffect(() => {
-        if (organizationId) {
-            fetchTimesheets();
-        }
+        return () => {
+            timesheetsCache = null;
+            timesheetsCacheKey = null;
+        };
+    }, []);
+
+    useEffect(() => {
+        // Wait until members have been fetched before running the query.
+        // This prevents selectedMember filtering from firing with an empty members
+        // array (which would cause members.find() to return undefined and send
+        // an unfiltered query, returning everyone's data instead of the selected member).
+        if (!organizationId) return;
+        if (selectedMember !== 'all' && members.length === 0) return;
+        fetchTimesheets();
     }, [range, selectedMember, filterProjectId, activeTimezone, members, projects, organizationId]);
 
     async function fetchMembers() {
@@ -502,17 +514,19 @@ function DailyView({ entries, selectedMember, toProperCase }: {
     const displayRows = useMemo(() => {
         if (!day) return [];
 
+        // For a specific member: sessions are already filtered by the server query.
+        // Return them directly as individual session rows.
+        if (selectedMember !== 'all') {
+            return day.sessions;
+        }
+
+        // For "All Members" view: aggregate sessions per user so each member
+        // appears as a single summarised row.
         const userMap: Record<string, any> = {};
 
         day.sessions.forEach(s => {
             const userId = s.user_id;
 
-            // For Single User view, return individual sessions
-            if (selectedMember !== 'all') {
-                return;
-            }
-
-            // For All Members view, aggregate by user
             if (!userMap[userId]) {
                 userMap[userId] = {
                     ...s,
@@ -545,8 +559,6 @@ function DailyView({ entries, selectedMember, toProperCase }: {
 
             if (row.project_id !== s.project_id) row.project_name = 'Multiple Projects';
         });
-
-        if (selectedMember !== 'all') return day.sessions;
 
         return Object.values(userMap)
             .map(row => ({
