@@ -3,8 +3,6 @@ import { motion } from 'framer-motion';
 import { 
     Check, 
     Zap, 
-    Crown, 
-    ChevronRight, 
     Users, 
     Clock, 
     Camera, 
