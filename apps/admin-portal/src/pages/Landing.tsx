@@ -123,7 +123,7 @@ export function Landing() {
                     </motion.div>
 
                     <div className="hidden lg:flex items-center gap-1 p-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-full shadow-shell-sm">
-                        <NavButton href="#features">Features</NavButton>
+                        <NavButton href="#how-it-works">Features</NavButton>
                         <NavButton href="#pricing">Pricing</NavButton>
                         <NavButton href="#faq">FAQ</NavButton>
                         <NavButton href="#download">Download</NavButton>
@@ -196,7 +196,7 @@ export function Landing() {
                                 onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
                                 className="w-full sm:w-auto px-10 py-4 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[13px] font-bold tracking-widest rounded-2xl hover:bg-[var(--bg-surface-hover)] hover:border-primary/20 transition-all active:scale-95 shadow-shell-sm flex items-center justify-center gap-2"
                             >
-                                Watch Demo
+                                How it Works
                             </button>
                         </motion.div>
 
@@ -251,7 +251,7 @@ export function Landing() {
                 </section>
 
                 {/* Features Bento Grid */}
-                <section id="features" className="py-32 bg-[var(--bg-main)]">
+                <section id="how-it-works" className="py-32 bg-[var(--bg-main)]">
                     <div className="mx-auto max-w-7xl px-6 md:px-10">
                         <div className="text-center max-w-3xl mx-auto mb-20">
                             <h2 className="text-[var(--text-muted)] text-[11px] font-bold tracking-[0.3em] uppercase mb-4">Precision Engineering</h2>
@@ -667,7 +667,7 @@ export function Landing() {
                                     </p>
                                     <div className="flex flex-wrap gap-4 justify-center md:justify-start">
                                         <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.5/TrackOwl_1.2.5_x64-setup.exe"
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.6/TrackOwl_1.2.6_x64-setup.exe"
                                             className="px-10 py-5 bg-primary text-white text-[12px] font-black tracking-widest uppercase rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3"
                                         >
                                             <Download size={20} />
