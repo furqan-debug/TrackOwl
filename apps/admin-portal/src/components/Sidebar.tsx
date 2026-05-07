@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import { ChevronDown, ChevronLeft, Star, Zap, LogOut } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Star, Zap, LogOut, Lock } from 'lucide-react';
 import { navStructure, matchActive, type BadgeType, type Role } from '../nav/navModel';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
@@ -24,7 +24,8 @@ export interface SidebarProps {
 export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, onToggle }: SidebarProps) {
     const location = useLocation();
     const { favorites } = useFavorites();
-    const { profile, signOut } = useAuth();
+    const { profile, signOut, organization } = useAuth();
+    const isPremium = organization?.plan_type === 'Premium' || organization?.subscription_status === 'Trial';
     const { theme } = useTheme();
     const userRole = (profile?.role || 'User') as Role;
 
@@ -192,7 +193,14 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                                 isChildActive && !isExpanded ? "text-primary" :
                                                     isChildActive || isExpanded ? "text-primary" : "text-[var(--sidebar-text)] group-hover:text-primary")}
                                                 strokeWidth={2} aria-hidden />
-                                            {!effectiveCollapsed && <span className="tracking-tight">{group.name}</span>}
+                                            {!effectiveCollapsed && (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="tracking-tight">{group.name}</span>
+                                                    {group.requiresPremium && !isPremium && (
+                                                        <Lock className="w-3 h-3 text-rose-500 opacity-60" />
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                         {!effectiveCollapsed && (
                                             <ChevronDown className={clsx("w-3.5 h-3.5 text-[var(--sidebar-text)] shrink-0 transition-transform duration-300", !isExpanded && "-rotate-90")} />
@@ -233,7 +241,12 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                                             : 'text-[var(--sidebar-text)] hover:bg-surface-hover/[0.03] hover:text-[var(--sidebar-text-active)]'
                                                     )}
                                                 >
-                                                    <span className="truncate tracking-tight font-medium text-[13px]">{child.name}</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="truncate tracking-tight font-medium text-[13px]">{child.name}</span>
+                                                        {child.requiresPremium && !isPremium && (
+                                                            <Lock className="w-3 h-3 text-rose-500 opacity-60" />
+                                                        )}
+                                                    </div>
                                                     {renderBadge(child.badge)}
                                                 </Link>
                                             );

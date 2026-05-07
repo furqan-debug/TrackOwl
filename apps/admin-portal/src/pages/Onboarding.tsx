@@ -72,30 +72,41 @@ export function Onboarding() {
 
             if (orgError) throw orgError;
 
-            // 2. Update Member Record (USE ID instead of Email + Sync UUID)
-            if (profile?.id && orgData) {
-                const { data: { user } } = await supabase.auth.getUser();
-                const curr_uid = user?.id;
+            // 2. Update or Create Member Record
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Authentication failed: No user found.");
 
-                const { error: memberError } = await supabase
-                    .from('members')
-                    .update({
-                        status: 'Active',
-                        organization_id: orgData.id,
-                        auth_user_id: curr_uid // Crucial: reconcile identity
-                    })
-                    .eq('id', profile.id);
+            if (orgData) {
+                if (profile?.id) {
+                    // Scenario: Invited user who already has a skeleton profile
+                    const { error: memberError } = await supabase
+                        .from('members')
+                        .update({
+                            status: 'Active',
+                            organization_id: orgData.id,
+                            auth_user_id: user.id
+                        })
+                        .eq('id', profile.id);
 
-                if (memberError) throw memberError;
+                    if (memberError) throw memberError;
+                } else {
+                    // Scenario: Fresh owner signup who doesn't have a profile yet
+                    const { error: memberError } = await supabase
+                        .from('members')
+                        .insert({
+                            email: user.email,
+                            full_name: user.user_metadata.full_name || 'Admin',
+                            role: 'Admin',
+                            status: 'Active',
+                            organization_id: orgData.id,
+                            auth_user_id: user.id
+                        });
+
+                    if (memberError) throw memberError;
+                }
                 
                 // 3. Force Sync Profile
-                const updated = await refreshProfile();
-                if (updated?.status !== 'Active') {
-                    console.warn('Profile sync lag detected. Retrying...');
-                    // Try one more time after a tiny delay
-                    await new Promise(r => setTimeout(r, 500));
-                    await refreshProfile();
-                }
+                await refreshProfile();
             }
 
             setStep(3);

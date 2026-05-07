@@ -53,26 +53,10 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
     }
 
     // 5. Handle cases where profile is missing/null (Identity failure)
+    // If no profile exists, we assume it's a new signup that needs onboarding.
     if (!profile && !loading) {
-        return (
-            <div className="min-h-screen bg-surface-hover flex items-center justify-center p-4">
-                <div className="bg-surface rounded-2xl shadow-xl w-full max-w-md p-8 text-center border border-border">
-                    <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span className="text-3xl">⚠️</span>
-                    </div>
-                    <h1 className="text-xl font-bold text-text-main mb-2">Profile Not Found</h1>
-                    <p className="text-text-muted text-sm mb-8">
-                        We couldn't find a management profile for your account. Please ensure your administrator has added you as an Admin or Viewer.
-                    </p>
-                    <button 
-                        onClick={() => signOut()}
-                        className="w-full bg-slate-900 text-white py-3 rounded-lg text-sm font-bold hover:bg-slate-800 transition-all"
-                    >
-                        Sign Out
-                    </button>
-                </div>
-            </div>
-        );
+        if (location.pathname === '/onboarding') return <>{children}</>;
+        return <Navigate to="/onboarding" replace />;
     }
 
     if (roles && profile && !roles.includes(profile.role)) {

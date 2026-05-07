@@ -15,10 +15,22 @@ interface MemberProfile {
     created_at: string;
 }
 
+interface OrganizationProfile {
+    id: string;
+    name: string;
+    plan_type: 'Basic' | 'Premium' | null;
+    subscription_status: 'None' | 'Trial' | 'Active' | 'Locked' | 'Past Due';
+    subscription_period: 'Monthly' | 'Yearly';
+    seats_purchased: number;
+    trial_ends_at: string | null;
+    created_at: string;
+}
+
 interface AuthContextType {
     session: Session | null;
     user: User | null;
     profile: MemberProfile | null;
+    organization: OrganizationProfile | null;
     loading: boolean;
     error: string | null;
     refreshProfile: () => Promise<MemberProfile | null>;
@@ -30,6 +42,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<MemberProfile | null>(null);
+    const [organization, setOrganization] = useState<OrganizationProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (session) fetchProfile(session.user.email!);
             else {
                 setProfile(null);
+                setOrganization(null);
                 setLoading(false);
             }
         });
@@ -65,50 +79,50 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         fetchInProgress.current = email;
-        setLoading(true); // Ensure we are in loading state
+        setLoading(true);
 
         try {
             console.log(`[AuthContext] Fetching profile for ${email}... (Retries left: ${retries})`);
             
-            const { data, error } = await supabase
+            const { data: member, error: memberError } = await supabase
                 .from('members')
                 .select('*')
                 .ilike('email', email)
                 .maybeSingle();
 
-            if (error) {
-                console.error('[AuthContext] Profile fetch error:', email, error.message);
-                
-                // Retry on error too, as it might be a transient connection issue or RLS propagation delay
-                if (retries > 0) {
-                    setTimeout(() => fetchProfile(email, retries - 1), 2000);
-                    return;
-                }
-                
-                setError(`Profile Verification Failed: ${error.message}`);
-                setLoading(false);
-                fetchInProgress.current = null;
-                return; 
-            }
+            if (memberError) throw memberError;
             
-            if (!data) {
+            if (!member) {
                 if (retries > 0) {
-                    console.log(`[AuthContext] No profile found for ${email}, retrying in 2s...`);
                     setTimeout(() => fetchProfile(email, retries - 1), 2000);
                     return;
                 }
-                console.error('[AuthContext] Profile not found after retries:', email);
                 setProfile(null);
+                setOrganization(null);
                 setLoading(false);
                 fetchInProgress.current = null;
                 return;
-            } else {
-                console.log('[AuthContext] Profile successfully loaded:', data.email);
-                setProfile(data);
-                setError(null);
-                setLoading(false);
-                fetchInProgress.current = null;
             }
+
+            setProfile(member);
+
+            if (member.organization_id) {
+                const { data: org, error: orgError } = await supabase
+                    .from('organizations')
+                    .select('*')
+                    .eq('id', member.organization_id)
+                    .maybeSingle();
+                
+                if (orgError) console.error('[AuthContext] Org fetch error:', orgError);
+                setOrganization(org);
+            } else {
+                setOrganization(null);
+            }
+
+            setError(null);
+            setLoading(false);
+            fetchInProgress.current = null;
+
         } catch (err: any) {
             console.error('Error fetching profile:', err);
             if (retries > 0) {
@@ -117,6 +131,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
             setError(err.message || 'Unknown error fetching profile');
             setProfile(null);
+            setOrganization(null);
             setLoading(false);
             fetchInProgress.current = null;
         }
@@ -124,6 +139,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const signOut = async () => {
         await supabase.auth.signOut();
+        setProfile(null);
+        setOrganization(null);
     };
 
     const refreshProfile = async (): Promise<MemberProfile | null> => {
@@ -139,10 +156,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 if (memberError) throw memberError;
                 
                 setProfile(member);
+
+                if (member.organization_id) {
+                    const { data: org } = await supabase
+                        .from('organizations')
+                        .select('*')
+                        .eq('id', member.organization_id)
+                        .single();
+                    setOrganization(org);
+                }
+
                 setLoading(false);
                 return member;
             }
             setProfile(null);
+            setOrganization(null);
             setLoading(false);
             return null;
         } catch (err: any) {
@@ -153,7 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, loading, error, refreshProfile, signOut }}>
+        <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, organization, loading, error, refreshProfile, signOut }}>
             {children}
         </AuthContext.Provider>
     );

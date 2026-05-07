@@ -62,7 +62,7 @@ interface MemberRow extends DbMember {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function People() {
-    const { profile } = useAuth();
+    const { profile, organization } = useAuth();
     const navigate = useNavigate();
     const isViewer = profile?.role === 'Viewer';
     const [members, setMembers] = useState<MemberRow[]>([]);
@@ -105,6 +105,24 @@ export function People() {
 
     async function handleAddMember() {
         if (!addEmail.trim()) return;
+
+        // --- SUBSCRIPTION CHECK ---
+        const hasSubscription = organization?.subscription_status !== 'None';
+        const currentMemberCount = members.length;
+        const availableSeats = organization?.seats_purchased || 0;
+
+        if (!hasSubscription) {
+            navigate('/dashboard/pricing');
+            return;
+        }
+
+        if (currentMemberCount >= availableSeats) {
+            setAddError(`You have reached your seat limit (${availableSeats}). Please purchase more seats in the Billing section to invite more members.`);
+            return;
+        }
+        // ---------------------------
+
+        setAdding(true);
         try {
             const { data: { session } } = await supabase.auth.getSession();
 

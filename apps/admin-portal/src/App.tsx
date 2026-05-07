@@ -33,6 +33,9 @@ import { Calendar } from './pages/Calendar';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { ProjectFormPage } from './pages/ProjectFormPage';
 import { MemberFormPage } from './pages/MemberFormPage';
+import { Billing } from './pages/Billing';
+import { Pricing } from './pages/Pricing';
+import { PremiumGate } from './components/access/PremiumGate';
 
 import { FavoritesProvider } from './context/FavoritesContext';
 import { AuthProvider } from './context/AuthContext';
@@ -89,7 +92,7 @@ function App() {
                 <AppShell>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
-                    <Route path="/activity" element={<Activity />} />
+                    <Route path="/activity" element={<PremiumGate title="Activity Monitoring" description="Upgrade to Premium to view detailed activity logs and screenshots."><Activity /></PremiumGate>} />
                     <Route path="/timesheets" element={<Timesheets />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/people" element={<People />} />
@@ -98,13 +101,13 @@ function App() {
                     <Route path="/projects/new" element={<ProjectFormPage />} />
                     <Route path="/projects/:id/edit" element={<ProjectFormPage />} />
                     <Route path="/schedules" element={<Schedules />} />
-                    <Route path="/url-tracking" element={<UrlTracking />} />
+                    <Route path="/url-tracking" element={<PremiumGate title="Website Tracking" description="Upgrade to Premium to track which websites your team is visiting."><UrlTracking /></PremiumGate>} />
                     <Route path="/financials" element={<PlaceholderPage title="Financials" />} />
                     <Route path="/member-timeline" element={<MemberTimeline />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/timesheets/approvals" element={<Approvals />} />
-                    <Route path="/activity/apps" element={<AppUsage />} />
+                    <Route path="/activity/apps" element={<PremiumGate title="App Usage Tracking" description="Upgrade to Premium to see which applications your team is using most."><AppUsage /></PremiumGate>} />
                     <Route path="/locations" element={<Locations />} />
                     <Route path="/locations/job-sites" element={<JobSites />} />
                     <Route path="/projects/todos" element={<Todos />} />
@@ -114,8 +117,8 @@ function App() {
                     <Route path="/reports/daily" element={<DailyTotals />} />
                     <Route path="/reports/owed" element={<AmountsOwed />} />
                     <Route path="/reports/payments" element={<PaymentsReport />} />
-                    <Route path="/reports/all" element={<PlaceholderPage title="All Reports" />} />
-                    <Route path="/reports/custom" element={<PlaceholderPage title="Customized Reports" />} />
+                    <Route path="/reports/all" element={<PremiumGate title="Advanced Reports" description="Upgrade to Premium to access detailed productivity and team performance reports."><PlaceholderPage title="All Reports" /></PremiumGate>} />
+                    <Route path="/reports/custom" element={<PremiumGate title="Customized Reports" description="Upgrade to Premium to create and save custom reports."><PlaceholderPage title="Customized Reports" /></PremiumGate>} />
                     <Route path="/people/teams" element={<Teams />} />
                     <Route path="/financials/create" element={<PlaceholderPage title="Create Payments" />} />
                     <Route path="/financials/past" element={<PlaceholderPage title="Past Payments" />} />
@@ -124,7 +127,8 @@ function App() {
                     <Route path="/silent/how-it-works" element={<PlaceholderPage title="Silent App: How it works" />} />
                     <Route path="/settings/tracking" element={<PlaceholderPage title="Activity & Tracking Settings" />} />
                     <Route path="/settings/integrations" element={<PlaceholderPage title="Integrations" />} />
-                    <Route path="/settings/billing" element={<PlaceholderPage title="Billing" />} />
+                    <Route path="/settings/billing" element={<Billing />} />
+                    <Route path="/pricing" element={<Pricing />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </AppShell>
