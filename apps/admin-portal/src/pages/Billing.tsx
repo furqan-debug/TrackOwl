@@ -10,7 +10,7 @@ import {
     Zap,
     Plus,
     Minus,
-    ChevronRight, 
+    ChevronRight,
     ExternalLink,
     Crown
 } from 'lucide-react';
