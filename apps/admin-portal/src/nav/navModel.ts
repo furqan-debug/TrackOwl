@@ -19,6 +19,7 @@ export interface NavChild {
     path: string;
     badge?: BadgeType;
     allowedRoles?: Role[];
+    requiresPremium?: boolean;
 }
 
 export interface NavGroup {
@@ -27,6 +28,7 @@ export interface NavGroup {
     path?: string;
     children?: NavChild[];
     allowedRoles?: Role[];
+    requiresPremium?: boolean;
 }
 
 export const navStructure: NavGroup[] = [
@@ -39,9 +41,10 @@ export const navStructure: NavGroup[] = [
     {
         name: 'Activity',
         icon: Activity,
+        requiresPremium: true,
         children: [
-            { name: 'Screenshots', path: '/dashboard/activity' },
-            { name: 'Apps & URLs', path: '/dashboard/activity/apps' },
+            { name: 'Screenshots', path: '/dashboard/activity', requiresPremium: true },
+            { name: 'Apps & URLs', path: '/dashboard/activity/apps', requiresPremium: true },
         ],
     },
     { 
@@ -71,6 +74,7 @@ export const navStructure: NavGroup[] = [
         path: '/dashboard/settings',
         children: [
             { name: 'Org Settings', path: '/dashboard/settings' },
+            { name: 'Billing & Plans', path: '/dashboard/settings/billing' },
         ],
     },
 ];
