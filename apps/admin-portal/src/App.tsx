@@ -94,7 +94,7 @@ function App() {
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/activity" element={<PremiumGate title="Activity Monitoring" description="Upgrade to Premium to view detailed activity logs and screenshots."><Activity /></PremiumGate>} />
                     <Route path="/timesheets" element={<Timesheets />} />
-                    <Route path="/reports" element={<Reports />} />
+                    <Route path="/reports" element={<PremiumGate title="Advanced Analytics" description="Upgrade to Premium to access in-depth productivity and performance reports."><Reports /></PremiumGate>} />
                     <Route path="/people" element={<People />} />
                     <Route path="/people/:id/edit" element={<MemberFormPage />} />
                     <Route path="/projects" element={<Projects />} />
@@ -103,7 +103,7 @@ function App() {
                     <Route path="/schedules" element={<Schedules />} />
                     <Route path="/url-tracking" element={<PremiumGate title="Website Tracking" description="Upgrade to Premium to track which websites your team is visiting."><UrlTracking /></PremiumGate>} />
                     <Route path="/financials" element={<PlaceholderPage title="Financials" />} />
-                    <Route path="/member-timeline" element={<MemberTimeline />} />
+                    <Route path="/member-timeline" element={<PremiumGate title="Activity Timeline" description="Upgrade to Premium to view detailed chronological activity logs and screenshots."><MemberTimeline /></PremiumGate>} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/timesheets/approvals" element={<Approvals />} />
@@ -113,10 +113,10 @@ function App() {
                     <Route path="/projects/todos" element={<Todos />} />
                     <Route path="/projects/clients" element={<Clients />} />
                     <Route path="/calendar" element={<Calendar />} />
-                    <Route path="/reports/legacy" element={<ReportsLegacy />} />
-                    <Route path="/reports/daily" element={<DailyTotals />} />
-                    <Route path="/reports/owed" element={<AmountsOwed />} />
-                    <Route path="/reports/payments" element={<PaymentsReport />} />
+                    <Route path="/reports/legacy" element={<PremiumGate title="Advanced Reports" description="Upgrade to Premium to access detailed productivity and team performance reports."><ReportsLegacy /></PremiumGate>} />
+                    <Route path="/reports/daily" element={<PremiumGate title="Advanced Reports" description="Upgrade to Premium to access detailed productivity and team performance reports."><DailyTotals /></PremiumGate>} />
+                    <Route path="/reports/owed" element={<PremiumGate title="Advanced Reports" description="Upgrade to Premium to access detailed productivity and team performance reports."><AmountsOwed /></PremiumGate>} />
+                    <Route path="/reports/payments" element={<PremiumGate title="Advanced Reports" description="Upgrade to Premium to access detailed productivity and team performance reports."><PaymentsReport /></PremiumGate>} />
                     <Route path="/reports/all" element={<PremiumGate title="Advanced Reports" description="Upgrade to Premium to access detailed productivity and team performance reports."><PlaceholderPage title="All Reports" /></PremiumGate>} />
                     <Route path="/reports/custom" element={<PremiumGate title="Customized Reports" description="Upgrade to Premium to create and save custom reports."><PlaceholderPage title="Customized Reports" /></PremiumGate>} />
                     <Route path="/people/teams" element={<Teams />} />

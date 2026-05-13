@@ -36,7 +36,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
                         <div className="flex items-start gap-10">
                             {/* Time Pillar */}
                             <div className="w-24 pt-2 border-r border-border flex flex-col items-end pr-10 shrink-0">
-                                <span className="text-[18px] font-bold text-text-main tabular-nums leading-none tracking-tight">
+                                <span className="text-[18px] font-bold tabular-nums leading-none tracking-tight" style={{ color: 'var(--chart-gold)' }}>
                                     {hour.toString().padStart(2, '0')}:00
                                 </span>
                                 <span className="text-[10px] font-black text-text-muted tracking-[0.2em] mt-2">
@@ -93,7 +93,7 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
 }
 
 function getBlockStyle(percent: number): string {
-    if (percent <= 20) return 'bg-red-600 border-red-700 text-white shadow-lg';
-    if (percent <= 50) return 'bg-sky-500 border-sky-400 text-white shadow-glow-primary';
-    return 'bg-blue-700 border-blue-800 text-white shadow-lg';
+    if (percent <= 20) return 'bg-error border-error/20 text-white shadow-sm';
+    if (percent <= 50) return 'bg-blue-400 border-blue-400/20 text-white shadow-md';
+    return 'bg-blue-600 border-blue-600/20 text-white shadow-lg';
 }

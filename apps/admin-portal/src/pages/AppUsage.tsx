@@ -1,15 +1,14 @@
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { fetchAllActivitySamples } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
-import { 
-    AppWindow, Monitor, Users, Search, 
-    Clock, Calendar, ChevronLeft, 
-    ChevronRight, RefreshCw, Filter,
+import {
+    AppWindow, Monitor, Users, Search,
+    Clock, RefreshCw, Filter,
     PieChart as PieChartIcon
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { PageLayout, StatMetric, LoadingState, EmptyState, FilterSelect } from '../components/ui';
+import { PageLayout, StatMetric, LoadingState, EmptyState, FilterSelect, DatePicker } from '../components/ui';
 import clsx from 'clsx';
 
 interface AppEntry {
@@ -56,7 +55,7 @@ export function AppUsage() {
     const [members, setMembers] = useState<MemberInfo[]>([]);
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
     const [searchTerm, setSearchTerm] = useState('');
-    const dateInputRef = useRef<HTMLInputElement>(null);
+
 
     const [selectedDate, setSelectedDate] = useState(formatLocalDate(new Date()));
 
@@ -128,11 +127,11 @@ export function AppUsage() {
                 if (limit <= 1) {
                     productiveSamples.push(...userSamps);
                 } else {
-                    const sorted = userSamps.sort((a,b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+                    const sorted = userSamps.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
                     let currentBlock: any[] = [];
                     for (let i = 0; i < sorted.length; i++) {
                         const s = sorted[i];
-                        const prev = i > 0 ? sorted[i-1] : null;
+                        const prev = i > 0 ? sorted[i - 1] : null;
                         const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
                         const isContiguous = prev && gapMs <= 125000;
 
@@ -194,11 +193,7 @@ export function AppUsage() {
         return h > 0 ? `${h}h ${m}m` : `${m}m`;
     };
 
-    const navigateDate = (dir: 'prev' | 'next') => {
-        const d = new Date(selectedDate);
-        d.setDate(d.getDate() + (dir === 'prev' ? -1 : 1));
-        setSelectedDate(formatLocalDate(d));
-    };
+
 
     const chartData = useMemo(() => {
         const top = apps.slice(0, 5).map(d => ({ name: d.app, value: d.count }));
@@ -232,30 +227,11 @@ export function AppUsage() {
                         />
                     </div>
 
-                    <div className="flex items-center bg-surface border border-border rounded-lg shadow-shell-sm overflow-hidden">
-                        <button onClick={() => navigateDate('prev')} className="p-2 hover:bg-surface-hover border-r border-border transition-colors">
-                            <ChevronLeft className="w-4 h-4 text-text-muted" />
-                        </button>
-                        <div 
-                            className="relative px-6 py-1.5 min-w-[160px] text-center cursor-pointer hover:bg-surface-hover transition-colors group/date flex items-center justify-center gap-2"
-                            onClick={() => dateInputRef.current?.showPicker()}
-                        >
-                            <Calendar className="w-3 h-3 text-text-muted group-hover/date:text-primary transition-colors" />
-                            <span className="text-xs font-black text-text-main leading-none">
-                                {selectedDate === formatLocalDate(new Date()) ? 'Today' : new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                            </span>
-                            <input 
-                                ref={dateInputRef}
-                                type="date" 
-                                value={selectedDate}
-                                className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                            />
-                        </div>
-                        <button onClick={() => navigateDate('next')} className="p-2 hover:bg-surface-hover border-l border-border transition-colors" disabled={selectedDate >= formatLocalDate(new Date())}>
-                            <ChevronRight className="w-4 h-4 text-text-muted" />
-                        </button>
-                    </div>
+                    <DatePicker
+                        value={selectedDate}
+                        onChange={setSelectedDate}
+                        className="h-10 min-w-[180px]"
+                    />
 
                     <button
                         onClick={() => fetchData(false, true)}
@@ -271,22 +247,22 @@ export function AppUsage() {
             }
         >
             <div className="flex flex-col gap-6 pb-20">
-                
+
                 {/* 📊 KPI & Pulse */}
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
-                    
+
                     <div className="xl:col-span-4 grid grid-cols-1 gap-6">
                         <StatMetric icon={<Monitor className="w-5 h-5" />} label="Total Apps" value={apps.length} sub="Unique tools used today" />
-                        <StatMetric icon={<Clock className="w-5 h-5" />} label="Usage Time" value={formatTime(apps.reduce((a,b) => a+b.count, 0))} sub="Total tracked software time" />
+                        <StatMetric icon={<Clock className="w-5 h-5" />} label="Usage Time" value={formatTime(apps.reduce((a, b) => a + b.count, 0))} sub="Total tracked software time" />
                     </div>
 
                     <div className="xl:col-span-8 bg-surface border border-border rounded-xl shadow-shell-sm p-8 relative overflow-hidden flex flex-col">
                         <div className="flex items-center justify-between mb-8 shrink-0">
                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-xl bg-surface-hover border border-border flex items-center justify-center text-primary shadow-shell-sm">
+                                <div className="w-10 h-10 rounded-xl bg-surface-hover border border-border flex items-center justify-center text-accent shadow-shell-sm">
                                     <PieChartIcon className="w-5 h-5" />
                                 </div>
-                                <h3 className="text-sm font-black text-text-main tracking-tight">App Distribution</h3>
+                                <h3 className="text-sm font-black text-text-main tracking-[0.05em]">App Distribution</h3>
                             </div>
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
@@ -325,17 +301,17 @@ export function AppUsage() {
                 <div className="bg-surface border border-border rounded-xl shadow-shell-sm overflow-hidden flex flex-col min-h-[600px]">
                     <div className="px-8 py-6 border-b border-border flex items-center justify-between shrink-0 bg-surface-hover/50">
                         <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shadow-shell-sm">
+                            <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-accent shadow-shell-sm">
                                 <Filter className="w-5 h-5" />
                             </div>
-                            <h3 className="text-base font-black text-text-main tracking-tight">App List</h3>
+                            <h3 className="text-base font-black text-text-main tracking-[0.05em]">App List</h3>
                         </div>
                         <div className="flex items-center gap-4">
                             <div className="relative">
                                 <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-                                <input 
-                                    type="text" 
-                                    placeholder="Filter apps..." 
+                                <input
+                                    type="text"
+                                    placeholder="Filter apps..."
                                     value={searchTerm}
                                     onChange={e => setSearchTerm(e.target.value)}
                                     className="bg-surface border border-border rounded-lg pl-9 pr-4 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all w-64"
@@ -374,7 +350,7 @@ export function AppUsage() {
                                             </div>
                                         </td>
                                         <td className="px-10 py-5 hidden sm:table-cell">
-                                            <span className="px-2 py-1 bg-surface-hover border border-border rounded text-[9px] font-black text-text-muted group-hover:border-primary/20 group-hover:text-primary transition-colors">
+                                            <span className="px-2 py-1 bg-surface-hover border border-border rounded text-[9px] font-black text-text-muted group-hover:border-primary/20 group-hover:text-primary transition-colors tracking-[0.1em]">
                                                 {app.category}
                                             </span>
                                         </td>
@@ -382,7 +358,7 @@ export function AppUsage() {
                                         <td className="px-10 py-5 text-right">
                                             <div className="flex items-center justify-end gap-6">
                                                 <div className="w-24 h-1.5 bg-main rounded-full overflow-hidden border border-border flex-shrink-0">
-                                                    <div className="h-full bg-primary transition-all duration-1000" style={{ width: `${app.percent}%` }} />
+                                                    <div className="h-full transition-all duration-1000" style={{ width: `${app.percent}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--chart-gold) 0%)' }} />
                                                 </div>
                                                 <span className="text-sm font-black text-text-main tabular-nums w-12 text-right">
                                                     {app.percent.toFixed(1)}%

@@ -386,7 +386,7 @@ export function JobSites() {
                             <label className="text-[11px] font-bold text-text-muted tracking-[0.15em]">
                                 Geofence Radius
                             </label>
-                            <span className="text-[11px] font-bold text-primary font-mono bg-primary/5 px-3 py-1 rounded-lg">
+                            <span className="text-[11px] font-bold text-[var(--chart-gold)] font-mono bg-primary/5 px-3 py-1 rounded-lg">
                                 {formData.radius} METERS
                             </span>
                         </div>

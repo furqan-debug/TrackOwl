@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Clock, Mouse, Keyboard, Globe, Camera, Search, User, X } from 'lucide-react';
 import { SecureImage } from '../components/ui/SecureImage';
+import { DatePicker } from '../components/ui';
 
 interface MemberInfo {
     id: string;
@@ -139,7 +140,7 @@ export function MemberTimeline() {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                         <input type="text" placeholder="Search name or email..."
                             value={searchQuery} onChange={e => setSearchQuery(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-surface-hover border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow" />
+                            className="w-full pl-9 pr-4 py-2 bg-surface-hover border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--chart-gold)] transition-shadow" />
                     </div>
 
                     <div className="max-h-[60vh] overflow-y-auto space-y-1 pr-1 -mr-1">
@@ -147,7 +148,7 @@ export function MemberTimeline() {
                             <button key={m.id} onClick={() => { setSelectedMember(m); setSearchQuery(''); }}
                                 className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-colors ${selectedMember?.id === m.id ? 'bg-blue-50 border border-blue-100 ring-1 ring-blue-500 shadow-shell-sm' : 'hover:bg-surface-hover border border-transparent'
                                     }`}>
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${selectedMember?.id === m.id ? 'bg-blue-500 text-white' : 'bg-slate-200 text-text-muted'
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${selectedMember?.id === m.id ? 'bg-[var(--chart-gold)] text-white' : 'bg-slate-200 text-text-muted'
                                     }`}>
                                     {m.full_name.charAt(0).toUpperCase()}
                                 </div>
@@ -178,7 +179,7 @@ export function MemberTimeline() {
                         {/* Header Details */}
                         <div className="bg-surface rounded-xl border border-border shadow-shell-sm p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
-                                <div className="w-14 h-14 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl font-bold">
+                                <div className="w-14 h-14 bg-[var(--chart-gold)]/10 text-[var(--chart-gold)] rounded-xl flex items-center justify-center text-xl font-bold">
                                     {selectedMember.full_name.charAt(0).toUpperCase()}
                                 </div>
                                 <div>
@@ -186,8 +187,12 @@ export function MemberTimeline() {
                                     <p className="text-sm text-text-muted">{selectedMember.email}</p>
                                 </div>
                             </div>
-                            <input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)}
-                                className="border border-border bg-surface rounded-lg px-4 py-2 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-shell-sm" />
+                            <DatePicker 
+                                value={selectedDate}
+                                onChange={val => setSelectedDate(val)}
+                                className="min-w-[180px]"
+                            />
+
                         </div>
 
                         {/* Feed */}
@@ -242,8 +247,8 @@ function TimelineNode({ event, onImageClick }: { event: TimelineEvent, onImageCl
     if (event.type === 'session_start') {
         return (
             <div className="relative">
-                <div className="absolute -left-6 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center ring-4 ring-white -translate-x-1/2">
-                    <Clock className="w-3 h-3 text-blue-600" />
+                <div className="absolute -left-6 w-6 h-6 bg-[var(--chart-gold)]/10 rounded-full flex items-center justify-center ring-4 ring-white -translate-x-1/2">
+                    <Clock className="w-3 h-3 text-[var(--chart-gold)]" />
                 </div>
                 <div className="text-sm">
                     <span className="font-semibold text-text-main">{timeStr}</span>
@@ -270,8 +275,8 @@ function TimelineNode({ event, onImageClick }: { event: TimelineEvent, onImageCl
     if (event.type === 'screenshot') {
         return (
             <div className="relative">
-                <div className="absolute -left-6 w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center ring-4 ring-white -translate-x-1/2">
-                    <Camera className="w-3 h-3 text-purple-600" />
+                <div className="absolute -left-6 w-6 h-6 bg-[var(--chart-gold)]/10 rounded-full flex items-center justify-center ring-4 ring-white -translate-x-1/2">
+                    <Camera className="w-3 h-3 text-[var(--chart-gold)]" />
                 </div>
                 <div>
                     <div className="text-sm mb-2">

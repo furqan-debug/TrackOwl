@@ -9,7 +9,9 @@ import {
     BarChart3, 
     ShieldCheck,
     Calendar,
-    ArrowRight
+    ArrowRight,
+    Minus,
+    Plus
 } from 'lucide-react';
 import clsx from 'clsx';
 import { PageLayout, Card } from '../components/ui';
@@ -18,16 +20,18 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
 export function Pricing() {
-    const [isMonthly, setIsMonthly] = useState(true);
+    const [isMonthly, setIsMonthly] = useState(false);
+    const [selectedPlan, setSelectedPlan] = useState<any>(null);
+    const [seats, setSeats] = useState(5);
     const [loading, setLoading] = useState<string | null>(null);
     const { organization, refreshProfile } = useAuth();
     const navigate = useNavigate();
 
-    const handleSelectPlan = async (planType: string) => {
-        if (!organization?.id) return;
-        setLoading(planType);
+    const handleSelectPlan = async () => {
+        if (!organization?.id || !selectedPlan) return;
+        setLoading(selectedPlan.planType);
         try {
-            const isTrial = planType === 'Premium' && organization.subscription_status === 'None';
+            const isTrial = selectedPlan.planType === 'Premium' && organization.subscription_status === 'None';
             const trialEndsAt = isTrial 
                 ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
                 : organization.trial_ends_at;
@@ -35,11 +39,11 @@ export function Pricing() {
             const { error } = await supabase
                 .from('organizations')
                 .update({
-                    plan_type: planType,
+                    plan_type: selectedPlan.planType,
                     subscription_status: isTrial ? 'Trial' : 'Active',
                     subscription_period: isMonthly ? 'Monthly' : 'Yearly',
                     trial_ends_at: trialEndsAt,
-                    seats_purchased: organization.seats_purchased || 5 // Default to 5 seats if none
+                    seats_purchased: seats
                 })
                 .eq('id', organization.id);
 
@@ -58,7 +62,8 @@ export function Pricing() {
     const plans = [
         {
             name: 'Basic',
-            price: isMonthly ? '$3.99' : '$2.99',
+            price: isMonthly ? 3.99 : 2.99,
+            displayPrice: isMonthly ? '$3.99' : '$2.99',
             period: '/seat/mo',
             description: 'Essential tracking tools for small teams and growing operations.',
             features: [
@@ -73,7 +78,8 @@ export function Pricing() {
         },
         {
             name: 'Premium',
-            price: isMonthly ? '$6.99' : '$4.99',
+            price: isMonthly ? 6.99 : 4.99,
+            displayPrice: isMonthly ? '$6.99' : '$4.99',
             period: '/seat/mo',
             description: 'The complete employee monitoring suite with advanced transparency.',
             features: [
@@ -88,6 +94,88 @@ export function Pricing() {
             planType: 'Premium'
         }
     ];
+
+    if (selectedPlan) {
+        const annualMultiplier = isMonthly ? 1 : 12;
+        const paidSeats = Math.max(0, seats - 1);
+        const totalPrice = (paidSeats * selectedPlan.price * annualMultiplier).toFixed(2);
+        
+        return (
+            <PageLayout
+                title={`Configure ${selectedPlan.name}`}
+                description="Choose how many seats you need for your team."
+                maxWidth="6xl"
+            >
+                <div className="max-w-xl mx-auto py-12">
+                    <Card className="p-10 border border-border rounded-[40px] shadow-shell-lg relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[60px] rounded-full -mr-20 -mt-20" />
+                        
+                        <button 
+                            onClick={() => setSelectedPlan(null)}
+                            className="text-[11px] font-bold text-text-muted hover:text-primary mb-8 transition-colors flex items-center gap-2"
+                        >
+                            ← Back to plans
+                        </button>
+
+                        <div className="space-y-10 relative z-10">
+                            <div>
+                                <h3 className="text-2xl font-black text-text-main tracking-tight mb-2">How many seats?</h3>
+                                <p className="text-sm font-medium text-text-muted">Include yourself and your team members.</p>
+                            </div>
+
+                            <div className="flex items-center gap-8 p-4 bg-main rounded-[32px] border border-border w-full shadow-shell-sm">
+                                <button 
+                                    onClick={() => setSeats(Math.max(1, seats - 1))}
+                                    className="w-16 h-16 flex items-center justify-center rounded-2xl bg-surface border border-border text-text-muted hover:text-primary transition-all active:scale-90"
+                                >
+                                    <Minus className="w-6 h-6" />
+                                </button>
+                                <div className="flex-1 text-center">
+                                    <span className="text-5xl font-black text-text-main tabular-nums">
+                                        {seats}
+                                    </span>
+                                    <p className="text-[11px] font-black uppercase tracking-[0.2em] text-text-muted mt-1">Total Seats</p>
+                                </div>
+                                <button 
+                                    onClick={() => setSeats(seats + 1)}
+                                    className="w-16 h-16 flex items-center justify-center rounded-2xl bg-surface border border-border text-text-muted hover:text-primary transition-all active:scale-90"
+                                >
+                                    <Plus className="w-6 h-6" />
+                                </button>
+                            </div>
+
+                            <div className="p-8 bg-primary/5 border border-primary/10 rounded-[32px]">
+                                <div className="flex justify-between items-end">
+                                    <div className="space-y-1">
+                                        <p className="text-[11px] font-black uppercase tracking-[0.2em] text-primary">Total Amount</p>
+                                        <div className="flex items-baseline gap-2">
+                                            <span className="text-4xl font-black text-text-main tracking-tighter">${totalPrice}</span>
+                                            <span className="text-sm font-bold text-text-muted">{isMonthly ? '/mo' : '/year'}</span>
+                                        </div>
+                                        <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1">1 Free Owner Seat Included</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[11px] font-bold text-text-muted uppercase tracking-widest">{selectedPlan.name} Plan</p>
+                                        <p className="text-[11px] font-bold text-primary uppercase tracking-widest">{isMonthly ? 'Monthly' : 'Yearly (25% Off)'}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleSelectPlan}
+                                disabled={!!loading}
+                                className="w-full h-16 bg-primary text-white rounded-2xl text-[12px] font-black tracking-[0.2em] uppercase shadow-glow-primary hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                            >
+                                {loading ? 'Processing...' : (
+                                    <>Confirm & Continue <ArrowRight className="w-4 h-4" /></>
+                                )}
+                            </button>
+                        </div>
+                    </Card>
+                </div>
+            </PageLayout>
+        );
+    }
 
     return (
         <PageLayout
@@ -147,7 +235,7 @@ export function Pricing() {
                                     {plan.name}
                                 </h4>
                                 <div className="flex items-baseline gap-1">
-                                    <span className="text-5xl font-black tracking-tighter text-text-main">{plan.price}</span>
+                                    <span className="text-5xl font-black tracking-tighter text-text-main">{plan.displayPrice}</span>
                                     <span className="text-sm font-bold text-text-muted tracking-tight">{plan.period}</span>
                                 </div>
                             </div>
@@ -170,18 +258,16 @@ export function Pricing() {
                             </ul>
 
                             <button
-                                onClick={() => handleSelectPlan(plan.planType)}
-                                disabled={!!loading}
+                                onClick={() => setSelectedPlan(plan)}
                                 className={clsx(
                                     "w-full h-14 rounded-2xl text-[12px] font-black tracking-[0.2em] uppercase transition-all duration-300 flex items-center justify-center gap-2 group",
-                                    loading === plan.planType && "opacity-50 cursor-wait",
                                     plan.popular
                                         ? "bg-primary text-white shadow-glow-primary hover:brightness-110"
                                         : "bg-surface border border-border text-text-main hover:bg-surface-hover"
                                 )}
                             >
-                                {loading === plan.planType ? 'Processing...' : plan.buttonLabel}
-                                <ArrowRight className={clsx("w-4 h-4 group-hover:translate-x-1 transition-transform", loading === plan.planType && "hidden")} />
+                                {plan.buttonLabel}
+                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
                         </Card>
                     </motion.div>

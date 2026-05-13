@@ -39,9 +39,11 @@ export function KpiCard({
             : 'bg-black/5 text-text-muted border-black/5';
 
     return (
-        <div className={clsx("bg-surface border border-border shadow-shell-sm rounded-[1.5rem] p-6 flex flex-col relative overflow-hidden group transition-all duration-500 hover:shadow-xl hover:-translate-y-1", className)}>
+        <div className={clsx("bg-surface border border-border shadow-shell-sm rounded-[1.5rem] p-6 flex flex-col relative overflow-visible group transition-all duration-500 hover:shadow-xl hover:-translate-y-1", className)}>
             {/* Subtle premium glow effect behind icon */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-50 transition-opacity duration-500 group-hover:opacity-100 mix-blend-multiply" />
+            <div className="absolute top-0 right-0 w-32 h-32 rounded-tr-[1.5rem] overflow-hidden pointer-events-none">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl opacity-50 transition-opacity duration-500 group-hover:opacity-100 mix-blend-multiply" />
+            </div>
             
             <div className="flex items-start justify-between mb-5 relative z-10">
                 <div className="w-12 h-12 rounded-2xl bg-surface-hover border border-border flex items-center justify-center text-text-muted shrink-0 transition-all duration-500 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20 shadow-shell-sm">

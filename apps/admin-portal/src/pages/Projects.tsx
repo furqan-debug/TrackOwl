@@ -204,28 +204,28 @@ export function Projects() {
                         label="Total Projects"
                         value={stats.total}
                         sub={`${activeTab} status`}
-                        accent="brown-gradient"
+                        accent="brand-gradient"
                     />
                     <StatMetric
                         icon={<Building2 className="w-5 h-5" />}
                         label="Active Clients"
                         value={stats.uniqueClients}
                         sub="Managed entities"
-                        accent="brown-gradient"
+                        accent="brand-gradient"
                     />
                     <StatMetric
                         icon={<Check className="w-5 h-5" />}
                         label="In Budget"
                         value={`${projects.length - stats.overBudget}`}
                         sub="Operational health"
-                        accent="brown-gradient"
+                        accent="brand-gradient"
                     />
                     <StatMetric
                         icon={<Layers className="w-5 h-5" />}
                         label="Pending Tasks"
                         value={projects.reduce((acc, p) => acc + p.todoCount, 0)}
                         sub="Total deliverables"
-                        accent="brown-gradient"
+                        accent="brand-gradient"
                     />
                 </div>
 
@@ -248,7 +248,7 @@ export function Projects() {
                                 onClick={() => fetchProjects(true, true)}
                                 className={clsx(
                                     "w-10 h-10 flex items-center justify-center border border-border rounded-xl transition-all",
-                                    refreshing ? "text-primary bg-primary/5" : "text-text-muted hover:text-slate-900 hover:bg-surface-hover"
+                                    refreshing ? "text-[var(--chart-gold)] bg-primary/5" : "text-text-muted hover:text-slate-900 hover:bg-surface-hover"
                                 )}
                             >
                                 <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />

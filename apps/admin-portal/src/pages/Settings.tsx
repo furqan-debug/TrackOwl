@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { 
-    Save, CheckCircle, Database, Activity, 
+import {
+    Save, CheckCircle, Database, Activity,
     ShieldCheck, Mail, HardDrive, Loader2, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -92,7 +92,7 @@ export function SettingsPage() {
         setError(null);
         try {
             console.log('Persisting settings for org:', profile.organization_id, settings);
-            
+
             // 1. Update Organization Settings
             const { error: orgError, count } = await supabase
                 .from('organizations')
@@ -106,7 +106,7 @@ export function SettingsPage() {
             // We sync Daily Limit, Weekly Limit, and Idle Threshold
             const { error: memberError } = await supabase
                 .from('members')
-                .update({ 
+                .update({
                     daily_limit: settings.dailyHoursLimit,
                     weekly_limit: settings.weeklyHoursLimit,
                     idle_limit: Math.floor(settings.idleThresholdSeconds / 60), // Convert sec to min
@@ -171,12 +171,12 @@ export function SettingsPage() {
         );
     }
     return (
-        <PageLayout 
-            title="Settings" 
+        <PageLayout
+            title="Settings"
             description="Organization Policies & Protocols"
             actions={
                 <div className="flex items-center gap-3">
-                    <button 
+                    <button
                         onClick={fetchSettings}
                         disabled={saving}
                         className="p-2.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 text-text-muted transition-all duration-200"
@@ -213,8 +213,8 @@ export function SettingsPage() {
                             onClick={() => setActiveCategory(cat.id)}
                             className={clsx(
                                 "flex items-center gap-3 px-4 py-2.5 rounded-lg text-[14px] font-medium transition-all",
-                                activeCategory === cat.id 
-                                    ? "bg-primary/10 text-primary" 
+                                activeCategory === cat.id
+                                    ? "bg-white/10 text-text-main"
                                     : "text-text-muted hover:bg-white/5 hover:text-text-main"
                             )}
                         >
@@ -362,7 +362,7 @@ export function SettingsPage() {
                                         Immediately restore all organizational policies to factory defaults. This action is irreversible.
                                     </p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={handleReset}
                                     disabled={isViewer}
                                     className="h-9 px-4 rounded-md bg-rose-600 text-white text-[12px] font-bold hover:bg-rose-700 transition-all disabled:opacity-30"
@@ -402,11 +402,11 @@ function ToggleControl({ label, description, value, onChange }: { label: string;
                     value ? "bg-primary" : "bg-white/10"
                 )}
             >
-                <span 
+                <span
                     className={clsx(
                         "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out transform",
                         value ? "translate-x-4" : "translate-x-0"
-                    )} 
+                    )}
                 />
             </button>
         </div>

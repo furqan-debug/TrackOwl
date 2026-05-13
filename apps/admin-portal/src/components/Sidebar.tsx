@@ -1,12 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import { ChevronDown, ChevronLeft, Star, Zap, LogOut, Lock } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Star, Zap, LogOut, Lock, Sun, Moon } from 'lucide-react';
 import { navStructure, matchActive, type BadgeType, type Role } from '../nav/navModel';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
-import logoLight from '../assets/branding/3.svg';
+import { SecureImage } from '../components/ui/SecureImage';
 import logoDark from '../assets/branding/4.svg';
 
 const SIDEBAR_WIDTH_EXPANDED = 240;
@@ -23,15 +23,24 @@ export interface SidebarProps {
 
 export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, onToggle }: SidebarProps) {
     const location = useLocation();
-    const { favorites } = useFavorites();
+    const { favorites, toggleFavorite, isFavorite } = useFavorites();
     const { profile, signOut, organization } = useAuth();
-    const isPremium = organization?.plan_type === 'Premium' || organization?.subscription_status === 'Trial';
-    const { theme } = useTheme();
+    const isPremium = organization?.plan_type === 'Premium' ||
+        organization?.subscription_status === 'Active' ||
+        organization?.subscription_status === 'Trial' ||
+        organization?.subscription_status === 'None';
+    const { theme, toggleTheme } = useTheme();
     const userRole = (profile?.role || 'User') as Role;
 
     const effectiveCollapsed = overlay ? false : isCollapsed;
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     const [favoritesExpanded, setFavoritesExpanded] = useState(true);
+    const [avatarError, setAvatarError] = useState(false);
+
+    // Reset error state if avatar changes
+    useEffect(() => {
+        setAvatarError(false);
+    }, [profile?.avatar_url]);
 
     // Filtered nav structure based on roles
     const filteredNav = useMemo(() => {
@@ -94,26 +103,30 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
     return (
         <aside
             className={clsx(
-                "h-full bg-[var(--color-sidebar-bg)] border-r border-white/[0.05] flex flex-col overflow-y-auto shell-scrollbar",
+                "h-full flex flex-col overflow-y-auto shell-scrollbar border-r border-white/5",
                 overlay ? "w-[260px]" : "sticky top-0 transition-[width] duration-300 ease-in-out"
             )}
-            style={overlay ? undefined : { width: effectiveCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED }}
+            style={{
+                width: overlay ? undefined : (effectiveCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED),
+                background: 'var(--gradient-sidebar)'
+            }}
             aria-label="Main navigation"
         >
             {/* Logo Area */}
             <Link
                 to="/dashboard"
                 className={clsx(
-                    "flex items-center sticky top-0 z-20 bg-[var(--color-sidebar-bg)]/80 backdrop-blur-md border-b border-white/[0.05] hover:opacity-80 transition-opacity",
-                    effectiveCollapsed ? "justify-center px-0 py-5" : "px-6 py-5"
+                    "flex items-center sticky top-0 z-20 border-b border-white/[0.05] hover:opacity-80 transition-opacity",
+                    effectiveCollapsed ? "justify-center px-0 py-6" : "px-6 py-6"
                 )}
+                style={{ background: 'transparent' }}
             >
                 {effectiveCollapsed ? (
-                    <div className="w-11 h-11 flex items-center justify-center shrink-0">
-                        <img src={theme === 'dark' ? logoDark : logoLight} alt="" className="w-full h-full object-contain" />
+                    <div className="w-10 h-10 flex items-center justify-center shrink-0">
+                        <img src={logoDark} alt="" className="w-full h-full object-contain" />
                     </div>
                 ) : (
-                    <img src={theme === 'dark' ? logoDark : logoLight} alt="TrackOwl" className="h-28 w-auto object-contain" />
+                    <img src={logoDark} alt="TrackOwl" className="h-16 w-auto object-contain" />
                 )}
             </Link>
 
@@ -128,9 +141,9 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                             aria-expanded={favoritesExpanded}
                         >
                             <div className="flex items-center gap-2">
-                                <Star className={clsx("w-4 h-4 transition-colors", favorites.length > 0 ? "text-primary fill-primary/10" : "text-[var(--sidebar-text)] group-hover:text-[var(--sidebar-text-active)]")} aria-hidden />
+                                <Star className={clsx("w-4 h-4 transition-colors", favorites.length > 0 ? "text-accent fill-accent/20" : "text-[var(--sidebar-text)] group-hover:text-[var(--sidebar-text-active)]")} aria-hidden />
                                 Favorites
-                                <span className="text-[11px] opacity-40 font-mono ml-1">({favorites.length})</span>
+                                <span className="text-[11px] opacity-60 font-mono ml-1">({favorites.length})</span>
                             </div>
                             <ChevronDown className={clsx("w-3 h-3 text-[var(--sidebar-text)] transition-transform duration-300", !favoritesExpanded && "-rotate-90")} />
                         </button>
@@ -148,25 +161,25 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         className={clsx(
                                             "flex items-center gap-3 px-3 py-2.5 text-[13px] rounded-xl transition-all group",
                                             location.pathname === fav.path
-                                                ? "bg-primary/10 text-primary font-bold border border-primary/20"
-                                                : "text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-surface-hover/[0.03]"
+                                                ? "bg-[var(--bg-menu-active)] text-[var(--sidebar-text-active)] font-bold border border-white/10"
+                                                : "text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-white/5"
                                         )}
                                     >
-                                        <div className={clsx("w-2 h-2 rounded-full", location.pathname === fav.path ? "bg-primary" : "bg-surface/20 group-hover:bg-primary/30")} />
+                                        <div className={clsx("w-2 h-2 rounded-full", location.pathname === fav.path ? "bg-accent shadow-[0_0_8px_rgba(244,180,0,0.5)]" : "bg-white/40 group-hover:bg-accent/60")} />
                                         <span className="truncate font-bold text-[14px]">{fav.name}</span>
                                     </Link>
                                 ))
                             ) : (
-                                <p className="px-3 py-2.5 text-[11px] text-[var(--sidebar-text)] italic opacity-40 font-medium">No identified clusters.</p>
+                                <p className="px-3 py-2.5 text-[11px] text-[var(--sidebar-text)] italic opacity-60 font-medium">No identified clusters.</p>
                             )}
                         </div>
                     </div>
                 )}
 
                 {/* Main Navigation */}
-                <nav className="space-y-1" aria-label="Primary">
+                <nav className="space-y-2" aria-label="Primary">
                     {!effectiveCollapsed && (
-                        <p className="px-4 text-[13px] font-bold text-[var(--sidebar-text)] mb-6 opacity-20 text-left uppercase tracking-widest">Navigation</p>
+                        <p className="px-4 text-[11px] font-black text-white/40 mb-3 text-left uppercase tracking-[0.2em]">Navigation</p>
                     )}
                     {filteredNav.map((group) => {
                         const hasChildren = group.children && group.children.length > 0;
@@ -182,22 +195,22 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         onClick={() => toggleGroup(group.name)}
                                         className={clsx(
                                             'group flex items-center rounded-xl text-[14px] font-bold transition-all',
-                                            effectiveCollapsed ? 'justify-center p-3 w-full' : 'justify-between px-3.5 py-2.5 w-full',
-                                            isChildActive && !isExpanded ? 'bg-primary/10 text-primary shadow-sm' :
-                                                isExpanded ? 'text-[var(--sidebar-text-active)] bg-surface/[0.05]' : 'text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-surface-hover/[0.05]'
+                                            effectiveCollapsed ? 'justify-center p-3 w-full' : 'justify-between px-3.5 py-3 w-full',
+                                            isChildActive && !isExpanded ? 'bg-[var(--bg-menu-active)] text-accent shadow-lg' :
+                                                isExpanded ? 'text-white bg-white/[0.05]' : 'text-[var(--sidebar-text)] hover:text-white hover:bg-white/5'
                                         )}
                                         aria-expanded={isExpanded}
                                     >
                                         <div className={clsx("flex items-center gap-3", effectiveCollapsed && "justify-center")}>
-                                            <group.icon className={clsx("w-[18px] h-[18px] shrink-0 transition-colors",
-                                                isChildActive && !isExpanded ? "text-primary" :
-                                                    isChildActive || isExpanded ? "text-primary" : "text-[var(--sidebar-text)] group-hover:text-primary")}
-                                                strokeWidth={2} aria-hidden />
+                                            <group.icon className={clsx("w-[20px] h-[20px] shrink-0 transition-colors",
+                                                isChildActive && !isExpanded ? "text-accent" :
+                                                    isChildActive || isExpanded ? "text-white" : "text-[var(--sidebar-text)] group-hover:text-white")}
+                                                strokeWidth={2.5} aria-hidden />
                                             {!effectiveCollapsed && (
                                                 <div className="flex items-center gap-2">
                                                     <span className="tracking-tight">{group.name}</span>
                                                     {group.requiresPremium && !isPremium && (
-                                                        <Lock className="w-3 h-3 text-rose-500 opacity-60" />
+                                                        <Lock className="w-3 h-3 text-[#DC2626] opacity-60" />
                                                     )}
                                                 </div>
                                             )}
@@ -211,22 +224,32 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         to={group.path!}
                                         onClick={() => onOverlayClose?.()}
                                         className={clsx(
-                                            'group flex items-center rounded-xl text-[14px] font-bold transition-all relative overflow-hidden',
-                                            effectiveCollapsed ? 'justify-center p-3' : 'px-3.5 py-2.5 gap-3',
+                                            'group flex items-center justify-between rounded-xl text-[14px] font-bold transition-all relative overflow-hidden',
+                                            effectiveCollapsed ? 'p-3' : 'px-3.5 py-3 gap-3',
                                             isDirectlyActive
-                                                ? 'bg-primary/10 text-primary shadow-sm'
-                                                : 'text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-surface-hover/[0.05]'
+                                                ? 'bg-white/10 text-white shadow-lg ring-1 ring-white/10'
+                                                : 'text-[var(--sidebar-text)] hover:text-white hover:bg-white/5'
                                         )}
                                     >
-                                        <group.icon className={clsx("w-[20px] h-[20px] shrink-0 transition-colors",
-                                            isDirectlyActive ? "text-primary" : "text-[var(--sidebar-text)] group-hover:text-primary")}
-                                            strokeWidth={2} aria-hidden />
-                                        {!effectiveCollapsed && <span className="tracking-tight text-[15px]">{group.name}</span>}
+                                        <div className={clsx("flex items-center gap-3", effectiveCollapsed && "justify-center w-full")}>
+                                            <group.icon className={clsx("w-[20px] h-[20px] shrink-0 transition-colors",
+                                                isDirectlyActive ? "text-accent" : "text-[var(--sidebar-text)] group-hover:text-accent")}
+                                                strokeWidth={2.5} aria-hidden />
+                                            {!effectiveCollapsed && <span className="tracking-tight text-[14px]">{group.name}</span>}
+                                        </div>
+                                        {!effectiveCollapsed && (
+                                            <button
+                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(group.name, group.path!); }}
+                                                className={clsx("p-1 rounded-md transition-opacity shrink-0", isFavorite(group.path!) ? "text-accent opacity-100" : "text-[var(--sidebar-text)] opacity-0 group-hover:opacity-100 hover:text-accent hover:bg-white/10")}
+                                            >
+                                                <Star className={clsx("w-4 h-4", isFavorite(group.path!) && "fill-accent")} />
+                                            </button>
+                                        )}
                                     </Link>
                                 )}
 
                                 {hasChildren && isExpanded && (
-                                    <div className="mt-1 pb-1 space-y-0.5 relative ml-8 border-l border-white/[0.05] pl-3 animate-in slide-in-from-top-1 duration-200">
+                                    <div className="mt-1 pb-2 space-y-1 relative ml-[26px] border-l border-white/10 pl-4 animate-in slide-in-from-top-1 duration-200">
                                         {group.children!.map((child) => {
                                             const isActive = matchActive(location.pathname, child.path);
                                             return (
@@ -235,19 +258,27 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                                     to={child.path}
                                                     onClick={() => onOverlayClose?.()}
                                                     className={clsx(
-                                                        'flex items-center justify-between px-3 py-2 text-[12px] rounded-lg transition-all group',
+                                                        'flex items-center justify-between px-3 py-2 text-[12px] rounded-lg transition-all group/child',
                                                         isActive
-                                                            ? 'text-primary font-bold bg-primary/5'
-                                                            : 'text-[var(--sidebar-text)] hover:bg-surface-hover/[0.03] hover:text-[var(--sidebar-text-active)]'
+                                                            ? 'text-[var(--sidebar-text-active)] font-bold bg-white/[0.05]'
+                                                            : 'text-[var(--sidebar-text)] hover:bg-[var(--bg-surface-hover)]/10 hover:text-[var(--sidebar-text-active)]'
                                                     )}
                                                 >
                                                     <div className="flex items-center gap-2">
-                                                        <span className="truncate tracking-tight font-medium text-[13px]">{child.name}</span>
+                                                        <span className="truncate tracking-tight font-bold text-[13px]">{child.name}</span>
                                                         {child.requiresPremium && !isPremium && (
-                                                            <Lock className="w-3 h-3 text-rose-500 opacity-60" />
+                                                            <Lock className="w-3 h-3 text-[#DC2626] opacity-60" />
                                                         )}
                                                     </div>
-                                                    {renderBadge(child.badge)}
+                                                    <div className="flex items-center gap-2 shrink-0">
+                                                        {renderBadge(child.badge)}
+                                                        <button
+                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(child.name, child.path); }}
+                                                            className={clsx("p-1 rounded-md transition-opacity", isFavorite(child.path) ? "text-accent opacity-100" : "text-[var(--sidebar-text)] opacity-0 group-hover/child:opacity-100 hover:text-accent hover:bg-white/10")}
+                                                        >
+                                                            <Star className={clsx("w-3.5 h-3.5", isFavorite(child.path) && "fill-accent")} />
+                                                        </button>
+                                                    </div>
                                                 </Link>
                                             );
                                         })}
@@ -259,34 +290,70 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 </nav>
             </div>
 
-            {/* Profile Area */}
-            <div className="mt-auto border-t border-white/[0.05] bg-black/10 p-4 relative z-20">
-                <div className={clsx("flex items-center gap-3 p-1.5 rounded-xl transition-all hover:bg-surface-hover/[0.03] cursor-pointer group mb-2", effectiveCollapsed ? "justify-center" : "")}>
-                    <div className="relative shrink-0">
-                        <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-xs shadow-shell-sm ">
-                            {profile?.full_name?.charAt(0) || '?'}
+            <div className="mt-auto border-t border-white/10 bg-white/[0.03] backdrop-blur-md px-4 py-6 relative z-20">
+                {/* User Profile Area */}
+                <div className={clsx("flex flex-col gap-5", effectiveCollapsed ? "items-center" : "")}>
+                    <Link
+                        to="/dashboard/profile"
+                        onClick={() => onOverlayClose?.()}
+                        className={clsx("flex items-center gap-3 group cursor-pointer", effectiveCollapsed ? "justify-center" : "")}
+                    >
+                        <div className="relative shrink-0 min-w-[40px] min-h-[40px] w-10 h-10">
+                            <div className="w-full h-full rounded-xl bg-accent flex items-center justify-center text-[#001B4D] font-black text-sm shadow-lg shadow-accent/20 transition-transform group-hover:scale-105 overflow-hidden">
+                                {profile?.avatar_url && !avatarError ? (
+                                    <SecureImage
+                                        path={profile.avatar_url}
+                                        bucket="avatars"
+                                        alt={profile.full_name || 'User Avatar'}
+                                        className="w-full h-full object-cover"
+                                        onError={() => setAvatarError(true)}
+                                    />
+                                ) : (
+                                    profile?.full_name?.charAt(0) || '?'
+                                )}
+                            </div>
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#4FC08D] border-2 border-[#001B4D] rounded-full shadow-sm" />
                         </div>
-                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-[var(--color-sidebar-bg)] rounded-full" />
-                    </div>
-                    {!effectiveCollapsed && (
-                        <div className="min-w-0 flex-1">
-                            <p className="text-[14px] font-bold text-[var(--sidebar-text-active)] truncate leading-none mb-1.5">{profile?.full_name}</p>
-                            <p className="text-[11px] text-[var(--sidebar-text)] font-bold opacity-40">Access: {profile?.role}</p>
-                        </div>
-                    )}
-                </div>
+                        {!effectiveCollapsed && (
+                            <div className="min-w-0 flex-1">
+                                <p className="text-[14px] font-black text-white truncate leading-none mb-1.5 tracking-tight group-hover:text-accent transition-colors">{profile?.full_name}</p>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-[9px] font-black text-white/60 uppercase tracking-widest leading-none">View Profile</span>
+                                </div>
+                            </div>
+                        )}
+                    </Link>
 
-                <button
-                    type="button"
-                    onClick={() => signOut()}
-                    className={clsx(
-                        "w-full flex items-center rounded-xl text-[11px] font-bold tracking-[0.2em] text-rose-400 hover:bg-rose-400/10 transition-all group py-1",
-                        effectiveCollapsed ? "justify-center p-3" : "px-3 py-2.5 gap-3"
+                    {!effectiveCollapsed && (
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/10 flex items-center gap-2 flex-1">
+                                <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                                <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
+                                    {organization?.plan_type || 'Premium'} Plan
+                                </span>
+                            </div>
+                            <button
+                                onClick={toggleTheme}
+                                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all shrink-0"
+                                aria-label="Toggle theme"
+                            >
+                                {theme === 'dark' ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+                            </button>
+                        </div>
                     )}
-                >
-                    <LogOut className="w-[16px] h-[16px] shrink-0 group-hover:-translate-x-0.5 transition-transform" strokeWidth={2} />
-                    {!effectiveCollapsed && <span>Log out</span>}
-                </button>
+
+                    <button
+                        type="button"
+                        onClick={() => signOut()}
+                        className={clsx(
+                            "w-full flex items-center gap-3 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] text-[#FF4D4D] hover:bg-[#FF4D4D]/10 transition-all group",
+                            effectiveCollapsed ? "justify-center p-2.5" : "px-3 py-2.5"
+                        )}
+                    >
+                        <LogOut className="w-[16px] h-[16px] shrink-0 group-hover:-translate-x-0.5 transition-transform" strokeWidth={2.5} />
+                        {!effectiveCollapsed && <span>Sign Out</span>}
+                    </button>
+                </div>
             </div>
 
             {/* Collapse toggle */}
