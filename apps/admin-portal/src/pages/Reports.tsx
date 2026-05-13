@@ -269,9 +269,9 @@ export function Reports() {
             if (activeSessionIds.length > 0) ssQuery = ssQuery.in('session_id', activeSessionIds);
 
             const [samples, { count: ssCount }] = await Promise.all([
-                fetchAllActivitySamples(supabase, start, end, 'session_id, recorded_at, activity_percent, idle, app_name', { 
+                fetchAllActivitySamples(supabase, start, end, 'session_id, recorded_at, activity_percent, idle, app_name', {
                     organizationId: organizationId ?? undefined,
-                    sessionIds: activeSessionIds.length > 0 ? activeSessionIds : undefined 
+                    sessionIds: activeSessionIds.length > 0 ? activeSessionIds : undefined
                 }),
                 ssQuery,
             ]);
@@ -322,7 +322,7 @@ export function Reports() {
             samplesByUser.forEach((userSamps, uid) => {
                 const member = membersMap.get(uid);
                 const limit = member?.idle_limit ?? 0;
-                
+
                 if (limit <= 1) {
                     productiveSamples.push(...userSamps);
                 } else {
@@ -330,7 +330,7 @@ export function Reports() {
                     // samples in idle blocks >= limit are truly idle (ignored)
                     const sorted = userSamps.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
                     let currentBlock: any[] = [];
-                    
+
                     for (let i = 0; i < sorted.length; i++) {
                         const s = sorted[i];
                         const prev = i > 0 ? sorted[i - 1] : null;
@@ -582,9 +582,9 @@ export function Reports() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8 lg:gap-10">
                     <StatMetric icon={<Clock className="w-4 h-4" />} label="Time" value={formatDuration(totalMins)} sub="Worked" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     <StatMetric icon={<ActivityIcon className="w-4 h-4" />} label="Activity" value={`${avgActivity}%`} sub="Score" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
-                    <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Revenue" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     <StatMetric icon={<Monitor className="w-4 h-4" />} label="Sessions" value={totalSessions.toString()} sub="Total" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     <StatMetric icon={<Camera className="w-4 h-4" />} label="Captures" value={screenshotCount.toString()} sub="Proofs" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                    <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Revenue" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Expenses" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                 </div>
 
