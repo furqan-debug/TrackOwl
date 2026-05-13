@@ -32,7 +32,7 @@ import { useAuth } from '../context/AuthContext';
 // Official TrackOwl Brand Palette
 const BRAND_PRIMARY = 'var(--color-chart-main)';
 const CHART_COLORS = [
-    'var(--color-chart-main)',
+    'var(--chart-pie-primary)',
     'var(--color-chart-highlight)',
     'var(--color-chart-secondary)',
     'var(--color-chart-4)',
