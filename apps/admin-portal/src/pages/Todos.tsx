@@ -11,7 +11,7 @@ import {
 import { 
     PageLayout, Button, 
     LoadingState, EmptyState, Modal, Input,
-    StatMetric
+    StatMetric, DatePicker
 } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import clsx from 'clsx';
@@ -318,7 +318,11 @@ export function Todos() {
                         </div>
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black text-text-muted px-1">Resolution Date</label>
-                            <input type="date" value={formData.due_date} onChange={e => setFormData({ ...formData, due_date: e.target.value })} className="w-full px-4 py-2 bg-surface-hover border border-border rounded-xl text-sm font-bold text-text-main outline-none focus:border-primary transition-all" />
+                            <DatePicker 
+                                value={formData.due_date} 
+                                onChange={val => setFormData({ ...formData, due_date: val })} 
+                                className="w-full"
+                            />
                         </div>
                     </div>
                     <div className="pt-4 flex gap-3">

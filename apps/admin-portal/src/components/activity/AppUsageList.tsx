@@ -44,13 +44,13 @@ export function AppUsageList({ samples }: AppUsageListProps) {
                         </div>
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
-                        <span className="text-xs font-black text-text-main leading-none">
+                        <span className="text-xs font-black text-success leading-none">
                             {percent}%
                         </span>
                         <div className="w-12 h-1 bg-border rounded-full overflow-hidden">
-                            <div 
-                                className="h-full bg-primary transition-all duration-1000" 
-                                style={{ width: `${percent}%` }} 
+                            <div
+                                className="h-full transition-all duration-1000"
+                                style={{ width: `${percent}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--chart-gold) 0%)' }}
                             />
                         </div>
                     </div>
@@ -62,20 +62,20 @@ export function AppUsageList({ samples }: AppUsageListProps) {
 
 function groupByApp(samples: any[]) {
     if (!samples || samples.length === 0) return [];
-    
+
     const map: Record<string, number> = {};
-    samples.forEach(s => { 
-        const app = s.app_name || 'System'; 
-        map[app] = (map[app] || 0) + 1; 
+    samples.forEach(s => {
+        const app = s.app_name || 'System';
+        map[app] = (map[app] || 0) + 1;
     });
-    
+
     const total = samples.length;
     return Object.entries(map)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 15)
-        .map(([app, count]) => ({ 
-            app, 
-            count, 
-            percent: Math.round((count / total) * 100) 
+        .map(([app, count]) => ({
+            app,
+            count,
+            percent: Math.round((count / total) * 100)
         }));
 }

@@ -33,8 +33,8 @@ export function ActivityChart({ loading, samples }: ActivityChartProps) {
                         <AreaChart data={chartData}>
                             <defs>
                                 <linearGradient id="actGrad" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.2} />
-                                    <stop offset="95%" stopColor="var(--primary)" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="var(--chart-gold)" stopOpacity={0.2} />
+                                    <stop offset="95%" stopColor="var(--chart-gold)" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" opacity={0.3} />
@@ -58,7 +58,7 @@ export function ActivityChart({ loading, samples }: ActivityChartProps) {
                             <Area
                                 type="monotone"
                                 dataKey="activity"
-                                stroke="var(--primary)"
+                                stroke="var(--chart-gold)"
                                 strokeWidth={4}
                                 fill="url(#actGrad)"
                                 animationDuration={2000}

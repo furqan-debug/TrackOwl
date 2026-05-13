@@ -3,11 +3,10 @@ import { supabase } from '../lib/supabase';
 import {
     ChevronLeft, ChevronRight,
     Users,
-    Calendar as CalendarIcon,
     Plus, Filter,
     Clock, FolderOpen
 } from 'lucide-react';
-import { LoadingState, Modal, EmptyState, FilterSelect } from '../components/ui';
+import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker } from '../components/ui';
 import clsx from 'clsx';
 import {
     formatDuration,
@@ -328,12 +327,6 @@ export function Timesheets() {
         setSelectedDate(next);
     };
 
-    const formatRangeLabel = () => {
-        const opt: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
-        if (viewMode === 'daily') return `${selectedDate.toLocaleDateString('en-US', opt)} - ${selectedDate.toLocaleDateString('en-US', opt)}`;
-        return `${range.start.toLocaleDateString('en-US', opt)} - ${range.end.toLocaleDateString('en-US', opt)}`;
-    };
-
     return (
         <div className="flex flex-col min-h-screen bg-surface font-sans text-text-main">
             <header className="px-8 py-6 flex items-center justify-between border-b border-border shrink-0">
@@ -349,20 +342,16 @@ export function Timesheets() {
                         <button onClick={() => navigateDate(-1)} className="p-3 hover:bg-surface-hover rounded-xl transition-all text-text-muted hover:text-primary">
                             <ChevronLeft className="w-5 h-5" />
                         </button>
-                        <div className="flex items-center gap-4 px-4 relative cursor-pointer hover:bg-surface-hover rounded-xl transition-all h-full">
-                            <span className="text-[13px] font-bold text-text-main tabular-nums">{formatRangeLabel()}</span>
-                            <CalendarIcon className="w-4 h-4 text-text-muted" />
-                            <input
-                                type="date"
-                                className="absolute inset-0 opacity-0 cursor-pointer"
-                                value={getGroupingDateInTz(selectedDate, undefined)}
-                                onChange={(e) => {
-                                    if (e.target.value) {
-                                        setSelectedDate(new Date(e.target.value + 'T12:00:00'));
-                                    }
-                                }}
-                            />
-                        </div>
+                        <DatePicker
+                            value={getGroupingDateInTz(selectedDate, undefined)}
+                            onChange={(val) => {
+                                if (val) {
+                                    setSelectedDate(new Date(val + 'T12:00:00'));
+                                }
+                            }}
+                            className="min-w-[200px]"
+                        />
+
                         <button onClick={() => navigateDate(1)} className="p-3 hover:bg-surface-hover rounded-xl transition-all text-text-muted hover:text-primary">
                             <ChevronRight className="w-5 h-5" />
                         </button>
@@ -389,7 +378,7 @@ export function Timesheets() {
                             onClick={() => setViewMode(mode)}
                             className={clsx(
                                 "px-8 rounded-xl text-[12px] font-bold transition-all h-full",
-                                viewMode === mode ? "bg-surface text-primary shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
+                                viewMode === mode ? "bg-surface text-[var(--chart-gold)] shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
                             )}
                         >
                             {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -483,7 +472,10 @@ export function Timesheets() {
                     </div>
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold text-text-muted ">Date</label>
-                        <input type="date" className="w-full h-11 bg-surface-hover border border-border rounded-xl px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.date} onChange={(e) => setAddTimeData({ ...addTimeData, date: e.target.value })} />
+                        <DatePicker
+                            value={addTimeData.date}
+                            onChange={(val) => setAddTimeData({ ...addTimeData, date: val })}
+                        />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -610,7 +602,7 @@ function DailyView({ entries, selectedMember, toProperCase }: {
                     const duration = s.duration_mins || 0;
                     const width = (duration / 1440) * 100;
                     return (
-                        <div key={i} className="absolute inset-y-0 bg-primary rounded-full z-10 shadow-sm transition-all" style={{ left: `${left}%`, width: `${Math.max(width, 0.5)}%` }} />
+                        <div key={i} className="absolute inset-y-0 rounded-full z-10 shadow-sm transition-all" style={{ left: `${left}%`, width: `${Math.max(width, 0.5)}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--chart-gold) 0%)' }} />
                     );
                 })}
             </div>
@@ -653,7 +645,7 @@ function DailyView({ entries, selectedMember, toProperCase }: {
                                             {renderTimeDisplay(s)}
                                         </span>
                                         {s.offline_mins > 0 && (
-                                            <span className="text-[11px] text-primary font-bold tracking-tight bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10">
+                                            <span className="text-[11px] text-[var(--chart-gold)] font-bold tracking-tight bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10">
                                                 +{s.offline_mins}m offline
                                             </span>
                                         )}
@@ -700,10 +692,10 @@ function CalendarView({ entries }: { entries: DailyEntry[] }) {
                     <div key={i} className="bg-surface min-h-[140px] p-4 flex flex-col gap-3 hover:bg-surface-hover transition-all group">
                         <span className="text-[11px] font-bold text-text-muted group-hover:text-slate-900 transition-colors">{new Date(day.date + 'T12:00:00').getDate()}</span>
                         {day.totalMinutes > 0 && (
-                            <div className="bg-primary/5 border border-primary/10 text-primary rounded-xl p-3 flex flex-col gap-1.5 shadow-shell-sm">
+                            <div className="bg-primary/5 border border-primary/10 text-[var(--chart-gold)] rounded-xl p-3 flex flex-col gap-1.5 shadow-shell-sm">
                                 <span className="text-[12px] font-bold tabular-nums">{formatDuration(day.totalMinutes)}</span>
                                 <div className="w-full h-1 bg-primary/10 rounded-full overflow-hidden">
-                                    <div className="h-full bg-primary" style={{ width: `${day.activityPercent}%` }} />
+                                    <div className="h-full" style={{ width: `${day.activityPercent}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--chart-gold) 100%)' }} />
                                 </div>
                             </div>
                         )}

@@ -1,16 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
-    CreditCard,
     CheckCircle2,
     ArrowRight,
     Rocket,
     Check,
-    ShieldCheck,
     Users,
-    ChevronRight,
     Briefcase
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -21,9 +18,7 @@ import LogoIcon from '../assets/branding/3.svg';
 
 export function Onboarding() {
     const navigate = useNavigate();
-    const location = useLocation();
     const { profile, refreshProfile } = useAuth();
-    const selectedPlan = location.state?.plan || 'Starter';
 
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -49,12 +44,7 @@ export function Onboarding() {
         'Other'
     ];
 
-    const handleOrgSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        setStep(2);
-    };
-
-    const handlePaymentSubmit = async (e: React.FormEvent) => {
+    const handleOrgSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
@@ -65,7 +55,10 @@ export function Onboarding() {
                 .insert({
                     name: orgName,
                     industry: industry,
-                    size: orgSize
+                    size: orgSize,
+                    plan_type: 'Basic',
+                    subscription_status: 'None',
+                    seats_purchased: 1
                 })
                 .select()
                 .single();
@@ -109,7 +102,7 @@ export function Onboarding() {
                 await refreshProfile();
             }
 
-            setStep(3);
+            setStep(2);
         } catch (err: any) {
             console.error('Onboarding error:', err);
             alert(err.message || 'Setup failed. Please try again.');
@@ -120,8 +113,7 @@ export function Onboarding() {
 
     const steps = [
         { id: 1, label: 'Company' },
-        { id: 2, label: 'Billing' },
-        { id: 3, label: 'Finalize' }
+        { id: 2, label: 'Finalize' }
     ];
 
     const handleFinalLaunch = async () => {
@@ -139,7 +131,7 @@ export function Onboarding() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F9FAFB] flex flex-col items-center">
+        <div className="min-h-screen bg-main flex flex-col items-center">
             
             <div className="w-full max-w-[1200px] px-8 pt-8 flex items-center justify-between">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
@@ -149,7 +141,7 @@ export function Onboarding() {
                     {/* Name removed as per request */}
                 </div>
                 <div className="text-xs font-semibold text-text-muted bg-surface px-3 py-1 rounded-full border border-border">
-                    Step {step} of 3
+                    Step {step} of 2
                 </div>
             </div>
 
@@ -186,8 +178,8 @@ export function Onboarding() {
                                 <Rocket className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-blue-600 leading-none mb-1">Trial Plan</p>
-                                <p className="text-sm font-bold text-text-main">{selectedPlan} Plan (14 Days)</p>
+                                <p className="text-[10px] font-bold text-blue-600 leading-none mb-1">Freemium</p>
+                                <p className="text-sm font-bold text-text-main">Free Forever · Build your workspace</p>
                             </div>
                         </div>
                     </div>
@@ -268,65 +260,18 @@ export function Onboarding() {
 
                                 <Button
                                     type="submit"
+                                    disabled={loading}
                                     className="w-full py-6 bg-blue-600 hover:bg-black shadow-xl shadow-blue-600/10 rounded-2xl font-bold group text-white border-0 transition-all duration-300"
                                 >
-                                    Proceed to Plan
-                                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
-                                </Button>
-                            </form>
-                        )}
-
-                        {step === 2 && (
-                            <form onSubmit={handlePaymentSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                                <div className="space-y-2">
-                                    <h2 className="text-3xl font-extrabold text-text-main tracking-tight leading-none">Access Granted</h2>
-                                    <p className="text-text-muted text-sm">Review your 14-day free trial on the {selectedPlan} plan.</p>
-                                </div>
-
-                                <div className="rounded-3xl bg-slate-900 p-8 text-white relative overflow-hidden group shadow-2xl">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 blur-3xl rounded-full" />
-                                    <div className="relative z-10 space-y-6">
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="text-[10px] font-bold text-text-muted mb-1">Plan</p>
-                                                <p className="text-2xl font-black">{selectedPlan} Trial</p>
-                                            </div>
-                                            <div className="px-3 py-1 bg-blue-600 rounded-full text-[10px] font-bold ">Active</div>
-                                        </div>
-                                        <div className="flex items-baseline gap-2">
-                                            <span className="text-4xl font-extrabold">$0.00</span>
-                                            <span className="text-text-muted text-sm">/ first 14 days</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 pt-6 border-t border-white/5 text-xs text-text-muted">
-                                            <ShieldCheck className="w-4 h-4 text-blue-500" />
-                                            No commitment. Cancel anytime.
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="p-6 rounded-2xl border border-dashed border-border bg-surface-hover flex items-center gap-4 group hover:border-blue-600 transition-all cursor-pointer">
-                                    <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-text-muted group-hover:text-blue-600 transition-colors">
-                                        <CreditCard className="w-5 h-5" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-xs font-bold text-text-main mb-0.5">Stripe Secure Connection</p>
-                                        <p className="text-[10px] text-text-muted ">Connect to finalize setup</p>
-                                    </div>
-                                    <ChevronRight className="w-5 h-5 text-text-muted group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
-                                </div>
-
-                                <Button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full py-6 bg-slate-900 hover:bg-blue-600 shadow-xl rounded-2xl font-bold group text-white border-0 transition-all duration-300"
-                                >
-                                    {loading ? 'Initializing Workspace...' : 'Activate Free Trial'}
+                                    {loading ? 'Setting up...' : 'Create Workspace'}
                                     {!loading && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />}
                                 </Button>
                             </form>
                         )}
 
-                        {step === 3 && (
+
+
+                        {step === 2 && (
                             <div className="animate-in zoom-in-95 duration-700 text-center py-10">
                                 <div className="relative mb-10 w-fit mx-auto">
                                     <div className="absolute inset-0 bg-blue-100 blur-3xl rounded-full scale-110" />

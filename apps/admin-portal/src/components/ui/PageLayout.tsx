@@ -1,5 +1,8 @@
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
+import { Star } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { useFavorites } from '../../context/FavoritesContext';
 
 export interface PageLayoutProps {
     title?: string;
@@ -26,13 +29,17 @@ export function PageLayout({
     actions,
     backButton,
 }: PageLayoutProps) {
+    const { toggleFavorite, isFavorite } = useFavorites();
+    const location = useLocation();
+    const isFav = isFavorite(location.pathname);
+
     const maxClass =
         maxWidth === '7xl' ? 'max-w-7xl mx-auto' : maxWidth === '6xl' ? 'max-w-6xl mx-auto' : 'max-w-[1600px] mx-auto';
 
     return (
         <div className={clsx("p-6 md:px-10 md:py-12 w-full animate-in fade-in slide-in-from-top-4 duration-1000", maxClass)}>
             {(title || actions) && (
-                <div className="mb-10 md:mb-16">
+                <div className="mb-10 md:mb-16 relative z-20">
                     <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
                         <div className="space-y-4">
                             {backButton && (
@@ -50,17 +57,29 @@ export function PageLayout({
                             )}
                             <div className="space-y-1">
                                 {eyebrow && (
-                                    <span className="text-[10px] md:text-[11px] font-bold tracking-[0.2em] text-text-muted uppercase block">
+                                    <span className="text-[10px] md:text-[11px] font-bold tracking-[0.05em] text-text-muted uppercase block">
                                         {eyebrow}
                                     </span>
                                 )}
                                 {title && (
-                                    <h1 className="text-3xl md:text-4xl font-bold heading-gradient">
-                                        {title}
-                                    </h1>
+                                    <div className="flex items-center gap-4">
+                                        <h1 className="text-3xl md:text-4xl font-bold heading-gradient">
+                                            {title}
+                                        </h1>
+                                        <button
+                                            onClick={() => toggleFavorite(title, location.pathname)}
+                                            className={clsx(
+                                                "p-2 rounded-xl transition-all",
+                                                isFav ? "text-[var(--accent)] bg-[var(--accent)]/10" : "text-text-muted hover:text-[var(--accent)] hover:bg-surface-hover"
+                                            )}
+                                            title={isFav ? "Remove from Favorites" : "Add to Favorites"}
+                                        >
+                                            <Star className={clsx("w-5 h-5 transition-colors", isFav && "fill-[var(--accent)]")} strokeWidth={isFav ? 2 : 2.5} />
+                                        </button>
+                                    </div>
                                 )}
                                 {description && (
-                                    <p className="text-[14px] md:text-[16px] font-medium text-text-muted max-w-2xl leading-relaxed">
+                                    <p className="text-[14px] md:text-[16px] font-medium text-text-muted max-w-2xl tracking-[0.02em] leading-relaxed">
                                         {description}
                                     </p>
                                 )}

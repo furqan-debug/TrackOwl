@@ -20,7 +20,8 @@ export function PremiumGate({ children, title, description }: PremiumGateProps) 
         );
     }
 
-    const isPremium = organization?.plan_type === 'Premium' || organization?.subscription_status === 'Trial';
+    const isPremium = organization?.plan_type === 'Premium' || 
+                      organization?.subscription_status === 'Trial';
 
     if (!isPremium) {
         return (

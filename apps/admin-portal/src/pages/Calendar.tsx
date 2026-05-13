@@ -195,7 +195,7 @@ export function Calendar() {
                 {/* 📋 Operational Sidebar (3/12) */}
                 <div className="lg:col-span-3 space-y-6">
                     {/* Holiday Roll */}
-                    <div className="rounded-[24px] shadow-premium p-8 border border-[var(--border-color)] bg-dark-brown text-white overflow-hidden relative group">
+                    <div className="rounded-[24px] shadow-premium p-8 border border-[var(--border-color)] bg-navy text-white overflow-hidden relative group">
                         <div className="absolute -top-12 -right-12 w-32 h-32 bg-surface/5 rounded-full blur-3xl" />
                         <div className="flex items-center gap-3 mb-8 relative z-10">
                             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">

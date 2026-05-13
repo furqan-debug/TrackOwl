@@ -14,18 +14,17 @@ interface FavoritesContextType {
 const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [favorites, setFavorites] = useState<Favorite[]>([]);
-
-    useEffect(() => {
+    const [favorites, setFavorites] = useState<Favorite[]>(() => {
         const saved = localStorage.getItem('digireps_favorites');
         if (saved) {
             try {
-                setFavorites(JSON.parse(saved));
+                return JSON.parse(saved);
             } catch (e) {
                 console.error('Failed to parse favorites from localStorage', e);
             }
         }
-    }, []);
+        return [];
+    });
 
     useEffect(() => {
         localStorage.setItem('digireps_favorites', JSON.stringify(favorites));

@@ -7,34 +7,33 @@ interface StatMetricProps {
     value: string | number;
     sub?: string;
     trend?: number;
-    accent?: 'emerald' | 'amber' | 'rose' | 'primary' | 'brown-gradient';
+    accent?: 'emerald' | 'amber' | 'rose' | 'primary' | 'brand-gradient';
     className?: string;
 }
 
 export function StatMetric({ icon, label, value, sub, trend, accent, className }: StatMetricProps) {
-    const isBrownGradient = accent === 'brown-gradient';
+    const isBrandGradient = accent === 'brand-gradient';
 
     return (
         <div className={clsx(
             "glass-panel rounded-[12px] p-6 transition-all duration-500 group relative overflow-hidden flex flex-col justify-between min-h-[180px]",
-            isBrownGradient
-                ? "bg-gradient-to-br from-[#F5E6CA] via-[#8B5E3C]/30 to-[#C19A6B]/60 dark:from-primary/10 dark:via-transparent dark:to-dark-brown/20 border-[#8B5E3C]/30 dark:border-primary/20 hover:border-[#C19A6B]/60 dark:hover:border-primary/40"
+            isBrandGradient
+                ? "bg-gradient-to-br from-[var(--primary)]/5 via-transparent to-[var(--accent)]/5 border-primary/20 hover:border-accent/40 shadow-premium"
                 : "hover:shadow-elevated hover:border-primary/20",
             "hover:-translate-y-1",
             className
         )}>
             {/* Background Glow Effect */}
-            {!isBrownGradient && (
-                <div className={clsx(
-                    "absolute -right-4 -top-4 w-24 h-24 blur-[40px] opacity-10 transition-opacity group-hover:opacity-20",
-                    accent === 'emerald' && "bg-emerald-500",
-                    accent === 'amber' && "bg-amber-500",
-                    accent === 'rose' && "bg-rose-500",
-                    (accent === 'primary' || !accent) && "bg-primary"
-                )} />
-            )}
-            {isBrownGradient && (
-                <div className="absolute -right-4 -top-4 w-32 h-32 blur-[50px] opacity-30 bg-gradient-to-br from-[#8B5E3C] to-[#C19A6B] dark:from-primary dark:to-dark-brown transition-opacity group-hover:opacity-50 pointer-events-none" />
+            <div className={clsx(
+                "absolute -right-4 -top-4 w-24 h-24 blur-[40px] opacity-10 transition-opacity group-hover:opacity-20",
+                accent === 'emerald' && "bg-emerald-500",
+                accent === 'amber' && "bg-amber-500",
+                accent === 'rose' && "bg-rose-500",
+                (accent === 'primary' || !accent) && "bg-primary"
+            )} />
+
+            {isBrandGradient && (
+                <div className="absolute -right-4 -top-4 w-32 h-32 blur-[50px] opacity-20 bg-gradient-to-br from-primary to-accent transition-opacity group-hover:opacity-40 pointer-events-none" />
             )}
 
             <div className="flex items-center justify-between mb-5 relative z-10">
@@ -44,7 +43,7 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
                     accent === 'amber' && "bg-amber-500/10 text-amber-500 group-hover:bg-amber-500/20",
                     accent === 'rose' && "bg-rose-500/10 text-rose-500 group-hover:bg-rose-500/20",
                     accent === 'primary' && "bg-primary/10 text-primary group-hover:bg-primary/20",
-                    isBrownGradient && "bg-[#A47551]/15 text-[#3B2A23] dark:bg-primary/10 dark:text-primary group-hover:bg-[#A47551]/25 dark:group-hover:bg-primary/20 shadow-inner",
+                    isBrandGradient && "bg-accent/10 text-accent group-hover:bg-accent/20 shadow-inner border border-accent/20",
                     !accent && "bg-surface-hover text-text-muted group-hover:bg-primary/5 group-hover:text-primary shadow-inner"
                 )}>
                     {icon}
@@ -53,12 +52,12 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
                     <div className={clsx(
                         "text-[12px] font-bold px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-shell-sm border border-transparent",
                         trend >= 0
-                            ? (isBrownGradient ? "bg-primary/10 text-primary border-primary/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20")
-                            : (isBrownGradient ? "bg-primary/10 text-primary border-primary/20" : "bg-rose-500/10 text-rose-500 border-rose-500/20")
+                            ? "bg-success/10 text-success border-success/20"
+                            : "bg-error/10 text-error border-error/20"
                     )}>
                         <div className={clsx(
                             "w-1 h-1 rounded-full",
-                            trend >= 0 ? (isBrownGradient ? "bg-primary animate-pulse" : "bg-emerald-500 animate-pulse") : (isBrownGradient ? "bg-primary" : "bg-rose-500")
+                            trend >= 0 ? "bg-success animate-pulse" : "bg-error"
                         )} />
                         {trend >= 0 ? "+" : ""}{trend}%
                     </div>
@@ -66,14 +65,14 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
             </div>
 
             <div className="space-y-1.5 relative z-10">
-                <p className="text-[12px] font-bold text-text-muted uppercase">{label}</p>
+                <p className="text-[12px] font-bold stat-label uppercase tracking-[0.15em]">{label}</p>
                 <div className={clsx(
                     "text-2xl font-bold transition-all duration-300 tracking-tight",
-                    (isBrownGradient || accent === 'primary') ? "text-gradient-premium" : "text-text-main group-hover:text-primary"
+                    (isBrandGradient || accent === 'primary') ? "text-accent dark:text-accent" : "text-text-main group-hover:text-primary"
                 )}>
                     {value}
                 </div>
-                {sub && <p className="text-[13px] font-medium text-text-muted opacity-80">{sub}</p>}
+                {sub && <p className="text-[13px] font-medium stat-sublabel tracking-[0.1em]">{sub}</p>}
             </div>
         </div>
     );

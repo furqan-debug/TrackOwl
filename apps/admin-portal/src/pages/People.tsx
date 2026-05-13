@@ -253,12 +253,17 @@ export function People() {
         setAddError(null);
     }
 
+    const [roleFilter, setRoleFilter] = useState<string>('All');
+    const [statusFilter, setStatusFilter] = useState<string>('All');
+
     const filtered = members.filter(m => {
         const matchesSearch = m.full_name.toLowerCase().includes(search.toLowerCase()) ||
             m.email.toLowerCase().includes(search.toLowerCase());
         const isInvite = m.status === 'Pending';
         const matchesTab = activeTab === 'Invites' ? isInvite : !isInvite;
-        return matchesSearch && matchesTab;
+        const matchesRole = roleFilter === 'All' || m.role === roleFilter;
+        const matchesStatus = statusFilter === 'All' || m.status === statusFilter;
+        return matchesSearch && matchesTab && matchesRole && matchesStatus;
     });
 
     const membersCount = members.filter(m => m.status !== 'Pending').length;
@@ -272,7 +277,16 @@ export function People() {
             actions={
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => { if (!isViewer) { resetAddForm(); setShowAddModal(true); } }}
+                        onClick={() => { 
+                            if (!isViewer) { 
+                                if (organization?.subscription_status === 'None') {
+                                    navigate('/dashboard/pricing');
+                                } else {
+                                    resetAddForm(); 
+                                    setShowAddModal(true); 
+                                }
+                            } 
+                        }}
                         disabled={isViewer}
                         className="flex items-center gap-2 px-5 h-10 bg-primary text-white rounded-xl text-[12px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -292,7 +306,7 @@ export function People() {
                     onClick={() => setActiveTab('Members')}
                     className={clsx(
                         "px-6 rounded-lg text-[12px] font-bold transition-all h-full",
-                        activeTab === 'Members' ? "bg-surface text-primary shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
+                        activeTab === 'Members' ? "bg-surface text-text-main shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
                     )}
                 >
                     Members ({membersCount})
@@ -301,7 +315,7 @@ export function People() {
                     onClick={() => setActiveTab('Invites')}
                     className={clsx(
                         "px-6 rounded-lg text-[12px] font-bold transition-all h-full",
-                        activeTab === 'Invites' ? "bg-surface text-primary shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
+                        activeTab === 'Invites' ? "bg-surface text-text-main shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
                     )}
                 >
                     Pending Invites ({invitesCount})
@@ -324,7 +338,7 @@ export function People() {
                         onClick={() => setShowFilters(!showFilters)}
                         className={clsx(
                             "flex items-center gap-2 px-4 h-10 border rounded-xl text-[10px] font-bold transition-all shadow-shell-sm",
-                            showFilters ? "border-primary bg-primary/5 text-primary" : "border-border bg-surface text-text-muted hover:bg-surface-hover"
+                            showFilters ? "border-primary bg-primary/5 text-[var(--chart-gold)]" : "border-border bg-surface text-text-muted hover:bg-surface-hover"
                         )}
                     >
                         <Filter className="w-3.5 h-3.5" /> Filter
@@ -333,7 +347,7 @@ export function People() {
 
                 {selectedIds.size > 0 && (
                     <div className="flex items-center gap-3 animate-in slide-in-from-right-2 duration-300">
-                        <span className="text-[10px] font-bold text-primary bg-primary/5 px-4 h-10 flex items-center rounded-xl border border-primary/10 ">
+                        <span className="text-[10px] font-bold text-[var(--chart-gold)] bg-primary/5 px-4 h-10 flex items-center rounded-xl border border-primary/10 ">
                             {selectedIds.size} Selected
                         </span>
                         <button
@@ -346,6 +360,45 @@ export function People() {
                     </div>
                 )}
             </div>
+
+            {showFilters && (
+                <div className="mb-6 p-4 bg-surface border border-border rounded-xl flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold text-text-muted">Role:</label>
+                        <select 
+                            value={roleFilter} 
+                            onChange={e => setRoleFilter(e.target.value)}
+                            className="h-8 px-3 bg-surface-hover border border-border rounded-lg text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all"
+                        >
+                            <option value="All">All Roles</option>
+                            <option value="Admin">Owner</option>
+                            <option value="Manager">Manager</option>
+                            <option value="User">User</option>
+                            <option value="Viewer">Viewer</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold text-text-muted">Status:</label>
+                        <select 
+                            value={statusFilter} 
+                            onChange={e => setStatusFilter(e.target.value)}
+                            className="h-8 px-3 bg-surface-hover border border-border rounded-lg text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all"
+                        >
+                            <option value="All">All Statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                    {(roleFilter !== 'All' || statusFilter !== 'All') && (
+                        <button 
+                            onClick={() => { setRoleFilter('All'); setStatusFilter('All'); }}
+                            className="ml-2 text-[10px] font-bold text-primary hover:opacity-80 transition-opacity"
+                        >
+                            Clear Filters
+                        </button>
+                    )}
+                </div>
+            )}
 
             <Card noPadding className="border border-border rounded-[24px] overflow-hidden shadow-shell-sm">
                 <div className="overflow-x-auto custom-scrollbar">
@@ -645,7 +698,11 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
                             onChange={e => form.setAddRole(e.target.value)}
                             className="w-full h-11 px-4 bg-surface-hover border border-border rounded-xl text-[12px] font-bold text-text-main outline-none focus:border-primary transition-all appearance-none cursor-pointer"
                         >
-                            {rolesAvailable.map(r => <option key={r} value={r}>{r.toUpperCase()}</option>)}
+                            {rolesAvailable.map(r => (
+                                <option key={r} value={r} className="bg-surface text-text-main">
+                                    {r.toUpperCase()}
+                                </option>
+                            ))}
                         </select>
                         <ChevronDown className="w-4 h-4 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-primary transition-colors" />
                     </div>

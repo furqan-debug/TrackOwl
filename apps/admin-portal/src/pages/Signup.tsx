@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -9,8 +9,8 @@ import LogoIcon from '../assets/branding/3.svg';
 
 export function Signup() {
     const navigate = useNavigate();
-    const location = useLocation();
-    const selectedPlan = location.state?.plan || 'Starter';
+    // const location = useLocation();
+
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -38,7 +38,7 @@ export function Signup() {
             if (authError) throw authError;
 
             if (authData.user) {
-                navigate('/onboarding', { state: { plan: selectedPlan } });
+                navigate('/onboarding');
             }
         } catch (err: any) {
             setError(err.message || 'Signup failed. Please try again.');
@@ -72,7 +72,7 @@ export function Signup() {
                     <div className="mb-12 text-center animate-in fade-in slide-in-from-bottom-6 duration-1000">
                         <h1 className="text-5xl md:text-6xl font-black heading-gradient mb-6">Join TrackOwl</h1>
                         <p className="text-text-muted font-medium text-lg leading-relaxed max-w-[400px] mx-auto tracking-tight">
-                            Start your 14-day trial on the <span className="text-primary font-bold">{selectedPlan}</span> professional tier.
+                            Build your professional workspace and explore our monitoring suite for free.
                         </p>
                     </div>
 

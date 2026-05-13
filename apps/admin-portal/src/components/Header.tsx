@@ -141,7 +141,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                                 >
                                                     {child.name}
                                                     {matchActive(location.pathname, child.path) && (
-                                                        <div className="w-1 h-1 rounded-full bg-surface shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_8px_rgba(244,180,0,0.8)]" />
                                                     )}
                                                 </Link>
                                             ))}
@@ -191,13 +191,13 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                     {profile?.full_name?.split(' ')[0] || 'Member'}
                                 </span>
                                 <div className="flex items-center gap-1 mt-0.5">
-                                    <div className="w-1 h-1 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
-                                    <span className="text-[8px] font-bold text-emerald-500 ">Online</span>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-success shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+                                    <span className="text-[8px] font-bold text-success uppercase tracking-wider">Online</span>
                                 </div>
                             </div>
 
                             <div className="relative">
-                                <div className="w-7 h-7 rounded-lg bg-dark-brown flex items-center justify-center text-white text-[11px] font-bold overflow-hidden shadow-shell-sm ring-1 ring-[var(--border-color)]">
+                                <div className="w-7 h-7 rounded-lg bg-primary flex items-center justify-center text-white text-[11px] font-bold overflow-hidden shadow-shell-sm ring-1 ring-[var(--border-color)]">
                                     {profile?.avatar_url ? (
                                         <SecureImage path={profile.avatar_url} bucket="avatars" alt="" className="w-full h-full object-cover" />
                                     ) : (

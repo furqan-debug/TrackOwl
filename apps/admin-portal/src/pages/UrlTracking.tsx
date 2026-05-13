@@ -186,7 +186,7 @@ export function UrlTracking() {
                                 onClick={() => setRange(r)}
                                 className={clsx(
                                     "px-4 py-1.5 rounded-md text-xs font-semibold transition-all",
-                                    range === r ? "bg-surface text-primary shadow-shell-sm" : "text-text-muted hover:text-text-primary"
+                                    range === r ? "bg-surface text-[var(--chart-gold)] shadow-shell-sm" : "text-text-muted hover:text-text-primary"
                                 )}
                             >
                                 {r}
@@ -328,7 +328,7 @@ function KpiCard({ icon, label, value }: { icon: React.ReactNode; label: string;
                 {icon}
             </div>
             <div className="flex flex-col">
-                <p className="text-[10px] text-text-muted font-bold mb-1">{label}</p>
+                <p className="text-[10px] text-text-muted font-bold mb-1 tracking-[0.1em]">{label}</p>
                 <p className="text-2xl font-bold text-text-primary tracking-tight">{value}</p>
             </div>
         </div>

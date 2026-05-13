@@ -299,8 +299,11 @@ pub fn start_sample_loop(
     interval_ms: u64,
     db: Arc<Mutex<Option<rusqlite::Connection>>>,
     auth_token: Arc<Mutex<Option<String>>>,
+    plan_type: String,
 ) {
     thread::spawn(move || {
+        let mut last_title: Option<String> = None;
+        let mut last_domain: Option<String> = None;
         loop {
             if !*running.lock().unwrap() { break; }
 
@@ -310,21 +313,23 @@ pub fn start_sample_loop(
                 counts.active_seconds.swap(0, Ordering::Relaxed),
             );
 
-            let (app_name, window_title) = get_active_window();
+            let (app_name, window_title) = if plan_type == "Premium" || plan_type == "Trial" {
+                get_active_window()
+            } else {
+                (String::new(), String::new())
+            };
             
-            // Optimization: Only run heavy PowerShell lookup if the window title has changed
-            static mut LAST_TITLE: Option<String> = None;
-            static mut LAST_DOMAIN: Option<String> = None;
-            
-            let domain = unsafe {
-                if LAST_TITLE.as_ref() == Some(&window_title) {
-                    LAST_DOMAIN.clone().unwrap_or_default()
+            let domain = if plan_type == "Premium" || plan_type == "Trial" {
+                if last_title.as_ref() == Some(&window_title) {
+                    last_domain.clone().unwrap_or_default()
                 } else {
                     let d = get_browser_domain(&app_name, &window_title);
-                    LAST_TITLE = Some(window_title.clone());
-                    LAST_DOMAIN = Some(d.clone());
+                    last_title = Some(window_title.clone());
+                    last_domain = Some(d.clone());
                     d
                 }
+            } else {
+                String::new()
             };
             let idle = active_secs == 0;
 
@@ -475,7 +480,13 @@ pub fn start_screenshot_loop(
     auth_token: Arc<Mutex<Option<String>>>,
     organization_id: Option<String>,
     user_id: String,
+    plan_type: String,
 ) {
+    if plan_type != "Premium" && plan_type != "Trial" {
+        println!("[tracker] 🛡️ Plan is {}, skipping screenshot loop.", plan_type);
+        return;
+    }
+
     thread::spawn(move || {
         // Each screenshot thread owns a private DB connection.
         // This mirrors how start_sync_loop works and avoids mutex contention.

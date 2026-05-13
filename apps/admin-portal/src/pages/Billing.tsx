@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { 
-    CreditCard, 
-    Users, 
-    ArrowUpCircle, 
-    History, 
-    CheckCircle2, 
+import {
+    CreditCard,
+    Users,
+    ArrowUpCircle,
+    History,
+    CheckCircle2,
     AlertCircle,
     Calendar,
     Zap,
@@ -77,26 +77,26 @@ export function Billing() {
                     <Card className="p-10 border border-border rounded-[40px] shadow-shell-sm overflow-hidden relative">
                         {/* Decorative Background */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[60px] rounded-full -mr-20 -mt-20" />
-                        
+
                         <div className="relative z-10">
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
                                 <div className="space-y-2">
                                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-text-muted">Current Plan</p>
                                     <div className="flex items-center gap-4">
                                         <h2 className="text-4xl font-black text-text-main tracking-tight">
-                                            {organization.plan_type || 'Free Account'}
+                                            {organization.subscription_status === 'None' ? 'Freemium' : organization.plan_type}
                                         </h2>
-                                        <StatusBadge 
+                                        <StatusBadge
                                             variant={organization.subscription_status === 'Active' || organization.subscription_status === 'Trial' ? 'success' : 'warning'}
                                             className="px-4 py-1 h-auto text-[10px] font-black uppercase tracking-widest"
                                         >
-                                            {organization.subscription_status}
+                                            {organization.subscription_status === 'None' ? 'Explore Mode' : organization.subscription_status}
                                         </StatusBadge>
                                     </div>
                                 </div>
-                                
+
                                 <div className="flex items-center gap-3">
-                                    <button 
+                                    <button
                                         onClick={() => navigate('/dashboard/pricing')}
                                         className="px-6 h-12 bg-primary text-white rounded-xl text-[11px] font-bold shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"
                                     >
@@ -123,7 +123,7 @@ export function Billing() {
                                         <Calendar className="w-3.5 h-3.5" /> Renewal Date
                                     </p>
                                     <p className="text-xl font-black text-text-main">
-                                        {organization.trial_ends_at 
+                                        {organization.trial_ends_at
                                             ? new Date(organization.trial_ends_at).toLocaleDateString()
                                             : 'No active renewal'}
                                     </p>
@@ -132,7 +132,7 @@ export function Billing() {
                                     <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest flex items-center gap-2">
                                         <CreditCard className="w-3.5 h-3.5" /> Billing Cycle
                                     </p>
-                                    <p className="text-xl font-black text-text-main">{organization.subscription_period}</p>
+                                    <p className="text-xl font-black text-text-main">{organization.subscription_status === 'None' ? 'N/A' : organization.subscription_period}</p>
                                 </div>
                             </div>
                         </div>
@@ -147,7 +147,7 @@ export function Billing() {
 
                         <div className="flex flex-col md:flex-row items-center gap-10">
                             <div className="flex items-center gap-6 p-2 bg-main rounded-[24px] border border-border w-fit shadow-shell-sm">
-                                <button 
+                                <button
                                     onClick={() => setSeatsToPurchase(Math.max(1, seatsToPurchase - 1))}
                                     className="w-12 h-12 flex items-center justify-center rounded-xl bg-surface border border-border text-text-muted hover:text-primary transition-all active:scale-90"
                                 >
@@ -156,7 +156,7 @@ export function Billing() {
                                 <span className="text-2xl font-black text-text-main w-12 text-center tabular-nums">
                                     {seatsToPurchase}
                                 </span>
-                                <button 
+                                <button
                                     onClick={() => setSeatsToPurchase(seatsToPurchase + 1)}
                                     className="w-12 h-12 flex items-center justify-center rounded-xl bg-surface border border-border text-text-muted hover:text-primary transition-all active:scale-90"
                                 >
@@ -167,12 +167,13 @@ export function Billing() {
                             <div className="flex-1 space-y-1">
                                 <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em]">Estimated Total</p>
                                 <p className="text-3xl font-black text-text-main tracking-tight">
-                                    ${(seatsToPurchase * (organization.plan_type === 'Premium' ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99) : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99))).toFixed(2)}
+                                    ${(Math.max(0, seatsToPurchase - 1) * (organization.plan_type === 'Premium' ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99) : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99))).toFixed(2)}
                                     <span className="text-sm font-bold text-text-muted"> / mo</span>
                                 </p>
+                                <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1">1 Free Owner Seat Included</p>
                             </div>
 
-                            <button 
+                            <button
                                 onClick={handleUpdateSeats}
                                 disabled={saving || seatsToPurchase === organization.seats_purchased}
                                 className={clsx(
@@ -217,7 +218,7 @@ export function Billing() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-right">
-                                            <button className="text-primary text-[11px] font-black hover:underline uppercase tracking-widest">Download</button>
+                                            <button className="text-text-muted hover:text-text-main transition-colors text-[11px] font-black hover:underline uppercase tracking-widest">Download</button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -234,7 +235,7 @@ export function Billing() {
                         <div className="p-6 bg-main rounded-[24px] border border-border flex items-center gap-4 mb-6 relative group cursor-pointer overflow-hidden">
                             {/* Decorative Sparkle */}
                             <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 blur-xl group-hover:bg-primary/20 transition-colors" />
-                            
+
                             <div className="w-12 h-10 bg-surface border border-border rounded-lg flex items-center justify-center text-text-main shadow-shell-sm">
                                 <CreditCard className="w-6 h-6" />
                             </div>
@@ -257,7 +258,9 @@ export function Billing() {
                             </div>
                             <div>
                                 <h4 className="text-[15px] font-black text-text-main tracking-tight leading-none mb-1">Premium Perks</h4>
-                                <p className="text-[10px] font-bold text-primary uppercase tracking-widest">Active during trial</p>
+                                <p className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                                    {organization.subscription_status === 'None' ? 'Upgrade to Unlock' : 'Active during trial'}
+                                </p>
                             </div>
                         </div>
 

@@ -1,14 +1,14 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import {
     Mouse, Keyboard, Activity as ActivityIcon,
-    Zap, Users, Calendar,
+    Zap, Users,
     Monitor, Clock,
     RefreshCw,
     ChevronLeft, ChevronRight,
     Search, Camera
 } from 'lucide-react';
-import { PageLayout, StatMetric, FilterSelect, LoadingState, ScreenshotModal } from '../components/ui';
+import { PageLayout, StatMetric, FilterSelect, LoadingState, ScreenshotModal, DatePicker } from '../components/ui';
 import clsx from 'clsx';
 
 import { AppUsageList } from '../components/activity/AppUsageList';
@@ -74,7 +74,6 @@ export function Activity() {
     const [hasMoreScreenshots, setHasMoreScreenshots] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
 
-    const dateInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (!organizationId) return;
@@ -91,7 +90,7 @@ export function Activity() {
     const fetchData = useCallback(async (isSilent = false, forceRefresh = false, overrideLimit?: number) => {
         const currentLimit = overrideLimit ?? screenshotLimit;
         const cacheKey = `${selectedDate}_${selectedMemberId}_${currentLimit}`;
-        
+
         if (!forceRefresh && activityCache && activityCacheKey === cacheKey) {
             setSamples(activityCache.samples);
             setScreenshots(activityCache.screenshots);
@@ -208,7 +207,7 @@ export function Activity() {
         setLoadingMore(true);
         const newLimit = screenshotLimit + 12; // Load in batches of 12 for better grid alignment
         setScreenshotLimit(newLimit);
-        
+
         // Trigger a silent fetch immediately with the new limit
         await fetchData(true, false, newLimit);
         setLoadingMore(false);
@@ -234,7 +233,7 @@ export function Activity() {
 
     const totalClicks = uniqueSamples.reduce((a, b) => a + b.mouse_clicks, 0);
     const totalKeys = uniqueSamples.reduce((a, b) => a + b.key_presses, 0);
-    
+
     // Use block-based logic for productive time and activity score
     const productiveSamples: ActivitySample[] = [];
     if (idleLimit <= 1) {
@@ -244,7 +243,7 @@ export function Activity() {
         let currentBlock: ActivitySample[] = [];
         for (let i = 0; i < sorted.length; i++) {
             const s = sorted[i];
-            const prev = i > 0 ? sorted[i-1] : null;
+            const prev = i > 0 ? sorted[i - 1] : null;
             const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
             const isContiguous = prev && gapMs <= 125000;
 
@@ -294,31 +293,19 @@ export function Activity() {
                         />
                     </div>
 
-                    <div className="flex items-center bg-surface border border-border p-0.5 rounded-xl shadow-shell-sm overflow-hidden">
+                    <div className="flex items-center bg-surface border border-border p-0.5 rounded-xl shadow-shell-sm">
                         <button
                             onClick={() => navigateDate('prev')}
                             className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
-                        <div
-                            className="relative px-4 py-2 min-w-[150px] text-center cursor-pointer hover:bg-surface-hover transition-all group/date rounded-lg"
-                            onClick={() => dateInputRef.current?.showPicker()}
-                        >
-                            <div className="flex items-center justify-center gap-2">
-                                <Calendar className="w-3.5 h-3.5 text-text-muted" />
-                                <span className="text-[11px] font-bold text-text-main ">
-                                    {isToday ? 'Today' : new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                </span>
-                            </div>
-                            <input
-                                ref={dateInputRef}
-                                type="date"
-                                value={selectedDate}
-                                className="absolute inset-0 w-full h-full opacity-0 pointer-events-none"
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                            />
-                        </div>
+                        <DatePicker 
+                            value={selectedDate}
+                            onChange={(val) => setSelectedDate(val)}
+                            className="min-w-[180px]"
+                            label={isToday ? 'Today' : undefined}
+                        />
                         <button
                             onClick={() => navigateDate('next')}
                             className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg disabled:opacity-20"
@@ -349,28 +336,28 @@ export function Activity() {
                         label="Clicks"
                         value={totalClicks.toLocaleString()}
                         sub="Mouse interactions"
-                        accent="brown-gradient"
+                        accent="brand-gradient"
                     />
                     <StatMetric
                         icon={<Keyboard className="w-4 h-4" />}
                         label="Keys"
                         value={totalKeys.toLocaleString()}
                         sub="Keyboard events"
-                        accent="brown-gradient"
+                        accent="brand-gradient"
                     />
                     <StatMetric
                         icon={<Clock className="w-4 h-4" />}
                         label="Duration"
                         value={`${productiveMinutes}m`}
                         sub="Total active time"
-                        accent="brown-gradient"
+                        accent="brand-gradient"
                     />
                     <StatMetric
                         icon={<Zap className="w-4 h-4" />}
                         label="Activity"
                         value={`${avgActivity}%`}
                         sub="Average score"
-                        accent="brown-gradient"
+                        accent="brand-gradient"
                     />
                 </div>
 
@@ -382,12 +369,12 @@ export function Activity() {
                         <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border h-full flex flex-col overflow-hidden">
                             <div className="px-8 py-6 border-b border-border flex items-center justify-between bg-surface shrink-0">
                                 <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-xl bg-main border border-border flex items-center justify-center text-primary shadow-shell-sm">
+                                    <div className="w-10 h-10 rounded-xl bg-main border border-border flex items-center justify-center text-accent shadow-shell-sm">
                                         <ActivityIcon className="w-4 h-4" />
                                     </div>
                                     <div>
                                         <h3 className="text-[18px] font-bold text-text-main">Heatmap</h3>
-                                        <p className="text-[13px] font-medium text-text-muted mt-0.5">10-minute resolution</p>
+                                        <p className="text-[13px] font-medium text-text-muted mt-0.5 tracking-[0.1em]">10-minute resolution</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
@@ -416,7 +403,7 @@ export function Activity() {
                                 </div>
                                 <div>
                                     <h3 className="text-[18px] font-bold text-text-main">App Usage</h3>
-                                    <p className="text-[13px] font-medium text-text-muted mt-0.5">Top utilized software</p>
+                                    <p className="text-[13px] font-medium text-text-muted mt-0.5 tracking-[0.1em]">Top utilized software</p>
                                 </div>
                             </div>
                             <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -435,7 +422,7 @@ export function Activity() {
                                     </div>
                                     <div>
                                         <h3 className="text-[18px] font-bold text-text-main">Captures</h3>
-                                        <p className="text-[13px] font-medium text-text-muted mt-0.5">{screenshots.length} automated work captures</p>
+                                        <p className="text-[13px] font-medium text-text-muted mt-0.5 tracking-[0.1em]">{screenshots.length} automated work captures</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">

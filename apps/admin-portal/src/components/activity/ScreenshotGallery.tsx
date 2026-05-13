@@ -11,10 +11,10 @@ export function ScreenshotGallery({ screenshots, onSelectImage }: ScreenshotGall
     if (screenshots.length === 0) {
         return (
             <div className="h-full flex items-center justify-center">
-                <EmptyState 
-                    icon={<Camera />} 
-                    title="No visual sessions captured" 
-                    description="When work begins, automated captures will be synced and displayed here for review." 
+                <EmptyState
+                    icon={<Camera />}
+                    title="No visual sessions captured"
+                    description="When work begins, automated captures will be synced and displayed here for review."
                 />
             </div>
         );
@@ -23,19 +23,19 @@ export function ScreenshotGallery({ screenshots, onSelectImage }: ScreenshotGall
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-10">
             {screenshots.map((ss) => (
-                <div 
+                <div
                     key={ss.id}
                     onClick={() => onSelectImage(ss)}
                     className="group relative flex flex-col h-full animate-in fade-in slide-in-from-bottom-4 duration-700"
                 >
                     {/* Image Container with precise aspect ratio */}
                     <div className="relative aspect-video rounded-[24px] overflow-hidden bg-main border border-border shadow-shell-sm group-hover:border-primary/40 group-hover:shadow-elevated transition-all duration-500 cursor-zoom-in ring-4 ring-transparent group-hover:ring-primary/5">
-                        <SecureImage 
-                            path={ss.file_url} 
-                            alt="Activity Screenshot" 
-                            className="w-full h-full object-cover opacity-95 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110" 
+                        <SecureImage
+                            path={ss.file_url}
+                            alt="Activity Screenshot"
+                            className="w-full h-full object-cover opacity-95 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110"
                         />
-                        
+
                         {/* Overlay Detail */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center">
                             <div className="opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all duration-500 delay-75">

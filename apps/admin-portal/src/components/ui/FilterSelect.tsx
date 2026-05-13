@@ -128,7 +128,7 @@ export function FilterSelect({
                                 className={clsx(
                                     "flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all text-[12px] font-bold",
                                     value === allOption.id 
-                                        ? "bg-primary/5 text-primary" 
+                                        ? "bg-surface-hover text-text-main" 
                                         : "text-text-main hover:bg-surface hover:text-text-main"
                                 )}
                             >
@@ -147,7 +147,7 @@ export function FilterSelect({
                                     className={clsx(
                                         "flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all text-[12px] font-bold mb-0.5 last:mb-0",
                                         value === o.id 
-                                            ? "bg-primary/5 text-primary" 
+                                            ? "bg-surface-hover text-text-main" 
                                             : "text-text-main hover:bg-surface hover:text-text-main"
                                     )}
                                 >

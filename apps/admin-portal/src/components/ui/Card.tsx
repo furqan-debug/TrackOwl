@@ -26,7 +26,7 @@ export function Card({
     return (
         <div
             className={clsx(
-                'bg-[var(--bg-surface)] rounded-shell-lg overflow-hidden relative group transition-all duration-300 border border-[var(--border-color)] shadow-soft',
+                'bg-[var(--bg-surface)] rounded-shell-lg overflow-visible relative group transition-all duration-300 border border-[var(--border-color)] shadow-soft',
                 !noPadding && 'p-6 md:p-8',
                 className
             )}
@@ -40,12 +40,12 @@ export function Card({
                 )}>
                     <div className="space-y-0.5">
                         {title && (
-                            <h2 className="text-xs font-bold text-[var(--text-main)] ">
+                            <h2 className="text-xs font-bold text-[var(--text-main)] tracking-[0.05em]">
                                 {title}
                             </h2>
                         )}
                         {subtitle && (
-                            <p className="text-[10px] font-medium text-[var(--text-muted)] opacity-60 ">
+                            <p className="text-[10px] font-medium text-[var(--text-muted)] opacity-60 tracking-[0.1em]">
                                 {subtitle}
                             </p>
                         )}

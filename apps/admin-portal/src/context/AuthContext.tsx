@@ -47,22 +47,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        let isInitial = true;
+
         // 1. Initial session check
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
-            if (session) fetchProfile(session.user.email!);
+            if (session) fetchProfile(session.user.email!, 3, !isInitial);
             else setLoading(false);
+            isInitial = false;
         });
 
         // 2. Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             setSession(session);
-            if (session) fetchProfile(session.user.email!);
+            if (session) {
+                if (event === 'TOKEN_REFRESHED') return;
+                fetchProfile(session.user.email!, 3, !isInitial);
+            }
             else {
                 setProfile(null);
                 setOrganization(null);
                 setLoading(false);
             }
+            isInitial = false;
         });
 
         return () => subscription.unsubscribe();
@@ -71,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Track the current fetch to prevent concurrent overlapping calls
     const fetchInProgress = React.useRef<string | null>(null);
 
-    async function fetchProfile(email: string, retries = 3) {
+    async function fetchProfile(email: string, retries = 3, silent = false) {
         // If we're already fetching for this email, don't start another one
         if (fetchInProgress.current === email && retries === 3) {
             console.log(`[AuthContext] Fetch already in progress for ${email}, skipping duplicate call.`);
@@ -79,7 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         fetchInProgress.current = email;
-        setLoading(true);
+        if (!silent) setLoading(true);
 
         try {
             console.log(`[AuthContext] Fetching profile for ${email}... (Retries left: ${retries})`);

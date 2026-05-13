@@ -55,6 +55,7 @@ interface User {
     notification_settings?: NotificationSettings;
     close_behavior?: 'quit' | 'minimize';
   };
+  plan_type?: string;
 }
 
 async function syncTimezone(sb: any, memberId: string, memberTz: string | null | undefined) {
@@ -450,16 +451,18 @@ function SettingsScreen({ user, onSave, onBack, onLogout }: {
                 </label>
               </div>
 
-              <div className="toggle-row">
-                <div className="toggle-info">
-                  <span className="toggle-label">Screenshot Alerts</span>
-                  <span className="toggle-desc">Notify on every screen capture</span>
+              {(user.plan_type === 'Premium' || user.plan_type === 'Trial') && (
+                <div className="toggle-row">
+                  <div className="toggle-info">
+                    <span className="toggle-label">Screenshot Alerts</span>
+                    <span className="toggle-desc">Notify on every screen capture</span>
+                  </div>
+                  <label className="switch">
+                    <input type="checkbox" checked={notifyScreenshots} onChange={e => setNotifyScreenshots(e.target.checked)} />
+                    <span className="slider round"></span>
+                  </label>
                 </div>
-                <label className="switch">
-                  <input type="checkbox" checked={notifyScreenshots} onChange={e => setNotifyScreenshots(e.target.checked)} />
-                  <span className="slider round"></span>
-                </label>
-              </div>
+              )}
 
               <div className="toggle-row">
                 <div className="toggle-info">
@@ -965,9 +968,16 @@ export default function App() {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { clearSession(); return; }
 
-      let { data: member } = await sb.from('members').select('*').eq('auth_user_id', session.user.id).single();
+      let { data: member } = await sb.from('members')
+        .select('*, organizations(plan_type)')
+        .eq('auth_user_id', session.user.id)
+        .single();
+
       if (!member && session.user.email) {
-        const { data: byEmail } = await sb.from('members').select('*').eq('email', session.user.email).single();
+        const { data: byEmail } = await sb.from('members')
+          .select('*, organizations(plan_type)')
+          .eq('email', session.user.email)
+          .single();
         if (byEmail && !byEmail.auth_user_id) {
           await sb.from('members').update({ auth_user_id: session.user.id }).eq('id', byEmail.id);
           member = { ...byEmail, auth_user_id: session.user.id };
@@ -992,7 +1002,8 @@ export default function App() {
           timezone: tz || undefined,
           keep_idle: member.keep_idle,
           phone: member.phone,
-          custom_fields: member.custom_fields || {}
+          custom_fields: member.custom_fields || {},
+          plan_type: member.organizations?.plan_type || 'Basic'
         };
         console.log('USER LOADED (Session):', userObj);
         setUser(userObj);
@@ -1368,12 +1379,12 @@ export default function App() {
 
       console.log('[Login] Fetching member profile for user:', authData.user.id);
       let { data: member, error: memberError } = await sb
-        .from('members').select('*').eq('auth_user_id', authData.user.id).single();
+        .from('members').select('*, organizations(plan_type)').eq('auth_user_id', authData.user.id).single();
 
       // Fallback: lookup by email if auth_user_id is not yet linked
       if ((memberError || !member) && authData.user.email) {
         console.log('[Login] Profile not found by ID, attempting email fallback:', authData.user.email);
-        const { data: byEmail } = await sb.from('members').select('*').eq('email', authData.user.email).single();
+        const { data: byEmail } = await sb.from('members').select('*, organizations(plan_type)').eq('email', authData.user.email).single();
         if (byEmail && !byEmail.auth_user_id) {
           console.log('[Login] Found unlinked profile by email, linking now...');
           const { error: updateError } = await sb.from('members').update({ auth_user_id: authData.user.id }).eq('id', byEmail.id);
@@ -1406,7 +1417,8 @@ export default function App() {
         timezone: tz || undefined,
         keep_idle: member.keep_idle,
         phone: member.phone,
-        custom_fields: member.custom_fields || {}
+        custom_fields: member.custom_fields || {},
+        plan_type: member.organizations?.plan_type || 'Basic'
       };
       const { data: projectsData } = await sb.from('projects').select('*');
       const token = authData.session.access_token;
@@ -1715,7 +1727,7 @@ export default function App() {
         )}
         {screen === 'consent' && (
           <motion.div key="consent" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
-            <ConsentScreen project={activeProject!} onAccept={handleConsentAccepted} onDecline={handleConsentDeclined} />
+            <ConsentScreen user={user!} project={activeProject!} onAccept={handleConsentAccepted} onDecline={handleConsentDeclined} />
           </motion.div>
         )}
         {screen === 'tracker' && (
@@ -1945,7 +1957,7 @@ function Topbar({ user, onLogout, onSettings, onSupport, todoBadge, disabled }: 
     <header className="app-topbar">
       <div className="topbar-brand">
         <div className="topbar-logo">
-          <img src="/header.svg" style={{ height: 85, width: 'auto', objectFit: 'contain' }} alt="TrackOwl" />
+          <img src="/header.svg" style={{ height: 24, width: 'auto', objectFit: 'contain' }} alt="TrackOwl" />
         </div>
       </div>
       {user && <LocalClock />}
@@ -2163,7 +2175,8 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, onSupp
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Consent
 // ─────────────────────────────────────────────────────────────────────────────
-function ConsentScreen({ project, onAccept, onDecline }: {
+function ConsentScreen({ user, project, onAccept, onDecline }: {
+  user: User;
   project: Project;
   onAccept: () => void;
   onDecline: () => void;
@@ -2188,8 +2201,12 @@ function ConsentScreen({ project, onAccept, onDecline }: {
           </div>
 
           <div className="consent-body">
-            <ConsentItem icon={<Eye size={16} />} title="Screenshots" desc="Up to 3 random captures every 10 min to verify work." />
-            <ConsentItem icon={<MonitorPlay size={16} />} title="Active Application" desc="Names of active windows (e.g. Chrome, VS Code)." />
+            {(user.plan_type === 'Premium' || user.plan_type === 'Trial') && (
+              <ConsentItem icon={<Eye size={16} />} title="Screenshots" desc="Up to 3 random captures every 10 min to verify work." />
+            )}
+            {(user.plan_type === 'Premium' || user.plan_type === 'Trial') && (
+              <ConsentItem icon={<MonitorPlay size={16} />} title="Active Application" desc="Names of active windows (e.g. Chrome, VS Code)." />
+            )}
             <ConsentItem icon={<MousePointerClick size={16} />} title="Activity Counts" desc="Mouse clicks and keystrokes count (not content)." />
             <ConsentItem icon={<MapPin size={16} />} title="General Location" desc="IP-based location for security auditing." />
             <div className="consent-note">

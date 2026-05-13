@@ -26,6 +26,7 @@ pub struct AppState {
     pub db: Arc<Mutex<Option<rusqlite::Connection>>>,
     pub is_idle_monitoring: Arc<Mutex<bool>>,
     pub last_idle_limit: Arc<Mutex<u32>>,
+    pub plan_type: Arc<Mutex<String>>,
 }
 
 impl Default for AppState {
@@ -48,6 +49,7 @@ impl Default for AppState {
             db: Arc::new(Mutex::new(db)),
             is_idle_monitoring: Arc::new(Mutex::new(false)),
             last_idle_limit: Arc::new(Mutex::new(10)),
+            plan_type: Arc::new(Mutex::new("Basic".to_string())),
         }
     }
 }
@@ -218,36 +220,39 @@ fn start_tracking(
     }
     
     let (cfg, counts, running, auth_arc, db_arc): (SupabaseConfig, Arc<tracker::TrackerCounts>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>) = {
-        let mut s = state.lock().unwrap();
+        let s = state.lock().unwrap();
         *s.auth_token.lock().unwrap() = Some(token.clone());
-        (
+        let res = (
             SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() },
             Arc::clone(&s.counts),
             Arc::clone(&s.tracking_running),
             Arc::clone(&s.auth_token),
             Arc::clone(&s.db),
-        )
+        );
+        res
     };
     
     // ─── Phase 1: Clean/Start Session Atomic ─────────────────────────────────────
     // We now use an RPC function to ensure atomicity (closes old sessions and starts new one)
 
-    // Fetch organization_id from the project to ensure correct scoping for multi-org users
-    let org_id: Option<String> = match crate::supabase_get(
+    // Fetch organization_id and plan_type
+    let (org_id, plan_type): (Option<String>, String) = match crate::supabase_get(
         &cfg,
         "projects",
-        &format!("id=eq.{}&select=organization_id", project_id),
+        &format!("id=eq.{}&select=organization_id,organizations(plan_type)", project_id),
         Some(&token),
     ) {
         Ok(resp_body) => {
             let json_rows: serde_json::Value = serde_json::from_str(&resp_body).unwrap_or(serde_json::json!([]));
-            let id = json_rows.get(0).and_then(|r| r.get("organization_id")).and_then(|v| v.as_str()).map(|s| s.to_string());
-            println!("[lib] 🔍 Organization lookup for project {}: {:?}", project_id, id);
-            id
+            let first = json_rows.get(0);
+            let id = first.and_then(|r| r.get("organization_id")).and_then(|v| v.as_str()).map(|s| s.to_string());
+            let plan = first.and_then(|r| r.get("organizations")).and_then(|v| v.get("plan_type")).and_then(|v| v.as_str()).unwrap_or("Basic").to_string();
+            println!("[lib] 🔍 Organization lookup for project {}: {:?}, Plan: {}", project_id, id, plan);
+            (id, plan)
         }
         Err(e) => {
             println!("[lib] ❌ Organization lookup FAILED for project {}: {}", project_id, e);
-            None
+            (None, "Basic".to_string())
         }
     };
 
@@ -276,6 +281,7 @@ fn start_tracking(
                         s.active_session_id = Some(session_id.clone());
                         s.user_id = Some(user_id.clone());
                         s.org_id = org_id.clone();
+                        *s.plan_type.lock().unwrap() = plan_type.clone();
                         *s.tracking_running.lock().unwrap() = true;
                     }
 
@@ -289,10 +295,12 @@ fn start_tracking(
                         app.clone(), Arc::clone(&counts), session_id.clone(),
                         cfg.clone(), Arc::clone(&running), 60_000,
                         Arc::clone(&db_arc), Arc::clone(&auth_arc),
+                        plan_type.clone(),
                     );
                     tracker::start_screenshot_loop(
                         app.clone(), session_id.clone(), cfg.clone(), Arc::clone(&running), 
-                        Arc::clone(&auth_arc), org_id, user_id.clone()
+                        Arc::clone(&auth_arc), org_id, user_id.clone(),
+                        plan_type.clone(),
                     );
 
                     // 30s offline sync loop
@@ -313,9 +321,9 @@ fn start_tracking(
 /// invoke('stop_tracking')
 #[tauri::command]
 fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>) -> TrackingResult {
-    let (cfg, auth_arc, session_id, running, db_arc, user_id, org_id) = {
+    let (cfg, auth_arc, session_id, running, db_arc, user_id, org_id, plan_type) = {
         let mut s = state.lock().unwrap();
-        (
+        let res = (
             SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() },
             Arc::clone(&s.auth_token),
             s.active_session_id.take(),
@@ -323,16 +331,17 @@ fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>
             Arc::clone(&s.db),
             s.user_id.clone(),
             s.org_id.clone(),
-        )
+            s.plan_type.lock().unwrap().clone(),
+        );
+        res
     };
 
     *running.lock().unwrap() = false;
 
     // ── Mandatory STOP screenshot ─────────────────────────────────────────────
-    // Spawned in a background thread so the UI stop response isn't delayed.
-    // The session row still exists on the server at this point, so the
-    // screenshots table insert will succeed.
-    if let (Some(sid), Some(uid)) = (session_id.clone(), user_id.clone()) {
+    if (plan_type == "Premium" || plan_type == "Trial") && session_id.is_some() && user_id.is_some() {
+        let sid = session_id.clone().unwrap();
+        let uid = user_id.clone().unwrap();
         let app2      = app.clone();
         let cfg2      = cfg.clone();
         let auth2     = Arc::clone(&auth_arc);
@@ -377,7 +386,7 @@ fn resume_tracking(
     app: tauri::AppHandle,
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> TrackingResult {
-    let (cfg, session_id, counts, running, auth_arc, db_arc, user_id, org_id): (SupabaseConfig, Option<String>, Arc<tracker::TrackerCounts>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>, Option<String>, Option<String>) = {
+    let (cfg, session_id, counts, running, auth_arc, db_arc, user_id, org_id, plan_type): (SupabaseConfig, Option<String>, Arc<tracker::TrackerCounts>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>, Option<String>, Option<String>, String) = {
         let s = state.lock().unwrap();
         // Guard against duplicate loops
         if *s.tracking_running.lock().unwrap() {
@@ -387,7 +396,7 @@ fn resume_tracking(
                 error: None 
             };
         }
-        (
+        let res = (
             SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() },
             s.active_session_id.clone(),
             Arc::clone(&s.counts),
@@ -396,7 +405,9 @@ fn resume_tracking(
             Arc::clone(&s.db),
             s.user_id.clone(),
             s.org_id.clone(),
-        )
+            s.plan_type.lock().unwrap().clone(),
+        );
+        res
     };
 
     let sid: String = match session_id {
@@ -412,10 +423,12 @@ fn resume_tracking(
     tracker::start_sample_loop(
         app.clone(), Arc::clone(&counts), sid.clone(),
         cfg.clone(), Arc::clone(&running), 60_000, Arc::clone(&db_arc), Arc::clone(&auth_arc),
+        plan_type.clone(),
     );
     tracker::start_screenshot_loop(
         app.clone(), sid.clone(), cfg.clone(), Arc::clone(&running), 
-        Arc::clone(&auth_arc), org_id, user_id.unwrap_or_default()
+        Arc::clone(&auth_arc), org_id, user_id.unwrap_or_default(),
+        plan_type.clone(),
     );
     cache::start_sync_loop(cfg.clone(), Arc::clone(&auth_arc), Arc::clone(&running));
 

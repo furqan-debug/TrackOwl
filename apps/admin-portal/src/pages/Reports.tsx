@@ -580,12 +580,12 @@ export function Reports() {
             <div className="flex flex-col gap-8 pb-20">
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8 lg:gap-10">
-                    <StatMetric icon={<Clock className="w-4 h-4" />} label="Time" value={formatDuration(totalMins)} sub="Worked" accent="brown-gradient" />
-                    <StatMetric icon={<ActivityIcon className="w-4 h-4" />} label="Activity" value={`${avgActivity}%`} sub="Score" accent="brown-gradient" />
-                    <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Revenue" accent="brown-gradient" />
-                    <StatMetric icon={<Monitor className="w-4 h-4" />} label="Sessions" value={totalSessions.toString()} sub="Total" accent="brown-gradient" />
-                    <StatMetric icon={<Camera className="w-4 h-4" />} label="Captures" value={screenshotCount.toString()} sub="Proofs" accent="brown-gradient" />
-                    <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Expenses" accent="brown-gradient" />
+                    <StatMetric icon={<Clock className="w-4 h-4" />} label="Time" value={formatDuration(totalMins)} sub="Worked" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                    <StatMetric icon={<ActivityIcon className="w-4 h-4" />} label="Activity" value={`${avgActivity}%`} sub="Score" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                    <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Revenue" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                    <StatMetric icon={<Monitor className="w-4 h-4" />} label="Sessions" value={totalSessions.toString()} sub="Total" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                    <StatMetric icon={<Camera className="w-4 h-4" />} label="Captures" value={screenshotCount.toString()} sub="Proofs" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                    <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Expenses" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                 </div>
 
                 {loading ? (
@@ -602,7 +602,7 @@ export function Reports() {
                             <div className="lg:col-span-8">
                                 <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border p-8 h-full">
                                     <div className="flex items-center justify-between mb-8">
-                                        <h3 className="text-[11px] font-bold text-text-main ">Activity Trend</h3>
+                                        <h3 className="text-[14px] font-bold" style={{ color: 'var(--chart-gold)' }}>Activity Trend</h3>
                                         <TrendingUpIcon size={16} className="text-text-muted" />
                                     </div>
                                     <div className="h-[320px] w-full">
@@ -646,7 +646,7 @@ export function Reports() {
 
                             <div className="lg:col-span-4 space-y-8">
                                 <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border p-8 h-full">
-                                    <h3 className="text-[11px] font-bold text-text-main mb-8">Top Apps</h3>
+                                    <h3 className="text-[14px] font-bold mb-8" style={{ color: 'var(--chart-gold)' }}>Top Apps</h3>
                                     <div className="h-[180px] w-full relative mb-8">
                                         <ResponsiveContainer width="100%" height="100%">
                                             <PieChart>
@@ -690,7 +690,7 @@ export function Reports() {
 
                         <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border p-8">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="text-[11px] font-bold text-text-main ">Time Allocation</h3>
+                                <h3 className="text-[14px] font-bold" style={{ color: 'var(--chart-gold)' }}>Time Allocation</h3>
                                 <BarChart3 className="w-4 h-4 text-text-muted" />
                             </div>
                             <div className="h-[300px] w-full">
@@ -723,7 +723,7 @@ export function Reports() {
                         <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border overflow-hidden">
                             <div className="px-8 py-6 border-b border-border flex items-center justify-between bg-surface shrink-0">
                                 <div className="space-y-1">
-                                    <h3 className="text-[16px] font-bold text-text-main tracking-tight">Timesheet Matrix</h3>
+                                    <h3 className="text-[16px] font-bold tracking-tight" style={{ color: 'var(--chart-gold)' }}>Timesheet Matrix</h3>
                                     <p className="text-[10px] font-bold text-text-muted ">Weekly performance distribution</p>
                                 </div>
                                 <div className="flex items-center gap-4">
@@ -767,10 +767,10 @@ export function Reports() {
                                                     {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                                 </th>
                                             ))}
-                                            <th className="py-4 px-6 text-[10px] font-bold text-text-main border-b border-border text-right w-[100px] ">
+                                            <th className="py-4 px-6 text-[10px] font-bold border-b border-border text-right w-[100px]" style={{ color: 'var(--chart-gold)' }}>
                                                 Total
                                             </th>
-                                            <th className="py-4 px-6 text-[10px] font-bold text-text-main border-b border-border text-right w-[100px] ">
+                                            <th className="py-4 px-6 text-[10px] font-bold border-b border-border text-right w-[100px]" style={{ color: 'var(--chart-gold)' }}>
                                                 Score
                                             </th>
                                         </tr>
@@ -791,7 +791,7 @@ export function Reports() {
                                                         {row.dailyMins[date] ? formatDuration(row.dailyMins[date]) : <span className="text-text-muted">—</span>}
                                                     </td>
                                                 ))}
-                                                <td className="py-4 px-6 text-[12px] font-bold text-text-main text-right tabular-nums">
+                                                <td className="py-4 px-6 text-[12px] font-bold text-right tabular-nums" style={{ color: 'var(--chart-gold)' }}>
                                                     {formatDuration(row.totalMins)}
                                                 </td>
                                                 <td className="py-4 px-6 text-right">
@@ -813,18 +813,18 @@ export function Reports() {
                                             {tableData.dates.map(date => {
                                                 const dayTotal = tableData.rows.reduce((sum, r) => sum + (r.dailyMins[date] || 0), 0);
                                                 return (
-                                                    <td key={date} className="py-6 px-4 text-[12px] font-bold text-primary text-center tabular-nums">
+                                                    <td key={date} className="py-6 px-4 text-[12px] font-bold text-center tabular-nums" style={{ color: 'var(--chart-gold)' }}>
                                                         {dayTotal > 0 ? formatDuration(dayTotal) : <span className="text-text-muted">—</span>}
                                                     </td>
                                                 );
                                             })}
                                             <td className="py-6 px-6 text-right">
-                                                <span className="text-[13px] font-bold text-primary tabular-nums">
+                                                <span className="text-[13px] font-bold tabular-nums" style={{ color: 'var(--chart-gold)' }}>
                                                     {formatDuration(tableData.rows.reduce((sum, r) => sum + r.totalMins, 0))}
                                                 </span>
                                             </td>
                                             <td className="py-6 px-6 text-right">
-                                                <span className="text-[13px] font-bold text-primary tabular-nums">
+                                                <span className="text-[13px] font-bold tabular-nums" style={{ color: 'var(--chart-gold)' }}>
                                                     {tableData.rows.length > 0 ? Math.round(tableData.rows.reduce((sum, r) => sum + r.activityScore, 0) / tableData.rows.length) : 0}%
                                                 </span>
                                             </td>
@@ -849,7 +849,7 @@ function CustomTooltip({ active, payload, label, unit }: any) {
             <div className="p-4 bg-surface/90 backdrop-blur-md rounded-2xl shadow-2xl border border-border min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
                 <p className="text-[9px] font-black text-text-muted mb-3 pb-2 border-b border-slate-50">{label}</p>
                 <div className="flex items-center gap-4">
-                    <div className="w-2 h-2 rounded-full bg-primary ring-4 ring-primary/10 shadow-[0_0_12px_rgba(64,102,211,0.4)]" />
+                    <div className="w-2 h-2 rounded-full ring-4 ring-[var(--chart-gold)]/10 shadow-[0_0_12px_rgba(197,138,42,0.4)]" style={{ backgroundColor: 'var(--chart-gold)' }} />
                     <div className="flex items-baseline gap-2">
                         <span className="text-3xl font-black text-text-main tracking-tighter tabular-nums">
                             {payload[0].value}
@@ -912,8 +912,9 @@ function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any)
                         onClick={() => { setRange(r); setOffset(0); onCancel(); }}
                         className={clsx(
                             "w-full text-left px-4 py-2.5 rounded-xl text-[11px] font-black transition-all border",
-                            range === r ? "bg-surface border-border text-primary shadow-shell-sm" : "text-text-muted border-transparent hover:text-slate-900 hover:bg-surface-hover"
+                            range === r ? "bg-surface border-border shadow-shell-sm" : "text-text-muted border-transparent hover:text-slate-900 hover:bg-surface-hover"
                         )}
+                        style={range === r ? { color: 'var(--chart-gold)' } : {}}
                     >
                         {r}
                     </button>
@@ -955,14 +956,14 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
 
     return (
         <div className="flex-1 min-w-[300px]">
-            <div className="bg-primary p-4 rounded-xl flex items-center justify-between text-white mb-4">
+            <div className="p-4 rounded-xl flex items-center justify-between text-white mb-4" style={{ backgroundColor: 'var(--chart-gold)' }}>
                 <button onClick={onPrev} className="hover:bg-surface-hover/20 p-1 rounded-lg transition-colors"><ChevronLeft className="w-4 h-4" /></button>
                 <span className="text-[13px] font-black ">{monthName}</span>
                 <button onClick={onNext} className="hover:bg-surface-hover/20 p-1 rounded-lg transition-colors"><ChevronRight className="w-4 h-4" /></button>
             </div>
             <div className="grid grid-cols-7 gap-1 text-center">
                 {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
-                    <div key={d} className="py-2 text-[10px] font-black text-primary/60 ">{d}</div>
+                    <div key={d} className="py-2 text-[10px] font-black opacity-60" style={{ color: 'var(--chart-gold)' }}>{d}</div>
                 ))}
                 {days.map((d, i) => {
                     if (!d) return <div key={i} className="py-3" />;
@@ -975,10 +976,11 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
                             onClick={() => onDateClick(d)}
                             className={clsx(
                                 "py-3 text-[12px] font-medium transition-all rounded-lg relative z-10",
-                                selected ? "bg-primary text-white shadow-lg shadow-primary/30" :
-                                    inRange ? "bg-primary/5 text-primary" :
+                                selected ? "text-white shadow-lg shadow-[var(--chart-gold)]/30" :
+                                    inRange ? "bg-[var(--chart-gold)]/5" :
                                         "text-text-muted hover:bg-surface-hover"
                             )}
+                            style={selected ? { backgroundColor: 'var(--chart-gold)' } : inRange ? { color: 'var(--chart-gold)' } : {}}
                         >
                             {d.getDate()}
                         </button>

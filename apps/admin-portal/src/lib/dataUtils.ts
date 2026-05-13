@@ -524,3 +524,30 @@ export async function fetchAllActivitySamples(
     return allSamples;
 }
 
+/**
+ * Transforms raw activity samples into daily hour totals for chart visualization.
+ */
+export function getDailyActivityData(samples: any[], _weekStart: Date, _weekEnd: Date) {
+    const dailyMinutes: Record<string, number> = {};
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    
+    // Initialize all days of the week
+    days.forEach(day => {
+        dailyMinutes[day] = 0;
+    });
+
+    samples.forEach(s => {
+        const date = new Date(s.recorded_at);
+        // Adjust to get Mon=0...Sun=6
+        const dayIndex = (date.getDay() + 6) % 7; 
+        const dayName = days[dayIndex];
+        if (dayName) {
+            dailyMinutes[dayName] = (dailyMinutes[dayName] || 0) + 1;
+        }
+    });
+
+    return days.map(day => ({
+        name: day,
+        hours: Math.round((dailyMinutes[day] / 60) * 100) / 100 // Round to 2 decimal places to avoid dropping tiny blocks
+    }));
+}

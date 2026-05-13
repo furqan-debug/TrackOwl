@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Trophy, TrendingUp, AlertCircle, Clock, Activity, MousePointer2 } from 'lucide-react';
 
+import { DatePicker } from '../components/ui';
+
 interface MemberStats {
     id: string;
     name: string;
@@ -115,11 +117,10 @@ export function Highlights() {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <input
-                        type="date"
+                    <DatePicker 
                         value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-text-main shadow-shell-sm bg-surface hover:bg-surface-hover transition-colors"
+                        onChange={(val) => setSelectedDate(val)}
+                        className="min-w-[180px]"
                     />
                 </div>
             </div>

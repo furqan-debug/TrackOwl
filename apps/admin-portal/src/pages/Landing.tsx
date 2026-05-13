@@ -140,7 +140,7 @@ export function Landing() {
                             onClick={() => navigate('/signup')}
                             className="px-6 py-2.5 bg-primary text-white text-[11px] font-bold tracking-widest rounded-full shadow-glow-primary hover:brightness-110 active:scale-95 transition-all"
                         >
-                            Get Started Free
+                            Build Your Workspace
                         </button>
                     </div>
                 </nav>
@@ -159,7 +159,7 @@ export function Landing() {
                             className="max-w-5xl text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[0.95] mb-8"
                         >
                             Stop Losing <span className="text-primary italic">Billable</span> <br className="hidden md:block" />
-                            Hours with <span className="bg-gradient-to-r from-[#1F1A17] via-[#1F1A17] via-[50%] to-[#A47551] bg-clip-text text-transparent">TrackOwl</span>.
+                            Hours with <span className="text-shiny-gold">TrackOwl</span>.
                         </motion.h1>
 
                         <motion.p
@@ -176,7 +176,7 @@ export function Landing() {
                             transition={{ duration: 0.6, delay: 0.25 }}
                             className="text-[11px] font-bold tracking-[0.2em] text-[var(--text-muted)] uppercase mb-12"
                         >
-                            No credit card · Setup in 5 minutes · Cancel anytime
+                            No credit card required · Free to explore · Cancel anytime
                         </motion.div>
 
                         <motion.div
@@ -189,7 +189,7 @@ export function Landing() {
                                 onClick={() => navigate('/signup')}
                                 className="w-full sm:w-auto px-10 py-4 bg-primary text-white text-[13px] font-bold tracking-widest rounded-2xl shadow-glow-primary hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 group"
                             >
-                                Start 14-Day Free Trial
+                                Get Started Free
                                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
                             <button
@@ -742,8 +742,8 @@ export function Landing() {
                                     a: "Yes. The TrackOwl desktop app tracks time even without an internet connection. Once you're back online, it automatically syncs all recorded data to the cloud."
                                 },
                                 {
-                                    q: "What happens after the 14-day trial?",
-                                    a: "You'll have the option to subscribe to one of our plans. Your data will be preserved, so you can continue right where you left off. No credit card is required to start the trial."
+                                    q: "Can I explore the platform for free?",
+                                    a: "Yes! You can create your account and set up your workspace completely free of charge. You can explore all features and configure your projects. You only need to choose a plan when you're ready to invite team members."
                                 },
                                 {
                                     q: "Does it support multiple organizations?",

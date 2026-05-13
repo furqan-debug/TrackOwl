@@ -20,10 +20,15 @@
   --color-text-main: var(--text-main);
   --color-text-muted: var(--text-muted);
 
-  /* Typography - Poppins & DM Sans */
-  --font-sans: "DM Sans", sans-serif;
-  --font-heading: "Poppins", sans-serif;
-  --font-body: "DM Sans", sans-serif;
+  /* Status Colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  /* Typography - Outfit & Inter */
+  --font-sans: "Inter", sans-serif;
+  --font-heading: "Outfit", sans-serif;
+  --font-body: "Inter", sans-serif;
 
   /* Shadows & Radius - Refined Premium Curves */
   --radius-shell-sm: 6px;
@@ -37,52 +42,167 @@
   --shadow-soft: 0 4px 20px -2px rgba(71, 45, 31, 0.08);
 }
 
+/* all light colors defined here */
 @layer base {
   :root {
-    --bg-main: #FFFFFF;
-    --bg-surface: #FAF7F3;
-    --bg-surface-hover: #F0EAE4;
-    --text-main: #2B2B2B;
-    --text-secondary: #6B5B53;
-    --text-muted: #9A8F88;
-    --border-color: #E8DED6;
-    --border-hover: #D4A373;
-    --color-primary: #3B2A23;
-    --color-secondary: #5A3E34;
-    --color-accent: #D4A373;
-    --color-chart-main: #A47551;
-    --color-chart-highlight: #D4A373;
-    --color-chart-secondary: #5A3E34;
-    --color-chart-bg: #E8DED6;
-    --color-chart-4: #C08D5D;
-    --color-chart-5: #7A5840;
-    --sidebar-text: #6B5B53;
-    --sidebar-text-active: #3B2A23;
-    --color-sidebar-bg: var(--bg-main);
+    /* Brand Colors - High Luster Gold Palette */
+    --color-primary: #001B4D;
+    --primary: #001B4D;
+    --primary-hover: #002766;
+
+
+    /* SOPHISTICATED GOLD (Light Mode - Better Contrast) */
+    --accent: #B8860B;
+    --accent-hover: #A67809;
+    --accent-soft: #FDE047;
+    --gold-shiny: #C5A028;
+    --gold-light: #F5E6CA;
+    --gold-vibrant: #D4AF37;
+
+    /* Backgrounds */
+    --bg-main: #F8FAFC;
+    --bg-surface: #FFFFFF;
+    /*crads color*/
+    --bg-surface-hover: #F5F7FB;
+    --bg-menu-active: #0A2A6B;
+    --color-sidebar-bg: #001B4D;
+
+    /* Text */
+    --text-main: #001B4D;
+    --text-secondary: #64748B;
+    --text-muted: #94A3B8;
+    --text-gold: #B8860B;
+
+    /* Borders */
+    --border-color: #E2E8F0;
+    --border-soft: #EEF2F7;
+    --divider: #F1F5F9;
+    --border-input: #CBD5E1;
+    --border-btn-secondary: #D6DEE8;
+
+    /* Status */
+    --color-info: #3B82F6;
+    --color-info-soft: #DBEAFE;
+
+    /* Charts - Sophisticated Gold Palette */
+    --chart-gold: #001B4D;
+    --chart-gold-secondary: #f1bc34;
+    --chart-gold-light: #D4AF37;
+    --chart-gold-soft: #EAB308;
+    --chart-gold-muted: #D9B36A;
+    --chart-blue: #0f3796;
+    --chart-grey: #f0f0f3;
+    --chart-pie-primary: var(--chart-gold); /* Slice 1: gold in light, grey in dark */
+
+
+    --color-chart-main: var(--chart-gold);
+    --color-chart-highlight: var(--chart-gold-light);
+    --color-chart-secondary: var(--chart-gold-secondary);
+    --color-chart-4: var(--chart-gold-soft);
+    --color-chart-5: var(--chart-gold-muted);
+
+    /* Gradients - Theme Aware */
+    --gradient-sidebar: linear-gradient(180deg, #00153D 0%, #002B73 100%);
+    --gradient-gold-card: linear-gradient(135deg, #F5E6CA 0%, #D4AF37 100%);
+    --gradient-navy-btn: linear-gradient(135deg, #001B4D 0%, #002766 100%);
+    --gradient-gold-btn: linear-gradient(135deg, #B8860B 0%, #D4AF37 100%);
+
+    --sidebar-text: rgba(255, 255, 255, 0.7);
+    --sidebar-text-active: #D4AF37;
     font-family: var(--font-sans);
   }
 
+  /* all dark colors defined here */
   .dark {
-    --bg-main: #0A0A0A;
-    --bg-surface: #1F1A17;
-    --bg-surface-hover: rgba(245, 230, 202, 0.05);
-    --text-main: #FAFAFA;
-    --text-secondary: rgba(250, 250, 250, 0.8);
-    --text-muted: rgba(250, 250, 250, 0.6);
-    --border-color: rgba(212, 175, 55, 0.15);
-    --border-hover: rgba(212, 175, 55, 0.3);
-    --color-primary: #D4AF37;
-    --color-secondary: #1F1A17;
-    --color-accent: #D4AF37;
-    --color-chart-main: #D4AF37;
-    --color-chart-highlight: #F5E6CA;
-    --color-chart-secondary: #1F1A17;
-    --color-chart-bg: #2A2420;
-    --color-chart-4: #E5C158;
-    --color-chart-5: #A38522;
-    --sidebar-text: rgba(250, 250, 250, 0.6);
-    --sidebar-text-active: #D4AF37;
-    --color-sidebar-bg: #14100E;
+    --bg-main: #020617;
+    --bg-surface: #0F172A;
+    --bg-surface-hover: rgba(255, 255, 255, 0.08);
+    --bg-menu-active: #0A2A6B;
+    --text-main: #F8FAFC;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    --border-color: rgba(255, 255, 255, 0.15);
+    --border-soft: rgba(255, 255, 255, 0.1);
+    --border-hover: rgba(255, 255, 255, 0.3);
+
+    /* VIBRANT GOLD (Dark Mode - Maximum Shine) */
+    --accent: #FFD700;
+    --text-gold: #FFD700;
+    --gradient-gold-btn: linear-gradient(135deg, #FFD700 0%, #D4AF37 50%, #FFD700 100%);
+    --sidebar-text-active: #FFD700;
+
+    /* Primary Overrides */
+    --color-primary: #FFD700;
+    --primary: #FFD700;
+    --primary-hover: #FDE047;
+
+    /* Chart Overrides */
+    --chart-gold: #FFD700;
+    --chart-gold-secondary: #D4AF37;
+    --chart-gold-light: #FDE047;
+    --chart-gold-soft: #EAB308;
+    --chart-gold-muted: #D9B36A;
+    --chart-pie-primary: #f0f0f3; /* Dark mode: grey instead of gold for pie slice 1 */
+  }
+
+  /* Safe Dark Mode Overrides for Hardcoded Light Classes */
+  .dark .border-slate-50 {
+    border-color: var(--border-soft) !important;
+  }
+
+  .dark .divide-slate-50> :not([hidden])~ :not([hidden]) {
+    border-color: var(--border-soft) !important;
+  }
+
+  /* Ensure text on gold (primary) backgrounds in dark mode is navy blue instead of white for readability */
+  .dark .bg-primary.text-white,
+  .dark .hover\:bg-primary.hover\:text-white:hover,
+  .dark .group:hover .group-hover\:bg-primary.group-hover\:text-white {
+    color: #001B4D !important;
+  }
+
+  /* StatMetric Label Colors (Handled manually to avoid Tailwind OS preference bugs) */
+  .stat-label {
+    color: var(--text-secondary);
+  }
+
+  .stat-sublabel {
+    color: var(--text-muted);
+    opacity: 0.9;
+  }
+
+  .dark .stat-label {
+    color: #E2E8F0;
+  }
+
+  .dark .stat-sublabel {
+    color: #CBD5E1;
+    opacity: 1;
+  }
+
+  /* Remove gold gradient & glow from stat cards in dark mode */
+  .dark .glass-panel.bg-gradient-to-br {
+    background: var(--bg-surface) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  .dark .glass-panel .blur-\[50px\] {
+    opacity: 0 !important;
+  }
+
+  /* Shiny Gold Text Utility - Theme Aware */
+  .text-shiny-gold {
+    background: linear-gradient(135deg, #B8860B 0%, #D4AF37 50%, #B8860B 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    display: inline-block;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+  }
+
+  .dark .text-shiny-gold {
+    background: linear-gradient(135deg, #FFD700 0%, #FFF9C4 25%, #D4AF37 50%, #FFF9C4 75%, #FFD700 100%);
+    filter: drop-shadow(0 0 12px rgba(255, 215, 0, 0.3));
   }
 
   body {
@@ -91,7 +211,7 @@
   }
 
   .heading-gradient {
-    background: linear-gradient(to right, #3B2A23, #A47551);
+    background: linear-gradient(to right, #001B4D, #001B4D);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -113,6 +233,12 @@
     -webkit-text-fill-color: initial;
     color: var(--text-main);
     font-family: var(--font-heading);
+  }
+
+  /* Fix Dark Mode Legibility for Primary Text */
+  .dark .group:hover .group-hover\:text-primary,
+  .dark .hover\:text-primary:hover {
+    color: var(--text-main) !important;
   }
 
   h1,
@@ -140,29 +266,47 @@
 
   /* Premium Utilities */
   .card-premium {
-    @apply bg-[var(--bg-surface)] rounded-shell-lg border border-[var(--border-color)] shadow-soft transition-all duration-300;
+    @apply bg-[var(--bg-surface)] rounded-shell-lg border border-[var(--border-color)] shadow-soft transition-all duration-500 hover:shadow-premium hover:-translate-y-1;
   }
 
   .btn-primary {
-    @apply bg-primary hover:brightness-110 text-base-white px-5 py-2.5 rounded-shell-md font-medium transition-all duration-200 shadow-md active:scale-95;
+    background: var(--gradient-navy-btn);
+    @apply hover:brightness-110 text-white px-5 py-2.5 rounded-shell-md font-medium transition-all duration-200 shadow-md active:scale-95;
+  }
+
+  .btn-gold {
+    background: var(--gradient-gold-btn);
+    @apply hover:brightness-110 text-[#001B4D] px-5 py-2.5 rounded-shell-md font-bold transition-all duration-200 shadow-md active:scale-95;
   }
 
   .btn-ghost {
-    @apply hover:bg-primary/10 text-primary px-4 py-2 rounded-shell-md font-medium transition-all duration-200;
+    @apply hover:bg-primary/5 text-primary px-4 py-2 rounded-shell-md font-medium transition-all duration-200;
   }
 
   .glass-panel {
-    background: rgba(245, 230, 202, 0.5);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(164, 117, 81, 0.2);
-    box-shadow: 0 8px 32px 0 rgba(71, 45, 31, 0.05);
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(226, 232, 240, 0.3);
+    box-shadow: 0 8px 32px 0 rgba(0, 27, 77, 0.05);
   }
 
   .dark .glass-panel {
-    background: rgba(31, 26, 23, 0.6);
-    border-color: rgba(212, 175, 55, 0.1);
+    background: rgba(15, 23, 42, 0.8);
+    border-color: rgba(255, 255, 255, 0.05);
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  /* Dropdown Styling */
+  select option {
+    background-color: var(--bg-surface);
+    color: var(--text-main);
+  }
+
+  .dark select option {
+    background-color: #1F1A17;
+    /* Explicitly use bg-surface for dark mode */
+    color: #FAFAFA;
   }
 }
 

@@ -13,7 +13,8 @@ import {
     Card, 
     PageLayout, 
     LoadingState,
-    StatusBadge
+    StatusBadge,
+    DatePicker
 } from '../components/ui';
 import { SecureImage } from '../components/ui/SecureImage';
 import clsx from 'clsx';
@@ -201,7 +202,7 @@ export function MemberFormPage() {
                             onClick={() => setActiveTab(tab)}
                             className={clsx(
                                 "px-6 py-2.5 text-[10px] font-bold rounded-xl transition-all whitespace-nowrap",
-                                activeTab === tab ? "bg-surface text-primary shadow-shell-sm" : "text-text-muted hover:text-text-primary"
+                                activeTab === tab ? "bg-surface text-[var(--chart-gold)] shadow-shell-sm" : "text-text-muted hover:text-text-primary"
                             )}
                         >
                             {tab}
@@ -644,22 +645,33 @@ function FormField({ label, value, onChange, type = 'text', icon, placeholder }:
         <div className="space-y-2 group">
             <label className="text-[10px] font-bold text-text-muted ml-1 transition-colors group-focus-within:text-primary">{label}</label>
             <div className="relative">
-                {icon && (
-                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors">
-                        {icon}
-                    </div>
+                {type === 'date' ? (
+                    <DatePicker 
+                        value={value}
+                        onChange={onChange}
+                        className="w-full"
+                    />
+                ) : (
+                    <>
+                        {icon && (
+                            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors">
+                                {icon}
+                            </div>
+                        )}
+                        <input
+                            type={type}
+                            value={value || ''}
+                            onChange={e => onChange(e.target.value)}
+                            placeholder={placeholder}
+                            className={clsx(
+                                "w-full py-4 bg-surface-subtle border border-border rounded-2xl text-sm font-bold text-text-primary outline-none focus:border-primary transition-all placeholder:opacity-40",
+                                icon ? "pl-14 pr-6" : "px-6"
+                            )}
+                        />
+                    </>
                 )}
-                <input
-                    type={type}
-                    value={value || ''}
-                    onChange={e => onChange(e.target.value)}
-                    placeholder={placeholder}
-                    className={clsx(
-                        "w-full py-4 bg-surface-subtle border border-border rounded-2xl text-sm font-bold text-text-primary outline-none focus:border-primary transition-all placeholder:opacity-40",
-                        icon ? "pl-14 pr-6" : "px-6"
-                    )}
-                />
             </div>
         </div>
     );
 }
+

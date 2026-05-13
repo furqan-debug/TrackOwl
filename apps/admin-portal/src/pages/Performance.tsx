@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Clock, Activity, MousePointer2, Keyboard, Search, ArrowUpDown, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { fetchAllActivitySamples, calculateActivityScore } from '../lib/dataUtils';
+import { DatePicker } from '../components/ui';
 
 interface MemberPerformance {
     id: string;
@@ -209,11 +210,10 @@ export function Performance() {
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <input
-                        type="date"
+                    <DatePicker 
                         value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-text-main shadow-shell-sm bg-surface hover:bg-surface-hover transition-colors"
+                        onChange={(val) => setSelectedDate(val)}
+                        className="min-w-[180px]"
                     />
                 </div>
             </div>
