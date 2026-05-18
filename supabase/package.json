@@ -19,6 +19,7 @@
     "express": "^5.2.1",
     "pg": "^8.20.0",
     "resend": "^6.9.3",
+    "stripe": "^22.1.1",
     "uuid": "^11.1.0"
   },
   "devDependencies": {

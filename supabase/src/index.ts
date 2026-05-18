@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { Resend } from 'resend';
+import Stripe from 'stripe';
 
 dotenv.config();
 
@@ -35,6 +36,99 @@ app.use(cors({
     },
     credentials: true,
 }));
+// Initialize Stripe
+const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || '';
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
+const stripe = STRIPE_SECRET_KEY ? new Stripe(STRIPE_SECRET_KEY, { apiVersion: '2026-04-22.dahlia' }) : null;
+
+if (!stripe) {
+    console.warn('⚠️  STRIPE_SECRET_KEY is not set. Billing endpoints will return 501 Not Implemented.');
+}
+
+// ── STRIPE WEBHOOK (Must be registered BEFORE express.json() to get raw request body) ──
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    if (!stripe || !STRIPE_WEBHOOK_SECRET) {
+        console.error('🚨 Webhook failed: Stripe or Webhook Secret is not configured.');
+        return res.status(501).json({ error: 'Stripe integration is not configured' });
+    }
+
+    const sig = req.headers['stripe-signature'];
+    if (!sig) {
+        return res.status(400).json({ error: 'Missing stripe-signature header' });
+    }
+
+    let event: Stripe.Event;
+
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig as string, STRIPE_WEBHOOK_SECRET);
+    } catch (err: any) {
+        console.error(`🚨 Webhook Signature verification failed: ${err.message}`);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    console.log(`🔔 Stripe Webhook Received Event: ${event.type}`);
+
+    try {
+        const db = getDb();
+
+        if (
+            event.type === 'customer.subscription.created' ||
+            event.type === 'customer.subscription.updated' ||
+            event.type === 'customer.subscription.deleted'
+        ) {
+            const subscription = event.data.object as Stripe.Subscription;
+            const stripeCustomerId = subscription.customer as string;
+            const status = subscription.status;
+            
+            // Get active quantity (seats count)
+            const seats = subscription.items.data[0]?.quantity || 1;
+            
+            // Map plan type from Stripe Price ID
+            const priceId = subscription.items.data[0]?.price.id;
+            const isPremiumPrice = 
+                priceId === process.env.STRIPE_PRICE_PREMIUM_MONTHLY || 
+                priceId === process.env.STRIPE_PRICE_PREMIUM_YEARLY;
+            
+            const planType = isPremiumPrice ? 'Premium' : 'Basic';
+            
+            // Map subscription status
+            let subscriptionStatus: 'None' | 'Trial' | 'Active' | 'Locked' | 'Past Due' = 'None';
+            if (status === 'active') {
+                subscriptionStatus = 'Active';
+            } else if (status === 'trialing') {
+                subscriptionStatus = 'Trial';
+            } else if (status === 'past_due' || status === 'unpaid') {
+                subscriptionStatus = 'Past Due';
+            } else if (status === 'incomplete_expired' || status === 'canceled') {
+                subscriptionStatus = 'None';
+            }
+
+            // Update database using stripeCustomerId to match organization
+            const { data: updatedOrg, error: orgUpdateError } = await db
+                .from('organizations')
+                .update({
+                    plan_type: planType,
+                    subscription_status: subscriptionStatus,
+                    seats_purchased: seats,
+                    stripe_subscription_id: subscription.id,
+                })
+                .eq('stripe_customer_id', stripeCustomerId)
+                .select();
+
+            if (orgUpdateError) {
+                console.error(`🚨 Webhook database update error for Customer ${stripeCustomerId}:`, orgUpdateError);
+            } else {
+                console.log(`` + '\u001b' + `[32m[Webhook] Subscription synchronized for Customer ${stripeCustomerId}: ${planType} plan, ${seats} seat(s) [Status: ${subscriptionStatus}]` + '\u001b' + `[0m`);
+            }
+        }
+        
+        res.json({ received: true });
+    } catch (err: any) {
+        console.error('🚨 Webhook handler execution error:', err);
+        res.status(500).json({ error: 'Internal webhook processor error' });
+    }
+});
+
 app.use(express.json({ limit: '50mb' })); // Large limit for base64 screenshot payloads
 
 // Initialize Supabase client lazily (won't crash if env vars are missing at startup)
@@ -1425,6 +1519,271 @@ app.put('/api/teams/:id/members', requireAuth, async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
+
+/**
+ * POST /api/billing/create-checkout-session
+ * Body: { planType, billingCycle, seatsCount }
+ * Returns: { url }
+ */
+app.post('/api/billing/create-checkout-session', requireAuth, async (req, res) => {
+    try {
+        const orgId = (req as any).organizationId;
+        const authUser = (req as any).authUser;
+        const role = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(400).json({ error: 'User does not belong to an organization' });
+        }
+
+        if (role !== 'Admin') {
+            return res.status(403).json({ error: 'Only administrators can manage billing.' });
+        }
+
+        const { billingCycle = 'Monthly', seatsCount = 5 } = req.body;
+
+        // Offline Simulator Fallback when Stripe keys are not configured
+        if (!stripe) {
+            const adminPortalUrl = process.env.ADMIN_PORTAL_URL || 'http://localhost:5174';
+            return res.json({
+                url: `${adminPortalUrl}/dashboard/pricing/mock-checkout?billingCycle=${billingCycle}&seatsCount=${seatsCount}`
+            });
+        }
+
+        const db = getDb();
+        // 1. Fetch organization details
+        const { data: org, error: orgError } = await db
+            .from('organizations')
+            .select('*')
+            .eq('id', orgId)
+            .single();
+
+        if (orgError || !org) {
+            return res.status(404).json({ error: 'Organization not found' });
+        }
+
+        let stripeCustomerId = org.stripe_customer_id;
+
+        // 2. Create customer if not exists
+        if (!stripeCustomerId) {
+            const customer = await stripe.customers.create({
+                email: authUser.email,
+                name: org.name,
+                metadata: {
+                    organization_id: orgId
+                }
+            });
+            stripeCustomerId = customer.id;
+
+            // Save stripe_customer_id in organization
+            await db
+                .from('organizations')
+                .update({ stripe_customer_id: stripeCustomerId })
+                .eq('id', orgId);
+        }
+
+        // 3. Determine Price ID
+        const priceId = billingCycle === 'Yearly'
+            ? process.env.STRIPE_PRICE_PREMIUM_YEARLY
+            : process.env.STRIPE_PRICE_PREMIUM_MONTHLY;
+
+        if (!priceId) {
+            return res.status(500).json({ error: 'Stripe Price ID is not configured in backend environment.' });
+        }
+
+        // 4. Create Checkout Session
+        const adminPortalUrl = process.env.ADMIN_PORTAL_URL || 'http://localhost:5174';
+        const session = await stripe.checkout.sessions.create({
+            customer: stripeCustomerId,
+            payment_method_types: ['card'],
+            line_items: [
+                {
+                    price: priceId,
+                    quantity: seatsCount,
+                },
+            ],
+            mode: 'subscription',
+            success_url: `${adminPortalUrl}/dashboard/settings/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${adminPortalUrl}/dashboard/settings/billing?success=false`,
+            subscription_data: {
+                metadata: {
+                    organization_id: orgId,
+                },
+            },
+        });
+
+        res.json({ url: session.url });
+    } catch (e: any) {
+        console.error('🚨 Error creating checkout session:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/**
+ * POST /api/billing/create-portal-session
+ * Returns: { url }
+ */
+app.post('/api/billing/create-portal-session', requireAuth, async (req, res) => {
+    try {
+        const orgId = (req as any).organizationId;
+        const role = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(400).json({ error: 'User does not belong to an organization' });
+        }
+
+        if (role !== 'Admin') {
+            return res.status(403).json({ error: 'Only administrators can manage billing.' });
+        }
+
+        // Offline Simulator Fallback when Stripe keys are not configured
+        if (!stripe) {
+            const adminPortalUrl = process.env.ADMIN_PORTAL_URL || 'http://localhost:5174';
+            return res.json({
+                url: `${adminPortalUrl}/dashboard/settings/billing?mock_portal=true`
+            });
+        }
+
+        const db = getDb();
+        const { data: org, error: orgError } = await db
+            .from('organizations')
+            .select('stripe_customer_id')
+            .eq('id', orgId)
+            .single();
+
+        if (orgError || !org) {
+            return res.status(404).json({ error: 'Organization not found' });
+        }
+
+        if (!org.stripe_customer_id) {
+            return res.status(400).json({ error: 'This organization does not have an active Stripe customer profile.' });
+        }
+
+        const adminPortalUrl = process.env.ADMIN_PORTAL_URL || 'http://localhost:5174';
+        const session = await stripe.billingPortal.sessions.create({
+            customer: org.stripe_customer_id,
+            return_url: `${adminPortalUrl}/dashboard/settings/billing`,
+        });
+
+        res.json({ url: session.url });
+    } catch (e: any) {
+        console.error('🚨 Error creating billing portal session:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/**
+ * POST /api/billing/mock-success
+ * Body: { planType, billingCycle, seatsCount }
+ * Returns: { success: true }
+ */
+app.post('/api/billing/mock-success', requireAuth, async (req, res) => {
+    try {
+        const orgId = (req as any).organizationId;
+        const role = (req as any).memberRole;
+        const { planType = 'Premium', billingCycle = 'Monthly', seatsCount = 5 } = req.body;
+
+        if (!orgId) {
+            return res.status(400).json({ error: 'User does not belong to an organization' });
+        }
+
+        if (role !== 'Admin') {
+            return res.status(403).json({ error: 'Only administrators can manage billing.' });
+        }
+
+        const db = getDb();
+        
+        // Try updating all fields (assuming stripe columns exist in database)
+        const { error } = await db
+            .from('organizations')
+            .update({
+                plan_type: planType,
+                subscription_status: 'Active',
+                subscription_period: billingCycle,
+                seats_purchased: seatsCount,
+                stripe_customer_id: 'cus_mock_' + uuidv4().substring(0, 8),
+                stripe_subscription_id: 'sub_mock_' + uuidv4().substring(0, 8),
+            })
+            .eq('id', orgId);
+
+        if (error) {
+            console.warn('⚠️ Standard mock update failed (likely missing stripe database columns). Falling back to base plan columns...', error.message);
+            
+            // Graceful fallback: Update guaranteed plan fields only
+            const { error: fallbackError } = await db
+                .from('organizations')
+                .update({
+                    plan_type: planType,
+                    subscription_status: 'Active',
+                    seats_purchased: seatsCount
+                })
+                .eq('id', orgId);
+
+            if (fallbackError) throw fallbackError;
+        }
+
+        res.json({ success: true });
+    } catch (e: any) {
+        console.error('🚨 Error simulating mock billing success:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+/**
+ * POST /api/billing/mock-downgrade
+ * Body: {}
+ * Returns: { success: true }
+ */
+app.post('/api/billing/mock-downgrade', requireAuth, async (req, res) => {
+    try {
+        const orgId = (req as any).organizationId;
+        const role = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(400).json({ error: 'User does not belong to an organization' });
+        }
+
+        if (role !== 'Admin') {
+            return res.status(403).json({ error: 'Only administrators can manage billing.' });
+        }
+
+        const db = getDb();
+        
+        // Try resetting all fields
+        const { error } = await db
+            .from('organizations')
+            .update({
+                plan_type: 'Basic',
+                subscription_status: 'None',
+                subscription_period: 'Monthly',
+                seats_purchased: 5,
+                stripe_customer_id: null,
+                stripe_subscription_id: null,
+            })
+            .eq('id', orgId);
+
+        if (error) {
+            console.warn('⚠️ Standard mock downgrade failed. Falling back to base plan columns...', error.message);
+            
+            // Graceful fallback
+            const { error: fallbackError } = await db
+                .from('organizations')
+                .update({
+                    plan_type: 'Basic',
+                    subscription_status: 'None',
+                    seats_purchased: 5
+                })
+                .eq('id', orgId);
+
+            if (fallbackError) throw fallbackError;
+        }
+
+        res.json({ success: true });
+    } catch (e: any) {
+        console.error('🚨 Error simulating mock billing downgrade:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 
 // Only listen locally. Vercel will use the exported app automatically.
 if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {

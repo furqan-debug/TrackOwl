@@ -58,7 +58,7 @@ export const navStructure: NavGroup[] = [
         name: 'Reports',
         icon: FileText,
         path: '/dashboard/reports',
-        requiresPremium: true
+        requiresPremium: true,
     },
     {
         name: 'People',

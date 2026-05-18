@@ -206,7 +206,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                                 <div className="flex items-center gap-2">
                                                     <span className="tracking-tight">{group.name}</span>
                                                     {group.requiresPremium && !isPremium && (
-                                                        <Lock className="w-3 h-3 text-[#DC2626] opacity-60" />
+                                                        <Lock className="w-3.5 h-3.5 text-accent animate-pulse" />
                                                     )}
                                                 </div>
                                             )}
@@ -235,7 +235,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                                 <div className="flex items-center gap-2">
                                                     <span className="tracking-tight text-[14px]">{group.name}</span>
                                                     {group.requiresPremium && !isPremium && (
-                                                        <Lock className="w-3 h-3 text-[#DC2626] opacity-60" />
+                                                        <Lock className="w-3.5 h-3.5 text-accent animate-pulse" />
                                                     )}
                                                 </div>
                                             )}
@@ -270,7 +270,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                                     <div className="flex items-center gap-2">
                                                         <span className="truncate tracking-tight font-bold text-[13px]">{child.name}</span>
                                                         {child.requiresPremium && !isPremium && (
-                                                            <Lock className="w-3 h-3 text-[#DC2626] opacity-60" />
+                                                            <Lock className="w-3 h-3 text-accent/80" />
                                                         )}
                                                     </div>
                                                     <div className="flex items-center gap-2 shrink-0">
