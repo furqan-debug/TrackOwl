@@ -12,17 +12,22 @@ import {
     Minus,
     ChevronRight,
     ExternalLink,
-    Crown
+    Crown,
+    Info
 } from 'lucide-react';
 import { PageLayout, Card, StatusBadge, LoadingState } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 export function Billing() {
-    const { organization, refreshProfile } = useAuth();
+    const { organization, refreshProfile, session } = useAuth();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const [showMockPortalNotice, setShowMockPortalNotice] = useState(searchParams.get('mock_portal') === 'true');
     const [memberCount, setMemberCount] = useState(0);
     const [seatsToPurchase, setSeatsToPurchase] = useState(organization?.seats_purchased || 5);
     const [saving, setSaving] = useState(false);
@@ -42,8 +47,47 @@ export function Billing() {
         setMemberCount(count || 0);
     }
 
+    const handleManageBilling = async () => {
+        if (!organization?.stripe_customer_id) {
+            navigate('/dashboard/pricing');
+            return;
+        }
+        setSaving(true);
+        try {
+            const res = await fetch(`${API}/api/billing/create-portal-session`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session?.access_token}`
+                }
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to create billing portal session');
+            }
+
+            const data = await res.json();
+            if (data.url) {
+                window.location.href = data.url;
+            }
+        } catch (err: any) {
+            console.error('Error starting Stripe portal:', err);
+            alert(err.message || 'Failed to open billing settings.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleUpdateSeats = async () => {
         if (!organization?.id) return;
+        
+        // If Stripe customer exists, manage seats in Stripe Billing Portal
+        if (organization.stripe_customer_id) {
+            await handleManageBilling();
+            return;
+        }
+
         setSaving(true);
         try {
             const { error } = await supabase
@@ -70,6 +114,64 @@ export function Billing() {
             description="Manage your plan, seat usage, and payment methods."
             maxWidth="6xl"
         >
+            {/* Mock Billing Portal Redirect Notice */}
+            {showMockPortalNotice && (
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-[24px] p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden backdrop-blur-md">
+                    <div className="flex items-center gap-3 relative z-10">
+                        <CheckCircle2 className="w-6 h-6 text-blue-400 shrink-0" />
+                        <div>
+                            <h4 className="text-sm font-bold text-white">Stripe Portal Simulation Authorized</h4>
+                            <p className="text-xs text-text-muted">You clicked "Manage Subscription". Since Stripe is offline, the sandbox simulated customer portal access successfully.</p>
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => setShowMockPortalNotice(false)}
+                        className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/35 border border-blue-500/30 text-blue-300 text-xs font-bold rounded-xl transition-all relative z-10"
+                    >
+                        Dismiss
+                    </button>
+                </div>
+            )}
+
+            {/* Developer Sandbox Plan Sync / Downgrade controls */}
+            {(organization.stripe_customer_id?.startsWith('cus_mock_') || (organization.plan_type === 'Premium' && !organization.stripe_customer_id)) && (
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-[24px] p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden backdrop-blur-md">
+                    <div className="flex items-center gap-3 relative z-10">
+                        <Info className="w-6 h-6 text-amber-400 shrink-0 animate-pulse" />
+                        <div>
+                            <h4 className="text-sm font-bold text-white">Developer Simulation Mode Active</h4>
+                            <p className="text-xs text-text-muted">TrackOwl is running in Sandbox Offline Billing. No real subscription charges or credit cards are involved.</p>
+                        </div>
+                    </div>
+                    <button 
+                        disabled={saving}
+                        onClick={async () => {
+                            setSaving(true);
+                            try {
+                                const res = await fetch(`${API}/api/billing/mock-downgrade`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${session?.access_token}`
+                                    }
+                                });
+                                if (!res.ok) throw new Error('Downgrade failed');
+                                await refreshProfile();
+                                alert('Sandbox subscription reset back to Basic successfully!');
+                                window.location.reload();
+                            } catch (err) {
+                                alert('Failed to reset sandbox billing.');
+                            } finally {
+                                setSaving(false);
+                            }
+                        }}
+                        className="px-4 py-2 bg-rose-500/20 hover:bg-rose-500/35 border border-rose-500/30 text-rose-300 text-xs font-bold rounded-xl transition-all relative z-10 disabled:opacity-50"
+                    >
+                        {saving ? 'Resetting Sandbox...' : 'Reset to Basic Plan (Downgrade)'}
+                    </button>
+                </div>
+            )}
+
             <div className="grid gap-8 lg:grid-cols-12 pb-20">
                 {/* Left Column: Current Status */}
                 <div className="lg:col-span-8 space-y-8">
@@ -96,14 +198,30 @@ export function Billing() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
+                                    {organization.stripe_customer_id ? (
+                                        <button
+                                            onClick={handleManageBilling}
+                                            disabled={saving}
+                                            className="px-6 h-12 bg-primary text-white rounded-xl text-[11px] font-bold shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"
+                                        >
+                                            <Crown className="w-4 h-4" />
+                                            {saving ? 'Loading...' : 'Manage Subscription'}
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => navigate('/dashboard/pricing')}
+                                            className="px-6 h-12 bg-primary text-white rounded-xl text-[11px] font-bold shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"
+                                        >
+                                            <ArrowUpCircle className="w-4 h-4" />
+                                            Upgrade Plan
+                                        </button>
+                                    )}
                                     <button
-                                        onClick={() => navigate('/dashboard/pricing')}
-                                        className="px-6 h-12 bg-primary text-white rounded-xl text-[11px] font-bold shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"
+                                        onClick={handleManageBilling}
+                                        disabled={saving || !organization.stripe_customer_id}
+                                        title={organization.stripe_customer_id ? "Manage in Stripe" : "Stripe account not configured yet"}
+                                        className="p-3 bg-surface border border-border rounded-xl text-text-muted hover:text-primary hover:border-primary/30 transition-all shadow-shell-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <ArrowUpCircle className="w-4 h-4" />
-                                        Upgrade Plan
-                                    </button>
-                                    <button className="p-3 bg-surface border border-border rounded-xl text-text-muted hover:text-primary hover:border-primary/30 transition-all shadow-shell-sm">
                                         <ExternalLink className="w-5 h-5" />
                                     </button>
                                 </div>
@@ -232,22 +350,51 @@ export function Billing() {
                     {/* Payment Method */}
                     <Card className="p-8 border border-border rounded-[32px] shadow-shell-sm">
                         <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-text-muted mb-6">Payment Method</h4>
-                        <div className="p-6 bg-main rounded-[24px] border border-border flex items-center gap-4 mb-6 relative group cursor-pointer overflow-hidden">
-                            {/* Decorative Sparkle */}
-                            <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 blur-xl group-hover:bg-primary/20 transition-colors" />
+                        {organization.stripe_customer_id ? (
+                            <>
+                                <div 
+                                    onClick={handleManageBilling}
+                                    className="p-6 bg-main rounded-[24px] border border-border flex items-center gap-4 mb-6 relative group cursor-pointer overflow-hidden"
+                                >
+                                    {/* Decorative Sparkle */}
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 blur-xl group-hover:bg-primary/20 transition-colors" />
 
-                            <div className="w-12 h-10 bg-surface border border-border rounded-lg flex items-center justify-center text-text-main shadow-shell-sm">
-                                <CreditCard className="w-6 h-6" />
-                            </div>
-                            <div className="flex-1">
-                                <p className="text-[13px] font-black text-text-main">Visa ending in 4242</p>
-                                <p className="text-[11px] font-medium text-text-muted">Expires 12/28</p>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-text-muted" />
-                        </div>
-                        <button className="w-full h-12 bg-main border border-border text-[11px] font-bold text-text-main rounded-xl hover:bg-surface-hover transition-all">
-                            Update Payment Method
-                        </button>
+                                    <div className="w-12 h-10 bg-surface border border-border rounded-lg flex items-center justify-center text-text-main shadow-shell-sm">
+                                        <CreditCard className="w-6 h-6" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-[13px] font-black text-text-main">Stripe Payment</p>
+                                        <p className="text-[11px] font-medium text-text-muted">Managed via secure portal</p>
+                                    </div>
+                                    <ChevronRight className="w-4 h-4 text-text-muted" />
+                                </div>
+                                <button
+                                    onClick={handleManageBilling}
+                                    disabled={saving}
+                                    className="w-full h-12 bg-main border border-border text-[11px] font-bold text-text-main rounded-xl hover:bg-surface-hover transition-all"
+                                >
+                                    {saving ? 'Loading...' : 'Update Payment Method'}
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <div className="p-6 bg-main rounded-[24px] border border-border flex items-center gap-4 mb-6 relative overflow-hidden opacity-60">
+                                    <div className="w-12 h-10 bg-surface border border-border rounded-lg flex items-center justify-center text-text-muted shadow-shell-sm">
+                                        <CreditCard className="w-6 h-6" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-[13px] font-black text-text-muted">No card on file</p>
+                                        <p className="text-[11px] font-medium text-text-muted">Freemium Plan</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => navigate('/dashboard/pricing')}
+                                    className="w-full h-12 bg-primary text-white text-[11px] font-black uppercase tracking-widest rounded-xl shadow-glow-primary hover:brightness-110 transition-all"
+                                >
+                                    Add Payment Method
+                                </button>
+                            </>
+                        )}
                     </Card>
 
                     {/* Features Comparison Mini */}

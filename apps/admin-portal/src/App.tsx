@@ -35,6 +35,7 @@ import { ProjectFormPage } from './pages/ProjectFormPage';
 import { MemberFormPage } from './pages/MemberFormPage';
 import { Billing } from './pages/Billing';
 import { Pricing } from './pages/Pricing';
+import { MockCheckout } from './pages/MockCheckout';
 import { PremiumRoute } from './components/access/PremiumRoute';
 
 import { FavoritesProvider } from './context/FavoritesContext';
@@ -129,6 +130,7 @@ function App() {
                     <Route path="/settings/integrations" element={<PlaceholderPage title="Integrations" />} />
                     <Route path="/settings/billing" element={<Billing />} />
                     <Route path="/pricing" element={<Pricing />} />
+                    <Route path="/pricing/mock-checkout" element={<MockCheckout />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </AppShell>

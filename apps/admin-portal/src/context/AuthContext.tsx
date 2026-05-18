@@ -24,6 +24,8 @@ interface OrganizationProfile {
     seats_purchased: number;
     trial_ends_at: string | null;
     created_at: string;
+    stripe_customer_id?: string | null;
+    stripe_subscription_id?: string | null;
 }
 
 interface AuthContextType {

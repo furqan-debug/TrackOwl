@@ -29,13 +29,15 @@ const PREMIUM_FEATURES_LOST = [
     'Advanced Reports',
 ];
 
+const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 export function Pricing() {
     const [isMonthly, setIsMonthly] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState<any>(null);
     const [seats, setSeats] = useState(5);
     const [loading, setLoading] = useState<string | null>(null);
     const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
-    const { organization, refreshProfile, refreshOrganization, isPremium } = useAuth();
+    const { organization, refreshProfile, refreshOrganization, isPremium, session } = useAuth();
     const navigate = useNavigate();
 
     const currentPlanType = organization?.plan_type || 'Basic';
@@ -53,6 +55,41 @@ export function Pricing() {
 
         setLoading(selectedPlan.planType);
         setShowDowngradeWarning(false);
+
+        // STRIPE UPGRADE REDIRECT FOR PREMIUM PLAN
+        if (selectedPlan.planType === 'Premium') {
+            try {
+                const res = await fetch(`${API}/api/billing/create-checkout-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${session?.access_token}`
+                    },
+                    body: JSON.stringify({
+                        planType: 'Premium',
+                        billingCycle: isMonthly ? 'Monthly' : 'Yearly',
+                        seatsCount: seats
+                    })
+                });
+
+                if (!res.ok) {
+                    const data = await res.json();
+                    throw new Error(data.error || 'Failed to create checkout session');
+                }
+
+                const data = await res.json();
+                if (data.url) {
+                    window.location.href = data.url;
+                    return;
+                }
+            } catch (err: any) {
+                console.error('Error starting Stripe checkout:', err);
+                alert(err.message || 'Failed to start checkout. Stripe price keys may not be configured.');
+                setLoading(null);
+                return;
+            }
+        }
+
         try {
             const isTrial = selectedPlan.planType === 'Premium' && organization.subscription_status === 'None';
             const trialEndsAt = isTrial 
