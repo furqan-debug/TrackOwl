@@ -285,12 +285,11 @@ export function Pricing() {
             <div className="flex justify-center items-center gap-6 mb-16">
                 <div className="flex items-center gap-3">
                     <span className={clsx("text-sm font-bold tracking-tight transition-colors", !isMonthly ? "text-text-main" : "text-text-muted")}>Yearly</span>
-                    <div className={clsx(
-                        "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors duration-300",
-                        isMonthly ? "bg-rose-500/10 text-rose-500 border-rose-500/20" : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                    )}>
-                        Save 25%
-                    </div>
+                    {!isMonthly && (
+                        <div className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                            Save 25%
+                        </div>
+                    )}
                 </div>
 
                 <button

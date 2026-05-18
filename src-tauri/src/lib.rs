@@ -672,10 +672,30 @@ pub fn run() {
         ])
         .on_window_event(|window: &tauri::Window, event: &tauri::WindowEvent| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                use tauri_plugin_notification::NotificationExt;
+
                 let state_handle = window.state::<Mutex<AppState>>();
                 println!("[lib] 🛑 Closing requested (Forced Quit behavior)");
+
+                // Check if a session was active BEFORE we clear it
+                let had_active_session = {
+                    let s = state_handle.lock().unwrap();
+                    s.active_session_id.is_some()
+                };
+
                 api.prevent_close(); // Prevent immediate close so we can sync
                 stop_and_sync_internal(&state_handle);
+
+                // Fire OS notification if the user was mid-session
+                if had_active_session {
+                    let _ = window.app_handle()
+                        .notification()
+                        .builder()
+                        .title("TrackOwl — Session Ended")
+                        .body("Your tracking session was automatically saved and stopped when the app was closed.")
+                        .show();
+                }
+
                 window.app_handle().exit(0); // Now exit
             }
         })
