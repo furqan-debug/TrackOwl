@@ -135,7 +135,7 @@ export function Pricing() {
     // ────────────────────────────────────────────────────────────────
     if (showDowngradeWarning) {
         return (
-            <PageLayout title="Downgrade to Basic" description="Please review what you'll lose." maxWidth="2xl">
+            <PageLayout title="Downgrade to Basic" description="Please review what you'll lose." maxWidth="7xl">
                 <div className="max-w-lg mx-auto py-12">
                     <Card className="p-10 border border-warning/30 rounded-[40px] shadow-shell-lg relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-warning/5 blur-[60px] rounded-full -mr-20 -mt-20" />
