@@ -1,0 +1,11 @@
+{
+  "version": "1.2.7",
+  "notes": "TrackOwl v1.2.7 - UI Polish & Premium Feature Gating Update. This release enforces premium feature access control with elegant lock overlays, completes the Deep Royal Navy & Sophisticated Gold brand identity across all portal components, and improves dark mode contrast and visual consistency throughout the admin portal.",
+  "pub_date": "2026-05-18T17:36:56.965Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3anhFY05XMWY1MTJyZGZTcElRS1ZQQ0phRDk3R2JDS1NYb1ZRdXBEU3lYNm9CNGk0RDlLYkw5a3pxdWFqTVY3Vy9nL0p6NllpMUd5SkRpZitYNlhEdXdJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5MTI1ODE2CWZpbGU6VHJhY2tPd2xfMS4yLjdfeDY0LXNldHVwLmV4ZQp1cXY2OHpKV3BxZE1FbW52azFEeW82blpxOHFiMkw4Y0FCMm1MWjRTQnd3c2ZwSFhyYjF4elFKWUdJVWVGdWNKUmE5Wnc2a2pMT1VocC8yZXRqMi9DUT09Cg==",
+      "url": "https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.7/TrackOwl_1.2.7_x64-setup.exe"
+    }
+  }
+}
