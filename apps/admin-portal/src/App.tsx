@@ -36,6 +36,7 @@ import { MemberFormPage } from './pages/MemberFormPage';
 import { Billing } from './pages/Billing';
 import { Pricing } from './pages/Pricing';
 import { PremiumGate } from './components/access/PremiumGate';
+import { PremiumRoute } from './components/access/PremiumRoute';
 
 import { FavoritesProvider } from './context/FavoritesContext';
 import { AuthProvider } from './context/AuthContext';
@@ -92,33 +93,33 @@ function App() {
                 <AppShell>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
-                    <Route path="/activity" element={<PremiumGate title="Activity Monitoring" description="Upgrade to Premium to view detailed activity logs and screenshots."><Activity /></PremiumGate>} />
+                    <Route path="/activity" element={<PremiumRoute><Activity /></PremiumRoute>} />
                     <Route path="/timesheets" element={<Timesheets />} />
-                    <Route path="/reports" element={<PremiumGate title="Advanced Analytics" description="Upgrade to Premium to access in-depth productivity and performance reports."><Reports /></PremiumGate>} />
+                    <Route path="/reports" element={<PremiumRoute><Reports /></PremiumRoute>} />
                     <Route path="/people" element={<People />} />
                     <Route path="/people/:id/edit" element={<MemberFormPage />} />
                     <Route path="/projects" element={<Projects />} />
                     <Route path="/projects/new" element={<ProjectFormPage />} />
                     <Route path="/projects/:id/edit" element={<ProjectFormPage />} />
                     <Route path="/schedules" element={<Schedules />} />
-                    <Route path="/url-tracking" element={<PremiumGate title="Website Tracking" description="Upgrade to Premium to track which websites your team is visiting."><UrlTracking /></PremiumGate>} />
+                    <Route path="/url-tracking" element={<PremiumRoute><UrlTracking /></PremiumRoute>} />
                     <Route path="/financials" element={<PlaceholderPage title="Financials" />} />
-                    <Route path="/member-timeline" element={<PremiumGate title="Activity Timeline" description="Upgrade to Premium to view detailed chronological activity logs and screenshots."><MemberTimeline /></PremiumGate>} />
+                    <Route path="/member-timeline" element={<PremiumRoute><MemberTimeline /></PremiumRoute>} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
                     <Route path="/timesheets/approvals" element={<Approvals />} />
-                    <Route path="/activity/apps" element={<PremiumGate title="App Usage Tracking" description="Upgrade to Premium to see which applications your team is using most."><AppUsage /></PremiumGate>} />
+                    <Route path="/activity/apps" element={<PremiumRoute><AppUsage /></PremiumRoute>} />
                     <Route path="/locations" element={<Locations />} />
                     <Route path="/locations/job-sites" element={<JobSites />} />
                     <Route path="/projects/todos" element={<Todos />} />
                     <Route path="/projects/clients" element={<Clients />} />
                     <Route path="/calendar" element={<Calendar />} />
-                    <Route path="/reports/legacy" element={<PremiumGate title="Advanced Reports" description="Upgrade to Premium to access detailed productivity and team performance reports."><ReportsLegacy /></PremiumGate>} />
-                    <Route path="/reports/daily" element={<PremiumGate title="Advanced Reports" description="Upgrade to Premium to access detailed productivity and team performance reports."><DailyTotals /></PremiumGate>} />
-                    <Route path="/reports/owed" element={<PremiumGate title="Advanced Reports" description="Upgrade to Premium to access detailed productivity and team performance reports."><AmountsOwed /></PremiumGate>} />
-                    <Route path="/reports/payments" element={<PremiumGate title="Advanced Reports" description="Upgrade to Premium to access detailed productivity and team performance reports."><PaymentsReport /></PremiumGate>} />
-                    <Route path="/reports/all" element={<PremiumGate title="Advanced Reports" description="Upgrade to Premium to access detailed productivity and team performance reports."><PlaceholderPage title="All Reports" /></PremiumGate>} />
-                    <Route path="/reports/custom" element={<PremiumGate title="Customized Reports" description="Upgrade to Premium to create and save custom reports."><PlaceholderPage title="Customized Reports" /></PremiumGate>} />
+                    <Route path="/reports/legacy" element={<PremiumRoute><ReportsLegacy /></PremiumRoute>} />
+                    <Route path="/reports/daily" element={<PremiumRoute><DailyTotals /></PremiumRoute>} />
+                    <Route path="/reports/owed" element={<PremiumRoute><AmountsOwed /></PremiumRoute>} />
+                    <Route path="/reports/payments" element={<PremiumRoute><PaymentsReport /></PremiumRoute>} />
+                    <Route path="/reports/all" element={<PremiumRoute><PlaceholderPage title="All Reports" /></PremiumRoute>} />
+                    <Route path="/reports/custom" element={<PremiumRoute><PlaceholderPage title="Customized Reports" /></PremiumRoute>} />
                     <Route path="/people/teams" element={<Teams />} />
                     <Route path="/financials/create" element={<PlaceholderPage title="Create Payments" />} />
                     <Route path="/financials/past" element={<PlaceholderPage title="Past Payments" />} />

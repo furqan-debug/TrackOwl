@@ -294,12 +294,26 @@ function SettingsScreen({ user, onSave, onBack, onLogout }: {
   const [closeBehavior] = useState<'quit' | 'minimize'>('quit');
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [orgName, setOrgName] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     // Sync to Rust on mount
     trackerAPI.setCloseBehavior(closeBehavior);
   }, []);
+
+  // Fetch organization name on mount
+  useEffect(() => {
+    if (!user.organization_id) return;
+    getSupabase().then(async (sb: any) => {
+      const { data } = await sb
+        .from('organizations')
+        .select('name')
+        .eq('id', user.organization_id)
+        .maybeSingle();
+      if (data?.name) setOrgName(data.name);
+    });
+  }, [user.organization_id]);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -390,6 +404,9 @@ function SettingsScreen({ user, onSave, onBack, onLogout }: {
             <div className="profile-identity">
               <h3 className="profile-name">{fullName || 'Your Name'}</h3>
               <p className="profile-email">{user.email}</p>
+              {orgName && (
+                <p className="profile-org">{orgName}</p>
+              )}
             </div>
           </div>
         </div>
@@ -1018,6 +1035,57 @@ export default function App() {
       }
     });
   }, []); // Run once on mount
+
+  // ── Realtime: Listen for org plan changes ────────────────────────────────────
+  // When the admin portal upgrades or downgrades the plan, update React state
+  // and push the new plan to the Rust backend via the update_plan IPC command.
+  useEffect(() => {
+    if (!user?.organization_id) return;
+
+    let channel: any = null;
+
+    getSupabase().then((sb: any) => {
+      channel = sb.channel(`org-plan-${user.organization_id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'organizations',
+            filter: `id=eq.${user.organization_id}`
+          },
+          async (payload: any) => {
+            const newPlanType: string = payload.new?.plan_type || 'Basic';
+            const prevPlanType = user?.plan_type || 'Basic';
+
+            if (newPlanType === prevPlanType) return;
+
+            console.log(`[App] 🔄 Org plan changed: ${prevPlanType} → ${newPlanType}`);
+
+            // 1. Update React state so UI reflects new plan immediately
+            setUser(prev => prev ? { ...prev, plan_type: newPlanType } : prev);
+
+            // 2. Push to Rust backend so next tracking session respects new plan
+            const tauri = (window as any).__TAURI__;
+            if (tauri?.core?.invoke) {
+              try {
+                await tauri.core.invoke('update_plan', { plan: newPlanType });
+                console.log('[App] ✅ Rust backend plan updated to', newPlanType);
+              } catch (e) {
+                console.error('[App] Failed to update Rust plan:', e);
+              }
+            }
+          }
+        )
+        .subscribe();
+    });
+
+    return () => {
+      if (channel) {
+        getSupabase().then((sb: any) => sb.removeChannel(channel));
+      }
+    };
+  }, [user?.organization_id]); // Re-subscribe when org changes (e.g. after login)
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;

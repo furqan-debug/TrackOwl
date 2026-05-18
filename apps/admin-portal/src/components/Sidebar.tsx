@@ -24,11 +24,7 @@ export interface SidebarProps {
 export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, onToggle }: SidebarProps) {
     const location = useLocation();
     const { favorites, toggleFavorite, isFavorite } = useFavorites();
-    const { profile, signOut, organization } = useAuth();
-    const isPremium = organization?.plan_type === 'Premium' ||
-        organization?.subscription_status === 'Active' ||
-        organization?.subscription_status === 'Trial' ||
-        organization?.subscription_status === 'None';
+    const { profile, signOut, organization, isPremium } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const userRole = (profile?.role || 'User') as Role;
 
@@ -329,7 +325,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                             <div className="px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/10 flex items-center gap-2 flex-1">
                                 <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                                 <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
-                                    {organization?.plan_type || 'Premium'} Plan
+                                    {isPremium ? (organization?.subscription_status === 'Trial' ? 'Trial' : 'Premium') : (organization?.plan_type || 'Basic')} Plan
                                 </span>
                             </div>
                             <button
