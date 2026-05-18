@@ -33,11 +33,27 @@ interface AuthContextType {
     organization: OrganizationProfile | null;
     loading: boolean;
     error: string | null;
+    /** True when org is on Premium or Trial — use this everywhere instead of manual checks */
+    isPremium: boolean;
+    /** True when org is on Basic plan (or free/None) — opposite of isPremium (excluding locked) */
+    isBasic: boolean;
     refreshProfile: () => Promise<MemberProfile | null>;
+    /** Re-fetches only the organization row without reloading the full profile */
+    refreshOrganization: () => Promise<OrganizationProfile | null>;
     signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+/** Derives isPremium from an organization record. Single source of truth. */
+function computeIsPremium(org: OrganizationProfile | null): boolean {
+    if (!org) return false;
+    // Trial counts as Premium access
+    if (org.subscription_status === 'Trial') return true;
+    // Premium plan that is Active
+    if (org.plan_type === 'Premium' && org.subscription_status === 'Active') return true;
+    return false;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
@@ -45,6 +61,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [organization, setOrganization] = useState<OrganizationProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Derived plan flags — always computed from organization state
+    const isPremium = computeIsPremium(organization);
+    const isBasic = !isPremium && organization?.subscription_status !== 'Locked';
 
     useEffect(() => {
         let isInitial = true;
@@ -187,8 +207,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    /** Fetches only the organization row and updates state instantly.
+     *  Call this after a plan change to reflect new permissions without a full page reload. */
+    const refreshOrganization = async (): Promise<OrganizationProfile | null> => {
+        if (!profile?.organization_id) return null;
+        try {
+            const { data: org, error: orgError } = await supabase
+                .from('organizations')
+                .select('*')
+                .eq('id', profile.organization_id)
+                .single();
+            if (orgError) throw orgError;
+            setOrganization(org);
+            return org;
+        } catch (err: any) {
+            console.error('[AuthContext] refreshOrganization error:', err);
+            return null;
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ session, user: session?.user ?? null, profile, organization, loading, error, refreshProfile, signOut }}>
+        <AuthContext.Provider value={{
+            session,
+            user: session?.user ?? null,
+            profile,
+            organization,
+            loading,
+            error,
+            isPremium,
+            isBasic,
+            refreshProfile,
+            refreshOrganization,
+            signOut,
+        }}>
             {children}
         </AuthContext.Provider>
     );
@@ -200,4 +251,10 @@ export function useAuth() {
         throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;
+}
+
+/** Convenience alias — returns { isPremium, isBasic } without the rest of auth. */
+export function usePlan() {
+    const { isPremium, isBasic, organization } = useAuth();
+    return { isPremium, isBasic, organization };
 }

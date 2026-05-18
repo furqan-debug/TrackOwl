@@ -1215,6 +1215,22 @@ input:checked+.slider:before {
   margin-top: 0.125rem;
 }
 
+.profile-identity .profile-org {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--accent-light);
+  border: 1px solid rgba(212, 163, 115, 0.3);
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+}
+
 .avatar-preview-container {
   position: relative;
   width: 84px;

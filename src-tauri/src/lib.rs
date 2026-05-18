@@ -545,6 +545,18 @@ fn set_close_behavior(_behavior: String) {
     println!("[lib] ⚙️ Close behavior forced to 'quit'");
 }
 
+/// Update the organization plan at runtime without restarting tracking.
+/// Called by the React frontend when it detects a plan change via Supabase Realtime.
+/// invoke('update_plan', { plan: 'Premium' })
+#[tauri::command]
+fn update_plan(state: tauri::State<'_, Mutex<AppState>>, plan: String) -> Result<(), String> {
+    let s = state.lock().map_err(|e| e.to_string())?;
+    let mut current = s.plan_type.lock().map_err(|e| e.to_string())?;
+    println!("[lib] 📋 Plan updated: {} → {}", *current, plan);
+    *current = plan;
+    Ok(())
+}
+
 // ─── App entry point ──────────────────────────────────────────────────────────
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -656,6 +668,7 @@ pub fn run() {
             get_location,
             set_close_behavior,
             sync_now,
+            update_plan,
         ])
         .on_window_event(|window: &tauri::Window, event: &tauri::WindowEvent| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

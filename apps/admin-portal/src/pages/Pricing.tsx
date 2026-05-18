@@ -11,7 +11,9 @@ import {
     Calendar,
     ArrowRight,
     Minus,
-    Plus
+    Plus,
+    Crown,
+    AlertTriangle
 } from 'lucide-react';
 import clsx from 'clsx';
 import { PageLayout, Card } from '../components/ui';
@@ -19,28 +21,51 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 
+const PREMIUM_FEATURES_LOST = [
+    'Automated Screenshots',
+    'App & URL Tracking',
+    'Activity Monitoring',
+    'Productivity Analysis',
+    'Advanced Reports',
+];
+
 export function Pricing() {
     const [isMonthly, setIsMonthly] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState<any>(null);
     const [seats, setSeats] = useState(5);
     const [loading, setLoading] = useState<string | null>(null);
-    const { organization, refreshProfile } = useAuth();
+    const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
+    const { organization, refreshProfile, refreshOrganization, isPremium } = useAuth();
     const navigate = useNavigate();
 
+    const currentPlanType = organization?.plan_type || 'Basic';
+    const isDowngrade = selectedPlan?.planType === 'Basic' && isPremium;
+
+    // Called after the user confirms their seat count
     const handleSelectPlan = async () => {
         if (!organization?.id || !selectedPlan) return;
+
+        // If downgrading to Basic from Premium, show warning first
+        if (isDowngrade && !showDowngradeWarning) {
+            setShowDowngradeWarning(true);
+            return;
+        }
+
         setLoading(selectedPlan.planType);
+        setShowDowngradeWarning(false);
         try {
             const isTrial = selectedPlan.planType === 'Premium' && organization.subscription_status === 'None';
             const trialEndsAt = isTrial 
                 ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
                 : organization.trial_ends_at;
 
+            const isBasicSelect = selectedPlan.planType === 'Basic';
+
             const { error } = await supabase
                 .from('organizations')
                 .update({
                     plan_type: selectedPlan.planType,
-                    subscription_status: isTrial ? 'Trial' : 'Active',
+                    subscription_status: isBasicSelect ? 'Active' : (isTrial ? 'Trial' : 'Active'),
                     subscription_period: isMonthly ? 'Monthly' : 'Yearly',
                     trial_ends_at: trialEndsAt,
                     seats_purchased: seats
@@ -49,8 +74,16 @@ export function Pricing() {
 
             if (error) throw error;
 
+            // Use refreshOrganization for instant plan-flag update, fall back to full profile refresh
+            await refreshOrganization();
             await refreshProfile();
-            navigate('/dashboard/settings/billing');
+
+            // Navigate: downgrade → dashboard (premium routes now locked); upgrade → billing
+            if (isBasicSelect) {
+                navigate('/dashboard');
+            } else {
+                navigate('/dashboard/settings/billing');
+            }
         } catch (err) {
             console.error('Error updating plan:', err);
             alert('Failed to update plan. Please try again.');
@@ -72,7 +105,7 @@ export function Pricing() {
                 { icon: <Calendar className="w-4 h-4" />, text: 'Weekly/hour limits' },
                 { icon: <BarChart3 className="w-4 h-4" />, text: 'Basic dashboard' }
             ],
-            buttonLabel: 'Select Basic',
+            buttonLabel: currentPlanType === 'Basic' ? 'Current Plan' : 'Switch to Basic',
             popular: false,
             planType: 'Basic'
         },
@@ -89,12 +122,74 @@ export function Pricing() {
                 { icon: <ShieldCheck className="w-4 h-4" />, text: 'Activity Monitoring' },
                 { icon: <BarChart3 className="w-4 h-4" />, text: 'Productivity Analysis' }
             ],
-            buttonLabel: organization?.subscription_status === 'None' ? 'Start 7-Day Free Trial' : 'Upgrade to Premium',
+            buttonLabel: isPremium
+                ? (organization?.subscription_status === 'Trial' ? 'Current Plan (Trial)' : 'Current Plan')
+                : (organization?.subscription_status === 'None' ? 'Start 7-Day Free Trial' : 'Upgrade to Premium'),
             popular: true,
             planType: 'Premium'
         }
     ];
 
+    // ────────────────────────────────────────────────────────────────
+    // Downgrade Warning Modal
+    // ────────────────────────────────────────────────────────────────
+    if (showDowngradeWarning) {
+        return (
+            <PageLayout title="Downgrade to Basic" description="Please review what you'll lose." maxWidth="2xl">
+                <div className="max-w-lg mx-auto py-12">
+                    <Card className="p-10 border border-warning/30 rounded-[40px] shadow-shell-lg relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-64 h-64 bg-warning/5 blur-[60px] rounded-full -mr-20 -mt-20" />
+                        <div className="relative z-10 space-y-8">
+                            <div className="flex items-center gap-4">
+                                <div className="w-14 h-14 rounded-2xl bg-warning/10 flex items-center justify-center text-warning border border-warning/20">
+                                    <AlertTriangle className="w-7 h-7" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-black text-text-main tracking-tight">Downgrade to Basic?</h3>
+                                    <p className="text-[13px] font-medium text-text-muted mt-1">The following premium features will be <span className="text-warning font-bold">immediately disabled</span>:</p>
+                                </div>
+                            </div>
+
+                            <ul className="space-y-3">
+                                {PREMIUM_FEATURES_LOST.map(feature => (
+                                    <li key={feature} className="flex items-center gap-3 text-[13px] font-bold text-text-muted">
+                                        <div className="w-5 h-5 rounded-md bg-warning/10 flex items-center justify-center text-warning border border-warning/20 shrink-0">
+                                            <AlertTriangle className="w-3 h-3" />
+                                        </div>
+                                        {feature}
+                                    </li>
+                                ))}
+                            </ul>
+
+                            <p className="text-[12px] font-medium text-text-muted leading-relaxed p-4 bg-main/50 rounded-2xl border border-border">
+                                Any active tracking sessions will continue until they naturally end. Screenshot and app data collection will stop on the <strong>next</strong> tracking session start.
+                            </p>
+
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => { setShowDowngradeWarning(false); setSelectedPlan(null); }}
+                                    className="flex-1 h-14 bg-main border border-border text-text-main rounded-2xl text-[12px] font-black uppercase tracking-widest hover:bg-surface-hover transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSelectPlan}
+                                    disabled={!!loading}
+                                    className="flex-1 h-14 bg-warning text-white rounded-2xl text-[12px] font-black uppercase tracking-widest hover:brightness-110 transition-all disabled:opacity-50"
+                                >
+                                    {loading ? 'Downgrading...' : 'Confirm Downgrade'}
+                                </button>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+            </PageLayout>
+        );
+    }
+
+    // ────────────────────────────────────────────────────────────────
+    // Seat Configuration Step
+    // ────────────────────────────────────────────────────────────────
     if (selectedPlan) {
         const annualMultiplier = isMonthly ? 1 : 12;
         const paidSeats = Math.max(0, seats - 1);
@@ -164,7 +259,7 @@ export function Pricing() {
                             <button
                                 onClick={handleSelectPlan}
                                 disabled={!!loading}
-                                className="w-full h-16 bg-primary text-white rounded-2xl text-[12px] font-black tracking-[0.2em] uppercase shadow-glow-primary hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3"
+                                className="w-full h-16 bg-primary text-white rounded-2xl text-[12px] font-black tracking-[0.2em] uppercase shadow-glow-primary hover:brightness-110 active:scale-[0.98] transition-all flex items-center justify-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 {loading ? 'Processing...' : (
                                     <>Confirm & Continue <ArrowRight className="w-4 h-4" /></>
@@ -177,6 +272,9 @@ export function Pricing() {
         );
     }
 
+    // ────────────────────────────────────────────────────────────────
+    // Plan Selection Grid
+    // ────────────────────────────────────────────────────────────────
     return (
         <PageLayout
             title="Pricing & Plans"
@@ -210,68 +308,86 @@ export function Pricing() {
             </div>
 
             <div className="grid gap-8 md:grid-cols-2 max-w-4xl mx-auto pb-20">
-                {plans.map((plan, i) => (
-                    <motion.div
-                        key={plan.name}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                    >
-                        <Card 
-                            className={clsx(
-                                "relative flex flex-col h-full rounded-[40px] p-10 md:p-12 transition-all duration-500 border",
-                                plan.popular ? "border-primary/30 shadow-shell-lg" : "border-border shadow-shell-sm"
-                            )}
+                {plans.map((plan, i) => {
+                    const isCurrentPlan = organization?.plan_type === plan.planType && (
+                        plan.planType === 'Basic' ? !isPremium : isPremium
+                    );
+
+                    return (
+                        <motion.div
+                            key={plan.name}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1 }}
                         >
-                            {plan.popular && (
-                                <div className="absolute top-8 right-8 flex items-center gap-2 text-primary font-black text-[10px] tracking-[0.2em] uppercase">
-                                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                    Recommended
-                                </div>
-                            )}
-
-                            <div className="mb-10">
-                                <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-text-muted mb-4">
-                                    {plan.name}
-                                </h4>
-                                <div className="flex items-baseline gap-1">
-                                    <span className="text-5xl font-black tracking-tighter text-text-main">{plan.displayPrice}</span>
-                                    <span className="text-sm font-bold text-text-muted tracking-tight">{plan.period}</span>
-                                </div>
-                            </div>
-
-                            <p className="text-[13px] font-medium text-text-muted leading-relaxed mb-10 min-h-[40px]">
-                                {plan.description}
-                            </p>
-
-                            <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent mb-10" />
-
-                            <ul className="space-y-5 mb-12 flex-1">
-                                {plan.features.map((f, idx) => (
-                                    <li key={idx} className="flex items-center gap-4 text-[13px] font-bold text-text-main">
-                                        <div className="w-8 h-8 rounded-xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10">
-                                            {f.icon}
-                                        </div>
-                                        {f.text}
-                                    </li>
-                                ))}
-                            </ul>
-
-                            <button
-                                onClick={() => setSelectedPlan(plan)}
+                            <Card 
                                 className={clsx(
-                                    "w-full h-14 rounded-2xl text-[12px] font-black tracking-[0.2em] uppercase transition-all duration-300 flex items-center justify-center gap-2 group",
-                                    plan.popular
-                                        ? "bg-primary text-white shadow-glow-primary hover:brightness-110"
-                                        : "bg-surface border border-border text-text-main hover:bg-surface-hover"
+                                    "relative flex flex-col h-full rounded-[40px] p-10 md:p-12 transition-all duration-500 border",
+                                    plan.popular ? "border-primary/30 shadow-shell-lg" : "border-border shadow-shell-sm",
+                                    isCurrentPlan && "ring-2 ring-primary/30"
                                 )}
                             >
-                                {plan.buttonLabel}
-                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </button>
-                        </Card>
-                    </motion.div>
-                ))}
+                                {/* Current Plan Badge */}
+                                {isCurrentPlan && (
+                                    <div className="absolute top-8 right-8 flex items-center gap-2 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full">
+                                        <Crown className="w-3 h-3 text-primary" />
+                                        <span className="text-[9px] font-black text-primary uppercase tracking-widest">Current Plan</span>
+                                    </div>
+                                )}
+
+                                {plan.popular && !isCurrentPlan && (
+                                    <div className="absolute top-8 right-8 flex items-center gap-2 text-primary font-black text-[10px] tracking-[0.2em] uppercase">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                                        Recommended
+                                    </div>
+                                )}
+
+                                <div className="mb-10">
+                                    <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-text-muted mb-4">
+                                        {plan.name}
+                                    </h4>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-5xl font-black tracking-tighter text-text-main">{plan.displayPrice}</span>
+                                        <span className="text-sm font-bold text-text-muted tracking-tight">{plan.period}</span>
+                                    </div>
+                                </div>
+
+                                <p className="text-[13px] font-medium text-text-muted leading-relaxed mb-10 min-h-[40px]">
+                                    {plan.description}
+                                </p>
+
+                                <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent mb-10" />
+
+                                <ul className="space-y-5 mb-12 flex-1">
+                                    {plan.features.map((f, idx) => (
+                                        <li key={idx} className="flex items-center gap-4 text-[13px] font-bold text-text-main">
+                                            <div className="w-8 h-8 rounded-xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10">
+                                                {f.icon}
+                                            </div>
+                                            {f.text}
+                                        </li>
+                                    ))}
+                                </ul>
+
+                                <button
+                                    onClick={() => !isCurrentPlan && setSelectedPlan(plan)}
+                                    disabled={isCurrentPlan}
+                                    className={clsx(
+                                        "w-full h-14 rounded-2xl text-[12px] font-black tracking-[0.2em] uppercase transition-all duration-300 flex items-center justify-center gap-2 group",
+                                        isCurrentPlan
+                                            ? "bg-primary/5 border border-primary/20 text-primary cursor-default"
+                                            : plan.popular
+                                                ? "bg-primary text-white shadow-glow-primary hover:brightness-110"
+                                                : "bg-surface border border-border text-text-main hover:bg-surface-hover"
+                                    )}
+                                >
+                                    {plan.buttonLabel}
+                                    {!isCurrentPlan && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
+                                </button>
+                            </Card>
+                        </motion.div>
+                    );
+                })}
             </div>
 
             {/* Trial Note */}

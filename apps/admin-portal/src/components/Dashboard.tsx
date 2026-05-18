@@ -88,8 +88,7 @@ interface DashStats {
     trendProductivity: number;
 }
 export function Dashboard() {
-    const { profile, organization } = useAuth();
-    const isPremium = organization?.plan_type === 'Premium' || organization?.subscription_status === 'Trial';
+    const { profile, organization, isPremium } = useAuth();
     const organizationId = profile?.organization_id;
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -692,87 +691,90 @@ export function Dashboard() {
                                 </button>
                             </div>
 
-                            <div className="flex-1 overflow-y-auto no-scrollbar divide-y divide-border relative">
+                            {/* Wrap overlay + scrollable content together so overlay is fixed relative to visible area */}
+                            <div className="flex-1 relative overflow-hidden">
                                 {!isPremium && (
                                     <FeatureLockOverlay
                                         title="Activity Monitoring"
                                         description="Upgrade to Premium to unlock screenshots and detailed activity stream."
                                     />
                                 )}
-                                {userActivity.length === 0 ? (
-                                    <EmptyState icon={<Camera />} title="No activity recorded yet" description="Tracking samples will appear here once the team starts working." className="py-32" />
-                                ) : (
-                                    userActivity.map((user) => (
-                                        <div key={user.userId} className="p-8 space-y-6 hover:bg-surface-hover transition-all group">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center gap-4">
-                                                    <div className="w-10 h-10 rounded-xl bg-main border border-border shadow-sm flex items-center justify-center text-[14px] font-bold text-text-muted overflow-hidden shrink-0 group-hover:border-primary/30 transition-all duration-500">
-                                                        {user.avatarUrl ? (
-                                                            <SecureImage path={user.avatarUrl} bucket="avatars" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                                                        ) : user.fullName.charAt(0)}
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <div className="flex items-center gap-4">
-                                                            <p className={clsx(
-                                                                "text-[18px] font-bold text-text-main tracking-tight",
-                                                                user.fullName.includes('@') && "lowercase opacity-80"
-                                                            )}>
-                                                                {user.fullName.includes('@') ? user.fullName.toLowerCase() : toProperCase(user.fullName)}
-                                                            </p>
-                                                            <div className="px-3 py-1 bg-primary/5 text-primary text-[12px] font-bold rounded-lg border border-primary/10">
-                                                                {formatDuration(user.totalMinutes)}
-                                                            </div>
+                                <div className="h-full overflow-y-auto no-scrollbar divide-y divide-border">
+                                    {userActivity.length === 0 ? (
+                                        <EmptyState icon={<Camera />} title="No activity recorded yet" description="Tracking samples will appear here once the team starts working." className="py-32" />
+                                    ) : (
+                                        userActivity.map((user) => (
+                                            <div key={user.userId} className="p-8 space-y-6 hover:bg-surface-hover transition-all group">
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="w-10 h-10 rounded-xl bg-main border border-border shadow-sm flex items-center justify-center text-[14px] font-bold text-text-muted overflow-hidden shrink-0 group-hover:border-primary/30 transition-all duration-500">
+                                                            {user.avatarUrl ? (
+                                                                <SecureImage path={user.avatarUrl} bucket="avatars" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                            ) : user.fullName.charAt(0)}
                                                         </div>
-                                                        <div className="flex items-center gap-2">
-                                                            <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                                            <span className="text-[13px] font-bold text-success ">{user.activityScore}% Focus Level</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <button className="w-10 h-10 flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface hover:shadow-sm transition-all"><MoreHorizontal className="w-5 h-5" /></button>
-                                            </div>
-
-                                            <div className="grid grid-cols-3 gap-6">
-                                                {user.screenshots.slice(0, 3).map((ss) => (
-                                                    <div key={ss.id} className="relative group/ss" onClick={() => setEnlargedScreenshot(ss)}>
-                                                        <div className="aspect-video bg-slate-100 border border-slate-100 rounded-[20px] overflow-hidden relative cursor-zoom-in transition-all duration-500 group-hover/ss:border-primary/40 group-hover/ss:shadow-elevated shadow-sm">
-                                                            <SecureImage path={ss.path} className="w-full h-full object-cover opacity-95 group-hover/ss:opacity-100 group-hover/ss:scale-105 transition-all duration-700" />
-
-                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/ss:opacity-100 transition-opacity duration-300" />
-
-                                                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/ss:opacity-100 transition-all duration-300 scale-90 group-hover/ss:scale-100">
-                                                                <div className="px-4 py-2 rounded-xl glass-panel text-[11px] font-bold text-slate-900 shadow-xl border-white/40">Inspect</div>
-                                                            </div>
-
-                                                            <div className="absolute bottom-3 right-3 translate-y-1 group-hover/ss:translate-y-0 transition-transform duration-300">
-                                                                <span className="px-3 py-1.5 rounded-lg bg-black/60 text-white text-[9px] font-bold backdrop-blur-md border border-white/10">
-                                                                    {new Date(ss.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                </span>
-                                                            </div>
-                                                            <div className="absolute top-3 left-3 -translate-y-1 group-hover/ss:translate-y-0 transition-transform duration-300">
-                                                                <span className={clsx(
-                                                                    "px-4 py-2 rounded-lg text-white text-[11px] font-bold backdrop-blur-md border border-white/10 shadow-lg",
-                                                                    ss.activityPercent > 70 ? "bg-success/80" : ss.activityPercent > 30 ? "bg-warning/80" : "bg-error/80"
+                                                        <div className="space-y-2">
+                                                            <div className="flex items-center gap-4">
+                                                                <p className={clsx(
+                                                                    "text-[18px] font-bold text-text-main tracking-tight",
+                                                                    user.fullName.includes('@') && "lowercase opacity-80"
                                                                 )}>
-                                                                    {ss.activityPercent}%
-                                                                </span>
+                                                                    {user.fullName.includes('@') ? user.fullName.toLowerCase() : toProperCase(user.fullName)}
+                                                                </p>
+                                                                <div className="px-3 py-1 bg-primary/5 text-primary text-[12px] font-bold rounded-lg border border-primary/10">
+                                                                    {formatDuration(user.totalMinutes)}
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center gap-2">
+                                                                <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                                                <span className="text-[13px] font-bold text-success ">{user.activityScore}% Focus Level</span>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                ))}
-                                                {/* Placeholder for empty screen spots to keep alignment */}
-                                                {Array.from({ length: Math.max(0, 3 - user.screenshots.length) }).map((_, i) => (
-                                                    <div key={`empty-${i}`} className="aspect-video bg-main/50 border-2 border-dashed border-border rounded-[20px] flex flex-col items-center justify-center gap-3 opacity-60">
-                                                        <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center shadow-sm text-text-muted">
-                                                            <Camera className="w-5 h-5" />
+                                                    <button className="w-10 h-10 flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface hover:shadow-sm transition-all"><MoreHorizontal className="w-5 h-5" /></button>
+                                                </div>
+
+                                                <div className="grid grid-cols-3 gap-6">
+                                                    {user.screenshots.slice(0, 3).map((ss) => (
+                                                        <div key={ss.id} className="relative group/ss" onClick={() => setEnlargedScreenshot(ss)}>
+                                                            <div className="aspect-video bg-slate-100 border border-slate-100 rounded-[20px] overflow-hidden relative cursor-zoom-in transition-all duration-500 group-hover/ss:border-primary/40 group-hover/ss:shadow-elevated shadow-sm">
+                                                                <SecureImage path={ss.path} className="w-full h-full object-cover opacity-95 group-hover/ss:opacity-100 group-hover/ss:scale-105 transition-all duration-700" />
+
+                                                                <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/ss:opacity-100 transition-opacity duration-300" />
+
+                                                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/ss:opacity-100 transition-all duration-300 scale-90 group-hover/ss:scale-100">
+                                                                    <div className="px-4 py-2 rounded-xl glass-panel text-[11px] font-bold text-slate-900 shadow-xl border-white/40">Inspect</div>
+                                                                </div>
+
+                                                                <div className="absolute bottom-3 right-3 translate-y-1 group-hover/ss:translate-y-0 transition-transform duration-300">
+                                                                    <span className="px-3 py-1.5 rounded-lg bg-black/60 text-white text-[9px] font-bold backdrop-blur-md border border-white/10">
+                                                                        {new Date(ss.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </span>
+                                                                </div>
+                                                                <div className="absolute top-3 left-3 -translate-y-1 group-hover/ss:translate-y-0 transition-transform duration-300">
+                                                                    <span className={clsx(
+                                                                        "px-4 py-2 rounded-lg text-white text-[11px] font-bold backdrop-blur-md border border-white/10 shadow-lg",
+                                                                        ss.activityPercent > 70 ? "bg-success/80" : ss.activityPercent > 30 ? "bg-warning/80" : "bg-error/80"
+                                                                    )}>
+                                                                        {ss.activityPercent}%
+                                                                    </span>
+                                                                </div>
+                                                            </div>
                                                         </div>
-                                                        <span className="text-[9px] font-bold text-text-muted ">Awaiting Capture</span>
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                    {/* Placeholder for empty screen spots to keep alignment */}
+                                                    {Array.from({ length: Math.max(0, 3 - user.screenshots.length) }).map((_, i) => (
+                                                        <div key={`empty-${i}`} className="aspect-video bg-main/50 border-2 border-dashed border-border rounded-[20px] flex flex-col items-center justify-center gap-3 opacity-60">
+                                                            <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center shadow-sm text-text-muted">
+                                                                <Camera className="w-5 h-5" />
+                                                            </div>
+                                                            <span className="text-[9px] font-bold text-text-muted ">Awaiting Capture</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    ))
-                                )}
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -916,40 +918,43 @@ export function Dashboard() {
                                 <Monitor className="w-5 h-5" />
                             </div>
                         </div>
-                        <div className="flex-1 max-h-[300px] overflow-y-auto no-scrollbar divide-y divide-border relative">
+                        {/* Wrap overlay + scrollable list in a non-scrolling relative container */}
+                        <div className="flex-1 relative overflow-hidden max-h-[300px]">
                             {!isPremium && (
                                 <FeatureLockOverlay
                                     title="App Tracking"
                                     description="Upgrade to Premium to see exactly which tools and applications your team is using."
                                 />
                             )}
-                            {appUsage.length === 0 ? (
-                                <EmptyState icon={<Monitor />} title="Awaiting application data" className="py-12" />
-                            ) : (
-                                appUsage.map((app, i) => (
-                                    <div key={i} className="flex items-center justify-between px-10 py-5 hover:bg-surface-hover/50 transition-all duration-300 group">
-                                        <div className="flex items-center gap-4 min-w-0">
-                                            <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-text-muted shadow-sm shrink-0 group-hover:border-primary/20 transition-all duration-500">
-                                                {(app.name.toLowerCase().includes('chrome') || app.name.toLowerCase().includes('browser')) ? (
-                                                    <Globe className="w-5 h-5 text-info opacity-70 group-hover:opacity-100 transition-opacity" />
-                                                ) : (
-                                                    <Monitor className="w-5 h-5 opacity-40 group-hover:opacity-80 transition-opacity" />
-                                                )}
+                            <div className="h-full overflow-y-auto no-scrollbar divide-y divide-border">
+                                {appUsage.length === 0 ? (
+                                    <EmptyState icon={<Monitor />} title="Awaiting application data" className="py-12" />
+                                ) : (
+                                    appUsage.map((app, i) => (
+                                        <div key={i} className="flex items-center justify-between px-10 py-5 hover:bg-surface-hover/50 transition-all duration-300 group">
+                                            <div className="flex items-center gap-4 min-w-0">
+                                                <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-text-muted shadow-sm shrink-0 group-hover:border-primary/20 transition-all duration-500">
+                                                    {(app.name.toLowerCase().includes('chrome') || app.name.toLowerCase().includes('browser')) ? (
+                                                        <Globe className="w-5 h-5 text-info opacity-70 group-hover:opacity-100 transition-opacity" />
+                                                    ) : (
+                                                        <Monitor className="w-5 h-5 opacity-40 group-hover:opacity-80 transition-opacity" />
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="text-[13px] font-bold text-text-main tracking-tight truncate group-hover:text-primary transition-colors">{app.name}</span>
+                                                    <span className="text-[9px] text-text-muted font-bold mt-1 opacity-60">System Process</span>
+                                                </div>
                                             </div>
-                                            <div className="flex flex-col min-w-0">
-                                                <span className="text-[13px] font-bold text-text-main tracking-tight truncate group-hover:text-primary transition-colors">{app.name}</span>
-                                                <span className="text-[9px] text-text-muted font-bold mt-1 opacity-60">System Process</span>
+                                            <div className="flex items-center gap-6">
+                                                <span className="text-[11px] text-text-muted font-bold tracking-tight">{formatDuration(app.minutes)}</span>
+                                                <div className="text-[12px] font-bold text-success w-12 h-9 flex items-center justify-center bg-success/10 border border-success/20 rounded-xl group-hover:bg-success/20 transition-all tabular-nums">
+                                                    {Math.round(app.percent)}%
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-6">
-                                            <span className="text-[11px] text-text-muted font-bold tracking-tight">{formatDuration(app.minutes)}</span>
-                                            <div className="text-[12px] font-bold text-success w-12 h-9 flex items-center justify-center bg-success/10 border border-success/20 rounded-xl group-hover:bg-success/20 transition-all tabular-nums">
-                                                {Math.round(app.percent)}%
-                                            </div>
-                                        </div>
-                                    </div>
-                                )) // light theme
-                            )}
+                                    ))
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -960,7 +965,7 @@ export function Dashboard() {
                     screenshots={[enlargedScreenshot]}
                     currentIndex={0}
                     onClose={() => setEnlargedScreenshot(null)}
-                    onNavigate={() => {}}
+                    onNavigate={() => { }}
                 />
             )}
         </PageLayout>
