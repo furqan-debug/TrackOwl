@@ -1,56 +1,58 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    TrackOwl — Compact Professional Desktop App
    Window: 440 × 700 px
+   Theme: Deep Royal Navy & Sophisticated Gold (aligned with Admin Portal)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  /* Brand */
-  --accent: #D4A373;
-  --accent-hover: #C08D5D;
+  /* ── Brand ── */
+  --accent: #D4AF37;                          /* Sophisticated Gold */
+  --accent-hover: #B8860B;
   --accent-light: #F5E6CA;
-  --accent-subtle: #FAF7F3;
+  --accent-subtle: #FEFCF3;
 
-  --primary-brand: #3B2A23;
+  --primary-brand: #001B4D;                   /* Deep Royal Navy */
+  --primary-hover: #002766;
 
-  /* Surfaces */
-  --bg-app: #FFFFFF;
-  --surface: #FAF7F3;
-  --surface-hover: #F0EAE4;
+  /* ── Surfaces ── */
+  --bg-app: #F8FAFC;
+  --surface: #FFFFFF;
+  --surface-hover: #F5F7FB;
 
-  /* Borders */
-  --border: #E8DED6;
-  --border-subtle: rgba(232, 222, 214, 0.5);
+  /* ── Borders ── */
+  --border: #E2E8F0;
+  --border-subtle: rgba(226, 232, 240, 0.5);
 
-  /* Text */
-  --text-primary: #2B2B2B;
-  --text-secondary: #6B5B53;
-  --text-tertiary: #9A8F88;
+  /* ── Text ── */
+  --text-primary: #001B4D;                    /* Navy — main text */
+  --text-secondary: #475569;
+  --text-tertiary: #64748B;
 
-  /* Status */
+  /* ── Status ── */
   --success: #10b981;
   --success-bg: #d1fae5;
   --success-text: #065f46;
-  --warning: #D4A373;
-  --warning-bg: #F5E6CA;
-  --warning-text: #7A5840;
+  --warning: #F59E0B;
+  --warning-bg: #FEF3C7;
+  --warning-text: #92400E;
   --danger: #ef4444;
   --danger-bg: #fee2e2;
   --danger-text: #991b1b;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.10), 0 4px 8px rgba(0, 0, 0, 0.05);
+  /* ── Shadows ── */
+  --shadow-sm: 0 1px 2px rgba(0, 27, 77, 0.05);
+  --shadow-md: 0 4px 8px rgba(0, 27, 77, 0.08), 0 1px 3px rgba(0, 27, 77, 0.05);
+  --shadow-lg: 0 12px 24px rgba(0, 27, 77, 0.10), 0 4px 8px rgba(0, 27, 77, 0.05);
 
-  /* Geometry */
+  /* ── Geometry ── */
   --r-sm: 4px;
   --r-md: 8px;
   --r-lg: 12px;
   --r-xl: 16px;
   --r-2xl: 20px;
 
-  /* Font */
-  font-family: "DM Sans", "Helvetica", -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* ── Font ── */
+  font-family: "Inter", "Outfit", -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
