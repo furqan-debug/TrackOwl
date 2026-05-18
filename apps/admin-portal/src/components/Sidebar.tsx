@@ -231,7 +231,14 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                             <group.icon className={clsx("w-[20px] h-[20px] shrink-0 transition-colors",
                                                 isDirectlyActive ? "text-accent" : "text-[var(--sidebar-text)] group-hover:text-accent")}
                                                 strokeWidth={2.5} aria-hidden />
-                                            {!effectiveCollapsed && <span className="tracking-tight text-[14px]">{group.name}</span>}
+                                            {!effectiveCollapsed && (
+                                                <div className="flex items-center gap-2">
+                                                    <span className="tracking-tight text-[14px]">{group.name}</span>
+                                                    {group.requiresPremium && !isPremium && (
+                                                        <Lock className="w-3 h-3 text-[#DC2626] opacity-60" />
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                         {!effectiveCollapsed && (
                                             <button
