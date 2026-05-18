@@ -88,7 +88,7 @@ interface DashStats {
     trendProductivity: number;
 }
 export function Dashboard() {
-    const { profile, organization, isPremium } = useAuth();
+    const { profile, isPremium } = useAuth();
     const organizationId = profile?.organization_id;
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);

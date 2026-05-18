@@ -35,7 +35,6 @@ import { ProjectFormPage } from './pages/ProjectFormPage';
 import { MemberFormPage } from './pages/MemberFormPage';
 import { Billing } from './pages/Billing';
 import { Pricing } from './pages/Pricing';
-import { PremiumGate } from './components/access/PremiumGate';
 import { PremiumRoute } from './components/access/PremiumRoute';
 
 import { FavoritesProvider } from './context/FavoritesContext';
