@@ -378,7 +378,7 @@ export function Timesheets() {
                             onClick={() => setViewMode(mode)}
                             className={clsx(
                                 "px-8 rounded-xl text-[12px] font-bold transition-all h-full",
-                                viewMode === mode ? "bg-surface text-[var(--chart-gold)] shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
+                                viewMode === mode ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm" : "text-text-muted hover:text-slate-600"
                             )}
                         >
                             {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -602,7 +602,7 @@ function DailyView({ entries, selectedMember, toProperCase }: {
                     const duration = s.duration_mins || 0;
                     const width = (duration / 1440) * 100;
                     return (
-                        <div key={i} className="absolute inset-y-0 rounded-full z-10 shadow-sm transition-all" style={{ left: `${left}%`, width: `${Math.max(width, 0.5)}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--chart-gold) 0%)' }} />
+                        <div key={i} className="absolute inset-y-0 rounded-full z-10 shadow-sm transition-all" style={{ left: `${left}%`, width: `${Math.max(width, 0.5)}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--gold-vibrant) 100%)' }} />
                     );
                 })}
             </div>
@@ -695,7 +695,7 @@ function CalendarView({ entries }: { entries: DailyEntry[] }) {
                             <div className="bg-primary/5 border border-primary/10 text-[var(--chart-gold)] rounded-xl p-3 flex flex-col gap-1.5 shadow-shell-sm">
                                 <span className="text-[12px] font-bold tabular-nums">{formatDuration(day.totalMinutes)}</span>
                                 <div className="w-full h-1 bg-primary/10 rounded-full overflow-hidden">
-                                    <div className="h-full" style={{ width: `${day.activityPercent}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--chart-gold) 100%)' }} />
+                                    <div className="h-full" style={{ width: `${day.activityPercent}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--gold-vibrant) 100%)' }} />
                                 </div>
                             </div>
                         )}

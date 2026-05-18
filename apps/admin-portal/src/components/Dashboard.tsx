@@ -888,7 +888,7 @@ export function Dashboard() {
                                                 animate={{ width: `${Math.min(100, (proj.minutes / (stats.totalProductiveMinutes || 1)) * 100)}%` }}
                                                 transition={{ duration: 1, ease: "easeOut" }}
                                                 className="h-full rounded-full relative group-hover:brightness-110 transition-all"
-                                                style={{ background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--chart-gold) 0%)' }}
+                                                style={{ background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--gold-vibrant) 100%)' }}
                                             >
                                                 <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent mix-blend-overlay" />
                                             </motion.div>
@@ -955,10 +955,14 @@ export function Dashboard() {
                 </div>
             </div>
 
-            <ScreenshotModal
-                screenshot={enlargedScreenshot}
-                onClose={() => setEnlargedScreenshot(null)}
-            />
+            {enlargedScreenshot && (
+                <ScreenshotModal
+                    screenshots={[enlargedScreenshot]}
+                    currentIndex={0}
+                    onClose={() => setEnlargedScreenshot(null)}
+                    onNavigate={() => {}}
+                />
+            )}
         </PageLayout>
     );
 }

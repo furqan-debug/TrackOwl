@@ -63,7 +63,7 @@ export function Activity() {
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [selectedDate, setSelectedDate] = useState(formatLocalDate(new Date()));
-    const [enlarged, setEnlarged] = useState<any | null>(null);
+    const [enlargedIndex, setEnlargedIndex] = useState<number | null>(null);
     const [members, setMembers] = useState<MemberInfo[]>([]);
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
     const [sessionMinutes, setSessionMinutes] = useState(0);
@@ -450,12 +450,10 @@ export function Activity() {
                             <div className="p-8">
                                 <ScreenshotGallery
                                     screenshots={screenshots}
-                                    onSelectImage={(ss) => setEnlarged({
-                                        id: ss.id,
-                                        path: ss.file_url,
-                                        recordedAt: ss.recorded_at,
-                                        activityPercent: samples.find(samp => samp.recorded_at.substring(0, 16) === ss.recorded_at.substring(0, 16))?.activity_percent ?? 50
-                                    })}
+                                    onSelectImage={(ss) => {
+                                        const idx = screenshots.findIndex(s => s.id === ss.id);
+                                        setEnlargedIndex(idx >= 0 ? idx : 0);
+                                    }}
                                 />
 
                                 {hasMoreScreenshots && (
@@ -483,10 +481,18 @@ export function Activity() {
                 </div>
             </div>
 
-            <ScreenshotModal
-                screenshot={enlarged}
-                onClose={() => setEnlarged(null)}
-            />
+            {enlargedIndex !== null && (
+                <ScreenshotModal
+                    screenshots={screenshots.map(ss => ({
+                        path: ss.file_url,
+                        recordedAt: ss.recorded_at,
+                        activityPercent: samples.find(samp => samp.recorded_at.substring(0, 16) === ss.recorded_at.substring(0, 16))?.activity_percent ?? 50
+                    }))}
+                    currentIndex={enlargedIndex}
+                    onClose={() => setEnlargedIndex(null)}
+                    onNavigate={setEnlargedIndex}
+                />
+            )}
         </PageLayout>
     );
 }
