@@ -35,7 +35,7 @@ export function Landing() {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMonthly, setIsMonthly] = useState(false);
-    const [activeOS, setActiveOS] = useState<'win' | 'mac' | 'linux'>('win');
+    const [activeOS, setActiveOS] = useState<'win' | 'mac'>('win');
 
     useEffect(() => {
         const handleScroll = () => {
@@ -49,8 +49,6 @@ export function Landing() {
         const ua = navigator.userAgent.toLowerCase();
         if (ua.includes('mac os')) {
             setActiveOS('mac');
-        } else if (ua.includes('linux') && !ua.includes('android')) {
-            setActiveOS('linux');
         } else {
             setActiveOS('win');
         }
@@ -680,7 +678,7 @@ export function Landing() {
                                     <div className="space-y-8 w-full max-w-xl">
                                         {/* OS Selector Tabs */}
                                         <div className="flex items-center gap-2 p-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-2xl w-fit mx-auto md:mx-0 shadow-shell-sm">
-                                            {(['win', 'mac', 'linux'] as const).map((os) => (
+                                            {(['win', 'mac'] as const).map((os) => (
                                                 <button
                                                     key={os}
                                                     onClick={() => setActiveOS(os)}
@@ -693,7 +691,6 @@ export function Landing() {
                                                 >
                                                     {os === 'win' && 'Windows'}
                                                     {os === 'mac' && 'macOS'}
-                                                    {os === 'linux' && 'Linux'}
                                                 </button>
                                             ))}
                                         </div>
@@ -746,31 +743,6 @@ export function Landing() {
                                                         <span>v1.2.8 (Apple Silicon) / v1.0.6 (Intel)</span>
                                                         <span>·</span>
                                                         <span>DMG Installer (~9 MB)</span>
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            {activeOS === 'linux' && (
-                                                <div className="space-y-4">
-                                                    <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                                                        <a
-                                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.0.6/TrackOwl_1.0.6_amd64.AppImage"
-                                                            className="px-10 py-5 bg-primary text-white text-[12px] font-black tracking-widest uppercase rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3 justify-center"
-                                                        >
-                                                            <Download size={20} />
-                                                            Download .AppImage
-                                                        </a>
-                                                        <a
-                                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.0.6/TrackOwl_1.0.6_amd64.deb"
-                                                            className="px-10 py-5 bg-[var(--bg-main)] border border-[var(--border-color)] text-[12px] font-black tracking-widest uppercase rounded-2xl hover:bg-[var(--bg-surface-hover)] transition-all shadow-shell-sm flex items-center gap-2 justify-center text-[var(--text-main)]"
-                                                        >
-                                                            Download .deb
-                                                        </a>
-                                                    </div>
-                                                    <div className="flex items-center gap-4 justify-center md:justify-start text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
-                                                        <span>v1.0.6 (Linux)</span>
-                                                        <span>·</span>
-                                                        <span>Universal & Debian (~60 MB)</span>
                                                     </div>
                                                 </div>
                                             )}
