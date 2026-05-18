@@ -26,7 +26,7 @@ interface MemberInfo {
     idle_limit?: number | null;
 }
 
-const COLORS = ['var(--color-chart-main)', '#4f46e5', '#4338ca', '#3730a3', '#312e81', '#1e1b4b'];
+const COLORS = ['var(--chart-pie-slot-0)', '#4f46e5', '#4338ca', '#3730a3', '#312e81', '#1e1b4b'];
 
 function categorizeApp(appName: string) {
     const l = appName.toLowerCase();

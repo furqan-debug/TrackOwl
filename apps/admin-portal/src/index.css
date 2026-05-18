@@ -69,8 +69,8 @@
 
     /* Text */
     --text-main: #001B4D;
-    --text-secondary: #64748B;
-    --text-muted: #94A3B8;
+    --text-secondary: #475569;
+    --text-muted: #64748B;
     --text-gold: #B8860B;
 
     /* Borders */
@@ -92,7 +92,9 @@
     --chart-gold-muted: #D9B36A;
     --chart-blue: #0f3796;
     --chart-grey: #f0f0f3;
-    --chart-pie-primary: var(--chart-gold); /* Slice 1: gold in light, grey in dark */
+    --chart-pie-primary: var(--chart-gold);
+    /* Slice 1: gold in light, grey in dark */
+    --chart-pie-slot-0: #f1bc34;
 
 
     --color-chart-main: var(--chart-gold);
@@ -119,8 +121,8 @@
     --bg-surface-hover: rgba(255, 255, 255, 0.08);
     --bg-menu-active: #0A2A6B;
     --text-main: #F8FAFC;
-    --text-secondary: #CBD5E1;
-    --text-muted: #94A3B8;
+    --text-secondary: #E2E8F0;
+    --text-muted: #CBD5E1;
     --border-color: rgba(255, 255, 255, 0.15);
     --border-soft: rgba(255, 255, 255, 0.1);
     --border-hover: rgba(255, 255, 255, 0.3);
@@ -142,7 +144,9 @@
     --chart-gold-light: #FDE047;
     --chart-gold-soft: #EAB308;
     --chart-gold-muted: #D9B36A;
-    --chart-pie-primary: #f0f0f3; /* Dark mode: grey instead of gold for pie slice 1 */
+    --chart-pie-primary: #f0f0f3;
+    /* Dark mode: grey instead of gold for pie slice 1 */
+    --chart-pie-slot-0: var(--chart-gold);
   }
 
   /* Safe Dark Mode Overrides for Hardcoded Light Classes */
@@ -168,16 +172,56 @@
 
   .stat-sublabel {
     color: var(--text-muted);
-    opacity: 0.9;
+    opacity: 1;
   }
 
   .dark .stat-label {
-    color: #E2E8F0;
+    color: #F1F5F9;
   }
 
   .dark .stat-sublabel {
-    color: #CBD5E1;
+    color: #E2E8F0;
     opacity: 1;
+  }
+
+  /* Stat Card Brand Icon — Gold border+icon in light, White border+icon in dark, transparent bg */
+  .stat-icon-brand {
+    background-color: transparent;
+    color: #D4AF37 !important;
+    border: 1px solid rgba(212, 175, 55, 0.4);
+  }
+
+  .stat-icon-brand:hover,
+  .group:hover .stat-icon-brand {
+    background-color: transparent;
+  }
+
+  .dark .stat-icon-brand {
+    background-color: transparent;
+    color: #FFFFFF !important;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+  }
+
+  .dark .group:hover .stat-icon-brand {
+    background-color: transparent;
+  }
+
+  /* Stat Card Value — Navy in light mode only, White in dark */
+  :root:not(.dark) .stat-value-brand {
+    color: #001B4D !important;
+  }
+
+  .dark .stat-value-brand {
+    color: #FFFFFF !important;
+  }
+
+  /* Settings Save Button — White in light, Black in dark */
+  .settings-save-btn {
+    color: #ffffff !important;
+  }
+
+  .dark .settings-save-btn {
+    color: #000000 !important;
   }
 
   /* Remove gold gradient & glow from stat cards in dark mode */
@@ -185,6 +229,7 @@
     background: var(--bg-surface) !important;
     border-color: rgba(255, 255, 255, 0.1) !important;
   }
+
   .dark .glass-panel .blur-\[50px\] {
     opacity: 0 !important;
   }
@@ -359,4 +404,76 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
   z-index: 50;
   border-color: var(--color-primary);
+}
+
+/* ─── Settings Page Range Slider — Light Mode Only ─── */
+:root input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 9999px;
+  background: #001B4D;
+  /* navy blue track */
+  cursor: pointer;
+  outline: none;
+}
+
+:root input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #D4AF37;
+  /* gold dot */
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+:root input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.25);
+}
+
+:root input[type="range"]::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #D4AF37;
+  border: 2px solid #fff;
+  cursor: pointer;
+}
+
+:root input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  background: #001B4D;
+}
+
+/* Dark mode — keep original appearance (accent-primary handles it) */
+.dark input[type="range"] {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark input[type="range"]::-webkit-slider-thumb {
+  background: var(--primary);
+  /* gold in dark via --primary: #FFD700 */
+  border-color: var(--bg-surface);
+  box-shadow: none;
+}
+
+.dark input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+  box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.2);
+}
+
+.dark input[type="range"]::-moz-range-thumb {
+  background: var(--primary);
+  border-color: var(--bg-surface);
+}
+
+.dark input[type="range"]::-moz-range-track {
+  background: rgba(255, 255, 255, 0.1);
 }

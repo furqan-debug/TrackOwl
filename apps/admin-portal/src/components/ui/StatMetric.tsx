@@ -43,7 +43,7 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
                     accent === 'amber' && "bg-amber-500/10 text-amber-500 group-hover:bg-amber-500/20",
                     accent === 'rose' && "bg-rose-500/10 text-rose-500 group-hover:bg-rose-500/20",
                     accent === 'primary' && "bg-primary/10 text-primary group-hover:bg-primary/20",
-                    isBrandGradient && "bg-accent/10 text-accent group-hover:bg-accent/20 shadow-inner border border-accent/20",
+                    isBrandGradient && "stat-icon-brand",
                     !accent && "bg-surface-hover text-text-muted group-hover:bg-primary/5 group-hover:text-primary shadow-inner"
                 )}>
                     {icon}
@@ -68,7 +68,7 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
                 <p className="text-[12px] font-bold stat-label uppercase tracking-[0.15em]">{label}</p>
                 <div className={clsx(
                     "text-2xl font-bold transition-all duration-300 tracking-tight",
-                    (isBrandGradient || accent === 'primary') ? "text-accent dark:text-accent" : "text-text-main group-hover:text-primary"
+                    (isBrandGradient || accent === 'primary') ? "stat-value-brand" : "text-text-main group-hover:text-primary"
                 )}>
                     {value}
                 </div>

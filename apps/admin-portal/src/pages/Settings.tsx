@@ -184,12 +184,12 @@ export function SettingsPage() {
                     >
                         <RefreshCw className={clsx("w-5 h-5", saving && "animate-spin")} />
                     </button>
-                    <button
+                     <button
                         onClick={handleSave}
                         disabled={saving || isViewer}
                         className={clsx(
-                            "flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-premium",
-                            saved ? "bg-emerald-500 text-white" : "bg-primary text-primary-foreground hover:scale-[1.02] active:scale-[0.98]"
+                            "settings-save-btn flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-premium",
+                            saved ? "bg-emerald-500" : "bg-primary hover:scale-[1.02] active:scale-[0.98]"
                         )}
                     >
                         {saving ? (
@@ -433,7 +433,7 @@ function RangeControl({ label, description, value, unit, min, max, step = 1, onC
             <input
                 type="range" min={min} max={max} step={step} value={value}
                 onChange={e => onChange(Number(e.target.value))}
-                className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-primary"
+                className="w-full rounded-full appearance-none cursor-pointer"
             />
         </div>
     );
