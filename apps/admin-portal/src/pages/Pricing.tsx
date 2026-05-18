@@ -327,25 +327,26 @@ export function Pricing() {
                                     isCurrentPlan && "ring-2 ring-primary/30"
                                 )}
                             >
-                                {/* Current Plan Badge */}
-                                {isCurrentPlan && (
-                                    <div className="absolute top-8 right-8 flex items-center gap-2 bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-full">
-                                        <Crown className="w-3 h-3 text-primary" />
-                                        <span className="text-[9px] font-black text-primary uppercase tracking-widest">Current Plan</span>
-                                    </div>
-                                )}
-
-                                {plan.popular && !isCurrentPlan && (
-                                    <div className="absolute top-8 right-8 flex items-center gap-2 text-primary font-black text-[10px] tracking-[0.2em] uppercase">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                        Recommended
-                                    </div>
-                                )}
 
                                 <div className="mb-10">
-                                    <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-text-muted mb-4">
-                                        {plan.name}
-                                    </h4>
+                                    {/* Plan name row with inline badge */}
+                                    <div className="flex items-center justify-between mb-4">
+                                        <h4 className="text-[11px] font-black uppercase tracking-[0.4em] text-text-muted">
+                                            {plan.name}
+                                        </h4>
+                                        {isCurrentPlan && (
+                                            <div className="flex items-center gap-1.5 bg-primary/10 border border-primary/20 px-2.5 py-1 rounded-full">
+                                                <Crown className="w-3 h-3 text-primary" />
+                                                <span className="text-[9px] font-black text-primary uppercase tracking-widest">Current Plan</span>
+                                            </div>
+                                        )}
+                                        {plan.popular && !isCurrentPlan && (
+                                            <div className="flex items-center gap-1.5 text-primary font-black text-[10px] tracking-[0.2em] uppercase">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                                                Recommended
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="flex items-baseline gap-1">
                                         <span className="text-5xl font-black tracking-tighter text-text-main">{plan.displayPrice}</span>
                                         <span className="text-sm font-bold text-text-muted tracking-tight">{plan.period}</span>
