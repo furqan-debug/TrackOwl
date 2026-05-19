@@ -1,11 +1,15 @@
 {
-  "version": "1.2.7",
-  "notes": "TrackOwl v1.2.7 - UI Polish & Premium Feature Gating Update. This release enforces premium feature access control with elegant lock overlays, completes the Deep Royal Navy & Sophisticated Gold brand identity across all portal components, and improves dark mode contrast and visual consistency throughout the admin portal.",
-  "pub_date": "2026-05-18T17:36:56.965Z",
+  "version": "1.2.9",
+  "notes": "TrackOwl v1.2.9 — Stability & Marketing Update.\n\n- ✅ Fixes macOS login screen crash by delaying input listener & checking accessibility permissions.\n- ✅ Adds a new landing page component and marketing section.\n- ✅ Extends Apple Silicon support branding to include M4 and M5 chips.\n- ✅ Removes legacy Linux panels for a streamlined presentation.",
+  "pub_date": "2026-05-19T15:18:49.056Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3anhFY05XMWY1MTJyZGZTcElRS1ZQQ0phRDk3R2JDS1NYb1ZRdXBEU3lYNm9CNGk0RDlLYkw5a3pxdWFqTVY3Vy9nL0p6NllpMUd5SkRpZitYNlhEdXdJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5MTI1ODE2CWZpbGU6VHJhY2tPd2xfMS4yLjdfeDY0LXNldHVwLmV4ZQp1cXY2OHpKV3BxZE1FbW52azFEeW82blpxOHFiMkw4Y0FCMm1MWjRTQnd3c2ZwSFhyYjF4elFKWUdJVWVGdWNKUmE5Wnc2a2pMT1VocC8yZXRqMi9DUT09Cg==",
-      "url": "https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.7/TrackOwl_1.2.7_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajBSc0x2NGhqODY0aG1JcmNTbGtCRThwS01OYXpIN0Z5UjJndXJlNUZNRFAxeXdOdXJxWGFocXZtQk8vU0RMZjBKOTR0eElZdlViOW5hSDdLSHVRUHdZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5MjAzOTI4CWZpbGU6VHJhY2tPd2xfMS4yLjlfeDY0LXNldHVwLmV4ZQo3MkV1YkJZU2Fxdks2VGM1d0NaNG53Sm9MQkZkN0s0eGpqZVRuRElIQlkrTUlqRTRPY1RIRkh2cTZ0VEtad0NQMlNQZnkyTXFYNEhhUFoxWUFSRFpEdz09Cg==",
+      "url": "https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.9/TrackOwl_1.2.9_x64-setup.exe"
+    },
+    "darwin-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajBSelBIT1VOT1Z3WUd5Tm5DN3g2OGU2TGI5MVlnYTdscHFKSXExbUxtNHFQcHRaTUlaYnR4SWwvUVo2Umk4emlIRWV1dUZPY3lwNXZBSnpwQTFGN1E4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5MjAzOTI5CWZpbGU6VHJhY2tPd2xfYWFyY2g2NC5hcHAudGFyLmd6CklTSHgyNENNWE9nbjZuL2pKUWp3MEhqNEN6Qi9YYUxHM1Nud2krS0lxL0lQM1AxclJIdmYrcmMzTFA2MDllYm1uOEhhbkh1UWZEdE56TmdvVkJ6cENBPT0K",
+      "url": "https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.9/TrackOwl_aarch64.app.tar.gz"
     }
   }
 }
