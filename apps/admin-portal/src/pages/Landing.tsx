@@ -701,21 +701,21 @@ export function Landing() {
                                                 <div className="space-y-4">
                                                     <div className="flex flex-wrap gap-4 justify-center md:justify-start">
                                                         <a
-                                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.8/TrackOwl_1.2.8_x64-setup.exe"
+                                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.9/TrackOwl_1.2.9_x64-setup.exe"
                                                             className="px-10 py-5 bg-primary text-white text-[12px] font-black tracking-widest uppercase rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3 justify-center"
                                                         >
                                                             <Download size={20} />
                                                             Download .exe Installer
                                                         </a>
                                                         <a
-                                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.8/TrackOwl_1.2.8_x64_en-US.msi"
+                                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.9/TrackOwl_1.2.9_x64_en-US.msi"
                                                             className="px-10 py-5 bg-[var(--bg-main)] border border-[var(--border-color)] text-[12px] font-black tracking-widest uppercase rounded-2xl hover:bg-[var(--bg-surface-hover)] transition-all shadow-shell-sm flex items-center gap-2 justify-center text-[var(--text-main)]"
                                                         >
                                                             Download .msi (Enterprise)
                                                         </a>
                                                     </div>
                                                     <div className="flex items-center gap-4 justify-center md:justify-start text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
-                                                        <span>v1.2.8 (Latest)</span>
+                                                        <span>v1.2.9 (Latest)</span>
                                                         <span>·</span>
                                                         <span>64-bit Setup (~5 MB)</span>
                                                     </div>
@@ -726,7 +726,7 @@ export function Landing() {
                                                 <div className="space-y-4">
                                                     <div className="flex flex-wrap gap-4 justify-center md:justify-start">
                                                         <a
-                                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.8/TrackOwl_1.2.8_aarch64.dmg"
+                                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.9/TrackOwl_1.2.9_aarch64.dmg"
                                                             className="px-10 py-5 bg-primary text-white text-[12px] font-black tracking-widest uppercase rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3 justify-center"
                                                         >
                                                             <Download size={20} />
@@ -740,7 +740,7 @@ export function Landing() {
                                                         </a>
                                                     </div>
                                                     <div className="flex items-center gap-4 justify-center md:justify-start text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
-                                                        <span>v1.2.8 (Apple Silicon) / v1.0.6 (Intel)</span>
+                                                        <span>v1.2.9 (Apple Silicon) / v1.0.6 (Intel)</span>
                                                         <span>·</span>
                                                         <span>DMG Installer (~9 MB)</span>
                                                     </div>
