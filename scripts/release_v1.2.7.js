@@ -18,7 +18,7 @@ function sign(filePath) {
   const env = {
     ...process.env,
     TAURI_SIGNING_PRIVATE_KEY: encodedKey,
-    TAURI_SIGNING_PRIVATE_KEY_PASSWORD: 'Trackora2026!'
+    TAURI_SIGNING_PRIVATE_KEY_PASSWORD: process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD
   };
   const cmd = `npx tauri signer sign "${filePath}"`;
   log(`Signing: ${path.basename(filePath)}`);
