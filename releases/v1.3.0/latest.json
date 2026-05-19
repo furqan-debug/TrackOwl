@@ -1,0 +1,15 @@
+{
+  "version": "1.3.0",
+  "notes": "TrackOwl v1.3.0 — macOS Notification Branding & Bundle ID Fix.\n\n- ✅ Fixes macOS notification banner names and logos by transitioning bundle ID to com.digireps.trackowl.\n- ✅ Ensures all local systems receive the fully branded TrackOwl notification system.\n- ✅ General performance stability and optimizations.",
+  "pub_date": "2026-05-19T16:19:30.911Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3andRbW05aDVjTkVDNlZaVzdWaitBcHZ1OGprSk50WStjaDZoNTlTSU50Rk1FcjB3MjhYdDUzVVQvdGxOSWxxdG14TjFFV3A2RkhNL0Y4dnBrRnhiNHcwPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5MjA3NTYxCWZpbGU6VHJhY2tPd2xfMS4zLjBfeDY0LXNldHVwLmV4ZQpGQ2J2UEovRnp2dUx4RExkb084eVRDbmNnTHhndzAvMmZaSUNtVVNUaEZTbTQ0SDZ3VnUyc1RhOHBtQkFDTnhHa0xiQUtFbDNkQVN4Q3drVE90Z2NCZz09Cg==",
+      "url": "https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.0/TrackOwl_1.3.0_x64-setup.exe"
+    },
+    "darwin-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajIwdFA2UmU0WVdqRWROR2hZVE1WT3N0dCtxeXU0cFVVZEhYNkN0MlE5ZDJXb1pIY0thZnZmaytHeGg2Y3l1cmpsOEpYOGFYZ2gwVi9TbnlkOHJ3RWdNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5MjA3NTcwCWZpbGU6VHJhY2tPd2xfYWFyY2g2NC5hcHAudGFyLmd6ClBIVVZCR0JVeUE3TzJJL21nMmNXcnlNY2N0SDBUMmFKWlg4V3RTTG9saVZNaTlQd1BKaFl1THQ4M0E4dEtTYWJjd1hxaFFETjE3UzJJZ05DZUhyV0RRPT0K",
+      "url": "https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.0/TrackOwl_aarch64.app.tar.gz"
+    }
+  }
+}
