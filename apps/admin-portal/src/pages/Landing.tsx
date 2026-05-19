@@ -727,10 +727,10 @@ export function Landing() {
                                                     <div className="flex flex-wrap gap-4 justify-center md:justify-start">
                                                         <a
                                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.2.9/TrackOwl_1.2.9_aarch64.dmg"
-                                                            className="px-10 py-5 bg-primary text-white text-[12px] font-black tracking-widest uppercase rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3 justify-center"
+                                                            className="px-5 py-5 bg-primary text-white text-[12px] font-black tracking-widest uppercase rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3 justify-center"
                                                         >
                                                             <Download size={20} />
-                                                            Apple Silicon (M1/M2/M3/M4/M5)
+                                                            Apple Silicon (macOS (.dmg))
                                                         </a>
                                                         <a
                                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.0.6/TrackOwl_1.0.6_x64.dmg"
