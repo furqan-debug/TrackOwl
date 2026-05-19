@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import {
     ChevronRight,
     Check,
-    Zap,
     Monitor,
     Clock,
     Camera,
@@ -18,12 +17,19 @@ import {
     Globe,
     Briefcase,
     Plus,
-    Minus
+    Minus,
+    Heart,
+    ShoppingCart,
+    CreditCard,
+    GraduationCap,
+    Palette,
+    MessageSquare
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
 import LogoIcon from '../assets/branding/3.svg';
 import DashboardPreview from '../assets/branding/dashboard-preview.png';
+import DesktopPreview from '../assets/branding/desktop-preview.png';
 import JasonAvatar from '../assets/branding/jason.png';
 import ElenaAvatar from '../assets/branding/elena.png';
 import SarahAvatar from '../assets/branding/sarah.png';
@@ -124,10 +130,10 @@ export function Landing() {
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="relative w-40 h-full flex items-center cursor-pointer group"
+                        className="relative w-48 h-full flex items-center cursor-pointer group"
                         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                     >
-                        <div className="absolute top-1/2 -translate-y-1/2 flex h-32 w-32 items-center justify-center transition-transform duration-500 group-hover:rotate-[360deg]">
+                        <div className="absolute top-1/2 -translate-y-1/2 flex h-40 w-40 items-center justify-center transition-all duration-300 group-hover:scale-[1.05]">
                             <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
                         </div>
                     </motion.div>
@@ -158,107 +164,134 @@ export function Landing() {
 
             <main className="relative z-10">
                 {/* Hero Section */}
-                <section className="relative min-h-[90vh] flex items-center justify-center pt-52 pb-20 overflow-hidden">
-                    <div className="mx-auto max-w-7xl px-6 md:px-10 flex flex-col items-center text-center">
-
-
-                        <motion.h1
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.1 }}
-                            className="max-w-5xl text-5xl md:text-7xl lg:text-8xl font-black tracking-tight leading-[0.95] mb-8"
-                        >
-                            Stop Losing <span className="text-primary italic">Billable</span> <br className="hidden md:block" />
-                            Hours with <span className="text-shiny-gold">TrackOwl</span>.
-                        </motion.h1>
-
-                        <motion.p
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.2 }}
-                            className="max-w-none text-lg md:text-xl font-medium text-[var(--text-secondary)] leading-relaxed mb-4"
-                        >
-                            The precision time tracker for modern teams who value <span className="text-[var(--text-main)] font-bold decoration-primary/40 underline underline-offset-4 decoration-2">transparency over micromanagement</span>.
-                        </motion.p>
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.25 }}
-                            className="text-[11px] font-bold tracking-[0.2em] text-[var(--text-muted)] uppercase mb-12"
-                        >
-                            No credit card required · Free to explore · Cancel anytime
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.3 }}
-                            className="flex flex-col sm:flex-row items-center gap-5 w-full sm:w-auto"
-                        >
-                            <button
-                                onClick={() => navigate('/signup')}
-                                className="w-full sm:w-auto px-10 py-4 bg-primary text-white text-[13px] font-bold tracking-widest rounded-2xl shadow-glow-primary hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 group"
+                <section className="relative min-h-[90vh] flex items-center justify-center pt-48 pb-20 overflow-hidden">
+                    <div className="mx-auto max-w-7xl px-6 md:px-10 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+                        {/* Left Column: Content */}
+                        <div className="col-span-12 lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left pr-0 lg:pr-6">
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6 }}
+                                className="text-[#D4AF37] text-[10px] font-bold tracking-[0.25em] uppercase mb-4"
                             >
-                                Get Started Free
-                                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                            </button>
-                            <button
-                                onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-                                className="w-full sm:w-auto px-10 py-4 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[13px] font-bold tracking-widest rounded-2xl hover:bg-[var(--bg-surface-hover)] hover:border-primary/20 transition-all active:scale-95 shadow-shell-sm flex items-center justify-center gap-2"
+                                Workforce Analytics & Insights
+                            </motion.div>
+
+                            <motion.h1
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 0.1 }}
+                                className="text-4xl sm:text-5xl lg:text-[46px] xl:text-[54px] font-black tracking-tight leading-[1.08] mb-6 text-[var(--text-main)]"
                             >
-                                How it Works
-                            </button>
-                        </motion.div>
+                                Stop Losing <br className="hidden lg:block" />
+                                <span className="text-[#D4AF37]">Billable</span> Hours with <br className="hidden lg:block" />
+                                TrackOwl.
+                            </motion.h1>
 
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ duration: 1, delay: 0.5 }}
-                            className="mt-20 relative w-full max-w-6xl mx-auto px-4 perspective-[1000px]"
-                        >
-                            <div className="relative rounded-[2.5rem] border-[8px] border-[var(--bg-surface)] shadow-premium overflow-hidden transform rotateX-4 group transition-transform duration-700 hover:rotateX-0">
-                                <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent pointer-events-none z-10" />
-                                <img
-                                    src={DashboardPreview}
-                                    alt="TrackOwl Interface"
-                                    className="w-full h-auto object-cover transition-transform duration-1000 group-hover:scale-105"
-                                />
-                                <div className="absolute inset-0 border border-white/10 rounded-[2rem] pointer-events-none z-20" />
-                            </div>
+                            <motion.p
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 0.2 }}
+                                className="text-base md:text-lg font-medium text-[var(--text-secondary)] leading-relaxed mb-8 max-w-md"
+                            >
+                                The smart time tracking solution for modern teams, <span className="text-primary font-bold border-b border-primary/20 pb-0.5">transparent processes</span>, and <span className="text-primary font-bold border-b border-primary/20 pb-0.5">better project outcomes</span>.
+                            </motion.p>
 
-                            {/* Floating decorative elements */}
-                            <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/20 blur-[60px] rounded-full animate-pulse" />
-                            <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-primary/10 blur-[80px] rounded-full animate-pulse" style={{ animationDelay: '1.5s' }} />
-                        </motion.div>
-                    </div>
-                </section>
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 0.3 }}
+                                className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
+                            >
+                                <button
+                                    onClick={() => navigate('/signup')}
+                                    className="w-full sm:w-auto px-7 py-3.5 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#001B4D] text-[11px] font-black tracking-widest uppercase rounded-full shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 group"
+                                >
+                                    Start Your Free Trial
+                                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </button>
+                                <button
+                                    onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+                                    className="w-full sm:w-auto px-7 py-3.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-main)] text-[11px] font-black tracking-widest uppercase rounded-full hover:bg-[var(--bg-surface-hover)] hover:border-primary/20 transition-all active:scale-95 shadow-shell-sm flex items-center justify-center gap-2 group"
+                                >
+                                    Take a Tour
+                                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            </motion.div>
 
-                {/* Trusted By Section */}
-                <section className="py-20 border-y border-[var(--border-color)] bg-[var(--bg-surface)]/30 overflow-hidden">
-                    <div className="mx-auto max-w-7xl px-6 text-center mb-10">
-                        <span className="text-[10px] font-bold tracking-[0.3em] text-[var(--text-muted)] uppercase">Trusted by forward-thinking teams at</span>
-                    </div>
-                    <div className="relative flex overflow-x-hidden group">
-                        <div className="animate-marquee flex gap-20 py-4 opacity-50 grayscale group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-500 items-center">
-                            {['NexaSYS', 'CloudScale', 'OrbitAI', 'StreamFlow', 'MetaDesign', 'DataCore', 'Visionary', 'PrimeLogistics'].map((name, i) => (
-                                <div key={i} className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                                        <Zap className="w-4 h-4 text-primary" />
-                                    </div>
-                                    <span className="text-xl font-black tracking-tighter text-[var(--text-main)]">{name}</span>
+                            {/* Trusted by industries */}
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.8, delay: 0.5 }}
+                                className="mt-12 w-full pt-8 border-t border-[var(--border-color)]/60 text-center lg:text-left"
+                            >
+                                <span className="text-[9px] md:text-[10px] font-bold tracking-[0.25em] text-[var(--text-muted)] uppercase block mb-6">
+                                    Loved by SMBS to the Large Global Teams
+                                </span>
+                                <div className="grid grid-cols-5 gap-y-6 gap-x-2 md:gap-x-4">
+                                    {[
+                                        { name: 'SaaS/Tech', icon: Monitor },
+                                        { name: 'Healthcare', icon: Heart },
+                                        { name: 'eCommerce', icon: ShoppingCart },
+                                        { name: 'FinTech', icon: CreditCard },
+                                        { name: 'Education', icon: GraduationCap },
+                                        { name: 'Marketing', icon: TrendingUp },
+                                        { name: 'Design', icon: Palette },
+                                        { name: 'Agency', icon: Briefcase },
+                                        { name: 'Consulting', icon: MessageSquare },
+                                        { name: 'Nonprofit', icon: Globe }
+                                    ].map((ind, i) => {
+                                        const Icon = ind.icon;
+                                        return (
+                                            <div key={i} className="flex flex-col items-center justify-center gap-2 group/ind">
+                                                <Icon className="w-5 h-5 text-[var(--text-muted)] group-hover/ind:text-primary transition-all duration-300" strokeWidth={1.7} />
+                                                <span className="text-[10px] font-medium text-[var(--text-secondary)] whitespace-nowrap tracking-wide">{ind.name}</span>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
-                            ))}
-                            {/* Duplicate for seamless scroll */}
-                            {['NexaSYS', 'CloudScale', 'OrbitAI', 'StreamFlow', 'MetaDesign', 'DataCore', 'Visionary', 'PrimeLogistics'].map((name, i) => (<div key={`dup-${i}`} className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                                    <Zap className="w-4 h-4 text-primary" />
+                            </motion.div>
+                        </div>
+
+                        {/* Right Column: Image */}
+                        <div className="col-span-12 lg:col-span-6 w-full flex justify-center items-center mt-12 lg:mt-0">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                transition={{ duration: 1, delay: 0.5 }}
+                                className="relative w-full max-w-2xl lg:max-w-none px-4 mockup-3d-container"
+                            >
+                                {/* Main Admin Dashboard Image */}
+                                <div className="relative rounded-[2.5rem] border-[8px] border-[var(--bg-surface)] shadow-premium overflow-hidden mockup-3d-card group">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent pointer-events-none z-10" />
+                                    <img
+                                        src={DashboardPreview}
+                                        alt="TrackOwl Interface"
+                                        className="w-full h-auto block transition-transform duration-1000 group-hover:scale-105"
+                                    />
+                                    <div className="absolute inset-0 border border-white/10 rounded-[2rem] pointer-events-none z-20" />
                                 </div>
-                                <span className="text-xl font-black tracking-tighter text-[var(--text-main)]">{name}</span>
-                            </div>
-                            ))}
+
+                                {/* Floating Desktop App Image */}
+                                <div className="absolute -left-4 md:-left-8 -bottom-10 w-[38%] max-w-[200px] rounded-[1.8rem] border-[6px] border-[var(--bg-surface)] shadow-premium overflow-hidden mockup-desktop-float z-30 group/desktop">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent pointer-events-none z-10" />
+                                    <img
+                                        src={DesktopPreview}
+                                        alt="TrackOwl Desktop App"
+                                        className="w-full h-auto block transition-transform duration-1000 group-hover/desktop:scale-105"
+                                    />
+                                    <div className="absolute inset-0 border border-white/15 rounded-[1.4rem] pointer-events-none z-20" />
+                                </div>
+
+                                {/* Floating decorative elements */}
+                                <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/20 blur-[60px] rounded-full animate-pulse pointer-events-none" />
+                                <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-primary/10 blur-[80px] rounded-full animate-pulse pointer-events-none" style={{ animationDelay: '1.5s' }} />
+                            </motion.div>
                         </div>
                     </div>
                 </section>
+
 
                 {/* Features Bento Grid */}
                 <section id="how-it-works" className="py-32 bg-[var(--bg-main)]">
@@ -298,7 +331,7 @@ export function Landing() {
                             {/* Activity - Bento Small */}
                             <div className="md:col-span-4 group relative overflow-hidden rounded-[2.5rem] bg-[var(--bg-surface)] border border-[var(--border-color)] p-10 shadow-soft hover:border-primary/30 transition-all duration-500">
                                 <div className="flex flex-col h-full items-center text-center justify-center space-y-6">
-                                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                                    <div className="w-14 h-14 rounded-2xl bg-[#001B4D] text-[#D4AF37] flex items-center justify-center">
                                         <TrendingUp size={28} />
                                     </div>
                                     <h4 className="text-2xl font-black tracking-tight">Active Pulse</h4>
@@ -311,7 +344,7 @@ export function Landing() {
                                                 key={i}
                                                 initial={{ height: 0 }}
                                                 whileInView={{ height: `${h}%` }}
-                                                className="w-full bg-emerald-500/40 rounded-t-sm"
+                                                className="w-full bg-[#D4AF37]/40 rounded-t-sm"
                                                 transition={{ delay: i * 0.1, duration: 0.5 }}
                                             />
                                         ))}
@@ -357,7 +390,7 @@ export function Landing() {
                                         <ul className="space-y-3">
                                             {['CSV/PDF Exports', 'Client Sharing', 'Custom Branding', 'API Access'].map(item => (
                                                 <li key={item} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase">
-                                                    <Check size={14} className="text-emerald-400" />
+                                                    <Check size={14} className="text-[#D4AF37]" />
                                                     {item}
                                                 </li>
                                             ))}
@@ -370,7 +403,7 @@ export function Landing() {
                                             <div className="h-2 w-3/4 bg-white/20 rounded-full" />
                                             <div className="flex justify-between items-end pt-4">
                                                 <div className="h-16 w-4 bg-white/40 rounded-t-sm" />
-                                                <div className="h-24 w-4 bg-emerald-400 rounded-t-sm shadow-[0_0_15px_rgba(52,211,153,0.5)]" />
+                                                <div className="h-24 w-4 bg-[#D4AF37] rounded-t-sm shadow-[0_0_15px_rgba(212,175,55,0.5)]" />
                                                 <div className="h-12 w-4 bg-white/40 rounded-t-sm" />
                                                 <div className="h-20 w-4 bg-white/40 rounded-t-sm" />
                                             </div>
@@ -399,7 +432,7 @@ export function Landing() {
                                             <div className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest">Efficiency Increase</div>
                                         </div>
                                         <div className="p-6 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-color)] flex items-center gap-6">
-                                            <div className="text-4xl font-black text-emerald-500">$12k</div>
+                                            <div className="text-4xl font-black text-[#D4AF37]">$12k</div>
                                             <div className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest">Avg. Annual Savings</div>
                                         </div>
                                     </div>
@@ -418,7 +451,7 @@ export function Landing() {
                                         </div>
                                     </div>
                                     {/* Abstract background blobs */}
-                                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 blur-[60px] rounded-full" />
+                                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#D4AF37]/10 blur-[60px] rounded-full" />
                                     <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-primary/10 blur-[60px] rounded-full" />
                                 </div>
                             </div>
@@ -565,14 +598,11 @@ export function Landing() {
                         <div className="flex justify-center items-center gap-6 mb-20">
                             <div className="flex items-center gap-3">
                                 <span className={twMerge("text-sm font-bold tracking-tight transition-colors", !isMonthly ? "text-[var(--text-main)]" : "text-[var(--text-muted)]")}>Yearly</span>
-                                <div className={twMerge(
-                                    "px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border transition-colors duration-300",
-                                    isMonthly
-                                        ? "bg-rose-500/10 text-rose-500 border-rose-500/20"
-                                        : "bg-emerald-500/10 text-emerald-500 border-emerald-500/20"
-                                )}>
-                                    Save 25%
-                                </div>
+                                {!isMonthly && (
+                                    <div className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 transition-all duration-300">
+                                        Save 25%
+                                    </div>
+                                )}
                             </div>
 
                             <button
@@ -668,7 +698,7 @@ export function Landing() {
                             <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
                             <div className="relative z-10 flex flex-col md:flex-row items-center gap-16">
                                 <div className="flex-1 space-y-8">
-                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 text-emerald-600 text-[10px] font-black uppercase tracking-[0.2em]">
+                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-[10px] font-black uppercase tracking-[0.2em]">
                                         <ShieldCheck size={14} /> Official Desktop Client
                                     </div>
                                     <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1]">Ready to Start <br /> <span className="text-primary italic">Tracking?</span></h2>
