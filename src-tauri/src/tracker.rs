@@ -60,9 +60,40 @@ pub struct ScreenshotPayload {
 }
 
 // ─── Global input hook — runs on a dedicated thread ─────────────────────────
+static IS_LISTENER_SPAWNED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[cfg(target_os = "macos")]
+pub fn check_macos_accessibility() -> bool {
+    #[link(name = "ApplicationServices", kind = "framework")]
+    extern "C" {
+        fn AXIsProcessTrusted() -> u8;
+    }
+    unsafe { AXIsProcessTrusted() != 0 }
+}
+
+#[cfg(target_os = "macos")]
+pub fn open_macos_accessibility_settings() {
+    let _ = std::process::Command::new("open")
+        .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
+        .spawn();
+}
+
 /// Spawns rdev listener in a background thread.
 /// All mouse/keyboard events are counted in `counts`.
 pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
+    if IS_LISTENER_SPAWNED.swap(true, Ordering::SeqCst) {
+        return; // Already spawned!
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        if !check_macos_accessibility() {
+            println!("[tracker] macOS Accessibility permissions not granted. Delaying listener.");
+            IS_LISTENER_SPAWNED.store(false, Ordering::SeqCst);
+            return;
+        }
+    }
+
     thread::spawn(move || {
         if let Err(e) = listen(move |event: Event| {
             let mut is_active = false;
@@ -100,6 +131,7 @@ pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
             }
         }) {
             eprintln!("[tracker] rdev listen error: {:?}", e);
+            IS_LISTENER_SPAWNED.store(false, Ordering::SeqCst);
         }
     });
 }
