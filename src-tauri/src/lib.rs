@@ -218,6 +218,18 @@ fn start_tracking(
             };
         }
     }
+
+    #[cfg(target_os = "macos")]
+    {
+        if !tracker::check_macos_accessibility() {
+            tracker::open_macos_accessibility_settings();
+            return TrackingResult {
+                status: "error".to_string(),
+                session_id: None,
+                error: Some("macOS Accessibility Permission Required: Please enable 'TrackOwl' in the System Settings window that just opened, then try starting again.".to_string()),
+            };
+        }
+    }
     
     let (cfg, counts, running, auth_arc, db_arc): (SupabaseConfig, Arc<tracker::TrackerCounts>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>) = {
         let s = state.lock().unwrap();
@@ -289,6 +301,9 @@ fn start_tracking(
                     counts.mouse_count.store(0, std::sync::atomic::Ordering::Relaxed);
                     counts.keyboard_count.store(0, std::sync::atomic::Ordering::Relaxed);
                     counts.active_seconds.store(0, std::sync::atomic::Ordering::Relaxed);
+
+                    // Spawn the input listener since we are starting tracking and permissions are verified!
+                    tracker::spawn_input_listener(Arc::clone(&counts));
 
                     // Start native trackers
                     tracker::start_sample_loop(
@@ -561,7 +576,6 @@ fn update_plan(state: tauri::State<'_, Mutex<AppState>>, plan: String) -> Result
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let state = AppState::default();
-    let counts = Arc::clone(&state.counts);
 
     tauri::Builder::default()
         .manage(Mutex::new(state))
@@ -579,8 +593,6 @@ pub fn run() {
                 });
         }))
         .setup(move |app: &mut tauri::App| {
-            tracker::spawn_input_listener(Arc::clone(&counts));
-
             let app_handle = app.handle().clone();
             
             // --- System Tray ---
