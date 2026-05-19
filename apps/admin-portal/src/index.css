@@ -477,3 +477,48 @@
 .dark input[type="range"]::-moz-range-track {
   background: rgba(255, 255, 255, 0.1);
 }
+
+/* 3D Mockup Effects for Widescreen Layouts */
+@media (min-width: 1024px) {
+  .mockup-3d-container {
+    perspective: 1500px;
+    transform-style: preserve-3d;
+  }
+  
+  .mockup-3d-card {
+    transform: rotateX(5deg) rotateY(-8deg) rotateZ(1deg);
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-style: preserve-3d;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  
+  .mockup-3d-card:hover {
+    transform: rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+
+  .mockup-desktop-float {
+    transform: translateZ(50px) rotateX(5deg) rotateY(-8deg) rotateZ(1deg);
+    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    transform-style: preserve-3d;
+    will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  
+  .mockup-3d-container:hover .mockup-desktop-float {
+    transform: translateZ(20px) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+  }
+
+  /* Anti-blur rendering fixes for 3D transformed images */
+  .mockup-3d-card img, 
+  .mockup-desktop-float img {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translate3d(0, 0, 0);
+    will-change: transform;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: auto;
+  }
+}
