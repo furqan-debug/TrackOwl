@@ -730,7 +730,7 @@ export function Landing() {
                                                             className="px-10 py-5 bg-primary text-white text-[12px] font-black tracking-widest uppercase rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3 justify-center"
                                                         >
                                                             <Download size={20} />
-                                                            Apple Silicon (M1/M2/M3)
+                                                            Apple Silicon (M1/M2/M3/M4/M5)
                                                         </a>
                                                         <a
                                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.0.6/TrackOwl_1.0.6_x64.dmg"
