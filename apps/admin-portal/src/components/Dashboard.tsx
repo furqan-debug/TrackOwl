@@ -466,11 +466,11 @@ export function Dashboard() {
             title="Team Overview"
             description="Building the future of global work. Strategic leadership for the modern enterprise."
             actions={
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center glass-panel p-1 rounded-2xl shadow-premium border border-border">
+                <div className="flex items-center gap-2 md:gap-4">
+                    <div className="flex items-center glass-panel p-1 rounded-2xl shadow-premium border border-border flex-1 md:flex-none">
                         <button
                             onClick={() => navigateWeek('prev')}
-                            className="p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl"
+                            className="p-2 md:p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -478,12 +478,12 @@ export function Dashboard() {
                             value={`${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`}
                             displayValue={`${weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`}
                             onChange={(val) => handleDateChange(val)}
-                            className="min-w-[240px]"
+                            className="flex-1 min-w-0"
                             label="Viewing Week"
                         />
                         <button
                             onClick={() => navigateWeek('next')}
-                            className="p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl disabled:opacity-30 disabled:hover:bg-transparent"
+                            className="p-2 md:p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl disabled:opacity-30 disabled:hover:bg-transparent"
                             disabled={weekEnd > new Date()}
                         >
                             <ChevronRight className="w-4 h-4" />
@@ -492,7 +492,7 @@ export function Dashboard() {
                     <button
                         onClick={() => fetchDashboardData(true, true)}
                         className={clsx(
-                            "w-12 h-12 flex items-center justify-center glass-panel rounded-2xl transition-all duration-300 border border-border",
+                            "w-10 h-10 md:w-12 md:h-12 flex items-center justify-center glass-panel rounded-2xl transition-all duration-300 border border-border shrink-0",
                             refreshing ? "text-primary shadow-glow-primary border-primary/20" : "text-text-muted hover:text-text-main"
                         )}
                     >
@@ -504,7 +504,7 @@ export function Dashboard() {
             <div className="flex flex-col gap-12 pb-32">
 
                 {/* 📊 KPI Architecture */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
                     <StatMetric
                         icon={<TrendingUp className="w-5 h-5" />}
                         label="Team Focus"
@@ -544,14 +544,14 @@ export function Dashboard() {
                 {/* 📈 Analytics Row (Line & Donut Charts) */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
                     {/* Line Chart: Time Tracked Over Time */}
-                    <div className="lg:col-span-8 bg-surface rounded-2xl shadow-premium border border-border flex flex-col min-h-[420px]">
-                        <div className="px-8 py-6 border-b border-border flex items-center justify-between relative z-20">
+                    <div className="lg:col-span-8 bg-surface rounded-2xl shadow-premium border border-border flex flex-col min-h-[300px] md:min-h-[420px]">
+                        <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border flex items-center justify-between relative z-20">
                             <div>
-                                <h3 className="text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Tracked Over Time</h3>
-                                <p className="text-[12px] font-medium text-text-muted tracking-[0.1em]">Daily productivity trends for this week</p>
+                                <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Tracked Over Time</h3>
+                                <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Daily productivity trends for this week</p>
                             </div>
                         </div>
-                        <div className="flex-1 p-8 pt-4 relative">
+                        <div className="flex-1 p-4 md:p-8 pt-2 md:pt-4 relative">
                             {chartData.every(d => d.hours === 0) ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <EmptyState
@@ -603,12 +603,12 @@ export function Dashboard() {
                     </div>
 
                     {/* Donut Chart: Time Distribution */}
-                    <div className="lg:col-span-4 bg-surface rounded-2xl shadow-premium border border-border overflow-hidden flex flex-col min-h-[420px]">
-                        <div className="px-8 py-6 border-b border-border">
-                            <h3 className="text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Distribution</h3>
-                            <p className="text-[12px] font-medium text-text-muted tracking-[0.1em]">Breakdown by project</p>
+                    <div className="lg:col-span-4 bg-surface rounded-2xl shadow-premium border border-border overflow-hidden flex flex-col min-h-[300px] md:min-h-[420px]">
+                        <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border">
+                            <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Distribution</h3>
+                            <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Breakdown by project</p>
                         </div>
-                        <div className="flex-1 flex flex-col p-8 items-center justify-center relative min-h-[300px]">
+                        <div className="flex-1 flex flex-col p-4 md:p-8 items-center justify-center relative min-h-[240px] md:min-h-[300px]">
                             {projectActivity.length === 0 ? (
                                 <EmptyState
                                     icon={<FolderOpen className="w-8 h-8 text-text-muted/20" />}
@@ -676,18 +676,18 @@ export function Dashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
                     {/* 🖥️ Left Content: Activity Stream (70%) */}
-                    <div className="lg:col-span-7 flex flex-col h-[780px]">
+                    <div className="lg:col-span-7 flex flex-col min-h-[400px] lg:h-[780px]">
                         <div className="bg-surface rounded-2xl overflow-hidden flex flex-col h-full shadow-premium border border-border">
-                            <div className="px-8 py-6 border-b border-border flex items-center justify-between shrink-0">
-                                <div>
-                                    <h3 className="text-[22px] font-bold mb-2 tracking-[0.05em]" style={{ color: 'var(--chart-gold)' }}>Visual Activity Stream</h3>
-                                    <p className="text-[14px] font-medium text-text-muted tracking-[0.1em]">Showing top 4 most active team members</p>
+                            <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 gap-3">
+                                <div className="min-w-0">
+                                    <h3 className="text-[16px] md:text-[22px] font-bold mb-1 md:mb-2 tracking-[0.05em] truncate" style={{ color: 'var(--chart-gold)' }}>Visual Activity Stream</h3>
+                                    <p className="text-[11px] md:text-[14px] font-medium text-text-muted tracking-[0.1em]">Top 4 most active members</p>
                                 </div>
                                 <button
                                     onClick={() => navigate('/dashboard/activity')}
-                                    className="px-6 py-3 rounded-xl bg-primary text-white text-[12px] font-bold hover:brightness-110 transition-all duration-300 shadow-md flex items-center gap-2 group"
+                                    className="px-3 py-2 md:px-6 md:py-3 rounded-xl bg-primary text-white text-[11px] md:text-[12px] font-bold hover:brightness-110 transition-all duration-300 shadow-md flex items-center gap-1 md:gap-2 group shrink-0"
                                 >
-                                    Explore All <ArrowUpRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                    Explore All <ArrowUpRight className="w-3.5 h-3.5 md:w-4 md:h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                                 </button>
                             </div>
 
@@ -704,36 +704,36 @@ export function Dashboard() {
                                         <EmptyState icon={<Camera />} title="No activity recorded yet" description="Tracking samples will appear here once the team starts working." className="py-32" />
                                     ) : (
                                         userActivity.map((user) => (
-                                            <div key={user.userId} className="p-8 space-y-6 hover:bg-surface-hover transition-all group">
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className="w-10 h-10 rounded-xl bg-main border border-border shadow-sm flex items-center justify-center text-[14px] font-bold text-text-muted overflow-hidden shrink-0 group-hover:border-primary/30 transition-all duration-500">
+                                            <div key={user.userId} className="p-4 md:p-8 space-y-4 md:space-y-6 hover:bg-surface-hover transition-all group">
+                                                <div className="flex items-center justify-between gap-2">
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-main border border-border shadow-sm flex items-center justify-center text-[14px] font-bold text-text-muted overflow-hidden shrink-0 group-hover:border-primary/30 transition-all duration-500">
                                                             {user.avatarUrl ? (
                                                                 <SecureImage path={user.avatarUrl} bucket="avatars" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                             ) : user.fullName.charAt(0)}
                                                         </div>
-                                                        <div className="space-y-2">
-                                                            <div className="flex items-center gap-4">
+                                                        <div className="space-y-1.5 min-w-0">
+                                                            <div className="flex items-center gap-2 flex-wrap">
                                                                 <p className={clsx(
-                                                                    "text-[18px] font-bold text-text-main tracking-tight",
+                                                                    "text-[14px] md:text-[18px] font-bold text-text-main tracking-tight truncate",
                                                                     user.fullName.includes('@') && "lowercase opacity-80"
                                                                 )}>
                                                                     {user.fullName.includes('@') ? user.fullName.toLowerCase() : toProperCase(user.fullName)}
                                                                 </p>
-                                                                <div className="px-3 py-1 bg-primary/5 text-primary text-[12px] font-bold rounded-lg border border-primary/10">
+                                                                <div className="px-2 py-0.5 md:px-3 md:py-1 bg-primary/5 text-primary text-[10px] md:text-[12px] font-bold rounded-lg border border-primary/10 shrink-0">
                                                                     {formatDuration(user.totalMinutes)}
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-2">
                                                                 <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                                                <span className="text-[13px] font-bold text-success ">{user.activityScore}% Focus Level</span>
+                                                                <span className="text-[11px] md:text-[13px] font-bold text-success">{user.activityScore}% Focus Level</span>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <button className="w-10 h-10 flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface hover:shadow-sm transition-all"><MoreHorizontal className="w-5 h-5" /></button>
+                                                    <button className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface hover:shadow-sm transition-all shrink-0"><MoreHorizontal className="w-4 h-4 md:w-5 md:h-5" /></button>
                                                 </div>
 
-                                                <div className="grid grid-cols-3 gap-6">
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
                                                     {user.screenshots.slice(0, 3).map((ss) => (
                                                         <div key={ss.id} className="relative group/ss" onClick={() => setEnlargedScreenshot(ss)}>
                                                             <div className="aspect-video bg-slate-100 border border-slate-100 rounded-[20px] overflow-hidden relative cursor-zoom-in transition-all duration-500 group-hover/ss:border-primary/40 group-hover/ss:shadow-elevated shadow-sm">
@@ -780,12 +780,12 @@ export function Dashboard() {
                     </div>
 
                     {/* 👥 Right Content: Who's Online (30%) */}
-                    <div className="lg:col-span-5 flex flex-col h-[780px]">
+                    <div className="lg:col-span-5 flex flex-col min-h-[400px] lg:h-[780px]">
                         <div className="bg-surface rounded-2xl shadow-premium overflow-hidden flex flex-col h-full border border-border">
-                            <div className="px-8 py-6 border-b border-border flex items-center justify-between shrink-0">
+                            <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0">
                                 <div>
-                                    <h3 className="text-[18px] font-bold tracking-tight mb-2 tracking-[0.05em]" style={{ color: 'var(--chart-gold)' }}>Live Directory</h3>
-                                    <p className="text-[13px] font-bold text-text-muted tracking-[0.1em]">Real-time status updates</p>
+                                    <h3 className="text-[15px] md:text-[18px] font-bold tracking-tight mb-1 md:mb-2" style={{ color: 'var(--chart-gold)' }}>Live Directory</h3>
+                                    <p className="text-[11px] md:text-[13px] font-bold text-text-muted tracking-[0.1em]">Real-time status updates</p>
                                 </div>
                                 <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-success/10 border border-success/20">
                                     <div className="w-2 h-2 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
@@ -864,14 +864,14 @@ export function Dashboard() {
                 {/* 📊 Secondary Metrics Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Project Velocity Chart */}
-                    <div className="glass-panel rounded-[12px] shadow-premium p-10 border border-border">
-                        <div className="flex items-center justify-between mb-10">
+                    <div className="glass-panel rounded-[12px] shadow-premium p-5 md:p-10 border border-border">
+                        <div className="flex items-center justify-between mb-5 md:mb-10">
                             <div>
-                                <h3 className="text-[14px] font-bold tracking-tight mb-1 tracking-[0.05em]" style={{ color: 'var(--chart-gold)' }}>Time Distribution</h3>
-                                <p className="text-[10px] font-bold text-text-muted tracking-[0.1em] ">Active hours per project</p>
+                                <h3 className="text-[13px] md:text-[14px] font-bold tracking-tight mb-1" style={{ color: 'var(--chart-gold)' }}>Time Distribution</h3>
+                                <p className="text-[10px] font-bold text-text-muted tracking-[0.1em]">Active hours per project</p>
                             </div>
-                            <div className="w-12 h-12 rounded-2xl bg-main flex items-center justify-center text-text-muted border border-border">
-                                <BarChart3 className="w-5 h-5" />
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-main flex items-center justify-center text-text-muted border border-border shrink-0">
+                                <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
@@ -909,12 +909,12 @@ export function Dashboard() {
 
                     {/* App ecosystem Ledger */}
                     <div className="glass-panel rounded-[12px] shadow-premium overflow-hidden flex flex-col border border-border">
-                        <div className="px-10 py-8 border-b border-border bg-surface/50 flex items-center justify-between">
+                        <div className="px-5 py-5 md:px-10 md:py-8 border-b border-border bg-surface/50 flex items-center justify-between">
                             <div>
-                                <h3 className="text-[14px] font-bold tracking-tight mb-1 tracking-[0.05em]" style={{ color: 'var(--chart-gold)' }}>Application Ecosystem</h3>
-                                <p className="text-[10px] font-bold text-text-muted  tracking-[0.1em]">Most utilized tools and platforms</p>
+                                <h3 className="text-[13px] md:text-[14px] font-bold tracking-tight mb-1" style={{ color: 'var(--chart-gold)' }}>Application Ecosystem</h3>
+                                <p className="text-[10px] font-bold text-text-muted tracking-[0.1em]">Most utilized tools and platforms</p>
                             </div>
-                            <div className="w-12 h-12 rounded-2xl bg-main flex items-center justify-center text-text-muted border border-border">
+                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-main flex items-center justify-center text-text-muted border border-border shrink-0">
                                 <Monitor className="w-5 h-5" />
                             </div>
                         </div>
@@ -931,7 +931,7 @@ export function Dashboard() {
                                     <EmptyState icon={<Monitor />} title="Awaiting application data" className="py-12" />
                                 ) : (
                                     appUsage.map((app, i) => (
-                                        <div key={i} className="flex items-center justify-between px-10 py-5 hover:bg-surface-hover/50 transition-all duration-300 group">
+                                        <div key={i} className="flex items-center justify-between px-5 py-4 md:px-10 md:py-5 hover:bg-surface-hover/50 transition-all duration-300 group">
                                             <div className="flex items-center gap-4 min-w-0">
                                                 <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-text-muted shadow-sm shrink-0 group-hover:border-primary/20 transition-all duration-500">
                                                     {(app.name.toLowerCase().includes('chrome') || app.name.toLowerCase().includes('browser')) ? (

@@ -37,10 +37,10 @@ export function PageLayout({
         maxWidth === '7xl' ? 'max-w-7xl mx-auto' : maxWidth === '6xl' ? 'max-w-6xl mx-auto' : 'max-w-[1600px] mx-auto';
 
     return (
-        <div className={clsx("p-6 md:px-10 md:py-12 w-full animate-in fade-in slide-in-from-top-4 duration-1000", maxClass)}>
+        <div className={clsx("p-4 md:px-10 md:py-12 w-full animate-in fade-in slide-in-from-top-4 duration-1000", maxClass)}>
             {(title || actions) && (
-                <div className="mb-10 md:mb-16 relative z-20">
-                    <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+                <div className="mb-6 md:mb-16 relative z-20">
+                    <div className="flex flex-col gap-4 md:gap-8 lg:flex-row lg:items-end lg:justify-between">
                         <div className="space-y-4">
                             {backButton && (
                                 <button
@@ -86,7 +86,7 @@ export function PageLayout({
                             </div>
                         </div>
                         {actions && (
-                            <div className="flex items-center gap-4 shrink-0 pb-1">
+                            <div className="flex items-center gap-2 md:gap-4 shrink-0 pb-1 w-full lg:w-auto overflow-x-auto">
                                 {actions}
                             </div>
                         )}
