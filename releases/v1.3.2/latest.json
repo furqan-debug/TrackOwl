@@ -1,0 +1,15 @@
+{
+  "version": "1.3.2",
+  "notes": "TrackOwl v1.3.2 — Stability and feature improvements release.",
+  "pub_date": "2026-05-20T17:10:40.409Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTSEFhd21TUll5U1VBanBhMDBSZGIwbHkyVTZ0R1E2ZE9RakJ4Q0RFUXBZQUJsTkU4U2FGSmRQZkk0aVFsaEtuU3FMbkV5RkFBNzBlL1hiSlFaWUI2c05LcVBSamRIRGdzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5Mjk3MDMyCWZpbGU6VHJhY2tPd2xfMS4zLjJfeDY0LXNldHVwLmV4ZQpZZ21VM2VCQnhTd0hKRHk5VXJKZjI5T1FwM3FoQzM4eFlJV2FPUDZNam1Eb3I5NHBoRENLaTlGUTNZNmh2cUQ2d1crcms1bDBOSkJheDBITGRGaytBdz09Cg==",
+      "url": "https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_x64-setup.exe"
+    },
+    "darwin-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVTSEFhd21TUll5U1JyaGg2MENRb2IzZms5T1lGTytENFFEaXllejlQMTJxa1lwWXZiSUwzT2lNYS9DNTRDOERMKzVaWUpkcEF3V1dkdFBKRmJBZmVRdmJ0L0FzbU5UTVFzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc5Mjk3MDQwCWZpbGU6VHJhY2tPd2xfYWFyY2g2NC5hcHAudGFyLmd6CjRQdy9ldDlZYmx4NS9mM0ZtcWRhSjcyNXBML3k1UlB3UWxSWDdxMXc1NVhmYzRyTHQ5U0Z6SDI5MmpxdkFKTTltSjg3emhzQmFjcDVvVDlDckhmRkF3PT0K",
+      "url": "https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_aarch64.app.tar.gz"
+    }
+  }
+}
