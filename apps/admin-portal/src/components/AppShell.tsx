@@ -43,23 +43,26 @@ export function AppShell({ children }: AppShellProps) {
             </div>
 
             <div className="flex-1 flex flex-col min-w-0 h-full relative">
-                {/* Mobile Menu Toggle (only visible on mobile) */}
-                <button
-                    onClick={() => setMobileMenuOpen(true)}
-                    className="md:hidden fixed top-4 right-4 z-[70] w-12 h-12 flex items-center justify-center rounded-2xl bg-primary text-white shadow-premium border border-white/10 active:scale-95 transition-all"
-                    aria-label="Open menu"
-                >
-                    <Menu className="w-6 h-6" />
-                </button>
+                {/* Mobile Top Bar — hidden on md+ */}
+                <div className="md:hidden sticky top-0 z-[60] flex items-center justify-between px-4 h-14 bg-[var(--bg-surface)] border-b border-[var(--border-color)] shrink-0">
+                    <span className="text-[16px] font-black text-[var(--text-main)] tracking-tight">TrackOwl</span>
+                    <button
+                        onClick={() => setMobileMenuOpen(true)}
+                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white shadow-md active:scale-95 transition-all"
+                        aria-label="Open menu"
+                    >
+                        <Menu className="w-5 h-5" />
+                    </button>
+                </div>
 
-                <div className="flex-1 flex flex-col min-h-0 relative">
+                <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
                     {/* Mobile overlay */}
                     {mobileMenuOpen && (
                         <MobileNav onClose={() => setMobileMenuOpen(false)} />
                     )}
 
                     <main className="flex-1 overflow-y-auto shell-scrollbar">
-                        <div className="max-w-[1600px] mx-auto w-full min-h-full py-10 px-6 lg:px-10">
+                        <div className="max-w-[1600px] mx-auto w-full min-h-full py-6 px-4 md:py-10 md:px-6 lg:px-10">
                             {children}
                         </div>
                     </main>
