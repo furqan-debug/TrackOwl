@@ -32,6 +32,23 @@ if (!TOKEN) {
   } catch {}
 }
 
+// Read TAURI_SIGNING_PRIVATE_KEY_PASSWORD from env, src-tauri/.env, or root .env
+let PASSWORD = process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD;
+if (!PASSWORD) {
+  try {
+    const env = fs.readFileSync(path.join(BASE_DIR, 'src-tauri/.env'), 'utf8');
+    const match = env.match(/TAURI_SIGNING_PRIVATE_KEY_PASSWORD[=:]([^\r\n]+)/);
+    if (match) PASSWORD = match[1].trim().replace(/^["']|["']$/g, '');
+  } catch {}
+}
+if (!PASSWORD) {
+  try {
+    const env = fs.readFileSync(path.join(BASE_DIR, '.env'), 'utf8');
+    const match = env.match(/TAURI_SIGNING_PRIVATE_KEY_PASSWORD[=:]([^\r\n]+)/);
+    if (match) PASSWORD = match[1].trim().replace(/^["']|["']$/g, '');
+  } catch {}
+}
+
 const ASSETS = [
   {
     name: `TrackOwl_${VERSION}_x64-setup.exe`,
@@ -159,7 +176,7 @@ function sign(filePath) {
   const env = {
     ...process.env,
     TAURI_SIGNING_PRIVATE_KEY: encodedKey,
-    TAURI_SIGNING_PRIVATE_KEY_PASSWORD: process.env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || 'TrackOwl2026!'
+    TAURI_SIGNING_PRIVATE_KEY_PASSWORD: PASSWORD || 'TrackOwl2026!'
   };
   const cmd = `npx tauri signer sign "${filePath}"`;
   log(`Signing: ${path.basename(filePath)}`);
