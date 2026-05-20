@@ -70,7 +70,7 @@ export function Landing() {
             avatar: JasonAvatar
         },
         {
-            savings: "+22% Efficiency",
+            savings: "+22% efficiency",
             quote: "No more status meetings. We monitor the workflow and jump in only when needed. Billable hours have never been tracked more accurately.",
             author: "Elena Moretti",
             role: "Director",
@@ -78,7 +78,7 @@ export function Landing() {
             avatar: ElenaAvatar
         },
         {
-            savings: "100% Trust",
+            savings: "100% trust",
             quote: "Our team members feel secure knowing their hard work is recorded fairly. It has eliminated all friction related to micromanagement.",
             author: "Sarah Jenkins",
             role: "Head of HR",
@@ -94,7 +94,7 @@ export function Landing() {
             avatar: MarcusAvatar
         },
         {
-            savings: "12 hrs/wk Saved",
+            savings: "12 hrs/wk saved",
             quote: "Automating timesheet verification has freed our HR team to focus on high-level strategic work.",
             author: "David Chen",
             role: "CTO",
@@ -110,12 +110,12 @@ export function Landing() {
             period: '/seat/mo',
             description: 'Essential tracking tools for small teams and solo founders.',
             features: [
-                'Manual Time Tracking',
-                'Timesheet Reporting',
-                'Unlimited Projects',
-                'Unlimited Teams'
+                'Manual time tracking',
+                'Timesheet reporting',
+                'Unlimited projects',
+                'Unlimited teams'
             ],
-            buttonLabel: 'Get Started',
+            buttonLabel: 'Get started',
             popular: false
         },
         {
@@ -125,14 +125,14 @@ export function Landing() {
             description: 'The complete toolkit for modern teams seeking absolute transparency.',
             features: [
                 'Everything in Basic',
-                'Automatic Time Tracking',
-                'Activity Screenshots',
-                'App & URL Tracking',
-                'Unlimited Storage',
-                'Smart Idle Detection',
-                'Advanced Reporting Access'
+                'Automatic time tracking',
+                'Activity screenshots',
+                'App & URL tracking',
+                'Unlimited storage',
+                'Smart idle detection',
+                'Advanced reporting access'
             ],
-            buttonLabel: 'Get Started Free',
+            buttonLabel: 'Get started free',
             popular: true
         },
         {
@@ -142,12 +142,12 @@ export function Landing() {
             description: 'Tailored solutions for large-scale operations and high-security needs.',
             features: [
                 'Everything in Premium',
-                'Dedicated Account Manager',
-                'SLAs & Dedicated Hosting',
-                'Advanced Security (SAML)',
-                'White-Label Options'
+                'Dedicated account manager',
+                'SLAs & dedicated hosting',
+                'Advanced security (SAML)',
+                'White-label options'
             ],
-            buttonLabel: 'Talk to Sales',
+            buttonLabel: 'Talk to sales',
             popular: false
         }
     ];
@@ -192,18 +192,18 @@ export function Landing() {
                             onClick={() => navigate('/login')}
                             className="hidden sm:block text-[11px] font-bold tracking-widest text-[var(--text-secondary)] hover:text-primary transition-all px-4"
                         >
-                            Log In
+                            Log in
                         </button>
                         <button
                             onClick={() => navigate('/signup')}
                             className="px-6 py-2.5 bg-primary text-white text-[11px] font-bold tracking-widest rounded-full shadow-glow-primary hover:brightness-110 active:scale-95 transition-all"
                         >
-                            Build Your Workspace
+                            Build your workspace
                         </button>
                     </div>
                 </nav>
             </header>
-
+ 
             <main className="relative z-10">
                 {/* Hero Section */}
                 <section className="relative min-h-[90vh] flex items-center justify-center pt-48 pb-20 overflow-hidden">
@@ -214,22 +214,22 @@ export function Landing() {
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.6 }}
-                                className="text-[#D4AF37] text-[10px] font-bold tracking-[0.25em] uppercase mb-4"
+                                className="text-[#D4AF37] text-[10px] font-bold tracking-[0.25em] mb-4"
                             >
-                                Workforce Analytics & Insights
+                                Workforce analytics & insights
                             </motion.div>
-
+ 
                             <motion.h1
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.6, delay: 0.1 }}
                                 className="text-4xl sm:text-5xl lg:text-[46px] xl:text-[54px] font-black tracking-tight leading-[1.08] mb-6 text-[var(--text-main)]"
                             >
-                                Stop Losing <br className="hidden lg:block" />
-                                <span className="text-[#D4AF37]">Billable</span> Hours with <br className="hidden lg:block" />
+                                Stop losing <br className="hidden lg:block" />
+                                <span className="text-[#D4AF37]">billable</span> hours with <br className="hidden lg:block" />
                                 TrackOwl.
                             </motion.h1>
-
+ 
                             <motion.p
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -238,7 +238,7 @@ export function Landing() {
                             >
                                 The smart time tracking solution for modern teams, enabling <span className="text-primary font-bold border-b border-primary/20 pb-0.5">transparent processes</span> and <span className="text-primary font-bold border-b border-primary/20 pb-0.5">better project outcomes</span>.
                             </motion.p>
-
+ 
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -247,20 +247,20 @@ export function Landing() {
                             >
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="w-full sm:w-auto px-7 py-3.5 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#001B4D] text-[11px] font-black tracking-widest uppercase rounded-full shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 group"
+                                    className="w-full sm:w-auto px-7 py-3.5 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#001B4D] text-[11px] font-black tracking-widest rounded-full shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 group"
                                 >
-                                    Start Your Free Trial
+                                    Start your free trial
                                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </button>
                                 <button
                                     onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-                                    className="w-full sm:w-auto px-7 py-3.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-main)] text-[11px] font-black tracking-widest uppercase rounded-full hover:bg-[var(--bg-surface-hover)] hover:border-primary/20 transition-all active:scale-95 shadow-shell-sm flex items-center justify-center gap-2 group"
+                                    className="w-full sm:w-auto px-7 py-3.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-main)] text-[11px] font-black tracking-widest rounded-full hover:bg-[var(--bg-surface-hover)] hover:border-primary/20 transition-all active:scale-95 shadow-shell-sm flex items-center justify-center gap-2 group"
                                 >
-                                    Take a Tour
+                                    Take a tour
                                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                 </button>
                             </motion.div>
-
+ 
                             {/* Trusted by industries */}
                             <motion.div
                                 initial={{ opacity: 0 }}
@@ -268,12 +268,12 @@ export function Landing() {
                                 transition={{ duration: 0.8, delay: 0.5 }}
                                 className="mt-12 w-full pt-8 border-t border-[var(--border-color)]/60 text-center lg:text-left"
                             >
-                                <span className="text-[9px] md:text-[10px] font-bold tracking-[0.25em] text-[var(--text-muted)] uppercase block mb-6">
-                                    Trusted By Teams Across Industries
+                                <span className="text-[9px] md:text-[10px] font-bold tracking-[0.25em] text-[var(--text-muted)] block mb-6">
+                                    Trusted by teams across industries
                                 </span>
                                 <div className="grid grid-cols-5 gap-y-6 gap-x-2 md:gap-x-4">
                                     {[
-                                        { name: 'SaaS/Tech', icon: Monitor },
+                                        { name: 'SaaS/tech', icon: Monitor },
                                         { name: 'Healthcare', icon: Heart },
                                         { name: 'eCommerce', icon: ShoppingCart },
                                         { name: 'FinTech', icon: CreditCard },
@@ -339,7 +339,7 @@ export function Landing() {
                 <section id="how-it-works" className="py-32 bg-[var(--bg-main)]">
                     <div className="mx-auto max-w-7xl px-6 md:px-10">
                         <div className="text-center max-w-3xl mx-auto mb-20">
-                            <h2 className="text-[var(--text-muted)] text-[11px] font-bold tracking-[0.3em] uppercase mb-4">Precision Engineering</h2>
+                            <h2 className="text-[var(--text-muted)] text-[11px] font-bold tracking-[0.3em] mb-4">Precision engineering</h2>
                             <h3 className="text-4xl md:text-5xl font-black tracking-tight mb-6">Everything you need, <br /> <span className="text-primary italic">nothing you don't.</span></h3>
                             <p className="text-[var(--text-secondary)] text-lg font-medium">We built TrackOwl to solve the visibility problem without the Big Brother baggage.</p>
                         </div>
@@ -354,14 +354,14 @@ export function Landing() {
                                             <Clock size={32} />
                                         </div>
                                         <div>
-                                            <h4 className="text-3xl font-black tracking-tight mb-4">Automated <span className="text-primary italic">Time Flow</span></h4>
+                                            <h4 className="text-3xl font-black tracking-tight mb-4">Automated <span className="text-primary italic">time flow</span></h4>
                                             <p className="text-[var(--text-secondary)] text-lg font-medium max-w-md leading-relaxed">
                                                 Our desktop application intelligently maps work hours to projects. No start buttons, no timers to forget—just pure, unadulterated accuracy.
                                             </p>
                                         </div>
                                     </div>
                                     <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {['0.1s Precision', 'Offline Sync', 'Smart Idle Detection', 'App Integration'].map((tag) => (
+                                        {['0.1s precision', 'Offline sync', 'Smart idle detection', 'App integration'].map((tag) => (
                                             <div key={tag} className="px-4 py-2 rounded-full bg-[var(--bg-main)] border border-[var(--border-color)] text-[10px] font-bold text-primary tracking-widest text-center">
                                                 {tag}
                                             </div>
@@ -376,7 +376,7 @@ export function Landing() {
                                     <div className="w-14 h-14 rounded-2xl bg-[#001B4D] text-[#D4AF37] flex items-center justify-center">
                                         <TrendingUp size={28} />
                                     </div>
-                                    <h4 className="text-2xl font-black tracking-tight">Active Pulse</h4>
+                                    <h4 className="text-2xl font-black tracking-tight">Active pulse</h4>
                                     <p className="text-[var(--text-secondary)] text-sm font-medium leading-relaxed">
                                         Visualize team engagement with our unique activity pulse indicator.
                                     </p>
@@ -401,7 +401,7 @@ export function Landing() {
                                         <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
                                             <Camera size={24} />
                                         </div>
-                                        <h4 className="text-xl font-black tracking-tight">Visual Proof</h4>
+                                        <h4 className="text-xl font-black tracking-tight">Visual proof</h4>
                                         <p className="text-[var(--text-secondary)] text-sm font-medium leading-relaxed">
                                             Transparent screenshots provide verifiable context for every hour tracked.
                                         </p>
@@ -425,13 +425,13 @@ export function Landing() {
                                         <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
                                             <BarChart3 size={28} />
                                         </div>
-                                        <h4 className="text-3xl font-black tracking-tight italic">Instant Audits</h4>
+                                        <h4 className="text-3xl font-black tracking-tight italic">Instant audits</h4>
                                         <p className="text-white/80 text-lg font-medium leading-relaxed">
                                             Generate export-ready reports for payroll, clients, or internal audits in seconds.
                                         </p>
                                         <ul className="space-y-3">
-                                            {['CSV/PDF Exporting', 'Client Report Sharing', 'Custom Branding Options', 'Developer API Access'].map(item => (
-                                                <li key={item} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase">
+                                            {['CSV/PDF exporting', 'Client report sharing', 'Custom branding options', 'Developer API access'].map(item => (
+                                                <li key={item} className="flex items-center gap-2 text-xs font-bold tracking-widest">
                                                     <Check size={14} className="text-[#D4AF37]" />
                                                     {item}
                                                 </li>
@@ -464,18 +464,18 @@ export function Landing() {
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
                             <div className="grid md:grid-cols-2 gap-16 items-center">
                                 <div className="space-y-8">
-                                    <h3 className="text-4xl font-black tracking-tight">The <span className="text-primary italic">ROI</span> of Transparency</h3>
+                                    <h3 className="text-4xl font-black tracking-tight">The <span className="text-primary italic">ROI</span> of transparency</h3>
                                     <p className="text-[var(--text-secondary)] text-lg leading-relaxed font-medium">
                                         Companies using TrackOwl report an average increase of 18% in billable utilization within the first 30 days.
                                     </p>
                                     <div className="space-y-6">
                                         <div className="p-6 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-color)] flex items-center gap-6">
                                             <div className="text-4xl font-black text-primary">15%</div>
-                                            <div className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest">Efficiency Increase</div>
+                                            <div className="text-sm font-bold text-[var(--text-secondary)] tracking-widest">Efficiency increase</div>
                                         </div>
                                         <div className="p-6 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-color)] flex items-center gap-6">
                                             <div className="text-4xl font-black text-[#D4AF37]">$12k</div>
-                                            <div className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest">Average Annual Savings</div>
+                                            <div className="text-sm font-bold text-[var(--text-secondary)] tracking-widest">Average annual savings</div>
                                         </div>
                                     </div>
                                 </div>
@@ -504,7 +504,7 @@ export function Landing() {
                 {/* Testimonials Marquee */}
                 <section className="py-32 overflow-hidden bg-[var(--bg-main)]">
                     <div className="mx-auto max-w-7xl px-6 text-center mb-16">
-                        <h2 className="text-4xl font-black tracking-tight mb-4">Loved by <span className="text-primary italic">Teams from SMBs to Large Global Enterprises</span></h2>
+                        <h2 className="text-4xl font-black tracking-tight mb-4">Loved by <span className="text-primary italic">teams from SMBs to large global enterprises</span></h2>
                         <p className="text-[var(--text-secondary)] font-medium text-lg">Real results from teams who swapped micromanagement for trust.</p>
                     </div>
 
@@ -519,7 +519,7 @@ export function Landing() {
                                     <div className="absolute top-6 right-8 text-primary/10">
                                         <Quote size={60} />
                                     </div>
-                                    <div className="inline-flex px-4 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[0.2em] w-fit">
+                                    <div className="inline-flex px-4 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black tracking-[0.2em] w-fit">
                                         {t.savings}
                                     </div>
                                     <p className="text-lg text-[var(--text-main)] font-medium leading-relaxed italic relative z-10">
@@ -531,7 +531,7 @@ export function Landing() {
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[12px] font-black text-[var(--text-main)]">{t.author}</span>
-                                            <span className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{t.role} · {t.company}</span>
+                                            <span className="text-[10px] font-bold text-[var(--text-muted)] tracking-widest">{t.role} · {t.company}</span>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -550,8 +550,8 @@ export function Landing() {
                             transition={{ duration: 0.6 }}
                             className="text-center mb-10"
                         >
-                            <h2 className="text-[11px] font-bold tracking-[0.3em] text-[var(--text-muted)] uppercase mb-4">Transparent Pricing</h2>
-                            <h3 className="text-4xl md:text-5xl font-black tracking-tight">Invest in <span className="text-primary italic">Better Results</span></h3>
+                            <h2 className="text-[11px] font-bold tracking-[0.3em] text-[var(--text-muted)] mb-4">Transparent pricing</h2>
+                            <h3 className="text-4xl md:text-5xl font-black tracking-tight">Invest in <span className="text-primary italic">better results</span></h3>
                         </motion.div>
 
                         {/* Pricing Toggle */}
@@ -559,7 +559,7 @@ export function Landing() {
                             <div className="flex items-center gap-3">
                                 <span className={twMerge("text-sm font-bold tracking-tight transition-colors", !isMonthly ? "text-[var(--text-main)]" : "text-[var(--text-muted)]")}>Yearly</span>
                                 {!isMonthly && (
-                                    <div className="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 transition-all duration-300">
+                                    <div className="px-3 py-1 rounded-full text-[9px] font-black tracking-widest border bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 transition-all duration-300">
                                         Save 25%
                                     </div>
                                 )}
@@ -577,9 +577,7 @@ export function Landing() {
                             </button>
 
                             <span className={twMerge("text-sm font-bold tracking-tight transition-colors", isMonthly ? "text-[var(--text-main)]" : "text-[var(--text-muted)]")}>Monthly</span>
-                        </div>
-
-                        <div className="grid gap-8 md:grid-cols-3 max-w-7xl mx-auto">
+                        </div>                        <div className="grid gap-8 md:grid-cols-3 max-w-7xl mx-auto">
                             {plans.map((plan, i) => (
                                 <motion.div
                                     key={i}
@@ -595,14 +593,14 @@ export function Landing() {
                                     )}
                                 >
                                     {plan.popular && (
-                                        <div className="absolute top-8 right-8 flex items-center gap-2 text-primary font-black text-[10px] tracking-[0.2em] uppercase">
+                                        <div className="absolute top-8 right-8 flex items-center gap-2 text-primary font-black text-[10px] tracking-[0.2em]">
                                             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                            Most Popular
+                                            Most popular
                                         </div>
                                     )}
 
                                     <div className="mb-12">
-                                        <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-[var(--text-muted)] mb-4">
+                                        <h4 className="text-[10px] font-black tracking-[0.4em] text-[var(--text-muted)] mb-4">
                                             {plan.name}
                                         </h4>
                                         <div className="flex items-baseline gap-1">
@@ -631,7 +629,7 @@ export function Landing() {
                                     <button
                                         onClick={() => navigate('/signup')}
                                         className={twMerge(
-                                            "w-full py-6 rounded-2xl text-[11px] font-black tracking-[0.2em] uppercase transition-all duration-300",
+                                            "w-full py-6 rounded-2xl text-[11px] font-black tracking-[0.2em] transition-all duration-300",
                                             plan.popular
                                                 ? "bg-primary text-white shadow-glow-primary hover:brightness-110"
                                                 : "bg-[var(--bg-main)] text-[var(--text-main)] border border-[var(--border-color)] hover:bg-[var(--bg-surface)]"
@@ -658,10 +656,10 @@ export function Landing() {
                             <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
                             <div className="relative z-10 flex flex-col md:flex-row items-center gap-16">
                                 <div className="flex-1 space-y-8">
-                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-[10px] font-black uppercase tracking-[0.2em]">
-                                        <ShieldCheck size={14} /> Official Desktop Client
+                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-[10px] font-black tracking-[0.2em]">
+                                        <ShieldCheck size={14} /> Official desktop client
                                     </div>
-                                    <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1]">Ready to Start <br /> <span className="text-primary italic">Tracking?</span></h2>
+                                    <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1]">Ready to start <br /> <span className="text-primary italic">tracking?</span></h2>
                                     <p className="max-w-xl text-[var(--text-secondary)] text-lg font-medium leading-relaxed">
                                         Download the TrackOwl desktop application. Setup takes less than 60 seconds, and the app runs silently in your system tray.
                                     </p>
@@ -673,7 +671,7 @@ export function Landing() {
                                                     key={os}
                                                     onClick={() => setActiveOS(os)}
                                                     className={twMerge(
-                                                        "relative px-6 py-2.5 rounded-xl text-[11px] font-bold tracking-widest uppercase transition-all duration-300",
+                                                        "relative px-6 py-2.5 rounded-xl text-[11px] font-bold tracking-widest transition-all duration-300",
                                                         activeOS === os
                                                             ? "bg-primary text-white shadow-premium"
                                                             : "text-[var(--text-secondary)] hover:text-[var(--text-main)]"
@@ -689,23 +687,23 @@ export function Landing() {
                                         <div className="flex flex-col gap-4">
                                             {activeOS === 'win' && (
                                                 <div className="space-y-4">
-                                                    <div className="flex flex-wrap gap-4 justify-center md:justify-start">                                                        <a
+                                                    <div className="flex flex-wrap gap-4 justify-center md:justify-start">                                                        <a
                                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_x64-setup.exe"
-                                                            className="px-10 py-5 bg-primary text-white text-[12px] font-black tracking-widest uppercase rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3 justify-center"
+                                                            className="px-10 py-5 bg-primary text-white text-[12px] font-black tracking-widest rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3 justify-center"
                                                         >
                                                             <Download size={20} />
-                                                            Download .exe Installer
+                                                            Download .exe installer
                                                         </a>
                                                         <a
                                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_x64_en-US.msi"
-                                                            className="px-10 py-5 bg-[var(--bg-main)] border border-[var(--border-color)] text-[12px] font-black tracking-widest uppercase rounded-2xl hover:bg-[var(--bg-surface-hover)] transition-all shadow-shell-sm flex items-center gap-2 justify-center text-[var(--text-main)]"
+                                                            className="px-10 py-5 bg-[var(--bg-main)] border border-[var(--border-color)] text-[12px] font-black tracking-widest rounded-2xl hover:bg-[var(--bg-surface-hover)] transition-all shadow-shell-sm flex items-center gap-2 justify-center text-[var(--text-main)]"
                                                         >
                                                             <Download size={20} />
-                                                            Download .msi (Enterprise)
+                                                            Download .msi (enterprise)
                                                         </a>
                                                     </div>
-                                                    <div className="flex items-center gap-4 justify-center md:justify-start text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
-                                                        <span>v1.3.2 (Latest)</span>
+                                                    <div className="flex items-center gap-4 justify-center md:justify-start text-[11px] font-bold text-[var(--text-muted)] tracking-widest">
+                                                        <span>v1.3.2 (latest)</span>
                                                         <span>·</span>
                                                         <span>64-bit Setup (~5 MB)</span>
                                                     </div>
@@ -716,22 +714,22 @@ export function Landing() {
                                                     <div className="flex flex-wrap gap-4 justify-center md:justify-start">
                                                         <a
                                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_aarch64.dmg"
-                                                            className="px-5 py-5 bg-primary text-white text-[12px] font-black tracking-widest uppercase rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3 justify-center"
+                                                            className="px-5 py-5 bg-primary text-white text-[12px] font-black tracking-widest rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3 justify-center"
                                                         >
                                                             <Download size={20} />
                                                             Apple Silicon (M1/M2/M3/M4/M5)
                                                         </a>
                                                         <a
                                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.0.6/TrackOwl_1.0.6_x64.dmg"
-                                                            className="px-10 py-5 bg-[var(--bg-main)] border border-[var(--border-color)] text-[12px] font-black tracking-widest uppercase rounded-2xl hover:bg-[var(--bg-surface-hover)] transition-all shadow-shell-sm flex items-center gap-2 justify-center text-[var(--text-main)]"
+                                                            className="px-10 py-5 bg-[var(--bg-main)] border border-[var(--border-color)] text-[12px] font-black tracking-widest rounded-2xl hover:bg-[var(--bg-surface-hover)] transition-all shadow-shell-sm flex items-center gap-2 justify-center text-[var(--text-main)]"
                                                         >
                                                             Intel Macs (v1.0.6)
                                                         </a>
                                                     </div>
-                                                    <div className="flex items-center gap-4 justify-center md:justify-start text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                                                    <div className="flex items-center gap-4 justify-center md:justify-start text-[11px] font-bold text-[var(--text-muted)] tracking-widest">
                                                         <span>v1.3.2 (Apple Silicon M1-M5) / v1.0.6 (Intel)</span>
                                                         <span>·</span>
-                                                        <span>DMG Installer (~9 MB)</span>
+                                                        <span>DMG installer (~9 MB)</span>
                                                     </div>
                                                 </div>
                                             )}
@@ -758,9 +756,9 @@ export function Landing() {
                                     <ShieldAlert size={28} />
                                 </div>
                                 <div className="space-y-2">
-                                    <p className="text-[11px] font-black text-amber-900 uppercase tracking-[0.2em]">Important Installation Note</p>
+                                    <p className="text-[11px] font-black text-amber-900 tracking-[0.2em]">Important installation note</p>
                                     <p className="text-sm text-amber-800/90 font-medium leading-relaxed">
-                                        Because TrackOwl is a newly released application, Windows may display a "SmartScreen" warning. To proceed, click <span className="font-black underline underline-offset-4 decoration-2">"More Info"</span> and then select <span className="font-black">"Run Anyway"</span>. This is a standard procedure for new, secure applications.
+                                        Because TrackOwl is a newly released application, Windows may display a "SmartScreen" warning. To proceed, click <span className="font-black underline underline-offset-4 decoration-2">"More info"</span> and then select <span className="font-black">"Run anyway"</span>. This is a standard procedure for new, secure applications.
                                     </p>
                                 </div>
                             </div>
@@ -777,8 +775,8 @@ export function Landing() {
                             transition={{ duration: 0.6 }}
                             className="text-center mb-20"
                         >
-                            <h4 className="text-[10px] font-black uppercase tracking-[0.4em] text-primary mb-6">Support</h4>
-                            <h3 className="text-4xl md:text-5xl font-black tracking-tight mb-8">Frequently Asked <span className="text-primary italic">Questions</span></h3>
+                            <h4 className="text-[10px] font-black tracking-[0.4em] text-primary mb-6">Support</h4>
+                            <h3 className="text-4xl md:text-5xl font-black tracking-tight mb-8">Frequently asked <span className="text-primary italic">questions</span></h3>
                         </motion.div>
 
                         <motion.div
@@ -816,8 +814,8 @@ export function Landing() {
 
                         <div className="mt-20 p-10 rounded-[2.5rem] bg-primary/5 border border-primary/10 text-center">
                             <p className="text-lg font-medium text-[var(--text-secondary)] mb-6">Still have questions?</p>
-                            <button className="px-8 py-4 bg-primary text-white text-[12px] font-black tracking-widest uppercase rounded-2xl hover:scale-105 transition-all shadow-glow-primary">
-                                Contact Support
+                            <button className="px-8 py-4 bg-primary text-white text-[12px] font-black tracking-widest rounded-2xl hover:scale-105 transition-all shadow-glow-primary">
+                                Contact support
                             </button>
                         </div>
                     </div>
@@ -846,27 +844,27 @@ export function Landing() {
                             </div>
 
                             <div className="col-span-1">
-                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-main)] mb-6">Product</h4>
+                                <h4 className="text-[10px] font-black tracking-[0.3em] text-[var(--text-main)] mb-6">Product</h4>
                                 <ul className="space-y-4">
-                                    {['Features', 'Time Tracking', 'Activity Monitoring', 'Reporting'].map(item => (
+                                    {['Features', 'Time tracking', 'Activity monitoring', 'Reporting'].map(item => (
                                         <li key={item}><a href="#" className="text-sm font-medium text-[var(--text-muted)] hover:text-primary transition-all">{item}</a></li>
                                     ))}
                                 </ul>
                             </div>
 
                             <div className="col-span-1">
-                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-main)] mb-6">Company</h4>
+                                <h4 className="text-[10px] font-black tracking-[0.3em] text-[var(--text-main)] mb-6">Company</h4>
                                 <ul className="space-y-4">
-                                    {['About Us', 'Privacy Policy', 'Terms of Service', 'Security'].map(item => (
+                                    {['About us', 'Privacy policy', 'Terms of service', 'Security'].map(item => (
                                         <li key={item}><a href="#" className="text-sm font-medium text-[var(--text-muted)] hover:text-primary transition-all">{item}</a></li>
                                     ))}
                                 </ul>
                             </div>
 
                             <div className="col-span-1">
-                                <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-[var(--text-main)] mb-6">Support</h4>
+                                <h4 className="text-[10px] font-black tracking-[0.3em] text-[var(--text-main)] mb-6">Support</h4>
                                 <ul className="space-y-4">
-                                    {['Documentation', 'Help Center', 'API Reference', 'Status'].map(item => (
+                                    {['Documentation', 'Help center', 'API reference', 'Status'].map(item => (
                                         <li key={item}><a href="#" className="text-sm font-medium text-[var(--text-muted)] hover:text-primary transition-all">{item}</a></li>
                                     ))}
                                 </ul>
@@ -874,10 +872,10 @@ export function Landing() {
                         </div>
 
                         <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-10 border-t border-[var(--border-color)]">
-                            <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                            <p className="text-[10px] font-bold text-[var(--text-muted)] tracking-widest">
                                 © 2026 TrackOwl · A product by <a href="https://digireps.co/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">DigiReps</a>
                             </p>
-                            <div className="flex gap-8 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">
+                            <div className="flex gap-8 text-[10px] font-bold text-[var(--text-muted)] tracking-widest">
                                 <a href="#" className="hover:text-primary transition-all">Twitter</a>
                                 <a href="#" className="hover:text-primary transition-all">LinkedIn</a>
                                 <a href="#" className="hover:text-primary transition-all">GitHub</a>
@@ -894,7 +892,7 @@ function NavButton({ children, href }: { children: React.ReactNode; href: string
     return (
         <a
             href={href}
-            className="px-6 py-2 rounded-full text-[11px] font-bold tracking-widest text-[var(--text-secondary)] hover:text-primary hover:bg-[var(--bg-main)] transition-all uppercase"
+            className="px-6 py-2 rounded-full text-[11px] font-bold tracking-widest text-[var(--text-secondary)] hover:text-primary hover:bg-[var(--bg-main)] transition-all"
         >
             {children}
         </a>
