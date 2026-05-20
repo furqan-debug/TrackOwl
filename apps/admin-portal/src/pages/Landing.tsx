@@ -60,6 +60,49 @@ export function Landing() {
         }
     }, []);
 
+    const testimonials = [
+        {
+            savings: "Saved $15,200",
+            quote: "TrackOwl paid for itself within the first 48 hours. We identified massive resource leaks in our development cycle.",
+            author: "Jason Riva",
+            role: "COO",
+            company: "NexaSystems",
+            avatar: JasonAvatar
+        },
+        {
+            savings: "+22% Efficiency",
+            quote: "No more status meetings. We monitor the workflow and jump in only when needed. Billable hours have never been tracked more accurately.",
+            author: "Elena Moretti",
+            role: "Director",
+            company: "PixelPerfect",
+            avatar: ElenaAvatar
+        },
+        {
+            savings: "100% Trust",
+            quote: "Our team members feel secure knowing their hard work is recorded fairly. It has eliminated all friction related to micromanagement.",
+            author: "Sarah Jenkins",
+            role: "Head of HR",
+            company: "GlobalLink",
+            avatar: SarahAvatar
+        },
+        {
+            savings: "Saved $8,500/mo",
+            quote: "We recovered billable hours that previously went uncaptured. Our monthly revenue increased immediately.",
+            author: "Marcus Thorne",
+            role: "CFO",
+            company: "Titan Logistics",
+            avatar: MarcusAvatar
+        },
+        {
+            savings: "12 hrs/wk Saved",
+            quote: "Automating timesheet verification has freed our HR team to focus on high-level strategic work.",
+            author: "David Chen",
+            role: "CTO",
+            company: "NexaFlow",
+            avatar: DavidAvatar
+        }
+    ];
+
     const plans = [
         {
             name: 'Basic',
@@ -68,10 +111,9 @@ export function Landing() {
             description: 'Essential tracking tools for small teams and solo founders.',
             features: [
                 'Manual Time Tracking',
-                'Timesheets Reports',
+                'Timesheet Reporting',
                 'Unlimited Projects',
                 'Unlimited Teams'
-
             ],
             buttonLabel: 'Get Started',
             popular: false
@@ -83,12 +125,12 @@ export function Landing() {
             description: 'The complete toolkit for modern teams seeking absolute transparency.',
             features: [
                 'Everything in Basic',
-                'Automatic time tracking',
-                'Activity screenshots',
-                'App & URL tracking',
-                'Unlimited Storage Space',
-                'Smart Idle detection',
-                'Detailed Reports Access'
+                'Automatic Time Tracking',
+                'Activity Screenshots',
+                'App & URL Tracking',
+                'Unlimited Storage',
+                'Smart Idle Detection',
+                'Advanced Reporting Access'
             ],
             buttonLabel: 'Get Started Free',
             popular: true
@@ -100,12 +142,12 @@ export function Landing() {
             description: 'Tailored solutions for large-scale operations and high-security needs.',
             features: [
                 'Everything in Premium',
-                'Dedicated account manager',
-                'SLA & dedicated hosting',
-                'Advanced security (SAML)',
-                'White-label options'
+                'Dedicated Account Manager',
+                'SLAs & Dedicated Hosting',
+                'Advanced Security (SAML)',
+                'White-Label Options'
             ],
-            buttonLabel: 'Talk to sales',
+            buttonLabel: 'Talk to Sales',
             popular: false
         }
     ];
@@ -194,7 +236,7 @@ export function Landing() {
                                 transition={{ duration: 0.6, delay: 0.2 }}
                                 className="text-base md:text-lg font-medium text-[var(--text-secondary)] leading-relaxed mb-8 max-w-md"
                             >
-                                The smart time tracking solution for modern teams, <span className="text-primary font-bold border-b border-primary/20 pb-0.5">transparent processes</span>, and <span className="text-primary font-bold border-b border-primary/20 pb-0.5">better project outcomes</span>.
+                                The smart time tracking solution for modern teams, enabling <span className="text-primary font-bold border-b border-primary/20 pb-0.5">transparent processes</span> and <span className="text-primary font-bold border-b border-primary/20 pb-0.5">better project outcomes</span>.
                             </motion.p>
 
                             <motion.div
@@ -312,14 +354,14 @@ export function Landing() {
                                             <Clock size={32} />
                                         </div>
                                         <div>
-                                            <h4 className="text-3xl font-black tracking-tight mb-4">Automated <span className="text-primary italic">Time-Flow</span></h4>
+                                            <h4 className="text-3xl font-black tracking-tight mb-4">Automated <span className="text-primary italic">Time Flow</span></h4>
                                             <p className="text-[var(--text-secondary)] text-lg font-medium max-w-md leading-relaxed">
-                                                Our desktop app intelligently maps work hours to projects. No start buttons, no timers to forget. Just pure, unadulterated accuracy.
+                                                Our desktop application intelligently maps work hours to projects. No start buttons, no timers to forget—just pure, unadulterated accuracy.
                                             </p>
                                         </div>
                                     </div>
                                     <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {['0.1s Precision', 'Offline Sync', 'Smart Idle', 'Deep App Sync'].map((tag) => (
+                                        {['0.1s Precision', 'Offline Sync', 'Smart Idle Detection', 'App Integration'].map((tag) => (
                                             <div key={tag} className="px-4 py-2 rounded-full bg-[var(--bg-main)] border border-[var(--border-color)] text-[10px] font-bold text-primary tracking-widest text-center">
                                                 {tag}
                                             </div>
@@ -383,12 +425,12 @@ export function Landing() {
                                         <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
                                             <BarChart3 size={28} />
                                         </div>
-                                        <h4 className="text-3xl font-black tracking-tight italic">Instant Audits.</h4>
+                                        <h4 className="text-3xl font-black tracking-tight italic">Instant Audits</h4>
                                         <p className="text-white/80 text-lg font-medium leading-relaxed">
                                             Generate export-ready reports for payroll, clients, or internal audits in seconds.
                                         </p>
                                         <ul className="space-y-3">
-                                            {['CSV/PDF Exports', 'Client Sharing', 'Custom Branding', 'API Access'].map(item => (
+                                            {['CSV/PDF Exporting', 'Client Report Sharing', 'Custom Branding Options', 'Developer API Access'].map(item => (
                                                 <li key={item} className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase">
                                                     <Check size={14} className="text-[#D4AF37]" />
                                                     {item}
@@ -422,9 +464,9 @@ export function Landing() {
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
                             <div className="grid md:grid-cols-2 gap-16 items-center">
                                 <div className="space-y-8">
-                                    <h3 className="text-4xl font-black tracking-tight">The <span className="text-primary italic">ROI</span> of Transparency.</h3>
+                                    <h3 className="text-4xl font-black tracking-tight">The <span className="text-primary italic">ROI</span> of Transparency</h3>
                                     <p className="text-[var(--text-secondary)] text-lg leading-relaxed font-medium">
-                                        Companies using TrackOwl report an average of 18% increase in billable utilization within the first 30 days.
+                                        Companies using TrackOwl report an average increase of 18% in billable utilization within the first 30 days.
                                     </p>
                                     <div className="space-y-6">
                                         <div className="p-6 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-color)] flex items-center gap-6">
@@ -433,7 +475,7 @@ export function Landing() {
                                         </div>
                                         <div className="p-6 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-color)] flex items-center gap-6">
                                             <div className="text-4xl font-black text-[#D4AF37]">$12k</div>
-                                            <div className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest">Avg. Annual Savings</div>
+                                            <div className="text-sm font-bold text-[var(--text-secondary)] uppercase tracking-widest">Average Annual Savings</div>
                                         </div>
                                     </div>
                                 </div>
@@ -462,95 +504,13 @@ export function Landing() {
                 {/* Testimonials Marquee */}
                 <section className="py-32 overflow-hidden bg-[var(--bg-main)]">
                     <div className="mx-auto max-w-7xl px-6 text-center mb-16">
-                        <h2 className="text-4xl font-black tracking-tight mb-4">Loved by <span className="text-primary italic">SMBS to the Large Global Teams.</span></h2>
+                        <h2 className="text-4xl font-black tracking-tight mb-4">Loved by <span className="text-primary italic">Teams from SMBs to Large Global Enterprises</span></h2>
                         <p className="text-[var(--text-secondary)] font-medium text-lg">Real results from teams who swapped micromanagement for trust.</p>
                     </div>
 
                     <div className="relative flex overflow-x-hidden group">
                         <div className="animate-marquee flex gap-8 py-10">
-                            {[
-                                {
-                                    savings: "Saved $15,200",
-                                    quote: "TrackOwl paid for itself in the first 48 hours. We identified massive resource leakage in our dev cycle.",
-                                    author: "Jason Riva",
-                                    role: "COO",
-                                    company: "NexaSystems",
-                                    avatar: JasonAvatar
-                                },
-                                {
-                                    savings: "+22% Efficiency",
-                                    quote: "No more status meetings. We watch the flow and jump in when needed. Billable hours have never been more accurate.",
-                                    author: "Elena Moretti",
-                                    role: "Director",
-                                    company: "PixelPerfect",
-                                    avatar: ElenaAvatar
-                                },
-                                {
-                                    savings: "100% Trust",
-                                    quote: "Our employees feel safer knowing their hard work is recorded fairly. It's ended all micromanagement friction.",
-                                    author: "Sarah Jenkins",
-                                    role: "Head of HR",
-                                    company: "GlobalLink",
-                                    avatar: SarahAvatar
-                                },
-                                {
-                                    savings: "Saved $8,500/mo",
-                                    quote: "We recovered hours that were previously uncaptured. Our monthly revenue increased immediately.",
-                                    author: "Marcus Thorne",
-                                    role: "CFO",
-                                    company: "Titan Logistics",
-                                    avatar: MarcusAvatar
-                                },
-                                {
-                                    savings: "12 hrs/wk Saved",
-                                    quote: "Automating timesheet verification has freed up our HR team for higher-level strategic work.",
-                                    author: "David Chen",
-                                    role: "CTO",
-                                    company: "NexaFlow",
-                                    avatar: DavidAvatar
-                                }
-                            ].concat(...Array(2).fill([
-                                {
-                                    savings: "Saved $15,200",
-                                    quote: "TrackOwl paid for itself in the first 48 hours. We identified massive resource leakage in our dev cycle.",
-                                    author: "Jason Riva",
-                                    role: "COO",
-                                    company: "NexaSystems",
-                                    avatar: JasonAvatar
-                                },
-                                {
-                                    savings: "+22% Efficiency",
-                                    quote: "No more status meetings. We watch the flow and jump in when needed. Billable hours have never been more accurate.",
-                                    author: "Elena Moretti",
-                                    role: "Director",
-                                    company: "PixelPerfect",
-                                    avatar: ElenaAvatar
-                                },
-                                {
-                                    savings: "100% Trust",
-                                    quote: "Our employees feel safer knowing their hard work is recorded fairly. It's ended all micromanagement friction.",
-                                    author: "Sarah Jenkins",
-                                    role: "Head of HR",
-                                    company: "GlobalLink",
-                                    avatar: SarahAvatar
-                                },
-                                {
-                                    savings: "Saved $8,500/mo",
-                                    quote: "We recovered hours that were previously uncaptured. Our monthly revenue increased immediately.",
-                                    author: "Marcus Thorne",
-                                    role: "CFO",
-                                    company: "Titan Logistics",
-                                    avatar: MarcusAvatar
-                                },
-                                {
-                                    savings: "12 hrs/wk Saved",
-                                    quote: "Automating timesheet verification has freed up our HR team for higher-level strategic work.",
-                                    author: "David Chen",
-                                    role: "CTO",
-                                    company: "NexaFlow",
-                                    avatar: DavidAvatar
-                                }
-                            ])).map((t, i) => (
+                            {[...testimonials, ...testimonials, ...testimonials].map((t, i) => (
                                 <motion.div
                                     key={i}
                                     whileHover={{ y: -10 }}
@@ -591,7 +551,7 @@ export function Landing() {
                             className="text-center mb-10"
                         >
                             <h2 className="text-[11px] font-bold tracking-[0.3em] text-[var(--text-muted)] uppercase mb-4">Transparent Pricing</h2>
-                            <h3 className="text-4xl md:text-5xl font-black tracking-tight">Invest in <span className="text-primary italic">Better Results.</span></h3>
+                            <h3 className="text-4xl md:text-5xl font-black tracking-tight">Invest in <span className="text-primary italic">Better Results</span></h3>
                         </motion.div>
 
                         {/* Pricing Toggle */}
@@ -703,7 +663,7 @@ export function Landing() {
                                     </div>
                                     <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1]">Ready to Start <br /> <span className="text-primary italic">Tracking?</span></h2>
                                     <p className="max-w-xl text-[var(--text-secondary)] text-lg font-medium leading-relaxed">
-                                        Download the TrackOwl desktop app. Setup takes under 60 seconds and runs silently in your tray.
+                                        Download the TrackOwl desktop application. Setup takes less than 60 seconds, and the app runs silently in your system tray.
                                     </p>
                                     <div className="space-y-8 w-full max-w-xl">
                                         {/* OS Selector Tabs */}
@@ -800,7 +760,7 @@ export function Landing() {
                                 <div className="space-y-2">
                                     <p className="text-[11px] font-black text-amber-900 uppercase tracking-[0.2em]">Important Installation Note</p>
                                     <p className="text-sm text-amber-800/90 font-medium leading-relaxed">
-                                        As a growing platform, Windows may show a "SmartScreen" warning. Click <span className="font-black underline underline-offset-4 decoration-2">"More Info"</span> and then <span className="font-black">"Run Anyway"</span>. This is a standard procedure for new verified applications.
+                                        Because TrackOwl is a newly released application, Windows may display a "SmartScreen" warning. To proceed, click <span className="font-black underline underline-offset-4 decoration-2">"More Info"</span> and then select <span className="font-black">"Run Anyway"</span>. This is a standard procedure for new, secure applications.
                                     </p>
                                 </div>
                             </div>
@@ -830,24 +790,24 @@ export function Landing() {
                         >
                             {[
                                 {
-                                    q: "How does the automatic tracking work?",
+                                    q: "How does automatic tracking work?",
                                     a: "Our desktop application runs silently in the background, detecting active window titles and mapping them to projects based on your configuration. It intelligently filters out idle time and private browsing."
                                 },
                                 {
                                     q: "Is my team's data secure?",
-                                    a: "Absolutely. All data is encrypted in transit and at rest. Screenshots are processed with privacy-first algorithms, and you have full control over who can view specific team metrics."
+                                    a: "Absolutely. All data is encrypted both in transit and at rest. Screenshots are processed using privacy-first algorithms, and you have full control over who can view specific team metrics."
                                 },
                                 {
                                     q: "Can I use it offline?",
-                                    a: "Yes. The TrackOwl desktop app tracks time even without an internet connection. Once you're back online, it automatically syncs all recorded data to the cloud."
+                                    a: "Yes, the TrackOwl desktop application tracks time even without an active internet connection. Once you are back online, it automatically syncs all recorded data to the cloud."
                                 },
                                 {
                                     q: "Can I explore the platform for free?",
-                                    a: "Yes! You can create your account and set up your workspace completely free of charge. You can explore all features and configure your projects. You only need to choose a plan when you're ready to invite team members."
+                                    a: "Yes! You can create an account and set up your workspace completely free of charge. You can explore all features and configure your projects, and you only need to choose a plan when you are ready to invite team members."
                                 },
                                 {
                                     q: "Does it support multiple organizations?",
-                                    a: "Yes! You can manage multiple organizations under a single account, making it perfect for agencies and freelancers managing different client portfolios."
+                                    a: "Yes! You can manage multiple organizations under a single account, making it perfect for agencies and freelancers managing diverse client portfolios."
                                 }
                             ].map((faq, i) => (
                                 <FaqItem key={i} question={faq.q} answer={faq.a} delay={i * 0.1} />
@@ -855,7 +815,7 @@ export function Landing() {
                         </motion.div>
 
                         <div className="mt-20 p-10 rounded-[2.5rem] bg-primary/5 border border-primary/10 text-center">
-                            <p className="text-lg font-medium text-[var(--text-secondary)] mb-6">Still have more questions?</p>
+                            <p className="text-lg font-medium text-[var(--text-secondary)] mb-6">Still have questions?</p>
                             <button className="px-8 py-4 bg-primary text-white text-[12px] font-black tracking-widest uppercase rounded-2xl hover:scale-105 transition-all shadow-glow-primary">
                                 Contact Support
                             </button>
