@@ -12,8 +12,8 @@ import {
 import { trackerAPI } from './tauri-ipc';
 import './App.css';
 
-const SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL as string;
-const SUPABASE_ANON_KEY = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
 let _supabase: any = null;
 async function getSupabase() {
@@ -1864,10 +1864,10 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
     try {
       const { createClient } = await import('@supabase/supabase-js');
       const sb = createClient(
-        (import.meta as any).env?.VITE_SUPABASE_URL as string,
-        (import.meta as any).env?.VITE_SUPABASE_ANON_KEY as string
+        import.meta.env.VITE_SUPABASE_URL as string,
+        import.meta.env.VITE_SUPABASE_ANON_KEY as string
       );
-      const adminPortalUrl = (import.meta as any).env?.VITE_ADMIN_PORTAL_URL || 'http://localhost:5174';
+      const adminPortalUrl = import.meta.env.VITE_ADMIN_PORTAL_URL || 'http://localhost:5174';
       const { error } = await sb.auth.resetPasswordForEmail(forgotEmail.trim(), {
         redirectTo: `${adminPortalUrl}/update-password`,
       });
