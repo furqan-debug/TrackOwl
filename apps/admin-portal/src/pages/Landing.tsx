@@ -8,8 +8,6 @@ import {
     Clock,
     Camera,
     Quote,
-    ShieldCheck,
-    ShieldAlert,
     TrendingUp,
     Users,
     BarChart3,
@@ -643,125 +641,86 @@ export function Landing() {
                     </div>
                 </section>
 
-                {/* CTA / Download Section */}
-                <section id="download" className="py-32 border-t border-[var(--border-color)] relative overflow-hidden bg-[var(--bg-main)]">
-                    <div className="mx-auto max-w-7xl px-6 md:px-10">
+                {/* Download Section */}
+                <section id="download" className="py-24 relative bg-[var(--bg-main)]">
+                    <div className="mx-auto max-w-2xl px-6 md:px-10 text-center">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.98 }}
-                            whileInView={{ opacity: 1, scale: 1 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            transition={{ duration: 0.8 }}
-                            className="relative rounded-[3rem] bg-[var(--bg-surface)] border border-[var(--border-color)] p-10 md:p-20 overflow-hidden shadow-soft text-center md:text-left"
+                            transition={{ duration: 0.6 }}
+                            className="space-y-6"
                         >
-                            <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/5 to-transparent pointer-events-none" />
-                            <div className="relative z-10 flex flex-col md:flex-row items-center gap-16">
-                                <div className="flex-1 space-y-8">
-                                    <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-[10px] font-black tracking-[0.2em]">
-                                        <ShieldCheck size={14} /> Official desktop client
-                                    </div>
-                                    <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1]">Ready to start <br /> <span className="text-primary italic">tracking?</span></h2>
-                                    <p className="max-w-xl text-[var(--text-secondary)] text-lg font-medium leading-relaxed">
-                                        Download the TrackOwl desktop application. Setup takes less than 60 seconds, and the app runs silently in your system tray.
-                                    </p>
-                                    <div className="space-y-8 w-full max-w-xl">
-                                        {/* OS Selector Tabs */}
-                                        <div className="flex items-center gap-2 p-1.5 bg-[var(--bg-main)] border border-[var(--border-color)] rounded-2xl w-fit mx-auto md:mx-0 shadow-shell-sm">
-                                            {(['win', 'mac'] as const).map((os) => (
-                                                <button
-                                                    key={os}
-                                                    onClick={() => setActiveOS(os)}
-                                                    className={twMerge(
-                                                        "relative px-6 py-2.5 rounded-xl text-[11px] font-bold tracking-widest transition-all duration-300",
-                                                        activeOS === os
-                                                            ? "bg-primary text-white shadow-premium"
-                                                            : "text-[var(--text-secondary)] hover:text-[var(--text-main)]"
-                                                    )}
-                                                >
-                                                    {os === 'win' && 'Windows'}
-                                                    {os === 'mac' && 'macOS'}
-                                                </button>
-                                            ))}
-                                        </div>
+                            <h2 className="text-3xl md:text-4xl font-black tracking-tight">Download TrackOwl</h2>
+                            <p className="text-[var(--text-secondary)] text-base font-medium leading-relaxed max-w-md mx-auto">
+                                Setup takes under 60 seconds. Runs silently in your system tray.
+                            </p>
 
-                                        {/* Download Options */}
-                                        <div className="flex flex-col gap-4">
-                                            {activeOS === 'win' && (
-                                                <div className="space-y-4">
-                                                    <div className="flex flex-wrap gap-4 justify-center md:justify-start">                                                        <a
-                                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_x64-setup.exe"
-                                                            className="px-10 py-5 bg-primary text-white text-[12px] font-black tracking-widest rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3 justify-center"
-                                                        >
-                                                            <Download size={20} />
-                                                            Download .exe installer
-                                                        </a>
-                                                        <a
-                                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_x64_en-US.msi"
-                                                            className="px-10 py-5 bg-[var(--bg-main)] border border-[var(--border-color)] text-[12px] font-black tracking-widest rounded-2xl hover:bg-[var(--bg-surface-hover)] transition-all shadow-shell-sm flex items-center gap-2 justify-center text-[var(--text-main)]"
-                                                        >
-                                                            <Download size={20} />
-                                                            Download .msi (enterprise)
-                                                        </a>
-                                                    </div>
-                                                    <div className="flex items-center gap-4 justify-center md:justify-start text-[11px] font-bold text-[var(--text-muted)] tracking-widest">
-                                                        <span>v1.3.2 (latest)</span>
-                                                        <span>·</span>
-                                                        <span>64-bit Setup (~5 MB)</span>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {activeOS === 'mac' && (
-                                                <div className="space-y-4">
-                                                    <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                                                        <a
-                                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_aarch64.dmg"
-                                                            className="px-5 py-5 bg-primary text-white text-[12px] font-black tracking-widest rounded-2xl shadow-glow-primary hover:scale-105 transition-all flex items-center gap-3 justify-center"
-                                                        >
-                                                            <Download size={20} />
-                                                            Apple Silicon (M1/M2/M3/M4/M5)
-                                                        </a>
-                                                        <a
-                                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.0.6/TrackOwl_1.0.6_x64.dmg"
-                                                            className="px-10 py-5 bg-[var(--bg-main)] border border-[var(--border-color)] text-[12px] font-black tracking-widest rounded-2xl hover:bg-[var(--bg-surface-hover)] transition-all shadow-shell-sm flex items-center gap-2 justify-center text-[var(--text-main)]"
-                                                        >
-                                                            Intel Macs (v1.0.6)
-                                                        </a>
-                                                    </div>
-                                                    <div className="flex items-center gap-4 justify-center md:justify-start text-[11px] font-bold text-[var(--text-muted)] tracking-widest">
-                                                        <span>v1.3.2 (Apple Silicon M1-M5) / v1.0.6 (Intel)</span>
-                                                        <span>·</span>
-                                                        <span>DMG installer (~9 MB)</span>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex-shrink-0 w-64 h-64 md:w-80 md:h-80 rounded-[3rem] bg-primary/5 border border-primary/10 flex items-center justify-center relative group">
-                                    <Monitor size={120} className="text-primary opacity-20 group-hover:opacity-40 transition-opacity" />
-                                    <div className="absolute inset-0 flex items-center justify-center">
-                                        <motion.div
-                                            animate={{ scale: [1, 1.1, 1] }}
-                                            transition={{ duration: 4, repeat: Infinity }}
-                                            className="w-32 h-32 rounded-full bg-primary flex items-center justify-center text-white shadow-glow-primary"
+                            {/* OS Tabs */}
+                            <div className="flex items-center gap-2 p-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl w-fit mx-auto">
+                                {(['win', 'mac'] as const).map((os) => (
+                                    <button
+                                        key={os}
+                                        onClick={() => setActiveOS(os)}
+                                        className={twMerge(
+                                            "px-5 py-2 rounded-lg text-[11px] font-bold tracking-widest transition-all duration-300",
+                                            activeOS === os
+                                                ? "bg-primary text-white shadow-sm"
+                                                : "text-[var(--text-secondary)] hover:text-[var(--text-main)]"
+                                        )}
+                                    >
+                                        {os === 'win' && 'Windows'}
+                                        {os === 'mac' && 'macOS'}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Download Buttons */}
+                            {activeOS === 'win' && (
+                                <div className="space-y-3">
+                                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                        <a
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_x64-setup.exe"
+                                            className="px-8 py-3.5 bg-primary text-white text-[11px] font-black tracking-widest rounded-xl shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 justify-center"
                                         >
-                                            <Download size={48} />
-                                        </motion.div>
+                                            <Download size={16} />
+                                            Download .exe
+                                        </a>
+                                        <a
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_x64_en-US.msi"
+                                            className="px-8 py-3.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[11px] font-bold tracking-widest rounded-xl hover:border-primary/30 transition-all flex items-center gap-2 justify-center text-[var(--text-main)]"
+                                        >
+                                            <Download size={16} />
+                                            Download .msi
+                                        </a>
                                     </div>
+                                    <p className="text-[10px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.2 · 64-bit · ~5 MB</p>
                                 </div>
-                            </div>
+                            )}
+                            {activeOS === 'mac' && (
+                                <div className="space-y-3">
+                                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                                        <a
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_aarch64.dmg"
+                                            className="px-8 py-3.5 bg-primary text-white text-[11px] font-black tracking-widest rounded-xl shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 justify-center"
+                                        >
+                                            <Download size={16} />
+                                            Apple Silicon (M1–M5)
+                                        </a>
+                                        <a
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.0.6/TrackOwl_1.0.6_x64.dmg"
+                                            className="px-8 py-3.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[11px] font-bold tracking-widest rounded-xl hover:border-primary/30 transition-all flex items-center gap-2 justify-center text-[var(--text-main)]"
+                                        >
+                                            Intel Macs (v1.0.6)
+                                        </a>
+                                    </div>
+                                    <p className="text-[10px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.2 (Apple Silicon) · v1.0.6 (Intel) · DMG · ~9 MB</p>
+                                </div>
+                            )}
 
-                            {/* Security Note */}
-                            <div className="mt-16 p-8 bg-amber-500/5 border border-amber-500/10 rounded-[2rem] flex flex-col md:flex-row gap-6 items-center text-center md:text-left max-w-4xl mx-auto">
-                                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-600 shrink-0">
-                                    <ShieldAlert size={28} />
-                                </div>
-                                <div className="space-y-2">
-                                    <p className="text-[11px] font-black text-amber-900 tracking-[0.2em]">Important installation note</p>
-                                    <p className="text-sm text-amber-800/90 font-medium leading-relaxed">
-                                        Because TrackOwl is a newly released application, Windows may display a "SmartScreen" warning. To proceed, click <span className="font-black underline underline-offset-4 decoration-2">"More info"</span> and then select <span className="font-black">"Run anyway"</span>. This is a standard procedure for new, secure applications.
-                                    </p>
-                                </div>
-                            </div>
+                            <p className="text-[10px] text-[var(--text-muted)]/60 pt-2">
+                                Windows may show a SmartScreen warning — click "More info" → "Run anyway" to proceed.
+                            </p>
                         </motion.div>
                     </div>
                 </section>
