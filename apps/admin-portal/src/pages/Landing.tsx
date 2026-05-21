@@ -21,7 +21,8 @@ import {
     CreditCard,
     GraduationCap,
     Palette,
-    MessageSquare
+    MessageSquare,
+    AlertTriangle
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
@@ -212,7 +213,7 @@ export function Landing() {
                                 initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.6 }}
-                                className="text-[#D4AF37] text-[10px] font-bold tracking-[0.25em] mb-4"
+                                className="text-[#D4AF37] text-[13px] font-bold tracking-[0.2em] mb-4"
                             >
                                 Workforce analytics & insights
                             </motion.div>
@@ -266,7 +267,7 @@ export function Landing() {
                                 transition={{ duration: 0.8, delay: 0.5 }}
                                 className="mt-12 w-full pt-8 border-t border-[var(--border-color)]/60 text-center lg:text-left"
                             >
-                                <span className="text-[9px] md:text-[10px] font-bold tracking-[0.25em] text-[var(--text-muted)] block mb-6">
+                                <span className="text-[12px] md:text-[13px] font-bold tracking-[0.2em] text-[var(--text-muted)] block mb-6">
                                     Trusted by teams across industries
                                 </span>
                                 <div className="grid grid-cols-5 gap-y-6 gap-x-2 md:gap-x-4">
@@ -286,7 +287,7 @@ export function Landing() {
                                         return (
                                             <div key={i} className="flex flex-col items-center justify-center gap-2 group/ind">
                                                 <Icon className="w-5 h-5 text-[var(--text-muted)] group-hover/ind:text-primary transition-all duration-300" strokeWidth={1.7} />
-                                                <span className="text-[10px] font-medium text-[var(--text-secondary)] whitespace-nowrap tracking-wide">{ind.name}</span>
+                                                <span className="text-[12px] font-medium text-[var(--text-secondary)] whitespace-nowrap tracking-wide">{ind.name}</span>
                                             </div>
                                         );
                                     })}
@@ -337,7 +338,7 @@ export function Landing() {
                 <section id="how-it-works" className="py-32 bg-[var(--bg-main)]">
                     <div className="mx-auto max-w-7xl px-6 md:px-10">
                         <div className="text-center max-w-3xl mx-auto mb-20">
-                            <h2 className="text-[var(--text-muted)] text-[11px] font-bold tracking-[0.3em] mb-4">Precision engineering</h2>
+                            <h2 className="text-[var(--text-muted)] text-[13px] font-bold tracking-[0.25em] mb-4">Precision engineering</h2>
                             <h3 className="text-4xl md:text-5xl font-black tracking-tight mb-6">Everything you need, <br /> <span className="text-primary italic">nothing you don't.</span></h3>
                             <p className="text-[var(--text-secondary)] text-lg font-medium">We built TrackOwl to solve the visibility problem without the Big Brother baggage.</p>
                         </div>
@@ -360,7 +361,7 @@ export function Landing() {
                                     </div>
                                     <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
                                         {['0.1s precision', 'Offline sync', 'Smart idle detection', 'App integration'].map((tag) => (
-                                            <div key={tag} className="px-4 py-2 rounded-full bg-[var(--bg-main)] border border-[var(--border-color)] text-[10px] font-bold text-primary tracking-widest text-center">
+                                            <div key={tag} className="px-4 py-2 rounded-full bg-[var(--bg-main)] border border-[var(--border-color)] text-[12px] font-bold text-primary tracking-wide text-center">
                                                 {tag}
                                             </div>
                                         ))}
@@ -429,7 +430,7 @@ export function Landing() {
                                         </p>
                                         <ul className="space-y-3">
                                             {['CSV/PDF exporting', 'Client report sharing', 'Custom branding options', 'Developer API access'].map(item => (
-                                                <li key={item} className="flex items-center gap-2 text-xs font-bold tracking-widest">
+                                                <li key={item} className="flex items-center gap-2 text-[14px] font-bold tracking-wide">
                                                     <Check size={14} className="text-[#D4AF37]" />
                                                     {item}
                                                 </li>
@@ -548,7 +549,7 @@ export function Landing() {
                             transition={{ duration: 0.6 }}
                             className="text-center mb-10"
                         >
-                            <h2 className="text-[11px] font-bold tracking-[0.3em] text-[var(--text-muted)] mb-4">Transparent pricing</h2>
+                            <h2 className="text-[13px] font-bold tracking-[0.25em] text-[var(--text-muted)] mb-4">Transparent pricing</h2>
                             <h3 className="text-4xl md:text-5xl font-black tracking-tight">Invest in <span className="text-primary italic">better results</span></h3>
                         </motion.div>
 
@@ -575,7 +576,8 @@ export function Landing() {
                             </button>
 
                             <span className={twMerge("text-sm font-bold tracking-tight transition-colors", isMonthly ? "text-[var(--text-main)]" : "text-[var(--text-muted)]")}>Monthly</span>
-                        </div>                        <div className="grid gap-8 md:grid-cols-3 max-w-7xl mx-auto">
+                        </div>
+                        <div className="grid gap-8 md:grid-cols-3 max-w-7xl mx-auto">
                             {plans.map((plan, i) => (
                                 <motion.div
                                     key={i}
@@ -598,7 +600,7 @@ export function Landing() {
                                     )}
 
                                     <div className="mb-12">
-                                        <h4 className="text-[10px] font-black tracking-[0.4em] text-[var(--text-muted)] mb-4">
+                                        <h4 className="text-[13px] font-black tracking-[0.3em] text-[var(--text-muted)] mb-4">
                                             {plan.name}
                                         </h4>
                                         <div className="flex items-baseline gap-1">
@@ -694,7 +696,7 @@ export function Landing() {
                                             Download .msi
                                         </a>
                                     </div>
-                                    <p className="text-[10px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.2 · 64-bit · ~5 MB</p>
+                                    <p className="text-[13px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.2 · 64-bit · ~5 MB</p>
                                 </div>
                             )}
                             {activeOS === 'mac' && (
@@ -714,13 +716,20 @@ export function Landing() {
                                             Intel Macs (v1.0.6)
                                         </a>
                                     </div>
-                                    <p className="text-[10px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.2 (Apple Silicon) · v1.0.6 (Intel) · DMG · ~9 MB</p>
+                                    <p className="text-[13px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.2 (Apple Silicon) · v1.0.6 (Intel) · DMG · ~9 MB</p>
                                 </div>
                             )}
 
-                            <p className="text-[10px] text-[var(--text-muted)]/60 pt-2">
-                                Windows may show a SmartScreen warning — click "More info" → "Run anyway" to proceed.
-                            </p>
+                            {/* SmartScreen Warning Banner */}
+                            <div className="mt-4 w-full max-w-md mx-auto flex items-start gap-3 px-5 py-4 rounded-2xl bg-amber-50 border-2 border-amber-400 shadow-sm text-left">
+                                <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" strokeWidth={2.5} />
+                                <div>
+                                    <p className="text-[13px] font-black text-amber-800 tracking-wide mb-1">Windows SmartScreen Notice</p>
+                                    <p className="text-[13px] font-medium text-amber-700 leading-relaxed">
+                                        Windows may block the installer. Click <span className="font-black">&quot;More info&quot;</span> → <span className="font-black">&quot;Run anyway&quot;</span> to proceed safely.
+                                    </p>
+                                </div>
+                            </div>
                         </motion.div>
                     </div>
                 </section>
@@ -734,7 +743,7 @@ export function Landing() {
                             transition={{ duration: 0.6 }}
                             className="text-center mb-20"
                         >
-                            <h4 className="text-[10px] font-black tracking-[0.4em] text-primary mb-6">Support</h4>
+                            <h4 className="text-[13px] font-black tracking-[0.3em] text-primary mb-6">Support</h4>
                             <h3 className="text-4xl md:text-5xl font-black tracking-tight mb-8">Frequently asked <span className="text-primary italic">questions</span></h3>
                         </motion.div>
 
@@ -803,7 +812,7 @@ export function Landing() {
                             </div>
 
                             <div className="col-span-1">
-                                <h4 className="text-[10px] font-black tracking-[0.3em] text-[var(--text-main)] mb-6">Product</h4>
+                                <h4 className="text-[13px] font-black tracking-[0.25em] text-[var(--text-main)] mb-6">Product</h4>
                                 <ul className="space-y-4">
                                     {['Features', 'Time tracking', 'Activity monitoring', 'Reporting'].map(item => (
                                         <li key={item}><a href="#" className="text-sm font-medium text-[var(--text-muted)] hover:text-primary transition-all">{item}</a></li>
@@ -812,7 +821,7 @@ export function Landing() {
                             </div>
 
                             <div className="col-span-1">
-                                <h4 className="text-[10px] font-black tracking-[0.3em] text-[var(--text-main)] mb-6">Company</h4>
+                                <h4 className="text-[13px] font-black tracking-[0.25em] text-[var(--text-main)] mb-6">Company</h4>
                                 <ul className="space-y-4">
                                     {['About us', 'Privacy policy', 'Terms of service', 'Security'].map(item => (
                                         <li key={item}><a href="#" className="text-sm font-medium text-[var(--text-muted)] hover:text-primary transition-all">{item}</a></li>
@@ -821,7 +830,7 @@ export function Landing() {
                             </div>
 
                             <div className="col-span-1">
-                                <h4 className="text-[10px] font-black tracking-[0.3em] text-[var(--text-main)] mb-6">Support</h4>
+                                <h4 className="text-[13px] font-black tracking-[0.25em] text-[var(--text-main)] mb-6">Support</h4>
                                 <ul className="space-y-4">
                                     {['Documentation', 'Help center', 'API reference', 'Status'].map(item => (
                                         <li key={item}><a href="#" className="text-sm font-medium text-[var(--text-muted)] hover:text-primary transition-all">{item}</a></li>
@@ -831,10 +840,10 @@ export function Landing() {
                         </div>
 
                         <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-10 border-t border-[var(--border-color)]">
-                            <p className="text-[10px] font-bold text-[var(--text-muted)] tracking-widest">
+                            <p className="text-[13px] font-bold text-[var(--text-muted)] tracking-wide">
                                 © 2026 TrackOwl · A product by <a href="https://digireps.co/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">DigiReps</a>
                             </p>
-                            <div className="flex gap-8 text-[10px] font-bold text-[var(--text-muted)] tracking-widest">
+                            <div className="flex gap-8 text-[13px] font-bold text-[var(--text-muted)] tracking-wide">
                                 <a href="#" className="hover:text-primary transition-all">Twitter</a>
                                 <a href="#" className="hover:text-primary transition-all">LinkedIn</a>
                                 <a href="#" className="hover:text-primary transition-all">GitHub</a>
@@ -851,7 +860,7 @@ function NavButton({ children, href }: { children: React.ReactNode; href: string
     return (
         <a
             href={href}
-            className="px-6 py-2 rounded-full text-[11px] font-bold tracking-widest text-[var(--text-secondary)] hover:text-primary hover:bg-[var(--bg-main)] transition-all"
+            className="px-6 py-2 rounded-full text-[13px] font-bold tracking-wide text-[var(--text-secondary)] hover:text-primary hover:bg-[var(--bg-main)] transition-all"
         >
             {children}
         </a>

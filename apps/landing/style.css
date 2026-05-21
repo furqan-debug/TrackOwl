@@ -39,14 +39,15 @@
 
 html {
   scroll-behavior: smooth;
-  font-size: 16px;
+  font-size: 17px;
 }
 
 body {
   font-family: var(--font-main);
   background: var(--bg);
   color: var(--text);
-  line-height: 1.6;
+  line-height: 1.7;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
@@ -299,11 +300,12 @@ button {
 }
 
 .hero-subtitle {
-  font-size: clamp(1.1rem, 2vw, 1.25rem);
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
+  font-weight: 500;
   color: var(--text-2);
   max-width: 620px;
   margin: 0 auto 48px;
-  line-height: 1.6;
+  line-height: 1.75;
 }
 
 .hero-cta {
@@ -341,8 +343,9 @@ button {
 }
 
 .hero-note {
-  font-size: 0.85rem;
-  color: var(--text-3);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-2);
   margin-bottom: 80px;
 }
 
@@ -644,9 +647,10 @@ section {
 }
 
 .section-sub {
-  font-size: 1.15rem;
+  font-size: 1.2rem;
+  font-weight: 500;
   color: var(--text-2);
-  line-height: 1.6;
+  line-height: 1.75;
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -695,9 +699,10 @@ section {
 }
 
 .bento-card p {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
+  font-weight: 500;
   color: var(--text-2);
-  line-height: 1.6;
+  line-height: 1.75;
 }
 
 .time-ticker {
@@ -814,9 +819,10 @@ section {
 }
 
 .step-card p {
-  font-size: 0.9rem;
+  font-size: 1.05rem;
+  font-weight: 500;
   color: var(--text-2);
-  line-height: 1.6;
+  line-height: 1.75;
 }
 
 .step-arrow {
@@ -883,7 +889,8 @@ section {
 }
 
 .price-desc {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
+  font-weight: 500;
   color: var(--text-2);
   margin-bottom: 40px;
   min-height: 3rem;
@@ -897,7 +904,8 @@ section {
 
 .price-features li {
   padding: 10px 0;
-  font-size: 0.95rem;
+  font-size: 1.05rem;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -997,7 +1005,8 @@ section {
 }
 
 .dl-text p {
-  font-size: 0.95rem;
+  font-size: 1.05rem;
+  font-weight: 500;
   color: var(--text-2);
   margin-bottom: 16px;
 }
@@ -1065,10 +1074,12 @@ section {
 }
 
 .cta-inner p {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
+  font-weight: 500;
   color: var(--text-2);
   max-width: 600px;
   margin: 0 auto 40px;
+  line-height: 1.75;
 }
 
 .cta-btns {
@@ -1105,7 +1116,8 @@ section {
 }
 
 .footer-col a {
-  font-size: 0.95rem;
+  font-size: 1rem;
+  font-weight: 500;
   color: var(--text-2);
 }
 
@@ -1216,5 +1228,217 @@ section {
 
   .dl-actions {
     width: 100%;
+  }
+
+  /* ── Mobile Typography Fixes ─────────────────────────── */
+
+  .hero {
+    padding: 140px 0 80px;
+  }
+
+  .hero-title {
+    font-size: clamp(2.4rem, 10vw, 3.5rem);
+    line-height: 1.05;
+  }
+
+  .hero-badge {
+    font-size: 0.8rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.05rem;
+    line-height: 1.65;
+  }
+
+  .hero-note {
+    font-size: 0.9rem;
+    color: var(--text-2);
+  }
+
+  .btn-primary-hero,
+  .btn-outline-hero {
+    padding: 14px 28px;
+    font-size: 1rem;
+  }
+
+  .section-chip {
+    font-size: 0.8rem;
+  }
+
+  .section-sub {
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  .proof-inner {
+    flex-direction: column;
+    gap: 20px;
+    text-align: center;
+  }
+
+  .proof-label {
+    font-size: 0.85rem;
+  }
+
+  .proof-logos {
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .proof-logos span {
+    font-size: 1rem;
+  }
+
+  .bento-card {
+    padding: 28px 24px;
+  }
+
+  .bento-card h3 {
+    font-size: 1.2rem;
+  }
+
+  .bento-card p {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .bento-team {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .team-avatars {
+    margin-left: 0;
+  }
+
+  .step-card {
+    padding: 28px 24px;
+  }
+
+  .step-card h3 {
+    font-size: 1.1rem;
+  }
+
+  .step-card p {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .step-num {
+    font-size: 0.85rem;
+  }
+
+  .price-card {
+    padding: 36px 28px;
+  }
+
+  .price-plan {
+    font-size: 1.2rem;
+  }
+
+  .price-desc {
+    font-size: 1rem;
+    min-height: unset;
+  }
+
+  .price-features li {
+    font-size: 1rem;
+    padding: 12px 0;
+  }
+
+  .btn-price-primary,
+  .btn-price-secondary {
+    padding: 16px;
+    font-size: 1rem;
+  }
+
+  .os-tab {
+    padding: 10px 24px;
+    font-size: 0.95rem;
+  }
+
+  .dl-text h3 {
+    font-size: 1.3rem;
+  }
+
+  .dl-text p {
+    font-size: 1rem;
+  }
+
+  .dl-chip {
+    font-size: 0.75rem;
+    padding: 5px 12px;
+  }
+
+  .btn-download-main {
+    font-size: 1rem;
+    padding: 16px;
+  }
+
+  .btn-download-alt {
+    font-size: 0.95rem;
+  }
+
+  .cta-inner p {
+    font-size: 1.05rem;
+  }
+
+  .cta-btns {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .footer {
+    padding: 60px 0 32px;
+  }
+
+  .footer-inner {
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+  }
+
+  .footer-col a {
+    font-size: 1rem;
+  }
+
+  .footer-heading {
+    font-size: 0.8rem;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    text-align: center;
+    font-size: 0.9rem;
+  }
+
+  .footer-bottom-links {
+    gap: 20px;
+  }
+
+  /* Full-screen mobile nav */
+  .nav-links.open {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset: 72px 0 0 0;
+    background: rgba(5, 6, 15, 0.97);
+    backdrop-filter: blur(20px);
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    z-index: 499;
+  }
+
+  .nav-links.open a {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .nav-actions {
+    display: none;
   }
 }
