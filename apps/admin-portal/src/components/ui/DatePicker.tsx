@@ -112,7 +112,7 @@ export function DatePicker({
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute top-[calc(100%+8px)] left-0 w-[320px] bg-surface border border-border rounded-2xl shadow-premium z-[110] p-5 overflow-hidden"
+                        className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 w-[320px] bg-surface border border-border rounded-2xl shadow-premium z-[110] p-5 overflow-hidden"
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between mb-6">
