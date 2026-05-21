@@ -86,7 +86,7 @@ export function PageLayout({
                             </div>
                         </div>
                         {actions && (
-                            <div className="flex items-center gap-2 md:gap-4 shrink-0 pb-1 w-full lg:w-auto overflow-x-auto">
+                            <div className="flex items-center gap-2 md:gap-4 shrink-0 pb-1 w-full lg:w-auto flex-wrap">
                                 {actions}
                             </div>
                         )}
