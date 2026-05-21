@@ -156,9 +156,38 @@ pub fn get_active_window() -> (String, String) {
     }
 }
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
 pub fn get_active_window() -> (String, String) {
-    // macOS / Linux stubs — implement in Phase 3 extension
+    let script = r#"
+        try
+            tell application "System Events"
+                set frontApp to first application process whose frontmost is true
+                set appName to name of frontApp
+                set windowTitle to ""
+                try
+                    set windowTitle to name of front window of frontApp
+                end try
+                return appName & ":::" & windowTitle
+            end tell
+        on error
+            return "Unknown:::Unknown"
+        end try
+    "#;
+    
+    if let Ok(output) = std::process::Command::new("osascript")
+        .args(["-e", script])
+        .output()
+    {
+        let result = String::from_utf8_lossy(&output.stdout).trim().to_string();
+        if let Some((app, title)) = result.split_once(":::") {
+            return (app.to_string(), title.to_string());
+        }
+    }
+    ("Unknown".to_string(), "Unknown".to_string())
+}
+
+#[cfg(target_os = "linux")]
+pub fn get_active_window() -> (String, String) {
     ("Unknown".to_string(), "Unknown".to_string())
 }
 
@@ -651,6 +680,51 @@ fn rand_ms(max: u64, salt: u32) -> u64 {
     seed % max
 }
 
+#[cfg(target_os = "macos")]
+fn capture_screenshot() -> Option<String> {
+    use base64::{Engine, engine::general_purpose::STANDARD};
+    use std::process::Command;
+    use std::fs;
+    use image::GenericImageView;
+
+    let temp_path = format!("/tmp/trackowl_ss_{}.jpg", rand_ms(10000, 1));
+    let output = Command::new("screencapture")
+        .args(["-x", "-t", "jpg", &temp_path])
+        .output()
+        .ok()?;
+        
+    if !output.status.success() {
+        eprintln!("[tracker] screencapture failed");
+        return None;
+    }
+    
+    let bytes = fs::read(&temp_path).ok()?;
+    let _ = fs::remove_file(&temp_path);
+    
+    if let Ok(image) = image::load_from_memory(&bytes) {
+        let (orig_width, orig_height) = image.dimensions();
+        let resized_image = if orig_width > 2000 {
+            let new_width = 2000;
+            let new_height = (orig_height as f32 * (2000.0 / orig_width as f32)) as u32;
+            image::imageops::resize(&image, new_width, new_height, image::imageops::FilterType::Triangle)
+        } else {
+            image.to_rgba8()
+        };
+
+        let rgb_image = image::DynamicImage::ImageRgba8(resized_image).into_rgb8();
+        let (width, height) = rgb_image.dimensions();
+        let mut jpeg_bytes: Vec<u8> = Vec::new();
+        let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(std::io::Cursor::new(&mut jpeg_bytes), 60);
+        if encoder.encode(rgb_image.as_raw(), width, height, image::ColorType::Rgb8).is_ok() {
+            println!("[tracker] 📸 Encoded Mac screencapture to JPEG: {} bytes", jpeg_bytes.len());
+            return Some(STANDARD.encode(&jpeg_bytes));
+        }
+    }
+    
+    Some(STANDARD.encode(&bytes))
+}
+
+#[cfg(not(target_os = "macos"))]
 fn capture_screenshot() -> Option<String> {
     use screenshots::Screen;
     use base64::{Engine, engine::general_purpose::STANDARD};
