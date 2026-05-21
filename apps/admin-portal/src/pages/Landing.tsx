@@ -558,7 +558,7 @@ export function Landing() {
                             <div className="flex items-center gap-3">
                                 <span className={twMerge("text-sm font-bold tracking-tight transition-colors", !isMonthly ? "text-[var(--text-main)]" : "text-[var(--text-muted)]")}>Yearly</span>
                                 {!isMonthly && (
-                                    <div className="px-3 py-1 rounded-full text-[9px] font-black tracking-widest border bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/20 transition-all duration-300">
+                                    <div className="px-3 py-1 rounded-full text-[11px] font-black tracking-widest border bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20 transition-all duration-300">
                                         Save 25%
                                     </div>
                                 )}
@@ -683,14 +683,14 @@ export function Landing() {
                                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                                         <a
                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_x64-setup.exe"
-                                            className="px-8 py-3.5 bg-primary text-white text-[11px] font-black tracking-widest rounded-xl shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 justify-center"
+                                            className="w-[240px] py-3.5 bg-primary text-white text-[13px] font-black tracking-widest rounded-xl shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 justify-center"
                                         >
                                             <Download size={16} />
                                             Download .exe
                                         </a>
                                         <a
                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_x64_en-US.msi"
-                                            className="px-8 py-3.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[11px] font-bold tracking-widest rounded-xl hover:border-primary/30 transition-all flex items-center gap-2 justify-center text-[var(--text-main)]"
+                                            className="w-[240px] py-3.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[13px] font-bold tracking-widest rounded-xl hover:border-primary/30 transition-all flex items-center gap-2 justify-center text-[var(--text-main)]"
                                         >
                                             <Download size={16} />
                                             Download .msi
@@ -704,19 +704,19 @@ export function Landing() {
                                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                                         <a
                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.2/TrackOwl_1.3.2_aarch64.dmg"
-                                            className="px-8 py-3.5 bg-primary text-white text-[11px] font-black tracking-widest rounded-xl shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 justify-center"
+                                            className="w-[240px] py-3.5 bg-primary text-white text-[13px] font-black tracking-widest rounded-xl shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 justify-center"
                                         >
                                             <Download size={16} />
                                             Apple Silicon (M1–M5)
                                         </a>
-                                        <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.0.6/TrackOwl_1.0.6_x64.dmg"
-                                            className="px-8 py-3.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[11px] font-bold tracking-widest rounded-xl hover:border-primary/30 transition-all flex items-center gap-2 justify-center text-[var(--text-main)]"
+                                        <div
+                                            title="Intel Mac build is not available yet"
+                                            className="w-[240px] py-3.5 bg-[var(--bg-surface)] border border-dashed border-[var(--border-color)] text-[13px] font-bold tracking-widest rounded-xl flex items-center gap-2 justify-center text-[var(--text-muted)] opacity-60 cursor-not-allowed select-none"
                                         >
-                                            Intel Macs (v1.0.6)
-                                        </a>
+                                            Intel Mac — Coming Soon
+                                        </div>
                                     </div>
-                                    <p className="text-[13px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.2 (Apple Silicon) · v1.0.6 (Intel) · DMG · ~9 MB</p>
+                                    <p className="text-[13px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.2 · Apple Silicon only · DMG · ~9 MB</p>
                                 </div>
                             )}
 
