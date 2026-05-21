@@ -268,6 +268,15 @@ fn start_tracking(
         }
     };
 
+    // Guard: org_id must be present — sessions.organization_id is NOT NULL
+    if org_id.is_none() {
+        return TrackingResult {
+            status: "error".to_string(),
+            session_id: None,
+            error: Some("Your account is not linked to an organization. Please contact your administrator.".to_string()),
+        };
+    }
+
     // Get public IP
     let ip_address: Option<String> = ureq::get("https://api.ipify.org")
         .call()

@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Menu } from 'lucide-react';
+import { Menu, Sun, Moon } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { MobileNav } from './MobileNav.tsx';
 import { useAuth } from '../context/AuthContext';
 import { LockScreen } from './access/LockScreen';
+import { useTheme } from '../hooks/useTheme';
+import logoDark from '../assets/branding/4.svg';
+import logoLight from '../assets/branding/3.svg';
 
 interface AppShellProps {
     children: React.ReactNode;
@@ -15,6 +18,7 @@ export function AppShell({ children }: AppShellProps) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const { organization } = useAuth();
+    const { theme, toggleTheme } = useTheme();
     const isLockedPath = location.pathname === '/dashboard/pricing' || location.pathname === '/dashboard/settings/billing';
     const isLocked = organization?.subscription_status === 'Locked' && !isLockedPath;
 
@@ -45,14 +49,27 @@ export function AppShell({ children }: AppShellProps) {
             <div className="flex-1 flex flex-col min-w-0 h-full relative">
                 {/* Mobile Top Bar — hidden on md+ */}
                 <div className="md:hidden sticky top-0 z-[60] flex items-center justify-between px-4 h-14 bg-[var(--bg-surface)] border-b border-[var(--border-color)] shrink-0">
-                    <span className="text-[16px] font-black text-[var(--text-main)] tracking-tight">TrackOwl</span>
-                    <button
-                        onClick={() => setMobileMenuOpen(true)}
-                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white shadow-md active:scale-95 transition-all"
-                        aria-label="Open menu"
-                    >
-                        <Menu className="w-5 h-5" />
-                    </button>
+                    <img
+                        src={theme === 'dark' ? logoDark : logoLight}
+                        alt="TrackOwl"
+                        className="h-8 w-auto object-contain"
+                    />
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={toggleTheme}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl border border-[var(--border-color)] text-[var(--text-muted)] hover:text-primary hover:bg-primary/5 active:scale-95 transition-all"
+                            aria-label="Toggle theme"
+                        >
+                            {theme === 'dark' ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+                        </button>
+                        <button
+                            onClick={() => setMobileMenuOpen(true)}
+                            className="w-10 h-10 flex items-center justify-center rounded-xl bg-primary text-white shadow-md active:scale-95 transition-all"
+                            aria-label="Open menu"
+                        >
+                            <Menu className="w-5 h-5" />
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex-1 flex flex-col min-h-0 relative overflow-hidden">
