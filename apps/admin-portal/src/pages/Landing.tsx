@@ -682,28 +682,28 @@ export function Landing() {
                                 <div className="space-y-3">
                                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                                         <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.3/TrackOwl_1.3.2_x64-setup.exe"
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.4/TrackOwl_1.3.4_x64-setup.exe"
                                             className="w-[240px] py-3.5 bg-primary text-white text-[13px] font-black tracking-widest rounded-xl shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 justify-center"
                                         >
                                             <Download size={16} />
                                             Download .exe
                                         </a>
                                         <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.3/TrackOwl_1.3.2_x64_en-US.msi"
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.4/TrackOwl_1.3.4_x64_en-US.msi"
                                             className="w-[240px] py-3.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[13px] font-bold tracking-widest rounded-xl hover:border-primary/30 transition-all flex items-center gap-2 justify-center text-[var(--text-main)]"
                                         >
                                             <Download size={16} />
                                             Download .msi
                                         </a>
                                     </div>
-                                    <p className="text-[13px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.3 · 64-bit · ~5 MB</p>
+                                    <p className="text-[13px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.4 · 64-bit · ~5 MB</p>
                                 </div>
                             )}
                             {activeOS === 'mac' && (
                                 <div className="space-y-3">
                                     <div className="flex flex-col sm:flex-row gap-3 justify-center">
                                         <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.3/TrackOwl_1.3.2_aarch64.dmg"
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.4/TrackOwl_1.3.4_aarch64.dmg"
                                             className="w-[240px] py-3.5 bg-primary text-white text-[13px] font-black tracking-widest rounded-xl shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 justify-center"
                                         >
                                             <Download size={16} />
@@ -716,7 +716,7 @@ export function Landing() {
                                             Intel Mac — Coming Soon
                                         </div>
                                     </div>
-                                    <p className="text-[13px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.3 · Apple Silicon only · DMG · ~9 MB</p>
+                                    <p className="text-[13px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.4 · Apple Silicon only · DMG · ~9 MB</p>
                                 </div>
                             )}
 
