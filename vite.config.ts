@@ -1,9 +1,13 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import packageJson from './package.json'
 
 // Tauri dev uses a separate Vite config (no vite-plugin-electron)
 // This runs on port 5174 to avoid conflicts with the Electron dev server on 5173
 export default defineConfig({
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageJson.version),
+  },
   plugins: [react()],
   server: {
     port: 5174,

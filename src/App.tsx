@@ -221,13 +221,8 @@ function AppFooter({ lastSyncTime, isSyncing, onSync, isOnline }: {
   const [loc, setLoc] = useState<string | null>(null);
 
   useEffect(() => {
-    // 1. Get Version
-    const tauri = (window as any).__TAURI__;
-    if (tauri?.app) {
-      tauri.app.getVersion().then(setVersion);
-    } else {
-      setVersion('1.2.6');
-    }
+    // 1. Get Version (Injected at build time via Vite to ensure it always loads instantly)
+    setVersion((import.meta.env as any).VITE_APP_VERSION || '1.3.4');
 
     // 2. Get Location
     const fetchLoc = async () => {
