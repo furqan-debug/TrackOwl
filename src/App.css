@@ -348,8 +348,8 @@ input:checked+.slider:before {
   padding: 0 1.125rem;
   height: 46px;
   /* Fixed height — was 0.875rem 1.5rem padding, now precise */
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, #02225c 0%, #053381 100%);
+  border-bottom: none;
   flex-shrink: 0;
   position: sticky;
   top: 0;
@@ -379,7 +379,7 @@ input:checked+.slider:before {
 .topbar-title {
   font-weight: 620;
   font-size: 1.125rem;
-  color: var(--text-primary);
+  color: #FFFFFF;
   letter-spacing: -0.020em;
 }
 

@@ -195,13 +195,13 @@ function LocalClock() {
   const dateStr = now.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
-    <div className="local-context" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', borderLeft: '1px solid var(--border-light)', paddingLeft: '0.875rem', margin: '0 0.875rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: 'var(--text-primary)', fontWeight: 700, fontSize: '0.875rem' }}>
+    <div className="local-context" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '0.875rem', margin: '0 0.875rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#fff', fontWeight: 700, fontSize: '0.875rem' }}>
         <span>{timeStr}</span>
         <span style={{ fontSize: '0.6875rem', opacity: 0.6, fontWeight: 400 }}>{dateStr}</span>
       </div>
       {loc && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.625rem', color: 'var(--text-tertiary)', marginTop: '0.125rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.625rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.125rem' }}>
           <MapPin size={10} />
           {loc}
         </div>
@@ -2021,7 +2021,7 @@ function Topbar({ user, onLogout, onSettings, onSupport, todoBadge, disabled }: 
     <header className="app-topbar">
       <div className="topbar-brand">
         <div className="topbar-logo">
-          <img src="/header.svg" style={{ height: 24, width: 'auto', objectFit: 'contain' }} alt="TrackOwl" />
+          <img src="/header-white.svg" style={{ height: 24, width: 'auto', objectFit: 'contain' }} alt="TrackOwl" />
         </div>
       </div>
       {user && <LocalClock />}
@@ -2029,7 +2029,7 @@ function Topbar({ user, onLogout, onSettings, onSupport, todoBadge, disabled }: 
         <div className={`topbar-actions ${disabled ? 'disabled-actions' : ''}`}>
           {todoBadge != null && todoBadge > 0 && (
             <div style={{ position: 'relative', display: 'inline-flex' }} title={`${todoBadge} open task${todoBadge > 1 ? 's' : ''}`}>
-              <ClipboardList size={18} style={{ color: 'var(--text-tertiary)' }} />
+              <ClipboardList size={18} style={{ color: '#fff' }} />
               <span style={{
                 position: 'absolute', top: '-5px', right: '-7px',
                 background: '#ef4444', color: '#fff', borderRadius: '999px',
@@ -2045,10 +2045,10 @@ function Topbar({ user, onLogout, onSettings, onSupport, todoBadge, disabled }: 
               ) : initials}
             </div>
           </div>
-          <button onClick={disabled ? undefined : onSupport} className="btn btn-ghost" title="Support" style={{ padding: '0.3rem' }} disabled={disabled}>
+          <button onClick={disabled ? undefined : onSupport} className="btn btn-ghost" title="Support" style={{ padding: '0.3rem', color: '#fff' }} disabled={disabled}>
             <HelpCircle size={16} />
           </button>
-          <button onClick={disabled ? undefined : onLogout} className="btn btn-ghost" title={disabled ? "Stop timer to sign out" : "Sign out"} style={{ padding: '0.3rem' }} disabled={disabled}>
+          <button onClick={disabled ? undefined : onLogout} className="btn btn-ghost" title={disabled ? "Stop timer to sign out" : "Sign out"} style={{ padding: '0.3rem', color: '#fff' }} disabled={disabled}>
             <LogOut size={16} />
           </button>
         </div>
