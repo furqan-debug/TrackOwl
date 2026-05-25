@@ -1,46 +1,34 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ChevronRight,
     Check,
     Monitor,
     Clock,
-    Camera,
-    Quote,
     TrendingUp,
-    Users,
     BarChart3,
-    Download,
     Globe,
     Briefcase,
-    Plus,
-    Minus,
-    Heart,
-    ShoppingCart,
-    CreditCard,
-    GraduationCap,
-    Palette,
     MessageSquare,
-    AlertTriangle
+    Users,
+    Shield,
+    Lock,
+    Eye,
+    ChevronDown,
+    ArrowRight,
+    FileText,
+    Download
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
-import LogoIcon from '../assets/branding/3.svg';
-import DashboardPreview from '../assets/branding/dashboard-preview.png';
-import DesktopPreview from '../assets/branding/desktop-preview.png';
-import JasonAvatar from '../assets/branding/jason.png';
-import ElenaAvatar from '../assets/branding/elena.png';
-import SarahAvatar from '../assets/branding/sarah.png';
-import MarcusAvatar from '../assets/branding/marcus.png';
-import DavidAvatar from '../assets/branding/david.png';
-import VisualProofImg from '../assets/branding/visual-proof.png';
+import HeaderLogo from '../assets/branding/header-2.svg';
+import HeroDashboard from '../assets/branding/hero-dashboard.png';
+import ShowcaseDashboard from '../assets/branding/showcase-dashboard.png';
 
 export function Landing() {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
-    const [isMonthly, setIsMonthly] = useState(false);
-    const [activeOS, setActiveOS] = useState<'win' | 'mac'>('win');
+    const [activeFaq, setActiveFaq] = useState<number | null>(null);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -50,865 +38,829 @@ export function Landing() {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    useEffect(() => {
-        const ua = navigator.userAgent.toLowerCase();
-        if (ua.includes('mac os')) {
-            setActiveOS('mac');
-        } else {
-            setActiveOS('win');
-        }
-    }, []);
+    const headlineSlides = ["modern teams", "remote work", "agencies", "enterprises"];
+    const [currentSlide, setCurrentSlide] = useState(0);
 
-    const testimonials = [
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setCurrentSlide((prev) => (prev + 1) % headlineSlides.length);
+        }, 3000);
+        return () => clearInterval(interval);
+    }, [headlineSlides.length]);
+
+    const metrics = [
+        { title: '99.9%', subtitle: 'Platform uptime', icon: TrendingUp, color: 'text-green-500' },
+        { title: 'Real-time', subtitle: 'Workforce insights', icon: Eye, color: 'text-blue-500' },
+        { title: 'Enterprise-grade', subtitle: 'Security', icon: Shield, color: 'text-blue-600' },
+        { title: 'Ethical &', subtitle: 'Transparent tracking', icon: Users, color: 'text-blue-500' }
+    ];
+
+    const features = [
         {
-            savings: "Saved $15,200",
-            quote: "TrackOwl paid for itself within the first 48 hours. We identified massive resource leaks in our development cycle.",
-            author: "Jason Riva",
-            role: "COO",
-            company: "NexaSystems",
-            avatar: JasonAvatar
+            title: 'Smart time tracking',
+            desc: 'Automatically track work hours, productivity trends, and active sessions with precision.',
+            icon: Clock,
+            color: 'text-green-500',
+            bg: 'bg-green-50'
         },
         {
-            savings: "+22% efficiency",
-            quote: "No more status meetings. We monitor the workflow and jump in only when needed. Billable hours have never been tracked more accurately.",
-            author: "Elena Moretti",
-            role: "Director",
-            company: "PixelPerfect",
-            avatar: ElenaAvatar
+            title: 'Workforce visibility',
+            desc: 'Gain real-time operational visibility across remote and distributed teams.',
+            icon: Users,
+            color: 'text-blue-500',
+            bg: 'bg-blue-50'
         },
         {
-            savings: "100% trust",
-            quote: "Our team members feel secure knowing their hard work is recorded fairly. It has eliminated all friction related to micromanagement.",
-            author: "Sarah Jenkins",
-            role: "Head of HR",
-            company: "GlobalLink",
-            avatar: SarahAvatar
+            title: 'Productivity analytics',
+            desc: 'Transform workforce data into actionable insights with detailed reports and dashboards.',
+            icon: BarChart3,
+            color: 'text-purple-500',
+            bg: 'bg-purple-50'
         },
         {
-            savings: "Saved $8,500/mo",
-            quote: "We recovered billable hours that previously went uncaptured. Our monthly revenue increased immediately.",
-            author: "Marcus Thorne",
-            role: "CFO",
-            company: "Titan Logistics",
-            avatar: MarcusAvatar
+            title: 'Team activity reports',
+            desc: 'Review productivity patterns, attendance, and operational performance in one place.',
+            icon: FileText,
+            color: 'text-yellow-500',
+            bg: 'bg-yellow-50'
         },
         {
-            savings: "12 hrs/wk saved",
-            quote: "Automating timesheet verification has freed our HR team to focus on high-level strategic work.",
-            author: "David Chen",
-            role: "CTO",
-            company: "NexaFlow",
-            avatar: DavidAvatar
+            title: 'Enterprise security',
+            desc: 'Built with enterprise-grade infrastructure, encryption, and secure access controls.',
+            icon: Lock,
+            color: 'text-green-600',
+            bg: 'bg-green-50'
+        },
+        {
+            title: 'Ethical monitoring',
+            desc: 'Transparent, consent-based tracking built around trust and accountability.',
+            icon: Shield,
+            color: 'text-orange-500',
+            bg: 'bg-orange-50'
         }
     ];
 
-    const plans = [
+    const industries = [
+        { name: 'Remote teams', icon: Globe, color: 'text-yellow-500' },
+        { name: 'Staffing agencies', icon: Users, color: 'text-blue-400' },
+        { name: 'Software houses', icon: Monitor, color: 'text-blue-600' },
+        { name: 'Customer support teams', icon: MessageSquare, color: 'text-blue-500' },
+        { name: 'Virtual assistants', icon: Users, color: 'text-blue-400' },
+        { name: 'Enterprise operations', icon: Briefcase, color: 'text-blue-600' },
+        { name: 'Distributed workforces', icon: Globe, color: 'text-blue-500' }
+    ];
+
+    const steps = [
+        { num: 1, title: 'Create your admin account', desc: 'Set up your TrackOwl workspace with secure, free admin account creation and enterprise-ready onboarding.', color: 'bg-green-500', text: 'text-green-500' },
+        { num: 2, title: 'Create your organization', desc: 'Configure your organization structure, workforce settings, operational policies, and tracking preferences.', color: 'bg-blue-600', text: 'text-blue-600' },
+        { num: 3, title: 'Invite your team members', desc: 'Easily invite employees, contractors, and remote staff to join your organization\'s workspace.', color: 'bg-orange-500', text: 'text-orange-500' },
+        { num: 4, title: 'Install TrackOwl', desc: 'Deploy the TrackOwl desktop application with secure, consent-based workforce tracking.', color: 'bg-green-500', text: 'text-green-500' },
+        { num: 5, title: 'Monitor operations', desc: 'Track productivity, attendance, app usage, screenshots, and workforce activity in real time through a centralized dashboard.', color: 'bg-blue-600', text: 'text-blue-600' },
+        { num: 6, title: 'Optimize performance', desc: 'Use analytics, reports, and operational insights to improve accountability, efficiency, and team performance.', color: 'bg-orange-500', text: 'text-orange-500' }
+    ];
+
+    const testimonials = [
         {
-            name: 'Basic',
-            price: isMonthly ? '$3.99' : '$2.99',
-            period: '/seat/mo',
-            description: 'Essential tracking tools for small teams and solo founders.',
-            features: [
-                'Manual time tracking',
-                'Timesheet reporting',
-                'Unlimited projects',
-                'Unlimited teams'
-            ],
-            buttonLabel: 'Get started',
-            popular: false
+            quote: "TrackOwl gave us complete operational visibility across our remote workforce without creating a culture of micromanagement.",
+            author: "Operations Director",
+            role: "Remote BPO"
         },
         {
-            name: 'Premium',
-            price: isMonthly ? '$6.99' : '$4.99',
-            period: '/seat/mo',
-            description: 'The complete toolkit for modern teams seeking absolute transparency.',
-            features: [
-                'Everything in Basic',
-                'Automatic time tracking',
-                'Activity screenshots',
-                'App & URL tracking',
-                'Unlimited storage',
-                'Smart idle detection',
-                'Advanced reporting access'
-            ],
-            buttonLabel: 'Get started free',
-            popular: true
+            quote: "The analytics and reporting capabilities helped us identify inefficiencies we never noticed before.",
+            author: "Founder",
+            role: "Digital Agency"
         },
         {
-            name: 'Enterprise',
-            price: 'Custom',
-            period: '',
-            description: 'Tailored solutions for large-scale operations and high-security needs.',
-            features: [
-                'Everything in Premium',
-                'Dedicated account manager',
-                'SLAs & dedicated hosting',
-                'Advanced security (SAML)',
-                'White-label options'
-            ],
-            buttonLabel: 'Talk to sales',
-            popular: false
+            quote: "Clean interface, powerful insights, and enterprise-level reliability.",
+            author: "Workforce Manager",
+            role: "Distributed Team"
+        }
+    ];
+
+    const faqs = [
+        {
+            q: "Does TrackOwl monitor employees secretly?",
+            a: "No. TrackOwl is designed around ethical and transparent workforce visibility with consent-based tracking."
+        },
+        {
+            q: "Is TrackOwl suitable for enterprise organizations?",
+            a: "Yes. TrackOwl is built for scalability, operational reliability, and enterprise workforce management."
+        },
+        {
+            q: "Is workforce data secure?",
+            a: "Yes. We implement enterprise-grade security measures, encryption, and role-based access controls."
+        },
+        {
+            q: "Does TrackOwl support remote teams?",
+            a: "Absolutely. TrackOwl was specifically built for remote, hybrid, and distributed workforces."
+        },
+        {
+            q: "Can employees access their own activity data?",
+            a: "Yes. Users can access information associated with their own accounts."
         }
     ];
 
     return (
-        <div className="min-h-screen bg-[var(--bg-main)] font-sans text-[var(--text-main)] selection:bg-primary/20 selection:text-primary overflow-x-hidden relative">
-            {/* Ambient Background */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full animate-pulse" />
-                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] mix-blend-overlay" />
-            </div>
+        <div className="min-h-screen bg-slate-50 font-sans tracking-[0.03em] text-slate-900 selection:bg-blue-500/20 selection:text-blue-900 overflow-x-hidden relative">
 
             {/* Navigation */}
             <header className={twMerge(
-                "fixed top-0 left-0 right-0 z-[100] transition-all duration-500 border-b",
+                "fixed top-0 left-0 right-0 z-[100] transition-all duration-500",
                 isScrolled
-                    ? "bg-[var(--bg-main)]/80 backdrop-blur-xl border-[var(--border-color)] py-3 shadow-premium"
-                    : "bg-transparent border-transparent py-6"
+                    ? "bg-[#001338]/95 backdrop-blur-xl border-b border-white/10 py-3 shadow-2xl"
+                    : "bg-[#001338] border-transparent py-5"
             )}>
-                <nav className="mx-auto flex max-w-7xl h-20 items-center justify-between px-6 md:px-10 relative">
+                <nav className="mx-auto flex max-w-[1400px] h-20 items-center justify-between px-6 lg:px-8 relative">
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        className="relative w-48 h-full flex items-center cursor-pointer group"
+                        className="flex items-center gap-3 cursor-pointer group"
                         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                     >
-                        <div className="absolute top-1/2 -translate-y-1/2 flex h-40 w-40 items-center justify-center transition-all duration-300 group-hover:scale-[1.05]">
-                            <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
-                        </div>
+                        <img src={HeaderLogo} alt="TrackOwl" className="h-12 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] group-hover:scale-105 transition-transform" />
                     </motion.div>
 
-                    <div className="hidden lg:flex items-center gap-1 p-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-full shadow-shell-sm">
-                        <NavButton href="#how-it-works">Features</NavButton>
-                        <NavButton href="#pricing">Pricing</NavButton>
-                        <NavButton href="#faq">FAQ</NavButton>
-                        <NavButton href="#download">Download</NavButton>
+                    <div className="hidden xl:flex items-center gap-8">
+                        <a href="#features" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">Features</a>
+                        <a href="#showcase" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">Solutions</a>
+                        <a href="#industries" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">Industries</a>
+                        <a href="#how-it-works" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">How it works</a>
+                        <a href="#pricing" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">Pricing</a>
+                        <a href="#faq" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">FAQ</a>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-6">
+                        <a 
+                            href="#download"
+                            className="hidden lg:flex items-center gap-2 text-base font-bold text-white hover:text-blue-400 transition-colors"
+                        >
+                            <Download className="w-4 h-4" /> Download
+                        </a>
                         <button
                             onClick={() => navigate('/login')}
-                            className="hidden sm:block text-[11px] font-bold tracking-widest text-[var(--text-secondary)] hover:text-primary transition-all px-4"
+                            className="hidden sm:block text-base font-bold text-white hover:text-[#facc15] transition-colors"
                         >
                             Log in
                         </button>
                         <button
                             onClick={() => navigate('/signup')}
-                            className="px-6 py-2.5 bg-primary text-white text-[11px] font-bold tracking-widest rounded-full shadow-glow-primary hover:brightness-110 active:scale-95 transition-all"
+                            className="px-6 py-2.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-base font-black rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95"
                         >
-                            Build your workspace
+                            Start free trial
                         </button>
                     </div>
                 </nav>
             </header>
- 
+
             <main className="relative z-10">
-                {/* Hero Section */}
-                <section className="relative min-h-[90vh] flex items-center justify-center pt-48 pb-20 overflow-hidden">
-                    <div className="mx-auto max-w-7xl px-6 md:px-10 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
-                        {/* Left Column: Content */}
-                        <div className="col-span-12 lg:col-span-6 flex flex-col items-center lg:items-start text-center lg:text-left pr-0 lg:pr-6">
+                {/* HERO SECTION - DARK NAVY */}
+                <section className="bg-[#001338] relative pt-32 lg:pt-40 pb-48 lg:pb-56 overflow-hidden">
+                    {/* Background glowing effects */}
+                    <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#002766] blur-[150px] rounded-full pointer-events-none" />
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[150px] rounded-full pointer-events-none" />
+                    
+                    <div className="mx-auto max-w-[1400px] px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center relative z-10">
+                        
+                        {/* Hero Text Content */}
+                        <div className="col-span-12 lg:col-span-5 flex flex-col items-start text-left">
                             <motion.div
-                                initial={{ opacity: 0, y: -10 }}
+                                initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6 }}
-                                className="text-[#D4AF37] text-[13px] font-bold tracking-[0.2em] mb-4"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 border border-blue-400/30 text-sm font-bold text-blue-300 mb-6"
                             >
-                                Workforce analytics & insights
+                                #1 workforce analytics platform
                             </motion.div>
- 
+
                             <motion.h1
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 0.1 }}
-                                className="text-4xl sm:text-5xl lg:text-[46px] xl:text-[54px] font-black tracking-tight leading-[1.08] mb-6 text-[var(--text-main)]"
+                                transition={{ delay: 0.1 }}
+                                className="text-[44px] sm:text-6xl lg:text-[64px] font-black tracking-normal leading-[1.05] text-white mb-6"
                             >
-                                Stop losing <br className="hidden lg:block" />
-                                <span className="text-[#D4AF37]">billable</span> hours with <br className="hidden lg:block" />
-                                TrackOwl.
+                                Time tracking<br />built for<br/>
+                                <span className="text-[#facc15] block mt-2">
+                                    <AnimatePresence mode="popLayout">
+                                        <motion.span
+                                            key={currentSlide}
+                                            initial={{ y: 20, opacity: 0 }}
+                                            animate={{ y: 0, opacity: 1 }}
+                                            exit={{ y: -20, opacity: 0 }}
+                                            transition={{ duration: 0.4, ease: "easeOut" }}
+                                            className="block"
+                                        >
+                                            {headlineSlides[currentSlide]}
+                                        </motion.span>
+                                    </AnimatePresence>
+                                </span>
                             </motion.h1>
- 
+
                             <motion.p
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 0.2 }}
-                                className="text-base md:text-lg font-medium text-[var(--text-secondary)] leading-relaxed mb-8 max-w-md"
+                                transition={{ delay: 0.2 }}
+                                className="text-base sm:text-lg text-slate-300 leading-relaxed mb-10 max-w-lg font-medium"
                             >
-                                The smart time tracking solution for modern teams, enabling <span className="text-primary font-bold border-b border-primary/20 pb-0.5">transparent processes</span> and <span className="text-primary font-bold border-b border-primary/20 pb-0.5">better project outcomes</span>.
+                                TrackOwl helps businesses monitor productivity, track work hours, and gain real-time workforce visibility — without micromanagement.<br /><br />
+                                Built for remote, hybrid, and distributed teams that need operational clarity at scale.
                             </motion.p>
- 
+
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.6, delay: 0.3 }}
-                                className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto"
+                                transition={{ delay: 0.3 }}
+                                className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto mb-8"
                             >
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="w-full sm:w-auto px-7 py-3.5 bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#001B4D] text-[11px] font-black tracking-widest rounded-full shadow-lg hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 group"
+                                    className="w-full sm:w-auto px-8 py-3.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-base font-black rounded-full shadow-[0_4px_20px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group"
                                 >
-                                    Start your free trial
-                                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                    Start free trial
+                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </button>
-                                <button
-                                    onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-                                    className="w-full sm:w-auto px-7 py-3.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[var(--text-main)] text-[11px] font-black tracking-widest rounded-full hover:bg-[var(--bg-surface-hover)] hover:border-primary/20 transition-all active:scale-95 shadow-shell-sm flex items-center justify-center gap-2 group"
-                                >
-                                    Take a tour
-                                    <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                                <button 
+                                    onClick={() => window.location.href = 'mailto:hello@trackowl.io'}
+                                    className="w-full sm:w-auto px-8 py-3.5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-base font-bold rounded-full transition-all active:scale-95 flex items-center justify-center">
+                                    Book a demo
                                 </button>
                             </motion.div>
- 
-                            {/* Trusted by industries */}
+
+                            {/* Trust Line */}
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
-                                transition={{ duration: 0.8, delay: 0.5 }}
-                                className="mt-12 w-full pt-8 border-t border-[var(--border-color)]/60 text-center lg:text-left"
+                                transition={{ delay: 0.5 }}
+                                className="flex items-center gap-3 text-slate-300 text-sm font-medium"
                             >
-                                <span className="text-[12px] md:text-[13px] font-bold tracking-[0.2em] text-[var(--text-muted)] block mb-6">
-                                    Trusted by teams across industries
-                                </span>
-                                <div className="grid grid-cols-5 gap-y-6 gap-x-2 md:gap-x-4">
-                                    {[
-                                        { name: 'SaaS/tech', icon: Monitor },
-                                        { name: 'Healthcare', icon: Heart },
-                                        { name: 'eCommerce', icon: ShoppingCart },
-                                        { name: 'FinTech', icon: CreditCard },
-                                        { name: 'Education', icon: GraduationCap },
-                                        { name: 'Marketing', icon: TrendingUp },
-                                        { name: 'Design', icon: Palette },
-                                        { name: 'Agency', icon: Briefcase },
-                                        { name: 'Consulting', icon: MessageSquare },
-                                        { name: 'Nonprofit', icon: Globe }
-                                    ].map((ind, i) => {
-                                        const Icon = ind.icon;
-                                        return (
-                                            <div key={i} className="flex flex-col items-center justify-center gap-2 group/ind">
-                                                <Icon className="w-5 h-5 text-[var(--text-muted)] group-hover/ind:text-primary transition-all duration-300" strokeWidth={1.7} />
-                                                <span className="text-[12px] font-medium text-[var(--text-secondary)] whitespace-nowrap tracking-wide">{ind.name}</span>
-                                            </div>
-                                        );
-                                    })}
+                                <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
+                                    <Check className="w-4 h-4 text-green-400" />
                                 </div>
+                                Trusted by remote teams, agencies, and modern enterprises worldwide.
                             </motion.div>
                         </div>
 
-                        {/* Right Column: Image */}
-                        <div className="col-span-12 lg:col-span-6 w-full flex justify-center items-center mt-12 lg:mt-0">
+                        {/* Hero Dashboard Mockup Container */}
+                        <div className="col-span-12 lg:col-span-7 relative lg:-mr-32 xl:-mr-48 z-20 mt-12 lg:mt-0">
                             <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                transition={{ duration: 1, delay: 0.5 }}
-                                className="relative w-full max-w-2xl lg:max-w-none px-4 mockup-3d-container"
+                                initial={{ opacity: 0, x: 40, rotateY: 10 }}
+                                animate={{ opacity: 1, x: 0, rotateY: 0 }}
+                                transition={{ duration: 0.8, delay: 0.4 }}
+                                className="relative rounded-[1.5rem] border-[6px] border-[#001b4d] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] bg-white overflow-hidden"
                             >
-                                {/* Main Admin Dashboard Image */}
-                                <div className="relative rounded-[2.5rem] border-[8px] border-[var(--bg-surface)] shadow-premium overflow-hidden mockup-3d-card group">
-                                    <div className="absolute inset-0 bg-gradient-to-t from-primary/10 to-transparent pointer-events-none z-10" />
-                                    <img
-                                        src={DashboardPreview}
-                                        alt="TrackOwl Interface"
-                                        className="w-full h-auto block transition-transform duration-1000 group-hover:scale-105"
-                                    />
-                                    <div className="absolute inset-0 border border-white/10 rounded-[2rem] pointer-events-none z-20" />
+                                {/* Browser-like Header */}
+                                <div className="h-10 bg-[#001b4d] flex items-center px-4 gap-2">
+                                    <div className="flex gap-1.5">
+                                        <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                                        <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                                    </div>
                                 </div>
-
-                                {/* Floating Desktop App Image */}
-                                <div className="absolute -left-4 md:-left-8 -bottom-10 w-[38%] max-w-[200px] rounded-[1.8rem] border-[6px] border-[var(--bg-surface)] shadow-premium overflow-hidden mockup-desktop-float z-30 group/desktop">
-                                    <div className="absolute inset-0 bg-gradient-to-t from-primary/5 to-transparent pointer-events-none z-10" />
-                                    <img
-                                        src={DesktopPreview}
-                                        alt="TrackOwl Desktop App"
-                                        className="w-full h-auto block transition-transform duration-1000 group-hover/desktop:scale-105"
-                                    />
-                                    <div className="absolute inset-0 border border-white/15 rounded-[1.4rem] pointer-events-none z-20" />
-                                </div>
-
-                                {/* Floating decorative elements */}
-                                <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/20 blur-[60px] rounded-full animate-pulse pointer-events-none" />
-                                <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-primary/10 blur-[80px] rounded-full animate-pulse pointer-events-none" style={{ animationDelay: '1.5s' }} />
+                                
+                                {/* Mockup Content (Simulated Dashboard) */}
+                                <img src={HeroDashboard} alt="Dashboard Preview" className="w-full h-auto object-cover border-t border-white/10" />
                             </motion.div>
                         </div>
                     </div>
                 </section>
 
+                {/* HERO METRICS OVERLAP */}
+                <div className="relative z-30 mx-auto max-w-[1200px] px-4 -mt-20 lg:-mt-24 mb-16">
+                    <div className="bg-white rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-4 px-8 flex flex-col md:flex-row items-center justify-between border border-slate-100">
+                        {metrics.map((m, i) => {
+                            const Icon = m.icon;
+                            return (
+                                <div key={i} className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start py-3 md:py-0 border-b md:border-b-0 md:border-r border-slate-100 last:border-0 px-4">
+                                    <div className={`p-2 rounded-lg bg-slate-50 ${m.color}`}>
+                                        <Icon className="w-6 h-6" strokeWidth={2.5} />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-base font-black text-slate-900 leading-tight">{m.title}</span>
+                                        <span className="text-xs font-semibold text-slate-500 leading-tight">{m.subtitle}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
 
-                {/* Features Bento Grid */}
-                <section id="how-it-works" className="py-32 bg-[var(--bg-main)]">
-                    <div className="mx-auto max-w-7xl px-6 md:px-10">
-                        <div className="text-center max-w-3xl mx-auto mb-20">
-                            <h2 className="text-[var(--text-muted)] text-[13px] font-bold tracking-[0.25em] mb-4">Precision engineering</h2>
-                            <h3 className="text-4xl md:text-5xl font-black tracking-tight mb-6">Everything you need, <br /> <span className="text-primary italic">nothing you don't.</span></h3>
-                            <p className="text-[var(--text-secondary)] text-lg font-medium">We built TrackOwl to solve the visibility problem without the Big Brother baggage.</p>
+                {/* FEATURES SECTION */}
+                <section id="features" className="py-16 bg-slate-50">
+                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+                        <div className="text-center max-w-3xl mx-auto mb-16">
+                            <h2 className="text-[#facc15] text-base font-black mb-3">Powerful features</h2>
+                            <h3 className="text-3xl md:text-5xl font-black text-[#001b4d] mb-4">Powerful workforce intelligence</h3>
+                            <p className="text-lg font-medium text-slate-500">Everything you need to track, monitor, and optimize your team performance.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                            {/* Main Feature - Bento Large */}
-                            <div className="md:col-span-8 group relative overflow-hidden rounded-[2.5rem] bg-[var(--bg-surface)] border border-[var(--border-color)] p-10 md:p-14 shadow-soft hover:border-primary/30 transition-all duration-500">
-                                <div className="absolute top-0 right-0 w-80 h-80 bg-primary/5 blur-[80px] rounded-full group-hover:bg-primary/10 transition-colors" />
-                                <div className="relative z-10 flex flex-col h-full justify-between">
-                                    <div className="space-y-6">
-                                        <div className="w-16 h-16 rounded-[1.5rem] bg-primary flex items-center justify-center text-white shadow-glow-primary">
-                                            <Clock size={32} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {features.map((f, i) => {
+                                const Icon = f.icon;
+                                return (
+                                    <div key={i} className="p-6 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex gap-5 items-start">
+                                        <div className={twMerge("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0", f.bg, f.color)}>
+                                            <Icon className="w-6 h-6" strokeWidth={2.5}/>
                                         </div>
                                         <div>
-                                            <h4 className="text-3xl font-black tracking-tight mb-4">Automated <span className="text-primary italic">time flow</span></h4>
-                                            <p className="text-[var(--text-secondary)] text-lg font-medium max-w-md leading-relaxed">
-                                                Our desktop application intelligently maps work hours to projects. No start buttons, no timers to forget—just pure, unadulterated accuracy.
-                                            </p>
+                                            <h4 className="text-xl font-bold text-slate-900 mb-2">{f.title}</h4>
+                                            <p className="text-base font-medium text-slate-500 leading-relaxed">{f.desc}</p>
                                         </div>
                                     </div>
-                                    <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {['0.1s precision', 'Offline sync', 'Smart idle detection', 'App integration'].map((tag) => (
-                                            <div key={tag} className="px-4 py-2 rounded-full bg-[var(--bg-main)] border border-[var(--border-color)] text-[12px] font-bold text-primary tracking-wide text-center">
-                                                {tag}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Activity - Bento Small */}
-                            <div className="md:col-span-4 group relative overflow-hidden rounded-[2.5rem] bg-[var(--bg-surface)] border border-[var(--border-color)] p-10 shadow-soft hover:border-primary/30 transition-all duration-500">
-                                <div className="flex flex-col h-full items-center text-center justify-center space-y-6">
-                                    <div className="w-14 h-14 rounded-2xl bg-[#001B4D] text-[#D4AF37] flex items-center justify-center">
-                                        <TrendingUp size={28} />
-                                    </div>
-                                    <h4 className="text-2xl font-black tracking-tight">Active pulse</h4>
-                                    <p className="text-[var(--text-secondary)] text-sm font-medium leading-relaxed">
-                                        Visualize team engagement with our unique activity pulse indicator.
-                                    </p>
-                                    <div className="w-full flex items-end justify-center gap-1 h-12 px-4">
-                                        {[40, 70, 45, 90, 65, 80, 55, 30].map((h, i) => (
-                                            <motion.div
-                                                key={i}
-                                                initial={{ height: 0 }}
-                                                whileInView={{ height: `${h}%` }}
-                                                className="w-full bg-[#D4AF37]/40 rounded-t-sm"
-                                                transition={{ delay: i * 0.1, duration: 0.5 }}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Screenshots - Bento Small */}
-                            <div className="md:col-span-4 group relative overflow-hidden rounded-[2.5rem] bg-[var(--bg-surface)] border border-[var(--border-color)] p-10 shadow-soft hover:border-primary/30 transition-all duration-500">
-                                <div className="flex flex-col h-full justify-between">
-                                    <div className="space-y-4">
-                                        <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center">
-                                            <Camera size={24} />
-                                        </div>
-                                        <h4 className="text-xl font-black tracking-tight">Visual proof</h4>
-                                        <p className="text-[var(--text-secondary)] text-sm font-medium leading-relaxed">
-                                            Transparent screenshots provide verifiable context for every hour tracked.
-                                        </p>
-                                    </div>
-                                    <div className="mt-8 relative aspect-video rounded-xl bg-[var(--bg-main)] border border-[var(--border-color)] overflow-hidden">
-                                        <img
-                                            src={VisualProofImg}
-                                            alt="Visual Proof"
-                                            className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-[var(--bg-surface)] to-transparent pointer-events-none" />
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Reports - Bento Large */}
-                            <div className="md:col-span-8 group relative overflow-hidden rounded-[2.5rem] bg-primary text-white p-10 md:p-14 shadow-glow-primary border border-primary/20 transition-all duration-500">
-                                <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-white/10 blur-[80px] rounded-full" />
-                                <div className="relative z-10 flex flex-col md:flex-row items-center gap-10">
-                                    <div className="flex-1 space-y-6">
-                                        <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center">
-                                            <BarChart3 size={28} />
-                                        </div>
-                                        <h4 className="text-3xl font-black tracking-tight italic">Instant audits</h4>
-                                        <p className="text-white/80 text-lg font-medium leading-relaxed">
-                                            Generate export-ready reports for payroll, clients, or internal audits in seconds.
-                                        </p>
-                                        <ul className="space-y-3">
-                                            {['CSV/PDF exporting', 'Client report sharing', 'Custom branding options', 'Developer API access'].map(item => (
-                                                <li key={item} className="flex items-center gap-2 text-[14px] font-bold tracking-wide">
-                                                    <Check size={14} className="text-[#D4AF37]" />
-                                                    {item}
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                    <div className="flex-1 w-full flex items-center justify-center">
-                                        <div className="w-full bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-6 space-y-4">
-                                            <div className="h-2 w-1/2 bg-white/30 rounded-full" />
-                                            <div className="h-2 w-full bg-white/20 rounded-full" />
-                                            <div className="h-2 w-3/4 bg-white/20 rounded-full" />
-                                            <div className="flex justify-between items-end pt-4">
-                                                <div className="h-16 w-4 bg-white/40 rounded-t-sm" />
-                                                <div className="h-24 w-4 bg-[#D4AF37] rounded-t-sm shadow-[0_0_15px_rgba(212,175,55,0.5)]" />
-                                                <div className="h-12 w-4 bg-white/40 rounded-t-sm" />
-                                                <div className="h-20 w-4 bg-white/40 rounded-t-sm" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                                );
+                            })}
                         </div>
                     </div>
                 </section>
 
-                {/* Interactive ROI Section */}
-                <section className="py-32 bg-[var(--bg-surface)] relative overflow-hidden">
-                    <div className="mx-auto max-w-7xl px-6 md:px-10">
-                        <div className="glass-panel rounded-[3rem] p-10 md:p-20 relative overflow-hidden border-primary/10">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent" />
-                            <div className="grid md:grid-cols-2 gap-16 items-center">
-                                <div className="space-y-8">
-                                    <h3 className="text-4xl font-black tracking-tight">The <span className="text-primary italic">ROI</span> of transparency</h3>
-                                    <p className="text-[var(--text-secondary)] text-lg leading-relaxed font-medium">
-                                        Companies using TrackOwl report an average increase of 18% in billable utilization within the first 30 days.
-                                    </p>
-                                    <div className="space-y-6">
-                                        <div className="p-6 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-color)] flex items-center gap-6">
-                                            <div className="text-4xl font-black text-primary">15%</div>
-                                            <div className="text-sm font-bold text-[var(--text-secondary)] tracking-widest">Efficiency increase</div>
-                                        </div>
-                                        <div className="p-6 bg-[var(--bg-main)] rounded-2xl border border-[var(--border-color)] flex items-center gap-6">
-                                            <div className="text-4xl font-black text-[#D4AF37]">$12k</div>
-                                            <div className="text-sm font-bold text-[var(--text-secondary)] tracking-widest">Average annual savings</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="relative">
-                                    <div className="aspect-square rounded-[2rem] bg-primary/5 border border-primary/10 flex items-center justify-center overflow-hidden">
-                                        <div className="relative w-48 h-48">
-                                            <motion.div
-                                                animate={{ rotate: 360 }}
-                                                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-                                                className="absolute inset-0 border-4 border-dashed border-primary/20 rounded-full"
-                                            />
-                                            <div className="absolute inset-4 bg-primary rounded-full flex items-center justify-center shadow-glow-primary">
-                                                <TrendingUp size={48} className="text-white" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {/* Abstract background blobs */}
-                                    <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#D4AF37]/10 blur-[60px] rounded-full" />
-                                    <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-primary/10 blur-[60px] rounded-full" />
-                                </div>
+                {/* PLATFORM SHOWCASE SECTION */}
+                <section id="showcase" className="py-24 bg-white overflow-hidden">
+                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                        <div className="relative">
+                            <div className="rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] overflow-hidden flex">
+                                <img src={ShowcaseDashboard} alt="Platform Showcase" className="w-full h-auto object-cover" />
                             </div>
                         </div>
-                    </div>
-                </section>
 
-                {/* Testimonials Marquee */}
-                <section className="py-32 overflow-hidden bg-[var(--bg-main)]">
-                    <div className="mx-auto max-w-7xl px-6 text-center mb-16">
-                        <h2 className="text-4xl font-black tracking-tight mb-4">Loved by <span className="text-primary italic">teams from SMBs to large global enterprises</span></h2>
-                        <p className="text-[var(--text-secondary)] font-medium text-lg">Real results from teams who swapped micromanagement for trust.</p>
-                    </div>
-
-                    <div className="relative flex overflow-x-hidden group">
-                        <div className="animate-marquee flex gap-8 py-10">
-                            {[...testimonials, ...testimonials, ...testimonials].map((t, i) => (
-                                <motion.div
-                                    key={i}
-                                    whileHover={{ y: -10 }}
-                                    className="w-[400px] flex-shrink-0 bg-[var(--bg-surface)] p-10 rounded-[2.5rem] flex flex-col gap-8 border border-[var(--border-color)] shadow-soft relative group"
-                                >
-                                    <div className="absolute top-6 right-8 text-primary/10">
-                                        <Quote size={60} />
-                                    </div>
-                                    <div className="inline-flex px-4 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-black tracking-[0.2em] w-fit">
-                                        {t.savings}
-                                    </div>
-                                    <p className="text-lg text-[var(--text-main)] font-medium leading-relaxed italic relative z-10">
-                                        "{t.quote}"
-                                    </p>
-                                    <div className="flex items-center gap-4 mt-auto">
-                                        <div className="w-12 h-12 rounded-2xl overflow-hidden border-2 border-primary/10 shadow-sm">
-                                            <img src={t.avatar} alt={t.author} className="w-full h-full object-cover" />
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-[12px] font-black text-[var(--text-main)]">{t.author}</span>
-                                            <span className="text-[10px] font-bold text-[var(--text-muted)] tracking-widest">{t.role} · {t.company}</span>
-                                        </div>
-                                    </div>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Pricing Section */}
-                <section id="pricing" className="py-32 relative">
-                    <div className="mx-auto max-w-7xl px-6 md:px-10">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.6 }}
-                            className="text-center mb-10"
-                        >
-                            <h2 className="text-[13px] font-bold tracking-[0.25em] text-[var(--text-muted)] mb-4">Transparent pricing</h2>
-                            <h3 className="text-4xl md:text-5xl font-black tracking-tight">Invest in <span className="text-primary italic">better results</span></h3>
-                        </motion.div>
-
-                        {/* Pricing Toggle */}
-                        <div className="flex justify-center items-center gap-6 mb-20">
-                            <div className="flex items-center gap-3">
-                                <span className={twMerge("text-sm font-bold tracking-tight transition-colors", !isMonthly ? "text-[var(--text-main)]" : "text-[var(--text-muted)]")}>Yearly</span>
-                                {!isMonthly && (
-                                    <div className="px-3 py-1 rounded-full text-[11px] font-black tracking-widest border bg-[#10B981]/10 text-[#10B981] border-[#10B981]/20 transition-all duration-300">
-                                        Save 25%
-                                    </div>
-                                )}
-                            </div>
-
-                            <button
-                                onClick={() => setIsMonthly(!isMonthly)}
-                                className="group relative w-16 h-8 rounded-full bg-[var(--bg-surface)] border border-[var(--border-color)] p-1.5 transition-all hover:border-primary/30"
-                            >
-                                <motion.div
-                                    animate={{ x: isMonthly ? 32 : 0 }}
-                                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
-                                    className="w-5 h-5 rounded-full bg-primary shadow-glow-primary"
-                                />
-                            </button>
-
-                            <span className={twMerge("text-sm font-bold tracking-tight transition-colors", isMonthly ? "text-[var(--text-main)]" : "text-[var(--text-muted)]")}>Monthly</span>
-                        </div>
-                        <div className="grid gap-8 md:grid-cols-3 max-w-7xl mx-auto">
-                            {plans.map((plan, i) => (
-                                <motion.div
-                                    key={i}
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    whileInView={{ opacity: 1, scale: 1 }}
-                                    viewport={{ once: true }}
-                                    transition={{ duration: 0.5, delay: i * 0.2 }}
-                                    whileHover={{ y: -5 }}
-                                    className={twMerge(
-                                        "relative flex flex-col rounded-[2.5rem] p-10 md:p-14 transition-all duration-500",
-                                        "bg-[var(--bg-surface)]/40 backdrop-blur-2xl border border-[var(--border-color)]",
-                                        plan.popular && "shadow-shell-lg border-primary/30"
-                                    )}
-                                >
-                                    {plan.popular && (
-                                        <div className="absolute top-8 right-8 flex items-center gap-2 text-primary font-black text-[10px] tracking-[0.2em]">
-                                            <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                                            Most popular
-                                        </div>
-                                    )}
-
-                                    <div className="mb-12">
-                                        <h4 className="text-[13px] font-black tracking-[0.3em] text-[var(--text-muted)] mb-4">
-                                            {plan.name}
-                                        </h4>
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-6xl font-black tracking-tighter text-[var(--text-main)]">{plan.price}</span>
-                                            <span className="text-sm font-bold text-[var(--text-muted)] tracking-tight">{plan.period}</span>
-                                        </div>
-                                    </div>
-
-                                    <p className="text-sm font-medium text-[var(--text-secondary)] leading-relaxed mb-12 min-h-[48px]">
-                                        {plan.description}
-                                    </p>
-
-                                    <div className="w-full h-px bg-gradient-to-r from-transparent via-[var(--border-color)] to-transparent mb-12" />
-
-                                    <ul className="space-y-6 mb-16 flex-1">
-                                        {plan.features.map(f => (
-                                            <li key={f} className="flex items-center gap-4 text-[13px] font-semibold text-[var(--text-main)]">
-                                                <div className="flex items-center justify-center shrink-0 text-primary">
-                                                    <Check size={16} strokeWidth={3} />
-                                                </div>
-                                                {f}
-                                            </li>
-                                        ))}
-                                    </ul>
-
-                                    <button
-                                        onClick={() => navigate('/signup')}
-                                        className={twMerge(
-                                            "w-full py-6 rounded-2xl text-[11px] font-black tracking-[0.2em] transition-all duration-300",
-                                            plan.popular
-                                                ? "bg-primary text-white shadow-glow-primary hover:brightness-110"
-                                                : "bg-[var(--bg-main)] text-[var(--text-main)] border border-[var(--border-color)] hover:bg-[var(--bg-surface)]"
-                                        )}
-                                    >
-                                        {plan.buttonLabel}
-                                    </button>
-                                </motion.div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Download Section */}
-                <section id="download" className="py-24 relative bg-[var(--bg-main)]">
-                    <div className="mx-auto max-w-2xl px-6 md:px-10 text-center">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.6 }}
-                            className="space-y-6"
-                        >
-                            <h2 className="text-3xl md:text-4xl font-black tracking-tight">Download TrackOwl</h2>
-                            <p className="text-[var(--text-secondary)] text-base font-medium leading-relaxed max-w-md mx-auto">
-                                Setup takes under 60 seconds. Runs silently in your system tray.
+                        <div>
+                            <h2 className="text-3xl md:text-5xl font-black text-[#001b4d] mb-6 leading-tight">One platform.<br/>Complete operational visibility.</h2>
+                            <p className="text-lg font-medium text-slate-500 mb-8 leading-relaxed max-w-md">
+                                TrackOwl centralizes time tracking, team monitoring, analytics, screenshots, attendance, app usage, and reporting into a unified operational dashboard.
                             </p>
-
-                            {/* OS Tabs */}
-                            <div className="flex items-center gap-2 p-1 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-xl w-fit mx-auto">
-                                {(['win', 'mac'] as const).map((os) => (
-                                    <button
-                                        key={os}
-                                        onClick={() => setActiveOS(os)}
-                                        className={twMerge(
-                                            "px-5 py-2 rounded-lg text-[11px] font-bold tracking-widest transition-all duration-300",
-                                            activeOS === os
-                                                ? "bg-primary text-white shadow-sm"
-                                                : "text-[var(--text-secondary)] hover:text-[var(--text-main)]"
-                                        )}
-                                    >
-                                        {os === 'win' && 'Windows'}
-                                        {os === 'mac' && 'macOS'}
-                                    </button>
+                            
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2">
+                                {[
+                                    'Real-time team monitoring',
+                                    'Team attendance management',
+                                    'Smart productivity analytics',
+                                    'Detailed operational reporting',
+                                    'App & website usage tracking',
+                                    'Secure workforce analytics',
+                                    'Screenshot visibility system'
+                                ].map((hl, i) => (
+                                    <div key={i} className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
+                                            <Check className="w-4 h-4 text-white" strokeWidth={3} />
+                                        </div>
+                                        <span className="text-base font-bold text-slate-800">{hl}</span>
+                                    </div>
                                 ))}
                             </div>
+                        </div>
+                    </div>
+                </section>
 
-                            {/* Download Buttons */}
-                            {activeOS === 'win' && (
-                                <div className="space-y-3">
-                                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                                        <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.4/TrackOwl_1.3.4_x64-setup.exe"
-                                            className="w-[240px] py-3.5 bg-primary text-white text-[13px] font-black tracking-widest rounded-xl shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 justify-center"
-                                        >
-                                            <Download size={16} />
-                                            Download .exe
-                                        </a>
-                                        <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.4/TrackOwl_1.3.4_x64_en-US.msi"
-                                            className="w-[240px] py-3.5 bg-[var(--bg-surface)] border border-[var(--border-color)] text-[13px] font-bold tracking-widest rounded-xl hover:border-primary/30 transition-all flex items-center gap-2 justify-center text-[var(--text-main)]"
-                                        >
-                                            <Download size={16} />
-                                            Download .msi
-                                        </a>
+                {/* INDUSTRIES SECTION */}
+                <section id="industries" className="py-16 bg-slate-50">
+                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center">
+                        <h2 className="text-2xl font-black text-[#001b4d] mb-10">Built for modern businesses</h2>
+                        <div className="flex flex-wrap justify-center gap-8 md:gap-12">
+                            {industries.map((ind, i) => {
+                                const Icon = ind.icon;
+                                return (
+                                    <div key={i} className="flex flex-col items-center gap-3">
+                                        <Icon className={`w-10 h-10 ${ind.color}`} strokeWidth={1.5} />
+                                        <span className="text-sm font-bold text-slate-600">{ind.name}</span>
                                     </div>
-                                    <p className="text-[13px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.4 · 64-bit · ~5 MB</p>
-                                </div>
-                            )}
-                            {activeOS === 'mac' && (
-                                <div className="space-y-3">
-                                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                                        <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.4/TrackOwl_1.3.4_aarch64.dmg"
-                                            className="w-[240px] py-3.5 bg-primary text-white text-[13px] font-black tracking-widest rounded-xl shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2 justify-center"
-                                        >
-                                            <Download size={16} />
-                                            Apple Silicon (M1–M5)
-                                        </a>
-                                        <div
-                                            title="Intel Mac build is not available yet"
-                                            className="w-[240px] py-3.5 bg-[var(--bg-surface)] border border-dashed border-[var(--border-color)] text-[13px] font-bold tracking-widest rounded-xl flex items-center gap-2 justify-center text-[var(--text-muted)] opacity-60 cursor-not-allowed select-none"
-                                        >
-                                            Intel Mac — Coming Soon
+                                );
+                            })}
+                        </div>
+                    </div>
+                </section>
+
+                {/* HOW IT WORKS */}
+                <section id="how-it-works" className="py-24 bg-white">
+                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl font-black text-[#001b4d]">Simple setup. Powerful insights.</h2>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                            {steps.map((s, i) => (
+                                <div key={i} className="relative flex flex-col items-center text-center">
+                                    {/* Arrow connector for desktop */}
+                                    {i < steps.length - 1 && (i + 1) % 3 !== 0 && (
+                                        <div className="hidden md:block absolute top-12 left-[60%] w-[80%] h-[2px] bg-yellow-400/30 z-0">
+                                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 border-t-2 border-r-2 border-yellow-400 rotate-45" />
+                                        </div>
+                                    )}
+                                    <div className="flex flex-col items-start text-left bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100 shadow-sm w-full relative z-10 h-full">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className={`w-12 h-12 rounded-full ${s.color} text-white flex items-center justify-center text-xl font-black`}>
+                                                {s.num}
+                                            </div>
+                                            <h3 className="text-xl font-bold text-slate-900">{s.title}</h3>
+                                        </div>
+                                        <p className="text-base font-medium text-slate-500 leading-relaxed mb-6">{s.desc}</p>
+                                        
+                                        {/* Little illustrations inside the card */}
+                                        <div className="mt-auto w-full h-24 bg-white rounded-xl border border-slate-100 flex items-center justify-center p-3">
+                                            {i === 0 && (
+                                                <div className="w-full h-full bg-green-50 rounded border border-green-100 flex items-center justify-center relative">
+                                                    <div className="w-12 h-14 bg-white border border-green-200 rounded shadow-sm flex flex-col items-center justify-center gap-2">
+                                                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center text-green-600"><Shield className="w-3 h-3"/></div>
+                                                        <div className="w-6 h-1 bg-green-200 rounded-full"/>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {i === 1 && (
+                                                <div className="w-full h-full bg-blue-50 rounded border border-blue-100 flex flex-col items-center justify-center gap-1.5">
+                                                    <div className="w-8 h-4 bg-blue-500 rounded-sm shadow-sm" />
+                                                    <div className="w-12 h-px bg-blue-300" />
+                                                    <div className="flex gap-2">
+                                                        <div className="w-6 h-4 bg-blue-400 rounded-sm shadow-sm" />
+                                                        <div className="w-6 h-4 bg-blue-400 rounded-sm shadow-sm" />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {i === 2 && (
+                                                <div className="w-full h-full bg-orange-50 rounded border border-orange-100 flex items-center justify-center relative">
+                                                    <div className="w-14 h-10 bg-white border border-orange-200 rounded shadow-sm flex flex-col justify-center px-2 gap-1.5 relative z-10">
+                                                        <div className="w-full h-1 bg-orange-100 rounded-full"/>
+                                                        <div className="w-2/3 h-1 bg-orange-100 rounded-full"/>
+                                                        <div className="absolute -right-2 -bottom-2 w-6 h-6 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center text-white font-black text-sm leading-none">+</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {i === 3 && (
+                                                <div className="w-full h-full bg-green-50 rounded border border-green-100 flex items-center justify-center">
+                                                    <div className="relative">
+                                                        <Monitor className="w-10 h-10 text-green-500" strokeWidth={1.5} />
+                                                        <div className="absolute inset-0 flex items-center justify-center mb-1">
+                                                            <Download className="w-4 h-4 text-green-600" strokeWidth={3} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {i === 4 && (
+                                                <div className="w-full h-full bg-blue-50 rounded border border-blue-100 flex flex-col p-2 gap-1.5">
+                                                    <div className="w-full flex gap-1.5 h-1/2">
+                                                        <div className="flex-1 bg-blue-200 rounded-sm" />
+                                                        <div className="flex-[2] bg-blue-400 rounded-sm shadow-sm" />
+                                                    </div>
+                                                    <div className="w-full flex gap-1.5 h-1/2">
+                                                        <div className="flex-1 bg-blue-300 rounded-sm shadow-sm" />
+                                                        <div className="flex-1 bg-blue-500 rounded-sm shadow-sm" />
+                                                        <div className="flex-1 bg-blue-400 rounded-sm shadow-sm" />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {i === 5 && (
+                                                <div className="w-full h-full bg-orange-50 rounded border border-orange-100 flex flex-col justify-end p-2 relative overflow-hidden">
+                                                    <TrendingUp className="w-10 h-10 text-orange-500 absolute top-2 right-2 opacity-20" />
+                                                    <div className="flex items-end justify-between gap-1 w-full h-full z-10 pt-4">
+                                                        {[30, 45, 40, 60, 55, 80, 95].map((h, j) => (
+                                                            <div key={j} className="w-full bg-gradient-to-t from-orange-400 to-orange-300 rounded-t-sm shadow-sm" style={{ height: `${h}%` }} />
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    <p className="text-[13px] text-[var(--text-muted)] font-medium tracking-wide">v1.3.4 · Apple Silicon only · DMG · ~9 MB</p>
                                 </div>
-                            )}
-
-                            {/* SmartScreen Warning Banner */}
-                            <div className="mt-4 w-full max-w-md mx-auto flex items-start gap-3 px-5 py-4 rounded-2xl bg-amber-50 border-2 border-amber-400 shadow-sm text-left">
-                                <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" strokeWidth={2.5} />
-                                <div>
-                                    <p className="text-[13px] font-black text-amber-800 tracking-wide mb-1">Windows SmartScreen Notice</p>
-                                    <p className="text-[13px] font-medium text-amber-700 leading-relaxed">
-                                        Windows may block the installer. Click <span className="font-black">&quot;More info&quot;</span> → <span className="font-black">&quot;Run anyway&quot;</span> to proceed safely.
-                                    </p>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-                </section>
-
-                <section id="faq" className="py-32 bg-[var(--bg-main)] relative">
-                    <div className="mx-auto max-w-3xl px-6 md:px-10">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.6 }}
-                            className="text-center mb-20"
-                        >
-                            <h4 className="text-[13px] font-black tracking-[0.3em] text-primary mb-6">Support</h4>
-                            <h3 className="text-4xl md:text-5xl font-black tracking-tight mb-8">Frequently asked <span className="text-primary italic">questions</span></h3>
-                        </motion.div>
-
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            whileInView={{ opacity: 1 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.8 }}
-                            className="space-y-4"
-                        >
-                            {[
-                                {
-                                    q: "How does automatic tracking work?",
-                                    a: "Our desktop application runs silently in the background, detecting active window titles and mapping them to projects based on your configuration. It intelligently filters out idle time and private browsing."
-                                },
-                                {
-                                    q: "Is my team's data secure?",
-                                    a: "Absolutely. All data is encrypted both in transit and at rest. Screenshots are processed using privacy-first algorithms, and you have full control over who can view specific team metrics."
-                                },
-                                {
-                                    q: "Can I use it offline?",
-                                    a: "Yes, the TrackOwl desktop application tracks time even without an active internet connection. Once you are back online, it automatically syncs all recorded data to the cloud."
-                                },
-                                {
-                                    q: "Can I explore the platform for free?",
-                                    a: "Yes! You can create an account and set up your workspace completely free of charge. You can explore all features and configure your projects, and you only need to choose a plan when you are ready to invite team members."
-                                },
-                                {
-                                    q: "Does it support multiple organizations?",
-                                    a: "Yes! You can manage multiple organizations under a single account, making it perfect for agencies and freelancers managing diverse client portfolios."
-                                }
-                            ].map((faq, i) => (
-                                <FaqItem key={i} question={faq.q} answer={faq.a} delay={i * 0.1} />
                             ))}
-                        </motion.div>
-
-                        <div className="mt-20 p-10 rounded-[2.5rem] bg-primary/5 border border-primary/10 text-center">
-                            <p className="text-lg font-medium text-[var(--text-secondary)] mb-6">Still have questions?</p>
-                            <button className="px-8 py-4 bg-primary text-white text-[12px] font-black tracking-widest rounded-2xl hover:scale-105 transition-all shadow-glow-primary">
-                                Contact support
-                            </button>
                         </div>
                     </div>
                 </section>
 
-                {/* Final Footer */}
-                <footer className="py-20 bg-[var(--bg-main)] border-t border-[var(--border-color)]">
-                    <div className="mx-auto max-w-7xl px-6 md:px-10">
-                        <div className="grid md:grid-cols-4 gap-12 mb-20">
-                            <div className="col-span-1 md:col-span-1 space-y-6">
-                                <div className="relative h-20 mb-8 -ml-7">
-                                    <div className="absolute -top-12 left-0 w-64 h-48">
-                                        <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain object-left" />
+                {/* TESTIMONIALS */}
+                <section className="py-16 bg-slate-50">
+                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl font-black text-[#001b4d]">What teams are saying</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {testimonials.map((t, i) => (
+                                <div key={i} className="p-8 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm flex flex-col justify-between relative">
+                                    <div className="absolute top-6 left-6 text-blue-100 text-6xl font-serif leading-none">"</div>
+                                    <p className="text-lg text-slate-700 font-medium mb-8 leading-relaxed relative z-10 pt-4">{t.quote}</p>
+                                    <div className="flex items-center gap-3">
+                                        <img src={`https://i.pravatar.cc/100?img=${i+10}`} className="w-14 h-14 rounded-full" alt="" />
+                                        <div>
+                                            <div className="text-base font-bold text-slate-900">{t.author}</div>
+                                            <div className="text-sm font-semibold text-slate-500">{t.role}</div>
+                                        </div>
                                     </div>
                                 </div>
-                                <p className="text-[var(--text-muted)] text-sm font-medium leading-relaxed">
-                                    Built for transparency. <br /> Designed for high-performing teams.
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
+                {/* SECURITY & PRIVACY SECTION */}
+                <section id="security" className="py-24 bg-white">
+                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+                        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                            
+                            {/* Security Card - Dark */}
+                            <div className="col-span-3 rounded-[2rem] bg-[#001338] p-10 flex flex-col justify-center relative overflow-hidden text-white shadow-xl">
+                                <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-20 pointer-events-none">
+                                    <Shield className="w-64 h-64 text-blue-400" strokeWidth={1} />
+                                </div>
+                                
+                                <h2 className="text-3xl font-black mb-4 relative z-10">Enterprise-grade security & privacy</h2>
+                                <p className="text-lg text-slate-300 mb-8 max-w-md relative z-10">
+                                    TrackOwl is built with security, transparency, and ethical monitoring at its core.
                                 </p>
-                                <div className="flex gap-4">
-                                    {[Globe, Briefcase, Users].map((Icon, i) => (
-                                        <a key={i} href="#" className="w-10 h-10 rounded-xl bg-[var(--bg-surface)] border border-[var(--border-color)] flex items-center justify-center text-[var(--text-muted)] hover:text-primary hover:border-primary/30 transition-all">
-                                            <Icon size={18} />
-                                        </a>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 relative z-10">
+                                    {[
+                                        'HTTPS/TLS encryption', 'Consent-based tracking',
+                                        'Secure cloud infrastructure', 'Secure data storage',
+                                        'Role-based access control', 'Continuous security monitoring'
+                                    ].map((s, i) => (
+                                        <div key={i} className="flex items-center gap-2">
+                                            <Check className="w-6 h-6 text-blue-400 shrink-0" strokeWidth={3} />
+                                            <span className="text-base font-bold text-slate-200">{s}</span>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
 
-                            <div className="col-span-1">
-                                <h4 className="text-[13px] font-black tracking-[0.25em] text-[var(--text-main)] mb-6">Product</h4>
-                                <ul className="space-y-4">
-                                    {['Features', 'Time tracking', 'Activity monitoring', 'Reporting'].map(item => (
-                                        <li key={item}><a href="#" className="text-sm font-medium text-[var(--text-muted)] hover:text-primary transition-all">{item}</a></li>
-                                    ))}
-                                </ul>
+                            {/* Privacy Card - Light */}
+                            <div className="col-span-2 rounded-[2rem] bg-blue-50 border border-blue-100 p-10 flex flex-col justify-center relative">
+                                <div className="absolute top-10 right-10 w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                    <Users className="w-10 h-10 text-blue-600"/>
+                                    <div className="absolute bottom-0 right-0 w-8 h-8 bg-green-500 rounded-full border-4 border-white flex items-center justify-center">
+                                        <Check className="w-4 h-4 text-white" strokeWidth={4}/>
+                                    </div>
+                                </div>
+                                
+                                <h3 className="text-2xl font-bold text-[#001b4d] mb-4 mt-16 lg:mt-0 max-w-[200px]">Privacy commitment</h3>
+                                <p className="text-lg text-slate-600 font-medium leading-relaxed max-w-[300px]">
+                                    Tracking-related information is visible only to authorized administrators and the associated user account owner.
+                                </p>
                             </div>
 
-                            <div className="col-span-1">
-                                <h4 className="text-[13px] font-black tracking-[0.25em] text-[var(--text-main)] mb-6">Company</h4>
-                                <ul className="space-y-4">
-                                    {['About us', 'Privacy policy', 'Terms of service', 'Security'].map(item => (
-                                        <li key={item}><a href="#" className="text-sm font-medium text-[var(--text-muted)] hover:text-primary transition-all">{item}</a></li>
-                                    ))}
-                                </ul>
+                        </div>
+                    </div>
+                </section>
+
+                {/* PRICING SECTION */}
+                <section id="pricing" className="py-16 bg-slate-50">
+                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl font-black text-[#001b4d]">Flexible plans for every team</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                            
+                            {/* Basic */}
+                            <div className="p-8 rounded-[1.5rem] bg-white border border-slate-200 flex flex-col h-full">
+                                <div className="flex-1 mb-8">
+                                    <h3 className="text-2xl font-black text-slate-900 mb-3">Basic</h3>
+                                    <p className="text-base font-medium text-slate-500 leading-relaxed">For small teams getting started with time tracking.</p>
+                                </div>
+                                <div className="mb-6">
+                                    <span className="text-4xl font-black text-slate-900">$2.99</span>
+                                    <span className="text-base font-bold text-slate-500"> /user/month</span>
+                                </div>
+                                <button 
+                                    onClick={() => navigate('/signup')}
+                                    className="w-full py-4 rounded-lg bg-green-500 hover:bg-green-600 text-white text-lg font-bold transition-colors shadow-md mt-auto">
+                                    Get started
+                                </button>
                             </div>
 
-                            <div className="col-span-1">
-                                <h4 className="text-[13px] font-black tracking-[0.25em] text-[var(--text-main)] mb-6">Support</h4>
-                                <ul className="space-y-4">
-                                    {['Documentation', 'Help center', 'API reference', 'Status'].map(item => (
-                                        <li key={item}><a href="#" className="text-sm font-medium text-[var(--text-muted)] hover:text-primary transition-all">{item}</a></li>
-                                    ))}
-                                </ul>
+                            {/* Premium (Most Popular) */}
+                            <div className="p-8 rounded-[1.5rem] bg-white border-2 border-blue-600 flex flex-col relative shadow-[0_10px_30px_rgba(37,99,235,0.15)] transform md:-translate-y-2 h-full mt-4 md:mt-0">
+                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-[#facc15] text-[#001b4d] text-sm font-black rounded-full tracking-wider shadow-sm border-2 border-white">
+                                    Most popular
+                                </div>
+                                <div className="flex-1 mb-8 pt-2">
+                                    <h3 className="text-2xl font-black text-slate-900 mb-3">Premium</h3>
+                                    <p className="text-base font-medium text-slate-500 leading-relaxed pr-4">Advanced analytics and operational reporting for scaling businesses.</p>
+                                </div>
+                                <div className="mb-6">
+                                    <span className="text-4xl font-black text-slate-900">$4.99</span>
+                                    <span className="text-base font-bold text-slate-500"> /user/month</span>
+                                </div>
+                                <button 
+                                    onClick={() => navigate('/signup')}
+                                    className="w-full py-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold transition-colors shadow-md mt-auto">
+                                    Start free trial
+                                </button>
+                            </div>
+
+                            {/* Enterprise */}
+                            <div className="p-8 rounded-[1.5rem] bg-white border border-slate-200 flex flex-col h-full">
+                                <div className="flex-1 mb-8">
+                                    <h3 className="text-2xl font-black text-slate-900 mb-3">Enterprise</h3>
+                                    <p className="text-base font-medium text-slate-500 leading-relaxed">Custom infrastructure, enterprise onboarding, and large-scale workforce management solutions.</p>
+                                </div>
+                                <div className="mb-6 flex items-center h-[48px]">
+                                    <span className="text-3xl font-black text-slate-900">Custom</span>
+                                </div>
+                                <button 
+                                    onClick={() => window.location.href = 'mailto:hello@trackowl.io'}
+                                    className="w-full py-4 rounded-lg bg-[#facc15] hover:bg-[#eab308] text-[#001b4d] text-lg font-bold transition-colors shadow-md mt-auto">
+                                    Talk to sales
+                                </button>
                             </div>
                         </div>
+                    </div>
+                </section>
 
-                        <div className="flex flex-col md:flex-row justify-between items-center gap-6 pt-10 border-t border-[var(--border-color)]">
-                            <p className="text-[13px] font-bold text-[var(--text-muted)] tracking-wide">
-                                © 2026 TrackOwl · A product by <a href="https://digireps.co/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">DigiReps</a>
+                {/* FAQ SECTION */}
+                <section id="faq" className="py-24 bg-white">
+                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+                        <div className="text-center mb-12">
+                            <h2 className="text-2xl font-black text-[#001b4d]">Frequently asked questions</h2>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                            {/* Left Column */}
+                            <div className="space-y-4">
+                                {[0, 2, 4].map((i) => (
+                                    <div key={i} className="border-b border-slate-100">
+                                        <button 
+                                            onClick={() => setActiveFaq(activeFaq === i ? null : i)}
+                                            className="w-full py-5 flex items-center justify-between text-left text-lg font-bold text-slate-800 focus:outline-none"
+                                        >
+                                            {faqs[i].q}
+                                            <ChevronDown className={twMerge("w-5 h-5 text-blue-600 transition-transform", activeFaq === i && "rotate-180")} />
+                                        </button>
+                                        <AnimatePresence>
+                                            {activeFaq === i && (
+                                                <motion.div
+                                                    initial={{ height: 0 }}
+                                                    animate={{ height: 'auto' }}
+                                                    exit={{ height: 0 }}
+                                                    className="overflow-hidden"
+                                                >
+                                                    <div className="pb-5 text-slate-500 text-base font-medium leading-relaxed">
+                                                        {faqs[i].a}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            {/* Right Column */}
+                            <div className="space-y-4">
+                                {[1, 3].map((i) => (
+                                    <div key={i} className="border-b border-slate-100">
+                                        <button 
+                                            onClick={() => setActiveFaq(activeFaq === i ? null : i)}
+                                            className="w-full py-5 flex items-center justify-between text-left text-lg font-bold text-slate-800 focus:outline-none"
+                                        >
+                                            {faqs[i].q}
+                                            <ChevronDown className={twMerge("w-5 h-5 text-blue-600 transition-transform", activeFaq === i && "rotate-180")} />
+                                        </button>
+                                        <AnimatePresence>
+                                            {activeFaq === i && (
+                                                <motion.div
+                                                    initial={{ height: 0 }}
+                                                    animate={{ height: 'auto' }}
+                                                    exit={{ height: 0 }}
+                                                    className="overflow-hidden"
+                                                >
+                                                    <div className="pb-5 text-slate-500 text-base font-medium leading-relaxed">
+                                                        {faqs[i].a}
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                {/* DOWNLOAD SECTION */}
+                <section id="download" className="py-24 bg-blue-600 relative overflow-hidden">
+                    {/* Background decorations */}
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-50 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-700 rounded-full blur-3xl opacity-50 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+                    
+                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8 relative z-10">
+                        <div className="text-center mb-12">
+                            <h2 className="text-4xl font-black text-white mb-6">Download the TrackOwl desktop app</h2>
+                            <p className="text-xl text-blue-100 font-medium max-w-2xl mx-auto">
+                                The lightweight, secure desktop client your team needs to log time, capture activity, and stay productive.
                             </p>
-                            <div className="flex gap-8 text-[13px] font-bold text-[var(--text-muted)] tracking-wide">
-                                <a href="#" className="hover:text-primary transition-all">Twitter</a>
-                                <a href="#" className="hover:text-primary transition-all">LinkedIn</a>
-                                <a href="#" className="hover:text-primary transition-all">GitHub</a>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {/* Windows */}
+                            <div className="bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
+                                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
+                                    <Monitor className="w-8 h-8" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-2">Windows</h3>
+                                <p className="text-slate-500 font-medium mb-8">Windows 10 and 11 (64-bit)</p>
+                                <a 
+                                    href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.4/TrackOwl_1.3.4_x64-setup.exe"
+                                    className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-lg transition-colors flex items-center justify-center gap-2 mt-auto">
+                                    <Download className="w-5 h-5" /> Download for Windows
+                                </a>
+                            </div>
+                            
+                            {/* Mac */}
+                            <div className="bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
+                                <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-800 mb-6">
+                                    <Monitor className="w-8 h-8" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-2">macOS</h3>
+                                <p className="text-slate-500 font-medium mb-8">macOS 11.0 (Big Sur) or later</p>
+                                <a 
+                                    href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.4/TrackOwl_1.3.4_aarch64.dmg"
+                                    className="w-full py-4 px-6 bg-slate-800 hover:bg-slate-900 text-white text-lg font-bold rounded-lg transition-colors flex items-center justify-center gap-2 mt-auto">
+                                    <Download className="w-5 h-5" /> Download for Mac
+                                </a>
+                            </div>
+                            
+                            {/* Linux */}
+                            <div className="bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
+                                <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 mb-6">
+                                    <Monitor className="w-8 h-8" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-2">Linux</h3>
+                                <p className="text-slate-500 font-medium mb-8">Ubuntu, Debian, Fedora (.deb / .rpm)</p>
+                                <button 
+                                    disabled
+                                    className="w-full py-4 px-6 bg-orange-100 text-orange-500 text-lg font-bold rounded-lg flex items-center justify-center gap-2 mt-auto cursor-not-allowed border border-orange-200">
+                                    Coming Soon
+                                </button>
                             </div>
                         </div>
                     </div>
-                </footer>
+                </section>
+
             </main>
-        </div>
-    );
-}
 
-function NavButton({ children, href }: { children: React.ReactNode; href: string }) {
-    return (
-        <a
-            href={href}
-            className="px-6 py-2 rounded-full text-[13px] font-bold tracking-wide text-[var(--text-secondary)] hover:text-primary hover:bg-[var(--bg-main)] transition-all"
-        >
-            {children}
-        </a>
-    );
-}
-
-function FaqItem({ question, answer, delay }: { question: string; answer: string; delay: number }) {
-    const [isOpen, setIsOpen] = useState(false);
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay, duration: 0.5 }}
-            className={twMerge(
-                "group rounded-[2rem] border transition-all duration-500 overflow-hidden",
-                isOpen
-                    ? "bg-[var(--bg-surface)] border-primary/20 shadow-premium"
-                    : "bg-[var(--bg-surface)]/50 border-[var(--border-color)] hover:border-primary/10"
-            )}
-        >
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full px-8 py-6 flex items-center justify-between text-left"
-            >
-                <span className="text-lg font-black tracking-tight">{question}</span>
-                <div className={twMerge(
-                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500",
-                    isOpen ? "bg-primary text-white rotate-180" : "bg-[var(--bg-main)] text-[var(--text-muted)] group-hover:text-primary"
-                )}>
-                    {isOpen ? <Minus size={18} /> : <Plus size={18} />}
+            {/* FINAL CTA SECTION */}
+            <section className="bg-[#001338] py-24 relative z-10 border-b border-white/10">
+                <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center flex flex-col items-center">
+                    <img src={HeaderLogo} className="h-16 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] mb-6" alt="TrackOwl" />
+                    <h2 className="text-4xl md:text-6xl font-black text-white mb-6">Gain complete workforce visibility</h2>
+                    <p className="text-2xl text-slate-300 font-medium mb-10 max-w-3xl leading-relaxed">
+                        Track productivity, improve accountability, and operate with confidence using TrackOwl.
+                    </p>
+                    
+                    <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
+                        <button 
+                            onClick={() => navigate('/signup')}
+                            className="w-full sm:w-auto px-12 py-5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-lg font-black rounded-full shadow-[0_4px_20px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95">
+                            Start free trial
+                        </button>
+                        <button 
+                            onClick={() => window.location.href = 'mailto:hello@trackowl.io'}
+                            className="w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold rounded-full transition-all active:scale-95">
+                            Schedule a demo
+                        </button>
+                    </div>
+                    <p className="text-lg font-medium text-slate-400">Built for modern businesses managing remote teams at scale.</p>
                 </div>
-            </button>
-            <div
-                className={twMerge(
-                    "grid transition-all duration-500 ease-in-out",
-                    isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
-                )}
-            >
-                <div className="overflow-hidden">
-                    <div className="px-8 pb-8 pt-2">
-                        <p className="text-[var(--text-secondary)] font-medium leading-relaxed max-w-3xl">
-                            {answer}
-                        </p>
+            </section>
+
+            {/* FOOTER */}
+            <footer className="bg-[#001338] pt-20 pb-10 relative z-10">
+                <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16">
+                        <div>
+                            <h4 className="text-white font-bold mb-6 tracking-wide">Product</h4>
+                            <ul className="space-y-4 text-sm text-slate-400">
+                                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
+                                <li><a href="#security" className="hover:text-white transition-colors">Security</a></li>
+                                <li><a href="#showcase" className="hover:text-white transition-colors">Integrations</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 className="text-white font-bold mb-6 tracking-wide">Company</h4>
+                            <ul className="space-y-4 text-sm text-slate-400">
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-white transition-colors">About us</a></li>
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-white transition-colors">Careers</a></li>
+                                <li><a href="mailto:hello@trackowl.io" className="hover:text-white transition-colors">Contact</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 className="text-white font-bold mb-6 tracking-wide">Legal</h4>
+                            <ul className="space-y-4 text-sm text-slate-400">
+                                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-white transition-colors">Privacy policy</a></li>
+                                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-white transition-colors">Terms of service</a></li>
+                                <li><a href="#security" className="hover:text-white transition-colors">Security</a></li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 className="text-white font-bold mb-6 tracking-wide">Contact</h4>
+                            <ul className="space-y-4 text-sm text-slate-400">
+                                <li>
+                                    <a href="mailto:hello@trackowl.io" className="hover:text-[#facc15] font-medium transition-colors flex items-center gap-2">
+                                     hello@trackowl.io
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500">
+                        <img src={HeaderLogo} className="h-6 object-contain opacity-50 hover:opacity-100 transition-opacity" alt="TrackOwl" />
+                        <p>Developed by<br/>Digify Global LLC d/b/a DigiReps™</p>
                     </div>
                 </div>
-            </div>
-        </motion.div>
+            </footer>
+        </div>
     );
 }
