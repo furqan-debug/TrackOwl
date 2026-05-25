@@ -167,17 +167,17 @@ export function Landing() {
             <header className={twMerge(
                 "fixed top-0 left-0 right-0 z-[100] transition-all duration-500",
                 isScrolled
-                    ? "bg-[#001338]/95 backdrop-blur-xl border-b border-white/10 py-3 shadow-2xl"
-                    : "bg-[#001338] border-transparent py-5"
+                    ? "bg-[#001338]/95 backdrop-blur-xl border-b border-white/10 py-2 sm:py-3 shadow-2xl"
+                    : "bg-[#001338] border-transparent py-3 sm:py-5"
             )}>
-                <nav className="mx-auto flex max-w-[1400px] h-20 items-center justify-between px-6 lg:px-8 relative">
+                <nav className="mx-auto flex max-w-[1400px] h-14 sm:h-20 items-center justify-between px-4 sm:px-6 lg:px-8 relative">
                     <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
                         className="flex items-center gap-3 cursor-pointer group"
                         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                     >
-                        <img src={HeaderLogo} alt="TrackOwl" className="h-12 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] group-hover:scale-105 transition-transform" />
+                        <img src={HeaderLogo} alt="TrackOwl" className="h-8 sm:h-12 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] group-hover:scale-105 transition-transform" />
                     </motion.div>
 
                     <div className="hidden xl:flex items-center gap-8">
@@ -204,7 +204,7 @@ export function Landing() {
                         </button>
                         <button
                             onClick={() => navigate('/signup')}
-                            className="px-6 py-2.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-base font-black rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95"
+                            className="px-5 sm:px-6 py-2 sm:py-2.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-sm sm:text-base font-black rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95"
                         >
                             Start free trial
                         </button>
@@ -214,7 +214,7 @@ export function Landing() {
 
             <main className="relative z-10">
                 {/* HERO SECTION - DARK NAVY */}
-                <section className="bg-[#001338] relative pt-32 lg:pt-40 pb-48 lg:pb-56 overflow-hidden">
+                <section className="bg-[#001338] relative pt-36 lg:pt-48 pb-32 lg:pb-56 overflow-hidden">
                     {/* Background glowing effects */}
                     <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#002766] blur-[150px] rounded-full pointer-events-none" />
                     <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[150px] rounded-full pointer-events-none" />
@@ -235,7 +235,7 @@ export function Landing() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="text-[44px] sm:text-6xl lg:text-[64px] font-black tracking-normal leading-[1.05] text-white mb-6"
+                                className="text-4xl sm:text-5xl lg:text-[64px] font-black tracking-normal leading-[1.05] text-white mb-6"
                             >
                                 Time tracking<br />built for<br/>
                                 <span className="text-[#facc15] block mt-2">
@@ -258,7 +258,7 @@ export function Landing() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2 }}
-                                className="text-base sm:text-lg text-slate-300 leading-relaxed mb-10 max-w-lg font-medium"
+                                className="text-base sm:text-lg text-slate-300 leading-relaxed mb-8 max-w-lg font-medium"
                             >
                                 TrackOwl helps businesses monitor productivity, track work hours, and gain real-time workforce visibility — without micromanagement.<br /><br />
                                 Built for remote, hybrid, and distributed teams that need operational clarity at scale.
@@ -289,7 +289,7 @@ export function Landing() {
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
                                 transition={{ delay: 0.5 }}
-                                className="flex items-center gap-3 text-slate-300 text-sm font-medium"
+                                className="flex items-start sm:items-center gap-3 text-slate-300 text-sm font-medium"
                             >
                                 <div className="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center shrink-0">
                                     <Check className="w-4 h-4 text-green-400" />
@@ -301,8 +301,8 @@ export function Landing() {
                         {/* Hero Dashboard Mockup Container */}
                         <div className="col-span-12 lg:col-span-7 relative lg:-mr-32 xl:-mr-48 z-20 mt-12 lg:mt-0">
                             <motion.div
-                                initial={{ opacity: 0, x: 40, rotateY: 10 }}
-                                animate={{ opacity: 1, x: 0, rotateY: 0 }}
+                                initial={{ opacity: 0, y: 40, rotateY: 10 }}
+                                animate={{ opacity: 1, y: 0, rotateY: 0 }}
                                 transition={{ duration: 0.8, delay: 0.4 }}
                                 className="relative rounded-[1.5rem] border-[6px] border-[#001b4d] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] bg-white overflow-hidden"
                             >
@@ -324,7 +324,7 @@ export function Landing() {
 
                 {/* HERO METRICS OVERLAP */}
                 <div className="relative z-30 mx-auto max-w-[1200px] px-4 -mt-20 lg:-mt-24 mb-16">
-                    <div className="bg-white rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-4 px-8 flex flex-col md:flex-row items-center justify-between border border-slate-100">
+                    <div className="bg-white rounded-[2rem] md:rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-4 px-6 md:px-8 flex flex-col md:flex-row items-center justify-between border border-slate-100">
                         {metrics.map((m, i) => {
                             const Icon = m.icon;
                             return (
@@ -550,7 +550,7 @@ export function Landing() {
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                             
                             {/* Security Card - Dark */}
-                            <div className="col-span-3 rounded-[2rem] bg-[#001338] p-10 flex flex-col justify-center relative overflow-hidden text-white shadow-xl">
+                            <div className="col-span-3 rounded-[2rem] bg-[#001338] p-6 md:p-10 flex flex-col justify-center relative overflow-hidden text-white shadow-xl">
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-20 pointer-events-none">
                                     <Shield className="w-64 h-64 text-blue-400" strokeWidth={1} />
                                 </div>
@@ -574,7 +574,7 @@ export function Landing() {
                             </div>
 
                             {/* Privacy Card - Light */}
-                            <div className="col-span-2 rounded-[2rem] bg-blue-50 border border-blue-100 p-10 flex flex-col justify-center relative">
+                            <div className="col-span-2 rounded-[2rem] bg-blue-50 border border-blue-100 p-6 md:p-10 flex flex-col justify-center relative">
                                 <div className="absolute top-10 right-10 w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg">
                                     <Users className="w-10 h-10 text-blue-600"/>
                                     <div className="absolute bottom-0 right-0 w-8 h-8 bg-green-500 rounded-full border-4 border-white flex items-center justify-center">
@@ -618,7 +618,7 @@ export function Landing() {
                             </div>
 
                             {/* Premium (Most Popular) */}
-                            <div className="p-8 rounded-[1.5rem] bg-white border-2 border-blue-600 flex flex-col relative shadow-[0_10px_30px_rgba(37,99,235,0.15)] transform md:-translate-y-2 h-full mt-4 md:mt-0">
+                            <div className="p-8 rounded-[1.5rem] bg-white border-2 border-blue-600 flex flex-col relative shadow-[0_10px_30px_rgba(37,99,235,0.15)] transform md:-translate-y-2 h-full mt-8 md:mt-0">
                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-[#facc15] text-[#001b4d] text-sm font-black rounded-full tracking-wider shadow-sm border-2 border-white">
                                     Most popular
                                 </div>
@@ -787,7 +787,7 @@ export function Landing() {
             </main>
 
             {/* FINAL CTA SECTION */}
-            <section className="bg-[#001338] py-24 relative z-10 border-b border-white/10">
+            <section className="bg-[#001338] py-16 md:py-24 relative z-10 border-b border-white/10">
                 <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center flex flex-col items-center">
                     <img src={HeaderLogo} className="h-16 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] mb-6" alt="TrackOwl" />
                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6">Gain complete workforce visibility</h2>
