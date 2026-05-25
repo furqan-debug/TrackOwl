@@ -608,7 +608,7 @@ export function Landing() {
                                 </div>
                                 <div className="mb-6">
                                     <span className="text-4xl font-black text-slate-900">$2.99</span>
-                                    <span className="text-base font-bold text-slate-500"> /user/month</span>
+                                    <span className="text-base font-bold text-slate-500"> /user</span>
                                 </div>
                                 <button 
                                     onClick={() => navigate('/signup')}
@@ -628,7 +628,7 @@ export function Landing() {
                                 </div>
                                 <div className="mb-6">
                                     <span className="text-4xl font-black text-slate-900">$4.99</span>
-                                    <span className="text-base font-bold text-slate-500"> /user/month</span>
+                                    <span className="text-base font-bold text-slate-500"> /user</span>
                                 </div>
                                 <button 
                                     onClick={() => navigate('/signup')}
