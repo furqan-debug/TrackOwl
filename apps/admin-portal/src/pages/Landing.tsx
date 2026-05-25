@@ -111,17 +111,17 @@ export function Landing() {
     ];
 
     const steps = [
-        { num: 1, title: 'Create your admin account', desc: 'Set up your TrackOwl workspace with secure, free admin account creation and enterprise-ready onboarding.', color: 'bg-green-500', text: 'text-green-500' },
+        { num: 1, title: 'Create your admin account', desc: 'Set up your TrackOwl™ workspace with secure, free admin account creation and enterprise-ready onboarding.', color: 'bg-green-500', text: 'text-green-500' },
         { num: 2, title: 'Create your organization', desc: 'Configure your organization structure, workforce settings, operational policies, and tracking preferences.', color: 'bg-blue-600', text: 'text-blue-600' },
         { num: 3, title: 'Invite your team members', desc: 'Easily invite employees, contractors, and remote staff to join your organization\'s workspace.', color: 'bg-orange-500', text: 'text-orange-500' },
-        { num: 4, title: 'Install TrackOwl', desc: 'Deploy the TrackOwl desktop application with secure, consent-based workforce tracking.', color: 'bg-green-500', text: 'text-green-500' },
+        { num: 4, title: 'Install TrackOwl™', desc: 'Deploy the TrackOwl™ desktop application with secure, consent-based workforce tracking.', color: 'bg-green-500', text: 'text-green-500' },
         { num: 5, title: 'Monitor operations', desc: 'Track productivity, attendance, app usage, screenshots, and workforce activity in real time through a centralized dashboard.', color: 'bg-blue-600', text: 'text-blue-600' },
         { num: 6, title: 'Optimize performance', desc: 'Use analytics, reports, and operational insights to improve accountability, efficiency, and team performance.', color: 'bg-orange-500', text: 'text-orange-500' }
     ];
 
     const testimonials = [
         {
-            quote: "TrackOwl gave us complete operational visibility across our remote workforce without creating a culture of micromanagement.",
+            quote: "TrackOwl™ gave us complete operational visibility across our remote workforce without creating a culture of micromanagement.",
             author: "Operations Director",
             role: "Remote BPO"
         },
@@ -139,20 +139,20 @@ export function Landing() {
 
     const faqs = [
         {
-            q: "Does TrackOwl monitor employees secretly?",
-            a: "No. TrackOwl is designed around ethical and transparent workforce visibility with consent-based tracking."
+            q: "Does TrackOwl™ monitor employees secretly?",
+            a: "No. TrackOwl™ is designed around ethical and transparent workforce visibility with consent-based tracking."
         },
         {
-            q: "Is TrackOwl suitable for enterprise organizations?",
-            a: "Yes. TrackOwl is built for scalability, operational reliability, and enterprise workforce management."
+            q: "Is TrackOwl™ suitable for enterprise organizations?",
+            a: "Yes. TrackOwl™ is built for scalability, operational reliability, and enterprise workforce management."
         },
         {
             q: "Is workforce data secure?",
             a: "Yes. We implement enterprise-grade security measures, encryption, and role-based access controls."
         },
         {
-            q: "Does TrackOwl support remote teams?",
-            a: "Absolutely. TrackOwl was specifically built for remote, hybrid, and distributed workforces."
+            q: "Does TrackOwl™ support remote teams?",
+            a: "Absolutely. TrackOwl™ was specifically built for remote, hybrid, and distributed workforces."
         },
         {
             q: "Can employees access their own activity data?",
@@ -260,7 +260,7 @@ export function Landing() {
                                 transition={{ delay: 0.2 }}
                                 className="text-base sm:text-lg text-slate-300 leading-relaxed mb-8 max-w-lg font-medium"
                             >
-                                TrackOwl helps businesses monitor productivity, track work hours, and gain real-time workforce visibility — without micromanagement.<br /><br />
+                                TrackOwl™ helps businesses monitor productivity, track work hours, and gain real-time workforce visibility â€” without micromanagement.<br /><br />
                                 Built for remote, hybrid, and distributed teams that need operational clarity at scale.
                             </motion.p>
 
@@ -382,7 +382,7 @@ export function Landing() {
                         <div>
                             <h2 className="text-3xl md:text-5xl font-black text-[#001b4d] mb-6 leading-tight">One platform.<br/>Complete operational visibility.</h2>
                             <p className="text-lg font-medium text-slate-500 mb-8 leading-relaxed max-w-md">
-                                TrackOwl centralizes time tracking, team monitoring, analytics, screenshots, attendance, app usage, and reporting into a unified operational dashboard.
+                                TrackOwl™ centralizes time tracking, team monitoring, analytics, screenshots, attendance, app usage, and reporting into a unified operational dashboard.
                             </p>
                             
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2">
@@ -557,7 +557,7 @@ export function Landing() {
                                 
                                 <h2 className="text-3xl font-black mb-4 relative z-10">Enterprise-grade security & privacy</h2>
                                 <p className="text-lg text-slate-300 mb-8 max-w-md relative z-10">
-                                    TrackOwl is built with security, transparency, and ethical monitoring at its core.
+                                    TrackOwl™ is built with security, transparency, and ethical monitoring at its core.
                                 </p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 relative z-10">
                                     {[
@@ -732,7 +732,7 @@ export function Landing() {
                     
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8 relative z-10">
                         <div className="text-center mb-12">
-                            <h2 className="text-4xl font-black text-white mb-6">Download the TrackOwl desktop app</h2>
+                            <h2 className="text-4xl font-black text-white mb-6">Download the TrackOwl™ desktop app</h2>
                             <p className="text-xl text-blue-100 font-medium max-w-2xl mx-auto">
                                 The lightweight, secure desktop client your team needs to log time, capture activity, and stay productive.
                             </p>
@@ -792,7 +792,7 @@ export function Landing() {
                     <img src={HeaderLogo} className="h-16 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] mb-6" alt="TrackOwl" />
                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6">Gain complete workforce visibility</h2>
                     <p className="text-2xl text-slate-300 font-medium mb-10 max-w-3xl leading-relaxed">
-                        Track productivity, improve accountability, and operate with confidence using TrackOwl.
+                        Track productivity, improve accountability, and operate with confidence using TrackOwl™.
                     </p>
                     
                     <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
@@ -857,10 +857,11 @@ export function Landing() {
                     
                     <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500">
                         <img src={HeaderLogo} className="h-6 object-contain opacity-50 hover:opacity-100 transition-opacity" alt="TrackOwl" />
-                        <p>Developed by<br/>Digify Global LLC d/b/a DigiReps™</p>
+                        <p>TrackOwl™ , a product by DigiReps™</p>
                     </div>
                 </div>
             </footer>
         </div>
     );
 }
+
