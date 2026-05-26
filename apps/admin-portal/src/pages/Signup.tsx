@@ -9,8 +9,6 @@ import LogoIcon from '../assets/branding/3.svg';
 
 export function Signup() {
     const navigate = useNavigate();
-    // const location = useLocation();
-
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -18,11 +16,13 @@ export function Signup() {
     const [showPw, setShowPw] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setError(null);
+        setSuccessMsg(null);
 
         try {
             const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -38,7 +38,11 @@ export function Signup() {
             if (authError) throw authError;
 
             if (authData.user) {
-                navigate('/onboarding');
+                if (!authData.session) {
+                    setSuccessMsg('A confirmation link has been sent to your email address. Please check your inbox and click the link to activate your account.');
+                } else {
+                    navigate('/onboarding');
+                }
             }
         } catch (err: any) {
             setError(err.message || 'Signup failed. Please try again.');
@@ -77,78 +81,96 @@ export function Signup() {
                     </div>
 
                     <div className="glass-panel p-8 md:p-12 shadow-premium rounded-[40px] border border-border animate-in fade-in slide-in-from-bottom-10 duration-1000">
-                        <form onSubmit={handleSignup} className="space-y-8">
-                            <Input
-                                label="Full Name"
-                                type="text"
-                                required
-                                value={fullName}
-                                onChange={e => setFullName(e.target.value)}
-                                placeholder="Enter your full name"
-                                className="h-16 rounded-2xl text-base px-6 bg-surface/50 border-border focus:border-primary/40 focus:ring-primary/5 transition-all"
-                                leftIcon={<User className="w-5 h-5 text-text-muted" />}
-                            />
-
-                            <Input
-                                label="Work Email"
-                                type="email"
-                                required
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                                placeholder="name@company.com"
-                                className="h-16 rounded-2xl text-base px-6 bg-surface/50 border-border focus:border-primary/40 focus:ring-primary/5 transition-all"
-                                leftIcon={<Mail className="w-5 h-5 text-text-muted" />}
-                            />
-
-                            <div className="space-y-4">
-                                <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Secure Password</label>
-                                <div className="relative">
-                                    <Input
-                                        type={showPw ? 'text' : 'password'}
-                                        required
-                                        value={password}
-                                        onChange={e => setPassword(e.target.value)}
-                                        placeholder="Minimum 8 characters"
-                                        className="h-16 rounded-2xl text-base px-6 bg-surface/50 border-border pr-16 focus:border-primary/40 focus:ring-primary/5 transition-all"
-                                        leftIcon={<Lock className="w-5 h-5 text-text-muted" />}
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowPw(!showPw)}
-                                        className="absolute right-6 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors"
-                                    >
-                                        {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                                    </button>
+                        {successMsg ? (
+                            <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-500">
+                                <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-green-500/20">
+                                    <Mail className="w-10 h-10 text-green-500" />
                                 </div>
+                                <h3 className="text-2xl font-black text-text-main mb-4">Check Your Email</h3>
+                                <p className="text-text-muted leading-relaxed mb-8">{successMsg}</p>
+                                <Button 
+                                    onClick={() => navigate('/login')}
+                                    className="w-full h-14 bg-primary text-white rounded-2xl font-bold text-base shadow-lg hover:shadow-primary/20 active:scale-[0.98] transition-all duration-300 border-0"
+                                >
+                                    Proceed to Login
+                                </Button>
                             </div>
+                        ) : (
+                            <>
+                                <form onSubmit={handleSignup} className="space-y-8">
+                                    <Input
+                                        label="Full Name"
+                                        type="text"
+                                        required
+                                        value={fullName}
+                                        onChange={e => setFullName(e.target.value)}
+                                        placeholder="Enter your full name"
+                                        className="h-16 rounded-2xl text-base px-6 bg-surface/50 border-border focus:border-primary/40 focus:ring-primary/5 transition-all"
+                                        leftIcon={<User className="w-5 h-5 text-text-muted" />}
+                                    />
 
-                            {error && (
-                                <div className="flex items-start gap-4 p-6 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-rose-500 text-sm font-bold animate-in zoom-in-95 duration-300">
-                                    <AlertCircle className="w-5 h-5 shrink-0" />
-                                    <p className="leading-relaxed">{error}</p>
+                                    <Input
+                                        label="Work Email"
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={e => setEmail(e.target.value)}
+                                        placeholder="name@company.com"
+                                        className="h-16 rounded-2xl text-base px-6 bg-surface/50 border-border focus:border-primary/40 focus:ring-primary/5 transition-all"
+                                        leftIcon={<Mail className="w-5 h-5 text-text-muted" />}
+                                    />
+
+                                    <div className="space-y-4">
+                                        <label className="text-[11px] font-black text-text-muted uppercase tracking-widest ml-1">Secure Password</label>
+                                        <div className="relative">
+                                            <Input
+                                                type={showPw ? 'text' : 'password'}
+                                                required
+                                                value={password}
+                                                onChange={e => setPassword(e.target.value)}
+                                                placeholder="Minimum 8 characters"
+                                                className="h-16 rounded-2xl text-base px-6 bg-surface/50 border-border pr-16 focus:border-primary/40 focus:ring-primary/5 transition-all"
+                                                leftIcon={<Lock className="w-5 h-5 text-text-muted" />}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPw(!showPw)}
+                                                className="absolute right-6 top-1/2 -translate-y-1/2 text-text-muted hover:text-primary transition-colors"
+                                            >
+                                                {showPw ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {error && (
+                                        <div className="flex items-start gap-4 p-6 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-rose-500 text-sm font-bold animate-in zoom-in-95 duration-300">
+                                            <AlertCircle className="w-5 h-5 shrink-0" />
+                                            <p className="leading-relaxed">{error}</p>
+                                        </div>
+                                    )}
+
+                                    <Button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="w-full h-16 bg-primary text-white rounded-2xl font-bold text-lg group shadow-lg hover:shadow-primary/20 active:scale-[0.98] transition-all duration-300 border-0"
+                                    >
+                                        {loading ? 'Initializing...' : 'Create My Account'}
+                                        {!loading && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />}
+                                    </Button>
+                                </form>
+
+                                <div className="mt-12 pt-10 border-t border-border/50 text-center">
+                                    <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em] mb-6">Already tracked?</p>
+                                    <Button 
+                                        onClick={() => navigate('/login')}
+                                        variant="secondary"
+                                        className="w-full h-14 rounded-2xl text-[13px] font-black border-border bg-surface/30 hover:bg-surface-hover text-text-main transition-all uppercase tracking-widest"
+                                    >
+                                        Sign In to Console
+                                    </Button>
                                 </div>
-                            )}
-
-                            <Button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full h-16 bg-primary text-white rounded-2xl font-bold text-lg group shadow-lg hover:shadow-primary/20 active:scale-[0.98] transition-all duration-300 border-0"
-                            >
-                                {loading ? 'Initializing...' : 'Create My Account'}
-                                {!loading && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />}
-                            </Button>
-                        </form>
-
-                        <div className="mt-12 pt-10 border-t border-border/50 text-center">
-                            <p className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em] mb-6">Already tracked?</p>
-                            <Button 
-                                onClick={() => navigate('/login')}
-                                variant="secondary"
-                                className="w-full h-14 rounded-2xl text-[13px] font-black border-border bg-surface/30 hover:bg-surface-hover text-text-main transition-all uppercase tracking-widest"
-                            >
-                                Sign In to Console
-                            </Button>
-                        </div>
+                            </>
+                        )}
                     </div>
 
                     <p className="mt-16 text-center text-[10px] font-black text-text-muted tracking-[0.3em] uppercase opacity-40 leading-relaxed max-w-[440px] mx-auto">
