@@ -332,7 +332,9 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                             <div className="px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/10 flex items-center gap-2 flex-1">
                                 <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
                                 <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
-                                    {isPremium ? (organization?.subscription_status === 'Trial' ? 'Trial' : 'Premium') : (organization?.plan_type || 'Basic')} Plan
+                                    {organization?.subscription_status === 'None' 
+                                        ? 'No Active Plan' 
+                                        : `${isPremium ? (organization?.subscription_status === 'Trial' ? 'Trial' : 'Premium') : (organization?.plan_type || 'Basic')} Plan`}
                                 </span>
                             </div>
                             <button
