@@ -54,21 +54,11 @@ export function Billing() {
         }
         setSaving(true);
         try {
-            const res = await fetch(`${API}/api/billing/create-portal-session`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${session?.access_token}`
-                }
-            });
+            const { data, error: funcError } = await supabase.functions.invoke('create-portal-session');
 
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || 'Failed to create billing portal session');
-            }
+            if (funcError) throw funcError;
 
-            const data = await res.json();
-            if (data.url) {
+            if (data?.url) {
                 window.location.href = data.url;
             }
         } catch (err: any) {

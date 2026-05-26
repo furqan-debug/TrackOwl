@@ -29,15 +29,13 @@ const PREMIUM_FEATURES_LOST = [
     'Advanced Reports',
 ];
 
-const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
 export function Pricing() {
     const [isMonthly, setIsMonthly] = useState(false);
     const [selectedPlan, setSelectedPlan] = useState<any>(null);
     const [seats, setSeats] = useState(5);
     const [loading, setLoading] = useState<string | null>(null);
     const [showDowngradeWarning, setShowDowngradeWarning] = useState(false);
-    const { organization, refreshProfile, refreshOrganization, isPremium, session } = useAuth();
+    const { organization, refreshProfile, refreshOrganization, isPremium } = useAuth();
     const navigate = useNavigate();
 
     const currentPlanType = organization?.plan_type || 'Basic';
@@ -56,29 +54,20 @@ export function Pricing() {
         setLoading(selectedPlan.planType);
         setShowDowngradeWarning(false);
 
-        // STRIPE UPGRADE REDIRECT FOR PREMIUM PLAN
-        if (selectedPlan.planType === 'Premium') {
+        // STRIPE REDIRECT FOR PREMIUM AND BASIC PLANS
+        if (selectedPlan.planType === 'Premium' || selectedPlan.planType === 'Basic') {
             try {
-                const res = await fetch(`${API}/api/billing/create-checkout-session`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${session?.access_token}`
-                    },
-                    body: JSON.stringify({
-                        planType: 'Premium',
+                const { data, error: funcError } = await supabase.functions.invoke('create-checkout-session', {
+                    body: {
+                        planType: selectedPlan.planType,
                         billingCycle: isMonthly ? 'Monthly' : 'Yearly',
                         seatsCount: seats
-                    })
+                    }
                 });
 
-                if (!res.ok) {
-                    const data = await res.json();
-                    throw new Error(data.error || 'Failed to create checkout session');
-                }
+                if (funcError) throw funcError;
 
-                const data = await res.json();
-                if (data.url) {
+                if (data?.url) {
                     window.location.href = data.url;
                     return;
                 }

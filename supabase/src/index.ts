@@ -89,7 +89,21 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
                 priceId === process.env.STRIPE_PRICE_PREMIUM_MONTHLY || 
                 priceId === process.env.STRIPE_PRICE_PREMIUM_YEARLY;
             
-            const planType = isPremiumPrice ? 'Premium' : 'Basic';
+            const isBasicPrice = 
+                priceId === process.env.STRIPE_PRICE_BASIC_MONTHLY || 
+                priceId === process.env.STRIPE_PRICE_BASIC_YEARLY;
+            
+            let planType = 'Basic';
+            if (isPremiumPrice) {
+                planType = 'Premium';
+            } else if (isBasicPrice) {
+                planType = 'Basic';
+            }
+
+            const isYearly = 
+                priceId === process.env.STRIPE_PRICE_PREMIUM_YEARLY || 
+                priceId === process.env.STRIPE_PRICE_BASIC_YEARLY;
+            const planPeriod = isYearly ? 'Yearly' : 'Monthly';
             
             // Map subscription status
             let subscriptionStatus: 'None' | 'Trial' | 'Active' | 'Locked' | 'Past Due' = 'None';
@@ -109,6 +123,7 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
                 .update({
                     plan_type: planType,
                     subscription_status: subscriptionStatus,
+                    subscription_period: planPeriod,
                     seats_purchased: seats,
                     stripe_subscription_id: subscription.id,
                 })
@@ -118,7 +133,7 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
             if (orgUpdateError) {
                 console.error(`🚨 Webhook database update error for Customer ${stripeCustomerId}:`, orgUpdateError);
             } else {
-                console.log(`` + '\u001b' + `[32m[Webhook] Subscription synchronized for Customer ${stripeCustomerId}: ${planType} plan, ${seats} seat(s) [Status: ${subscriptionStatus}]` + '\u001b' + `[0m`);
+                console.log(`` + '\u001b' + `[32m[Webhook] Subscription synchronized for Customer ${stripeCustomerId}: ${planType} plan (${planPeriod}), ${seats} seat(s) [Status: ${subscriptionStatus}]` + '\u001b' + `[0m`);
             }
         }
         
@@ -1539,13 +1554,13 @@ app.post('/api/billing/create-checkout-session', requireAuth, async (req, res) =
             return res.status(403).json({ error: 'Only administrators can manage billing.' });
         }
 
-        const { billingCycle = 'Monthly', seatsCount = 5 } = req.body;
+        const { planType = 'Premium', billingCycle = 'Monthly', seatsCount = 5 } = req.body;
 
         // Offline Simulator Fallback when Stripe keys are not configured
         if (!stripe) {
             const adminPortalUrl = process.env.ADMIN_PORTAL_URL || 'http://localhost:5174';
             return res.json({
-                url: `${adminPortalUrl}/dashboard/pricing/mock-checkout?billingCycle=${billingCycle}&seatsCount=${seatsCount}`
+                url: `${adminPortalUrl}/dashboard/pricing/mock-checkout?planType=${planType}&billingCycle=${billingCycle}&seatsCount=${seatsCount}`
             });
         }
 
@@ -1582,12 +1597,19 @@ app.post('/api/billing/create-checkout-session', requireAuth, async (req, res) =
         }
 
         // 3. Determine Price ID
-        const priceId = billingCycle === 'Yearly'
-            ? process.env.STRIPE_PRICE_PREMIUM_YEARLY
-            : process.env.STRIPE_PRICE_PREMIUM_MONTHLY;
+        let priceId = '';
+        if (planType === 'Basic') {
+            priceId = billingCycle === 'Yearly'
+                ? (process.env.STRIPE_PRICE_BASIC_YEARLY || '')
+                : (process.env.STRIPE_PRICE_BASIC_MONTHLY || '');
+        } else {
+            priceId = billingCycle === 'Yearly'
+                ? (process.env.STRIPE_PRICE_PREMIUM_YEARLY || '')
+                : (process.env.STRIPE_PRICE_PREMIUM_MONTHLY || '');
+        }
 
         if (!priceId) {
-            return res.status(500).json({ error: 'Stripe Price ID is not configured in backend environment.' });
+            return res.status(500).json({ error: `Stripe Price ID for ${planType} (${billingCycle}) is not configured in backend environment.` });
         }
 
         // 4. Create Checkout Session
