@@ -72,6 +72,12 @@ export function Billing() {
     const handleUpdateSeats = async () => {
         if (!organization?.id) return;
         
+        // If they have no active plan, redirect to pricing
+        if (organization.subscription_status === 'None') {
+            navigate('/dashboard/pricing');
+            return;
+        }
+
         // If Stripe customer exists, manage seats in Stripe Billing Portal
         if (organization.stripe_customer_id) {
             await handleManageBilling();
@@ -188,7 +194,7 @@ export function Billing() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
-                                    {organization.stripe_customer_id ? (
+                                    {organization.subscription_status !== 'None' && organization.stripe_customer_id ? (
                                         <button
                                             onClick={handleManageBilling}
                                             disabled={saving}
@@ -208,8 +214,8 @@ export function Billing() {
                                     )}
                                     <button
                                         onClick={handleManageBilling}
-                                        disabled={saving || !organization.stripe_customer_id}
-                                        title={organization.stripe_customer_id ? "Manage in Stripe" : "Stripe account not configured yet"}
+                                        disabled={saving || organization.subscription_status === 'None' || !organization.stripe_customer_id}
+                                        title={organization.subscription_status !== 'None' && organization.stripe_customer_id ? "Manage in Stripe" : "Stripe account not configured yet"}
                                         className="p-3 bg-surface border border-border rounded-xl text-text-muted hover:text-primary hover:border-primary/30 transition-all shadow-shell-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <ExternalLink className="w-5 h-5" />
@@ -283,13 +289,13 @@ export function Billing() {
 
                             <button
                                 onClick={handleUpdateSeats}
-                                disabled={saving || seatsToPurchase === organization.seats_purchased}
+                                disabled={saving || (organization.subscription_status !== 'None' && seatsToPurchase === organization.seats_purchased)}
                                 className={clsx(
                                     "px-10 h-16 bg-primary text-white rounded-2xl text-[12px] font-black uppercase tracking-widest shadow-glow-primary hover:brightness-110 active:scale-95 transition-all",
-                                    (saving || seatsToPurchase === organization.seats_purchased) && "opacity-50 cursor-not-allowed"
+                                    (saving || (organization.subscription_status !== 'None' && seatsToPurchase === organization.seats_purchased)) && "opacity-50 cursor-not-allowed"
                                 )}
                             >
-                                {saving ? 'Saving...' : 'Update Seats'}
+                                {organization.subscription_status === 'None' ? 'Upgrade to Get Seats' : (saving ? 'Saving...' : 'Update Seats')}
                             </button>
                         </div>
                     </Card>
@@ -340,7 +346,7 @@ export function Billing() {
                     {/* Payment Method */}
                     <Card className="p-8 border border-border rounded-[32px] shadow-shell-sm">
                         <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-text-muted mb-6">Payment Method</h4>
-                        {organization.stripe_customer_id ? (
+                        {organization.subscription_status !== 'None' && organization.stripe_customer_id ? (
                             <>
                                 <div 
                                     onClick={handleManageBilling}
