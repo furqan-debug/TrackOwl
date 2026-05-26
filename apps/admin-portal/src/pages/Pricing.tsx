@@ -57,18 +57,28 @@ export function Pricing() {
         // STRIPE REDIRECT FOR PREMIUM AND BASIC PLANS
         if (selectedPlan.planType === 'Premium' || selectedPlan.planType === 'Basic') {
             try {
-                const { data, error: funcError } = await supabase.functions.invoke('create-checkout-session', {
-                    body: {
+                const { data: { session: currentSession } } = await supabase.auth.getSession();
+                const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentSession?.access_token}`,
+                        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({
                         planType: selectedPlan.planType,
                         billingCycle: isMonthly ? 'Monthly' : 'Yearly',
                         seatsCount: seats
-                    }
+                    })
                 });
 
-                if (funcError) throw funcError;
+                const result = await response.json();
+                if (!response.ok) {
+                    throw new Error(result.error || `Server returned ${response.status}`);
+                }
 
-                if (data?.url) {
-                    window.location.href = data.url;
+                if (result?.url) {
+                    window.location.href = result.url;
                     return;
                 }
             } catch (err: any) {
