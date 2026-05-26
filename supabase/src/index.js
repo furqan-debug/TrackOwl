@@ -74,7 +74,18 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
             const priceId = subscription.items.data[0]?.price.id;
             const isPremiumPrice = priceId === process.env.STRIPE_PRICE_PREMIUM_MONTHLY ||
                 priceId === process.env.STRIPE_PRICE_PREMIUM_YEARLY;
-            const planType = isPremiumPrice ? 'Premium' : 'Basic';
+            const isBasicPrice = priceId === process.env.STRIPE_PRICE_BASIC_MONTHLY ||
+                priceId === process.env.STRIPE_PRICE_BASIC_YEARLY;
+            let planType = 'Basic';
+            if (isPremiumPrice) {
+                planType = 'Premium';
+            }
+            else if (isBasicPrice) {
+                planType = 'Basic';
+            }
+            const isYearly = priceId === process.env.STRIPE_PRICE_PREMIUM_YEARLY ||
+                priceId === process.env.STRIPE_PRICE_BASIC_YEARLY;
+            const planPeriod = isYearly ? 'Yearly' : 'Monthly';
             // Map subscription status
             let subscriptionStatus = 'None';
             if (status === 'active') {
@@ -95,6 +106,7 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
                 .update({
                 plan_type: planType,
                 subscription_status: subscriptionStatus,
+                subscription_period: planPeriod,
                 seats_purchased: seats,
                 stripe_subscription_id: subscription.id,
             })
@@ -104,7 +116,7 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
                 console.error(`🚨 Webhook database update error for Customer ${stripeCustomerId}:`, orgUpdateError);
             }
             else {
-                console.log(`` + '\u001b' + `[32m[Webhook] Subscription synchronized for Customer ${stripeCustomerId}: ${planType} plan, ${seats} seat(s) [Status: ${subscriptionStatus}]` + '\u001b' + `[0m`);
+                console.log(`` + '\u001b' + `[32m[Webhook] Subscription synchronized for Customer ${stripeCustomerId}: ${planType} plan (${planPeriod}), ${seats} seat(s) [Status: ${subscriptionStatus}]` + '\u001b' + `[0m`);
             }
         }
         res.json({ received: true });
@@ -1383,9 +1395,6 @@ app.put('/api/teams/:id/members', requireAuth, async (req, res) => {
  */
 app.post('/api/billing/create-checkout-session', requireAuth, async (req, res) => {
     try {
-        if (!stripe) {
-            return res.status(501).json({ error: 'Stripe integration is not configured' });
-        }
         const orgId = req.organizationId;
         const authUser = req.authUser;
         const role = req.memberRole;
@@ -1395,7 +1404,14 @@ app.post('/api/billing/create-checkout-session', requireAuth, async (req, res) =
         if (role !== 'Admin') {
             return res.status(403).json({ error: 'Only administrators can manage billing.' });
         }
-        const { billingCycle = 'Monthly', seatsCount = 5 } = req.body;
+        const { planType = 'Premium', billingCycle = 'Monthly', seatsCount = 5 } = req.body;
+        // Offline Simulator Fallback when Stripe keys are not configured
+        if (!stripe) {
+            const adminPortalUrl = process.env.ADMIN_PORTAL_URL || 'http://localhost:5174';
+            return res.json({
+                url: `${adminPortalUrl}/dashboard/pricing/mock-checkout?planType=${planType}&billingCycle=${billingCycle}&seatsCount=${seatsCount}`
+            });
+        }
         const db = getDb();
         // 1. Fetch organization details
         const { data: org, error: orgError } = await db
@@ -1424,11 +1440,19 @@ app.post('/api/billing/create-checkout-session', requireAuth, async (req, res) =
                 .eq('id', orgId);
         }
         // 3. Determine Price ID
-        const priceId = billingCycle === 'Yearly'
-            ? process.env.STRIPE_PRICE_PREMIUM_YEARLY
-            : process.env.STRIPE_PRICE_PREMIUM_MONTHLY;
+        let priceId = '';
+        if (planType === 'Basic') {
+            priceId = billingCycle === 'Yearly'
+                ? (process.env.STRIPE_PRICE_BASIC_YEARLY || '')
+                : (process.env.STRIPE_PRICE_BASIC_MONTHLY || '');
+        }
+        else {
+            priceId = billingCycle === 'Yearly'
+                ? (process.env.STRIPE_PRICE_PREMIUM_YEARLY || '')
+                : (process.env.STRIPE_PRICE_PREMIUM_MONTHLY || '');
+        }
         if (!priceId) {
-            return res.status(500).json({ error: 'Stripe Price ID is not configured in backend environment.' });
+            return res.status(500).json({ error: `Stripe Price ID for ${planType} (${billingCycle}) is not configured in backend environment.` });
         }
         // 4. Create Checkout Session
         const adminPortalUrl = process.env.ADMIN_PORTAL_URL || 'http://localhost:5174';
@@ -1463,9 +1487,6 @@ app.post('/api/billing/create-checkout-session', requireAuth, async (req, res) =
  */
 app.post('/api/billing/create-portal-session', requireAuth, async (req, res) => {
     try {
-        if (!stripe) {
-            return res.status(501).json({ error: 'Stripe integration is not configured' });
-        }
         const orgId = req.organizationId;
         const role = req.memberRole;
         if (!orgId) {
@@ -1473,6 +1494,13 @@ app.post('/api/billing/create-portal-session', requireAuth, async (req, res) => 
         }
         if (role !== 'Admin') {
             return res.status(403).json({ error: 'Only administrators can manage billing.' });
+        }
+        // Offline Simulator Fallback when Stripe keys are not configured
+        if (!stripe) {
+            const adminPortalUrl = process.env.ADMIN_PORTAL_URL || 'http://localhost:5174';
+            return res.json({
+                url: `${adminPortalUrl}/dashboard/settings/billing?mock_portal=true`
+            });
         }
         const db = getDb();
         const { data: org, error: orgError } = await db
@@ -1495,6 +1523,105 @@ app.post('/api/billing/create-portal-session', requireAuth, async (req, res) => 
     }
     catch (e) {
         console.error('🚨 Error creating billing portal session:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+/**
+ * POST /api/billing/mock-success
+ * Body: { planType, billingCycle, seatsCount }
+ * Returns: { success: true }
+ */
+app.post('/api/billing/mock-success', requireAuth, async (req, res) => {
+    try {
+        const orgId = req.organizationId;
+        const role = req.memberRole;
+        const { planType = 'Premium', billingCycle = 'Monthly', seatsCount = 5 } = req.body;
+        if (!orgId) {
+            return res.status(400).json({ error: 'User does not belong to an organization' });
+        }
+        if (role !== 'Admin') {
+            return res.status(403).json({ error: 'Only administrators can manage billing.' });
+        }
+        const db = getDb();
+        // Try updating all fields (assuming stripe columns exist in database)
+        const { error } = await db
+            .from('organizations')
+            .update({
+            plan_type: planType,
+            subscription_status: 'Active',
+            subscription_period: billingCycle,
+            seats_purchased: seatsCount,
+            stripe_customer_id: 'cus_mock_' + uuidv4().substring(0, 8),
+            stripe_subscription_id: 'sub_mock_' + uuidv4().substring(0, 8),
+        })
+            .eq('id', orgId);
+        if (error) {
+            console.warn('⚠️ Standard mock update failed (likely missing stripe database columns). Falling back to base plan columns...', error.message);
+            // Graceful fallback: Update guaranteed plan fields only
+            const { error: fallbackError } = await db
+                .from('organizations')
+                .update({
+                plan_type: planType,
+                subscription_status: 'Active',
+                seats_purchased: seatsCount
+            })
+                .eq('id', orgId);
+            if (fallbackError)
+                throw fallbackError;
+        }
+        res.json({ success: true });
+    }
+    catch (e) {
+        console.error('🚨 Error simulating mock billing success:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+/**
+ * POST /api/billing/mock-downgrade
+ * Body: {}
+ * Returns: { success: true }
+ */
+app.post('/api/billing/mock-downgrade', requireAuth, async (req, res) => {
+    try {
+        const orgId = req.organizationId;
+        const role = req.memberRole;
+        if (!orgId) {
+            return res.status(400).json({ error: 'User does not belong to an organization' });
+        }
+        if (role !== 'Admin') {
+            return res.status(403).json({ error: 'Only administrators can manage billing.' });
+        }
+        const db = getDb();
+        // Try resetting all fields
+        const { error } = await db
+            .from('organizations')
+            .update({
+            plan_type: 'Basic',
+            subscription_status: 'None',
+            subscription_period: 'Monthly',
+            seats_purchased: 5,
+            stripe_customer_id: null,
+            stripe_subscription_id: null,
+        })
+            .eq('id', orgId);
+        if (error) {
+            console.warn('⚠️ Standard mock downgrade failed. Falling back to base plan columns...', error.message);
+            // Graceful fallback
+            const { error: fallbackError } = await db
+                .from('organizations')
+                .update({
+                plan_type: 'Basic',
+                subscription_status: 'None',
+                seats_purchased: 5
+            })
+                .eq('id', orgId);
+            if (fallbackError)
+                throw fallbackError;
+        }
+        res.json({ success: true });
+    }
+    catch (e) {
+        console.error('🚨 Error simulating mock billing downgrade:', e);
         res.status(500).json({ error: e.message });
     }
 });

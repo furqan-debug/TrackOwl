@@ -11,10 +11,13 @@ export function MockCheckout() {
     const navigate = useNavigate();
     const { session, refreshOrganization } = useAuth();
     
+    const planType = searchParams.get('planType') || 'Premium';
     const billingCycle = searchParams.get('billingCycle') || 'Monthly';
     const seatsCount = parseInt(searchParams.get('seatsCount') || '5', 10);
 
-    const pricePerSeat = billingCycle === 'Yearly' ? 12 : 15;
+    const pricePerSeat = planType === 'Basic'
+        ? (billingCycle === 'Yearly' ? 2.99 : 3.99)
+        : (billingCycle === 'Yearly' ? 4.99 : 6.99);
     const periodMultiplier = billingCycle === 'Yearly' ? 12 : 1;
     const subtotal = pricePerSeat * seatsCount * periodMultiplier;
 
@@ -31,7 +34,7 @@ export function MockCheckout() {
         setIsPaying(true);
         setError(null);
 
-        // Simulate network latency for high fidelity premium checkout feel
+        // Simulate network latency for high fidelity checkout feel
         await new Promise((resolve) => setTimeout(resolve, 2000));
 
         try {
@@ -42,7 +45,7 @@ export function MockCheckout() {
                     'Authorization': `Bearer ${session?.access_token}`
                 },
                 body: JSON.stringify({
-                    planType: 'Premium',
+                    planType,
                     billingCycle,
                     seatsCount
                 })
@@ -97,18 +100,18 @@ export function MockCheckout() {
                         </button>
 
                         <span className="text-xs font-bold text-accent uppercase tracking-widest bg-accent/10 px-2.5 py-1 rounded-md border border-accent/15">
-                            Subscribe to Premium
+                            Subscribe to {planType}
                         </span>
                         
-                        <h2 className="text-2xl font-bold mt-4 text-white">TrackOwl Premium</h2>
+                        <h2 className="text-2xl font-bold mt-4 text-white">TrackOwl {planType}</h2>
                         <p className="text-sm text-[var(--sidebar-text)] mt-1.5 leading-relaxed">
-                            Simulated developer portal. Enjoy all core premium capabilities without incurring real Stripe transactions.
+                            Simulated developer portal. Enjoy all core {planType.toLowerCase()} capabilities without incurring real Stripe transactions.
                         </p>
 
                         {/* Order breakdown */}
                         <div className="mt-8 space-y-4">
                             <div className="flex justify-between items-center text-sm text-[var(--sidebar-text)]">
-                                <span>Premium Seat Pricing</span>
+                                <span>{planType} Seat Pricing</span>
                                 <span className="font-semibold text-white">${pricePerSeat}/seat / mo</span>
                             </div>
                             <div className="flex justify-between items-center text-sm text-[var(--sidebar-text)]">
