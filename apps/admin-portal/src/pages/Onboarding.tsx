@@ -65,22 +65,51 @@ export function Onboarding() {
 
             if (orgError) throw orgError;
 
-            // 2. Update Member Record (already created by DB trigger)
+            // 2. Assign User to Organization
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("Authentication failed: No user found.");
 
             if (orgData) {
-                const { error: memberError } = await supabase
-                    .from('members')
-                    .update({
-                        status: 'Active',
-                        organization_id: orgData.id,
-                        auth_user_id: user.id,
-                        role: 'Admin'
-                    })
-                    .eq('auth_user_id', user.id);
+                if (profile?.id) {
+                    // Scenario A: Invited user or skeleton profile already exists
+                    const { error: memberError } = await supabase
+                        .from('members')
+                        .update({
+                            status: 'Active',
+                            organization_id: orgData.id,
+                            auth_user_id: user.id,
+                            role: 'Admin'
+                        })
+                        .eq('id', profile.id);
 
-                if (memberError) throw memberError;
+                    if (memberError) throw memberError;
+                } else {
+                    // Scenario B: Fresh owner signup - Need to insert first (with org_id = null to pass RLS) then update
+                    const { data: newMember, error: insertError } = await supabase
+                        .from('members')
+                        .insert({
+                            email: user.email,
+                            full_name: user.user_metadata.full_name || 'Admin',
+                            role: 'Admin',
+                            status: 'Active',
+                            organization_id: null,
+                            auth_user_id: user.id
+                        })
+                        .select()
+                        .single();
+
+                    if (insertError) throw insertError;
+
+                    // Now update with the newly created org ID
+                    const { error: updateError } = await supabase
+                        .from('members')
+                        .update({
+                            organization_id: orgData.id
+                        })
+                        .eq('id', newMember.id);
+
+                    if (updateError) throw updateError;
+                }
                 
                 // 3. Force Sync Profile
                 await refreshProfile();
