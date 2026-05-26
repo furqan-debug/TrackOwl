@@ -131,7 +131,9 @@ export function Pricing() {
                 { icon: <Calendar className="w-4 h-4" />, text: 'Weekly/hour limits' },
                 { icon: <BarChart3 className="w-4 h-4" />, text: 'Basic dashboard' }
             ],
-            buttonLabel: currentPlanType === 'Basic' ? 'Current Plan' : 'Switch to Basic',
+            buttonLabel: (currentPlanType === 'Basic' && organization?.subscription_status !== 'None')
+                ? 'Current Plan'
+                : (organization?.subscription_status === 'None' ? 'Choose Basic' : 'Switch to Basic'),
             popular: false,
             planType: 'Basic'
         },
@@ -334,9 +336,10 @@ export function Pricing() {
 
             <div className="grid gap-8 md:grid-cols-2 max-w-4xl mx-auto pb-20">
                 {plans.map((plan, i) => {
-                    const isCurrentPlan = organization?.plan_type === plan.planType && (
-                        plan.planType === 'Basic' ? !isPremium : isPremium
-                    );
+                    const isCurrentPlan = organization?.subscription_status !== 'None' &&
+                        organization?.plan_type === plan.planType && (
+                            plan.planType === 'Basic' ? !isPremium : isPremium
+                        );
 
                     return (
                         <motion.div

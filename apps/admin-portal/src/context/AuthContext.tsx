@@ -66,7 +66,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Derived plan flags — always computed from organization state
     const isPremium = computeIsPremium(organization);
-    const isBasic = !isPremium && organization?.subscription_status !== 'Locked';
+    const isBasic = !isPremium && 
+                    organization?.subscription_status !== 'Locked' && 
+                    organization?.subscription_status !== 'None';
 
     useEffect(() => {
         let isInitial = true;
