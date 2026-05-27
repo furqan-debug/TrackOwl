@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -260,7 +260,7 @@ export function Landing() {
                                 transition={{ delay: 0.2 }}
                                 className="text-base sm:text-lg text-slate-300 leading-relaxed mb-8 max-w-lg font-medium"
                             >
-                                TrackOwl™ helps businesses monitor productivity, track work hours, and gain real-time workforce visibility â€” without micromanagement.<br /><br />
+                                TrackOwl™ helps businesses monitor productivity, track work hours, and gain real-time workforce visibility — without micromanagement.<br /><br />
                                 Built for remote, hybrid, and distributed teams that need operational clarity at scale.
                             </motion.p>
 
