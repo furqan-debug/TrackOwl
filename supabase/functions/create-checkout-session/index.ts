@@ -21,7 +21,7 @@ serve(async (req) => {
     try {
       bodyData = await req.json();
     } catch (_) {}
-    const { planType = "Premium", billingCycle = "Monthly", seatsCount = 5 } = bodyData;
+    const { planType = "Premium", billingCycle = "Monthly", seatsCount = 5, isTrial = false } = bodyData;
 
     if (!stripeSecretKey) {
       const origin = req.headers.get("origin") || "https://www.trackowl.io";
@@ -113,6 +113,8 @@ serve(async (req) => {
     }
 
     // 5. Create Stripe Checkout Session
+    // NOTE: seatsCount is the number of *billable* seats (free owner seat already excluded by the frontend)
+    const billableSeats = Math.max(1, seatsCount);
     const origin = req.headers.get("origin") || "https://www.trackowl.io";
     const session = await stripe.checkout.sessions.create({
       customer: stripeCustomerId,
@@ -120,13 +122,16 @@ serve(async (req) => {
       line_items: [
         {
           price: priceId,
-          quantity: seatsCount,
+          quantity: billableSeats,
         },
       ],
       mode: "subscription",
       success_url: `${origin}/dashboard/settings/billing?success=true&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${origin}/dashboard/settings/billing?success=false`,
       subscription_data: {
+        // Apply 7-day free trial for new Premium subscribers — Stripe enforces this natively:
+        // card is not charged until the trial ends, and subscription.status becomes 'trialing'
+        ...(isTrial && planType === "Premium" ? { trial_period_days: 7 } : {}),
         metadata: {
           organization_id: org.id,
         },
