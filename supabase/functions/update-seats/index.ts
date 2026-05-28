@@ -17,9 +17,19 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
 
-    // If Stripe not configured, return empty list (sandbox/dev mode)
+    let bodyData: any = {};
+    try {
+      bodyData = await req.json();
+    } catch (_) {}
+    const { seatsCount } = bodyData;
+
+    if (typeof seatsCount !== "number" || seatsCount < 1) {
+      throw new Error("Invalid seats count");
+    }
+
     if (!stripeSecretKey) {
-      return new Response(JSON.stringify({ invoices: [] }), {
+      // Sandbox mode mock
+      return new Response(JSON.stringify({ success: true, sandbox: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
@@ -28,73 +38,63 @@ serve(async (req) => {
     const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Auth
+    // Auth
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Authorization header is missing");
-
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
     if (authErr || !user) throw new Error("Invalid or expired authorization token");
 
-    // 2. Member + org
-    const { data: member, error: memberErr } = await supabase
+    // Get org
+    const { data: member } = await supabase
       .from("members")
       .select("organization_id, role")
       .eq("auth_user_id", user.id)
       .single();
 
-    if (memberErr || !member) throw new Error("Member profile not found.");
-    if (member.role !== "Admin") throw new Error("Only administrators can view billing.");
+    if (!member || member.role !== "Admin") throw new Error("Admin access required to update seats");
 
-    const { data: org, error: orgErr } = await supabase
+    const { data: org } = await supabase
       .from("organizations")
-      .select("stripe_customer_id")
+      .select("stripe_subscription_id, stripe_customer_id")
       .eq("id", member.organization_id)
       .single();
 
-    if (orgErr || !org) throw new Error("Organization not found.");
-    if (!org.stripe_customer_id) {
-      return new Response(JSON.stringify({ invoices: [] }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      });
+    if (!org?.stripe_subscription_id) {
+      throw new Error("This organization does not have an active Stripe subscription.");
     }
 
-    // 3. Fetch invoices from Stripe (latest 20)
-    const stripeInvoices = await stripe.invoices.list({
-      customer: org.stripe_customer_id,
-      limit: 20,
+    // Retrieve subscription from Stripe
+    const subscription = await stripe.subscriptions.retrieve(org.stripe_subscription_id);
+    const subscriptionItemId = subscription.items.data[0]?.id;
+
+    if (!subscriptionItemId) {
+      throw new Error("Could not find a valid subscription item to update.");
+    }
+
+    const billableSeats = Math.max(1, seatsCount - 1);
+
+    // Update the subscription item quantity
+    await stripe.subscriptions.update(org.stripe_subscription_id, {
+      items: [
+        {
+          id: subscriptionItemId,
+          quantity: billableSeats,
+        },
+      ],
+      proration_behavior: "always_invoice",
     });
 
-    const invoices = stripeInvoices.data.map((inv) => {
-      let desc = inv.description;
-      if (!desc) {
-        if (inv.billing_reason === 'subscription_update') {
-          desc = "Seat Adjustment (Prorated)";
-        } else {
-          desc = inv.lines?.data?.[0]?.description || "Subscription";
-        }
-      }
+    // The webhook will automatically sync the new seat count to the DB
+    // But we can trigger a manual sync-subscription call locally or let the frontend poll
 
-      return {
-        id: inv.id,
-        date: inv.created,
-        description: desc,
-        amount: inv.amount_paid / 100,
-        currency: inv.currency,
-        status: inv.status,
-        invoice_pdf: inv.invoice_pdf,
-        hosted_invoice_url: inv.hosted_invoice_url,
-      };
-    });
-
-    return new Response(JSON.stringify({ invoices }), {
+    return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
 
   } catch (err: any) {
-    console.error("🚨 Error in get-invoices:", err.message);
+    console.error("🚨 Error in update-seats:", err.message);
     return new Response(JSON.stringify({ error: err.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,
