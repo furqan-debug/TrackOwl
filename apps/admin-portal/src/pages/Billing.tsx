@@ -133,25 +133,39 @@ export function Billing() {
             return;
         }
 
-        // If Stripe customer exists, manage seats in Stripe Billing Portal
-        if (organization.stripe_customer_id) {
-            await handleManageBilling();
-            return;
-        }
-
         setSaving(true);
         try {
-            const { error } = await supabase
-                .from('organizations')
-                .update({ seats_purchased: seatsToPurchase })
-                .eq('id', organization.id);
+            // If active Stripe subscription, update via edge function
+            if (organization.stripe_subscription_id) {
+                const { error: funcError, data } = await supabase.functions.invoke('update-seats', {
+                    body: { seatsCount: seatsToPurchase }
+                });
+                
+                if (funcError || data?.error) {
+                    throw new Error(data?.error || funcError?.message || 'Failed to update seats in Stripe');
+                }
+                
+                // Force a synchronous pull from Stripe so the UI updates instantly
+                await supabase.functions.invoke('sync-subscription');
+                
+                // Fetch fresh org data
+                await refreshOrganization();
+                await fetchInvoices(); // Refresh the billing history table to show the new prorated charge
+                alert('Seats updated successfully! Your card on file has been automatically charged for the prorated difference.');
+            } else {
+                // Sandbox/offline mode: update DB directly
+                const { error } = await supabase
+                    .from('organizations')
+                    .update({ seats_purchased: seatsToPurchase })
+                    .eq('id', organization.id);
 
-            if (error) throw error;
-            await refreshProfile();
-            alert('Seats updated successfully!');
-        } catch (err) {
+                if (error) throw error;
+                await refreshProfile();
+                alert('Seats updated successfully!');
+            }
+        } catch (err: any) {
             console.error('Error updating seats:', err);
-            alert('Failed to update seats.');
+            alert(err.message || 'Failed to update seats.');
         } finally {
             setSaving(false);
         }
@@ -351,9 +365,12 @@ export function Billing() {
                             <div className="flex-1 space-y-1">
                                 <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em]">Estimated Total</p>
                                 <p className="text-3xl font-black text-text-main tracking-tight">
-                                    ${(Math.max(0, seatsToPurchase - 1) * (organization.plan_type === 'Premium' ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99) : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99))).toFixed(2)}
-                                    <span className="text-sm font-bold text-text-muted"> / mo</span>
+                                    ${(Math.max(0, seatsToPurchase - 1) * (organization.plan_type === 'Premium' ? (organization.subscription_period === 'Monthly' ? 6.99 : 59.88) : (organization.subscription_period === 'Monthly' ? 3.99 : 35.88))).toFixed(2)}
+                                    <span className="text-sm font-bold text-text-muted">
+                                        {organization.subscription_period === 'Monthly' ? ' / mo' : ' / year'}
+                                    </span>
                                 </p>
+
                                 <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1">1 Free Owner Seat Included</p>
                             </div>
 

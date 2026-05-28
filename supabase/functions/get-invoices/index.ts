@@ -66,16 +66,27 @@ serve(async (req) => {
       limit: 20,
     });
 
-    const invoices = stripeInvoices.data.map((inv) => ({
-      id: inv.id,
-      date: inv.created,
-      description: inv.lines?.data?.[0]?.description || inv.description || "Subscription",
-      amount: inv.amount_paid / 100,
-      currency: inv.currency,
-      status: inv.status,
-      invoice_pdf: inv.invoice_pdf,
-      hosted_invoice_url: inv.hosted_invoice_url,
-    }));
+    const invoices = stripeInvoices.data.map((inv) => {
+      let desc = inv.description;
+      if (!desc) {
+        if (inv.billing_reason === 'subscription_update') {
+          desc = "Seat Adjustment (Prorated)";
+        } else {
+          desc = inv.lines?.data?.[0]?.description || "Subscription";
+        }
+      }
+
+      return {
+        id: inv.id,
+        date: inv.created,
+        description: desc,
+        amount: inv.amount_paid / 100,
+        currency: inv.currency,
+        status: inv.status,
+        invoice_pdf: inv.invoice_pdf,
+        hosted_invoice_url: inv.hosted_invoice_url,
+      };
+    });
 
     return new Response(JSON.stringify({ invoices }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
