@@ -49,8 +49,10 @@ serve(async (req) => {
       const stripeCustomerId = subscription.customer as string;
       const status = subscription.status;
 
-      // Get active seats quantity
-      const seats = subscription.items.data[0]?.quantity || 1;
+      // Stripe quantity = billable seats only. Add 1 for the free owner seat
+      // so seats_purchased reflects the true total available seats.
+      const billableSeats = subscription.items.data[0]?.quantity || 1;
+      const totalSeats = billableSeats + 1;
 
       // Map plan type from Stripe Price/Product ID
       const priceId = subscription.items.data[0]?.price.id;
@@ -94,8 +96,16 @@ serve(async (req) => {
           plan_type: planType,
           subscription_status: subscriptionStatus,
           subscription_period: planPeriod,
-          seats_purchased: seats,
+          seats_purchased: totalSeats,
           stripe_subscription_id: subscription.id,
+          // Sync trial end date from Stripe so the UI countdown is accurate
+          trial_ends_at: subscription.trial_end
+            ? new Date(subscription.trial_end * 1000).toISOString()
+            : null,
+          // Sync next billing date (current_period_end) for active paid subscriptions
+          current_period_end: subscription.current_period_end
+            ? new Date(subscription.current_period_end * 1000).toISOString()
+            : null,
         })
         .eq("stripe_customer_id", stripeCustomerId)
         .select();
@@ -103,7 +113,7 @@ serve(async (req) => {
       if (orgUpdateErr) {
         console.error(`🚨 Webhook database update error for Customer ${stripeCustomerId}:`, orgUpdateErr.message);
       } else {
-        console.log(`[Webhook] Synchronized subscription for Customer ${stripeCustomerId}: ${planType} plan (${planPeriod}), ${seats} seat(s) [Status: ${subscriptionStatus}]`);
+        console.log(`[Webhook] Synchronized subscription for Customer ${stripeCustomerId}: ${planType} plan (${planPeriod}), ${totalSeats} total seat(s) [${billableSeats} billed + 1 free owner] [Status: ${subscriptionStatus}]`);
       }
     }
 

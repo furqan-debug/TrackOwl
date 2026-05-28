@@ -23,6 +23,7 @@ interface OrganizationProfile {
     subscription_period: 'Monthly' | 'Yearly';
     seats_purchased: number;
     trial_ends_at: string | null;
+    current_period_end: string | null;
     created_at: string;
     stripe_customer_id?: string | null;
     stripe_subscription_id?: string | null;
