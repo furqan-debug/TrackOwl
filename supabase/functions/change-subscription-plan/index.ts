@@ -186,9 +186,11 @@ serve(async (req) => {
       throw new Error(`Target Stripe Price ID for ${planType} (${resolvedBillingCycle}) is not configured.`);
     }
 
-    const isDowngrade = planType === "Basic" && org.plan_type === "Premium";
+    const isPlanDowngrade = planType === "Basic" && org.plan_type === "Premium";
+    const isYearlyToMonthly = resolvedBillingCycle === "Monthly" && org.subscription_period === "Yearly";
+    const isScheduled = isPlanDowngrade || isYearlyToMonthly;
 
-    if (isDowngrade) {
+    if (isScheduled) {
       // 1. Create Subscription Schedule from Subscription
       let schedule;
       if (subscription.schedule) {
@@ -266,7 +268,7 @@ serve(async (req) => {
             quantity: currentSeats,
           },
         ],
-        proration_behavior: "create_prorations",
+        proration_behavior: "always_invoice",
       });
 
       // 3. Update database immediately

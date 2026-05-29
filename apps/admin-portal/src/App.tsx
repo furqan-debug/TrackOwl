@@ -29,6 +29,7 @@ import { ForgotPassword } from './pages/ForgotPassword';
 import { UpdatePassword } from './pages/UpdatePassword';
 import { MemberTimeline } from './pages/MemberTimeline';
 import { Teams } from './pages/Teams';
+import { ChangePlan } from './pages/ChangePlan';
 import { Calendar } from './pages/Calendar';
 import { PlaceholderPage } from './pages/PlaceholderPage';
 import { ProjectFormPage } from './pages/ProjectFormPage';
@@ -129,6 +130,7 @@ function App() {
                     <Route path="/settings/tracking" element={<PlaceholderPage title="Activity & Tracking Settings" />} />
                     <Route path="/settings/integrations" element={<PlaceholderPage title="Integrations" />} />
                     <Route path="/settings/billing" element={<Billing />} />
+                    <Route path="/settings/billing/change-plan" element={<ChangePlan />} />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/pricing/mock-checkout" element={<MockCheckout />} />
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
