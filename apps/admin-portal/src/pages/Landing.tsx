@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -190,7 +190,7 @@ export function Landing() {
                     </div>
 
                     <div className="flex items-center gap-6">
-                        <a 
+                        <a
                             href="#download"
                             className="hidden lg:flex items-center gap-2 text-base font-bold text-white hover:text-blue-400 transition-colors"
                         >
@@ -218,9 +218,9 @@ export function Landing() {
                     {/* Background glowing effects */}
                     <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#002766] blur-[150px] rounded-full pointer-events-none" />
                     <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[150px] rounded-full pointer-events-none" />
-                    
+
                     <div className="mx-auto max-w-[1400px] px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center relative z-10">
-                        
+
                         {/* Hero Text Content */}
                         <div className="col-span-12 lg:col-span-5 flex flex-col items-start text-left">
                             <motion.div
@@ -237,7 +237,7 @@ export function Landing() {
                                 transition={{ delay: 0.1 }}
                                 className="text-4xl sm:text-5xl lg:text-[64px] font-black tracking-normal leading-[1.05] text-white mb-6"
                             >
-                                Time tracking<br />built for<br/>
+                                Time tracking<br />built for<br />
                                 <span className="text-[#facc15] block mt-2">
                                     <AnimatePresence mode="popLayout">
                                         <motion.span
@@ -260,7 +260,7 @@ export function Landing() {
                                 transition={{ delay: 0.2 }}
                                 className="text-base sm:text-lg text-slate-300 leading-relaxed mb-8 max-w-lg font-medium"
                             >
-                                TrackOwl™ helps businesses monitor productivity, track work hours, and gain real-time workforce visibility â€” without micromanagement.<br /><br />
+                                TrackOwl™ helps businesses monitor productivity, track work hours, and gain real-time workforce visibility — without micromanagement.<br /><br />
                                 Built for remote, hybrid, and distributed teams that need operational clarity at scale.
                             </motion.p>
 
@@ -277,7 +277,7 @@ export function Landing() {
                                     Start free trial
                                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </button>
-                                <button 
+                                <button
                                     onClick={() => window.location.href = 'mailto:hello@trackowl.io'}
                                     className="w-full sm:w-auto px-8 py-3.5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-base font-bold rounded-full transition-all active:scale-95 flex items-center justify-center">
                                     Book a demo
@@ -314,7 +314,7 @@ export function Landing() {
                                         <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
                                     </div>
                                 </div>
-                                
+
                                 {/* Mockup Content (Simulated Dashboard) */}
                                 <img src={HeroDashboard} alt="Dashboard Preview" className="w-full h-auto object-cover border-t border-white/10" />
                             </motion.div>
@@ -357,7 +357,7 @@ export function Landing() {
                                 return (
                                     <div key={i} className="p-6 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex gap-5 items-start">
                                         <div className={twMerge("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0", f.bg, f.color)}>
-                                            <Icon className="w-6 h-6" strokeWidth={2.5}/>
+                                            <Icon className="w-6 h-6" strokeWidth={2.5} />
                                         </div>
                                         <div>
                                             <h4 className="text-xl font-bold text-slate-900 mb-2">{f.title}</h4>
@@ -380,11 +380,11 @@ export function Landing() {
                         </div>
 
                         <div>
-                            <h2 className="text-3xl md:text-5xl font-black text-[#001b4d] mb-6 leading-tight">One platform.<br/>Complete operational visibility.</h2>
+                            <h2 className="text-3xl md:text-5xl font-black text-[#001b4d] mb-6 leading-tight">One platform.<br />Complete operational visibility.</h2>
                             <p className="text-lg font-medium text-slate-500 mb-8 leading-relaxed max-w-md">
                                 TrackOwl™ centralizes time tracking, team monitoring, analytics, screenshots, attendance, app usage, and reporting into a unified operational dashboard.
                             </p>
-                            
+
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2">
                                 {[
                                     'Real-time team monitoring',
@@ -449,14 +449,14 @@ export function Landing() {
                                             <h3 className="text-xl font-bold text-slate-900">{s.title}</h3>
                                         </div>
                                         <p className="text-base font-medium text-slate-500 leading-relaxed mb-6">{s.desc}</p>
-                                        
+
                                         {/* Little illustrations inside the card */}
                                         <div className="mt-auto w-full h-24 bg-white rounded-xl border border-slate-100 flex items-center justify-center p-3">
                                             {i === 0 && (
                                                 <div className="w-full h-full bg-green-50 rounded border border-green-100 flex items-center justify-center relative">
                                                     <div className="w-12 h-14 bg-white border border-green-200 rounded shadow-sm flex flex-col items-center justify-center gap-2">
-                                                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center text-green-600"><Shield className="w-3 h-3"/></div>
-                                                        <div className="w-6 h-1 bg-green-200 rounded-full"/>
+                                                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center text-green-600"><Shield className="w-3 h-3" /></div>
+                                                        <div className="w-6 h-1 bg-green-200 rounded-full" />
                                                     </div>
                                                 </div>
                                             )}
@@ -473,8 +473,8 @@ export function Landing() {
                                             {i === 2 && (
                                                 <div className="w-full h-full bg-orange-50 rounded border border-orange-100 flex items-center justify-center relative">
                                                     <div className="w-14 h-10 bg-white border border-orange-200 rounded shadow-sm flex flex-col justify-center px-2 gap-1.5 relative z-10">
-                                                        <div className="w-full h-1 bg-orange-100 rounded-full"/>
-                                                        <div className="w-2/3 h-1 bg-orange-100 rounded-full"/>
+                                                        <div className="w-full h-1 bg-orange-100 rounded-full" />
+                                                        <div className="w-2/3 h-1 bg-orange-100 rounded-full" />
                                                         <div className="absolute -right-2 -bottom-2 w-6 h-6 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center text-white font-black text-sm leading-none">+</div>
                                                     </div>
                                                 </div>
@@ -532,7 +532,7 @@ export function Landing() {
                                     <div className="absolute top-6 left-6 text-blue-100 text-6xl font-serif leading-none">"</div>
                                     <p className="text-lg text-slate-700 font-medium mb-8 leading-relaxed relative z-10 pt-4">{t.quote}</p>
                                     <div className="flex items-center gap-3">
-                                        <img src={`https://i.pravatar.cc/100?img=${i+10}`} className="w-14 h-14 rounded-full" alt="" />
+                                        <img src={`https://i.pravatar.cc/100?img=${i + 10}`} className="w-14 h-14 rounded-full" alt="" />
                                         <div>
                                             <div className="text-base font-bold text-slate-900">{t.author}</div>
                                             <div className="text-sm font-semibold text-slate-500">{t.role}</div>
@@ -548,13 +548,13 @@ export function Landing() {
                 <section id="security" className="py-24 bg-white">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                            
+
                             {/* Security Card - Dark */}
                             <div className="col-span-3 rounded-[2rem] bg-[#001338] p-6 md:p-10 flex flex-col justify-center relative overflow-hidden text-white shadow-xl">
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-20 pointer-events-none">
                                     <Shield className="w-64 h-64 text-blue-400" strokeWidth={1} />
                                 </div>
-                                
+
                                 <h2 className="text-3xl font-black mb-4 relative z-10">Enterprise-grade security & privacy</h2>
                                 <p className="text-lg text-slate-300 mb-8 max-w-md relative z-10">
                                     TrackOwl™ is built with security, transparency, and ethical monitoring at its core.
@@ -576,12 +576,12 @@ export function Landing() {
                             {/* Privacy Card - Light */}
                             <div className="col-span-2 rounded-[2rem] bg-blue-50 border border-blue-100 p-6 md:p-10 flex flex-col justify-center relative">
                                 <div className="absolute top-10 right-10 w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg">
-                                    <Users className="w-10 h-10 text-blue-600"/>
+                                    <Users className="w-10 h-10 text-blue-600" />
                                     <div className="absolute bottom-0 right-0 w-8 h-8 bg-green-500 rounded-full border-4 border-white flex items-center justify-center">
-                                        <Check className="w-4 h-4 text-white" strokeWidth={4}/>
+                                        <Check className="w-4 h-4 text-white" strokeWidth={4} />
                                     </div>
                                 </div>
-                                
+
                                 <h3 className="text-2xl font-bold text-[#001b4d] mb-4 mt-16 lg:mt-0 max-w-[200px]">Privacy commitment</h3>
                                 <p className="text-lg text-slate-600 font-medium leading-relaxed max-w-[300px]">
                                     Tracking-related information is visible only to authorized administrators and the associated user account owner.
@@ -599,7 +599,7 @@ export function Landing() {
                             <h2 className="text-3xl font-black text-[#001b4d]">Flexible plans for every team</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-                            
+
                             {/* Basic */}
                             <div className="p-8 rounded-[1.5rem] bg-white border border-slate-200 flex flex-col h-full">
                                 <div className="flex-1 mb-8">
@@ -610,7 +610,7 @@ export function Landing() {
                                     <span className="text-4xl font-black text-slate-900">$2.99</span>
                                     <span className="text-base font-bold text-slate-500"> /user</span>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => navigate('/signup')}
                                     className="w-full py-4 rounded-lg bg-green-500 hover:bg-green-600 text-white text-lg font-bold transition-colors shadow-md mt-auto">
                                     Get started
@@ -630,7 +630,7 @@ export function Landing() {
                                     <span className="text-4xl font-black text-slate-900">$4.99</span>
                                     <span className="text-base font-bold text-slate-500"> /user</span>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => navigate('/signup')}
                                     className="w-full py-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold transition-colors shadow-md mt-auto">
                                     Start free trial
@@ -646,7 +646,7 @@ export function Landing() {
                                 <div className="mb-6 flex items-center h-[48px]">
                                     <span className="text-3xl font-black text-slate-900">Custom</span>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => window.location.href = 'mailto:hello@trackowl.io'}
                                     className="w-full py-4 rounded-lg bg-[#facc15] hover:bg-[#eab308] text-[#001b4d] text-lg font-bold transition-colors shadow-md mt-auto">
                                     Talk to sales
@@ -667,7 +667,7 @@ export function Landing() {
                             <div className="space-y-4">
                                 {[0, 2, 4].map((i) => (
                                     <div key={i} className="border-b border-slate-100">
-                                        <button 
+                                        <button
                                             onClick={() => setActiveFaq(activeFaq === i ? null : i)}
                                             className="w-full py-5 flex items-center justify-between text-left text-lg font-bold text-slate-800 focus:outline-none"
                                         >
@@ -691,12 +691,12 @@ export function Landing() {
                                     </div>
                                 ))}
                             </div>
-                            
+
                             {/* Right Column */}
                             <div className="space-y-4">
                                 {[1, 3].map((i) => (
                                     <div key={i} className="border-b border-slate-100">
-                                        <button 
+                                        <button
                                             onClick={() => setActiveFaq(activeFaq === i ? null : i)}
                                             className="w-full py-5 flex items-center justify-between text-left text-lg font-bold text-slate-800 focus:outline-none"
                                         >
@@ -729,7 +729,7 @@ export function Landing() {
                     {/* Background decorations */}
                     <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-50 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
                     <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-700 rounded-full blur-3xl opacity-50 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
-                    
+
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8 relative z-10">
                         <div className="text-center mb-12">
                             <h2 className="text-4xl font-black text-white mb-6">Download the TrackOwl™ desktop app</h2>
@@ -737,7 +737,7 @@ export function Landing() {
                                 The lightweight, secure desktop client your team needs to log time, capture activity, and stay productive.
                             </p>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {/* Windows */}
                             <div className="bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
@@ -746,13 +746,13 @@ export function Landing() {
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Windows</h3>
                                 <p className="text-slate-500 font-medium mb-8">Windows 10 and 11 (64-bit)</p>
-                                <a 
+                                <a
                                     href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.4/TrackOwl_1.3.4_x64-setup.exe"
                                     className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-lg transition-colors flex items-center justify-center gap-2 mt-auto">
                                     <Download className="w-5 h-5" /> Download for Windows
                                 </a>
                             </div>
-                            
+
                             {/* Mac */}
                             <div className="bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
                                 <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-800 mb-6">
@@ -760,13 +760,13 @@ export function Landing() {
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">macOS</h3>
                                 <p className="text-slate-500 font-medium mb-8">macOS 11.0 (Big Sur) or later</p>
-                                <a 
+                                <a
                                     href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.4/TrackOwl_1.3.4_aarch64.dmg"
                                     className="w-full py-4 px-6 bg-slate-800 hover:bg-slate-900 text-white text-lg font-bold rounded-lg transition-colors flex items-center justify-center gap-2 mt-auto">
                                     <Download className="w-5 h-5" /> Download for Mac
                                 </a>
                             </div>
-                            
+
                             {/* Linux */}
                             <div className="bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
                                 <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 mb-6">
@@ -774,7 +774,7 @@ export function Landing() {
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Linux</h3>
                                 <p className="text-slate-500 font-medium mb-8">Ubuntu, Debian, Fedora (.deb / .rpm)</p>
-                                <button 
+                                <button
                                     disabled
                                     className="w-full py-4 px-6 bg-orange-100 text-orange-500 text-lg font-bold rounded-lg flex items-center justify-center gap-2 mt-auto cursor-not-allowed border border-orange-200">
                                     Coming Soon
@@ -794,14 +794,14 @@ export function Landing() {
                     <p className="text-2xl text-slate-300 font-medium mb-10 max-w-3xl leading-relaxed">
                         Track productivity, improve accountability, and operate with confidence using TrackOwl™.
                     </p>
-                    
+
                     <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
-                        <button 
+                        <button
                             onClick={() => navigate('/signup')}
                             className="w-full sm:w-auto px-12 py-5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-lg font-black rounded-full shadow-[0_4px_20px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95">
                             Start free trial
                         </button>
-                        <button 
+                        <button
                             onClick={() => window.location.href = 'mailto:hello@trackowl.io'}
                             className="w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold rounded-full transition-all active:scale-95">
                             Schedule a demo
@@ -824,7 +824,7 @@ export function Landing() {
                                 <li><a href="#showcase" className="hover:text-white transition-colors">Integrations</a></li>
                             </ul>
                         </div>
-                        
+
                         <div>
                             <h4 className="text-white font-bold mb-6 tracking-wide">Company</h4>
                             <ul className="space-y-4 text-sm text-slate-400">
@@ -833,7 +833,7 @@ export function Landing() {
                                 <li><a href="mailto:hello@trackowl.io" className="hover:text-white transition-colors">Contact</a></li>
                             </ul>
                         </div>
-                        
+
                         <div>
                             <h4 className="text-white font-bold mb-6 tracking-wide">Legal</h4>
                             <ul className="space-y-4 text-sm text-slate-400">
@@ -842,19 +842,19 @@ export function Landing() {
                                 <li><a href="#security" className="hover:text-white transition-colors">Security</a></li>
                             </ul>
                         </div>
-                        
+
                         <div>
                             <h4 className="text-white font-bold mb-6 tracking-wide">Contact</h4>
                             <ul className="space-y-4 text-sm text-slate-400">
                                 <li>
                                     <a href="mailto:hello@trackowl.io" className="hover:text-[#facc15] font-medium transition-colors flex items-center gap-2">
-                                     hello@trackowl.io
+                                        hello@trackowl.io
                                     </a>
                                 </li>
                             </ul>
                         </div>
                     </div>
-                    
+
                     <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500">
                         <img src={HeaderLogo} className="h-6 object-contain opacity-50 hover:opacity-100 transition-opacity" alt="TrackOwl" />
                         <p>TrackOwl™ , a product by DigiReps™</p>

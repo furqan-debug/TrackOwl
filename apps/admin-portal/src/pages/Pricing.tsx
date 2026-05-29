@@ -68,7 +68,9 @@ export function Pricing() {
                     body: JSON.stringify({
                         planType: selectedPlan.planType,
                         billingCycle: isMonthly ? 'Monthly' : 'Yearly',
-                        seatsCount: seats
+                        seatsCount: Math.max(1, seats - 1), // subtract free owner seat
+                        // Pass trial flag so Stripe enforces the 7-day trial natively
+                        isTrial: selectedPlan.planType === 'Premium' && organization?.subscription_status === 'None'
                     })
                 });
 
