@@ -24,22 +24,60 @@ import clsx from 'clsx';
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export function Billing() {
-    const { organization, refreshProfile, session } = useAuth();
+    const { organization, refreshProfile, refreshOrganization, session } = useAuth();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const [showMockPortalNotice, setShowMockPortalNotice] = useState(searchParams.get('mock_portal') === 'true');
     const [memberCount, setMemberCount] = useState(0);
     const [seatsToPurchase, setSeatsToPurchase] = useState(organization?.seats_purchased || 5);
     const [saving, setSaving] = useState(false);
+    const [syncingAfterCheckout, setSyncingAfterCheckout] = useState(searchParams.get('success') === 'true');
     const [invoices, setInvoices] = useState<any[]>([]);
     const [loadingInvoices, setLoadingInvoices] = useState(false);
     const [showChangePlanModal, setShowChangePlanModal] = useState(false);
+
+    // After Stripe redirects back with ?success=true, the webhook may not have fired yet.
+    // Poll refreshOrganization until stripe_subscription_id appears in the DB (max 10 tries × 2s).
+    useEffect(() => {
+        if (searchParams.get('success') !== 'true') return;
+
+        let attempts = 0;
+        const MAX_ATTEMPTS = 10;
+
+        const poll = async () => {
+            attempts++;
+            const updated = await refreshOrganization();
+            const isWebhookDone = !!updated?.stripe_subscription_id;
+
+            if (isWebhookDone || attempts >= MAX_ATTEMPTS) {
+                setSyncingAfterCheckout(false);
+                const cleanParams = new URLSearchParams(searchParams);
+                cleanParams.delete('success');
+                cleanParams.delete('session_id');
+                navigate(
+                    { search: cleanParams.toString() },
+                    { replace: true }
+                );
+            } else {
+                setTimeout(poll, 2000);
+            }
+        };
+
+        poll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     useEffect(() => {
         if (organization?.id) {
             fetchMemberCount();
             fetchBillingHistory();
             setSeatsToPurchase(organization.seats_purchased || 5);
+            // Silently backfill current_period_end / seats if missing (runs once per session)
+            if (organization.stripe_subscription_id && !organization.current_period_end) {
+                supabase.functions.invoke('sync-subscription')
+                    .then(() => refreshOrganization())
+                    .catch(() => {}); // silent — no UX impact
+            }
         }
     }, [organization?.id, organization?.seats_purchased]);
 
@@ -207,7 +245,7 @@ export function Billing() {
             const isMockMode = !organization.stripe_subscription_id || organization.stripe_customer_id?.startsWith('cus_mock_');
 
             if (isMockMode) {
-                // Preserving complete developer sandbox simulation mode:
+                // Developer sandbox simulation mode:
                 const { error } = await supabase
                     .from('organizations')
                     .update({ seats_purchased: seatsToPurchase })
@@ -261,6 +299,17 @@ export function Billing() {
             description="Manage your plan, seat usage, and payment methods."
             maxWidth="6xl"
         >
+            {/* Post-Checkout Sync Banner: shown while webhook propagates */}
+            {syncingAfterCheckout && (
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[24px] p-6 mb-8 flex items-center gap-4 relative overflow-hidden backdrop-blur-md">
+                    <div className="w-6 h-6 rounded-full border-2 border-emerald-400 border-t-transparent animate-spin shrink-0" />
+                    <div>
+                        <h4 className="text-sm font-bold text-emerald-400">Syncing your subscription…</h4>
+                        <p className="text-xs text-text-muted">We're confirming your payment with Stripe. This usually takes a few seconds.</p>
+                    </div>
+                </div>
+            )}
+
             {/* Mock Billing Portal Redirect Notice */}
             {showMockPortalNotice && (
                 <div className="bg-blue-500/10 border border-blue-500/20 rounded-[24px] p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden backdrop-blur-md">
@@ -279,6 +328,7 @@ export function Billing() {
                     </button>
                 </div>
             )}
+
 
             {/* Developer Sandbox Plan Sync / Downgrade controls */}
             {(organization.stripe_customer_id?.startsWith('cus_mock_') || (organization.plan_type === 'Premium' && !organization.stripe_customer_id)) && (
@@ -421,15 +471,16 @@ export function Billing() {
                                 </div>
                                 <div className="space-y-1 text-center md:text-left md:border-r border-border/20 pr-4 last:border-r-0">
                                     <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center justify-center md:justify-start gap-2">
-                                        <Calendar className="w-3.5 h-3.5 text-primary/75" /> Renewal Date
+                                        <Calendar className="w-3.5 h-3.5 text-primary/75" />
+                                        {organization.subscription_status === 'Trial' ? 'Trial Ends' : 'Renewal Date'}
                                     </p>
                                     <p className="text-xl font-black text-text-main">
-                                        {organization.trial_ends_at
-                                            ? new Date(organization.trial_ends_at).toLocaleDateString()
+                                        {organization.subscription_status === 'Trial' && organization.trial_ends_at
+                                            ? new Date(organization.trial_ends_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                                             : organization.current_period_end
-                                                ? new Date(organization.current_period_end).toLocaleDateString()
+                                                ? new Date(organization.current_period_end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
                                                 : organization.subscription_status === 'Active'
-                                                    ? 'Automatic Renewal'
+                                                    ? 'Auto-renews'
                                                     : 'No active renewal'}
                                     </p>
                                 </div>
@@ -619,31 +670,29 @@ export function Billing() {
                         </div>
 
                         <div className="overflow-x-auto w-full">
-                            <table className="w-full text-left">
-                                <thead className="bg-main/40">
-                                    <tr>
-                                        <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Date</th>
-                                        <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Description</th>
-                                        <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Amount</th>
-                                        <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Status</th>
-                                        <th className="px-6 py-4 text-right"></th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border/10">
-                                    {loadingInvoices ? (
+                            {loadingInvoices ? (
+                                <div className="flex items-center justify-center gap-3 py-12 text-text-muted">
+                                    <div className="w-5 h-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+                                    <span className="text-[13px] font-bold">Loading invoices…</span>
+                                </div>
+                            ) : invoices.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                                    <History className="w-8 h-8 text-text-muted opacity-20" />
+                                    <p className="text-[13px] font-bold text-text-muted">No billing history found.</p>
+                                </div>
+                            ) : (
+                                <table className="w-full text-left">
+                                    <thead className="bg-main/40">
                                         <tr>
-                                            <td colSpan={5} className="px-6 py-8 text-center text-slate-600 dark:text-slate-400 text-[13px] font-bold animate-pulse">
-                                                Loading billing history...
-                                            </td>
+                                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Date</th>
+                                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Description</th>
+                                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Amount</th>
+                                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Status</th>
+                                            <th className="px-6 py-4 text-right"></th>
                                         </tr>
-                                    ) : invoices.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={5} className="px-6 py-8 text-center text-slate-600 dark:text-slate-400 text-[13px] font-bold">
-                                                No billing history found.
-                                            </td>
-                                        </tr>
-                                    ) : (
-                                        invoices.map((inv) => (
+                                    </thead>
+                                    <tbody className="divide-y divide-border/10">
+                                        {invoices.map((inv) => (
                                             <tr key={inv.id} className="hover:bg-main/30 transition-colors">
                                                 <td className="px-6 py-4 text-[13px] font-bold text-text-main">{inv.date}</td>
                                                 <td className="px-6 py-4 text-[13px] font-semibold text-slate-600 dark:text-slate-300">{inv.description}</td>
@@ -681,10 +730,10 @@ export function Billing() {
                                                     )}
                                                 </td>
                                             </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
                         </div>
                     </Card>
                 </div>
