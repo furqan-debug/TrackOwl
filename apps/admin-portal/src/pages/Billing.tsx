@@ -34,7 +34,6 @@ export function Billing() {
     const [syncingAfterCheckout, setSyncingAfterCheckout] = useState(searchParams.get('success') === 'true');
     const [invoices, setInvoices] = useState<any[]>([]);
     const [loadingInvoices, setLoadingInvoices] = useState(false);
-    const [showChangePlanModal, setShowChangePlanModal] = useState(false);
 
     // After Stripe redirects back with ?success=true, the webhook may not have fired yet.
     // Poll refreshOrganization until stripe_subscription_id appears in the DB (max 10 tries × 2s).
@@ -151,48 +150,7 @@ export function Billing() {
         }
     };
 
-    const handleChangePlan = async (targetPlanType: 'Basic' | 'Premium') => {
-        if (!organization?.id) return;
-        
-        setSaving(true);
-        try {
-            const { data: { session: currentSession } } = await supabase.auth.getSession();
-            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/change-subscription-plan`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentSession?.access_token}`,
-                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
-                },
-                body: JSON.stringify({
-                    action: 'changePlan',
-                    planType: targetPlanType,
-                    billingCycle: organization.subscription_period || 'Monthly'
-                })
-            });
 
-            const result = await response.json();
-            if (!response.ok) {
-                throw new Error(result.error || `Server returned ${response.status}`);
-            }
-
-            if (result?.success) {
-                await refreshProfile();
-                setShowChangePlanModal(false);
-                if (result.scheduled) {
-                    alert(`Plan downgrade successfully scheduled for ${new Date(result.scheduledFor).toLocaleDateString()}! You will continue to have Premium access until then.`);
-                } else {
-                    alert(`Plan successfully upgraded to Premium! Your card on file has been updated.`);
-                }
-                window.location.reload();
-            }
-        } catch (err: any) {
-            console.error('Error changing subscription plan:', err);
-            alert(err.message || 'Failed to change plan.');
-        } finally {
-            setSaving(false);
-        }
-    };
 
     const handleCancelDowngrade = async () => {
         if (!organization?.id) return;
@@ -422,7 +380,7 @@ export function Billing() {
                                 <div className="flex items-center gap-3">
                                     {organization.subscription_status !== 'None' && (
                                         <button
-                                            onClick={() => setShowChangePlanModal(true)}
+                                            onClick={() => navigate('/dashboard/settings/billing/change-plan')}
                                             disabled={saving || !!organization.settings?.pending_downgrade}
                                             title={organization.settings?.pending_downgrade ? "Plan downgrade already scheduled" : "Upgrade or downgrade your plan"}
                                             className="px-5 h-11 bg-surface border border-border/30 text-text-main hover:border-primary/55 font-black rounded-xl text-[10px] uppercase tracking-wider shadow-sm active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
@@ -745,92 +703,6 @@ export function Billing() {
                 </div>
             </div>
 
-            {showChangePlanModal && (() => {
-                const isPremium = organization.plan_type === 'Premium';
-                return (
-                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                        <div className="bg-surface border border-border/30 rounded-3xl p-8 max-w-md w-full shadow-premium relative overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                            {/* Decorative background blur */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full" />
-                            
-                            <div className="relative z-10 space-y-6">
-                                <div>
-                                    <h3 className="text-xl font-black text-text-main tracking-tight mb-2">
-                                        {isPremium ? "Downgrade to Basic" : "Upgrade to Premium"}
-                                    </h3>
-                                    <p className="text-[12.5px] font-semibold text-slate-600 dark:text-slate-300">
-                                        Switch your organization's subscription tier.
-                                    </p>
-                                </div>
-
-                                <div className="p-5 bg-main/50 border border-border/15 rounded-2xl space-y-3">
-                                    <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
-                                        <span>Plan Change:</span>
-                                        <span className="text-text-main font-black">
-                                            {organization.plan_type} ➔ {isPremium ? "Basic" : "Premium"}
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
-                                        <span>Active Seats:</span>
-                                        <span className="text-text-main font-black">{organization.seats_purchased} Seat{organization.seats_purchased > 1 ? 's' : ''}</span>
-                                    </div>
-                                    <div className="pt-2.5 border-t border-border/20 flex justify-between items-baseline">
-                                        <span className="text-xs font-black uppercase text-primary">New Price Total</span>
-                                        <div className="text-right">
-                                            <span className="text-2xl font-black text-text-main">
-                                                ${(
-                                                    Math.max(0, organization.seats_purchased - 1) * 
-                                                    (isPremium
-                                                        ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99) 
-                                                        : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99)
-                                                    ) * 
-                                                    (organization.subscription_period === 'Yearly' ? 12 : 1)
-                                                ).toFixed(2)}
-                                            </span>
-                                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
-                                                {organization.subscription_period === 'Yearly' ? ' / yr' : ' / mo'}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="text-[11.5px] font-semibold leading-relaxed p-4 bg-primary/5 border border-primary/10 rounded-xl">
-                                    {isPremium ? (
-                                        <span className="text-amber-600 dark:text-amber-400 block">
-                                            ⚠️ Note: The downgrade to **Basic** is scheduled and will take effect at the start of your next billing cycle on{" "}
-                                            <strong>
-                                                {organization.current_period_end ? new Date(organization.current_period_end).toLocaleDateString() : "your next renewal"}
-                                            </strong>. 
-                                            You maintain full Premium access until then. No prorated refunds are issued.
-                                        </span>
-                                    ) : (
-                                        <span className="text-emerald-600 dark:text-emerald-400 block">
-                                            ✨ Note: Your upgrade to **Premium** is applied **immediately**. Your card on file will be prorated automatically for the remainder of this cycle.
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="flex gap-4">
-                                    <button
-                                        onClick={() => setShowChangePlanModal(false)}
-                                        disabled={saving}
-                                        className="flex-1 h-11 bg-main border border-border/30 text-text-main font-bold uppercase tracking-wider rounded-xl hover:bg-surface-hover transition-all cursor-pointer"
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={() => handleChangePlan(isPremium ? "Basic" : "Premium")}
-                                        disabled={saving}
-                                        className="flex-1 h-11 bg-primary text-white dark:text-slate-950 hover:bg-primary-hover font-black uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer"
-                                    >
-                                        {saving ? "Processing..." : (isPremium ? "Confirm Downgrade" : "Confirm Upgrade")}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            })()}
         </PageLayout>
     );
 }
