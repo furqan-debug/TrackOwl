@@ -87,6 +87,18 @@ serve(async (req) => {
         subscriptionStatus = "None";
       }
 
+      // Retrieve existing settings to preserve other JSON keys
+      const { data: orgData } = await supabase
+        .from("organizations")
+        .select("settings")
+        .eq("stripe_customer_id", stripeCustomerId)
+        .single();
+      
+      const currentSettings = orgData?.settings || {};
+      if (planType === "Basic") {
+        delete currentSettings.pending_downgrade;
+      }
+
       // Sync organization profile in Supabase
       const { data: updatedOrg, error: orgUpdateErr } = await supabase
         .from("organizations")
@@ -94,8 +106,11 @@ serve(async (req) => {
           plan_type: planType,
           subscription_status: subscriptionStatus,
           subscription_period: planPeriod,
-          seats_purchased: seats,
+          seats_purchased: seats + 1,
           stripe_subscription_id: subscription.id,
+          trial_ends_at: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
+          current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
+          settings: currentSettings,
         })
         .eq("stripe_customer_id", stripeCustomerId)
         .select();

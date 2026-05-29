@@ -5,7 +5,25 @@ import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
 import { Resend } from 'resend';
 import Stripe from 'stripe';
+import path from 'path';
+import { fileURLToPath } from 'url';
+// 1. Try standard config
 dotenv.config();
+// 2. Fallback to process.cwd() / supabase / .env
+if (!process.env.SUPABASE_SERVICE_KEY) {
+    dotenv.config({ path: path.resolve(process.cwd(), 'supabase/.env') });
+}
+// 3. Fallback to file-relative ../.env path
+if (!process.env.SUPABASE_SERVICE_KEY) {
+    try {
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        dotenv.config({ path: path.resolve(__dirname, '../.env') });
+    }
+    catch (e) {
+        // ignore
+    }
+}
 const app = express();
 const PORT = process.env.PORT || 3001;
 // ── CORS ─────────────────────────────────────────────────────────────────────
@@ -107,7 +125,7 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
                 plan_type: planType,
                 subscription_status: subscriptionStatus,
                 subscription_period: planPeriod,
-                seats_purchased: seats,
+                seats_purchased: seats + 1,
                 stripe_subscription_id: subscription.id,
             })
                 .eq('stripe_customer_id', stripeCustomerId)
@@ -1462,7 +1480,7 @@ app.post('/api/billing/create-checkout-session', requireAuth, async (req, res) =
             line_items: [
                 {
                     price: priceId,
-                    quantity: seatsCount,
+                    quantity: Math.max(1, seatsCount - 1),
                 },
             ],
             mode: 'subscription',

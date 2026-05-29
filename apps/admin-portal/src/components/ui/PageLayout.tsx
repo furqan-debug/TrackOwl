@@ -79,7 +79,7 @@ export function PageLayout({
                                     </div>
                                 )}
                                 {description && (
-                                    <p className="text-[14px] md:text-[16px] font-medium text-text-muted max-w-2xl tracking-[0.02em] leading-relaxed">
+                                    <p className="text-[14px] md:text-[16px] font-medium text-slate-600 dark:text-slate-300 max-w-2xl tracking-[0.02em] leading-relaxed">
                                         {description}
                                     </p>
                                 )}
