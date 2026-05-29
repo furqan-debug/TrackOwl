@@ -138,6 +138,41 @@ export function ChangePlan() {
     const currentPriceLabel = getPriceLabel(organization.plan_type || 'Basic', organization.subscription_period || 'Monthly');
     const newPriceLabel = getPriceLabel(selectedPlan, selectedCycle);
 
+    // Process proration details to be extremely clean and simple for the user
+    const getGroupedProrations = () => {
+        if (!previewData?.prorationDetails || previewData.prorationDetails.length === 0) {
+            return [];
+        }
+
+        let totalCredits = 0;
+        let totalCharges = 0;
+
+        previewData.prorationDetails.forEach((p: any) => {
+            if (p.amount < 0) {
+                totalCredits += p.amount;
+            } else {
+                totalCharges += p.amount;
+            }
+        });
+
+        const grouped = [];
+        if (totalCredits !== 0) {
+            grouped.push({
+                description: "Credit for unused time",
+                amount: totalCredits
+            });
+        }
+        if (totalCharges !== 0) {
+            grouped.push({
+                description: "Prorated charge for remaining time",
+                amount: totalCharges
+            });
+        }
+        return grouped;
+    };
+
+    const groupedProrations = getGroupedProrations();
+
     return (
         <PageLayout 
             title="Change your plan" 
@@ -462,14 +497,14 @@ export function ChangePlan() {
                                                             ${previewData?.amountDueToday?.toFixed(2) || "0.00"}
                                                         </p>
                                                         
-                                                        {previewData?.prorationDetails && previewData.prorationDetails.length > 0 && (
-                                                            <div className="mt-3 space-y-1 pt-3 border-t border-border/20">
-                                                                <p className="text-[10px] font-bold text-text-muted uppercase">Adjustments Applied:</p>
-                                                                {previewData.prorationDetails.map((p: any, i: number) => (
-                                                                    <div key={i} className="flex justify-between text-[11px]">
+                                                        {groupedProrations && groupedProrations.length > 0 && (
+                                                            <div className="mt-3 space-y-1.5 pt-3 border-t border-border/20">
+                                                                <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Adjustments Applied:</p>
+                                                                {groupedProrations.map((p: any, i: number) => (
+                                                                    <div key={i} className="flex justify-between text-[11px] font-semibold">
                                                                         <span className="text-text-secondary truncate pr-2" title={p.description}>{p.description}</span>
-                                                                        <span className={p.amount < 0 ? "text-emerald-500 font-bold" : "text-text-main"}>
-                                                                            {p.amount < 0 ? "-" : ""}${Math.abs(p.amount).toFixed(2)}
+                                                                        <span className={p.amount < 0 ? "text-emerald-500 font-black" : "text-text-main font-black"}>
+                                                                            {p.amount < 0 ? "-" : "+"}${Math.abs(p.amount).toFixed(2)}
                                                                         </span>
                                                                     </div>
                                                                 ))}
