@@ -393,7 +393,8 @@ export function Billing() {
                                         <button
                                             onClick={handleManageBilling}
                                             disabled={saving}
-                                            className="px-6 h-11 bg-primary !text-white dark:!text-slate-900 hover:bg-primary-hover font-black rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                                            style={{ color: 'var(--bg-surface)' }}
+                                            className="px-6 h-11 bg-primary hover:bg-primary-hover font-black rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                                         >
                                             <Crown className="w-4 h-4" />
                                             {saving ? 'Loading...' : 'Manage Subscription'}
@@ -401,7 +402,8 @@ export function Billing() {
                                     ) : (
                                         <button
                                             onClick={() => navigate('/dashboard/pricing')}
-                                            className="px-6 h-11 bg-primary !text-white dark:!text-slate-900 hover:bg-primary-hover font-black rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                                            style={{ color: 'var(--bg-surface)' }}
+                                            className="px-6 h-11 bg-primary hover:bg-primary-hover font-black rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                                         >
                                             <ArrowUpCircle className="w-4 h-4" />
                                             Upgrade Plan
@@ -550,8 +552,9 @@ export function Billing() {
                                 <button
                                     onClick={handleUpdateSeats}
                                     disabled={saving || (organization.subscription_status !== 'None' && seatsToPurchase === organization.seats_purchased)}
+                                    style={{ color: 'var(--bg-surface)' }}
                                     className={clsx(
-                                        "px-8 h-11 bg-primary !text-white dark:!text-slate-900 hover:bg-primary-hover font-black rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer",
+                                        "px-8 h-11 bg-primary hover:bg-primary-hover font-black rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer",
                                         (saving || (organization.subscription_status !== 'None' && seatsToPurchase === organization.seats_purchased)) && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
