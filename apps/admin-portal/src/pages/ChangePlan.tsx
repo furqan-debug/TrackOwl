@@ -112,14 +112,14 @@ export function ChangePlan() {
             description="A few clicks to update your subscription."
             backButton={{ onClick: () => navigate('/dashboard/settings/billing'), label: 'Back to Billing' }}
         >
-            <div className="max-w-3xl mx-auto space-y-6">
+            <div className="max-w-3xl mx-auto space-y-5">
 
                 {/* ── STEP 1: Plan + Cycle ── */}
-                <div className="bg-surface border border-border/30 rounded-2xl p-6 space-y-5">
+                <div className="bg-surface border border-border/30 rounded-2xl p-7 space-y-6">
 
                     {/* Plan Tier */}
-                    <div className="space-y-2">
-                        <label className="text-[11px] font-black text-text-muted uppercase tracking-widest block">Plan</label>
+                    <div className="space-y-3">
+                        <label className="text-xs font-black text-text-muted uppercase tracking-widest block">Plan</label>
                         <div className="grid grid-cols-2 gap-3">
                             {(['Basic', 'Premium'] as const).map((plan) => {
                                 const price = plan === 'Premium'
@@ -133,20 +133,20 @@ export function ChangePlan() {
                                         type="button"
                                         onClick={() => setSelectedPlan(plan)}
                                         className={clsx(
-                                            'relative p-4 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer',
+                                            'relative p-5 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer',
                                             isSelected
                                                 ? 'border-primary bg-primary/5 shadow-sm'
                                                 : 'border-border/30 bg-main hover:border-border/60 hover:bg-surface'
                                         )}
                                     >
                                         {isCurrent && (
-                                            <span className="absolute top-2.5 right-2.5 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-border/40 text-text-muted">
+                                            <span className="absolute top-3 right-3 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-border/40 text-text-muted">
                                                 Current
                                             </span>
                                         )}
-                                        <div className="text-xl mb-1.5">{plan === 'Basic' ? '🌱' : '💎'}</div>
-                                        <h3 className="text-sm font-black text-text-main">{plan}</h3>
-                                        <p className="text-xs font-semibold text-text-muted mt-0.5">{price} / seat / mo</p>
+                                        <div className="text-2xl mb-2">{plan === 'Basic' ? '🌱' : '💎'}</div>
+                                        <h3 className="text-base font-black text-text-main">{plan}</h3>
+                                        <p className="text-sm font-semibold text-text-muted mt-1">{price} / seat / mo</p>
                                     </button>
                                 );
                             })}
@@ -156,10 +156,10 @@ export function ChangePlan() {
                     <div className="border-t border-border/20" />
 
                     {/* Billing Cycle */}
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-4">
                         <div>
-                            <label className="text-[11px] font-black text-text-muted uppercase tracking-widest block mb-0.5">Billing Cycle</label>
-                            <p className="text-xs text-text-muted">Yearly billing saves you 25%</p>
+                            <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1">Billing Cycle</label>
+                            <p className="text-sm text-text-muted">Yearly billing saves you 25%</p>
                         </div>
                         <div className="flex bg-main border border-border/30 p-1 rounded-lg gap-1">
                             {(['Monthly', 'Yearly'] as const).map((cycle) => (
@@ -168,7 +168,7 @@ export function ChangePlan() {
                                     type="button"
                                     onClick={() => setSelectedCycle(cycle)}
                                     className={clsx(
-                                        'px-4 py-1.5 text-xs font-black rounded-md transition-all cursor-pointer flex items-center gap-1.5',
+                                        'px-4 py-2 text-sm font-black rounded-md transition-all cursor-pointer flex items-center gap-1.5',
                                         selectedCycle === cycle
                                             ? 'bg-primary text-white shadow-sm'
                                             : 'text-text-muted hover:text-text-main'
@@ -192,34 +192,34 @@ export function ChangePlan() {
 
                     {/* Active seats info-only row (no controls) */}
                     <div className="border-t border-border/20" />
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-4">
                         <div>
-                            <label className="text-[11px] font-black text-text-muted uppercase tracking-widest block mb-0.5">Seats</label>
-                            <p className="text-xs text-text-muted">Manage seats separately from the Billing page.</p>
+                            <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1">Active Seats</label>
+                            <p className="text-sm text-text-muted">Manage seats separately from the Billing page.</p>
                         </div>
-                        <span className="text-sm font-black text-text-main tabular-nums">{seats}</span>
+                        <span className="text-base font-black text-text-main tabular-nums">{seats}</span>
                     </div>
                 </div>
 
                 {/* ── STEP 2: Summary Card ── */}
                 {hasChanges && (
-                    <div className="bg-surface border border-border/30 rounded-2xl p-6 space-y-4">
-                        <h2 className="text-[11px] font-black text-text-muted uppercase tracking-widest">Summary</h2>
+                    <div className="bg-surface border border-border/30 rounded-2xl p-7 space-y-5">
+                        <h2 className="text-xs font-black text-text-muted uppercase tracking-widest">Summary</h2>
 
                         {previewLoading ? (
-                            <div className="flex items-center gap-3 py-4 text-text-muted">
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                                <span className="text-sm font-semibold">Calculating…</span>
+                            <div className="flex items-center gap-3 py-6 text-text-muted">
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <span className="text-base font-semibold">Calculating…</span>
                             </div>
                         ) : (
                             <>
                                 {/* Charge today */}
-                                <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                        <p className="text-sm font-bold text-text-main">
+                                <div className="flex items-start justify-between gap-6">
+                                    <div className="flex-1">
+                                        <p className="text-base font-bold text-text-main">
                                             {isScheduled ? 'No charge today' : 'Charge Today'}
                                         </p>
-                                        <p className="text-xs text-text-muted mt-0.5">
+                                        <p className="text-sm text-text-muted mt-1.5 leading-relaxed">
                                             {isScheduled
                                                 ? 'Changes take effect at your next renewal.'
                                                 : hasProratedDifference
@@ -228,7 +228,7 @@ export function ChangePlan() {
                                         </p>
                                     </div>
                                     <p className={clsx(
-                                        'text-2xl font-black tracking-tight shrink-0',
+                                        'text-3xl font-black tracking-tight shrink-0',
                                         isScheduled ? 'text-text-muted' : 'text-primary'
                                     )}>
                                         {isScheduled ? '$0.00' : `$${amountDueToday.toFixed(2)}`}
@@ -238,19 +238,19 @@ export function ChangePlan() {
                                 <div className="border-t border-border/20" />
 
                                 {/* Next renewal */}
-                                <div className="flex items-start justify-between">
+                                <div className="flex items-start justify-between gap-6">
                                     <div>
-                                        <p className="text-sm font-bold text-text-main">Next Renewal</p>
-                                        <p className="text-xs text-text-muted mt-0.5">{renewalDate}</p>
+                                        <p className="text-base font-bold text-text-main">Next Renewal</p>
+                                        <p className="text-sm text-text-muted mt-1">{renewalDate}</p>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-sm font-black text-text-main">
+                                    <div className="text-right shrink-0">
+                                        <p className="text-base font-black text-text-main">
                                             ${renewalAmount.toFixed(2)}
-                                            <span className="text-xs text-text-muted font-semibold ml-1">
+                                            <span className="text-sm text-text-muted font-semibold ml-1">
                                                 / {selectedCycle === 'Monthly' ? 'mo' : 'yr'}
                                             </span>
                                         </p>
-                                        <p className="text-xs text-text-muted mt-0.5">
+                                        <p className="text-sm text-text-muted mt-1">
                                             {selectedPlan} · {seats} seats · {selectedCycle}
                                         </p>
                                     </div>
@@ -262,24 +262,24 @@ export function ChangePlan() {
 
                 {/* ── STEP 3: What happens next ── */}
                 {hasChanges && (
-                    <div className="bg-surface border border-border/30 rounded-2xl p-6 space-y-3">
-                        <h2 className="text-[11px] font-black text-text-muted uppercase tracking-widest">What happens next</h2>
-                        <div className="space-y-3">
+                    <div className="bg-surface border border-border/30 rounded-2xl p-7 space-y-5">
+                        <h2 className="text-xs font-black text-text-muted uppercase tracking-widest">What happens next</h2>
+                        <div className="space-y-4">
                             {immediateEffect && (
-                                <div className="flex items-start gap-3">
-                                    <Zap className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                                    <p className="text-sm font-semibold text-text-main">{immediateEffect}</p>
+                                <div className="flex items-start gap-3.5">
+                                    <Zap className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                                    <p className="text-base font-semibold text-text-main leading-snug">{immediateEffect}</p>
                                 </div>
                             )}
-                            <div className="flex items-start gap-3">
-                                <Calendar className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                                <p className="text-sm font-semibold text-text-main">
+                            <div className="flex items-start gap-3.5">
+                                <Calendar className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                                <p className="text-base font-semibold text-text-main leading-snug">
                                     Your next renewal is on <span className="font-black">{renewalDate}</span>.
                                 </p>
                             </div>
-                            <div className="flex items-start gap-3">
-                                <RefreshCcw className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                                <p className="text-sm font-semibold text-text-main">
+                            <div className="flex items-start gap-3.5">
+                                <RefreshCcw className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                                <p className="text-base font-semibold text-text-main leading-snug">
                                     Future renewals will be{' '}
                                     <span className="font-black">
                                         ${renewalAmount.toFixed(2)}/{selectedCycle === 'Monthly' ? 'month' : 'year'}
@@ -287,20 +287,20 @@ export function ChangePlan() {
                                     for {seats} seats.
                                 </p>
                             </div>
-                            <div className="flex items-start gap-3">
-                                <CheckCircle className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" />
-                                <p className="text-sm font-semibold text-text-main">No disruption to your service or data.</p>
+                            <div className="flex items-start gap-3.5">
+                                <CheckCircle className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
+                                <p className="text-base font-semibold text-text-main leading-snug">No disruption to your service or data.</p>
                             </div>
                         </div>
                     </div>
                 )}
 
                 {/* ── Actions ── */}
-                <div className="flex gap-3 pb-8">
+                <div className="flex gap-3 pb-10">
                     <button
                         type="button"
                         onClick={() => navigate('/dashboard/settings/billing')}
-                        className="h-12 px-6 bg-surface border border-border/30 text-text-main font-bold text-sm rounded-xl hover:bg-main transition-all cursor-pointer"
+                        className="h-13 px-7 bg-surface border border-border/30 text-text-main font-bold text-sm rounded-xl hover:bg-main transition-all cursor-pointer"
                     >
                         Cancel
                     </button>
@@ -309,7 +309,7 @@ export function ChangePlan() {
                         onClick={handleConfirm}
                         disabled={saving || !hasChanges || previewLoading}
                         className={clsx(
-                            'flex-1 h-12 bg-primary text-white font-black text-sm uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer',
+                            'flex-1 h-13 bg-primary text-white font-black text-sm uppercase tracking-widest rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer',
                             (saving || !hasChanges || previewLoading) && 'opacity-40 cursor-not-allowed'
                         )}
                     >
