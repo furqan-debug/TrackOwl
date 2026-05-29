@@ -122,14 +122,21 @@ export function ChangePlan() {
                        selectedCycle !== organization.subscription_period || 
                        seatsToPurchase !== organization.seats_purchased;
 
-    // Base pricing details
-    const currentPricePerSeat = organization.plan_type === 'Premium' 
-        ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99)
-        : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99);
-
     const newPricePerSeat = selectedPlan === 'Premium'
         ? (selectedCycle === 'Monthly' ? 6.99 : 4.99)
         : (selectedCycle === 'Monthly' ? 3.99 : 2.99);
+
+    // Helper to format pricing display correctly
+    const getPriceLabel = (plan: 'Basic' | 'Premium', cycle: 'Monthly' | 'Yearly') => {
+        if (plan === 'Premium') {
+            return cycle === 'Monthly' ? '$6.99 / seat / mo' : '$4.99 / seat / mo (billed annually)';
+        } else {
+            return cycle === 'Monthly' ? '$3.99 / seat / mo' : '$2.99 / seat / mo (billed annually)';
+        }
+    };
+
+    const currentPriceLabel = getPriceLabel(organization.plan_type || 'Basic', organization.subscription_period || 'Monthly');
+    const newPriceLabel = getPriceLabel(selectedPlan, selectedCycle);
 
     return (
         <PageLayout 
@@ -141,8 +148,9 @@ export function ChangePlan() {
                 {/* LEFT COLUMN: Controls & Explanation */}
                 <div className="lg:col-span-2 space-y-6">
                     {/* Plan & Cycle Selection */}
-                    <Card className="p-6 border border-border/30 bg-surface rounded-2xl shadow-sm">
-                        <div className="flex flex-col md:flex-row items-center gap-4 mb-6">
+                    <Card className="p-6 border border-border/30 bg-surface rounded-2xl shadow-sm space-y-6">
+                        {/* Visual Flow Indicator: Current -> New */}
+                        <div className="flex flex-col md:flex-row items-center gap-4 border-b border-border/20 pb-6">
                             {/* Current Plan Indicator */}
                             <div className="flex-1 w-full bg-main/50 border border-border/20 rounded-xl p-4 flex items-center gap-4">
                                 <div className="w-12 h-12 rounded-lg bg-surface flex items-center justify-center border border-border/30 shadow-sm">
@@ -151,32 +159,113 @@ export function ChangePlan() {
                                 <div>
                                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">Current Plan</p>
                                     <h4 className="text-base font-black text-text-main">{organization.plan_type}</h4>
-                                    <p className="text-xs font-semibold text-slate-500">${currentPricePerSeat} / seat / {organization.subscription_period === 'Monthly' ? 'mo' : 'yr'}</p>
+                                    <p className="text-xs font-semibold text-slate-500">{currentPriceLabel}</p>
                                 </div>
                             </div>
                             
                             <ArrowRight className="w-5 h-5 text-slate-400 hidden md:block shrink-0" />
                             
-                            {/* New Plan Selection */}
+                            {/* New Plan Preview */}
                             <div className={clsx(
                                 "flex-1 w-full border rounded-xl p-4 flex items-center gap-4 transition-all",
-                                selectedPlan !== organization.plan_type ? "bg-primary/5 border-primary/30" : "bg-surface border-border/20"
+                                selectedPlan !== organization.plan_type || selectedCycle !== organization.subscription_period ? "bg-primary/5 border-primary/30" : "bg-surface border-border/20"
                             )}>
                                 <div className="w-12 h-12 rounded-lg bg-main flex items-center justify-center border border-border/30 shadow-sm">
                                     <div className="text-2xl">{selectedPlan === 'Basic' ? '🌱' : '💎'}</div>
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">New Plan</p>
-                                    <select 
-                                        value={selectedPlan}
-                                        onChange={(e) => setSelectedPlan(e.target.value as 'Basic' | 'Premium')}
-                                        className="bg-transparent text-base font-black text-text-main focus:outline-none cursor-pointer appearance-none"
-                                    >
-                                        <option value="Basic">Basic</option>
-                                        <option value="Premium">Premium</option>
-                                    </select>
-                                    <p className="text-xs font-semibold text-slate-500">${newPricePerSeat} / seat / {selectedCycle === 'Monthly' ? 'mo' : 'yr'}</p>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1">New Plan Preview</p>
+                                    <h4 className="text-base font-black text-text-main">{selectedPlan} Plan</h4>
+                                    <p className="text-xs font-semibold text-slate-500">{newPriceLabel}</p>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Interactive Plan Selector */}
+                        <div className="space-y-3">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">Select Plan Tier</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedPlan('Basic')}
+                                    className={clsx(
+                                        "p-4 rounded-xl border-2 text-left transition-all relative overflow-hidden flex items-center justify-between cursor-pointer group",
+                                        selectedPlan === 'Basic' 
+                                            ? "border-primary bg-primary/5 text-text-main" 
+                                            : "border-border/30 bg-surface hover:bg-main text-slate-400"
+                                    )}
+                                >
+                                    <div>
+                                        <h5 className="text-sm font-black text-text-main">Basic Plan</h5>
+                                        <p className="text-xs font-semibold text-slate-500 mt-1">
+                                            {selectedCycle === 'Monthly' ? '$3.99' : '$2.99'} / seat / mo
+                                        </p>
+                                    </div>
+                                    <span className="text-2xl group-hover:scale-110 transition-transform">🌱</span>
+                                </button>
+                                
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedPlan('Premium')}
+                                    className={clsx(
+                                        "p-4 rounded-xl border-2 text-left transition-all relative overflow-hidden flex items-center justify-between cursor-pointer group",
+                                        selectedPlan === 'Premium' 
+                                            ? "border-primary bg-primary/5 text-text-main" 
+                                            : "border-border/30 bg-surface hover:bg-main text-slate-400"
+                                    )}
+                                >
+                                    <div>
+                                        <h5 className="text-sm font-black text-text-main flex items-center gap-1.5">
+                                            Premium Plan
+                                            <span className="text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                                                Popular
+                                            </span>
+                                        </h5>
+                                        <p className="text-xs font-semibold text-slate-500 mt-1">
+                                            {selectedCycle === 'Monthly' ? '$6.99' : '$4.99'} / seat / mo
+                                        </p>
+                                    </div>
+                                    <span className="text-2xl group-hover:scale-110 transition-transform">💎</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Interactive Billing Cycle Selector */}
+                        <div className="flex flex-col md:flex-row items-center justify-between gap-4 p-4 bg-main/30 rounded-xl border border-border/20">
+                            <div>
+                                <h5 className="text-sm font-black text-text-main">Billing Cycle</h5>
+                                <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                                    Switch to yearly billing to save 25% on your subscription.
+                                </p>
+                            </div>
+                            <div className="flex bg-surface p-1 rounded-lg border border-border/30 shadow-sm shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedCycle('Monthly')}
+                                    className={clsx(
+                                        "px-4 py-1.5 text-xs font-black rounded-md transition-all cursor-pointer",
+                                        selectedCycle === 'Monthly'
+                                            ? "bg-primary text-white dark:text-slate-950 shadow-sm"
+                                            : "text-slate-400 hover:text-text-main"
+                                    )}
+                                >
+                                    Monthly
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedCycle('Yearly')}
+                                    className={clsx(
+                                        "px-4 py-1.5 text-xs font-black rounded-md transition-all cursor-pointer flex items-center gap-1.5",
+                                        selectedCycle === 'Yearly'
+                                            ? "bg-primary text-white dark:text-slate-950 shadow-sm"
+                                            : "text-slate-400 hover:text-text-main"
+                                    )}
+                                >
+                                    Yearly
+                                    <span className="text-[9px] font-extrabold uppercase tracking-wide px-1 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                                        -25%
+                                    </span>
+                                </button>
                             </div>
                         </div>
 
@@ -190,6 +279,7 @@ export function ChangePlan() {
                             </div>
                             <div className="flex items-center gap-3 px-3 py-1.5 bg-surface rounded-lg border border-border/30 shadow-sm">
                                 <button
+                                    type="button"
                                     onClick={() => setSeatsToPurchase(Math.max(Math.max(1, memberCount), seatsToPurchase - 1))}
                                     disabled={seatsToPurchase <= Math.max(1, memberCount)}
                                     className="w-7 h-7 flex items-center justify-center rounded bg-main text-text-main hover:text-primary transition-colors disabled:opacity-30 cursor-pointer"
@@ -200,6 +290,7 @@ export function ChangePlan() {
                                     {seatsToPurchase}
                                 </span>
                                 <button
+                                    type="button"
                                     onClick={() => setSeatsToPurchase(seatsToPurchase + 1)}
                                     className="w-7 h-7 flex items-center justify-center rounded bg-main text-text-main hover:text-primary transition-colors cursor-pointer"
                                 >
@@ -319,7 +410,7 @@ export function ChangePlan() {
                                 <div className="flex justify-between border-b border-border/20 pb-4">
                                     <div>
                                         <p className="font-bold text-text-main">{selectedPlan} Plan</p>
-                                        <p className="text-xs text-slate-500 mt-0.5">Per seat / {selectedCycle === 'Monthly' ? 'month' : 'year'}</p>
+                                        <p className="text-xs text-slate-500 mt-0.5">Per seat / {selectedCycle === 'Monthly' ? 'month' : 'month (billed annually)'}</p>
                                     </div>
                                     <div className="font-black text-text-main">${newPricePerSeat}</div>
                                 </div>
@@ -327,7 +418,11 @@ export function ChangePlan() {
                                 <div className="flex justify-between border-b border-border/20 pb-4">
                                     <div>
                                         <p className="font-bold text-text-main">Billable seats</p>
-                                        <p className="text-xs text-slate-500 mt-0.5">${newPricePerSeat} × {Math.max(1, seatsToPurchase - 1)} seats</p>
+                                        <p className="text-xs text-slate-500 mt-0.5">
+                                            {selectedCycle === 'Monthly' 
+                                                ? `$${newPricePerSeat} × ${Math.max(1, seatsToPurchase - 1)} seats` 
+                                                : `$${newPricePerSeat}/mo × 12 mo = $${(newPricePerSeat * 12).toFixed(2)}/yr × ${Math.max(1, seatsToPurchase - 1)} seats`}
+                                        </p>
                                     </div>
                                     <div className="font-black text-text-main">{Math.max(1, seatsToPurchase - 1)}</div>
                                 </div>
