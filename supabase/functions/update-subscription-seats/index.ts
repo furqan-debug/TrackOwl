@@ -87,7 +87,10 @@ serve(async (req) => {
 
     const isDecrease = seatsCount < org.seats_purchased;
 
-    // 4. Update quantity in Stripe
+    // 4. Update quantity in Stripe.
+    // - Increases: "always_invoice" immediately charges the card for the prorated
+    //   amount (remaining days × price per seat) and creates a real paid invoice.
+    // - Decreases: "none" — no refund; the lower quantity takes effect at next renewal.
     await stripe.subscriptions.update(org.stripe_subscription_id, {
       items: [
         {
@@ -95,7 +98,7 @@ serve(async (req) => {
           quantity: Math.max(1, seatsCount - 1),
         },
       ],
-      proration_behavior: isDecrease ? "none" : "create_prorations",
+      proration_behavior: isDecrease ? "none" : "always_invoice",
     });
 
     // 5. Update local database seats_purchased (instant update)
