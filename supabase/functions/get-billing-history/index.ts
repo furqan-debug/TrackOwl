@@ -24,43 +24,33 @@ serve(async (req) => {
       });
     }
 
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2023-10-16",
-    });
-
+    const stripe = new Stripe(stripeSecretKey, { apiVersion: "2023-10-16" });
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // 1. Get authenticated user
+    // 1. Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) throw new Error("Authorization header is missing");
 
     const token = authHeader.replace("Bearer ", "");
     const { data: { user }, error: authErr } = await supabase.auth.getUser(token);
+    if (authErr || !user) throw new Error("Invalid or expired authorization token");
 
-    if (authErr || !user) {
-      throw new Error("Invalid or expired authorization token");
-    }
-
-    // 2. Fetch member organization
+    // 2. Get org Stripe customer ID
     const { data: member, error: memberErr } = await supabase
       .from("members")
       .select("organization_id")
       .eq("auth_user_id", user.id)
       .single();
 
-    if (memberErr || !member) {
-      throw new Error("Member profile not found.");
-    }
+    if (memberErr || !member) throw new Error("Member profile not found.");
 
     const { data: org, error: orgErr } = await supabase
       .from("organizations")
-      .select("stripe_customer_id")
+      .select("stripe_customer_id, stripe_subscription_id")
       .eq("id", member.organization_id)
       .single();
 
-    if (orgErr || !org) {
-      throw new Error("Organization not found.");
-    }
+    if (orgErr || !org) throw new Error("Organization not found.");
 
     if (!org.stripe_customer_id) {
       return new Response(JSON.stringify({ invoices: [] }), {
@@ -69,10 +59,11 @@ serve(async (req) => {
       });
     }
 
-    // 3. Fetch invoices list from Stripe
+    // 3. Fetch all invoices (paid, open, draft) from Stripe
     const invoicesList = await stripe.invoices.list({
       customer: org.stripe_customer_id,
-      limit: 10,
+      limit: 24,
+      expand: ["data.lines"],
     });
 
     const formattedInvoices = invoicesList.data.map((inv) => ({
@@ -88,13 +79,55 @@ serve(async (req) => {
       pdfUrl: inv.invoice_pdf,
     }));
 
-    return new Response(JSON.stringify({ invoices: formattedInvoices }), {
+    // 4. Fetch upcoming invoice to surface pending proration items
+    // (seat upgrades create pending invoice items not yet billed)
+    let pendingItems: any[] = [];
+    if (org.stripe_subscription_id) {
+      try {
+        const upcoming = await stripe.invoices.retrieveUpcoming({
+          customer: org.stripe_customer_id,
+          subscription: org.stripe_subscription_id,
+        });
+
+        // Only surface proration lines (type="invoiceitem") as "pending" entries
+        const prorationLines = upcoming.lines.data.filter(
+          (line) => line.proration === true
+        );
+
+        if (prorationLines.length > 0) {
+          // Sum all pending proration amounts
+          const pendingTotal = prorationLines.reduce((sum, l) => sum + l.amount, 0);
+          if (pendingTotal !== 0) {
+            const nextBillingDate = new Date(upcoming.period_end * 1000).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            });
+            pendingItems.push({
+              id: "pending_proration",
+              date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" }),
+              description: `Seat adjustment (prorated until ${nextBillingDate})`,
+              amount: `$${(Math.abs(pendingTotal) / 100).toFixed(2)}`,
+              status: "pending",
+              pdfUrl: null,
+            });
+          }
+        }
+      } catch (_) {
+        // If upcoming invoice fetch fails (e.g. no subscription), ignore silently
+      }
+    }
+
+    // Pending prorations appear at the top of the list
+    const allInvoices = [...pendingItems, ...formattedInvoices];
+
+    return new Response(JSON.stringify({ invoices: allInvoices }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
 
   } catch (err: any) {
-    console.error("🚨 Error in get-billing-history:", err.message);
+    console.error("Error in get-billing-history:", err.message);
     return new Response(JSON.stringify({ error: err.message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 400,

@@ -700,11 +700,17 @@ export function Billing() {
                                                 <td className="px-6 py-4">
                                                     <div className={clsx(
                                                         "flex items-center gap-1.5 font-bold text-[10px] uppercase",
-                                                        inv.status === "paid" ? "text-emerald-500" : "text-amber-500"
+                                                        inv.status === "paid" ? "text-emerald-500"
+                                                        : inv.status === "pending" ? "text-blue-400"
+                                                        : "text-amber-500"
                                                     )}>
                                                         {inv.status === "paid" ? (
                                                             <>
                                                                 <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+                                                            </>
+                                                        ) : inv.status === "pending" ? (
+                                                            <>
+                                                                <History className="w-3.5 h-3.5" /> Pending
                                                             </>
                                                         ) : (
                                                             <>
