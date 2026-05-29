@@ -179,7 +179,7 @@ export function ChangePlan() {
                                         <span className={clsx(
                                             'text-[10px] font-extrabold px-1.5 py-0.5 rounded transition-all',
                                             selectedCycle === 'Yearly'
-                                                ? 'bg-black/30 text-white'
+                                                ? 'bg-slate-900 !text-slate-50 dark:bg-slate-900 dark:!text-slate-50'
                                                 : 'bg-amber-500/15 text-amber-500 dark:text-amber-400'
                                         )}>
                                             −25%
