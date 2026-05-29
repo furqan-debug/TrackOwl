@@ -31,10 +31,14 @@ export function Billing() {
     const [memberCount, setMemberCount] = useState(0);
     const [seatsToPurchase, setSeatsToPurchase] = useState(organization?.seats_purchased || 5);
     const [saving, setSaving] = useState(false);
+    const [invoices, setInvoices] = useState<any[]>([]);
+    const [loadingInvoices, setLoadingInvoices] = useState(false);
+    const [showChangePlanModal, setShowChangePlanModal] = useState(false);
 
     useEffect(() => {
         if (organization?.id) {
             fetchMemberCount();
+            fetchBillingHistory();
             setSeatsToPurchase(organization.seats_purchased || 5);
         }
     }, [organization?.id, organization?.seats_purchased]);
@@ -45,6 +49,46 @@ export function Billing() {
             .select('*', { count: 'exact', head: true })
             .eq('organization_id', organization?.id);
         setMemberCount(count || 0);
+    }
+
+    async function fetchBillingHistory() {
+        setLoadingInvoices(true);
+        try {
+            const isMockMode = !organization?.stripe_subscription_id || organization?.stripe_customer_id?.startsWith('cus_mock_');
+
+            if (isMockMode) {
+                setInvoices([
+                    {
+                        id: 'inv_mock_trial',
+                        date: 'May 7, 2026',
+                        description: 'Premium Plan (Trial Started)',
+                        amount: '$0.00',
+                        status: 'paid',
+                        pdfUrl: '#'
+                    }
+                ]);
+                return;
+            }
+
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-billing-history`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentSession?.access_token}`,
+                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+                }
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                setInvoices(result.invoices || []);
+            }
+        } catch (err) {
+            console.error('Error fetching billing history:', err);
+        } finally {
+            setLoadingInvoices(false);
+        }
     }
 
     const handleManageBilling = async () => {
@@ -69,6 +113,85 @@ export function Billing() {
         }
     };
 
+    const handleChangePlan = async (targetPlanType: 'Basic' | 'Premium') => {
+        if (!organization?.id) return;
+        
+        setSaving(true);
+        try {
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/change-subscription-plan`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentSession?.access_token}`,
+                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify({
+                    action: 'changePlan',
+                    planType: targetPlanType,
+                    billingCycle: organization.subscription_period || 'Monthly'
+                })
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || `Server returned ${response.status}`);
+            }
+
+            if (result?.success) {
+                await refreshProfile();
+                setShowChangePlanModal(false);
+                if (result.scheduled) {
+                    alert(`Plan downgrade successfully scheduled for ${new Date(result.scheduledFor).toLocaleDateString()}! You will continue to have Premium access until then.`);
+                } else {
+                    alert(`Plan successfully upgraded to Premium! Your card on file has been updated.`);
+                }
+                window.location.reload();
+            }
+        } catch (err: any) {
+            console.error('Error changing subscription plan:', err);
+            alert(err.message || 'Failed to change plan.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleCancelDowngrade = async () => {
+        if (!organization?.id) return;
+        
+        setSaving(true);
+        try {
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/change-subscription-plan`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentSession?.access_token}`,
+                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify({
+                    action: 'cancelDowngrade'
+                })
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || `Server returned ${response.status}`);
+            }
+
+            if (result?.success) {
+                await refreshProfile();
+                alert(`Pending plan downgrade successfully cancelled. Your subscription will remain Premium indefinitely!`);
+                window.location.reload();
+            }
+        } catch (err: any) {
+            console.error('Error cancelling downgrade:', err);
+            alert(err.message || 'Failed to cancel plan downgrade.');
+        } finally {
+            setSaving(false);
+        }
+    };
+
     const handleUpdateSeats = async () => {
         if (!organization?.id) return;
         
@@ -78,25 +201,53 @@ export function Billing() {
             return;
         }
 
-        // If Stripe customer exists, manage seats in Stripe Billing Portal
-        if (organization.stripe_customer_id) {
-            await handleManageBilling();
-            return;
-        }
-
         setSaving(true);
         try {
-            const { error } = await supabase
-                .from('organizations')
-                .update({ seats_purchased: seatsToPurchase })
-                .eq('id', organization.id);
+            // Check if we are running in real Stripe or mock sandbox
+            const isMockMode = !organization.stripe_subscription_id || organization.stripe_customer_id?.startsWith('cus_mock_');
 
-            if (error) throw error;
-            await refreshProfile();
-            alert('Seats updated successfully!');
-        } catch (err) {
+            if (isMockMode) {
+                // Preserving complete developer sandbox simulation mode:
+                const { error } = await supabase
+                    .from('organizations')
+                    .update({ seats_purchased: seatsToPurchase })
+                    .eq('id', organization.id);
+
+                if (error) throw error;
+                await refreshProfile();
+                alert(`[Sandbox Mode] Seats successfully updated to ${seatsToPurchase}!`);
+                window.location.reload();
+                return;
+            }
+
+            // Real Stripe Mode: Call our secure Edge Function to update Stripe and Postgres
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/update-subscription-seats`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${currentSession?.access_token}`,
+                    'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+                },
+                body: JSON.stringify({
+                    seatsCount: seatsToPurchase
+                })
+            });
+
+            const result = await response.json();
+            if (!response.ok) {
+                throw new Error(result.error || `Server returned ${response.status}`);
+            }
+
+            if (result?.success) {
+                await refreshProfile();
+                await fetchMemberCount();
+                alert(`Seats successfully updated to ${seatsToPurchase}! Your card will be prorated automatically.`);
+                window.location.reload();
+            }
+        } catch (err: any) {
             console.error('Error updating seats:', err);
-            alert('Failed to update seats.');
+            alert(err.message || 'Failed to update seats.');
         } finally {
             setSaving(false);
         }
@@ -117,7 +268,7 @@ export function Billing() {
                         <CheckCircle2 className="w-6 h-6 text-blue-400 shrink-0" />
                         <div>
                             <h4 className="text-sm font-bold text-white">Stripe Portal Simulation Authorized</h4>
-                            <p className="text-xs text-text-muted">You clicked "Manage Subscription". Since Stripe is offline, the sandbox simulated customer portal access successfully.</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold">You clicked "Manage Subscription". Since Stripe is offline, the sandbox simulated customer portal access successfully.</p>
                         </div>
                     </div>
                     <button 
@@ -136,7 +287,7 @@ export function Billing() {
                         <Info className="w-6 h-6 text-amber-400 shrink-0 animate-pulse" />
                         <div>
                             <h4 className="text-sm font-bold text-white">Developer Simulation Mode Active</h4>
-                            <p className="text-xs text-text-muted">TrackOwl is running in Sandbox Offline Billing. No real subscription charges or credit cards are involved.</p>
+                            <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold">TrackOwl is running in Sandbox Offline Billing. No real subscription charges or credit cards are involved.</p>
                         </div>
                     </div>
                     <button 
@@ -168,25 +319,50 @@ export function Billing() {
                 </div>
             )}
 
+            {/* Plan Downgrade Scheduled Notice */}
+            {organization.settings?.pending_downgrade && (
+                <div className="bg-amber-500/10 border border-amber-500/25 rounded-[24px] p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-4 relative overflow-hidden backdrop-blur-md">
+                    <div className="flex items-center gap-3 relative z-10">
+                        <Info className="w-6.5 h-6.5 text-amber-500 shrink-0 animate-pulse" />
+                        <div>
+                            <h4 className="text-sm font-bold text-text-main">Plan Downgrade Scheduled</h4>
+                            <p className="text-xs text-slate-600 dark:text-slate-300 font-semibold mt-0.5">
+                                You have scheduled a downgrade to the <strong className="text-text-main">Basic</strong> plan, taking effect at your next renewal on{" "}
+                                <strong className="text-text-main">
+                                    {new Date(organization.settings.pending_downgrade.scheduled_for).toLocaleDateString()}
+                                </strong>. 
+                                You retain full access to Premium features until the end of your current period.
+                            </p>
+                        </div>
+                    </div>
+                    <button 
+                        disabled={saving}
+                        onClick={handleCancelDowngrade}
+                        className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/35 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-xl transition-all relative z-10 disabled:opacity-50 cursor-pointer shrink-0"
+                    >
+                        {saving ? 'Canceling...' : 'Cancel Pending Downgrade'}
+                    </button>
+                </div>
+            )}
+
             <div className="grid gap-8 lg:grid-cols-12 pb-20">
-                {/* Left Column: Current Status */}
-                <div className="lg:col-span-8 space-y-8">
-                    {/* Active Plan Card */}
-                    <Card className="p-10 border border-border rounded-[40px] shadow-shell-sm overflow-hidden relative">
+                {/* Row 1: Active Plan Card (Full Width) */}
+                <div className="lg:col-span-12">
+                    <Card className="p-8 border border-border/30 bg-surface rounded-2xl shadow-soft overflow-hidden relative">
                         {/* Decorative Background */}
                         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 blur-[60px] rounded-full -mr-20 -mt-20" />
 
                         <div className="relative z-10">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
-                                <div className="space-y-2">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-text-muted">Current Plan</p>
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+                                <div className="space-y-1.5">
+                                    <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400">Current Plan</p>
                                     <div className="flex items-center gap-4">
-                                        <h2 className="text-4xl font-black text-text-main tracking-tight">
+                                        <h2 className="text-3xl font-black text-text-main tracking-tight">
                                             {organization.subscription_status === 'None' ? 'Freemium' : organization.plan_type}
                                         </h2>
                                         <StatusBadge
                                             variant={organization.subscription_status === 'Active' || organization.subscription_status === 'Trial' ? 'success' : 'warning'}
-                                            className="px-4 py-1 h-auto text-[10px] font-black uppercase tracking-widest"
+                                            className="px-4 py-1 h-auto text-[10px] font-black uppercase tracking-widest animate-pulse"
                                         >
                                             {organization.subscription_status === 'None' ? 'Explore Mode' : organization.subscription_status}
                                         </StatusBadge>
@@ -194,11 +370,22 @@ export function Billing() {
                                 </div>
 
                                 <div className="flex items-center gap-3">
+                                    {organization.subscription_status !== 'None' && (
+                                        <button
+                                            onClick={() => setShowChangePlanModal(true)}
+                                            disabled={saving || !!organization.settings?.pending_downgrade}
+                                            title={organization.settings?.pending_downgrade ? "Plan downgrade already scheduled" : "Upgrade or downgrade your plan"}
+                                            className="px-5 h-11 bg-surface border border-border/30 text-text-main hover:border-primary/55 font-black rounded-xl text-[10px] uppercase tracking-wider shadow-sm active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            <Zap className="w-4 h-4 text-primary" />
+                                            Change Plan
+                                        </button>
+                                    )}
                                     {organization.subscription_status !== 'None' && organization.stripe_customer_id ? (
                                         <button
                                             onClick={handleManageBilling}
                                             disabled={saving}
-                                            className="px-6 h-12 bg-primary text-white rounded-xl text-[11px] font-bold shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"
+                                            className="px-6 h-11 bg-primary text-white dark:text-slate-950 hover:bg-primary-hover font-black rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                                         >
                                             <Crown className="w-4 h-4" />
                                             {saving ? 'Loading...' : 'Manage Subscription'}
@@ -206,7 +393,7 @@ export function Billing() {
                                     ) : (
                                         <button
                                             onClick={() => navigate('/dashboard/pricing')}
-                                            className="px-6 h-12 bg-primary text-white rounded-xl text-[11px] font-bold shadow-glow-primary hover:brightness-110 active:scale-95 transition-all flex items-center gap-2"
+                                            className="px-6 h-11 bg-primary text-white dark:text-slate-950 hover:bg-primary-hover font-black rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                                         >
                                             <ArrowUpCircle className="w-4 h-4" />
                                             Upgrade Plan
@@ -216,228 +403,379 @@ export function Billing() {
                                         onClick={handleManageBilling}
                                         disabled={saving || organization.subscription_status === 'None' || !organization.stripe_customer_id}
                                         title={organization.subscription_status !== 'None' && organization.stripe_customer_id ? "Manage in Stripe" : "Stripe account not configured yet"}
-                                        className="p-3 bg-surface border border-border rounded-xl text-text-muted hover:text-primary hover:border-primary/30 transition-all shadow-shell-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                        className="p-3 bg-surface border border-border/30 rounded-xl text-slate-600 dark:text-slate-400 hover:text-primary hover:border-primary/35 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                     >
-                                        <ExternalLink className="w-5 h-5" />
+                                        <ExternalLink className="w-4.5 h-4.5" />
                                     </button>
                                 </div>
                             </div>
 
-                            <div className="grid md:grid-cols-3 gap-8 p-8 bg-main/50 rounded-3xl border border-border/50">
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest flex items-center gap-2">
-                                        <Users className="w-3.5 h-3.5" /> Seats Used
+                            <div className="grid md:grid-cols-3 gap-6 p-6 bg-main/40 rounded-2xl border border-border/15">
+                                <div className="space-y-1 text-center md:text-left md:border-r border-border/20 pr-4 last:border-r-0">
+                                    <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center justify-center md:justify-start gap-2">
+                                        <Users className="w-3.5 h-3.5 text-primary/75" /> Seats Used
                                     </p>
                                     <p className="text-2xl font-black text-text-main">
-                                        {memberCount} <span className="text-lg text-text-muted font-bold">/ {organization.seats_purchased}</span>
+                                        {memberCount} <span className="text-lg text-slate-500 dark:text-slate-400 font-bold">/ {organization.seats_purchased}</span>
                                     </p>
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest flex items-center gap-2">
-                                        <Calendar className="w-3.5 h-3.5" /> Renewal Date
+                                <div className="space-y-1 text-center md:text-left md:border-r border-border/20 pr-4 last:border-r-0">
+                                    <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center justify-center md:justify-start gap-2">
+                                        <Calendar className="w-3.5 h-3.5 text-primary/75" /> Renewal Date
                                     </p>
                                     <p className="text-xl font-black text-text-main">
                                         {organization.trial_ends_at
                                             ? new Date(organization.trial_ends_at).toLocaleDateString()
-                                            : 'No active renewal'}
+                                            : organization.current_period_end
+                                                ? new Date(organization.current_period_end).toLocaleDateString()
+                                                : organization.subscription_status === 'Active'
+                                                    ? 'Automatic Renewal'
+                                                    : 'No active renewal'}
                                     </p>
                                 </div>
-                                <div className="space-y-1">
-                                    <p className="text-[10px] font-bold text-text-muted uppercase tracking-widest flex items-center gap-2">
-                                        <CreditCard className="w-3.5 h-3.5" /> Billing Cycle
+                                <div className="space-y-1 text-center md:text-left last:border-r-0">
+                                    <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center justify-center md:justify-start gap-2">
+                                        <CreditCard className="w-3.5 h-3.5 text-primary/75" /> Billing Cycle
                                     </p>
                                     <p className="text-xl font-black text-text-main">{organization.subscription_status === 'None' ? 'N/A' : organization.subscription_period}</p>
                                 </div>
                             </div>
                         </div>
                     </Card>
+                </div>
 
-                    {/* Seat Management */}
-                    <Card className="p-10 border border-border rounded-[40px] shadow-shell-sm">
-                        <div className="mb-8">
-                            <h3 className="text-xl font-black text-text-main tracking-tight mb-2">Manage Seats</h3>
-                            <p className="text-[13px] font-medium text-text-muted">Purchase additional seats to invite more team members.</p>
-                        </div>
-
-                        <div className="flex flex-col md:flex-row items-center gap-10">
-                            <div className="flex items-center gap-6 p-2 bg-main rounded-[24px] border border-border w-fit shadow-shell-sm">
-                                <button
-                                    onClick={() => setSeatsToPurchase(Math.max(1, seatsToPurchase - 1))}
-                                    className="w-12 h-12 flex items-center justify-center rounded-xl bg-surface border border-border text-text-muted hover:text-primary transition-all active:scale-90"
-                                >
-                                    <Minus className="w-5 h-5" />
-                                </button>
-                                <span className="text-2xl font-black text-text-main w-12 text-center tabular-nums">
-                                    {seatsToPurchase}
-                                </span>
-                                <button
-                                    onClick={() => setSeatsToPurchase(seatsToPurchase + 1)}
-                                    className="w-12 h-12 flex items-center justify-center rounded-xl bg-surface border border-border text-text-muted hover:text-primary transition-all active:scale-90"
-                                >
-                                    <Plus className="w-5 h-5" />
-                                </button>
+                {/* Row 2 - Left: Seat Management (Spans 8 Columns) */}
+                <div className="lg:col-span-8">
+                    <Card className="p-8 border border-border/30 bg-surface rounded-2xl shadow-soft h-full flex flex-col justify-between">
+                        <div>
+                            <div className="mb-6">
+                                <h3 className="text-lg font-black text-text-main tracking-tight mb-1">Manage Seats</h3>
+                                <p className="text-[12.5px] font-semibold text-slate-600 dark:text-slate-300">Purchase additional seats to invite more team members.</p>
                             </div>
 
-                            <div className="flex-1 space-y-1">
-                                <p className="text-[11px] font-bold text-text-muted uppercase tracking-[0.2em]">Estimated Total</p>
-                                <p className="text-3xl font-black text-text-main tracking-tight">
-                                    ${(Math.max(0, seatsToPurchase - 1) * (organization.plan_type === 'Premium' ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99) : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99))).toFixed(2)}
-                                    <span className="text-sm font-bold text-text-muted"> / mo</span>
-                                </p>
-                                <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-1">1 Free Owner Seat Included</p>
-                            </div>
+                            <div className="flex flex-col md:flex-row items-center gap-8">
+                                <div className="flex items-center gap-4 px-3 py-1.5 bg-main/60 rounded-xl border border-border/20 w-fit shadow-sm">
+                                    <button
+                                        onClick={() => setSeatsToPurchase(Math.max(Math.max(1, memberCount), seatsToPurchase - 1))}
+                                        disabled={seatsToPurchase <= Math.max(1, memberCount)}
+                                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-surface border border-border/30 text-text-main hover:text-primary hover:border-primary/55 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm cursor-pointer"
+                                    >
+                                        <Minus className="w-4 h-4" />
+                                    </button>
+                                    <span className="text-xl font-black text-text-main w-8 text-center tabular-nums">
+                                        {seatsToPurchase}
+                                    </span>
+                                    <button
+                                        onClick={() => setSeatsToPurchase(seatsToPurchase + 1)}
+                                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-surface border border-border/30 text-text-main hover:text-primary hover:border-primary/55 transition-all active:scale-95 shadow-sm cursor-pointer"
+                                    >
+                                        <Plus className="w-4 h-4" />
+                                    </button>
+                                </div>
 
-                            <button
-                                onClick={handleUpdateSeats}
-                                disabled={saving || (organization.subscription_status !== 'None' && seatsToPurchase === organization.seats_purchased)}
-                                className={clsx(
-                                    "px-10 h-16 bg-primary text-white rounded-2xl text-[12px] font-black uppercase tracking-widest shadow-glow-primary hover:brightness-110 active:scale-95 transition-all",
-                                    (saving || (organization.subscription_status !== 'None' && seatsToPurchase === organization.seats_purchased)) && "opacity-50 cursor-not-allowed"
-                                )}
-                            >
-                                {organization.subscription_status === 'None' ? 'Upgrade to Get Seats' : (saving ? 'Saving...' : 'Update Seats')}
-                            </button>
+                                <div className="flex-1 space-y-1.5">
+                                    <div className="flex flex-col">
+                                        <p className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-0.5">
+                                            {seatsToPurchase === organization.seats_purchased 
+                                                ? 'Current Subscription' 
+                                                : (seatsToPurchase < organization.seats_purchased 
+                                                    ? 'Next Renewal Total' 
+                                                    : 'New Subscription Total')}
+                                        </p>
+                                        <p className="text-2xl font-black text-text-main tracking-tight">
+                                            ${(
+                                                Math.max(0, seatsToPurchase - 1) * 
+                                                (organization.plan_type === 'Premium' 
+                                                    ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99) 
+                                                    : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99)
+                                                ) * 
+                                                (organization.subscription_period === 'Yearly' ? 12 : 1)
+                                            ).toFixed(2)}
+                                            <span className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                                                {organization.subscription_period === 'Yearly' ? ' / yr' : ' / mo'}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    
+                                    {seatsToPurchase !== organization.seats_purchased && (
+                                        <div className="pt-1.5 border-t border-border/30 animate-in fade-in slide-in-from-top-1">
+                                            {seatsToPurchase > organization.seats_purchased ? (
+                                                <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wide">
+                                                    Additional: +${(
+                                                        (seatsToPurchase - organization.seats_purchased) * 
+                                                        (organization.plan_type === 'Premium' 
+                                                            ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99) 
+                                                            : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99)
+                                                        ) * 
+                                                        (organization.subscription_period === 'Yearly' ? 12 : 1)
+                                                    ).toFixed(2)} {organization.subscription_period === 'Yearly' ? '/yr' : '/mo'} (for {seatsToPurchase - organization.seats_purchased} new seat{seatsToPurchase - organization.seats_purchased > 1 ? 's' : ''})
+                                                </p>
+                                            ) : (
+                                                <div className="space-y-1">
+                                                    <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-wide">
+                                                        Savings: -${(
+                                                            (organization.seats_purchased - seatsToPurchase) * 
+                                                            (organization.plan_type === 'Premium' 
+                                                                ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99) 
+                                                                : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99)
+                                                            ) * 
+                                                            (organization.subscription_period === 'Yearly' ? 12 : 1)
+                                                        ).toFixed(2)} {organization.subscription_period === 'Yearly' ? '/yr' : '/mo'} (at next renewal)
+                                                    </p>
+                                                    <p className="text-[11px] font-medium text-amber-500 leading-snug">
+                                                        ⚠️ Note: Reducing seats takes effect on your next renewal. No refunds or prorated credits are issued for the current period.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    
+                                    {seatsToPurchase === Math.max(1, memberCount) && memberCount > 0 && (
+                                        <p className="text-[9px] font-bold text-amber-500 uppercase tracking-wide mt-1">
+                                            Reached active member count ({memberCount}). Deactivate members to reduce seats further.
+                                        </p>
+                                    )}
+                                    <p className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest mt-1">1 Free Owner Seat Included</p>
+                                </div>
+
+                                <button
+                                    onClick={handleUpdateSeats}
+                                    disabled={saving || (organization.subscription_status !== 'None' && seatsToPurchase === organization.seats_purchased)}
+                                    className={clsx(
+                                        "px-8 h-11 bg-primary text-white dark:text-slate-950 hover:bg-primary-hover font-black rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer",
+                                        (saving || (organization.subscription_status !== 'None' && seatsToPurchase === organization.seats_purchased)) && "opacity-50 cursor-not-allowed"
+                                    )}
+                                >
+                                    {organization.subscription_status === 'None' ? 'Upgrade to Get Seats' : (saving ? 'Saving...' : 'Update Seats')}
+                                </button>
+                            </div>
                         </div>
                     </Card>
+                </div>
 
-                    {/* Billing History */}
-                    <Card className="p-10 border border-border rounded-[40px] shadow-shell-sm">
-                        <div className="flex items-center justify-between mb-8">
+                {/* Row 2 - Right: Payment Method (Spans 4 Columns) */}
+                <div className="lg:col-span-4">
+                    <Card className="p-8 border border-border/30 bg-surface rounded-2xl shadow-soft h-full flex flex-col justify-between">
+                        <div>
+                            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-500 dark:text-slate-400 mb-6">Payment Method</h4>
+                            {organization.subscription_status !== 'None' && organization.stripe_customer_id ? (
+                                <div className="space-y-6">
+                                    <div 
+                                        onClick={handleManageBilling}
+                                        className="p-4 bg-main/50 rounded-2xl border border-border/15 flex items-center gap-4 relative group cursor-pointer overflow-hidden shadow-sm"
+                                    >
+                                        {/* Decorative Sparkle */}
+                                        <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 blur-xl group-hover:bg-primary/20 transition-colors" />
+
+                                        <div className="w-10 h-9 bg-surface border border-border/20 rounded-lg flex items-center justify-center text-text-main shadow-sm">
+                                            <CreditCard className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-[12px] font-black text-text-main">Stripe Payment</p>
+                                            <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Managed securely in Stripe</p>
+                                        </div>
+                                        <ChevronRight className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                                    </div>
+                                    <button
+                                        onClick={handleManageBilling}
+                                        disabled={saving}
+                                        className="w-full h-11 bg-main border border-border/30 text-[10px] font-bold uppercase tracking-wider text-text-main rounded-xl hover:bg-surface-hover transition-all cursor-pointer"
+                                    >
+                                        {saving ? 'Loading...' : 'Update Payment Method'}
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="space-y-6">
+                                    <div className="p-4 bg-main/50 rounded-2xl border border-border/15 flex items-center gap-4 relative overflow-hidden opacity-60 shadow-sm">
+                                        <div className="w-10 h-9 bg-surface border border-border/20 rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm">
+                                            <CreditCard className="w-5 h-5" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="text-[12px] font-black text-slate-600 dark:text-slate-300">No card on file</p>
+                                            <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Freemium Plan</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => navigate('/dashboard/pricing')}
+                                        className="w-full h-11 bg-primary text-white dark:text-slate-950 hover:bg-primary-hover font-black text-[10px] uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer"
+                                    >
+                                        Add Payment Method
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </Card>
+                </div>
+
+                {/* Row 3: Billing History Card (Full Width) */}
+                <div className="lg:col-span-12">
+                    <Card className="p-8 border border-border/30 bg-surface rounded-2xl shadow-soft">
+                        <div className="flex items-center justify-between mb-6">
                             <div>
-                                <h3 className="text-xl font-black text-text-main tracking-tight mb-2">Billing History</h3>
-                                <p className="text-[13px] font-medium text-text-muted">View and download your recent invoices.</p>
+                                <h3 className="text-lg font-black text-text-main tracking-tight mb-1">Billing History</h3>
+                                <p className="text-[12.5px] font-semibold text-slate-600 dark:text-slate-300">View and download your recent invoices.</p>
                             </div>
-                            <History className="w-6 h-6 text-text-muted opacity-30" />
+                            <History className="w-5 h-5 text-slate-500 dark:text-slate-400 opacity-40" />
                         </div>
 
-                        <div className="overflow-hidden border border-border rounded-3xl">
+                        <div className="overflow-x-auto w-full">
                             <table className="w-full text-left">
-                                <thead className="bg-main/50">
+                                <thead className="bg-main/40">
                                     <tr>
-                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-text-muted">Date</th>
-                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-text-muted">Description</th>
-                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-text-muted">Amount</th>
-                                        <th className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-text-muted">Status</th>
+                                        <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Date</th>
+                                        <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Description</th>
+                                        <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Amount</th>
+                                        <th className="px-6 py-4 text-[11px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300">Status</th>
                                         <th className="px-6 py-4 text-right"></th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-border">
-                                    <tr className="hover:bg-main/30 transition-colors">
-                                        <td className="px-6 py-4 text-[13px] font-bold text-text-main">May 7, 2026</td>
-                                        <td className="px-6 py-4 text-[13px] font-medium text-text-muted">Premium Plan (Trial Started)</td>
-                                        <td className="px-6 py-4 text-[13px] font-bold text-text-main">$0.00</td>
-                                        <td className="px-6 py-4">
-                                            <div className="flex items-center gap-1.5 text-emerald-500 font-bold text-[10px] uppercase">
-                                                <CheckCircle2 className="w-3.5 h-3.5" /> Completed
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button className="text-text-muted hover:text-text-main transition-colors text-[11px] font-black hover:underline uppercase tracking-widest">Download</button>
-                                        </td>
-                                    </tr>
+                                <tbody className="divide-y divide-border/10">
+                                    {loadingInvoices ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-8 text-center text-slate-600 dark:text-slate-400 text-[13px] font-bold animate-pulse">
+                                                Loading billing history...
+                                            </td>
+                                        </tr>
+                                    ) : invoices.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-8 text-center text-slate-600 dark:text-slate-400 text-[13px] font-bold">
+                                                No billing history found.
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        invoices.map((inv) => (
+                                            <tr key={inv.id} className="hover:bg-main/30 transition-colors">
+                                                <td className="px-6 py-4 text-[13px] font-bold text-text-main">{inv.date}</td>
+                                                <td className="px-6 py-4 text-[13px] font-semibold text-slate-600 dark:text-slate-300">{inv.description}</td>
+                                                <td className="px-6 py-4 text-[13px] font-bold text-text-main">{inv.amount}</td>
+                                                <td className="px-6 py-4">
+                                                    <div className={clsx(
+                                                        "flex items-center gap-1.5 font-bold text-[10px] uppercase",
+                                                        inv.status === "paid" ? "text-emerald-500" : "text-amber-500"
+                                                    )}>
+                                                        {inv.status === "paid" ? (
+                                                            <>
+                                                                <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <AlertCircle className="w-3.5 h-3.5" /> {inv.status}
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4 text-right">
+                                                    {inv.pdfUrl && inv.pdfUrl !== '#' ? (
+                                                        <a 
+                                                            href={inv.pdfUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-[11px] font-black hover:underline uppercase tracking-widest"
+                                                        >
+                                                            Download
+                                                        </a>
+                                                    ) : (
+                                                        <span className="text-slate-600/40 dark:text-slate-500/40 text-[11px] font-black uppercase tracking-widest select-none">
+                                                            N/A
+                                                        </span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
                     </Card>
                 </div>
+            </div>
 
-                {/* Right Column: Comparison & Info */}
-                <div className="lg:col-span-4 space-y-8">
-                    {/* Payment Method */}
-                    <Card className="p-8 border border-border rounded-[32px] shadow-shell-sm">
-                        <h4 className="text-[11px] font-black uppercase tracking-[0.3em] text-text-muted mb-6">Payment Method</h4>
-                        {organization.subscription_status !== 'None' && organization.stripe_customer_id ? (
-                            <>
-                                <div 
-                                    onClick={handleManageBilling}
-                                    className="p-6 bg-main rounded-[24px] border border-border flex items-center gap-4 mb-6 relative group cursor-pointer overflow-hidden"
-                                >
-                                    {/* Decorative Sparkle */}
-                                    <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 blur-xl group-hover:bg-primary/20 transition-colors" />
-
-                                    <div className="w-12 h-10 bg-surface border border-border rounded-lg flex items-center justify-center text-text-main shadow-shell-sm">
-                                        <CreditCard className="w-6 h-6" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="text-[13px] font-black text-text-main">Stripe Payment</p>
-                                        <p className="text-[11px] font-medium text-text-muted">Managed via secure portal</p>
-                                    </div>
-                                    <ChevronRight className="w-4 h-4 text-text-muted" />
+            {showChangePlanModal && (() => {
+                const isPremium = organization.plan_type === 'Premium';
+                return (
+                    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-surface border border-border/30 rounded-3xl p-8 max-w-md w-full shadow-premium relative overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            {/* Decorative background blur */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-3xl rounded-full" />
+                            
+                            <div className="relative z-10 space-y-6">
+                                <div>
+                                    <h3 className="text-xl font-black text-text-main tracking-tight mb-2">
+                                        {isPremium ? "Downgrade to Basic" : "Upgrade to Premium"}
+                                    </h3>
+                                    <p className="text-[12.5px] font-semibold text-slate-600 dark:text-slate-300">
+                                        Switch your organization's subscription tier.
+                                    </p>
                                 </div>
-                                <button
-                                    onClick={handleManageBilling}
-                                    disabled={saving}
-                                    className="w-full h-12 bg-main border border-border text-[11px] font-bold text-text-main rounded-xl hover:bg-surface-hover transition-all"
-                                >
-                                    {saving ? 'Loading...' : 'Update Payment Method'}
-                                </button>
-                            </>
-                        ) : (
-                            <>
-                                <div className="p-6 bg-main rounded-[24px] border border-border flex items-center gap-4 mb-6 relative overflow-hidden opacity-60">
-                                    <div className="w-12 h-10 bg-surface border border-border rounded-lg flex items-center justify-center text-text-muted shadow-shell-sm">
-                                        <CreditCard className="w-6 h-6" />
+
+                                <div className="p-5 bg-main/50 border border-border/15 rounded-2xl space-y-3">
+                                    <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                                        <span>Plan Change:</span>
+                                        <span className="text-text-main font-black">
+                                            {organization.plan_type} ➔ {isPremium ? "Basic" : "Premium"}
+                                        </span>
                                     </div>
-                                    <div className="flex-1">
-                                        <p className="text-[13px] font-black text-text-muted">No card on file</p>
-                                        <p className="text-[11px] font-medium text-text-muted">Freemium Plan</p>
+                                    <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400">
+                                        <span>Active Seats:</span>
+                                        <span className="text-text-main font-black">{organization.seats_purchased} Seat{organization.seats_purchased > 1 ? 's' : ''}</span>
+                                    </div>
+                                    <div className="pt-2.5 border-t border-border/20 flex justify-between items-baseline">
+                                        <span className="text-xs font-black uppercase text-primary">New Price Total</span>
+                                        <div className="text-right">
+                                            <span className="text-2xl font-black text-text-main">
+                                                ${(
+                                                    Math.max(0, organization.seats_purchased - 1) * 
+                                                    (isPremium
+                                                        ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99) 
+                                                        : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99)
+                                                    ) * 
+                                                    (organization.subscription_period === 'Yearly' ? 12 : 1)
+                                                ).toFixed(2)}
+                                            </span>
+                                            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                                                {organization.subscription_period === 'Yearly' ? ' / yr' : ' / mo'}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
-                                <button
-                                    onClick={() => navigate('/dashboard/pricing')}
-                                    className="w-full h-12 bg-primary text-white text-[11px] font-black uppercase tracking-widest rounded-xl shadow-glow-primary hover:brightness-110 transition-all"
-                                >
-                                    Add Payment Method
-                                </button>
-                            </>
-                        )}
-                    </Card>
 
-                    {/* Features Comparison Mini */}
-                    <Card className="p-8 border border-border rounded-[32px] shadow-shell-sm bg-gradient-to-b from-surface to-main/30">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-glow-primary border border-primary/20">
-                                <Crown className="w-5 h-5" />
+                                <div className="text-[11.5px] font-semibold leading-relaxed p-4 bg-primary/5 border border-primary/10 rounded-xl">
+                                    {isPremium ? (
+                                        <span className="text-amber-600 dark:text-amber-400 block">
+                                            ⚠️ Note: The downgrade to **Basic** is scheduled and will take effect at the start of your next billing cycle on{" "}
+                                            <strong>
+                                                {organization.current_period_end ? new Date(organization.current_period_end).toLocaleDateString() : "your next renewal"}
+                                            </strong>. 
+                                            You maintain full Premium access until then. No prorated refunds are issued.
+                                        </span>
+                                    ) : (
+                                        <span className="text-emerald-600 dark:text-emerald-400 block">
+                                            ✨ Note: Your upgrade to **Premium** is applied **immediately**. Your card on file will be prorated automatically for the remainder of this cycle.
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <button
+                                        onClick={() => setShowChangePlanModal(false)}
+                                        disabled={saving}
+                                        className="flex-1 h-11 bg-main border border-border/30 text-text-main font-bold uppercase tracking-wider rounded-xl hover:bg-surface-hover transition-all cursor-pointer"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={() => handleChangePlan(isPremium ? "Basic" : "Premium")}
+                                        disabled={saving}
+                                        className="flex-1 h-11 bg-primary text-white dark:text-slate-950 hover:bg-primary-hover font-black uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer"
+                                    >
+                                        {saving ? "Processing..." : (isPremium ? "Confirm Downgrade" : "Confirm Upgrade")}
+                                    </button>
+                                </div>
                             </div>
-                            <div>
-                                <h4 className="text-[15px] font-black text-text-main tracking-tight leading-none mb-1">Premium Perks</h4>
-                                <p className="text-[10px] font-bold text-primary uppercase tracking-widest">
-                                    {organization.subscription_status === 'None' ? 'Upgrade to Unlock' : 'Active during trial'}
-                                </p>
-                            </div>
-                        </div>
-
-                        <ul className="space-y-4">
-                            {[
-                                'Automated Screenshots',
-                                'App & URL Monitoring',
-                                'Productivity Analytics',
-                                'Advanced Data Retention',
-                                'Priority Expert Support'
-                            ].map(feature => (
-                                <li key={feature} className="flex items-center gap-3 text-[12px] font-bold text-text-muted">
-                                    <Zap className="w-3.5 h-3.5 text-primary" />
-                                    {feature}
-                                </li>
-                            ))}
-                        </ul>
-                    </Card>
-
-                    {/* Support Alert */}
-                    <div className="p-8 bg-blue-500/5 border border-blue-500/10 rounded-[32px] flex items-start gap-4">
-                        <AlertCircle className="w-6 h-6 text-blue-500 shrink-0" />
-                        <div className="space-y-2">
-                            <p className="text-[13px] font-black text-blue-900 tracking-tight">Need a custom plan?</p>
-                            <p className="text-[11px] font-medium text-blue-800/70 leading-relaxed">
-                                For teams larger than 50 members, we offer enterprise pricing with custom SLA and dedicated support.
-                            </p>
-                            <button className="text-[11px] font-black text-blue-500 hover:underline uppercase tracking-widest pt-2">
-                                Talk to Sales
-                            </button>
                         </div>
                     </div>
-                </div>
-            </div>
+                );
+            })()}
         </PageLayout>
     );
 }

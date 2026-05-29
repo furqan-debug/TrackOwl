@@ -120,7 +120,7 @@ serve(async (req) => {
       line_items: [
         {
           price: priceId,
-          quantity: seatsCount,
+          quantity: Math.max(1, seatsCount - 1),
         },
       ],
       mode: "subscription",
