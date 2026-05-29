@@ -128,12 +128,16 @@ serve(async (req) => {
         // Amount due today from the prorated invoice
         amountDueToday = upcoming.amount_due / 100;
         
-        // Always use Stripe's period_end as the authoritative next renewal date.
-        // This correctly handles all cases:
-        //   - Monthly -> Yearly: resets to 1 year from now
-        //   - Upgrade same cycle: keeps the same period end (already correct)
-        //   - Any other immediate change: Stripe knows best
-        nextRenewalDate = new Date(upcoming.period_end * 1000).toISOString();
+        // Always use the period.end of the actual new subscription line item.
+        // Stripe's top-level upcoming.period_end can sometimes refer to the current period,
+        // but the line item for the new price always knows its exact period end.
+        const newPriceLine = upcoming.lines.data.find(l => l.price.id === targetPriceId && !l.proration);
+        if (newPriceLine) {
+          nextRenewalDate = new Date(newPriceLine.period.end * 1000).toISOString();
+        } else {
+          // Fallback to top-level if not found
+          nextRenewalDate = new Date(upcoming.period_end * 1000).toISOString();
+        }
 
         // Extract proration lines for details
         const prorations = upcoming.lines.data.filter(l => l.proration);
