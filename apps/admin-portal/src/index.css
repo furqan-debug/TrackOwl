@@ -45,6 +45,8 @@
 /* all light colors defined here */
 @layer base {
   :root {
+    color-scheme: light;
+    color: #001B4D;
     /* Brand Colors - High Luster Gold Palette */
     --color-primary: #001B4D;
     --primary: #001B4D;
@@ -116,6 +118,8 @@
 
   /* all dark colors defined here */
   .dark {
+    color-scheme: dark;
+    color: #F8FAFC;
     --bg-main: #020617;
     --bg-surface: #0F172A;
     --bg-surface-hover: rgba(255, 255, 255, 0.08);

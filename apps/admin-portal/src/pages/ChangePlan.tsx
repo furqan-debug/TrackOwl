@@ -245,7 +245,7 @@ export function ChangePlan() {
                                     className={clsx(
                                         "px-4 py-1.5 text-xs font-black rounded-md transition-all cursor-pointer",
                                         selectedCycle === 'Monthly'
-                                            ? "bg-primary text-white dark:text-slate-950 shadow-sm"
+                                            ? "bg-primary text-white shadow-sm"
                                             : "text-slate-400 hover:text-text-main"
                                     )}
                                 >
@@ -257,12 +257,17 @@ export function ChangePlan() {
                                     className={clsx(
                                         "px-4 py-1.5 text-xs font-black rounded-md transition-all cursor-pointer flex items-center gap-1.5",
                                         selectedCycle === 'Yearly'
-                                            ? "bg-primary text-white dark:text-slate-950 shadow-sm"
+                                            ? "bg-primary text-white shadow-sm"
                                             : "text-slate-400 hover:text-text-main"
                                     )}
                                 >
                                     Yearly
-                                    <span className="text-[9px] font-extrabold uppercase tracking-wide px-1 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                                    <span className={clsx(
+                                        "text-[9px] font-extrabold uppercase tracking-wide px-1.5 py-0.5 rounded transition-all",
+                                        selectedCycle === 'Yearly'
+                                            ? "bg-white/20 text-white dark:bg-slate-950/15 dark:text-slate-950"
+                                            : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                    )}>
                                         -25%
                                     </span>
                                 </button>
@@ -459,10 +464,10 @@ export function ChangePlan() {
                                                         
                                                         {previewData?.prorationDetails && previewData.prorationDetails.length > 0 && (
                                                             <div className="mt-3 space-y-1 pt-3 border-t border-border/20">
-                                                                <p className="text-[10px] font-bold text-slate-500 uppercase">Adjustments Applied:</p>
+                                                                <p className="text-[10px] font-bold text-text-muted uppercase">Adjustments Applied:</p>
                                                                 {previewData.prorationDetails.map((p: any, i: number) => (
                                                                     <div key={i} className="flex justify-between text-[11px]">
-                                                                        <span className="text-slate-500 truncate pr-2" title={p.description}>{p.description}</span>
+                                                                        <span className="text-text-secondary truncate pr-2" title={p.description}>{p.description}</span>
                                                                         <span className={p.amount < 0 ? "text-emerald-500 font-bold" : "text-text-main"}>
                                                                             {p.amount < 0 ? "-" : ""}${Math.abs(p.amount).toFixed(2)}
                                                                         </span>
@@ -530,7 +535,7 @@ export function ChangePlan() {
                                 onClick={handleConfirm}
                                 disabled={saving || !hasChanges || previewLoading}
                                 className={clsx(
-                                    "flex-1 h-11 bg-primary text-white dark:text-slate-950 hover:bg-primary-hover font-black uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center cursor-pointer text-xs",
+                                    "flex-1 h-11 bg-primary text-white hover:bg-primary-hover font-black uppercase tracking-wider rounded-xl shadow-md transition-all flex items-center justify-center cursor-pointer text-xs",
                                     (saving || !hasChanges || previewLoading) && "opacity-50 cursor-not-allowed"
                                 )}
                             >
