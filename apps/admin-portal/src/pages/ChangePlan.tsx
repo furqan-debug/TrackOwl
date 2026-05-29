@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { PageLayout } from '../components/ui';
-import { CheckCircle, Minus, Plus, Loader2, Zap, Calendar, RefreshCcw } from 'lucide-react';
+import { CheckCircle, Loader2, Zap, Calendar, RefreshCcw } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export function ChangePlan() {
@@ -12,24 +12,19 @@ export function ChangePlan() {
 
     const [selectedPlan, setSelectedPlan] = useState<'Basic' | 'Premium'>(organization?.plan_type || 'Basic');
     const [selectedCycle, setSelectedCycle] = useState<'Monthly' | 'Yearly'>(organization?.subscription_period || 'Monthly');
-    const [seatsToPurchase, setSeatsToPurchase] = useState<number>(organization?.seats_purchased || 5);
-    const [memberCount, setMemberCount] = useState<number>(0);
     const [previewLoading, setPreviewLoading] = useState(false);
     const [previewData, setPreviewData] = useState<any>(null);
     const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        if (!organization?.id) return;
-        fetchMemberCount();
-    }, [organization?.id]);
+    // Seats are fixed to the org's current seat count — managed separately from plan changes
+    const seats = organization?.seats_purchased || 1;
 
     useEffect(() => {
         if (!organization?.id) return;
 
         const noChange =
             selectedPlan === organization.plan_type &&
-            selectedCycle === organization.subscription_period &&
-            seatsToPurchase === organization.seats_purchased;
+            selectedCycle === organization.subscription_period;
 
         if (noChange) {
             setPreviewData(null);
@@ -44,7 +39,7 @@ export function ChangePlan() {
                     body: {
                         newPlanType: selectedPlan,
                         newBillingCycle: selectedCycle,
-                        newSeatsCount: seatsToPurchase
+                        newSeatsCount: seats
                     }
                 });
                 if (error) throw error;
@@ -59,35 +54,15 @@ export function ChangePlan() {
 
         const t = setTimeout(fetchPreview, 400);
         return () => clearTimeout(t);
-    }, [selectedPlan, selectedCycle, seatsToPurchase, organization?.id]);
-
-    async function fetchMemberCount() {
-        const { count } = await supabase
-            .from('members')
-            .select('*', { count: 'exact', head: true })
-            .eq('organization_id', organization?.id);
-        setMemberCount(count || 0);
-    }
+    }, [selectedPlan, selectedCycle, organization?.id]);
 
     const handleConfirm = async () => {
         setSaving(true);
         try {
-            if (selectedPlan === organization?.plan_type && selectedCycle === organization?.subscription_period) {
-                const { error } = await supabase.functions.invoke('update-subscription-seats', {
-                    body: { seatsCount: seatsToPurchase }
-                });
-                if (error) throw error;
-            } else {
-                if (seatsToPurchase !== organization?.seats_purchased) {
-                    await supabase.functions.invoke('update-subscription-seats', {
-                        body: { seatsCount: seatsToPurchase }
-                    });
-                }
-                const { error } = await supabase.functions.invoke('change-subscription-plan', {
-                    body: { action: 'changePlan', planType: selectedPlan, billingCycle: selectedCycle }
-                });
-                if (error) throw error;
-            }
+            const { error } = await supabase.functions.invoke('change-subscription-plan', {
+                body: { action: 'changePlan', planType: selectedPlan, billingCycle: selectedCycle }
+            });
+            if (error) throw error;
             await refreshOrganization();
             alert('Subscription updated successfully!');
             navigate('/dashboard/settings/billing');
@@ -101,21 +76,23 @@ export function ChangePlan() {
 
     const hasChanges =
         selectedPlan !== organization.plan_type ||
-        selectedCycle !== organization.subscription_period ||
-        seatsToPurchase !== organization.seats_purchased;
+        selectedCycle !== organization.subscription_period;
 
     const isUpgrade = selectedPlan === 'Premium' && organization.plan_type === 'Basic';
     const isDowngrade = selectedPlan === 'Basic' && organization.plan_type === 'Premium';
     const isScheduled = previewData?.isScheduled ?? false;
 
-    // Simple price per seat for display
     const newPricePerSeat = selectedPlan === 'Premium'
         ? (selectedCycle === 'Monthly' ? 6.99 : 4.99)
         : (selectedCycle === 'Monthly' ? 3.99 : 2.99);
-    const billableSeats = Math.max(1, seatsToPurchase - 1);
+    const billableSeats = Math.max(1, seats - 1);
     const renewalAmount = previewData?.nextRenewalAmount
         ?? (billableSeats * newPricePerSeat * (selectedCycle === 'Yearly' ? 12 : 1));
     const amountDueToday = previewData?.amountDueToday ?? 0;
+
+    // Is there a meaningful difference between today's charge and the normal renewal amount?
+    // e.g. switching to yearly or upgrading mid-cycle creates a gap the user might question
+    const hasProratedDifference = !isScheduled && Math.abs(amountDueToday - renewalAmount) > 0.5;
 
     const renewalDate = previewData?.nextRenewalDate
         ? new Date(previewData.nextRenewalDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
@@ -123,7 +100,6 @@ export function ChangePlan() {
         ? new Date(organization.current_period_end).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
         : '—';
 
-    // What happens next bullet text
     const immediateEffect = isUpgrade
         ? 'Premium features unlock immediately after confirmation.'
         : isDowngrade
@@ -138,7 +114,7 @@ export function ChangePlan() {
         >
             <div className="max-w-3xl mx-auto space-y-6">
 
-                {/* ── STEP 1: What is changing ── */}
+                {/* ── STEP 1: Plan + Cycle ── */}
                 <div className="bg-surface border border-border/30 rounded-2xl p-6 space-y-5">
 
                     {/* Plan Tier */}
@@ -177,7 +153,6 @@ export function ChangePlan() {
                         </div>
                     </div>
 
-                    {/* Divider */}
                     <div className="border-t border-border/20" />
 
                     {/* Billing Cycle */}
@@ -215,35 +190,14 @@ export function ChangePlan() {
                         </div>
                     </div>
 
-                    {/* Divider */}
+                    {/* Active seats info-only row (no controls) */}
                     <div className="border-t border-border/20" />
-
-                    {/* Seats */}
                     <div className="flex items-center justify-between">
                         <div>
                             <label className="text-[11px] font-black text-text-muted uppercase tracking-widest block mb-0.5">Seats</label>
-                            <p className="text-xs text-text-muted">
-                                {memberCount} members active · 1 owner seat is free
-                            </p>
+                            <p className="text-xs text-text-muted">Manage seats separately from the Billing page.</p>
                         </div>
-                        <div className="flex items-center gap-3 bg-main border border-border/30 px-3 py-1.5 rounded-lg">
-                            <button
-                                type="button"
-                                onClick={() => setSeatsToPurchase(Math.max(Math.max(1, memberCount), seatsToPurchase - 1))}
-                                disabled={seatsToPurchase <= Math.max(1, memberCount)}
-                                className="w-7 h-7 flex items-center justify-center rounded-md bg-surface border border-border/30 text-text-main hover:border-primary hover:text-primary transition-all disabled:opacity-30 cursor-pointer"
-                            >
-                                <Minus className="w-3.5 h-3.5" />
-                            </button>
-                            <span className="text-sm font-black text-text-main w-6 text-center tabular-nums">{seatsToPurchase}</span>
-                            <button
-                                type="button"
-                                onClick={() => setSeatsToPurchase(seatsToPurchase + 1)}
-                                className="w-7 h-7 flex items-center justify-center rounded-md bg-surface border border-border/30 text-text-main hover:border-primary hover:text-primary transition-all cursor-pointer"
-                            >
-                                <Plus className="w-3.5 h-3.5" />
-                            </button>
-                        </div>
+                        <span className="text-sm font-black text-text-main tabular-nums">{seats}</span>
                     </div>
                 </div>
 
@@ -259,21 +213,23 @@ export function ChangePlan() {
                             </div>
                         ) : (
                             <>
-                                {/* Amount due today */}
-                                <div className="flex items-start justify-between">
+                                {/* Charge today */}
+                                <div className="flex items-start justify-between gap-4">
                                     <div>
                                         <p className="text-sm font-bold text-text-main">
-                                            {isScheduled ? 'No charge today' : 'Amount Due Today'}
+                                            {isScheduled ? 'No charge today' : 'Charge Today'}
                                         </p>
                                         <p className="text-xs text-text-muted mt-0.5">
                                             {isScheduled
                                                 ? 'Changes take effect at your next renewal.'
+                                                : hasProratedDifference
+                                                ? 'Includes any unused-time credit from your current plan and a prorated charge for the remainder of this billing period.'
                                                 : 'Charged immediately after confirmation.'}
                                         </p>
                                     </div>
                                     <p className={clsx(
-                                        'text-2xl font-black tracking-tight',
-                                        isScheduled ? 'text-text-muted' : 'text-primary dark:text-primary'
+                                        'text-2xl font-black tracking-tight shrink-0',
+                                        isScheduled ? 'text-text-muted' : 'text-primary'
                                     )}>
                                         {isScheduled ? '$0.00' : `$${amountDueToday.toFixed(2)}`}
                                     </p>
@@ -295,7 +251,7 @@ export function ChangePlan() {
                                             </span>
                                         </p>
                                         <p className="text-xs text-text-muted mt-0.5">
-                                            {selectedPlan} · {seatsToPurchase} seats · {selectedCycle}
+                                            {selectedPlan} · {seats} seats · {selectedCycle}
                                         </p>
                                     </div>
                                 </div>
@@ -328,7 +284,7 @@ export function ChangePlan() {
                                     <span className="font-black">
                                         ${renewalAmount.toFixed(2)}/{selectedCycle === 'Monthly' ? 'month' : 'year'}
                                     </span>{' '}
-                                    for {seatsToPurchase} seats.
+                                    for {seats} seats.
                                 </p>
                             </div>
                             <div className="flex items-start gap-3">
