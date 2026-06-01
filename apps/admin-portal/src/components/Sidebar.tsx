@@ -112,10 +112,9 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
             <Link
                 to="/dashboard"
                 className={clsx(
-                    "flex items-center sticky top-0 z-20 border-b border-white/[0.05] hover:opacity-80 transition-opacity",
+                    "flex items-center border-b border-white/[0.05] hover:opacity-80 transition-opacity shrink-0",
                     effectiveCollapsed ? "justify-center px-0 py-6" : "px-6 py-6"
                 )}
-                style={{ background: 'transparent' }}
             >
                 {effectiveCollapsed ? (
                     <div className="w-10 h-10 flex items-center justify-center shrink-0">
@@ -175,7 +174,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 {/* Main Navigation */}
                 <nav className="space-y-2" aria-label="Primary">
                     {!effectiveCollapsed && (
-                        <p className="px-4 text-[11px] font-black text-white/40 mb-3 text-left uppercase tracking-[0.2em]">Navigation</p>
+                        <p className="px-4 text-[11px] font-bold text-white/40 mb-3 text-left uppercase tracking-[0.2em]">Navigation</p>
                     )}
                     {filteredNav.map((group) => {
                         const hasChildren = group.children && group.children.length > 0;
@@ -302,7 +301,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                         className={clsx("flex items-center gap-3 group cursor-pointer", effectiveCollapsed ? "justify-center" : "")}
                     >
                         <div className="relative shrink-0 min-w-[40px] min-h-[40px] w-10 h-10">
-                            <div className="w-full h-full rounded-xl bg-accent flex items-center justify-center text-[#001B4D] font-black text-sm shadow-lg shadow-accent/20 transition-transform group-hover:scale-105 overflow-hidden">
+                            <div className="w-full h-full rounded-xl bg-accent flex items-center justify-center text-[#001B4D] font-bold text-sm shadow-lg shadow-accent/20 transition-transform group-hover:scale-105 overflow-hidden">
                                 {profile?.avatar_url && !avatarError ? (
                                     <SecureImage
                                         path={profile.avatar_url}
@@ -319,9 +318,9 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                         </div>
                         {!effectiveCollapsed && (
                             <div className="min-w-0 flex-1">
-                                <p className="text-[14px] font-black text-white truncate leading-none mb-1.5 tracking-tight group-hover:text-accent transition-colors">{profile?.full_name}</p>
+                                <p className="text-[14px] font-bold text-white truncate leading-none mb-1.5 group-hover:text-accent transition-colors">{profile?.full_name}</p>
                                 <div className="flex items-center gap-1.5">
-                                    <span className="text-[9px] font-black text-white/60 uppercase tracking-widest leading-none">View Profile</span>
+                                    <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest leading-none">View Profile</span>
                                 </div>
                             </div>
                         )}
@@ -331,7 +330,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                         <div className="flex items-center justify-between gap-3">
                             <div className="px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/10 flex items-center gap-2 flex-1">
                                 <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-                                <span className="text-[10px] font-black text-white/60 uppercase tracking-widest">
+                                <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
                                     {organization?.subscription_status === 'None' 
                                         ? 'No Active Plan' 
                                         : `${isPremium ? (organization?.subscription_status === 'Trial' ? 'Trial' : 'Premium') : (organization?.plan_type || 'Basic')} Plan`}
@@ -351,7 +350,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                         type="button"
                         onClick={() => signOut()}
                         className={clsx(
-                            "w-full flex items-center gap-3 rounded-xl text-[11px] font-black uppercase tracking-[0.15em] text-[#FF4D4D] hover:bg-[#FF4D4D]/10 transition-all group",
+                            "w-full flex items-center gap-3 rounded-xl text-[11px] font-bold uppercase tracking-[0.15em] text-[#FF4D4D] hover:bg-[#FF4D4D]/10 transition-all group",
                             effectiveCollapsed ? "justify-center p-2.5" : "px-3 py-2.5"
                         )}
                     >

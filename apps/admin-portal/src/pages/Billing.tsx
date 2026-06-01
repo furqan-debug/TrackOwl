@@ -337,7 +337,7 @@ export function Billing() {
                     </div>
                     <button 
                         onClick={() => setShowMockPortalNotice(false)}
-                        className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/35 border border-blue-500/30 text-blue-300 text-xs font-bold rounded-xl transition-all relative z-10"
+                        className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/35 border border-blue-500/30 text-blue-300 text-xs font-bold rounded-md transition-all relative z-10"
                     >
                         Dismiss
                     </button>
@@ -377,7 +377,7 @@ export function Billing() {
                                 setSaving(false);
                             }
                         }}
-                        className="px-4 py-2 bg-rose-500/20 hover:bg-rose-500/35 border border-rose-500/30 text-rose-300 text-xs font-bold rounded-xl transition-all relative z-10 disabled:opacity-50"
+                        className="px-4 py-2 bg-rose-500/20 hover:bg-rose-500/35 border border-rose-500/30 text-rose-300 text-xs font-bold rounded-md transition-all relative z-10 disabled:opacity-50"
                     >
                         {saving ? 'Resetting Sandbox...' : 'Reset to Basic Plan (Downgrade)'}
                     </button>
@@ -403,7 +403,7 @@ export function Billing() {
                     <button 
                         disabled={saving}
                         onClick={handleCancelDowngrade}
-                        className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/35 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-xl transition-all relative z-10 disabled:opacity-50 cursor-pointer shrink-0"
+                        className="px-4 py-2 bg-amber-500/20 hover:bg-amber-500/35 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs font-bold rounded-md transition-all relative z-10 disabled:opacity-50 cursor-pointer shrink-0"
                     >
                         {saving ? 'Canceling...' : 'Cancel Pending Downgrade'}
                     </button>
@@ -440,7 +440,7 @@ export function Billing() {
                                             onClick={() => navigate('/dashboard/settings/billing/change-plan')}
                                             disabled={saving || !!organization.settings?.pending_downgrade}
                                             title={organization.settings?.pending_downgrade ? "Plan downgrade already scheduled" : "Upgrade or downgrade your plan"}
-                                            className="px-5 h-11 bg-surface border border-border/30 text-text-main hover:border-primary/55 font-black rounded-xl text-[10px] uppercase tracking-wider shadow-sm active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="px-5 h-11 bg-surface border border-border/30 text-text-main hover:border-primary/55 font-black rounded-md text-[10px] uppercase tracking-wider shadow-sm active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Zap className="w-4 h-4 text-primary" />
                                             Change Plan
@@ -451,7 +451,7 @@ export function Billing() {
                                             onClick={handleManageBilling}
                                             disabled={saving}
                                             style={{ color: 'var(--bg-surface)' }}
-                                            className="px-6 h-11 bg-primary hover:bg-primary-hover font-black rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                                            className="px-6 h-11 bg-primary hover:bg-primary-hover font-black rounded-md text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                                         >
                                             <Crown className="w-4 h-4" />
                                             {saving ? 'Loading...' : 'Manage Subscription'}
@@ -460,7 +460,7 @@ export function Billing() {
                                         <button
                                             onClick={() => navigate('/dashboard/pricing')}
                                             style={{ color: 'var(--bg-surface)' }}
-                                            className="px-6 h-11 bg-primary hover:bg-primary-hover font-black rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+                                            className="px-6 h-11 bg-primary hover:bg-primary-hover font-black rounded-md text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
                                         >
                                             <ArrowUpCircle className="w-4 h-4" />
                                             Upgrade Plan
@@ -470,7 +470,7 @@ export function Billing() {
                                         onClick={handleManageBilling}
                                         disabled={saving || organization.subscription_status === 'None' || !organization.stripe_customer_id}
                                         title={organization.subscription_status !== 'None' && organization.stripe_customer_id ? "Manage in Stripe" : "Stripe account not configured yet"}
-                                        className="p-3 bg-surface border border-border/30 rounded-xl text-slate-600 dark:text-slate-400 hover:text-primary hover:border-primary/35 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                        className="p-3 bg-surface border border-border/30 rounded-md text-slate-600 dark:text-slate-400 hover:text-primary hover:border-primary/35 transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                     >
                                         <ExternalLink className="w-4.5 h-4.5" />
                                     </button>
@@ -522,11 +522,11 @@ export function Billing() {
                             </div>
 
                             <div className="flex flex-col md:flex-row items-center gap-8">
-                                <div className="flex items-center gap-4 px-3 py-1.5 bg-main/60 rounded-xl border border-border/20 w-fit shadow-sm">
+                                <div className="flex items-center gap-4 px-3 py-1.5 bg-main/60 rounded-md border border-border/20 w-fit shadow-sm">
                                     <button
                                         onClick={() => setSeatsToPurchase(Math.max(Math.max(1, memberCount), seatsToPurchase - 1))}
                                         disabled={seatsToPurchase <= Math.max(1, memberCount)}
-                                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-surface border border-border/30 text-text-main hover:text-primary hover:border-primary/55 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm cursor-pointer"
+                                        className="w-9 h-9 flex items-center justify-center rounded-md bg-surface border border-border/30 text-text-main hover:text-primary hover:border-primary/55 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm cursor-pointer"
                                     >
                                         <Minus className="w-4 h-4" />
                                     </button>
@@ -535,7 +535,7 @@ export function Billing() {
                                     </span>
                                     <button
                                         onClick={() => setSeatsToPurchase(seatsToPurchase + 1)}
-                                        className="w-9 h-9 flex items-center justify-center rounded-lg bg-surface border border-border/30 text-text-main hover:text-primary hover:border-primary/55 transition-all active:scale-95 shadow-sm cursor-pointer"
+                                        className="w-9 h-9 flex items-center justify-center rounded-md bg-surface border border-border/30 text-text-main hover:text-primary hover:border-primary/55 transition-all active:scale-95 shadow-sm cursor-pointer"
                                     >
                                         <Plus className="w-4 h-4" />
                                     </button>
@@ -611,7 +611,7 @@ export function Billing() {
                                     disabled={saving || (organization.subscription_status !== 'None' && seatsToPurchase === organization.seats_purchased)}
                                     style={{ color: 'var(--bg-surface)' }}
                                     className={clsx(
-                                        "px-8 h-11 bg-primary hover:bg-primary-hover font-black rounded-xl text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer",
+                                        "px-8 h-11 bg-primary hover:bg-primary-hover font-black rounded-md text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer",
                                         (saving || (organization.subscription_status !== 'None' && seatsToPurchase === organization.seats_purchased)) && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
@@ -637,9 +637,9 @@ export function Billing() {
                                         <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 blur-xl group-hover:bg-primary/20 transition-colors" />
 
                                         {paymentMethod ? (
-                                            <CardBrandIcon brand={paymentMethod.brand} className="w-10 h-9 shrink-0 shadow-sm rounded-lg" />
+                                            <CardBrandIcon brand={paymentMethod.brand} className="w-10 h-9 shrink-0 shadow-sm rounded-md" />
                                         ) : (
-                                            <div className="w-10 h-9 bg-surface border border-border/20 rounded-lg flex items-center justify-center text-text-main shadow-sm shrink-0">
+                                            <div className="w-10 h-9 bg-surface border border-border/20 rounded-md flex items-center justify-center text-text-main shadow-sm shrink-0">
                                                 <CreditCard className="w-5 h-5" />
                                             </div>
                                         )}
@@ -656,7 +656,7 @@ export function Billing() {
                                     <button
                                         onClick={handleManageBilling}
                                         disabled={saving}
-                                        className="w-full h-11 bg-main border border-border/30 text-[10px] font-bold uppercase tracking-wider text-text-main rounded-xl hover:bg-surface-hover transition-all cursor-pointer"
+                                        className="w-full h-11 bg-main border border-border/30 text-[10px] font-bold uppercase tracking-wider text-text-main rounded-md hover:bg-surface-hover transition-all cursor-pointer"
                                     >
                                         {saving ? 'Loading...' : 'Update Payment Method'}
                                     </button>
@@ -664,7 +664,7 @@ export function Billing() {
                             ) : (
                                 <div className="space-y-6">
                                     <div className="p-4 bg-main/50 rounded-2xl border border-border/15 flex items-center gap-4 relative overflow-hidden opacity-60 shadow-sm">
-                                        <div className="w-10 h-9 bg-surface border border-border/20 rounded-lg flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm">
+                                        <div className="w-10 h-9 bg-surface border border-border/20 rounded-md flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm">
                                             <CreditCard className="w-5 h-5" />
                                         </div>
                                         <div className="flex-1">
@@ -674,7 +674,7 @@ export function Billing() {
                                     </div>
                                     <button
                                         onClick={() => navigate('/dashboard/pricing')}
-                                        className="w-full h-11 bg-primary text-white dark:text-slate-950 hover:bg-primary-hover font-black text-[10px] uppercase tracking-wider rounded-xl shadow-md transition-all cursor-pointer"
+                                        className="w-full h-11 bg-primary text-white dark:text-slate-950 hover:bg-primary-hover font-black text-[10px] uppercase tracking-wider rounded-md shadow-md transition-all cursor-pointer"
                                     >
                                         Add Payment Method
                                     </button>
