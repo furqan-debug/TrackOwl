@@ -10,7 +10,7 @@ CREATE UNIQUE INDEX unique_active_session_per_user ON sessions (user_id) WHERE (
 
 -- 2. Create/Update the atomic start function (Hardened)
 CREATE OR REPLACE FUNCTION public.rpc_start_session(
-    p_user_id text, 
+    p_user_id uuid, 
     p_project_id text DEFAULT NULL, 
     p_organization_id uuid DEFAULT NULL, 
     p_ip_address text DEFAULT NULL
@@ -22,7 +22,14 @@ AS $$
 DECLARE
     v_session_id uuid;
     v_now timestamptz := now();
+    v_member_status text;
 BEGIN
+    -- 0. Ensure the user is Active
+    SELECT status INTO v_member_status FROM public.members WHERE id = p_user_id;
+    IF v_member_status != 'Active' THEN
+        RAISE EXCEPTION 'Your account is deactivated. You cannot start tracking time.';
+    END IF;
+
     -- 1. Close any older sessions (just in case)
     UPDATE public.sessions
     SET ended_at = v_now
