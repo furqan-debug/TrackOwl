@@ -11,6 +11,7 @@ export interface ModalProps {
     children: ReactNode;
     footer?: ReactNode;
     maxWidth?: string;
+    allowOverflow?: boolean;
 }
 
 export function Modal({
@@ -21,6 +22,7 @@ export function Modal({
     children,
     footer,
     maxWidth = 'max-w-lg',
+    allowOverflow = false,
 }: ModalProps) {
     useEffect(() => {
         if (isOpen) {
@@ -42,13 +44,14 @@ export function Modal({
             }}
         >
             <div className={clsx(
-                "bg-surface rounded-[32px] w-full shadow-2xl flex flex-col border border-border overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-8 duration-500",
+                "bg-surface rounded-[32px] w-full shadow-2xl flex flex-col border border-border animate-in zoom-in-95 slide-in-from-bottom-8 duration-500",
+                allowOverflow ? "overflow-visible" : "overflow-hidden",
                 maxWidth
             )}
             onClick={(e) => e.stopPropagation()}
             >
                 {/* Modal Header */}
-                <div className="px-8 py-6 border-b border-border bg-surface-subtle">
+                <div className={clsx("px-8 py-6 border-b border-border bg-surface-subtle", allowOverflow && "rounded-t-[32px]")}>
                     <div className="flex items-center justify-between">
                         <div>
                             <h2 className="text-2xl font-bold text-text-primary tracking-tight leading-tight mb-2">
@@ -70,13 +73,13 @@ export function Modal({
                 </div>
 
                 {/* Modal Content */}
-                <div className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar">
+                <div className={clsx("flex-1 px-8 py-8 custom-scrollbar", allowOverflow ? "overflow-visible" : "overflow-y-auto")}>
                     {children}
                 </div>
 
                 {/* Modal Footer */}
                 {footer && (
-                    <div className="px-8 py-6 border-t border-border bg-surface-subtle flex items-center justify-end gap-4">
+                    <div className={clsx("px-8 py-6 border-t border-border bg-surface-subtle flex items-center justify-end gap-4", allowOverflow && "rounded-b-[32px]")}>
                         {footer}
                     </div>
                 )}

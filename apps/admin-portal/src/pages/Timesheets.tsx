@@ -338,8 +338,8 @@ export function Timesheets() {
 
             <div className="px-8 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-slate-50 sticky top-0 bg-surface/80 backdrop-blur-md z-30">
                 <div className="flex items-center gap-6">
-                    <div className="flex items-center bg-surface border border-border rounded-2xl p-1 shadow-shell-sm h-12">
-                        <button onClick={() => navigateDate(-1)} className="p-3 hover:bg-surface-hover rounded-xl transition-all text-text-muted hover:text-primary">
+                    <div className="flex items-center bg-surface border border-border rounded-md p-1 shadow-shell-sm h-12">
+                        <button onClick={() => navigateDate(-1)} className="p-3 hover:bg-surface-hover rounded-md transition-all text-text-muted hover:text-primary">
                             <ChevronLeft className="w-5 h-5" />
                         </button>
                         <DatePicker
@@ -352,7 +352,7 @@ export function Timesheets() {
                             className="min-w-[200px]"
                         />
 
-                        <button onClick={() => navigateDate(1)} className="p-3 hover:bg-surface-hover rounded-xl transition-all text-text-muted hover:text-primary">
+                        <button onClick={() => navigateDate(1)} className="p-3 hover:bg-surface-hover rounded-md transition-all text-text-muted hover:text-primary">
                             <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
@@ -371,13 +371,13 @@ export function Timesheets() {
                     </div>
                 </div>
 
-                <div className="flex bg-main/50 p-1.5 rounded-2xl border border-border/50 h-12 shrink-0">
+                <div className="flex bg-main/50 p-1.5 rounded-md border border-border/50 h-12 shrink-0">
                     {(['daily', 'weekly', 'calendar'] as const).map(mode => (
                         <button
                             key={mode}
                             onClick={() => setViewMode(mode)}
                             className={clsx(
-                                "px-8 rounded-xl text-[12px] font-bold transition-all h-full",
+                                "px-8 rounded-md text-[12px] font-bold transition-all h-full",
                                 viewMode === mode ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm" : "text-text-muted hover:text-slate-600"
                             )}
                         >
@@ -399,11 +399,11 @@ export function Timesheets() {
                         />
                     </div>
 
-                    <button onClick={() => setShowFilters(true)} className="flex items-center gap-3 px-6 h-12 bg-surface border border-border text-text-muted rounded-2xl text-[13px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all">
+                    <button onClick={() => setShowFilters(true)} className="flex items-center gap-3 px-6 h-12 bg-surface border border-border text-text-muted rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all">
                         <Filter className="w-4 h-4" /> Filter
                     </button>
 
-                    <button onClick={() => setShowAddTime(true)} className="flex items-center gap-3 px-8 h-12 bg-primary text-white rounded-2xl text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">
+                    <button onClick={() => setShowAddTime(true)} className="flex items-center gap-3 px-8 h-12 bg-primary text-white rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">
                         <Plus className="w-5 h-5" /> Add time
                     </button>
                 </div>
@@ -421,7 +421,7 @@ export function Timesheets() {
                 )}
             </main>
 
-            <Modal isOpen={showFilters} onClose={() => setShowFilters(false)} title="Filters">
+            <Modal isOpen={showFilters} onClose={() => setShowFilters(false)} title="Filters" allowOverflow={true}>
                 <div className="space-y-6 py-4">
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold text-text-muted ">Project Scope</label>
@@ -480,15 +480,15 @@ export function Timesheets() {
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-muted ">Start</label>
-                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-xl px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({ ...addTimeData, startTime: e.target.value })} />
+                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({ ...addTimeData, startTime: e.target.value })} />
                         </div>
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-muted ">End</label>
-                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-xl px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({ ...addTimeData, endTime: e.target.value })} />
+                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({ ...addTimeData, endTime: e.target.value })} />
                         </div>
                     </div>
                     <div className="flex justify-end pt-2">
-                        <button onClick={handleManualAddTime} className="px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">Submit Entry</button>
+                        <button onClick={handleManualAddTime} className="px-8 h-11 bg-primary text-white rounded-md text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">Submit Entry</button>
                     </div>
                 </div>
             </Modal>
@@ -607,7 +607,7 @@ function DailyView({ entries, selectedMember, toProperCase }: {
                 })}
             </div>
 
-            <div className="bg-surface rounded-[24px] border border-border shadow-shell-sm overflow-hidden">
+            <div className="bg-surface rounded-md border border-border shadow-shell-sm overflow-hidden">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
                         <tr className="bg-surface-hover/30">
@@ -645,7 +645,7 @@ function DailyView({ entries, selectedMember, toProperCase }: {
                                             {renderTimeDisplay(s)}
                                         </span>
                                         {s.offline_mins > 0 && (
-                                            <span className="text-[11px] text-[var(--chart-gold)] font-bold tracking-tight bg-primary/5 px-2 py-0.5 rounded-lg border border-primary/10">
+                                            <span className="text-[11px] text-[var(--chart-gold)] font-bold tracking-tight bg-primary/5 px-2 py-0.5 rounded-md border border-primary/10">
                                                 +{s.offline_mins}m offline
                                             </span>
                                         )}
@@ -664,13 +664,13 @@ function WeeklyView({ entries, onNavigate }: { entries: DailyEntry[], onNavigate
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-6">
             {entries.map((day, i) => (
-                <div key={i} className="bg-surface border border-border rounded-[24px] p-6 flex flex-col items-center gap-4 hover:border-primary/30 hover:shadow-lg hover:shadow-slate-200/40 transition-all cursor-pointer group" onClick={() => onNavigate(day.date)}>
+                <div key={i} className="bg-surface border border-border rounded-md p-6 flex flex-col items-center gap-4 hover:border-primary/30 hover:shadow-lg hover:shadow-slate-200/40 transition-all cursor-pointer group" onClick={() => onNavigate(day.date)}>
                     <span className="text-[10px] font-bold text-text-muted ">{DAYS_SHORT[new Date(day.date + 'T12:00:00').getDay()]}</span>
                     <span className="text-2xl font-bold text-text-main group-hover:text-primary transition-colors tabular-nums">{new Date(day.date + 'T12:00:00').getDate()}</span>
                     <div className="flex flex-col items-center gap-1">
                         <span className="text-[13px] font-bold text-text-main tabular-nums">{formatDuration(day.totalMinutes)}</span>
                         {day.totalMinutes > 0 && (
-                            <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-lg">{day.activityPercent}%</span>
+                            <span className="text-[10px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded-md">{day.activityPercent}%</span>
                         )}
                     </div>
                 </div>
@@ -681,7 +681,7 @@ function WeeklyView({ entries, onNavigate }: { entries: DailyEntry[], onNavigate
 
 function CalendarView({ entries }: { entries: DailyEntry[] }) {
     return (
-        <div className="bg-surface border border-border rounded-[24px] overflow-hidden shadow-shell-sm">
+        <div className="bg-surface border border-border rounded-md overflow-hidden shadow-shell-sm">
             <div className="grid grid-cols-7 border-b border-border">
                 {DAYS_SHORT.map(d => (
                     <div key={d} className="bg-surface-hover/50 p-4 text-[10px] font-bold text-text-muted text-center">{d}</div>
@@ -692,7 +692,7 @@ function CalendarView({ entries }: { entries: DailyEntry[] }) {
                     <div key={i} className="bg-surface min-h-[140px] p-4 flex flex-col gap-3 hover:bg-surface-hover transition-all group">
                         <span className="text-[11px] font-bold text-text-muted group-hover:text-slate-900 transition-colors">{new Date(day.date + 'T12:00:00').getDate()}</span>
                         {day.totalMinutes > 0 && (
-                            <div className="bg-primary/5 border border-primary/10 text-[var(--chart-gold)] rounded-xl p-3 flex flex-col gap-1.5 shadow-shell-sm">
+                            <div className="bg-primary/5 border border-primary/10 text-[var(--chart-gold)] rounded-md p-3 flex flex-col gap-1.5 shadow-shell-sm">
                                 <span className="text-[12px] font-bold tabular-nums">{formatDuration(day.totalMinutes)}</span>
                                 <div className="w-full h-1 bg-primary/10 rounded-full overflow-hidden">
                                     <div className="h-full" style={{ width: `${day.activityPercent}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--gold-vibrant) 100%)' }} />
