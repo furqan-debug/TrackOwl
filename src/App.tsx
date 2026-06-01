@@ -1160,8 +1160,8 @@ export default function App() {
 
     // 2. Adjust local timer and live idle counter
     const discardedSecs = minutes * 60;
-    setElapsed(prev => Math.max(0, prev - discardedSecs));
-    setLiveIdleSeconds(prev => Math.max(0, prev - discardedSecs));
+    setElapsedStart((prev: number) => Math.max(0, prev - discardedSecs));
+    setLiveIdleSeconds((prev: number) => Math.max(0, prev - discardedSecs));
 
     if (shouldResume) {
       setIdlePaused(false);
