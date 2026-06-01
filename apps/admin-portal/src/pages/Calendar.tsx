@@ -97,10 +97,10 @@ export function Calendar() {
             description="Operational schedule of approved leave and corporate milestones."
             actions={
                 <div className="flex items-center gap-4">
-                    <div className="p-1 rounded-xl flex items-center shadow-shell-sm border border-[var(--border-color)] overflow-hidden bg-[var(--bg-surface)]">
+                    <div className="p-1 rounded-md flex items-center shadow-shell-sm border border-[var(--border-color)] overflow-hidden bg-[var(--bg-surface)]">
                         <button 
                             onClick={prevMonth} 
-                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-slate-900 transition-all rounded-lg"
+                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-slate-900 transition-all rounded-md"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -111,7 +111,7 @@ export function Calendar() {
                         </div>
                         <button 
                             onClick={nextMonth} 
-                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-slate-900 transition-all rounded-lg"
+                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-slate-900 transition-all rounded-md"
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>
@@ -120,7 +120,7 @@ export function Calendar() {
                     <button 
                         onClick={() => fetchData(true)} 
                         className={clsx(
-                            "w-10 h-10 flex items-center justify-center glass-panel rounded-xl transition-all shadow-shell-sm",
+                            "w-10 h-10 flex items-center justify-center glass-panel rounded-md transition-all shadow-shell-sm",
                             refreshing ? "text-primary animate-spin" : "text-text-muted hover:text-slate-900"
                         )}
                     >
@@ -133,11 +133,11 @@ export function Calendar() {
                 
                 {/* 📅 Compact Grid Shell (9/12) */}
                 <div className="lg:col-span-9">
-                    <div className="rounded-[24px] shadow-premium overflow-hidden border border-[var(--border-color)] bg-[var(--bg-surface)]">
+                    <div className="rounded-md shadow-premium overflow-hidden border border-[var(--border-color)] bg-[var(--bg-surface)]">
                         <div className="grid grid-cols-7 bg-primary/5 border-b border-[var(--border-color)]">
                             {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
                                 <div key={d} className="py-4 text-center">
-                                    <span className="text-[10px] font-black text-[var(--text-muted)] tracking-[0.2em]">{d}</span>
+                                    <span className="text-[10px] font-bold text-[var(--text-muted)] tracking-[0.2em]">{d}</span>
                                 </div>
                             ))}
                         </div>
@@ -156,16 +156,23 @@ export function Calendar() {
                                     return dateStr >= start && dateStr <= end;
                                 });
 
+                                const isToday = day === new Date().getDate() && currentDate.getMonth() === new Date().getMonth() && currentDate.getFullYear() === new Date().getFullYear();
+                                const isWeekend = idx % 7 === 0 || idx % 7 === 6;
+
                                 return (
                                     <div 
                                         key={day} 
                                         className={clsx(
-                                            "border-r border-b border-[var(--border-color)] p-3 hover:bg-primary/5 transition-all group relative overflow-hidden last:border-r-0",
-                                            dayRequests.length > 0 && "bg-primary/5"
+                                            "border-r border-b border-[var(--border-color)] p-3 hover:bg-primary/5 transition-all group relative overflow-hidden last:border-r-0 min-h-[120px]",
+                                            isWeekend && "bg-surface-hover/40",
+                                            isToday && "ring-2 ring-primary/30 z-10 bg-primary/[0.02]"
                                         )}
                                     >
                                         <div className="flex justify-between items-start mb-2">
-                                            <span className="text-[11px] font-bold text-[var(--text-muted)] group-hover:text-[var(--text-main)] transition-colors tracking-tight">
+                                            <span className={clsx(
+                                                "text-[12px] font-bold tracking-tight transition-colors",
+                                                isToday ? "text-primary bg-primary/10 w-6 h-6 flex items-center justify-center rounded-md" : "text-[var(--text-muted)] group-hover:text-[var(--text-main)]"
+                                            )}>
                                                 {day}
                                             </span>
                                             {dayHolidays.length > 0 && (
@@ -173,14 +180,15 @@ export function Calendar() {
                                             )}
                                         </div>
                                         
-                                        <div className="space-y-1 overflow-y-auto max-h-[80px] no-scrollbar pr-1">
+                                        <div className="space-y-1.5 overflow-y-auto max-h-[80px] no-scrollbar pr-1 mt-2">
                                             {dayHolidays.map(h => (
-                                                <div key={h.id} className="bg-rose-50 text-rose-500 text-[9px] font-bold tracking-tight px-2 py-1 rounded-md border border-rose-100 flex items-center gap-1.5 shadow-shell-sm">
+                                                <div key={h.id} className="bg-rose-50 text-rose-600 text-[9px] font-bold tracking-tight px-2 py-1 rounded shadow-sm border-l-2 border-rose-500 flex items-center gap-1.5">
                                                     {h.name}
                                                 </div>
                                             ))}
                                             {dayRequests.map(r => (
-                                                <div key={r.id} className="bg-primary text-white text-[9px] font-bold tracking-tight px-2 py-1 rounded-md shadow-shell-sm truncate">
+                                                <div key={r.id} className="bg-indigo-50 text-indigo-700 text-[9px] font-bold tracking-tight px-2 py-1 rounded shadow-sm border-l-2 border-indigo-500 truncate flex items-center gap-1">
+                                                    <Palmtree className="w-2.5 h-2.5 shrink-0 opacity-70" />
                                                     {r.member_name}
                                                 </div>
                                             ))}
@@ -195,24 +203,24 @@ export function Calendar() {
                 {/* 📋 Operational Sidebar (3/12) */}
                 <div className="lg:col-span-3 space-y-6">
                     {/* Holiday Roll */}
-                    <div className="rounded-[24px] shadow-premium p-8 border border-[var(--border-color)] bg-navy text-white overflow-hidden relative group">
+                    <div className="rounded-md shadow-premium p-6 border border-[var(--border-color)] bg-[#001B4D] text-white overflow-hidden relative group">
                         <div className="absolute -top-12 -right-12 w-32 h-32 bg-surface/5 rounded-full blur-3xl" />
-                        <div className="flex items-center gap-3 mb-8 relative z-10">
-                            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
+                        <div className="flex items-center gap-3 mb-6 relative z-10">
+                            <div className="w-8 h-8 rounded-md bg-[#D4AF37] flex items-center justify-center text-[#001B4D] shadow-lg shadow-[#D4AF37]/20">
                                 <AlertCircle className="w-4 h-4" />
                             </div>
-                            <span className="text-[10px] font-black tracking-[0.2em] text-white/60">Upcoming Holidays</span>
+                            <span className="text-[10px] font-bold tracking-[0.2em] text-white/80">Upcoming Holidays</span>
                         </div>
                         
-                        <div className="space-y-5 relative z-10">
+                        <div className="space-y-4 relative z-10">
                             {holidays.length === 0 ? (
-                                <div className="p-4 bg-surface/5 rounded-xl border border-white/10">
-                                    <p className="text-[10px] text-white/40 font-bold text-center italic">No corporate milestones</p>
+                                <div className="p-4 bg-white/5 rounded-md border border-white/10">
+                                    <p className="text-[10px] text-white/60 font-bold text-center italic">No corporate milestones</p>
                                 </div>
                             ) : (
                                 holidays.slice(0, 4).map(h => (
-                                    <div key={h.id} className="group/item flex flex-col gap-1 border-l-2 border-indigo-500/30 pl-4 py-1 hover:border-indigo-400 transition-colors">
-                                        <span className="text-[9px] font-bold text-indigo-400 ">
+                                    <div key={h.id} className="group/item flex flex-col gap-1 border-l-2 border-[#D4AF37] pl-4 py-1 hover:border-[#FDE047] transition-colors">
+                                        <span className="text-[9px] font-bold text-[#D4AF37]/80">
                                             {new Date(h.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                         </span>
                                         <p className="text-sm font-bold text-white tracking-tight leading-tight">{h.name}</p>
@@ -223,17 +231,17 @@ export function Calendar() {
                     </div>
 
                     {/* Schedule Legend */}
-                    <div className="rounded-[24px] shadow-premium p-8 border border-[var(--border-color)] bg-[var(--bg-surface)]">
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/10">
+                    <div className="rounded-md shadow-premium p-6 border border-[var(--border-color)] bg-[var(--bg-surface)]">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="w-8 h-8 rounded-md bg-primary/10 flex items-center justify-center text-primary border border-primary/10">
                                 <Info className="w-4 h-4" />
                             </div>
-                            <span className="text-[10px] font-black text-[var(--text-muted)] tracking-[0.2em]">Operational Legend</span>
+                            <span className="text-[10px] font-bold text-[var(--text-muted)] tracking-[0.2em]">Operational Legend</span>
                         </div>
                         
-                        <div className="space-y-4">
-                            <div className="flex items-center gap-4 p-3 hover:bg-surface-hover rounded-xl transition-all border border-transparent hover:border-slate-100 group">
-                                <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-shell-sm group-hover:scale-105 transition-transform">
+                        <div className="space-y-3">
+                            <div className="flex items-center gap-4 p-2.5 hover:bg-surface-hover rounded-md transition-all border border-transparent hover:border-slate-100 group">
+                                <div className="w-10 h-10 rounded-md bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 shadow-sm group-hover:scale-105 transition-transform">
                                     <Palmtree className="w-5 h-5" />
                                 </div>
                                 <div>
@@ -242,8 +250,8 @@ export function Calendar() {
                                 </div>
                             </div>
                             
-                            <div className="flex items-center gap-4 p-3 hover:bg-surface-hover rounded-xl transition-all border border-transparent hover:border-slate-100 group">
-                                <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 shadow-shell-sm group-hover:scale-105 transition-transform">
+                            <div className="flex items-center gap-4 p-2.5 hover:bg-surface-hover rounded-md transition-all border border-transparent hover:border-slate-100 group">
+                                <div className="w-10 h-10 rounded-md bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 shadow-sm group-hover:scale-105 transition-transform">
                                     <AlertCircle className="w-5 h-5" />
                                 </div>
                                 <div>
@@ -255,7 +263,7 @@ export function Calendar() {
                     </div>
 
                     {/* Quick Insight */}
-                    <div className="p-6 bg-surface-hover border border-border rounded-[24px] text-center">
+                    <div className="p-5 bg-surface-hover border border-border rounded-md text-center shadow-sm">
                         <p className="text-[10px] font-bold text-text-muted leading-relaxed">
                             Team attendance is synchronized with <br/> global workspace policies.
                         </p>
