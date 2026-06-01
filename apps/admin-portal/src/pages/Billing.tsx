@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import {
     CreditCard,
     Users,
@@ -11,11 +11,55 @@ import {
     Plus,
     Minus,
     ChevronRight,
+    ChevronDown,
+    ChevronUp,
     ExternalLink,
     Crown,
     Info
 } from 'lucide-react';
 import { PageLayout, Card, StatusBadge, LoadingState } from '../components/ui';
+
+const CardBrandIcon = ({ brand, className }: { brand?: string, className?: string }) => {
+    switch (brand?.toLowerCase()) {
+        case 'mastercard':
+            return (
+                <svg viewBox="0 0 24 24" fill="none" className={className}>
+                    <rect width="24" height="24" rx="4" fill="#000000"/>
+                    <circle cx="9" cy="12" r="5" fill="#EB001B"/>
+                    <circle cx="15" cy="12" r="5" fill="#F79E1B" fillOpacity="0.8"/>
+                </svg>
+            );
+        case 'visa':
+            return (
+                <svg viewBox="0 0 24 24" fill="none" className={className}>
+                    <rect width="24" height="24" rx="4" fill="#1A1F36"/>
+                    <text x="12" y="15" fill="#fff" fontSize="8" fontWeight="900" fontFamily="sans-serif" textAnchor="middle" fontStyle="italic">VISA</text>
+                </svg>
+            );
+        case 'amex':
+            return (
+                <svg viewBox="0 0 24 24" fill="none" className={className}>
+                    <rect width="24" height="24" rx="4" fill="#006FCF"/>
+                    <text x="12" y="14.5" fill="#fff" fontSize="6.5" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">AMEX</text>
+                </svg>
+            );
+        case 'discover':
+            return (
+                <svg viewBox="0 0 24 24" fill="none" className={className}>
+                    <rect width="24" height="24" rx="4" fill="#E55C20"/>
+                    <text x="12" y="14.5" fill="#fff" fontSize="5.5" fontWeight="bold" fontFamily="sans-serif" textAnchor="middle">DISCOVER</text>
+                </svg>
+            );
+        default:
+            return (
+                <svg viewBox="0 0 24 24" fill="none" className={className}>
+                    <rect width="24" height="24" rx="4" fill="#1f2937"/>
+                    <rect x="4" y="8" width="16" height="3" fill="#fff" fillOpacity="0.2"/>
+                    <rect x="4" y="15" width="6" height="2" fill="#fff" fillOpacity="0.2"/>
+                </svg>
+            );
+    }
+};
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -34,6 +78,17 @@ export function Billing() {
     const [syncingAfterCheckout, setSyncingAfterCheckout] = useState(searchParams.get('success') === 'true');
     const [invoices, setInvoices] = useState<any[]>([]);
     const [loadingInvoices, setLoadingInvoices] = useState(false);
+    const [paymentMethod, setPaymentMethod] = useState<any>(null);
+    const [expandedInvoices, setExpandedInvoices] = useState<Set<string>>(new Set());
+
+    const toggleInvoice = (id: string) => {
+        setExpandedInvoices(prev => {
+            const next = new Set(prev);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
+            return next;
+        });
+    };
 
     // After Stripe redirects back with ?success=true, the webhook may not have fired yet.
     // Poll refreshOrganization until stripe_subscription_id appears in the DB (max 10 tries × 2s).
@@ -104,6 +159,7 @@ export function Billing() {
                         pdfUrl: '#'
                     }
                 ]);
+                setPaymentMethod({ brand: 'visa', last4: '4242', exp_month: 12, exp_year: 2028 });
                 return;
             }
 
@@ -120,6 +176,7 @@ export function Billing() {
             if (response.ok) {
                 const result = await response.json();
                 setInvoices(result.invoices || []);
+                if (result.paymentMethod) setPaymentMethod(result.paymentMethod);
             }
         } catch (err) {
             console.error('Error fetching billing history:', err);
@@ -579,12 +636,20 @@ export function Billing() {
                                         {/* Decorative Sparkle */}
                                         <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 blur-xl group-hover:bg-primary/20 transition-colors" />
 
-                                        <div className="w-10 h-9 bg-surface border border-border/20 rounded-lg flex items-center justify-center text-text-main shadow-sm">
-                                            <CreditCard className="w-5 h-5" />
-                                        </div>
+                                        {paymentMethod ? (
+                                            <CardBrandIcon brand={paymentMethod.brand} className="w-10 h-9 shrink-0 shadow-sm rounded-lg" />
+                                        ) : (
+                                            <div className="w-10 h-9 bg-surface border border-border/20 rounded-lg flex items-center justify-center text-text-main shadow-sm shrink-0">
+                                                <CreditCard className="w-5 h-5" />
+                                            </div>
+                                        )}
                                         <div className="flex-1">
-                                            <p className="text-[12px] font-black text-text-main">Stripe Payment</p>
-                                            <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">Managed securely in Stripe</p>
+                                            <p className="text-[12px] font-black text-text-main capitalize">
+                                                {paymentMethod ? `${paymentMethod.brand} •••• ${paymentMethod.last4}` : 'Stripe Payment'}
+                                            </p>
+                                            <p className="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                                                {paymentMethod ? `Expires ${paymentMethod.exp_month}/${paymentMethod.exp_year}` : 'Managed securely in Stripe'}
+                                            </p>
                                         </div>
                                         <ChevronRight className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:translate-x-0.5 transition-transform" />
                                     </div>
@@ -653,51 +718,105 @@ export function Billing() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border/10">
-                                        {invoices.map((inv) => (
-                                            <tr key={inv.id} className="hover:bg-main/30 transition-colors">
-                                                <td className="px-6 py-4 text-[13px] font-bold text-text-main">{inv.date}</td>
-                                                <td className="px-6 py-4 text-[13px] font-semibold text-slate-600 dark:text-slate-300">{inv.description}</td>
-                                                <td className="px-6 py-4 text-[13px] font-bold text-text-main">{inv.amount}</td>
-                                                <td className="px-6 py-4">
-                                                    <div className={clsx(
-                                                        "flex items-center gap-1.5 font-bold text-[10px] uppercase",
-                                                        inv.status === "paid" ? "text-emerald-500"
-                                                        : inv.status === "pending" ? "text-blue-400"
-                                                        : "text-amber-500"
-                                                    )}>
-                                                        {inv.status === "paid" ? (
-                                                            <>
-                                                                <CheckCircle2 className="w-3.5 h-3.5" /> Completed
-                                                            </>
-                                                        ) : inv.status === "pending" ? (
-                                                            <>
-                                                                <History className="w-3.5 h-3.5" /> Pending
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <AlertCircle className="w-3.5 h-3.5" /> {inv.status}
-                                                            </>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 text-right">
-                                                    {inv.pdfUrl && inv.pdfUrl !== '#' ? (
-                                                        <a 
-                                                            href={inv.pdfUrl}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-[11px] font-black hover:underline uppercase tracking-widest"
-                                                        >
-                                                            Download
-                                                        </a>
-                                                    ) : (
-                                                        <span className="text-slate-600/40 dark:text-slate-500/40 text-[11px] font-black uppercase tracking-widest select-none">
-                                                            N/A
-                                                        </span>
+                                        {invoices.map((inv) => {
+                                            const isExpanded = expandedInvoices.has(inv.id);
+                                            const prorationLines = inv.lines?.filter((l: any) => l.proration) || [];
+                                            const mainLines = inv.lines?.filter((l: any) => !l.proration) || [];
+                                            const hasProrations = prorationLines.length > 0;
+                                            
+                                            // Construct a simple summary
+                                            let displayDescription = inv.description;
+                                            if (hasProrations && mainLines.length > 0) {
+                                                displayDescription = mainLines[0].description;
+                                            } else if (hasProrations) {
+                                                displayDescription = "Seat Prorations (Mid-cycle upgrades)";
+                                            }
+
+                                            return (
+                                                <Fragment key={inv.id}>
+                                                    <tr className={clsx("hover:bg-main/30 transition-colors", hasProrations && "cursor-pointer")} onClick={() => hasProrations && toggleInvoice(inv.id)}>
+                                                        <td className="px-6 py-4 text-[13px] font-bold text-text-main">{inv.date}</td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="text-[13px] font-semibold text-slate-600 dark:text-slate-300">{displayDescription}</span>
+                                                                {hasProrations && (
+                                                                    <span className="flex items-center gap-1 text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                                                        {prorationLines.length} adjustments {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-[13px] font-bold text-text-main">{inv.amount}</td>
+                                                        <td className="px-6 py-4">
+                                                            <div className={clsx(
+                                                                "flex items-center gap-1.5 font-bold text-[10px] uppercase",
+                                                                inv.status === "paid" ? "text-emerald-500"
+                                                                : inv.status === "pending" ? "text-blue-400"
+                                                                : "text-amber-500"
+                                                            )}>
+                                                                {inv.status === "paid" ? (
+                                                                    <>
+                                                                        <CheckCircle2 className="w-3.5 h-3.5" /> Completed
+                                                                    </>
+                                                                ) : inv.status === "pending" ? (
+                                                                    <>
+                                                                        <History className="w-3.5 h-3.5" /> Pending
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        <AlertCircle className="w-3.5 h-3.5" /> {inv.status}
+                                                                    </>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4 text-right">
+                                                            {inv.pdfUrl && inv.pdfUrl !== '#' ? (
+                                                                <a 
+                                                                    href={inv.pdfUrl}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    onClick={(e) => e.stopPropagation()}
+                                                                    className="text-slate-500 dark:text-slate-400 hover:text-primary transition-colors text-[11px] font-black hover:underline uppercase tracking-widest"
+                                                                >
+                                                                    Download
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-slate-600/40 dark:text-slate-500/40 text-[11px] font-black uppercase tracking-widest select-none">
+                                                                    N/A
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                    {isExpanded && hasProrations && (
+                                                        <tr className="bg-main/10 border-y border-border/5">
+                                                            <td colSpan={5} className="px-6 py-4">
+                                                                <div className="pl-4 border-l-2 border-primary/20 space-y-3">
+                                                                    <div className="mb-3">
+                                                                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1">Proration Details</p>
+                                                                        <p className="text-[12px] font-medium text-slate-500 dark:text-slate-400">
+                                                                            Note: Seat count changed between {Math.min(...prorationLines.map((l: any) => l.quantity || 0))} and {Math.max(...prorationLines.map((l: any) => l.quantity || 0))} during the billing period.
+                                                                        </p>
+                                                                    </div>
+                                                                    {inv.lines.map((line: any) => (
+                                                                        <div key={line.id} className="flex items-center justify-between text-[12px]">
+                                                                            <span className={clsx(
+                                                                                "font-medium pr-4",
+                                                                                line.proration ? "text-slate-600 dark:text-slate-400" : "text-text-main font-bold"
+                                                                            )}>
+                                                                                {line.description}
+                                                                            </span>
+                                                                            <span className="font-bold text-text-main whitespace-nowrap">
+                                                                                ${(line.amount / 100).toFixed(2)}
+                                                                            </span>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
                                                     )}
-                                                </td>
-                                            </tr>
-                                        ))}
+                                                </Fragment>
+                                            );
+                                        })}
                                     </tbody>
                                 </table>
                             )}
