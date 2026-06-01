@@ -145,19 +145,33 @@ export function ProjectFormPage() {
 
             if (projectId) {
                 // Update Members
-                await supabase.from('project_members').delete().eq('project_id', projectId);
+                const { error: delMemErr } = await supabase.from('project_members').delete().eq('project_id', projectId);
+                if (delMemErr) throw delMemErr;
+                
                 if (userIds.size > 0) {
-                    await supabase.from('project_members').insert(
-                        Array.from(userIds).map(mid => ({ project_id: projectId, member_id: mid }))
+                    const { error: insMemErr } = await supabase.from('project_members').insert(
+                        Array.from(userIds).map(mid => ({ 
+                            project_id: projectId, 
+                            member_id: mid,
+                            organization_id: profile?.organization_id 
+                        }))
                     );
+                    if (insMemErr) throw insMemErr;
                 }
 
                 // Update Teams
-                await supabase.from('project_teams').delete().eq('project_id', projectId);
+                const { error: delTeamErr } = await supabase.from('project_teams').delete().eq('project_id', projectId);
+                if (delTeamErr) throw delTeamErr;
+                
                 if (teamIds.size > 0) {
-                    await supabase.from('project_teams').insert(
-                        Array.from(teamIds).map(tid => ({ project_id: projectId, team_id: tid }))
+                    const { error: insTeamErr } = await supabase.from('project_teams').insert(
+                        Array.from(teamIds).map(tid => ({ 
+                            project_id: projectId, 
+                            team_id: tid,
+                            organization_id: profile?.organization_id
+                        }))
                     );
+                    if (insTeamErr) throw insTeamErr;
                 }
             }
 

@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS timesheet_approvals (
   week_end     DATE NOT NULL,
   total_hours  NUMERIC(10,2) NOT NULL DEFAULT 0,
   status       TEXT NOT NULL DEFAULT 'Pending', -- Pending | Approved | Rejected
-  approved_by  UUID REFERENCES members(id),
+  approved_by  UUID REFERENCES members(id) ON DELETE SET NULL,
   approved_at  TIMESTAMPTZ,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(member_id, week_start)

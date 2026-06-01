@@ -105,11 +105,16 @@ pub fn supabase_post(
 
     match req.send_string(body) {
         Ok(resp) => resp.into_string().map_err(|e| e.to_string()),
-        Err(ureq::Error::Status(code, resp)) => {
+        Err(ureq::Error::Status(_code, resp)) => {
             let body = resp.into_string().unwrap_or_else(|_| "Unknown error body".to_string());
-            Err(format!("Supabase POST error ({}): {}", code, body))
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body) {
+                if let Some(msg) = json.get("message").and_then(|m| m.as_str()) {
+                    return Err(msg.to_string());
+                }
+            }
+            Err(format!("Supabase error: {}", body))
         }
-        Err(e) => Err(format!("Supabase POST transport error: {}", e)),
+        Err(e) => Err(format!("Supabase transport error: {}", e)),
     }
 }
 
@@ -138,11 +143,16 @@ pub fn supabase_patch(
 
     match req.send_string(body) {
         Ok(resp) => resp.into_string().map_err(|e| e.to_string()),
-        Err(ureq::Error::Status(code, resp)) => {
+        Err(ureq::Error::Status(_code, resp)) => {
             let body = resp.into_string().unwrap_or_else(|_| "Unknown error body".to_string());
-            Err(format!("Supabase PATCH error ({}): {}", code, body))
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body) {
+                if let Some(msg) = json.get("message").and_then(|m| m.as_str()) {
+                    return Err(msg.to_string());
+                }
+            }
+            Err(format!("Supabase error: {}", body))
         }
-        Err(e) => Err(format!("Supabase PATCH transport error: {}", e)),
+        Err(e) => Err(format!("Supabase transport error: {}", e)),
     }
 }
 
@@ -190,9 +200,19 @@ pub fn supabase_get(
         req = req.set("Authorization", &format!("Bearer {}", token));
     }
 
-    req.call()
-        .map_err(|e| format!("Supabase GET error: {}", e))
-        .and_then(|resp| resp.into_string().map_err(|e| e.to_string()))
+    match req.call() {
+        Ok(resp) => resp.into_string().map_err(|e| e.to_string()),
+        Err(ureq::Error::Status(_code, resp)) => {
+            let body = resp.into_string().unwrap_or_else(|_| "Unknown error body".to_string());
+            if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body) {
+                if let Some(msg) = json.get("message").and_then(|m| m.as_str()) {
+                    return Err(msg.to_string());
+                }
+            }
+            Err(format!("Supabase error: {}", body))
+        }
+        Err(e) => Err(format!("Supabase transport error: {}", e)),
+    }
 }
 
 // ─── IPC Commands ─────────────────────────────────────────────────────────────

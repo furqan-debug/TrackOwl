@@ -406,8 +406,8 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                 </div>
             </td>
             <td className="px-6 py-5">
-                <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
+                <div className="h-14 flex flex-col justify-center gap-2">
+                    <div className="flex items-start gap-2">
                         {project.allow_tracking ? (
                             <span className="text-[12px] font-bold text-emerald-500 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md tracking-tight">Tracking Enabled</span>
                         ) : (
@@ -420,7 +420,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                 </div>
             </td>
             <td className="px-6 py-5 text-center">
-                <div className="flex items-center justify-center -space-x-2">
+                <div className="h-14 flex items-center justify-center -space-x-2">
                     {project.memberCount > 0 ? (
                         <>
                             {[0, 1, 2].slice(0, project.memberCount).map((_, i) => (
@@ -443,7 +443,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                 </div>
             </td>
             <td className="px-6 py-5 min-w-[200px]">
-                <div className="flex flex-col gap-1.5">
+                <div className="h-14 flex flex-col justify-center gap-1.5">
                     <span className="text-[13px] font-bold text-text-main">
                         {project.budget_type === 'No budget' ? 'No budget limits' : project.budget_type}
                     </span>

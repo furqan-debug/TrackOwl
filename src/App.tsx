@@ -674,8 +674,9 @@ export default function App() {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [isTracking, setIsTracking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const [elapsedStart, setElapsedStart] = useState<number>(0);
+  const sessionElapsedRef = useRef<number>(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [elapsed, setElapsed] = useState(0);
   const [rememberMe, setRememberMe] = useState(true);
   const [trackingError, setTrackingError] = useState<string | null>(null);
 
@@ -1020,7 +1021,9 @@ export default function App() {
         };
         console.log('USER LOADED (Session):', userObj);
         setUser(userObj);
-        const { data: projs } = await sb.from('projects').select('*');
+        const { data: projs } = await sb.from('projects')
+          .select('*, project_members!inner(member_id)')
+          .eq('project_members.member_id', userObj.id);
         const projectsList = projs || [];
         setProjects(projectsList);
         setScreen('projects');
@@ -1392,37 +1395,38 @@ export default function App() {
 
   useEffect(() => {
     if (isTracking && !isPaused) {
-      timerRef.current = setInterval(() => setElapsed(e => e + 1), 1000);
+      timerRef.current = setInterval(() => {
+        sessionElapsedRef.current += 1;
+        
+        // Limit check inside interval to avoid React re-renders
+        if (user && activeProject) {
+          const otherProjectsToday = projects
+            .filter(p => p.id !== activeProject.id)
+            .reduce((s, p) => s + Math.max(0, (p.stats?.todaySeconds || 0) - (p.stats?.keptIdleSeconds || 0)), 0);
+          const currentToday = otherProjectsToday + sessionElapsedRef.current;
+
+          const otherProjectsWeek = projects
+            .filter(p => p.id !== activeProject.id)
+            .reduce((s, p) => s + Math.max(0, (p.stats?.weeklySeconds || 0) - (p.stats?.weeklyIdleSeconds || 0)), 0);
+          const currentWeek = otherProjectsWeek + sessionElapsedRef.current;
+
+          const weeklyLimitSecs = (user.weekly_limit || 40) * 3600;
+          const dailyLimitSecs = (user.daily_limit || 8) * 3600;
+
+          if (currentToday >= dailyLimitSecs || currentWeek >= weeklyLimitSecs) {
+            trackerAPI.showNotification('Tracking Limit Reached', 'Your session has been automatically stopped because you reached your daily or weekly time limit.');
+            handleStop();
+            setTrackingError('Session stopped due to reaching tracking limit.');
+          }
+        }
+      }, 1000);
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
     }
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [isTracking, isPaused]);
+  }, [isTracking, isPaused, user, projects, activeProject]);
 
-  useEffect(() => {
-    if (isTracking && !isPaused && user && activeProject) {
-      // Calculate total today: (Sum of productive time for ALL OTHER projects today) + current elapsed
-      const otherProjectsToday = projects
-        .filter(p => p.id !== activeProject.id)
-        .reduce((s, p) => s + Math.max(0, (p.stats?.todaySeconds || 0) - (p.stats?.keptIdleSeconds || 0)), 0);
-      const currentToday = otherProjectsToday + elapsed;
 
-      // Calculate total week: (Sum of productive time for ALL OTHER projects this week) + current elapsed
-      const otherProjectsWeek = projects
-        .filter(p => p.id !== activeProject.id)
-        .reduce((s, p) => s + Math.max(0, (p.stats?.weeklySeconds || 0) - (p.stats?.weeklyIdleSeconds || 0)), 0);
-      const currentWeek = otherProjectsWeek + elapsed;
-
-      const weeklyLimitSecs = (user.weekly_limit || 40) * 3600;
-      const dailyLimitSecs = (user.daily_limit || 8) * 3600;
-
-      if (currentToday >= dailyLimitSecs || currentWeek >= weeklyLimitSecs) {
-        trackerAPI.showNotification('Tracking Limit Reached', 'Your session has been automatically stopped because you reached your daily or weekly time limit.');
-        handleStop();
-        setTrackingError('Session stopped due to reaching tracking limit.');
-      }
-    }
-  }, [elapsed, isTracking, isPaused, user, projects, activeProject]);
 
 
 
@@ -1484,7 +1488,9 @@ export default function App() {
         custom_fields: member.custom_fields || {},
         plan_type: member.organizations?.plan_type || 'Basic'
       };
-      const { data: projectsData } = await sb.from('projects').select('*');
+      const { data: projectsData } = await sb.from('projects')
+        .select('*, project_members!inner(member_id)')
+        .eq('project_members.member_id', userObj.id);
       const token = authData.session.access_token;
       trackerAPI.setAuthToken(token);
 
@@ -1525,7 +1531,8 @@ export default function App() {
     const todaySecs = project.stats?.todaySeconds || 0;
     const idleSecs = project.stats?.keptIdleSeconds || 0;
     const productiveStart = Math.max(0, todaySecs - idleSecs);
-    setElapsed(productiveStart);
+    sessionElapsedRef.current = productiveStart;
+    setElapsedStart(productiveStart);
     setLiveIdleSeconds(0); // reset live idle counter for new session
     idleMinutesRef.current = 0; // reset inactivity counter for new session
     setIsPaused(false);
@@ -1580,7 +1587,19 @@ export default function App() {
 
       const res: any = await trackerAPI.startTracking(project.id, user?.id ?? '', token);
       if (res?.status === 'error') {
-        const rawErr = res.error || '';
+        let rawErr = res.error || '';
+        
+        // Sanitize raw backend JSON errors if they somehow bubble up
+        if (typeof rawErr === 'string' && rawErr.includes('{')) {
+          try {
+            const jsonPart = rawErr.substring(rawErr.indexOf('{'));
+            const parsed = JSON.parse(jsonPart);
+            if (parsed.message) rawErr = parsed.message;
+          } catch (e) {
+            // keep rawErr as is
+          }
+        }
+
         if (rawErr.includes('transport error') || rawErr.includes('Dns Failed')) {
           setTrackingError('Network error: Unable to reach the server. Please check your internet connection.');
           setIsOnline(false);
@@ -1601,7 +1620,18 @@ export default function App() {
         trackerAPI.showNotification('Tracking Started', `Now tracking for ${project.name}`);
       }
     } catch (err: any) {
-      const errMsg = err.toString();
+      let errMsg = err.toString();
+
+      if (typeof errMsg === 'string' && errMsg.includes('{')) {
+        try {
+          const jsonPart = errMsg.substring(errMsg.indexOf('{'));
+          const parsed = JSON.parse(jsonPart);
+          if (parsed.message) errMsg = parsed.message;
+        } catch (e) {
+          // keep errMsg as is
+        }
+      }
+
       if (errMsg.includes('transport error') || errMsg.includes('Dns Failed')) {
         setTrackingError('Network error: Unable to reach the server. Please check your internet connection.');
         setIsOnline(false);
@@ -1627,7 +1657,8 @@ export default function App() {
     setIsPaused(false);
     setSessionId(null);
     setActiveProject(null);
-    setElapsed(0);
+    sessionElapsedRef.current = 0;
+    setElapsedStart(0);
     setScreen('projects');
 
     // Notification Alert
@@ -1802,7 +1833,9 @@ export default function App() {
               sessionId={sessionId}
               idlePaused={idlePaused}
               onResumeFromIdle={() => { setIdlePaused(false); (trackerAPI as any).stopIdleMonitoring(); handleResume(); }}
-              elapsed={elapsed}
+              elapsedStart={elapsedStart}
+              isPaused={isPaused}
+              isTracking={isTracking}
               liveIdleSeconds={liveIdleSeconds}
               onStop={handleStop}
               onSettings={() => setScreen('settings')}
@@ -2307,13 +2340,15 @@ function ConsentItem({ icon, title, desc }: { icon: React.ReactNode; title: stri
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Tracker
 // ─────────────────────────────────────────────────────────────────────────────
-function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, elapsed, liveIdleSeconds = 0, onStop, onSettings, onSupport, todos, onTodoDone, projects }: {
+function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, elapsedStart, isPaused, isTracking, liveIdleSeconds = 0, onStop, onSettings, onSupport, todos, onTodoDone, projects }: {
   user: User;
   project: Project;
   sessionId?: string | null;
   idlePaused?: boolean;
   onResumeFromIdle?: () => void;
-  elapsed: number;
+  elapsedStart: number;
+  isPaused: boolean;
+  isTracking: boolean;
   liveIdleSeconds?: number;
   onStop: () => void;
   onSettings: () => void;
@@ -2322,10 +2357,24 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, el
   onTodoDone: (id: string) => void;
   projects: Project[];
 }) {
+  const [localElapsed, setLocalElapsed] = useState(elapsedStart);
+
+  useEffect(() => {
+    setLocalElapsed(elapsedStart);
+  }, [elapsedStart]);
+
+  useEffect(() => {
+    let int: any;
+    if (isTracking && !isPaused) {
+      int = setInterval(() => setLocalElapsed(e => e + 1), 1000);
+    }
+    return () => clearInterval(int);
+  }, [isTracking, isPaused]);
+
   const [showReassign, setShowReassign] = useState(false);
-  const hrs = Math.floor(elapsed / 3600);
-  const mins = Math.floor((elapsed % 3600) / 60);
-  const secs = elapsed % 60;
+  const hrs = Math.floor(localElapsed / 3600);
+  const mins = Math.floor((localElapsed % 3600) / 60);
+  const secs = localElapsed % 60;
   const fmt = (n: number) => String(n).padStart(2, '0');
 
   const baseKeptIdle = project.stats?.keptIdleSeconds || 0;
@@ -2334,7 +2383,7 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, el
   // liveIdleSeconds accumulates idle in the current unsaved session
   // baseKeptIdle is idle from previously completed/synced samples
   const totalIdleSeconds = baseKeptIdle + liveIdleSeconds;
-  const displayProductive = Math.max(0, elapsed - liveIdleSeconds);
+  const displayProductive = Math.max(0, localElapsed - liveIdleSeconds);
   const displayIdle = totalIdleSeconds;
 
   return (

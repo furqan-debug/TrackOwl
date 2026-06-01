@@ -203,6 +203,15 @@ export function People() {
         } catch { fetchMembers(); }
     }
 
+    async function handleReactivate(id: string) {
+        if (!confirm('Are you sure you want to reactivate this member? They will regain access and tracking capabilities.')) return;
+        setMembers(prev => prev.map(m => m.id === id ? { ...m, status: 'Active' } : m));
+        try {
+            const { error } = await supabase.from('members').update({ status: 'Active' }).eq('id', id);
+            if (error) throw error;
+        } catch { fetchMembers(); }
+    }
+
     const handleBatchDelete = async () => {
         if (!window.confirm(`Are you sure you want to remove ${selectedIds.size} members?`)) return;
         setLoading(true);
@@ -355,7 +364,7 @@ export function People() {
                             disabled={isViewer}
                             className="flex items-center gap-2 px-4 h-10 bg-rose-50 text-rose-500 rounded-xl text-[10px] font-bold border border-rose-100 hover:bg-rose-100 transition-all disabled:opacity-50"
                         >
-                            <Trash2 className="w-3.5 h-3.5" /> Batch Delete
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
                         </button>
                     </div>
                 )}
@@ -449,6 +458,7 @@ export function People() {
                                         onEdit={(tab?: string) => navigate(`/dashboard/people/${m.id}/edit${tab ? `?tab=${tab}` : ''}`)}
                                         onResendInvite={() => handleResendInvite(m.email)}
                                         onDelete={() => handleDeactivate(m.id)}
+                                        onReactivate={() => handleReactivate(m.id)}
                                         isViewer={isViewer}
                                         currentUserRole={profile?.role}
                                     />
@@ -477,7 +487,7 @@ export function People() {
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
-function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDelete, isViewer, currentUserRole }: any) {
+function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDelete, onReactivate, isViewer, currentUserRole }: any) {
     const isRestricted = isViewer || (currentUserRole === 'Manager' && m.role === 'Admin');
     const [open, setOpen] = useState(false);
     const dropRef = useRef<HTMLTableDataCellElement>(null);
@@ -623,13 +633,23 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                             onClick={() => { setOpen(false); onEdit('Limits'); }}
                         />
                         <div className="my-1 border-t border-border" />
-                        <DropItem
-                            icon={<Trash2 className="w-3.5 h-3.5" />}
-                            label="Deactivate Member"
-                            disabled={isRestricted}
-                            onClick={() => { if (!isRestricted) { setOpen(false); onDelete(); } }}
-                            danger
-                        />
+                        {m.status === 'Inactive' ? (
+                            <DropItem
+                                icon={<CheckCircle className="w-3.5 h-3.5" />}
+                                label="Reactivate Member"
+                                disabled={isRestricted}
+                                onClick={() => { if (!isRestricted) { setOpen(false); onReactivate(); } }}
+                                danger={false}
+                            />
+                        ) : (
+                            <DropItem
+                                icon={<Trash2 className="w-3.5 h-3.5" />}
+                                label="Deactivate Member"
+                                disabled={isRestricted}
+                                onClick={() => { if (!isRestricted) { setOpen(false); onDelete(); } }}
+                                danger
+                            />
+                        )}
                     </div>
                 )}
             </td>
