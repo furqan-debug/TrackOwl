@@ -78,9 +78,30 @@ serve(async (req) => {
       amount: `$${(inv.amount_paid / 100).toFixed(2)}`,
       status: inv.status || "paid",
       pdfUrl: inv.invoice_pdf,
+      lines: inv.lines.data.map((l) => ({
+        id: l.id,
+        description: l.description,
+        amount: l.amount,
+        proration: l.proration,
+        quantity: l.quantity,
+        period: l.period,
+      })),
     }));
 
-    return new Response(JSON.stringify({ invoices: formattedInvoices }), {
+    // 4. Fetch payment methods
+    const paymentMethods = await stripe.paymentMethods.list({
+      customer: org.stripe_customer_id,
+      type: "card",
+    });
+
+    const defaultPaymentMethod = paymentMethods.data[0] ? {
+      brand: paymentMethods.data[0].card?.brand,
+      last4: paymentMethods.data[0].card?.last4,
+      exp_month: paymentMethods.data[0].card?.exp_month,
+      exp_year: paymentMethods.data[0].card?.exp_year,
+    } : null;
+
+    return new Response(JSON.stringify({ invoices: formattedInvoices, paymentMethod: defaultPaymentMethod }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
     });
