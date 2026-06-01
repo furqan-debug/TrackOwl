@@ -290,9 +290,9 @@ export function Projects() {
                                         </button>
                                     </th>
                                     <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Project</th>
-                                    <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Status</th>
+                                    <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Tracking</th>
                                     <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-center">Team</th>
-                                    <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Budget Utilization</th>
+                                    <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Budget & Configuration</th>
                                     <th className="pr-8 py-4 w-12"></th>
                                 </tr>
                             </thead>
@@ -354,9 +354,6 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
     }
 
     const limit = project.budget_limit || 0;
-    const trackedHours = (project.tracked_seconds || 0) / 3600;
-    const progress = limit > 0 ? Math.min(100, (trackedHours / limit) * 100) : 0;
-    const isOverBudget = limit > 0 && trackedHours > limit;
 
     return (
         <tr className={clsx(
@@ -411,9 +408,15 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
             <td className="px-6 py-5">
                 <div className="flex flex-col gap-2">
                     <div className="flex items-center gap-2">
-                        <span className="text-[15px] font-bold text-text-main">{project.teamCount} Active Teams</span>
+                        {project.allow_tracking ? (
+                            <span className="text-[12px] font-bold text-emerald-500 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md tracking-tight">Tracking Enabled</span>
+                        ) : (
+                            <span className="text-[12px] font-bold text-rose-500 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-md tracking-tight">Tracking Disabled</span>
+                        )}
                     </div>
-                    <span className="text-[12px] font-bold text-primary/70">{project.todoCount} Pending Deliverables</span>
+                    {project.allow_tracking && !project.disable_idle_time && (
+                        <span className="text-[11px] font-bold text-text-muted tracking-tight">Idle tracking active</span>
+                    )}
                 </div>
             </td>
             <td className="px-6 py-5 text-center">
@@ -440,27 +443,18 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                 </div>
             </td>
             <td className="px-6 py-5 min-w-[200px]">
-                <div className="flex flex-col gap-2">
-                    <div className="flex justify-between items-end">
-                        <div className="flex items-center gap-3">
-                            <span className={clsx("text-[18px] font-bold tracking-tight", isOverBudget ? "text-rose-500" : "text-text-main")}>
-                                {trackedHours.toFixed(1)}h
-                            </span>
-                            <span className="text-[12px] font-bold text-text-muted tracking-tight">/ {project.budget_limit || '∞'} Limit</span>
-                        </div>
-                        <span className={clsx("text-[13px] font-bold", isOverBudget ? "text-rose-500" : "text-text-muted")}>
-                            {progress.toFixed(0)}%
+                <div className="flex flex-col gap-1.5">
+                    <span className="text-[13px] font-bold text-text-main">
+                        {project.budget_type === 'No budget' ? 'No budget limits' : project.budget_type}
+                    </span>
+                    {limit > 0 && project.budget_type !== 'No budget' && (
+                        <span className="text-[11px] font-bold text-text-muted tracking-tight">
+                            Limit: <span className="text-primary">{limit}</span> {project.budget_type.includes('hours') ? 'hrs' : project.budget_type.includes('amount') ? 'USD' : ''}
                         </span>
-                    </div>
-                    <div className="w-full h-1.5 bg-main rounded-full overflow-hidden">
-                        <div
-                            className={clsx(
-                                "h-full transition-all duration-1000",
-                                isOverBudget ? "bg-rose-500" : "bg-primary"
-                            )}
-                            style={{ width: `${progress}%` }}
-                        />
-                    </div>
+                    )}
+                    {project.budget_notifications && (
+                        <span className="text-[10px] font-bold text-[var(--chart-gold)] tracking-tight">Alerts enabled</span>
+                    )}
                 </div>
             </td>
             <td className="pr-8 py-5 text-right relative" ref={dropRef}>
