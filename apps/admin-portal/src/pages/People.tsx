@@ -194,11 +194,11 @@ export function People() {
 
 
 
-    async function handleDeactivate(id: string) {
-        if (!confirm('Are you sure you want to deactivate this member? This will stop their tracking and block access.')) return;
-        setMembers(prev => prev.map(m => m.id === id ? { ...m, status: 'Inactive' } : m));
+    async function handleDeleteMember(id: string) {
+        if (!confirm('Are you sure you want to permanently delete this member? This will destroy all their tracked time, screenshots, and data forever. This action cannot be undone.')) return;
+        setMembers(prev => prev.filter(m => m.id !== id));
         try {
-            const { error } = await supabase.from('members').update({ status: 'Inactive' }).eq('id', id);
+            const { error } = await supabase.from('members').delete().eq('id', id);
             if (error) throw error;
         } catch { fetchMembers(); }
     }
@@ -457,7 +457,7 @@ export function People() {
                                         onToggle={() => toggleSelection(m.id)}
                                         onEdit={(tab?: string) => navigate(`/dashboard/people/${m.id}/edit${tab ? `?tab=${tab}` : ''}`)}
                                         onResendInvite={() => handleResendInvite(m.email)}
-                                        onDelete={() => handleDeactivate(m.id)}
+                                        onDelete={() => handleDeleteMember(m.id)}
                                         onReactivate={() => handleReactivate(m.id)}
                                         isViewer={isViewer}
                                         currentUserRole={profile?.role}
