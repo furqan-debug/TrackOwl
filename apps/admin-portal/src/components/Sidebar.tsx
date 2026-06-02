@@ -319,8 +319,9 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                         {!effectiveCollapsed && (
                             <div className="min-w-0 flex-1">
                                 <p className="text-[14px] font-bold text-white truncate leading-none mb-1.5 group-hover:text-accent transition-colors">{profile?.full_name}</p>
-                                <div className="flex items-center gap-1.5">
+                                <div className="flex flex-col gap-1.5">
                                     <span className="text-[9px] font-bold text-white/60 uppercase tracking-widest leading-none">View Profile</span>
+                                    <span className="text-[10px] font-bold text-emerald-400 capitalize">{userRole === 'Admin' ? 'Owner' : userRole}</span>
                                 </div>
                             </div>
                         )}

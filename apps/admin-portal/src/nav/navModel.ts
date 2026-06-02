@@ -12,7 +12,7 @@ import {
 
 export type BadgeType = 'new' | 'bolt' | null;
 
-export type Role = 'Admin' | 'Manager' | 'User' | 'Viewer';
+export type Role = 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
 
 export interface NavChild {
     name: string;
@@ -73,6 +73,7 @@ export const navStructure: NavGroup[] = [
         name: 'Settings',
         icon: Settings,
         path: '/dashboard/settings',
+        allowedRoles: ['Owner'],
         children: [
             { name: 'Org Settings', path: '/dashboard/settings' },
             { name: 'Billing & Plans', path: '/dashboard/settings/billing' },

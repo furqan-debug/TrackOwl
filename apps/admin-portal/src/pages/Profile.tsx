@@ -244,7 +244,7 @@ export function ProfilePage() {
                                 <div className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-border">
                                     <div className="flex items-center gap-3">
                                         <Shield className="w-4 h-4 text-text-muted" />
-                                        <span className="text-[13px] font-bold text-text-main uppercase tracking-widest">{profile?.role}</span>
+                                        <span className="text-[13px] font-bold text-text-main uppercase tracking-widest">{profile?.role === 'Admin' ? 'Owner' : profile?.role}</span>
                                     </div>
                                     <Diamond className="w-4 h-4 text-primary opacity-50" />
                                 </div>

@@ -18,7 +18,7 @@ import { SecureImage } from '../components/ui/SecureImage';
 import { supabase } from '../lib/supabase';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Role = 'Admin' | 'Manager' | 'User' | 'Viewer';
+type Role = 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
 type Status = 'Active' | 'Inactive' | 'Pending';
 
 interface DbMember {
@@ -380,7 +380,8 @@ export function People() {
                             className="h-8 px-3 bg-surface-hover border border-border rounded-lg text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all"
                         >
                             <option value="All">All Roles</option>
-                            <option value="Admin">Owner</option>
+                            <option value="Owner">Owner</option>
+                            <option value="Admin">Admin</option>
                             <option value="Manager">Manager</option>
                             <option value="User">User</option>
                             <option value="Viewer">Viewer</option>
@@ -488,7 +489,7 @@ export function People() {
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
 function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDelete, onReactivate, isViewer, currentUserRole }: any) {
-    const isRestricted = isViewer || (currentUserRole === 'Manager' && m.role === 'Admin');
+    const isRestricted = isViewer || (currentUserRole === 'Manager' && (m.role === 'Owner' || m.role === 'Admin')) || (currentUserRole === 'Admin' && m.role === 'Owner');
     const [open, setOpen] = useState(false);
     const dropRef = useRef<HTMLTableDataCellElement>(null);
     const initials = m.full_name.split(' ').map((w: any) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -536,10 +537,10 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
             </td>
             <td className="px-6 py-5">
                 <StatusBadge
-                    variant={m.role === 'Admin' ? 'success' : m.role === 'Manager' ? 'warning' : 'default'}
+                    variant={m.role === 'Owner' ? 'success' : m.role === 'Admin' ? 'success' : m.role === 'Manager' ? 'warning' : 'default'}
                     className="text-[9px] h-6 px-2.5 font-bold "
                 >
-                    {m.role === 'Admin' ? 'OWNER' : m.role.toUpperCase()}
+                    {m.role.toUpperCase()}
                 </StatusBadge>
             </td>
             <td className="px-6 py-5">
@@ -677,7 +678,7 @@ function DropItem({ icon, label, onClick, danger, disabled }: any) {
 // ─── Modals ───────────────────────────────────────────────────────────
 
 function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any) {
-    const rolesAvailable = currentUserRole === 'Admin' ? ['User', 'Viewer', 'Manager', 'Admin'] : ['User', 'Viewer', 'Manager'];
+    const rolesAvailable = (currentUserRole === 'Owner' || currentUserRole === 'Admin') ? ['User', 'Viewer', 'Manager', 'Admin'] : ['User', 'Viewer', 'Manager'];
 
     return (
         <Modal

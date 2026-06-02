@@ -19,7 +19,7 @@ import {
 import { SecureImage } from '../components/ui/SecureImage';
 import clsx from 'clsx';
 
-type Role = 'Admin' | 'Manager' | 'User' | 'Viewer';
+type Role = 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
 
 export function MemberFormPage() {
     const { id } = useParams<{ id: string }>();
@@ -246,11 +246,22 @@ export function MemberFormPage() {
                                         <select
                                             value={role}
                                             onChange={e => setRole(e.target.value as Role)}
-                                            className="w-full px-6 py-4 bg-surface-subtle border border-border rounded-xl text-sm font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer"
+                                            disabled={role === 'Owner'}
+                                            className={clsx(
+                                                "w-full px-6 py-4 bg-surface-subtle border border-border rounded-xl text-sm font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer",
+                                                role === 'Owner' && "opacity-50 cursor-not-allowed"
+                                            )}
                                         >
-                                            {['User', 'Viewer', 'Manager', 'Admin'].map(r => <option key={r} value={r}>{r}</option>)}
+                                            {role === 'Owner' ? (
+                                                <option value="Owner">Owner</option>
+                                            ) : (
+                                                ['User', 'Viewer', 'Manager', 'Admin'].map(r => <option key={r} value={r}>{r}</option>)
+                                            )}
                                         </select>
                                     </div>
+                                    {role === 'Owner' && (
+                                        <p className="text-[10px] text-text-muted mt-2 italic">Ownership can only be transferred from Organization Settings.</p>
+                                    )}
                                 </div>
                                 <FormField
                                     label="Geographic Location (City/Country)"
