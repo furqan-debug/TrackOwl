@@ -822,6 +822,7 @@ export function Landing() {
                                 <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
                                 <li><a href="#security" className="hover:text-white transition-colors">Security</a></li>
                                 <li><a href="#showcase" className="hover:text-white transition-colors">Integrations</a></li>
+                                <li><a href="/help" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Help Center</a></li>
                             </ul>
                         </div>
 

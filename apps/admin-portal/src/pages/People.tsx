@@ -93,9 +93,20 @@ export function People() {
     async function fetchMembers() {
         setLoading(true);
         try {
-            const { data, error } = await supabase.from('members').select('*').order('created_at', { ascending: false });
+            const { data, error } = await supabase
+                .from('members')
+                .select('*, project_members(count), sessions(count)')
+                .order('created_at', { ascending: false });
+                
             if (error) throw error;
-            if (data) setMembers(data as any);
+            if (data) {
+                const formatted = data.map((d: any) => ({
+                    ...d,
+                    projectsCount: d.project_members?.[0]?.count || 0,
+                    sessionCount: d.sessions?.[0]?.count || 0
+                }));
+                setMembers(formatted as any);
+            }
         } catch (e) {
             console.error('Fetch members error:', e);
         } finally {
