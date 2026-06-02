@@ -1,16 +1,16 @@
 ---
-title: Billing history
+title: View invoices
 category: Billing & Subscriptions
-description: Learn how to manage billing history in TrackOwl.
+description: Learn how to manage view invoices in TrackOwl.
 ---
 
-# Billing history
+# View invoices
 
 > [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **Billing history** feature in the Billing & Subscriptions section.
+> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **View invoices** feature in the Billing & Subscriptions section.
 
 ## Overview
-Understanding how to use the **Billing history** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+Understanding how to use the **View invoices** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
 > **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
@@ -19,7 +19,7 @@ Understanding how to use the **Billing history** feature is essential for maximi
 To access this feature:
 1. Open the main **TrackOwl Dashboard**.
 2. Look for the **Billing & Subscriptions** icon in the primary sidebar navigation.
-3. Select **Billing history** from the secondary menu.
+3. Select **View invoices** from the secondary menu.
 
 ---
 

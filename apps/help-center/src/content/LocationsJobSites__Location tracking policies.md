@@ -1,16 +1,16 @@
 ---
-title: Connect an integration
-category: Integrations
-description: Learn how to manage connect an integration in TrackOwl.
+title: Location tracking policies
+category: Locations & Job Sites
+description: Learn how to manage location tracking policies in TrackOwl.
 ---
 
-# Connect an integration
+# Location tracking policies
 
 > [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **Connect an integration** feature in the Integrations section.
+> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **Location tracking policies** feature in the Locations & Job Sites section.
 
 ## Overview
-Understanding how to use the **Connect an integration** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+Understanding how to use the **Location tracking policies** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
 > **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
@@ -18,8 +18,8 @@ Understanding how to use the **Connect an integration** feature is essential for
 ## Where to find it
 To access this feature:
 1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Integrations** icon in the primary sidebar navigation.
-3. Select **Connect an integration** from the secondary menu.
+2. Look for the **Locations & Job Sites** icon in the primary sidebar navigation.
+3. Select **Location tracking policies** from the secondary menu.
 
 ---
 
@@ -28,7 +28,7 @@ To access this feature:
 Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
-2. Look at the left-hand menu and click on **Integrations**.
+2. Look at the left-hand menu and click on **Locations & Job Sites**.
 3. Find and click on the specific item you want to work on.
 4. Make your desired changes on the screen.
 5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!

@@ -40,7 +40,14 @@ function parseMarkdown(rawContent: string) {
       return `<div class="alert ${p1}"><strong class="alert-title">${p2}</strong>${marked(cleanMarkdown)}</div>`;
   });
 
-  return { title, category, content, html: marked(content) };
+  let html = marked(content) as string;
+  // Automatically add IDs to h2 tags for the Table of Contents anchor links
+  html = html.replace(/<h2>(.*?)<\/h2>/g, (_match, p1) => {
+      const id = p1.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+      return `<h2 id="${id}">${p1}</h2>`;
+  });
+
+  return { title, category, content, html };
 }
 
 const articles = Object.keys(modules).map((path) => {
