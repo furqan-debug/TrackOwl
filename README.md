@@ -1,73 +1,162 @@
-# TrackOwl (by DigiReps)
+# TrackOwl
 
-TrackOwl (by DigiReps) is a comprehensive time and productivity tracking solution designed for modern teams. It combines a powerful desktop monitoring client, a feature-rich admin portal, and a robust backend integration with Supabase.
+TrackOwl is a time tracking and workforce monitoring platform built around three applications:
 
-## Architecture
+* An Electron desktop client for activity tracking
+* A React admin portal for managing teams and projects
+* An Express API backed by Supabase
 
-The project is divided into three main components: 
- 
-- **Desktop Client (Root)**: An Electron-based application that runs in the background to track user activity, take screenshots, and monitor application/URL usage.
-- **Admin Portal (`/admin-portal`)**: A React-based web interface for managers to oversee projects, members, budgets, and detailed productivity reports.
-- **Backend (`/backend`)**: An Express server that handles data aggregation, member invitations, and complex business logic, sitting on top of a Supabase database.
+The desktop application records work sessions, application usage, browser activity, screenshots, and productivity data. The admin portal provides project management, reporting, team administration, and time-off management tools.
 
----
+## Project Structure
 
-## Key Features
+```text
+.
+├── admin-portal/   # React + Vite management dashboard
+├── backend/        # Express API and business logic
+└── desktop/        # Electron tracking client
+```
 
-- **Activity Tracking**: Real-time monitoring of active windows, URLs, and screenshots.
-- **Project Management**: Detailed project configurations including budgets, billable hours, and team assignments.
-- **Member Management**: Streamlined invite flow with custom roles, pay rates, and billing limits.
-- **Favorites System**: Customizable sidebar navigation allowing users to star frequently used sections.
-- **Detailed Reporting**: Comprehensive productivity reports, including session logs and activity percentages.
-- **Calendar & Time Off**: Management of holidays and team time-off requests.
+### Desktop Client
 
----
+The Electron client runs on employee devices and is responsible for:
+
+* Session tracking
+* Activity monitoring
+* Screenshot capture
+* Active application detection
+* Browser URL tracking
+* Syncing collected data to Supabase
+
+### Admin Portal
+
+The admin portal provides:
+
+* Project management
+* Team management
+* Productivity reporting
+* Budget tracking
+* Time-off management
+* Organization settings
+
+### Backend
+
+The backend acts as a service layer between the frontend applications and Supabase.
+
+Responsibilities include:
+
+* Member invitations
+* Permission handling
+* Reporting aggregation
+* Project management workflows
+* Business rule enforcement
 
 ## Tech Stack
 
-- **Frontend**: React, TypeScript, Vite, Tailwind CSS, Lucide Icons.
-- **Desktop**: Electron.
-- **Backend**: Express, Node.js.
-- **Database**: Supabase (PostgreSQL).
-- **Authentication**: Supabase Auth.
+### Admin Portal
 
----
+* React
+* TypeScript
+* Vite
+* Tailwind CSS
 
-## Getting Started
+### Desktop Client
 
-### Prerequisites
+* Electron
+* Node.js
 
-- Node.js (v18+)
-- Supabase Project
+### Backend
 
-### Installation
+* Express
+* Node.js
 
-1.  **Clone the repository**
-2.  **Setup Backend**:
-    - `cd backend`
-    - `npm install`
-    - Create a `.env` file based on `.env.example` with your Supabase credentials.
-    - `npm run dev`
-3.  **Setup Admin Portal**:
-    - `cd admin-portal`
-    - `npm install`
-    - Create a `.env` file with `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_API_BASE_URL`.
-    - `npm run dev`
-4.  **Setup Desktop Client**:
-    - `cd .. (back to root)`
-    - `npm install`
-    - Create a `.env` with Supabase credentials.
-    - `npm run dev`
+### Infrastructure
 
----
+* Supabase
+* PostgreSQL
+* Supabase Auth
 
-## Database Schema
+## Setup
 
-The database schema is managed via Supabase. Key tables include:
-- `projects`: Project details and budget settings.
-- `members`: User profiles and compensation details.
-- `sessions`: Recorded time tracking sessions.
-- `activity_samples`: Sampled data for activity levels and idling.
-- `project_teams` & `project_members`: Relationship mapping for access control.
+### Requirements
 
-Refer to `backend/supabase_schema.sql` for the full definition.
+* Node.js 18+
+* Supabase project
+
+### Backend
+
+```bash
+cd backend
+npm install
+cp .env.example .env
+npm run dev
+```
+
+Configure the required Supabase environment variables before starting the server.
+
+### Admin Portal
+
+```bash
+cd admin-portal
+npm install
+npm run dev
+```
+
+Required environment variables:
+
+```env
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
+VITE_API_BASE_URL=
+```
+
+### Desktop Client
+
+```bash
+npm install
+npm run dev
+```
+
+Configure Supabase credentials in the desktop client's environment file before running the application.
+
+## Database
+
+The project uses Supabase as its primary datastore.
+
+Core tables include:
+
+| Table            | Purpose                             |
+| ---------------- | ----------------------------------- |
+| projects         | Project configuration and budgeting |
+| members          | Team members and profile data       |
+| sessions         | Recorded work sessions              |
+| activity_samples | Productivity and activity metrics   |
+| project_members  | Project access mapping              |
+| project_teams    | Team assignments                    |
+
+The complete schema can be found in:
+
+```text
+backend/supabase_schema.sql
+```
+
+## Authentication
+
+Authentication is handled through Supabase Auth and shared across the platform.
+
+Access to projects, reports, and administrative functionality is controlled through role-based permissions stored in the database.
+
+## Development
+
+Each application can be developed independently:
+
+```bash
+# Backend
+cd backend && npm run dev
+
+# Admin Portal
+cd admin-portal && npm run dev
+
+# Desktop Client
+npm run dev
+```
