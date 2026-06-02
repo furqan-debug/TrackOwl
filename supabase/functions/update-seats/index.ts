@@ -52,7 +52,7 @@ serve(async (req) => {
       .eq("auth_user_id", user.id)
       .single();
 
-    if (!member || member.role !== "Admin") throw new Error("Admin access required to update seats");
+    if (!member || (member.role !== "Admin" && member.role !== "Owner")) throw new Error("Admin or Owner access required to update seats");
 
     const { data: org } = await supabase
       .from("organizations")
