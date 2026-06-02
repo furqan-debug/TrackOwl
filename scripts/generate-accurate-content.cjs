@@ -246,10 +246,8 @@ let count = 0;
 for (const [category, articles] of Object.entries(documentationStructure)) {
     for (const article of articles) {
         const content = generateContent(category, article);
-        // Format filename: "Category - Article Name.md" to ensure unique files and easy sorting
-        const safeCategory = category.replace(/[^a-zA-Z0-9]/g, '');
-        const safeArticle = article.replace(/[^a-zA-Z0-9 ]/g, '');
-        const fileName = `${safeCategory}__${safeArticle}.md`;
+        // Format filename as clean kebab-case
+        const fileName = `${article.toLowerCase().replace(/[^a-z0-9]+/g, '-')}.md`;
         
         fs.writeFileSync(path.join(contentDir, fileName), content, 'utf8');
         count++;
