@@ -8,7 +8,7 @@ interface MemberProfile {
     full_name: string;
     avatar_url: string | null;
     phone: string | null;
-    role: 'Admin' | 'Manager' | 'User' | 'Viewer';
+    role: 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
     status: 'Active' | 'Inactive' | 'Pending';
     organization_id: string | null;
     location: string | null;
