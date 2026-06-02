@@ -69,48 +69,27 @@ const documentationStructure = {
         "Activity levels (Keyboard/Mouse)",
         "Productivity scores"
     ],
-    "Attendance & Schedules": [
-        "Create a schedule",
-        "Assign shifts",
-        "View attendance reports",
-        "Late/Absent tracking"
-    ],
     "Locations & Job Sites": [
-        "Add a job site",
-        "Geofencing",
-        "GPS tracking"
-    ],
-    "Financials": [
-        "Daily totals",
-        "Amounts owed",
-        "Payments report"
+        "View team locations",
+        "Set up job sites",
+        "Location tracking policies"
     ],
     "Billing & Subscriptions": [
         "View current plan",
         "Upgrade/Downgrade",
         "Update payment method",
-        "Billing history"
+        "View invoices"
     ],
     "Reports": [
         "Time & Activity reports",
         "Custom reports",
         "Legacy reports"
     ],
-    "Clients": [
-        "Add a client",
-        "Assign projects to clients",
-        "Client budgets"
-    ],
     "Settings": [
         "General settings",
         "Tracking settings",
         "Security settings",
         "Notifications"
-    ],
-    "Integrations": [
-        "Connect an integration",
-        "Available integrations",
-        "Integration settings"
     ],
     "Security & Privacy": [
         "Data encryption",
@@ -203,6 +182,23 @@ A: Most actions in TrackOwl are reversible, but destructive actions like Archivi
 A: Administrative configurations are limited to the web dashboard. Standard viewing and tracking are fully supported on mobile devices.`;
     }
 
+    const featureDescriptions = {
+        "Deactivate users": "Deactivating a user instantly revokes their login access and stops all tracking, but securely preserves all of their historical time, activity, and financial data for your records. This is different from Deleting a user, which permanently removes them.",
+        "Delete users": "Deleting a user permanently removes their profile from your organization. Use this with caution, as it is recommended to 'Deactivate' users instead to preserve their historical data.",
+        "Invite members": "Inviting members allows you to bring new employees or contractors into your TrackOwl workspace so they can begin tracking time and collaborating on projects.",
+        "Assign managers": "Assigning managers delegates administrative responsibilities. Managers can approve timesheets, manage teams, and view reports, allowing Owners to focus on high-level billing and strategy.",
+        "Productivity scores": "Productivity scores provide an automated, high-level metric (from 0 to 100%) indicating how active a user was during their tracked time, based on keyboard and mouse input.",
+        "Project limits": "Project limits allow you to cap the total number of hours or budget a team can spend on a specific project, preventing overbilling and keeping tasks on schedule.",
+        "Idle time settings": "Idle time settings automatically stop or pause a user's timer if they walk away from their computer, ensuring you only pay for actual time worked.",
+        "Daily totals": "Daily totals give you a bird's-eye view of exactly how much time and money was spent across your entire organization on any given day.",
+        "Approve/Reject requests": "This feature allows managers to review submitted manual time entries or time off requests, ensuring all logged hours are accurate before payroll is generated.",
+        "Configure screenshot frequency": "Screenshot frequency allows you to control how many screenshots are taken per 10-minute interval, balancing team oversight with privacy concerns.",
+        "Blur screenshots": "Blurring screenshots is a vital privacy feature that obscures sensitive on-screen text (like passwords or private messages) while still proving that the employee was actively working.",
+        "Track URLs and Apps": "This feature monitors which websites and desktop applications your team uses while tracking time, helping you identify time-wasting habits and optimize workflows."
+    };
+
+    const specificOverview = featureDescriptions[article] || `Understanding how to use the **${article}** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.`;
+
     return `---
 title: ${article}
 category: ${category}
@@ -215,7 +211,7 @@ description: Learn how to manage ${article.toLowerCase()} in TrackOwl.
 > ${customOverview}
 
 ## Overview
-Understanding how to use the **${article}** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+${specificOverview}
 
 > [!IMPORTANT]
 > **Required Permissions:** You must be an \`Owner\` or \`Manager\` to modify these settings. Standard users have read-only access.

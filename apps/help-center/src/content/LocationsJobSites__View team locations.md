@@ -1,16 +1,16 @@
 ---
-title: Assign shifts
-category: Attendance & Schedules
-description: Learn how to manage assign shifts in TrackOwl.
+title: View team locations
+category: Locations & Job Sites
+description: Learn how to manage view team locations in TrackOwl.
 ---
 
-# Assign shifts
+# View team locations
 
 > [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **Assign shifts** feature in the Attendance & Schedules section.
+> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **View team locations** feature in the Locations & Job Sites section.
 
 ## Overview
-Understanding how to use the **Assign shifts** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+Understanding how to use the **View team locations** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
 > **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
@@ -18,8 +18,8 @@ Understanding how to use the **Assign shifts** feature is essential for maximizi
 ## Where to find it
 To access this feature:
 1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Attendance & Schedules** icon in the primary sidebar navigation.
-3. Select **Assign shifts** from the secondary menu.
+2. Look for the **Locations & Job Sites** icon in the primary sidebar navigation.
+3. Select **View team locations** from the secondary menu.
 
 ---
 
@@ -28,7 +28,7 @@ To access this feature:
 Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
-2. Look at the left-hand menu and click on **Attendance & Schedules**.
+2. Look at the left-hand menu and click on **Locations & Job Sites**.
 3. Find and click on the specific item you want to work on.
 4. Make your desired changes on the screen.
 5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!

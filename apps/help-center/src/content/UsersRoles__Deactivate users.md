@@ -10,7 +10,7 @@ description: Learn how to manage deactivate users in TrackOwl.
 > Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **Deactivate users** feature in the Users & Roles section.
 
 ## Overview
-Understanding how to use the **Deactivate users** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+Deactivating a user instantly revokes their login access and stops all tracking, but securely preserves all of their historical time, activity, and financial data for your records. This is different from Deleting a user, which permanently removes them.
 
 > [!IMPORTANT]
 > **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
