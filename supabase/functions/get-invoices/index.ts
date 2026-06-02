@@ -44,7 +44,7 @@ serve(async (req) => {
       .single();
 
     if (memberErr || !member) throw new Error("Member profile not found.");
-    if (member.role !== "Admin") throw new Error("Only administrators can view billing.");
+    if (member.role !== "Admin" && member.role !== "Owner") throw new Error("Only administrators and owners can view billing.");
 
     const { data: org, error: orgErr } = await supabase
       .from("organizations")
