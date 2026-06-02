@@ -165,15 +165,15 @@ export function ProfilePage() {
 
                 {/* 🎭 Hero Identity Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-                    <div className="lg:col-span-4 flex flex-col gap-8">
-                        <div className="glass-panel p-10 rounded-[2.5rem] flex flex-col items-center text-center relative overflow-hidden group">
+                    <div className="lg:col-span-4 flex flex-col gap-6">
+                        <div className="bg-surface border border-border shadow-shell-sm p-8 rounded-[24px] flex flex-col items-center text-center relative overflow-hidden group">
                             {/* Decorative Glow */}
                             <div className="absolute -right-10 -top-10 w-40 h-40 bg-primary/10 blur-[60px] rounded-full pointer-events-none" />
                             <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-primary/5 blur-[60px] rounded-full pointer-events-none" />
 
-                            <div className="relative mb-8 z-10">
-                                <div className="w-40 h-40 rounded-[2.5rem] bg-surface-hover p-1.5 shadow-premium overflow-hidden group/avatar border border-border rotate-3 group-hover:rotate-0 transition-all duration-500">
-                                    <div className="w-full h-full rounded-[2rem] bg-surface overflow-hidden relative">
+                            <div className="relative mb-6 z-10">
+                                <div className="w-32 h-32 rounded-[2rem] bg-surface-hover p-1.5 overflow-hidden group/avatar border border-border transition-all duration-500">
+                                    <div className="w-full h-full rounded-[1.5rem] bg-surface overflow-hidden relative">
                                         {profile?.avatar_url ? (
                                             <SecureImage 
                                                 path={profile.avatar_url} 
@@ -202,13 +202,13 @@ export function ProfilePage() {
                                         )}
                                     </div>
                                 </div>
-                                <div className="absolute -bottom-2 -right-2 w-12 h-12 bg-white border border-border rounded-2xl flex items-center justify-center shadow-premium transform rotate-12 group-hover:rotate-0 transition-transform duration-500">
-                                    <Diamond className="w-5 h-5 text-primary" />
+                                <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-surface border border-border rounded-xl flex items-center justify-center shadow-shell-sm transition-transform duration-500">
+                                    <Diamond className="w-4 h-4 text-primary" />
                                 </div>
                             </div>
 
                             <div className="relative z-10">
-                                <h2 className="text-3xl font-black text-text-main tracking-tight mb-3">{profile?.full_name || 'Anonymous User'}</h2>
+                                <h2 className="text-2xl font-black text-text-main tracking-tight mb-2">{profile?.full_name || 'Anonymous User'}</h2>
                                 <div className="flex items-center justify-center gap-3 mb-6">
                                     <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -222,7 +222,7 @@ export function ProfilePage() {
                         </div>
 
                         {/* Security Card */}
-                        <div className="glass-panel p-8 rounded-[2rem] space-y-6">
+                        <div className="bg-surface border border-border shadow-shell-sm p-6 rounded-[24px] space-y-5">
                             <div className="flex items-center gap-4 border-b border-border pb-6">
                                 <div className="w-12 h-12 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shadow-shell-sm">
                                     <Shield className="w-5 h-5" />
@@ -244,7 +244,7 @@ export function ProfilePage() {
                                 <div className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-border">
                                     <div className="flex items-center gap-3">
                                         <Shield className="w-4 h-4 text-text-muted" />
-                                        <span className="text-[13px] font-bold text-text-main uppercase tracking-widest">{profile?.role === 'Admin' ? 'Owner' : profile?.role}</span>
+                                        <span className="text-[13px] font-bold text-text-main uppercase tracking-widest">{profile?.role}</span>
                                     </div>
                                     <Diamond className="w-4 h-4 text-primary opacity-50" />
                                 </div>
@@ -252,60 +252,60 @@ export function ProfilePage() {
                         </div>
                     </div>
 
-                    <div className="lg:col-span-8 flex flex-col gap-10">
+                    <div className="lg:col-span-8 flex flex-col gap-6">
 
 
                         {/* 📝 Identity Forms */}
-                        <div className="glass-panel p-10 rounded-[2.5rem] space-y-10">
-                            <div className="flex items-center gap-5 border-b border-border pb-8">
-                                <div className="w-14 h-14 rounded-2xl bg-surface border border-border flex items-center justify-center text-primary shadow-shell-sm">
-                                    <User className="w-6 h-6" />
+                        <div className="bg-surface border border-border shadow-shell-sm p-8 rounded-[24px] space-y-8">
+                            <div className="flex items-center gap-4 border-b border-border pb-6">
+                                <div className="w-12 h-12 rounded-xl bg-surface-hover border border-border flex items-center justify-center text-primary shadow-shell-sm">
+                                    <User className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h3 className="text-[22px] font-black text-text-main tracking-tight">Identity Information</h3>
+                                    <h3 className="text-[18px] font-black text-text-main tracking-tight">Identity Information</h3>
                                     <p className="text-[13px] font-medium text-text-muted mt-1 opacity-70">These details are visible to your administrators and team members.</p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-                                <div className="space-y-3">
-                                    <label className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em] ml-1">Legal Full Name</label>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-1">Legal Full Name</label>
                                     <div className="relative group/field">
-                                        <User className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within/field:text-primary transition-colors" />
+                                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within/field:text-primary transition-colors" />
                                         <input
                                             type="text"
                                             value={fullName}
                                             onChange={e => setFullName(capitalizeWords(e.target.value))}
                                             placeholder="Enter your full name"
-                                            className="w-full bg-surface-hover/50 border border-border rounded-2xl pl-14 pr-6 py-4 text-[15px] font-bold text-text-main focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 focus:bg-surface transition-all shadow-inner"
+                                            className="w-full bg-surface border border-border rounded-xl pl-11 pr-4 h-11 text-[12px] font-bold text-text-main focus:outline-none focus:border-primary transition-all shadow-shell-sm"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-3">
-                                    <label className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em] ml-1">Contact Number</label>
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-1">Contact Number</label>
                                     <div className="relative group/field">
-                                        <Smartphone className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within/field:text-primary transition-colors" />
+                                        <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within/field:text-primary transition-colors" />
                                         <input
                                             type="tel"
                                             value={phone}
                                             onChange={e => setPhone(e.target.value)}
                                             placeholder="+1 (000) 000-0000"
-                                            className="w-full bg-surface-hover/50 border border-border rounded-2xl pl-14 pr-6 py-4 text-[15px] font-bold text-text-main focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 focus:bg-surface transition-all shadow-inner"
+                                            className="w-full bg-surface border border-border rounded-xl pl-11 pr-4 h-11 text-[12px] font-bold text-text-main focus:outline-none focus:border-primary transition-all shadow-shell-sm"
                                         />
                                     </div>
                                 </div>
 
-                                <div className="space-y-3 md:col-span-2">
-                                    <label className="text-[11px] font-black text-text-muted uppercase tracking-[0.2em] ml-1">Current Base Location</label>
+                                <div className="space-y-2 md:col-span-2">
+                                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-1">Current Base Location</label>
                                     <div className="relative group/field">
-                                        <MapPin className="absolute left-5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within/field:text-primary transition-colors" />
+                                        <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within/field:text-primary transition-colors" />
                                         <input
                                             type="text"
                                             value={location}
                                             readOnly
                                             placeholder="Detecting location..."
-                                            className="w-full bg-surface-hover/30 border border-border rounded-2xl pl-14 pr-6 py-4 text-[15px] font-bold text-text-muted cursor-not-allowed transition-all shadow-inner"
+                                            className="w-full bg-surface-hover/50 border border-border rounded-xl pl-11 pr-32 h-11 text-[12px] font-bold text-text-muted cursor-not-allowed transition-all shadow-shell-sm"
                                         />
                                         <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10">
                                             <Shield className="w-3 h-3 text-primary" />
@@ -321,7 +321,7 @@ export function ProfilePage() {
                                     onClick={handleSave}
                                     disabled={loading}
                                     className={clsx(
-                                        "h-12 px-10 rounded-2xl text-[13px] font-black transition-all shadow-premium active:scale-95 flex items-center gap-3",
+                                        "h-10 px-8 rounded-xl text-[12px] font-bold transition-all shadow-shell-sm flex items-center gap-2",
                                         success 
                                             ? "bg-emerald-500 text-white" 
                                             : "bg-primary text-white hover:brightness-110"
@@ -335,7 +335,7 @@ export function ProfilePage() {
                         </div>
 
                         {/* 🔒 Security CTA */}
-                        <div className="p-8 rounded-[2rem] bg-slate-900 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between group shadow-premium gap-6">
+                        <div className="p-8 rounded-[24px] bg-slate-900 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between group shadow-shell-sm gap-6">
                              <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/20 blur-[60px] rounded-full pointer-events-none group-hover:scale-150 transition-transform duration-1000" />
                              <div className="relative z-10 flex flex-col gap-1 text-center md:text-left">
                                 <h4 className="text-xl font-black tracking-tight italic">Protect your workspace access</h4>

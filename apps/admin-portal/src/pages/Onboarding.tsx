@@ -78,7 +78,7 @@ export function Onboarding() {
                             status: 'Active',
                             organization_id: orgData.id,
                             auth_user_id: user.id,
-                            role: 'Admin'
+                            role: 'Owner'
                         })
                         .eq('id', profile.id);
 
@@ -89,8 +89,8 @@ export function Onboarding() {
                         .from('members')
                         .insert({
                             email: user.email,
-                            full_name: user.user_metadata.full_name || 'Admin',
-                            role: 'Admin',
+                            full_name: user.user_metadata.full_name || 'Owner',
+                            role: 'Owner',
                             status: 'Active',
                             organization_id: orgData.id,
                             auth_user_id: user.id
