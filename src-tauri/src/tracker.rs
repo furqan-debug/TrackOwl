@@ -13,7 +13,6 @@ use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::thread;
 use std::time::Duration;
-use rdev::{listen, Event, EventType};
 use tauri::{AppHandle, Emitter};
 use serde::{Deserialize, Serialize};
 
@@ -78,6 +77,24 @@ pub fn open_macos_accessibility_settings() {
         .spawn();
 }
 
+#[cfg(target_os = "macos")]
+pub fn check_macos_screen_recording() -> bool {
+    #[link(name = "CoreGraphics", kind = "framework")]
+    extern "C" {
+        fn CGPreflightScreenCaptureAccess() -> bool;
+    }
+    unsafe { CGPreflightScreenCaptureAccess() }
+}
+
+#[cfg(target_os = "macos")]
+pub fn request_macos_screen_recording() -> bool {
+    #[link(name = "CoreGraphics", kind = "framework")]
+    extern "C" {
+        fn CGRequestScreenCaptureAccess() -> bool;
+    }
+    unsafe { CGRequestScreenCaptureAccess() }
+}
+
 /// Spawns rdev listener in a background thread.
 /// All mouse/keyboard events are counted in `counts`.
 pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
@@ -94,19 +111,20 @@ pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
         }
     }
 
+    #[cfg(not(target_os = "macos"))]
     thread::spawn(move || {
-        if let Err(e) = listen(move |event: Event| {
+        if let Err(e) = rdev::listen(move |event: rdev::Event| {
             let mut is_active = false;
             match event.event_type {
-                EventType::KeyPress(_) => {
+                rdev::EventType::KeyPress(_) => {
                     counts.keyboard_count.fetch_add(1, Ordering::Relaxed);
                     is_active = true;
                 }
-                EventType::ButtonPress(_) => {
+                rdev::EventType::ButtonPress(_) => {
                     counts.mouse_count.fetch_add(1, Ordering::Relaxed);
                     is_active = true;
                 }
-                EventType::MouseMove { .. } | EventType::Wheel { .. } => {
+                rdev::EventType::MouseMove { .. } | rdev::EventType::Wheel { .. } => {
                     is_active = true;
                 }
                 _ => {}
@@ -132,6 +150,94 @@ pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
         }) {
             eprintln!("[tracker] rdev listen error: {:?}", e);
             IS_LISTENER_SPAWNED.store(false, Ordering::SeqCst);
+        }
+    });
+
+    #[cfg(target_os = "macos")]
+    thread::spawn(move || {
+        #[link(name = "CoreGraphics", kind = "framework")]
+        extern "C" {
+            fn CGEventSourceCounterForEventType(stateID: i32, eventType: u32) -> u32;
+        }
+        
+        const K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE: i32 = 1;
+        const K_CG_EVENT_LEFT_MOUSE_DOWN: u32 = 1;
+        const K_CG_EVENT_RIGHT_MOUSE_DOWN: u32 = 3;
+        const K_CG_EVENT_OTHER_MOUSE_DOWN: u32 = 25;
+        const K_CG_EVENT_KEY_DOWN: u32 = 10;
+        const K_CG_EVENT_MOUSE_MOVED: u32 = 5;
+        const K_CG_EVENT_SCROLL_WHEEL: u32 = 22;
+
+        let mut last_mouse_clicks = 0;
+        let mut last_key_presses = 0;
+        let mut last_mouse_moves = 0;
+        let mut last_scrolls = 0;
+
+        // Initialize counters
+        unsafe {
+            last_mouse_clicks = CGEventSourceCounterForEventType(K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE, K_CG_EVENT_LEFT_MOUSE_DOWN)
+                .wrapping_add(CGEventSourceCounterForEventType(K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE, K_CG_EVENT_RIGHT_MOUSE_DOWN))
+                .wrapping_add(CGEventSourceCounterForEventType(K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE, K_CG_EVENT_OTHER_MOUSE_DOWN));
+            last_key_presses = CGEventSourceCounterForEventType(K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE, K_CG_EVENT_KEY_DOWN);
+            last_mouse_moves = CGEventSourceCounterForEventType(K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE, K_CG_EVENT_MOUSE_MOVED);
+            last_scrolls = CGEventSourceCounterForEventType(K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE, K_CG_EVENT_SCROLL_WHEEL);
+        }
+
+        loop {
+            thread::sleep(Duration::from_millis(100)); // Poll every 100ms
+            
+            let mut is_active = false;
+
+            unsafe {
+                let current_clicks = CGEventSourceCounterForEventType(K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE, K_CG_EVENT_LEFT_MOUSE_DOWN)
+                    .wrapping_add(CGEventSourceCounterForEventType(K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE, K_CG_EVENT_RIGHT_MOUSE_DOWN))
+                    .wrapping_add(CGEventSourceCounterForEventType(K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE, K_CG_EVENT_OTHER_MOUSE_DOWN));
+                let current_keys = CGEventSourceCounterForEventType(K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE, K_CG_EVENT_KEY_DOWN);
+                let current_moves = CGEventSourceCounterForEventType(K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE, K_CG_EVENT_MOUSE_MOVED);
+                let current_scrolls = CGEventSourceCounterForEventType(K_CG_EVENT_SOURCE_STATE_HID_SYSTEM_STATE, K_CG_EVENT_SCROLL_WHEEL);
+
+                if current_clicks != last_mouse_clicks {
+                    let diff = current_clicks.wrapping_sub(last_mouse_clicks);
+                    counts.mouse_count.fetch_add(diff, Ordering::Relaxed);
+                    last_mouse_clicks = current_clicks;
+                    is_active = true;
+                }
+                
+                if current_keys != last_key_presses {
+                    let diff = current_keys.wrapping_sub(last_key_presses);
+                    counts.keyboard_count.fetch_add(diff, Ordering::Relaxed);
+                    last_key_presses = current_keys;
+                    is_active = true;
+                }
+
+                if current_moves != last_mouse_moves {
+                    last_mouse_moves = current_moves;
+                    is_active = true;
+                }
+
+                if current_scrolls != last_scrolls {
+                    last_scrolls = current_scrolls;
+                    is_active = true;
+                }
+            }
+
+            if is_active {
+                let current_sec = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs();
+                let last_sec = counts.last_active_second.load(Ordering::Relaxed);
+                if last_sec != current_sec {
+                    if counts.last_active_second.compare_exchange(
+                        last_sec,
+                        current_sec,
+                        Ordering::Acquire,
+                        Ordering::Relaxed
+                    ).is_ok() {
+                        counts.active_seconds.fetch_add(1, Ordering::Relaxed);
+                    }
+                }
+            }
         }
     });
 }
@@ -163,12 +269,16 @@ pub fn get_active_window() -> (String, String) {
             tell application "System Events"
                 set frontApp to first application process whose frontmost is true
                 set appName to name of frontApp
-                set windowTitle to ""
-                try
-                    set windowTitle to name of front window of frontApp
-                end try
-                return appName & ":::" & windowTitle
             end tell
+            
+            set windowTitle to ""
+            try
+                tell application "System Events"
+                    set windowTitle to name of front window of frontApp
+                end tell
+            end try
+            
+            return appName & ":::" & windowTitle
         on error
             return "Unknown:::Unknown"
         end try

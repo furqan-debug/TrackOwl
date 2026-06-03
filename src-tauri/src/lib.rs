@@ -249,6 +249,15 @@ fn start_tracking(
                 error: Some("macOS Accessibility Permission Required: Please enable 'TrackOwl' in the System Settings window that just opened, then try starting again.".to_string()),
             };
         }
+
+        if !tracker::check_macos_screen_recording() {
+            tracker::request_macos_screen_recording();
+            return TrackingResult {
+                status: "error".to_string(),
+                session_id: None,
+                error: Some("macOS Screen Recording Permission Required: Please grant Screen Recording permission to 'TrackOwl' in System Settings (Privacy & Security -> Screen Recording), then try starting again.".to_string()),
+            };
+        }
     }
     
     let (cfg, counts, running, auth_arc, db_arc): (SupabaseConfig, Arc<tracker::TrackerCounts>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>) = {
