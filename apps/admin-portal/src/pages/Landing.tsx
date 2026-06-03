@@ -771,7 +771,7 @@ export function Landing() {
                                     <a
                                         href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.8/TrackOwl_1.3.8_aarch64.dmg"
                                         className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-900 text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
-                                        <Download className="w-4 h-4" /> Apple Silicon (M1/M2/M3)
+                                        <Download className="w-4 h-4" /> Apple Silicon
                                     </a>
                                     <a
                                         href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.8/TrackOwl_1.3.8_x64.dmg"
