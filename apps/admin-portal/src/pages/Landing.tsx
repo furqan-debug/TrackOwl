@@ -745,12 +745,19 @@ export function Landing() {
                                     <Monitor className="w-8 h-8" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Windows</h3>
-                                <p className="text-slate-500 font-medium mb-8">Windows 10 and 11 (64-bit)</p>
-                                <a
-                                    href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.4/TrackOwl_1.3.4_x64-setup.exe"
-                                    className="w-full py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold rounded-lg transition-colors flex items-center justify-center gap-2 mt-auto">
-                                    <Download className="w-5 h-5" /> Download for Windows
-                                </a>
+                                <p className="text-slate-500 font-medium mb-6">Windows 10 and 11 (64-bit)</p>
+                                <div className="w-full flex flex-col gap-3 mt-auto">
+                                    <a
+                                        href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.8/TrackOwl_1.3.8_x64-setup.exe"
+                                        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                                        <Download className="w-4 h-4" /> Download .exe
+                                    </a>
+                                    <a
+                                        href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.8/TrackOwl_1.3.8_x64_en-US.msi"
+                                        className="w-full py-3 px-4 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                                        <Download className="w-4 h-4" /> Download .msi
+                                    </a>
+                                </div>
                             </div>
 
                             {/* Mac */}
@@ -759,12 +766,19 @@ export function Landing() {
                                     <Monitor className="w-8 h-8" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">macOS</h3>
-                                <p className="text-slate-500 font-medium mb-8">macOS 11.0 (Big Sur) or later</p>
-                                <a
-                                    href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.4/TrackOwl_1.3.4_aarch64.dmg"
-                                    className="w-full py-4 px-6 bg-slate-800 hover:bg-slate-900 text-white text-lg font-bold rounded-lg transition-colors flex items-center justify-center gap-2 mt-auto">
-                                    <Download className="w-5 h-5" /> Download for Mac
-                                </a>
+                                <p className="text-slate-500 font-medium mb-6">macOS 11.0 (Big Sur) or later</p>
+                                <div className="w-full flex flex-col gap-3 mt-auto">
+                                    <a
+                                        href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.8/TrackOwl_1.3.8_aarch64.dmg"
+                                        className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-900 text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                                        <Download className="w-4 h-4" /> Apple Silicon (M1/M2/M3)
+                                    </a>
+                                    <a
+                                        href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.3.8/TrackOwl_1.3.8_x64.dmg"
+                                        className="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                                        <Download className="w-4 h-4" /> Intel Processor
+                                    </a>
+                                </div>
                             </div>
 
                             {/* Linux */}
