@@ -69,10 +69,9 @@ pub fn check_macos_accessibility() -> bool {
     }
     let is_trusted = unsafe { AXIsProcessTrusted() };
     
-    // Diagnostic logging
     println!(
-        "[tracker-diag] check_macos_accessibility: trusted={} pid={} exe={:?}",
-        is_trusted,
+        "[TRACKOWL_ACCESSIBILITY] trusted={} pid={} exe={:?}",
+        unsafe { AXIsProcessTrusted() },
         std::process::id(),
         std::env::current_exe()
     );
