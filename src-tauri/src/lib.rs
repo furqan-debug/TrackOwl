@@ -241,7 +241,9 @@ fn start_tracking(
 
     #[cfg(target_os = "macos")]
     {
+        println!("[tracker-diag] start_tracking called. Checking macOS permissions.");
         if !tracker::check_macos_accessibility() {
+            println!("[tracker-diag] start_tracking: Accessibility false. Opening settings and returning error.");
             tracker::open_macos_accessibility_settings();
             return TrackingResult {
                 status: "error".to_string(),
@@ -249,6 +251,7 @@ fn start_tracking(
                 error: Some("macOS Accessibility Permission Required: Please enable 'TrackOwl' in the System Settings window that just opened, then try starting again.".to_string()),
             };
         }
+        println!("[tracker-diag] start_tracking: Accessibility true. Proceeding to screen recording check.");
 
         if !tracker::check_macos_screen_recording() {
             tracker::request_macos_screen_recording();

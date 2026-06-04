@@ -65,9 +65,19 @@ static IS_LISTENER_SPAWNED: std::sync::atomic::AtomicBool = std::sync::atomic::A
 pub fn check_macos_accessibility() -> bool {
     #[link(name = "ApplicationServices", kind = "framework")]
     extern "C" {
-        fn AXIsProcessTrusted() -> u8;
+        fn AXIsProcessTrusted() -> bool;
     }
-    unsafe { AXIsProcessTrusted() != 0 }
+    let is_trusted = unsafe { AXIsProcessTrusted() };
+    
+    // Diagnostic logging
+    println!(
+        "[tracker-diag] check_macos_accessibility: trusted={} pid={} exe={:?}",
+        is_trusted,
+        std::process::id(),
+        std::env::current_exe()
+    );
+    
+    is_trusted
 }
 
 #[cfg(target_os = "macos")]
@@ -98,18 +108,22 @@ pub fn request_macos_screen_recording() -> bool {
 /// Spawns rdev listener in a background thread.
 /// All mouse/keyboard events are counted in `counts`.
 pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
+    println!("[tracker-diag] spawn_input_listener called.");
     if IS_LISTENER_SPAWNED.swap(true, Ordering::SeqCst) {
+        println!("[tracker-diag] IS_LISTENER_SPAWNED was true, returning early.");
         return; // Already spawned!
     }
 
     #[cfg(target_os = "macos")]
     {
+        println!("[tracker-diag] spawn_input_listener checking accessibility...");
         if !check_macos_accessibility() {
-            println!("[tracker] macOS Accessibility permissions not granted. Delaying listener.");
+            println!("[tracker-diag] macOS Accessibility permissions not granted. Delaying listener.");
             IS_LISTENER_SPAWNED.store(false, Ordering::SeqCst);
             return;
         }
     }
+    println!("[tracker-diag] Accessibility granted. Spawning input listener thread.");
 
     #[cfg(not(target_os = "macos"))]
     thread::spawn(move || {
