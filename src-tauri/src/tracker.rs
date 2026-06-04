@@ -90,17 +90,12 @@ pub fn open_macos_accessibility_settings() {
 pub fn check_macos_screen_recording() -> bool {
     #[link(name = "CoreGraphics", kind = "framework")]
     extern "C" {
-        fn CGPreflightScreenCaptureAccess() -> bool;
-    }
-    unsafe { CGPreflightScreenCaptureAccess() }
-}
-
-#[cfg(target_os = "macos")]
-pub fn request_macos_screen_recording() -> bool {
-    #[link(name = "CoreGraphics", kind = "framework")]
-    extern "C" {
         fn CGRequestScreenCaptureAccess() -> bool;
     }
+    // CGRequestScreenCaptureAccess checks the permission actively. 
+    // If not granted, it prompts the user and returns false.
+    // If granted, it returns true immediately. This bypasses the TCC cache 
+    // that CGPreflightScreenCaptureAccess suffers from.
     unsafe { CGRequestScreenCaptureAccess() }
 }
 

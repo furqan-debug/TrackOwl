@@ -254,7 +254,8 @@ fn start_tracking(
         println!("[tracker-diag] start_tracking: Accessibility true. Proceeding to screen recording check.");
 
         if !tracker::check_macos_screen_recording() {
-            tracker::request_macos_screen_recording();
+            // CGRequestScreenCaptureAccess (now used in check_macos_screen_recording) 
+            // automatically prompts the user if permission is missing.
             return TrackingResult {
                 status: "error".to_string(),
                 session_id: None,
