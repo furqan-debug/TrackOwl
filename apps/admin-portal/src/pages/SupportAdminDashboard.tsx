@@ -65,7 +65,7 @@ export function SupportAdminDashboard() {
         'broadcast',
         { event: 'new-message' },
         (payload) => {
-          if (selectedTicket?.id === payload.payload.ticketId) {
+          if (selectedTicket && selectedTicket.id === payload.payload.ticketId) {
             fetchMessages(selectedTicket.id);
           }
         }
