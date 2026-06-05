@@ -129,8 +129,8 @@ export function SupportWidget() {
     if (botMode === 'live_chat' && ticketStatus === 'resolved') {
       setLocalMessages(prev => [
         ...prev,
-        ...dbMessages.map(m => ({ sender: m.is_admin ? 'admin' : 'user', text: m.message })),
-        { sender: 'bot', text: 'This ticket has been resolved. The agent has disconnected. I am your virtual agent, how else can I help you today?' }
+        ...dbMessages.map(m => ({ sender: (m.is_admin ? 'admin' : 'user') as 'admin'|'user', text: m.message })),
+        { sender: 'bot' as const, text: 'This ticket has been resolved. The agent has disconnected. I am your virtual agent, how else can I help you today?' }
       ]);
       setDbMessages([]);
       setActiveTicketId(null);
