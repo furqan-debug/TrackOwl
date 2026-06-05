@@ -39,6 +39,10 @@ import { Pricing } from './pages/Pricing';
 import { MockCheckout } from './pages/MockCheckout';
 import { PremiumRoute } from './components/access/PremiumRoute';
 
+import { SupportAdminLogin } from './pages/SupportAdminLogin';
+import { SupportAdminDashboard } from './pages/SupportAdminDashboard';
+import { SupportWidget } from './components/SupportWidget';
+
 import { FavoritesProvider } from './context/FavoritesContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -88,6 +92,11 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/update-password" element={<UpdatePassword />} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+
+            {/* Support Agent Routes */}
+            <Route path="/support-admin/login" element={<SupportAdminLogin />} />
+            <Route path="/support-admin" element={<Navigate to="/support-admin/login" replace />} />
+            <Route path="/support-admin/dashboard" element={<SupportAdminDashboard />} />
 
             <Route path="/dashboard/*" element={
               <ProtectedRoute>
@@ -140,6 +149,7 @@ function App() {
             } />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <SupportWidget />
         </Router>
       </FavoritesProvider>
     </AuthProvider>
