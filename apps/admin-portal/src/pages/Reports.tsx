@@ -82,6 +82,8 @@ export function Reports() {
         rows: {
             memberId: string;
             fullName: string;
+            employeeId?: string;
+            email?: string;
             dailyMins: Record<string, number>;
             totalMins: number;
             activityScore: number;
