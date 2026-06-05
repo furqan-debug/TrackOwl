@@ -1,4 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { supabase } from '../lib/supabase';
 import {
     Monitor, Camera,
@@ -9,7 +11,8 @@ import {
     ChevronLeft,
     ChevronRight,
     RefreshCw,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon,
+    Download
 } from 'lucide-react';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -68,8 +71,12 @@ export function Reports() {
     // Team & Member filtering
     const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
     const [selectedTeamId, setSelectedTeamId] = useState<string>('All');
-    const [members, setMembers] = useState<{ id: string; auth_user_id?: string | null; email: string; full_name: string; pay_rate?: number; bill_rate?: number; timezone?: string }[]>([]);
+    const [members, setMembers] = useState<{ id: string; auth_user_id?: string | null; email: string; full_name: string; pay_rate?: number; bill_rate?: number; timezone?: string; employee_id?: string }[]>([]);
     const [selectedMemberId, setSelectedMemberId] = useState<string>('All');
+    const [showColumnDropdown, setShowColumnDropdown] = useState(false);
+    const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+    const [showEmpId, setShowEmpId] = useState(false);
+    const [showEmail, setShowEmail] = useState(false);
     const [tableData, setTableData] = useState<{
         dates: string[];
         rows: {
@@ -108,7 +115,7 @@ export function Reports() {
 
     async function fetchMembers() {
         const { data } = await supabase.from('members')
-            .select('id, auth_user_id, email, full_name, pay_rate, bill_rate, timezone, idle_limit')
+            .select('id, auth_user_id, email, full_name, pay_rate, bill_rate, timezone, idle_limit, employee_id')
             .eq('organization_id', organizationId)
             .eq('status', 'Active')
             .order('full_name', { ascending: true });
@@ -197,7 +204,7 @@ export function Reports() {
             ? members
             : (await supabase
                 .from('members')
-                .select('id, auth_user_id, email, full_name, pay_rate, bill_rate, timezone')
+                .select('id, auth_user_id, email, full_name, pay_rate, bill_rate, timezone, employee_id')
                 .eq('organization_id', organizationId)
                 .eq('status', 'Active')).data || [];
 
@@ -422,6 +429,8 @@ export function Reports() {
                 memberRows[m.id] = {
                     memberId: m.id,
                     fullName: m.full_name || m.email || 'Unknown',
+                    email: m.email || '',
+                    employeeId: m.employee_id || '',
                     dailyMins: {},
                     totalMins: 0,
                     activitySum: 0,
@@ -453,6 +462,8 @@ export function Reports() {
                 .map((row: any) => ({
                     memberId: row.memberId,
                     fullName: row.fullName,
+                    email: row.email,
+                    employeeId: row.employeeId,
                     dailyMins: row.dailyMins,
                     totalMins: row.totalMins,
                     activityScore: row.activitySamples > 0 ? Math.round(row.activitySum / row.activitySamples) : 0
@@ -483,6 +494,152 @@ export function Reports() {
         }
     }
 
+    const downloadCSV = () => {
+        let csvContent = "data:text/csv;charset=utf-8,";
+        
+        // Branding Header
+        csvContent += '"TrackOwl Timesheet Matrix Report"\r\n';
+        csvContent += `"Generated on: ${new Date().toLocaleDateString('en-US')}","Date Range: ${new Date(getDateRange().start).toLocaleDateString('en-US')} - ${new Date(getDateRange().end).toLocaleDateString('en-US')}"\r\n\r\n`;
+
+        let headers = ["Member"];
+        if (showEmpId) headers.push("Emp ID");
+        if (showEmail) headers.push("Email");
+        headers.push(...tableData.dates.map(d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })), "Total", "Score");
+        csvContent += headers.join(",") + "\r\n";
+
+        tableData.rows.forEach(row => {
+            let rowData = [`"${row.fullName}"`];
+            if (showEmpId) rowData.push(`"${row.employeeId || ''}"`);
+            if (showEmail) rowData.push(`"${row.email || ''}"`);
+            rowData.push(
+                ...tableData.dates.map(date => `"${row.dailyMins[date] ? formatDuration(row.dailyMins[date]) : ''}"`),
+                `"${formatDuration(row.totalMins)}"`,
+                `"${row.activityScore}%"`
+            );
+            csvContent += rowData.join(",") + "\r\n";
+        });
+
+        let totalsRow = ["Totals"];
+        if (showEmpId) totalsRow.push("");
+        if (showEmail) totalsRow.push("");
+        totalsRow.push(
+            ...tableData.dates.map(date => {
+                const dayTotal = tableData.rows.reduce((sum, r) => sum + (r.dailyMins[date] || 0), 0);
+                return `"${dayTotal > 0 ? formatDuration(dayTotal) : ''}"`;
+            }),
+            `"${formatDuration(tableData.rows.reduce((sum, r) => sum + r.totalMins, 0))}"`,
+            `"${tableData.rows.length > 0 ? Math.round(tableData.rows.reduce((sum, r) => sum + r.activityScore, 0) / tableData.rows.length) : 0}%"`
+        );
+        csvContent += totalsRow.join(",") + "\r\n\r\n";
+        
+        // Branding Footer
+        csvContent += '"TrackOwl"\r\n';
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Timesheet_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setShowDownloadDropdown(false);
+    };
+
+    const downloadPDF = async () => {
+        const doc = new jsPDF('landscape');
+        
+        let titleX = 14;
+        try {
+            const logoInfo = await new Promise<{url: string, w: number, h: number}>((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    if (ctx) {
+                        ctx.drawImage(img, 0, 0);
+                        resolve({ url: canvas.toDataURL('image/png'), w: img.width, h: img.height });
+                    } else {
+                        reject(new Error("No 2d context"));
+                    }
+                };
+                img.onerror = () => reject(new Error("Image failed to load"));
+                img.src = '/logo.png';
+            });
+            
+            // Maintain aspect ratio: fix height to 16 and calculate proportional width
+            const targetHeight = 16;
+            const targetWidth = (targetHeight * logoInfo.w) / logoInfo.h;
+            doc.addImage(logoInfo.url, 'PNG', 14, 10, targetWidth, targetHeight);
+            
+            titleX = 14 + targetWidth + 5; // 5 units of spacing between logo and text
+        } catch (err) {
+            console.error("Could not load logo for PDF", err);
+            titleX = 14; // fallback if no logo
+        }
+
+        // Add Document Title and Date
+        doc.setFontSize(16);
+        doc.setTextColor(15, 23, 42); // slate-900
+        doc.text("Timesheet Matrix Report", titleX, 16);
+        
+        doc.setFontSize(9);
+        doc.setTextColor(100, 116, 139); // slate-500
+        doc.text(`Generated on: ${new Date().toLocaleDateString('en-US')}  |  Date Range: ${new Date(getDateRange().start).toLocaleDateString('en-US')} - ${new Date(getDateRange().end).toLocaleDateString('en-US')}`, titleX, 22);
+
+        const headRow = ["Member"];
+        if (showEmpId) headRow.push("Emp ID");
+        if (showEmail) headRow.push("Email");
+        headRow.push(...tableData.dates.map(d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })), "Total", "Score");
+        const head = [headRow];
+        
+        const body = tableData.rows.map(row => {
+            const rowData = [row.fullName];
+            if (showEmpId) rowData.push(row.employeeId || '');
+            if (showEmail) rowData.push(row.email || '');
+            rowData.push(
+                ...tableData.dates.map(date => row.dailyMins[date] ? formatDuration(row.dailyMins[date]) : ''),
+                formatDuration(row.totalMins),
+                `${row.activityScore}%`
+            );
+            return rowData;
+        });
+
+        const footRow = ["Totals"];
+        if (showEmpId) footRow.push("");
+        if (showEmail) footRow.push("");
+        footRow.push(
+            ...tableData.dates.map(date => {
+                const dayTotal = tableData.rows.reduce((sum, r) => sum + (r.dailyMins[date] || 0), 0);
+                return dayTotal > 0 ? formatDuration(dayTotal) : '';
+            }),
+            formatDuration(tableData.rows.reduce((sum, r) => sum + r.totalMins, 0)),
+            `${tableData.rows.length > 0 ? Math.round(tableData.rows.reduce((sum, r) => sum + r.activityScore, 0) / tableData.rows.length) : 0}%`
+        );
+        const foot = [footRow];
+
+        autoTable(doc, {
+            head, body, foot,
+            startY: 32, // Start below the header
+            styles: { fontSize: 8 },
+            headStyles: { fillColor: [64, 102, 211] }
+        });
+        
+        // Add TrackOwl footer below the table
+        const finalY = (doc as any).lastAutoTable.finalY || 100;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(160, 174, 192); // slate-400 for a light appearance
+        const footerText = "TrackOwl";
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const textWidth = doc.getTextWidth(footerText);
+        doc.text(footerText, (pageWidth - textWidth) / 2, finalY + 15);
+
+        doc.save(`Timesheet_${new Date().toISOString().split('T')[0]}.pdf`);
+        setShowDownloadDropdown(false);
+    };
 
     return (
         <PageLayout
@@ -727,6 +884,63 @@ export function Reports() {
                                     <p className="text-[10px] font-bold text-text-muted ">Weekly performance distribution</p>
                                 </div>
                                 <div className="flex items-center gap-4">
+                                    <div className="relative group">
+                                        <button
+                                            onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                                            className={clsx(
+                                                "flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border",
+                                                showColumnDropdown || showEmpId || showEmail
+                                                    ? "bg-surface-hover border-border text-primary shadow-shell-sm" 
+                                                    : "bg-surface border-transparent text-text-muted hover:bg-surface-hover hover:text-slate-900"
+                                            )}
+                                        >
+                                            <ActivityIcon className="w-3.5 h-3.5" />
+                                            <span>Columns</span>
+                                        </button>
+                                        
+                                        {showColumnDropdown && (
+                                            <div className="absolute top-full right-0 mt-2 z-50 bg-surface border border-border rounded-xl shadow-2xl p-2 min-w-[160px] animate-in fade-in slide-in-from-top-2 duration-200">
+                                                <label className="flex items-center gap-3 px-3 py-2 hover:bg-surface-hover rounded-lg cursor-pointer transition-colors">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={showEmpId}
+                                                        onChange={(e) => setShowEmpId(e.target.checked)}
+                                                        className="w-3.5 h-3.5 rounded border-border text-primary focus:ring-primary/20"
+                                                    />
+                                                    <span className="text-[12px] font-bold text-text-main">Emp ID</span>
+                                                </label>
+                                                <label className="flex items-center gap-3 px-3 py-2 hover:bg-surface-hover rounded-lg cursor-pointer transition-colors">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        checked={showEmail}
+                                                        onChange={(e) => setShowEmail(e.target.checked)}
+                                                        className="w-3.5 h-3.5 rounded border-border text-primary focus:ring-primary/20"
+                                                    />
+                                                    <span className="text-[12px] font-bold text-text-main">Email</span>
+                                                </label>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="relative group">
+                                        <button
+                                            onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
+                                            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border bg-surface border-transparent text-text-muted hover:bg-surface-hover hover:text-slate-900"
+                                        >
+                                            <Download className="w-3.5 h-3.5" />
+                                            <span>Export</span>
+                                        </button>
+                                        
+                                        {showDownloadDropdown && (
+                                            <div className="absolute top-full right-0 mt-2 z-50 bg-surface border border-border rounded-xl shadow-2xl p-2 min-w-[140px] animate-in fade-in slide-in-from-top-2 duration-200">
+                                                <button onClick={downloadCSV} className="w-full text-left px-3 py-2 text-[12px] font-bold text-text-main hover:bg-surface-hover hover:text-primary rounded-lg transition-colors">
+                                                    Download CSV
+                                                </button>
+                                                <button onClick={downloadPDF} className="w-full text-left px-3 py-2 text-[12px] font-bold text-text-main hover:bg-surface-hover hover:text-primary rounded-lg transition-colors">
+                                                    Download PDF
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
                                     <div className="flex items-center gap-2 bg-surface-hover p-1 rounded-xl border border-border">
                                         <button
                                             onClick={() => {
@@ -745,13 +959,7 @@ export function Reports() {
                                             <ChevronRight className="w-4 h-4" />
                                         </button>
                                     </div>
-                                    <div className="flex -space-x-2">
-                                        {tableData.rows.slice(0, 4).map((r, i) => (
-                                            <div key={i} className="w-8 h-8 rounded-full bg-main border-2 border-white flex items-center justify-center text-[10px] font-bold text-text-muted shadow-shell-sm">
-                                                {r.fullName[0]}
-                                            </div>
-                                        ))}
-                                    </div>
+
                                 </div>
                             </div>
 
@@ -762,6 +970,16 @@ export function Reports() {
                                             <th className="sticky left-0 z-20 bg-surface-hover/90 backdrop-blur-md py-4 px-8 text-[11px] font-bold text-text-muted border-b border-border text-left w-[220px]">
                                                 Member
                                             </th>
+                                            {showEmpId && (
+                                                <th className="py-4 px-4 text-[11px] font-bold text-text-muted border-b border-border text-left w-[120px]">
+                                                    Emp ID
+                                                </th>
+                                            )}
+                                            {showEmail && (
+                                                <th className="py-4 px-4 text-[11px] font-bold text-text-muted border-b border-border text-left w-[240px]">
+                                                    Email
+                                                </th>
+                                            )}
                                             {tableData.dates.map(date => (
                                                 <th key={date} className="py-4 px-4 text-[10px] font-bold text-text-muted border-b border-border text-center w-[120px]">
                                                     {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -786,6 +1004,16 @@ export function Reports() {
                                                         <span className="text-[13px] font-bold text-text-main tracking-tight">{row.fullName}</span>
                                                     </div>
                                                 </td>
+                                                {showEmpId && (
+                                                    <td className="py-4 px-4 text-[12px] font-medium text-text-muted text-left">
+                                                        {row.employeeId || <span className="text-text-muted opacity-50">—</span>}
+                                                    </td>
+                                                )}
+                                                {showEmail && (
+                                                    <td className="py-4 px-4 text-[12px] font-medium text-text-muted text-left" title={row.email}>
+                                                        {row.email || <span className="text-text-muted opacity-50">—</span>}
+                                                    </td>
+                                                )}
                                                 {tableData.dates.map(date => (
                                                     <td key={date} className="py-4 px-4 text-[12px] font-medium text-text-muted text-center tabular-nums">
                                                         {row.dailyMins[date] ? formatDuration(row.dailyMins[date]) : <span className="text-text-muted">—</span>}
@@ -810,6 +1038,8 @@ export function Reports() {
                                             <td className="sticky left-0 z-20 bg-surface-hover/90 backdrop-blur-md py-6 px-8 text-[11px] font-bold text-text-main ">
                                                 Totals
                                             </td>
+                                            {showEmpId && <td className="py-6 px-4"></td>}
+                                            {showEmail && <td className="py-6 px-4"></td>}
                                             {tableData.dates.map(date => {
                                                 const dayTotal = tableData.rows.reduce((sum, r) => sum + (r.dailyMins[date] || 0), 0);
                                                 return (
