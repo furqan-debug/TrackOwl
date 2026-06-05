@@ -68,11 +68,25 @@ export function SupportWidget() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [ticketStatus, setTicketStatus] = useState<string>('open');
+
   // Polling for live chat messages
   useEffect(() => {
     if (botMode !== 'live_chat' || !activeTicketId) return;
     
     const fetchMessages = async () => {
+      // Fetch ticket status
+      const { data: ticketData } = await supabase
+        .from('support_tickets')
+        .select('status')
+        .eq('id', activeTicketId)
+        .single();
+        
+      if (ticketData) {
+        setTicketStatus((ticketData.status || '').toLowerCase());
+      }
+
+      // Fetch messages
       const { data } = await supabase
         .from('support_messages')
         .select('*')
@@ -83,9 +97,47 @@ export function SupportWidget() {
     };
 
     fetchMessages(); // initial fetch
-    const interval = setInterval(fetchMessages, 3000);
-    return () => clearInterval(interval);
+    
+    // Listen for realtime broadcasts from the Admin Dashboard
+    const channel = supabase.channel('widget-notifications')
+      .on(
+        'broadcast',
+        { event: 'admin-reply' },
+        (payload) => {
+          if (payload.payload.ticketId === activeTicketId) {
+            fetchMessages();
+          }
+        }
+      )
+      .on(
+        'broadcast',
+        { event: 'status-change' },
+        (payload) => {
+          if (payload.payload.ticketId === activeTicketId) {
+            setTicketStatus(payload.payload.status);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [botMode, activeTicketId]);
+
+  useEffect(() => {
+    if (botMode === 'live_chat' && ticketStatus === 'resolved') {
+      setLocalMessages(prev => [
+        ...prev,
+        ...dbMessages.map(m => ({ sender: m.is_admin ? 'admin' : 'user', text: m.message })),
+        { sender: 'bot', text: 'This ticket has been resolved. The agent has disconnected. I am your virtual agent, how else can I help you today?' }
+      ]);
+      setDbMessages([]);
+      setActiveTicketId(null);
+      setBotMode('normal');
+      setTicketStatus('open');
+    }
+  }, [ticketStatus, botMode, dbMessages]);
 
   const allMessages = [
     ...localMessages,
@@ -131,6 +183,13 @@ export function SupportWidget() {
             if (prev.some(m => m.id === data.id)) return prev;
             return [...prev, data];
           });
+          
+          // Notify admin of new message
+          supabase.channel('admin-notifications').send({
+            type: 'broadcast',
+            event: 'new-message',
+            payload: { ticketId: activeTicketId }
+          });
         }
       } catch (err) {
         console.error('Failed to send message:', err);
@@ -158,6 +217,13 @@ export function SupportWidget() {
         setActiveTicketId(data.id);
         setLocalMessages(prev => [...prev, { sender: 'bot', text: 'An agent will be with you shortly! Thank you for your patience.' }]);
         setBotMode('live_chat');
+        
+        // Notify admin of new ticket
+        supabase.channel('admin-notifications').send({
+          type: 'broadcast',
+          event: 'new-ticket',
+          payload: {}
+        });
       } catch (err) {
         console.error('Failed to submit ticket:', err);
         setLocalMessages(prev => [...prev, { sender: 'bot', text: 'Sorry, we encountered an error connecting to an agent. Please try again later.' }]);
