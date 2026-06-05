@@ -50,15 +50,32 @@ export function SupportAdminDashboard() {
   }, [selectedTicket]);
 
   useEffect(() => {
-    if (!secret) return;
-    const interval = setInterval(() => {
-      fetchTickets();
-      if (selectedTicket) {
-        fetchMessages(selectedTicket.id);
-      }
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [secret, selectedTicket]);
+    fetchTickets();
+    
+    // Listen for realtime broadcasts from the Customer Widget
+    const channel = supabase.channel('admin-notifications')
+      .on(
+        'broadcast',
+        { event: 'new-ticket' },
+        () => {
+          fetchTickets();
+        }
+      )
+      .on(
+        'broadcast',
+        { event: 'new-message' },
+        (payload) => {
+          if (selectedTicket?.id === payload.payload.ticketId) {
+            fetchMessages(selectedTicket.id);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedTicket]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -99,6 +116,12 @@ export function SupportAdminDashboard() {
       if (error) throw error;
       setReplyText('');
       fetchMessages(selectedTicket.id); // Refresh messages
+      
+      supabase.channel('widget-notifications').send({
+        type: 'broadcast',
+        event: 'admin-reply',
+        payload: { ticketId: selectedTicket.id }
+      });
     } catch (err) {
       console.error('Failed to send reply:', err);
     }
@@ -114,6 +137,12 @@ export function SupportAdminDashboard() {
       });
 
       if (error) throw error;
+      
+      supabase.channel('widget-notifications').send({
+        type: 'broadcast',
+        event: 'status-change',
+        payload: { ticketId: selectedTicket.id, status: newStatus.toLowerCase() }
+      });
       
       if (newStatus.toLowerCase() === 'closed') {
         setTickets(tickets.filter(t => t.id !== selectedTicket.id));
@@ -336,12 +365,13 @@ export function SupportAdminDashboard() {
                   <textarea
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
-                    placeholder="Type your reply to the customer..."
-                    className="w-full border border-gray-300 rounded-xl p-3 pr-16 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none h-24"
+                    disabled={(selectedTicket.status || '').toLowerCase() === 'resolved'}
+                    placeholder={(selectedTicket.status || '').toLowerCase() === 'resolved' ? "This ticket is resolved. Change status to Open to send a message." : "Type your reply to the customer..."}
+                    className="w-full border border-gray-300 rounded-xl p-3 pr-16 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none h-24 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                   ></textarea>
                   <button 
                     type="submit"
-                    disabled={!replyText.trim()}
+                    disabled={!replyText.trim() || (selectedTicket.status || '').toLowerCase() === 'resolved'}
                     className="absolute bottom-3 right-3 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                   >
                     <Send className="w-5 h-5" />
