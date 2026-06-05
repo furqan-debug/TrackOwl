@@ -51,7 +51,7 @@ export const navStructure: NavGroup[] = [
         name: 'Projects', 
         icon: FolderKanban, 
         path: '/dashboard/projects',
-        allowedRoles: ['Admin', 'Manager', 'User', 'Viewer']
+        allowedRoles: ['Owner', 'Admin', 'Manager', 'User', 'Viewer']
     },
     { name: 'Calendar', icon: CalendarIcon, path: '/dashboard/calendar' },
     {
@@ -63,7 +63,7 @@ export const navStructure: NavGroup[] = [
     {
         name: 'People',
         icon: Users,
-        allowedRoles: ['Admin', 'Manager', 'Viewer'],
+        allowedRoles: ['Owner', 'Admin', 'Manager', 'Viewer'],
         children: [
             { name: 'Members', path: '/dashboard/people' },
             { name: 'Teams', path: '/dashboard/people/teams' },
