@@ -24,15 +24,23 @@ const KNOWLEDGE_BASE = [
 ];
 
 function getBotResponse(input: string): string {
-  const tokens = input.toLowerCase().match(/\b\w+\b/g) || [];
+  // Filter out common stop words so short words like "i", "is", "it" don't trigger random keyword matches
+  const stopWords = new Set(['i', 'am', 'is', 'are', 'it', 'the', 'a', 'an', 'and', 'or', 'not', 'that', 'this', 'to', 'for', 'of', 'in', 'on', 'with', 'ok', 'got', 'what', 'how', 'why', 'when', 'where', 'who', 'do', 'does', 'can', 'you', 'me', 'my', 'your']);
+  const tokens = (input.toLowerCase().match(/\b\w+\b/g) || []).filter(t => !stopWords.has(t));
+  
   let bestMatch = null;
   let highestScore = 0;
 
   for (const entry of KNOWLEDGE_BASE) {
     let score = 0;
     for (const keyword of entry.keywords) {
-      if (tokens.some(t => t.includes(keyword) || keyword.includes(t))) {
-        score++;
+      for (const t of tokens) {
+        // Only trigger if the user's word contains the keyword (e.g. "timesheets" contains "timesheet")
+        if (t.includes(keyword)) {
+          // Weight the score heavily by the length of the matched keyword so specific words (timesheet) beat generic ones (time)
+          // Add a bonus if it's an exact match
+          score += keyword.length + (t === keyword ? 2 : 0);
+        }
       }
     }
     
@@ -42,8 +50,8 @@ function getBotResponse(input: string): string {
     }
   }
 
-  const threshold = tokens.length > 5 ? 2 : 1;
-  if (bestMatch && highestScore >= threshold) {
+  // We require a minimum score to ensure we don't just match a random short word
+  if (bestMatch && highestScore > 0) {
     return bestMatch.answer;
   }
 
