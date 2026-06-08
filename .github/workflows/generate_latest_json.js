@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs from 'fs';
 
 async function run() {
   const repo = process.env.GITHUB_REPOSITORY;
