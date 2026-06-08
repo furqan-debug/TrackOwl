@@ -29,6 +29,35 @@ export function Landing() {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
+    const [recommendedOS, setRecommendedOS] = useState<'windows' | 'mac-silicon' | 'mac-intel' | 'linux' | null>(null);
+
+    useEffect(() => {
+        const detectOS = async () => {
+            try {
+                const ua = navigator.userAgent.toLowerCase();
+                if (ua.includes('win')) {
+                    setRecommendedOS('windows');
+                } else if (ua.includes('linux') && !ua.includes('android')) {
+                    setRecommendedOS('linux');
+                } else if (ua.includes('mac')) {
+                    if ('userAgentData' in navigator && typeof (navigator as any).userAgentData.getHighEntropyValues === 'function') {
+                        const values = await (navigator as any).userAgentData.getHighEntropyValues(['architecture']);
+                        if (values.architecture === 'arm') {
+                            setRecommendedOS('mac-silicon');
+                        } else {
+                            setRecommendedOS('mac-intel');
+                        }
+                    } else {
+                        // Most modern Macs are Apple Silicon. Fallback.
+                        setRecommendedOS('mac-silicon');
+                    }
+                }
+            } catch (e) {
+                console.warn('OS detection failed', e);
+            }
+        };
+        detectOS();
+    }, []);
 
     useEffect(() => {
         const handleScroll = () => {
@@ -749,8 +778,9 @@ export function Landing() {
                                 <div className="w-full flex flex-col gap-3 mt-auto">
                                     <a
                                         href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_x64-setup.exe"
-                                        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                                        className="relative w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
                                         <Download className="w-4 h-4" /> Download .exe
+                                        {recommendedOS === 'windows' && <span className="absolute -top-3 -right-2 bg-amber-400 text-amber-900 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full shadow-md">⭐ Recommended</span>}
                                     </a>
                                     <a
                                         href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_x64_en-US.msi"
@@ -770,13 +800,15 @@ export function Landing() {
                                 <div className="w-full flex flex-col gap-3 mt-auto">
                                     <a
                                         href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_aarch64.dmg"
-                                        className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-900 text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                                        className="relative w-full py-3 px-4 bg-slate-800 hover:bg-slate-900 text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
                                         <Download className="w-4 h-4" /> Apple Silicon (M1/M2/M3)
+                                        {recommendedOS === 'mac-silicon' && <span className="absolute -top-3 -right-2 bg-amber-400 text-amber-900 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full shadow-md">⭐ Recommended</span>}
                                     </a>
                                     <a
                                         href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_x64.dmg"
-                                        className="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                                        className="relative w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
                                         <Download className="w-4 h-4" /> Intel Processor
+                                        {recommendedOS === 'mac-intel' && <span className="absolute -top-3 -right-2 bg-amber-400 text-amber-900 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full shadow-md">⭐ Recommended</span>}
                                     </a>
                                 </div>
                             </div>
