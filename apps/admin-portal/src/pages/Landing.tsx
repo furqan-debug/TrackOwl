@@ -59,7 +59,15 @@ export function Landing() {
                             const debugInfo = (gl as WebGLRenderingContext).getExtension('WEBGL_debug_renderer_info');
                             if (debugInfo) {
                                 const renderer = (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase();
-                                if (renderer.includes('apple') || renderer.includes('m1') || renderer.includes('m2') || renderer.includes('m3')) {
+                                
+                                // Safari obscures ALL GPUs (even Intel ones) as exactly "apple gpu" to prevent fingerprinting.
+                                // If it says exactly "apple gpu" or "apple", we are blind and should not guess.
+                                if (renderer === 'apple gpu' || renderer === 'apple') {
+                                    setRecommendedOS(null);
+                                    return;
+                                }
+
+                                if (renderer.includes('m1') || renderer.includes('m2') || renderer.includes('m3') || renderer.includes('apple m')) {
                                     setRecommendedOS('mac-silicon');
                                     return;
                                 } else if (renderer.includes('intel') || renderer.includes('amd') || renderer.includes('radeon') || renderer.includes('iris')) {
