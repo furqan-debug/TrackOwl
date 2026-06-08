@@ -51,26 +51,23 @@ export function Landing() {
                         }
                     } 
                     
-                    // Fallback for Safari/Firefox using WebGL renderer
+                    // Fallback for Safari/Firefox using WebGL Texture Compression support
+                    // Apple Silicon GPUs (M1/M2/M3) share iOS architecture and support ASTC/ETC/PVRTC.
+                    // Intel/AMD desktop GPUs on Macs do NOT support these mobile compression formats.
                     try {
                         const canvas = document.createElement('canvas');
                         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
                         if (gl) {
-                            const debugInfo = (gl as WebGLRenderingContext).getExtension('WEBGL_debug_renderer_info');
-                            if (debugInfo) {
-                                const renderer = (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase();
+                            const extensions = (gl as WebGLRenderingContext).getSupportedExtensions();
+                            if (extensions) {
+                                const isAppleSilicon = extensions.includes('WEBGL_compressed_texture_astc') || 
+                                                       extensions.includes('WEBGL_compressed_texture_etc') || 
+                                                       extensions.includes('WEBKIT_WEBGL_compressed_texture_pvrtc');
                                 
-                                // Safari obscures ALL GPUs (even Intel ones) as exactly "apple gpu" to prevent fingerprinting.
-                                // If it says exactly "apple gpu" or "apple", we are blind and should not guess.
-                                if (renderer === 'apple gpu' || renderer === 'apple') {
-                                    setRecommendedOS(null);
-                                    return;
-                                }
-
-                                if (renderer.includes('m1') || renderer.includes('m2') || renderer.includes('m3') || renderer.includes('apple m')) {
+                                if (isAppleSilicon) {
                                     setRecommendedOS('mac-silicon');
                                     return;
-                                } else if (renderer.includes('intel') || renderer.includes('amd') || renderer.includes('radeon') || renderer.includes('iris')) {
+                                } else {
                                     setRecommendedOS('mac-intel');
                                     return;
                                 }
