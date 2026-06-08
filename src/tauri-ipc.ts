@@ -89,6 +89,14 @@ export const trackerAPI = {
     }
   },
 
+  onUpdateAvailable: (cb: (info: { available: boolean, version: string | null, notes: string | null }) => void) => {
+    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+      return (window as any).__TAURI__.event.listen('update-available', (ev: any) => {
+        cb(ev.payload);
+      });
+    }
+  },
+
   /** Install the pending auto-update (downloads + restarts app) */
   installUpdate: async () => {
     const invoke = getInvoke();

@@ -1741,11 +1741,19 @@ export default function App() {
     setup();
     // Listen for update progress
     const unlistenProgress = trackerAPI.onUpdateProgress((p: number) => setUpdateProgress(p));
+    
+    // Listen for update available
+    const unlistenAvailable = trackerAPI.onUpdateAvailable((info: any) => {
+      if (info.available && info.version) {
+        setUpdateVersion(info.version);
+      }
+    });
 
     return () => {
       isMounted = false;
       if (unlisten) unlisten();
-      unlistenProgress.then((fn: any) => fn && fn());
+      if (unlistenProgress) unlistenProgress.then((fn: any) => fn && fn());
+      if (unlistenAvailable) unlistenAvailable.then((fn: any) => fn && fn());
     };
   }, []); // Only run once on mount
 
