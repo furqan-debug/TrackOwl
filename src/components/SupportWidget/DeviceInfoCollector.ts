@@ -14,7 +14,7 @@ export interface DeviceInfo {
 
 export async function collectDeviceInfo(): Promise<DeviceInfo> {
   // Check if we are running inside Tauri
-  const isTauri = Boolean(window.__TAURI__);
+  const isTauri = Boolean((window as any).__TAURI__);
 
   let osTypeVal = 'Unknown';
   let osVersionVal = 'Unknown';
