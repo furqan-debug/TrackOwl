@@ -799,6 +799,7 @@ export function Reports() {
                                                     stroke={BRAND_PRIMARY}
                                                     strokeWidth={2}
                                                     fillOpacity={1}
+                                                    
                                                     fill="url(#colorActivity)"
                                                 />
                                             </AreaChart>
