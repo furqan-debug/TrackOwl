@@ -44,13 +44,38 @@ export function Landing() {
                         const values = await (navigator as any).userAgentData.getHighEntropyValues(['architecture']);
                         if (values.architecture === 'arm') {
                             setRecommendedOS('mac-silicon');
-                        } else {
+                            return;
+                        } else if (values.architecture === 'x86') {
                             setRecommendedOS('mac-intel');
+                            return;
                         }
-                    } else {
-                        // Most modern Macs are Apple Silicon. Fallback.
-                        setRecommendedOS('mac-silicon');
+                    } 
+                    
+                    // Fallback for Safari/Firefox using WebGL renderer
+                    try {
+                        const canvas = document.createElement('canvas');
+                        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                        if (gl) {
+                            const debugInfo = (gl as WebGLRenderingContext).getExtension('WEBGL_debug_renderer_info');
+                            if (debugInfo) {
+                                const renderer = (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL).toLowerCase();
+                                if (renderer.includes('apple') || renderer.includes('m1') || renderer.includes('m2') || renderer.includes('m3')) {
+                                    setRecommendedOS('mac-silicon');
+                                    return;
+                                } else if (renderer.includes('intel') || renderer.includes('amd') || renderer.includes('radeon') || renderer.includes('iris')) {
+                                    setRecommendedOS('mac-intel');
+                                    return;
+                                }
+                            }
+                        }
+                    } catch (webglErr) {
+                        console.warn('WebGL detection failed', webglErr);
                     }
+
+                    // Ultimate fallback: Just recommend Mac broadly, but don't explicitly recommend Silicon on Intel
+                    // We'll leave it empty to avoid false positives, or just suggest Intel since Rosetta runs Intel apps on Silicon, but Silicon apps won't run on Intel.
+                    // Actually, let's just not show the badge if we are totally unsure.
+                    setRecommendedOS(null);
                 }
             } catch (e) {
                 console.warn('OS detection failed', e);
