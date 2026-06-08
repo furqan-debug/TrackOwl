@@ -71,3 +71,20 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+  publish-latest-json:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Generate latest.json
+        run: node .github/workflows/generate_latest_json.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload latest.json to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: latest.json

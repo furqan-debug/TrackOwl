@@ -29,6 +29,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "publisher": "DigiReps",
     "copyright": "Copyright © 2026 DigiReps",

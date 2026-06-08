@@ -46,6 +46,7 @@ import { SupportWidget } from './components/SupportWidget';
 import { FavoritesProvider } from './context/FavoritesContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { UpdaterOverlay } from './components/UpdaterOverlay';
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -83,6 +84,7 @@ function App() {
   return (
     <AuthProvider>
       <FavoritesProvider>
+        <UpdaterOverlay />
         <Router>
           <Routes>
             <Route path="/" element={<><AuthRedirect /><Landing /></>} />
