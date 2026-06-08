@@ -748,12 +748,12 @@ export function Landing() {
                                 <p className="text-slate-500 font-medium mb-6">Windows 10 and 11 (64-bit)</p>
                                 <div className="w-full flex flex-col gap-3 mt-auto">
                                     <a
-                                        href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.6/TrackOwl_1.4.6_x64-setup.exe"
+                                        href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_x64-setup.exe"
                                         className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
                                         <Download className="w-4 h-4" /> Download .exe
                                     </a>
                                     <a
-                                        href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.6/TrackOwl_1.4.6_x64_en-US.msi"
+                                        href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_x64_en-US.msi"
                                         className="w-full py-3 px-4 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
                                         <Download className="w-4 h-4" /> Download .msi
                                     </a>
@@ -769,12 +769,12 @@ export function Landing() {
                                 <p className="text-slate-500 font-medium mb-6">macOS 11.0 (Big Sur) or later</p>
                                 <div className="w-full flex flex-col gap-3 mt-auto">
                                     <a
-                                        href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.6/TrackOwl_1.4.6_aarch64.dmg"
+                                        href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_aarch64.dmg"
                                         className="w-full py-3 px-4 bg-slate-800 hover:bg-slate-900 text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
                                         <Download className="w-4 h-4" /> Apple Silicon (M1/M2/M3)
                                     </a>
                                     <a
-                                        href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.6/TrackOwl_1.4.6_x64.dmg"
+                                        href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_x64.dmg"
                                         className="w-full py-3 px-4 bg-slate-50 hover:bg-slate-100 text-slate-800 border border-slate-200 text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
                                         <Download className="w-4 h-4" /> Intel Processor
                                     </a>
