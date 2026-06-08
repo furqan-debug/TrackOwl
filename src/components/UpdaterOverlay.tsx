@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { listen } from '@tauri-apps/api/event';
+import { useEffect, useState } from 'react';
+import { listen, type Event } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { Download, RefreshCw, X } from 'lucide-react';
 
 interface UpdateStatus {
-  available: bool;
+  available: boolean;
   version: string | null;
   notes: string | null;
 }
@@ -22,12 +22,12 @@ export function UpdaterOverlay() {
 
     const setup = async () => {
       try {
-        unlistenAvailable = await listen<UpdateStatus>('update-available', (event) => {
+        unlistenAvailable = await listen<UpdateStatus>('update-available', (event: Event<UpdateStatus>) => {
           console.log('[updater] Update available received:', event.payload);
           setUpdateInfo(event.payload);
         });
 
-        unlistenProgress = await listen<number>('update-progress', (event) => {
+        unlistenProgress = await listen<number>('update-progress', (event: Event<number>) => {
           console.log('[updater] Download progress:', event.payload);
           setProgress(event.payload);
         });
