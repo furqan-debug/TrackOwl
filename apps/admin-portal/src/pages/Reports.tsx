@@ -660,7 +660,11 @@ export function Reports() {
 
                         <div className="relative group min-w-[100px]">
                             <div
-                                onClick={() => setShowRangeDropdown(!showRangeDropdown)}
+                                onClick={() => {
+                                    setShowRangeDropdown(!showRangeDropdown);
+                                    setShowColumnDropdown(false);
+                                    setShowDownloadDropdown(false);
+                                }}
                                 className="flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-surface-hover transition-all h-full"
                             >
                                 <CalendarIcon className="w-3.5 h-3.5 text-text-muted" />
@@ -888,7 +892,11 @@ export function Reports() {
                                 <div className="flex items-center gap-4">
                                     <div className="relative group">
                                         <button
-                                            onClick={() => setShowColumnDropdown(!showColumnDropdown)}
+                                            onClick={() => {
+                                                setShowColumnDropdown(!showColumnDropdown);
+                                                setShowDownloadDropdown(false);
+                                                setShowRangeDropdown(false);
+                                            }}
                                             className={clsx(
                                                 "flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border",
                                                 showColumnDropdown || showEmpId || showEmail
@@ -925,7 +933,11 @@ export function Reports() {
                                     </div>
                                     <div className="relative group">
                                         <button
-                                            onClick={() => setShowDownloadDropdown(!showDownloadDropdown)}
+                                            onClick={() => {
+                                                setShowDownloadDropdown(!showDownloadDropdown);
+                                                setShowColumnDropdown(false);
+                                                setShowRangeDropdown(false);
+                                            }}
                                             className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border bg-surface border-transparent text-text-muted hover:bg-surface-hover hover:text-slate-900"
                                         >
                                             <Download className="w-3.5 h-3.5" />
