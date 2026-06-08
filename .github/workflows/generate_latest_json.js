@@ -25,16 +25,16 @@ async function run() {
   };
 
   for (const asset of release.assets) {
-    if (asset.name.endsWith('.tar.gz') || asset.name.endsWith('.zip')) {
+    if (asset.name.endsWith('.tar.gz') || asset.name.endsWith('.zip') || asset.name.endsWith('.exe')) {
       // It's an updater bundle. Find its signature.
       const sigAsset = release.assets.find(a => a.name === `${asset.name}.sig`);
       if (sigAsset) {
         const sig = await getSig(sigAsset.url);
         
         let platformKey = '';
-        if (asset.name.includes('aarch64.tar.gz')) platformKey = 'darwin-aarch64';
-        else if (asset.name.includes('x64.tar.gz')) platformKey = 'darwin-x86_64';
-        else if (asset.name.includes('x64-setup.zip')) platformKey = 'windows-x86_64';
+        if (asset.name.includes('aarch64')) platformKey = 'darwin-aarch64';
+        else if (asset.name.includes('x64.app.tar.gz')) platformKey = 'darwin-x86_64';
+        else if (asset.name.endsWith('x64-setup.exe')) platformKey = 'windows-x86_64';
         else if (asset.name.includes('universal.tar.gz')) platformKey = 'darwin-universal';
         
         if (platformKey) {
