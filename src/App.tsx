@@ -10,7 +10,7 @@ import {
   Bell, ShieldCheck, Smartphone
 } from 'lucide-react';
 import { trackerAPI } from './tauri-ipc';
-import { SupportWidget } from './components/SupportWidget/SupportWidget';
+
 import './App.css';
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || 'https://lgmggbnaoyoapxqsfgzv.supabase.co') as string;
@@ -2497,7 +2497,7 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, el
       </div>
 
       <MyTasksPanel todos={todos} onDone={onTodoDone} />
-      <SupportWidget />
+
     </div>
   );
 }

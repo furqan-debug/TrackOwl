@@ -1,7 +1,7 @@
 {
   "name": "trackowl",
   "private": true,
-  "version": "1.4.6",
+  "version": "1.4.7",
   "type": "module",
   "description": "TrackOwl Time Tracker — Desktop App",
   "author": {
@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
+    "@tauri-apps/api": "~2.10.0",
     "framer-motion": "^12.35.2",
     "lucide-react": "^0.577.0",
     "react": "^19.2.0",
