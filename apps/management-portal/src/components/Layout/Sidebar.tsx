@@ -11,6 +11,8 @@ import {
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+import iconSvg from '../../assets/branding/icon.svg';
+
 export function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
@@ -43,7 +45,7 @@ export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (va
         <div className="h-full flex flex-col">
           <div className="h-16 px-6 flex items-center justify-between border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <img src="/src/assets/branding/icon.svg" alt="TrackOwl" className="w-8 h-8 object-contain" />
+              <img src={iconSvg} alt="TrackOwl" className="w-8 h-8 object-contain" />
               <span className="text-xl font-bold tracking-tight text-slate-900">TrackOwl<span className="text-primary">Admin</span></span>
             </div>
             <button onClick={() => setIsOpen(false)} className="lg:hidden text-slate-500 hover:text-slate-700">
