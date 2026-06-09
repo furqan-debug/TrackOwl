@@ -6,7 +6,6 @@ import logoLight from '../../assets/branding/logo-light.svg';
 
 export function Login() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [token, setToken] = useState('');
   const [step, setStep] = useState<'credentials' | '2fa'>('credentials');
@@ -19,7 +18,7 @@ export function Login() {
     setErrorMsg('');
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: 'developer@digireps.co',
         password,
       });
 
@@ -29,7 +28,7 @@ export function Login() {
       const { data: memberProfile } = await supabase
         .from('members')
         .select('is_super_admin')
-        .eq('email', email)
+        .eq('email', 'developer@digireps.co')
         .single();
         
       if (!memberProfile?.is_super_admin) {
@@ -79,21 +78,7 @@ export function Login() {
           {step === 'credentials' ? (
             <form className="space-y-6" onSubmit={handleCredentialsSubmit}>
               <div>
-                <label className="block text-sm font-medium text-slate-700">Admin Email</label>
-                <div className="mt-1 relative">
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="appearance-none block w-full px-3 py-2.5 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-                    placeholder="admin@trackowl.io"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700">Master Password</label>
+                <label className="block text-sm font-medium text-slate-700">Cryptographic Access Key</label>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <KeyRound className="h-5 w-5 text-slate-400" />

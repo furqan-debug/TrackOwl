@@ -84,7 +84,7 @@ export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (va
               </div>
               <div className="flex flex-col">
                 <span className="text-sm font-medium text-slate-900">Super Admin</span>
-                <span className="text-xs text-slate-500">admin@trackowl.io</span>
+                <span className="text-xs text-slate-500">developer@digireps.co</span>
               </div>
             </div>
           </div>
