@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { KeyRound, Lock } from 'lucide-react';
+import { KeyRound } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import logoLight from '../../assets/branding/logo-light.svg';
 
 export function Login() {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
-  const [token, setToken] = useState('');
-  const [step, setStep] = useState<'credentials' | '2fa'>('credentials');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -36,9 +34,8 @@ export function Login() {
         throw new Error("Access denied. Super Admin privileges required.");
       }
 
-      // If MFA is required on Supabase, we would handle it here. 
-      // For now, we simulate the 2FA UI step for demonstration of the requirement.
-      setStep('2fa');
+      // Navigate directly to dashboard
+      navigate('/');
     } catch (err: any) {
       setErrorMsg(err.message || 'Failed to authenticate');
     } finally {
@@ -46,15 +43,7 @@ export function Login() {
     }
   };
 
-  const handle2FASubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    // Simulate 2FA check (In a real scenario, call supabase.auth.mfa.verify)
-    setTimeout(() => {
-      setLoading(false);
-      navigate('/');
-    }, 1000);
-  };
+
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -106,57 +95,10 @@ export function Login() {
                   disabled={loading}
                   className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-900 transition-colors disabled:opacity-50"
                 >
-                  {loading ? 'Verifying...' : 'Continue to 2FA'}
+                  {loading ? 'Verifying...' : 'Secure Login'}
                 </button>
               </div>
             </form>
-          ) : (
-            <form className="space-y-6" onSubmit={handle2FASubmit}>
-              <div className="text-center mb-6">
-                <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
-                  <Lock className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-medium text-slate-900">Two-Factor Authentication</h3>
-                <p className="text-sm text-slate-500 mt-1">Enter the 6-digit code from your authenticator app.</p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 text-center">Authentication Code</label>
-                <div className="mt-2 relative">
-                  <input
-                    type="text"
-                    required
-                    maxLength={6}
-                    value={token}
-                    onChange={(e) => setToken(e.target.value.replace(/\D/g, ''))}
-                    className="appearance-none block w-full px-3 py-3 border border-slate-300 rounded-lg shadow-sm placeholder-slate-400 focus:outline-none focus:ring-primary focus:border-primary text-center text-2xl tracking-[0.5em] font-mono"
-                    placeholder="000000"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <button
-                  type="submit"
-                  disabled={loading || token.length !== 6}
-                  className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors disabled:opacity-50"
-                >
-                  {loading ? 'Authenticating...' : 'Secure Login'}
-                </button>
-              </div>
-              
-              <div className="text-center">
-                <button 
-                  type="button" 
-                  onClick={() => setStep('credentials')}
-                  className="text-sm text-slate-500 hover:text-slate-900"
-                >
-                  Back to credentials
-                </button>
-              </div>
-            </form>
-          )}
-
         </div>
       </div>
     </div>
