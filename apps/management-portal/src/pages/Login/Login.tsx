@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { KeyRound, Lock } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import logoDark from '../../assets/branding/logo-dark.svg';
 
 export function Login() {
   const navigate = useNavigate();
@@ -61,7 +62,7 @@ export function Login() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
           <div className="flex justify-center mb-2">
-            <img src="/src/assets/branding/logo-dark.svg" alt="TrackOwl Logo" className="h-12 w-auto" />
+            <img src={logoDark} alt="TrackOwl Logo" className="h-12 w-auto" />
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900 tracking-tight">
