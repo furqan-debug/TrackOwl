@@ -40,7 +40,7 @@ export function OrganizationDetails() {
   const owner = members.find(m => m.role === 'Admin') || members[0];
   const activeMembers = members.filter(m => m.status === 'Active').length;
   const seatsUsed = org.member_count ?? members.length;
-  const seatLimit = org.seat_limit ?? 10;
+  const seatLimit = org.seats_purchased ?? org.seat_limit ?? 10;
   const seatPct = Math.min((seatsUsed / seatLimit) * 100, 100);
   const totalRevenue = payments.filter(p => p.status === 'Completed').reduce((s, p) => s + Number(p.amount), 0);
 

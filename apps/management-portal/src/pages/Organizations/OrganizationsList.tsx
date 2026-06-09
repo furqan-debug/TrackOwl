@@ -28,7 +28,7 @@ export function OrganizationsList() {
       let query = supabase
         .from('organizations')
         .select(`
-          id, name, industry, size, plan_tier, seat_limit, member_count, created_at,
+          id, name, industry, size, plan_tier, seat_limit, seats_purchased, member_count, created_at,
           stripe_subscription_id, stripe_customer_id,
           members(id, email, full_name, role)
         `, { count: 'exact' })
@@ -123,7 +123,7 @@ export function OrganizationsList() {
                 <tbody className="divide-y divide-slate-100">
                   {filtered.map(org => {
                     const used = usedSeats(org);
-                    const limit = org.seat_limit || 10;
+                    const limit = org.seats_purchased || org.seat_limit || 10;
                     const pct = Math.min((used / limit) * 100, 100);
                     return (
                       <tr key={org.id} className="hover:bg-slate-50 transition-colors group">
