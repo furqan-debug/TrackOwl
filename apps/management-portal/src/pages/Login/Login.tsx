@@ -64,7 +64,6 @@ export function Login() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow-xl shadow-slate-200/50 sm:rounded-2xl sm:px-10 border border-slate-100">
           
-          {step === 'credentials' ? (
             <form className="space-y-6" onSubmit={handleCredentialsSubmit}>
               <div>
                 <label className="block text-sm font-medium text-slate-700">Cryptographic Access Key</label>
