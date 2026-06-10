@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import {
     Mail, Lock, Eye, EyeOff,
@@ -10,6 +10,49 @@ import { Input } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 
 import LogoIcon from '../assets/branding/3.svg';
+
+/* ─────────────────────────────────────────
+   Individual digit box for OTP input
+───────────────────────────────────────── */
+function OtpInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+    const inputRef = useRef<HTMLInputElement>(null);
+    const digits = Array.from({ length: 6 }, (_, i) => value[i] ?? '');
+
+    return (
+        <div
+            className="flex items-center justify-center gap-3 cursor-text"
+            onClick={() => inputRef.current?.focus()}
+        >
+            <input
+                ref={inputRef}
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={value}
+                onChange={(e) => onChange(e.target.value.replace(/\D/g, ''))}
+                className="absolute opacity-0 w-0 h-0"
+                autoComplete="one-time-code"
+            />
+            {digits.map((d, i) => (
+                <div
+                    key={i}
+                    className={`w-12 h-16 sm:w-14 sm:h-[72px] rounded-2xl border-2 flex items-center justify-center
+                                text-3xl font-bold font-mono transition-all duration-300
+                                ${value.length === i
+                                    ? 'border-primary bg-primary/5 shadow-[0_0_0_4px] shadow-primary/20 scale-105 z-10'
+                                    : d
+                                        ? 'border-border bg-surface text-text-main'
+                                        : 'border-border/60 bg-surface/40 text-transparent'
+                                }`}
+                >
+                    {d || (value.length === i ? <span className="w-0.5 h-7 bg-primary animate-pulse rounded-full" /> : '')}
+                </div>
+            ))}
+        </div>
+    );
+}
+
 
 export function Login() {
     const navigate = useNavigate();
@@ -228,17 +271,9 @@ export function Login() {
                                     </p>
                                 </div>
 
-                                <input
-                                    type="text"
-                                    required
-                                    maxLength={6}
-                                    pattern="[0-9]*"
-                                    inputMode="numeric"
-                                    value={mfaCode}
-                                    onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ''))}
-                                    className="block w-full text-center text-3xl tracking-[0.75em] font-mono py-4 bg-surface/50 border border-border rounded-2xl shadow-soft focus:outline-none focus:border-primary/40 focus:ring-primary/5 transition-all"
-                                    placeholder="000000"
-                                />
+                                <div className="py-2">
+                                    <OtpInput value={mfaCode} onChange={setMfaCode} />
+                                </div>
 
                                 {error && (
                                     <div className="flex items-start gap-4 p-6 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-rose-500 text-sm font-bold animate-in zoom-in-95 duration-300">
