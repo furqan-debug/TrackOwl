@@ -98,15 +98,15 @@ export function UserAnalytics() {
           {/* Metric Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { label: 'Total Members', value: metrics.totalUsers.toLocaleString(), sub: 'All-time signups', icon: Users, color: 'bg-blue-50 text-blue-600' },
-              { label: 'Active Members', value: metrics.activeUsers.toLocaleString(), sub: `${metrics.totalUsers > 0 ? Math.round((metrics.activeUsers / metrics.totalUsers) * 100) : 0}% of total`, icon: UserPlus, color: 'bg-emerald-50 text-emerald-600' },
-              { label: 'DAU', value: metrics.dau.toLocaleString(), sub: 'Unique users with sessions in 24h', icon: MousePointerClick, color: 'bg-amber-50 text-amber-600' },
-              { label: 'MAU', value: metrics.mau.toLocaleString(), sub: 'Unique users with sessions in 30d', icon: BarChart3, color: 'bg-indigo-50 text-indigo-600' },
-              { label: 'New Members (30d)', value: metrics.newUsers.toLocaleString(), sub: 'Members joined in last 30 days', icon: TrendingUp, color: 'bg-purple-50 text-purple-600' },
-              { label: 'New Orgs (30d)', value: metrics.newOrgs.toLocaleString(), sub: 'Organizations created in last 30 days', icon: Clock, color: 'bg-rose-50 text-rose-600' },
+              { label: 'Total Members', value: metrics.totalUsers.toLocaleString(), sub: 'All-time signups', icon: Users, color: 'text-blue-600 bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50' },
+              { label: 'Active Members', value: metrics.activeUsers.toLocaleString(), sub: `${metrics.totalUsers > 0 ? Math.round((metrics.activeUsers / metrics.totalUsers) * 100) : 0}% of total`, icon: UserPlus, color: 'text-emerald-600 bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50' },
+              { label: 'DAU', value: metrics.dau.toLocaleString(), sub: 'Unique users with sessions in 24h', icon: MousePointerClick, color: 'text-amber-600 bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50' },
+              { label: 'MAU', value: metrics.mau.toLocaleString(), sub: 'Unique users with sessions in 30d', icon: BarChart3, color: 'text-indigo-600 bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-200/50' },
+              { label: 'New Members (30d)', value: metrics.newUsers.toLocaleString(), sub: 'Members joined in last 30 days', icon: TrendingUp, color: 'text-purple-600 bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50' },
+              { label: 'New Orgs (30d)', value: metrics.newOrgs.toLocaleString(), sub: 'Organizations created in last 30 days', icon: Clock, color: 'text-rose-600 bg-gradient-to-br from-rose-50 to-rose-100/50 border border-rose-200/50' },
             ].map(card => (
-              <div key={card.label} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow">
-                <div className={`inline-flex p-2.5 rounded-xl mb-3 ${card.color}`}>
+              <div key={card.label} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+                <div className={`inline-flex p-2.5 rounded-xl mb-3 transition-transform duration-300 group-hover:scale-110 ${card.color}`}>
                   <card.icon className="w-5 h-5" />
                 </div>
                 <p className="text-sm font-medium text-slate-500">{card.label}</p>
@@ -117,8 +117,7 @@ export function UserAnalytics() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Daily Active Users */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-all duration-300">
               <div className="mb-6">
                 <h2 className="text-base font-semibold text-slate-900">Daily Active Users (7 days)</h2>
                 <p className="text-xs text-slate-400 mt-0.5">Unique users with at least one session per day</p>
@@ -136,8 +135,7 @@ export function UserAnalytics() {
               </div>
             </div>
 
-            {/* Monthly Growth Chart */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-all duration-300">
               <div className="mb-6">
                 <h2 className="text-base font-semibold text-slate-900">Monthly Growth (6 months)</h2>
                 <p className="text-xs text-slate-400 mt-0.5">New members and organizations per month</p>
@@ -158,8 +156,7 @@ export function UserAnalytics() {
             </div>
           </div>
 
-          {/* DAU/MAU Ratio */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 hover:shadow-md transition-all duration-300">
             <h2 className="text-base font-semibold text-slate-900 mb-4">Engagement Ratio (DAU / MAU)</h2>
             <div className="flex items-center gap-6">
               <div className="text-4xl font-bold text-slate-900">

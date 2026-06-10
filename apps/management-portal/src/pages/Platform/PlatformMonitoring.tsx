@@ -8,6 +8,11 @@ export function PlatformMonitoring() {
   const [appVersions, setAppVersions] = useState<{ version: string; count: number; pct: number }[]>([]);
   const [osDist, setOsDist] = useState<{ os: string; count: number; pct: number }[]>([]);
   const [recentErrors, setRecentErrors] = useState<any[]>([]);
+  const [statuses, setStatuses] = useState([
+    { label: 'Database (Supabase)', status: 'Checking...', uptime: '99.99%', latency: '—' },
+    { label: 'Auth Service', status: 'Checking...', uptime: '99.99%', latency: '—' },
+    { label: 'Storage Service', status: 'Checking...', uptime: '99.99%', latency: '—' }
+  ]);
 
   useEffect(() => {
     async function load() {
@@ -61,17 +66,37 @@ export function PlatformMonitoring() {
         console.error('Platform load error', err);
       } finally {
         setLoading(false);
+        checkServiceHealth();
       }
     }
+
+    async function checkServiceHealth() {
+      // DB ping
+      const dbStart = performance.now();
+      const { error: dbErr } = await supabase.from('organizations').select('id').limit(1);
+      const dbLat = Math.round(performance.now() - dbStart);
+      
+      // Auth ping
+      const authStart = performance.now();
+      const { error: authErr } = await supabase.auth.getSession();
+      const authLat = Math.round(performance.now() - authStart);
+      
+      // Storage ping
+      const storeStart = performance.now();
+      const { error: storeErr } = await supabase.storage.listBuckets();
+      const storeLat = Math.round(performance.now() - storeStart);
+
+      setStatuses([
+        { label: 'Database (Supabase)', status: dbErr ? 'Degraded' : 'Operational', uptime: '99.99%', latency: `${dbLat}ms` },
+        { label: 'Auth Service', status: authErr ? 'Degraded' : 'Operational', uptime: '99.99%', latency: `${authLat}ms` },
+        { label: 'Storage Service', status: storeErr ? 'Degraded' : 'Operational', uptime: '99.99%', latency: `${storeLat}ms` }
+      ]);
+    }
+
     load();
   }, []);
 
-  const statuses = [
-    { label: 'API Server', status: 'Operational', uptime: '99.99%', latency: '42ms' },
-    { label: 'Database (Supabase)', status: 'Operational', uptime: '99.99%', latency: '14ms' },
-    { label: 'Auth Service', status: 'Operational', uptime: '100%', latency: '8ms' },
-    { label: 'Storage (Screenshots)', status: 'Operational', uptime: '99.97%', latency: '—' },
-  ];
+
 
   return (
     <div className="max-w-7xl mx-auto space-y-6">
@@ -87,13 +112,13 @@ export function PlatformMonitoring() {
           {/* Metric cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Active Trackers', value: metrics.activeSessions.toLocaleString(), sub: 'Currently running', icon: MonitorPlay, color: 'bg-blue-50 text-blue-600' },
-              { label: 'Total Sessions (All)', value: metrics.totalSessions.toLocaleString(), sub: 'Lifetime sessions tracked', icon: Activity, color: 'bg-indigo-50 text-indigo-600' },
-              { label: 'Errors (24h)', value: metrics.syncErrors.toLocaleString(), sub: 'Logged error-level events', icon: AlertTriangle, color: 'bg-amber-50 text-amber-600' },
-              { label: 'Critical (24h)', value: metrics.criticalErrors.toLocaleString(), sub: 'Critical-level events', icon: XCircle, color: 'bg-red-50 text-red-600' },
+              { label: 'Active Trackers', value: metrics.activeSessions.toLocaleString(), sub: 'Currently running', icon: MonitorPlay, color: 'text-blue-600 bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50' },
+              { label: 'Total Sessions (All)', value: metrics.totalSessions.toLocaleString(), sub: 'Lifetime sessions tracked', icon: Activity, color: 'text-indigo-600 bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-200/50' },
+              { label: 'Errors (24h)', value: metrics.syncErrors.toLocaleString(), sub: 'Logged error-level events', icon: AlertTriangle, color: 'text-amber-600 bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50' },
+              { label: 'Critical (24h)', value: metrics.criticalErrors.toLocaleString(), sub: 'Critical-level events', icon: XCircle, color: 'text-red-600 bg-gradient-to-br from-red-50 to-red-100/50 border border-red-200/50' },
             ].map(card => (
-              <div key={card.label} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-                <div className={`inline-flex p-2.5 rounded-xl mb-3 ${card.color}`}>
+              <div key={card.label} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+                <div className={`inline-flex p-2.5 rounded-xl mb-3 transition-transform duration-300 group-hover:scale-110 ${card.color}`}>
                   <card.icon className="w-5 h-5" />
                 </div>
                 <p className="text-sm font-medium text-slate-500">{card.label}</p>
@@ -104,9 +129,10 @@ export function PlatformMonitoring() {
           </div>
 
           {/* Service Status Table */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-            <div className="px-5 py-4 border-b border-slate-100">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-base font-semibold text-slate-900">Service Status</h2>
+              <span className="text-xs text-slate-400">Live API Checks</span>
             </div>
             <table className="w-full text-sm text-left">
               <thead className="bg-slate-50 text-slate-500 font-medium">
@@ -122,8 +148,13 @@ export function PlatformMonitoring() {
                   <tr key={s.label} className="hover:bg-slate-50">
                     <td className="px-5 py-3 font-medium text-slate-900">{s.label}</td>
                     <td className="px-5 py-3">
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                        <CheckCircle className="w-3 h-3" /> {s.status}
+                      <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${
+                        s.status === 'Operational' ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 
+                        s.status === 'Checking...' ? 'text-slate-600 bg-slate-100 border-slate-300' : 
+                        'text-red-700 bg-red-50 border-red-200'
+                      }`}>
+                        {s.status === 'Operational' ? <CheckCircle className="w-3 h-3" /> : s.status === 'Checking...' ? <Activity className="w-3 h-3 animate-pulse" /> : <XCircle className="w-3 h-3" />} 
+                        {s.status}
                       </span>
                     </td>
                     <td className="px-5 py-3 text-slate-600 font-mono text-xs">{s.uptime}</td>
@@ -136,7 +167,7 @@ export function PlatformMonitoring() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* App Versions */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-all duration-300">
               <h2 className="text-base font-semibold text-slate-900 mb-5">Desktop App Versions</h2>
               <div className="space-y-4">
                 {appVersions.slice(0, 6).map((v, i) => (
@@ -163,7 +194,7 @@ export function PlatformMonitoring() {
             </div>
 
             {/* OS Distribution */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-all duration-300">
               <h2 className="text-base font-semibold text-slate-900 mb-5">OS Distribution</h2>
               <div className="space-y-4">
                 {osDist.slice(0, 6).map((o, i) => {
@@ -188,7 +219,7 @@ export function PlatformMonitoring() {
           </div>
 
           {/* Recent Errors */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
             <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
               <h2 className="text-base font-semibold text-slate-900">Recent Error Logs</h2>
               <span className="text-xs text-slate-400">Last 10 error-level events</span>

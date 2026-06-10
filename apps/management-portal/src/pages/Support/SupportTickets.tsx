@@ -75,13 +75,13 @@ export function SupportTickets() {
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { label: 'Open', value: metrics.open, icon: AlertCircle, color: 'text-amber-600 bg-amber-50' },
-              { label: 'In Progress', value: metrics.inProgress, icon: MessageSquare, color: 'text-blue-600 bg-blue-50' },
-              { label: 'Waiting for Customer', value: metrics.waitingForCustomer, icon: Clock, color: 'text-purple-600 bg-purple-50' },
-              { label: 'Resolved', value: metrics.resolved, icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
+              { label: 'Open', value: metrics.open, icon: AlertCircle, color: 'text-amber-600 bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50' },
+              { label: 'In Progress', value: metrics.inProgress, icon: MessageSquare, color: 'text-blue-600 bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50' },
+              { label: 'Waiting for Customer', value: metrics.waitingForCustomer, icon: Clock, color: 'text-purple-600 bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50' },
+              { label: 'Resolved', value: metrics.resolved, icon: CheckCircle2, color: 'text-emerald-600 bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50' },
             ].map(stat => (
-              <div key={stat.label} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
-                <div className={`inline-flex p-2.5 rounded-xl mb-3 ${stat.color}`}>
+              <div key={stat.label} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+                <div className={`inline-flex p-2.5 rounded-xl mb-3 transition-transform duration-300 group-hover:scale-110 ${stat.color}`}>
                   <stat.icon className="w-5 h-5" />
                 </div>
                 <p className="text-sm font-medium text-slate-500">{stat.label}</p>
@@ -91,7 +91,7 @@ export function SupportTickets() {
           </div>
 
           {/* Filters & Table */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
             <div className="p-4 border-b border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />

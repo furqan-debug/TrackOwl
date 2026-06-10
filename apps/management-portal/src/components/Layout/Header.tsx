@@ -2,7 +2,7 @@ import { Menu, Search, Bell } from 'lucide-react';
 
 export function Header({ onMenuClick }: { onMenuClick: () => void }) {
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-30">
+    <header className="h-16 glass border-b border-slate-200/60 px-4 lg:px-8 flex items-center justify-between sticky top-0 z-30 transition-all duration-300">
       <div className="flex items-center gap-4">
         <button 
           onClick={onMenuClick}

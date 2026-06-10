@@ -5,15 +5,15 @@ import { supabase } from '../../lib/supabase';
 
 function MetricCard({ title, value, sub, change, trend, icon: Icon, color = 'blue' }: any) {
   const colorMap: Record<string, string> = {
-    blue: 'bg-blue-50 text-blue-600',
-    indigo: 'bg-indigo-50 text-indigo-600',
-    emerald: 'bg-emerald-50 text-emerald-600',
-    amber: 'bg-amber-50 text-amber-600',
+    blue: 'bg-gradient-to-br from-blue-50 to-blue-100/50 text-blue-600 border border-blue-200/50',
+    indigo: 'bg-gradient-to-br from-indigo-50 to-indigo-100/50 text-indigo-600 border border-indigo-200/50',
+    emerald: 'bg-gradient-to-br from-emerald-50 to-emerald-100/50 text-emerald-600 border border-emerald-200/50',
+    amber: 'bg-gradient-to-br from-amber-50 to-amber-100/50 text-amber-600 border border-amber-200/50',
   };
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
       <div className="flex items-start justify-between mb-4">
-        <div className={`p-2.5 rounded-xl ${colorMap[color]}`}>
+        <div className={`p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 ${colorMap[color]}`}>
           <Icon className="w-5 h-5" />
         </div>
         {change && (
@@ -170,8 +170,7 @@ export function Dashboard() {
 
           {/* Charts Row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Revenue Chart */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow duration-300">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-base font-semibold text-slate-900">Revenue (Last 6 Months)</h2>
@@ -201,8 +200,7 @@ export function Dashboard() {
               </div>
             </div>
 
-            {/* Recent Signups */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col hover:shadow-md transition-shadow duration-300">
               <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
                 <h2 className="text-base font-semibold text-slate-900">Recent Organizations</h2>
                 <span className="text-xs text-slate-400">{recentSignups.length} latest</span>
@@ -230,7 +228,7 @@ export function Dashboard() {
 
           {/* Plan Distribution */}
           {planBreakdown.length > 0 && (
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow duration-300">
               <h2 className="text-base font-semibold text-slate-900 mb-6">Plan Distribution Breakdown</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {['Starter', 'Pro', 'Enterprise'].map(tier => {
