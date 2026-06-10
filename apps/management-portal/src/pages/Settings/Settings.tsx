@@ -179,6 +179,10 @@ export function Settings() {
     const [pwLoading, setPwLoading] = useState(false);
     const [pwError, setPwError] = useState('');
     const [pwSuccess, setPwSuccess] = useState('');
+    const [pwConfirmOpen, setPwConfirmOpen] = useState(false);
+    const [pwCode, setPwCode] = useState('');
+    const [pwMfaError, setPwMfaError] = useState('');
+    const [pwActionLoading, setPwActionLoading] = useState(false);
 
     // ── Global toasts ──
     const [successMsg, setSuccessMsg] = useState('');
@@ -330,18 +334,65 @@ export function Settings() {
             if (signInError) throw new Error('Current password is incorrect.');
 
             // Now update the password using the main authenticated client
+            if (!isMfaEnabled) {
+                const { error: updateError } = await supabase.auth.updateUser({ password: newPw });
+                if (updateError) throw updateError;
+                
+                setCurrentPw('');
+                setNewPw('');
+                setConfirmPw('');
+                setPwSuccess('Password updated successfully.');
+                setTimeout(() => setPwSuccess(''), 5000);
+            } else {
+                // If MFA enabled, open confirmation modal to ask for 2FA code
+                setPwConfirmOpen(true);
+            }
+        } catch (err: any) {
+            setPwError(err.message || 'Failed to update password.');
+        } finally {
+            setPwLoading(false);
+        }
+    };
+
+    const handleConfirmUpdatePassword = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (pwCode.length !== 6) {
+            setPwMfaError('Please enter the 6-digit code.');
+            return;
+        }
+
+        setPwActionLoading(true);
+        setPwMfaError('');
+        try {
+            const f = factors.find(f => f.factor_type === 'totp' && f.status === 'verified');
+            if (!f) throw new Error('No verified 2FA factor found.');
+
+            // Verify code before allowing password update
+            const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: f.id });
+            if (challengeError) throw challengeError;
+
+            const { error: verifyError } = await supabase.auth.mfa.verify({
+                factorId: f.id,
+                challengeId: challengeData.id,
+                code: pwCode,
+            });
+            if (verifyError) throw verifyError;
+
+            // Once verified, proceed to update password
             const { error: updateError } = await supabase.auth.updateUser({ password: newPw });
             if (updateError) throw updateError;
 
             setCurrentPw('');
             setNewPw('');
             setConfirmPw('');
+            setPwCode('');
+            setPwConfirmOpen(false);
             setPwSuccess('Password updated successfully.');
             setTimeout(() => setPwSuccess(''), 5000);
         } catch (err: any) {
-            setPwError(err.message || 'Failed to update password.');
+            setPwMfaError(err.message || 'Incorrect code or failed to update password.');
         } finally {
-            setPwLoading(false);
+            setPwActionLoading(false);
         }
     };
 
@@ -707,6 +758,73 @@ export function Settings() {
                             className="h-11 rounded-xl text-slate-600 font-semibold text-sm hover:bg-slate-100 transition-colors"
                         >
                             Keep 2FA Enabled
+                        </button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* ══════════════════════════════════════════════════
+                MODAL — Confirm Update Password
+            ══════════════════════════════════════════════════ */}
+            <Modal
+                isOpen={pwConfirmOpen}
+                onClose={() => {
+                    if (!pwActionLoading) {
+                        setPwConfirmOpen(false);
+                        setPwCode('');
+                        setPwMfaError('');
+                    }
+                }}
+                title="Verify Two-Factor Authentication"
+                maxWidth="max-w-sm"
+            >
+                <form onSubmit={handleConfirmUpdatePassword} className="space-y-6">
+                    <div className="flex gap-4 p-5 rounded-xl bg-blue-50 border border-blue-200">
+                        <ShieldCheck className="w-6 h-6 text-blue-600 shrink-0" />
+                        <div className="space-y-1.5">
+                            <p className="text-sm font-bold text-blue-800">Security Verification</p>
+                            <p className="text-sm text-blue-700/80 leading-relaxed">
+                                Please enter your 2FA code to confirm your password update.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    {pwMfaError && (
+                        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-medium">
+                            <AlertTriangle className="w-5 h-5 shrink-0" />
+                            {pwMfaError}
+                        </div>
+                    )}
+
+                    <div className="space-y-3">
+                        <p className="text-sm font-semibold text-slate-700 text-center">
+                            Enter your 6-digit authenticator code
+                        </p>
+                        <OtpInput value={pwCode} onChange={setPwCode} />
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                        <button
+                            type="submit"
+                            disabled={pwActionLoading || pwCode.length !== 6}
+                            className="h-12 rounded-xl bg-primary text-white font-bold text-sm
+                                       hover:bg-primary-hover active:bg-primary/90 transition-colors
+                                       disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                        >
+                            {pwActionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
+                            Verify & Update
+                        </button>
+                        <button
+                            type="button"
+                            disabled={pwActionLoading}
+                            onClick={() => {
+                                setPwConfirmOpen(false);
+                                setPwCode('');
+                                setPwMfaError('');
+                            }}
+                            className="h-11 rounded-xl text-slate-600 font-semibold text-sm hover:bg-slate-100 transition-colors"
+                        >
+                            Cancel
                         </button>
                     </div>
                 </form>
