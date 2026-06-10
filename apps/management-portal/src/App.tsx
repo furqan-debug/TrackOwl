@@ -10,6 +10,7 @@ import { BillingOverview } from './pages/Billing/BillingOverview';
 import { UserAnalytics } from './pages/Analytics/UserAnalytics';
 import { PlatformMonitoring } from './pages/Platform/PlatformMonitoring';
 import { SupportTickets } from './pages/Support/SupportTickets';
+import { Settings } from './pages/Settings/Settings';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 function AppLayout() {
@@ -64,6 +65,7 @@ function App() {
             <Route path="analytics" element={<UserAnalytics />} />
             <Route path="platform" element={<PlatformMonitoring />} />
             <Route path="support" element={<SupportTickets />} />
+            <Route path="settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>
