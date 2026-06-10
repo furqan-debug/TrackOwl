@@ -6,10 +6,12 @@ import {
   BarChart3, 
   Activity, 
   LifeBuoy, 
-  X
+  X,
+  LogOut
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useAuth } from '../../contexts/AuthContext';
 
 import iconSvg from '../../assets/branding/icon.svg';
 
@@ -27,6 +29,7 @@ const navItems = [
 ];
 
 export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (val: boolean) => void }) {
+  const { user, signOut } = useAuth();
   return (
     <>
       {/* Mobile overlay */}
@@ -77,16 +80,23 @@ export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (va
             </nav>
           </div>
 
-          <div className="p-4 border-t border-slate-100">
+          <div className="p-4 border-t border-slate-100 flex flex-col gap-2">
             <div className="flex items-center gap-3 px-3 py-2">
               <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-medium">
-                SA
+                {user?.email ? user.email.slice(0, 2).toUpperCase() : 'SA'}
               </div>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium text-slate-900">Super Admin</span>
-                <span className="text-xs text-slate-500">developer@digireps.co</span>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-medium text-slate-900 truncate">Super Admin</span>
+                <span className="text-xs text-slate-500 truncate">{user?.email || 'developer@digireps.co'}</span>
               </div>
             </div>
+            <button
+              onClick={signOut}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+            >
+              <LogOut className="w-4.5 h-4.5" />
+              Sign Out
+            </button>
           </div>
         </div>
       </div>
