@@ -110,11 +110,11 @@ function OtpInput({ value, onChange }: { value: string; onChange: (v: string) =>
                     className={`w-12 h-14 rounded-xl border-2 flex items-center justify-center
                                 text-2xl font-bold font-mono transition-all
                                 ${value.length === i
-                                    ? 'border-primary bg-primary/5 shadow-[0_0_0_3px] shadow-primary/20'
-                                    : d
-                                        ? 'border-slate-300 bg-white text-slate-900'
-                                        : 'border-slate-200 bg-slate-50 text-transparent'
-                                }`}
+                            ? 'border-primary bg-primary/5 shadow-[0_0_0_3px] shadow-primary/20'
+                            : d
+                                ? 'border-slate-300 bg-white text-slate-900'
+                                : 'border-slate-200 bg-slate-50 text-transparent'
+                        }`}
                 >
                     {d || (value.length === i ? <span className="w-0.5 h-6 bg-primary animate-pulse rounded-full" /> : '')}
                 </div>
@@ -337,7 +337,7 @@ export function Settings() {
             if (!isMfaEnabled) {
                 const { error: updateError } = await supabase.auth.updateUser({ password: newPw });
                 if (updateError) throw updateError;
-                
+
                 setCurrentPw('');
                 setNewPw('');
                 setConfirmPw('');
@@ -721,7 +721,7 @@ export function Settings() {
                             </p>
                         </div>
                     </div>
-                    
+
                     {mfaError && (
                         <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-medium">
                             <AlertTriangle className="w-5 h-5 shrink-0" />
@@ -788,7 +788,7 @@ export function Settings() {
                             </p>
                         </div>
                     </div>
-                    
+
                     {pwMfaError && (
                         <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm font-medium">
                             <AlertTriangle className="w-5 h-5 shrink-0" />
