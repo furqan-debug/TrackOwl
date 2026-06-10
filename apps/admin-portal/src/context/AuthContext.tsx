@@ -41,6 +41,9 @@ interface AuthContextType {
     isPremium: boolean;
     /** True when org is on Basic plan (or free/None) — opposite of isPremium (excluding locked) */
     isBasic: boolean;
+    aalLevel: 'aal1' | 'aal2' | null;
+    nextAalLevel: 'aal1' | 'aal2' | null;
+    refreshAal: () => Promise<{ currentLevel: 'aal1' | 'aal2'; nextLevel: 'aal1' | 'aal2' } | null>;
     refreshProfile: () => Promise<MemberProfile | null>;
     /** Re-fetches only the organization row without reloading the full profile */
     refreshOrganization: () => Promise<OrganizationProfile | null>;
@@ -65,6 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [organization, setOrganization] = useState<OrganizationProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [aalLevel, setAalLevel] = useState<'aal1' | 'aal2' | null>(null);
+    const [nextAalLevel, setNextAalLevel] = useState<'aal1' | 'aal2' | null>(null);
 
     // Derived plan flags — always computed from organization state
     const isPremium = computeIsPremium(organization);
@@ -72,13 +77,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     organization?.subscription_status !== 'Locked' && 
                     organization?.subscription_status !== 'None';
 
+    const fetchAal = async () => {
+        try {
+            const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+            if (error) throw error;
+            if (data) {
+                setAalLevel(data.currentLevel as 'aal1' | 'aal2');
+                setNextAalLevel(data.nextLevel as 'aal1' | 'aal2');
+                return data as { currentLevel: 'aal1' | 'aal2'; nextLevel: 'aal1' | 'aal2' };
+            }
+        } catch (err) {
+            console.error('Error fetching AAL level:', err);
+        }
+        return null;
+    };
+
     useEffect(() => {
         let isInitial = true;
 
         // 1. Initial session check
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
-            if (session) fetchProfile(session.user.email!, 3, !isInitial);
+            if (session) {
+                fetchAal();
+                fetchProfile(session.user.email!, 3, !isInitial);
+            }
             else setLoading(false);
             isInitial = false;
         });
@@ -87,12 +110,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             setSession(session);
             if (session) {
+                fetchAal();
                 if (event === 'TOKEN_REFRESHED') return;
                 fetchProfile(session.user.email!, 3, !isInitial);
             }
             else {
                 setProfile(null);
                 setOrganization(null);
+                setAalLevel(null);
+                setNextAalLevel(null);
                 setLoading(false);
             }
             isInitial = false;
@@ -171,9 +197,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const signOut = async () => {
-        await supabase.auth.signOut();
+        try {
+            await supabase.auth.signOut();
+        } catch (err) {
+            console.error('Error during signOut:', err);
+        }
         setProfile(null);
         setOrganization(null);
+        setAalLevel(null);
+        setNextAalLevel(null);
+    };
+
+    const refreshAal = async () => {
+        return await fetchAal();
     };
 
     const refreshProfile = async (): Promise<MemberProfile | null> => {
@@ -199,11 +235,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     setOrganization(org);
                 }
 
+                await fetchAal();
                 setLoading(false);
                 return member;
             }
             setProfile(null);
             setOrganization(null);
+            setAalLevel(null);
+            setNextAalLevel(null);
             setLoading(false);
             return null;
         } catch (err: any) {
@@ -242,6 +281,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             error,
             isPremium,
             isBasic,
+            aalLevel,
+            nextAalLevel,
+            refreshAal,
             refreshProfile,
             refreshOrganization,
             signOut,

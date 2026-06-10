@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { AccessDenied } from '../components/AccessDenied';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -7,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
-    const { profile, loading, session, signOut } = useAuth();
+    const { profile, loading, session, signOut, aalLevel, nextAalLevel } = useAuth();
     const location = useLocation();
 
     if (loading) {
@@ -23,27 +24,21 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
+    if (session && aalLevel === 'aal1' && nextAalLevel === 'aal2') {
+        // Redirect to login to complete MFA verification challenge
+        return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+
     // 3. Strictly block 'User' role from Admin Portal
     // If we have a profile and the role is 'User', they don't belong here.
     if (profile?.role === 'User') {
         return (
-            <div className="min-h-screen bg-surface-hover flex items-center justify-center p-4">
-                <div className="bg-surface rounded-2xl shadow-xl w-full max-w-md p-8 text-center border border-border">
-                    <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span className="text-3xl">🚫</span>
-                    </div>
-                    <h1 className="text-xl font-bold text-text-main mb-2">Admin Portal Access Restricted</h1>
-                    <p className="text-text-muted text-sm mb-8">
-                        This portal is for Admins and Managers only. Please use the TrackOwl desktop app for tracking.
-                    </p>
-                    <button 
-                        onClick={() => signOut()}
-                        className="w-full bg-slate-900 text-white py-3 rounded-lg text-sm font-bold hover:bg-slate-800 transition-all"
-                    >
-                        Sign Out
-                    </button>
-                </div>
-            </div>
+            <AccessDenied
+              title="Admin Portal Access Restricted"
+              message="This portal is for Admins and Managers only. Please use the TrackOwl desktop app for tracking."
+              buttonLabel="Sign Out"
+              onButtonClick={signOut}
+            />
         );
     }
 
@@ -62,23 +57,12 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
     if (roles && profile && !roles.includes(profile.role)) {
         // Specific route role restriction
         return (
-            <div className="min-h-screen bg-surface-hover flex items-center justify-center p-4">
-                <div className="bg-surface rounded-2xl shadow-xl w-full max-w-md p-8 text-center border border-border">
-                    <div className="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <span className="text-3xl">🚫</span>
-                    </div>
-                    <h1 className="text-xl font-bold text-text-main mb-2">Access Denied</h1>
-                    <p className="text-text-muted text-sm mb-8">
-                        You do not have permission to view this specific page.
-                    </p>
-                    <button 
-                        onClick={() => window.history.back()}
-                        className="w-full bg-slate-900 text-white py-3 rounded-lg text-sm font-bold hover:bg-slate-800 transition-all"
-                    >
-                        Go Back
-                    </button>
-                </div>
-            </div>
+            <AccessDenied
+              title="Access Denied"
+              message="You do not have permission to view this specific page."
+              buttonLabel="Go Back"
+              onButtonClick={() => window.history.back()}
+            />
         );
     }
 
