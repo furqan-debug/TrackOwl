@@ -73,10 +73,10 @@ export const navStructure: NavGroup[] = [
         name: 'Settings',
         icon: Settings,
         path: '/dashboard/settings',
-        allowedRoles: ['Owner'],
         children: [
-            { name: 'Org Settings', path: '/dashboard/settings' },
-            { name: 'Billing & Plans', path: '/dashboard/settings/billing' },
+            { name: 'Org Settings', path: '/dashboard/settings', allowedRoles: ['Owner'] },
+            { name: 'Security & 2FA', path: '/dashboard/settings/security' },
+            { name: 'Billing & Plans', path: '/dashboard/settings/billing', allowedRoles: ['Owner'] },
         ],
     },
 ];
