@@ -6,6 +6,7 @@ import {
   BarChart3, 
   Activity, 
   LifeBuoy, 
+  Settings,
   X,
   LogOut
 } from 'lucide-react';
@@ -26,6 +27,7 @@ const navItems = [
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Platform Health', href: '/platform', icon: Activity },
   { name: 'Support', href: '/support', icon: LifeBuoy },
+  { name: 'Settings', href: '/settings', icon: Settings },
 ];
 
 export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (val: boolean) => void }) {
@@ -42,7 +44,7 @@ export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (va
 
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform transition-transform duration-200 ease-in-out lg:translate-x-0 lg:static lg:w-64",
+        "fixed inset-y-0 left-0 z-50 w-72 glass border-r border-slate-200/60 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:w-64",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="h-full flex flex-col">
@@ -63,15 +65,15 @@ export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (va
                   key={item.name}
                   to={item.href}
                   className={({ isActive }) => cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
                     isActive 
-                      ? "bg-slate-50 text-primary" 
-                      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      ? "bg-primary text-white shadow-glow translate-x-1" 
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 hover:translate-x-1"
                   )}
                 >
                   {({ isActive }) => (
                     <>
-                      <item.icon className={cn("w-5 h-5", isActive ? "text-primary" : "text-slate-400")} />
+                      <item.icon className={cn("w-5 h-5 transition-colors duration-300", isActive ? "text-white" : "text-slate-400")} />
                       {item.name}
                     </>
                   )}
@@ -92,7 +94,7 @@ export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (va
             </div>
             <button
               onClick={signOut}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-300 hover:translate-x-1"
             >
               <LogOut className="w-4.5 h-4.5" />
               Sign Out
