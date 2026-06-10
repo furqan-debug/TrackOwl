@@ -93,15 +93,15 @@ export function BillingOverview() {
           {/* Metric Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             {[
-              { label: 'Monthly Revenue', value: `$${metrics.mrr.toLocaleString()}`, sub: `ARR: $${metrics.arr.toLocaleString()}`, icon: TrendingUp, color: 'text-indigo-600 bg-indigo-50' },
-              { label: 'Total Revenue (All Time)', value: `$${metrics.totalRevenue.toLocaleString()}`, sub: 'Sum of all completed payments', icon: CreditCard, color: 'text-blue-600 bg-blue-50' },
-              { label: 'Active Subscriptions', value: metrics.activeSubscriptions.toLocaleString(), sub: 'Orgs with Stripe subscription', icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50' },
-              { label: 'Failed Payments', value: metrics.failedPayments.toLocaleString(), sub: 'Requires immediate follow-up', icon: XCircle, color: 'text-red-600 bg-red-50' },
-              { label: 'Pending Payments', value: metrics.pendingPayments.toLocaleString(), sub: 'Awaiting confirmation', icon: Clock, color: 'text-amber-600 bg-amber-50' },
-              { label: 'Est. ARR', value: `$${metrics.arr.toLocaleString()}`, sub: 'MRR × 12', icon: ArrowUpRight, color: 'text-purple-600 bg-purple-50' },
+              { label: 'Monthly Revenue', value: `$${metrics.mrr.toLocaleString()}`, sub: `ARR: $${metrics.arr.toLocaleString()}`, icon: TrendingUp, color: 'text-indigo-600 bg-gradient-to-br from-indigo-50 to-indigo-100/50 border border-indigo-200/50' },
+              { label: 'Total Revenue (All Time)', value: `$${metrics.totalRevenue.toLocaleString()}`, sub: 'Sum of all completed payments', icon: CreditCard, color: 'text-blue-600 bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50' },
+              { label: 'Active Subscriptions', value: metrics.activeSubscriptions.toLocaleString(), sub: 'Orgs with Stripe subscription', icon: CheckCircle2, color: 'text-emerald-600 bg-gradient-to-br from-emerald-50 to-emerald-100/50 border border-emerald-200/50' },
+              { label: 'Failed Payments', value: metrics.failedPayments.toLocaleString(), sub: 'Requires immediate follow-up', icon: XCircle, color: 'text-red-600 bg-gradient-to-br from-red-50 to-red-100/50 border border-red-200/50' },
+              { label: 'Pending Payments', value: metrics.pendingPayments.toLocaleString(), sub: 'Awaiting confirmation', icon: Clock, color: 'text-amber-600 bg-gradient-to-br from-amber-50 to-amber-100/50 border border-amber-200/50' },
+              { label: 'Est. ARR', value: `$${metrics.arr.toLocaleString()}`, sub: 'MRR × 12', icon: ArrowUpRight, color: 'text-purple-600 bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50' },
             ].map(card => (
-              <div key={card.label} className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow">
-                <div className={`inline-flex p-2.5 rounded-xl mb-3 ${card.color}`}>
+              <div key={card.label} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+                <div className={`inline-flex p-2.5 rounded-xl mb-3 transition-transform duration-300 group-hover:scale-110 ${card.color}`}>
                   <card.icon className="w-5 h-5" />
                 </div>
                 <p className="text-sm font-medium text-slate-500">{card.label}</p>
@@ -112,8 +112,7 @@ export function BillingOverview() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* MRR Trend */}
-            <div className="lg:col-span-2 bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-all duration-300">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-base font-semibold text-slate-900">Monthly Revenue Trend</h2>
@@ -140,8 +139,7 @@ export function BillingOverview() {
               </div>
             </div>
 
-            {/* Plan Distribution Pie */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 hover:shadow-md transition-all duration-300">
               <h2 className="text-base font-semibold text-slate-900 mb-4">Plan Distribution</h2>
               <div className="h-40 w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -169,8 +167,7 @@ export function BillingOverview() {
             </div>
           </div>
 
-          {/* Recent Payments Table */}
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
             <div className="px-5 py-4 border-b border-slate-100">
               <h2 className="text-base font-semibold text-slate-900">Recent Transactions</h2>
             </div>
