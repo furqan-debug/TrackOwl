@@ -7,6 +7,7 @@ import {
 import { PageLayout, Modal } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 /* ─────────────────────────────────────────
    Tiny copy button helper
@@ -288,11 +289,19 @@ export function SecurityPage() {
 
         setPwLoading(true);
         try {
-            // Re-authenticate with current password first
+            // Get current user to know their email
             const { data: { user }, error: userError } = await supabase.auth.getUser();
             if (userError || !user?.email) throw new Error('Unable to verify current session.');
 
-            const { error: signInError } = await supabase.auth.signInWithPassword({
+            // Re-authenticate with current password using a temporary client 
+            // so we don't overwrite the global session and trigger an MFA downgrade redirect
+            const tempClient = createClient(
+                import.meta.env.VITE_SUPABASE_URL,
+                import.meta.env.VITE_SUPABASE_ANON_KEY,
+                { auth: { persistSession: false } }
+            );
+
+            const { error: signInError } = await tempClient.auth.signInWithPassword({
                 email: user.email,
                 password: currentPw,
             });

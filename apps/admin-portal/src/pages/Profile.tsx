@@ -3,10 +3,10 @@ import {
     User, Mail, Shield,
     Camera, Save, CheckCircle, 
     ShieldAlert, Loader2, Diamond,
-    Smartphone, MapPin, Lock, Key
+    Smartphone, MapPin
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { PageLayout, Modal } from '../components/ui';
+import { PageLayout } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import { SecureImage } from '../components/ui/SecureImage';
 import clsx from 'clsx';
@@ -26,42 +26,6 @@ export function ProfilePage() {
     const [avatarLoading, setAvatarLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     
-    // Password change state
-    const [showPasswordModal, setShowPasswordModal] = useState(false);
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [passwordLoading, setPasswordLoading] = useState(false);
-    const [passwordSuccess, setPasswordSuccess] = useState(false);
-    const [passwordError, setPasswordError] = useState<string | null>(null);
-
-    async function handlePasswordChange() {
-        if (newPassword !== confirmPassword) {
-            setPasswordError('Passwords do not match');
-            return;
-        }
-        if (newPassword.length < 6) {
-            setPasswordError('Password must be at least 6 characters');
-            return;
-        }
-
-        setPasswordLoading(true);
-        setPasswordError(null);
-        try {
-            const { error } = await supabase.auth.updateUser({ password: newPassword });
-            if (error) throw error;
-            setPasswordSuccess(true);
-            setTimeout(() => {
-                setShowPasswordModal(false);
-                setPasswordSuccess(false);
-                setNewPassword('');
-                setConfirmPassword('');
-            }, 2000);
-        } catch (err: any) {
-            setPasswordError(err.message);
-        } finally {
-            setPasswordLoading(false);
-        }
-    }
 
     // 📍 Auto-detect location via IP (Enforced & Exact)
     useEffect(() => {
@@ -334,95 +298,7 @@ export function ProfilePage() {
                             </div>
                         </div>
 
-                        {/* 🔒 Security CTA */}
-                        <div className="p-8 rounded-[24px] bg-slate-900 text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between group shadow-shell-sm gap-6">
-                             <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-primary/20 blur-[60px] rounded-full pointer-events-none group-hover:scale-150 transition-transform duration-1000" />
-                             <div className="relative z-10 flex flex-col gap-1 text-center md:text-left">
-                                <h4 className="text-xl font-black tracking-tight italic">Protect your workspace access</h4>
-                                <p className="text-[12px] font-bold text-white/50">Regularly updating your password ensures your account remains secure.</p>
-                             </div>
-                             <div className="relative z-10 w-full md:w-auto">
-                                <button 
-                                    onClick={() => setShowPasswordModal(true)}
-                                    className="w-full md:w-auto px-8 py-4 rounded-xl bg-white text-slate-900 text-[11px] font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-glow-white flex items-center justify-center gap-3 active:scale-95"
-                                >
-                                    <Lock className="w-4 h-4" />
-                                    Change Password
-                                </button>
-                             </div>
-                        </div>
 
-                        {/* Password Modal */}
-                        <Modal
-                            isOpen={showPasswordModal}
-                            onClose={() => setShowPasswordModal(false)}
-                            title="Update Security Key"
-                            maxWidth="md"
-                        >
-                            <div className="space-y-6">
-                                <div className="flex flex-col items-center text-center mb-2">
-                                    <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-4 border border-primary/20">
-                                        <Key className="w-8 h-8" />
-                                    </div>
-                                    <h3 className="text-xl font-black tracking-tight text-text-main">Set New Password</h3>
-                                    <p className="text-[13px] font-medium text-text-muted mt-1 px-4">Ensure your password is at least 6 characters with a mix of symbols.</p>
-                                </div>
-
-                                {passwordError && (
-                                    <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-bold flex items-center gap-3">
-                                        <ShieldAlert className="w-4 h-4" />
-                                        {passwordError}
-                                    </div>
-                                )}
-
-                                {passwordSuccess && (
-                                    <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-xs font-bold flex items-center gap-3">
-                                        <CheckCircle className="w-4 h-4" />
-                                        Password successfully updated!
-                                    </div>
-                                )}
-
-                                <div className="space-y-4">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">New Password</label>
-                                        <input
-                                            type="password"
-                                            value={newPassword}
-                                            onChange={e => setNewPassword(e.target.value)}
-                                            className="w-full bg-surface-hover/50 border border-border rounded-xl px-5 py-3.5 text-[14px] font-bold text-text-main focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 focus:bg-surface transition-all"
-                                            placeholder="••••••••"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest ml-1">Confirm Password</label>
-                                        <input
-                                            type="password"
-                                            value={confirmPassword}
-                                            onChange={e => setConfirmPassword(e.target.value)}
-                                            className="w-full bg-surface-hover/50 border border-border rounded-xl px-5 py-3.5 text-[14px] font-bold text-text-main focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 focus:bg-surface transition-all"
-                                            placeholder="••••••••"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex flex-col gap-3 pt-4">
-                                    <button
-                                        onClick={handlePasswordChange}
-                                        disabled={passwordLoading || passwordSuccess}
-                                        className="h-14 rounded-xl bg-primary text-white font-black text-[12px] uppercase tracking-widest shadow-glow-primary hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
-                                    >
-                                        {passwordLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
-                                        Update Password
-                                    </button>
-                                    <button
-                                        onClick={() => setShowPasswordModal(false)}
-                                        className="h-12 rounded-xl text-text-muted font-bold text-[11px] hover:text-primary transition-colors"
-                                    >
-                                        Cancel
-                                    </button>
-                                </div>
-                            </div>
-                        </Modal>
                     </div>
                 </div>
 
