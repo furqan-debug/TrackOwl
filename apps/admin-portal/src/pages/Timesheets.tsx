@@ -240,7 +240,7 @@ export function Timesheets() {
                     // Improved duration calculation:
                     // If ended_at is null, check if the last sample is recent.
                     // If the last sample is > 10 mins ago, use the last sample's time as the effective end.
-                    const lastSample = samples.length > 0 ? samples.sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())[0] : null;
+                    const lastSample = samples.length > 0 ? samples.sort((a: any, b: any) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())[0] : null;
                     const lastSampleTime = lastSample ? new Date(lastSample.recorded_at).getTime() : new Date(s.started_at).getTime();
                     const nowMs = new Date().getTime();
 
@@ -253,7 +253,7 @@ export function Timesheets() {
                     }
 
                     const durationMins = (effectiveEndMs - new Date(s.started_at).getTime()) / 60000;
-                    const offlineMins = samples.filter(samp => samp.is_offline).length;
+                    const offlineMins = samples.filter((samp: any) => samp.is_offline).length;
 
                     const isTrulyActive = !s.ended_at && (nowMs - lastSampleTime < 15 * 60000);
 
@@ -310,7 +310,7 @@ export function Timesheets() {
                 started_at: new Date(startStr).toISOString(),
                 ended_at: new Date(endStr).toISOString(),
                 manual: true
-            });
+            } as any);
             if (error) throw error;
             setShowAddTime(false);
             fetchTimesheets();
@@ -638,7 +638,7 @@ function DailyView({ entries, selectedMember, toProperCase }: {
                                     </div>
                                 </td>
                                 <td className="py-8 px-6 text-center text-[15px] font-bold text-text-muted tabular-nums">{s.idle_percent}%</td>
-                                <td className="py-8 px-6 text-center text-[18px] font-bold text-text-main tabular-nums">{formatDuration(s.duration_mins || 0)}</td>
+                                <td className="py-8 px-6 text-center text-[18px] font-bold text-text-main tabular-nums">{formatDuration((s.duration_mins || 0) + (s.offline_mins || 0))}</td>
                                 <td className="py-8 px-10 text-right">
                                     <div className="flex flex-col items-end gap-1">
                                         <span className="text-[14px] font-bold text-text-muted tabular-nums">

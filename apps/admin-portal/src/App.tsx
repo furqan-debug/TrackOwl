@@ -4,7 +4,7 @@ import { Dashboard } from './components/Dashboard';
 import { Activity } from './pages/Activity';
 import { Timesheets } from './pages/Timesheets';
 import { Reports } from './pages/Reports';
-import { ReportsLegacy } from './pages/ReportsLegacy';
+
 import { DailyTotals } from './pages/DailyTotals';
 import { AmountsOwed } from './pages/AmountsOwed';
 import { PaymentsReport } from './pages/PaymentsReport';
@@ -32,7 +32,7 @@ import { MemberTimeline } from './pages/MemberTimeline';
 import { Teams } from './pages/Teams';
 import { ChangePlan } from './pages/ChangePlan';
 import { Calendar } from './pages/Calendar';
-import { PlaceholderPage } from './pages/PlaceholderPage';
+
 import { ProjectFormPage } from './pages/ProjectFormPage';
 import { MemberFormPage } from './pages/MemberFormPage';
 import { Billing } from './pages/Billing';
@@ -72,7 +72,8 @@ function AuthRedirect() {
       navigate(`/accept-invite${hash}`, { replace: true });
     } else if (accessToken && type === 'recovery') {
       navigate(`/update-password${hash}`, { replace: true });
-    } else if (accessToken && type === 'signup') {
+    } else if (accessToken) {
+      // Fallback for OAuth logins (which don't have a type param) or general signups
       navigate(`/dashboard${hash}`, { replace: true });
     }
   }, []);
@@ -114,7 +115,7 @@ function App() {
                     <Route path="/projects/:id/edit" element={<ProjectFormPage />} />
                     <Route path="/schedules" element={<Schedules />} />
                     <Route path="/url-tracking" element={<PremiumRoute><UrlTracking /></PremiumRoute>} />
-                    <Route path="/financials" element={<PlaceholderPage title="Financials" />} />
+
                     <Route path="/member-timeline" element={<PremiumRoute><MemberTimeline /></PremiumRoute>} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/settings" element={<SettingsPage />} />
@@ -126,20 +127,12 @@ function App() {
                     <Route path="/projects/todos" element={<Todos />} />
                     <Route path="/projects/clients" element={<Clients />} />
                     <Route path="/calendar" element={<Calendar />} />
-                    <Route path="/reports/legacy" element={<PremiumRoute><ReportsLegacy /></PremiumRoute>} />
+
                     <Route path="/reports/daily" element={<PremiumRoute><DailyTotals /></PremiumRoute>} />
                     <Route path="/reports/owed" element={<PremiumRoute><AmountsOwed /></PremiumRoute>} />
                     <Route path="/reports/payments" element={<PremiumRoute><PaymentsReport /></PremiumRoute>} />
-                    <Route path="/reports/all" element={<PremiumRoute><PlaceholderPage title="All Reports" /></PremiumRoute>} />
-                    <Route path="/reports/custom" element={<PremiumRoute><PlaceholderPage title="Customized Reports" /></PremiumRoute>} />
+
                     <Route path="/people/teams" element={<Teams />} />
-                    <Route path="/financials/create" element={<PlaceholderPage title="Create Payments" />} />
-                    <Route path="/financials/past" element={<PlaceholderPage title="Past Payments" />} />
-                    <Route path="/financials/invoices" element={<PlaceholderPage title="Invoices" />} />
-                    <Route path="/financials/expenses" element={<PlaceholderPage title="Expenses" />} />
-                    <Route path="/silent/how-it-works" element={<PlaceholderPage title="Silent App: How it works" />} />
-                    <Route path="/settings/tracking" element={<PlaceholderPage title="Activity & Tracking Settings" />} />
-                    <Route path="/settings/integrations" element={<PlaceholderPage title="Integrations" />} />
                     <Route path="/settings/billing" element={<Billing />} />
                     <Route path="/settings/billing/change-plan" element={<ChangePlan />} />
                     <Route path="/pricing" element={<Pricing />} />

@@ -12,27 +12,18 @@ import {
     StatusBadge, EmptyState, LoadingState 
 } from '../components/ui';
 
-interface LeadPermissions {
-    approve_timesheets: boolean;
-    approve_time_modifications: boolean;
-    approve_time_off: boolean;
-    create_schedules: boolean;
-    manage_projects: boolean;
-    edit_roles: boolean;
-    view_activity: boolean;
-    manage_financials: boolean;
-    receive_notifications: boolean;
+import { teamService } from '../services/team.service';
+import type { Team, LeadPermissions } from '../services/team.service';
+
+interface Member {
+    id: string;
+    full_name: string;
+    email: string;
 }
 
-
-interface Team {
+interface Project {
     id: string;
     name: string;
-    description: string;
-    manager_id: string | null;
-    manager_name?: string;
-    member_count: number;
-    created_at: string;
 }
 
 interface Member {
@@ -78,34 +69,15 @@ export function Teams() {
     async function fetchData() {
         setLoading(true);
         try {
-            const [
-                { data: teamsData, error: tErr }, 
-                { data: membersData, error: mErr },
-                { data: projectsData, error: pErr }
-            ] = await Promise.all([
-                supabase.from('teams').select(`
-                    *, 
-                    members!teams_manager_id_fkey(full_name), 
-                    team_members(member_id, is_lead),
-                    project_teams(project_id)
-                `).order('created_at', { ascending: false }),
+            const [teamsData, { data: membersData, error: mErr }, { data: projectsData, error: pErr }] = await Promise.all([
+                teamService.fetchTeams(),
                 supabase.from('members').select('id, full_name, email').eq('status', 'Active'),
                 supabase.from('projects').select('id, name').eq('status', 'Active')
             ]);
-            if (tErr) throw tErr;
             if (mErr) throw mErr;
             if (pErr) throw pErr;
 
-            const formattedTeams = (teamsData || []).map(t => ({
-                ...t,
-                manager_name: t.members?.full_name,
-                member_count: t.team_members?.length || 0,
-                memberIds: t.team_members?.map((tm: any) => tm.member_id) || [],
-                leadIds: t.team_members?.filter((tm: any) => tm.is_lead).map((tm: any) => tm.member_id) || [],
-                projectIds: t.project_teams?.map((pt: any) => pt.project_id) || []
-            }));
-
-            setTeams(formattedTeams);
+            setTeams(teamsData);
             setMembers(membersData || []);
             setAllProjects(projectsData || []);
         } catch (e) {
@@ -131,16 +103,7 @@ export function Teams() {
     async function openEditModal(team: Team) {
         setLoading(true);
         try {
-            const { data: perms } = await supabase
-                .from('team_lead_permissions')
-                .select('*')
-                .eq('team_id', team.id);
-
-            const permsMap: Record<string, LeadPermissions> = {};
-            perms?.forEach(p => {
-                const { id, team_id, member_id, created_at, updated_at, ...rest } = p;
-                permsMap[member_id] = rest;
-            });
+            const permsMap = await teamService.fetchTeamLeadPermissions(team.id);
 
             setEditingTeam(team);
             setName(team.name);
@@ -201,57 +164,18 @@ export function Teams() {
     async function handleSave() {
         setLoading(true);
         try {
-            const teamPayload = {
+            await teamService.saveTeam({
+                id: editingTeam?.id,
                 name,
                 description,
                 manager_id: managerId || null,
-                organization_id: profile?.organization_id
-            };
-
-            let teamId = editingTeam?.id;
-
-            if (editingTeam) {
-                const { error } = await supabase.from('teams').update(teamPayload).eq('id', editingTeam.id);
-                if (error) throw error;
-            } else {
-                const { data, error } = await supabase.from('teams').insert(teamPayload).select().single();
-                if (error) throw error;
-                teamId = data.id;
-            }
-
-            if (!teamId) return;
-
-            // 1. Sync Members
-            await supabase.from('team_members').delete().eq('team_id', teamId);
-            if (selectedMemberIds.size > 0) {
-                const memberInserts = Array.from(selectedMemberIds).map(mid => ({
-                    team_id: teamId,
-                    member_id: mid,
-                    is_lead: selectedLeadIds.has(mid)
-                }));
-                await supabase.from('team_members').insert(memberInserts);
-            }
-
-            // 2. Sync Projects
-            await supabase.from('project_teams').delete().eq('team_id', teamId);
-            if (selectedProjectIds.size > 0) {
-                const projectInserts = Array.from(selectedProjectIds).map(pid => ({
-                    team_id: teamId,
-                    project_id: pid
-                }));
-                await supabase.from('project_teams').insert(projectInserts);
-            }
-
-            // 3. Sync Lead Permissions
-            await supabase.from('team_lead_permissions').delete().eq('team_id', teamId);
-            if (selectedLeadIds.size > 0) {
-                const permInserts = Array.from(selectedLeadIds).map(mid => ({
-                    team_id: teamId,
-                    member_id: mid,
-                    ...(leadPermissions[mid] || DEFAULT_PERMISSIONS)
-                }));
-                await supabase.from('team_lead_permissions').insert(permInserts);
-            }
+                organization_id: profile?.organization_id || undefined,
+                selectedMemberIds,
+                selectedLeadIds,
+                selectedProjectIds,
+                leadPermissions,
+                defaultPermissions: DEFAULT_PERMISSIONS
+            });
 
             setShowModal(false);
             fetchData();
@@ -265,8 +189,7 @@ export function Teams() {
     async function handleDelete() {
         if (!deletingTeam) return;
         try {
-            const { error } = await supabase.from('teams').delete().eq('id', deletingTeam.id);
-            if (error) throw error;
+            await teamService.deleteTeam(deletingTeam.id);
             setDeletingTeam(null);
             fetchData();
         } catch (e) {
@@ -585,7 +508,7 @@ export function Teams() {
                                                     <div className="p-6 bg-surface-solid grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-400">
                                                         {(Object.keys(DEFAULT_PERMISSIONS) as Array<keyof LeadPermissions>).map(key => (
                                                             <button
-                                                                key={key}
+                                                                key={key as string}
                                                                 onClick={() => updateLeadPermission(mid, key, !leadPermissions[mid]?.[key])}
                                                                 className="flex items-center gap-4 text-left group"
                                                             >
@@ -596,7 +519,7 @@ export function Teams() {
                                                                     {leadPermissions[mid]?.[key] && <Check className="w-4 h-4 text-white stroke-[4]" />}
                                                                 </div>
                                                                 <span className="text-xs font-medium text-text-muted group-hover:text-text-primary transition-colors capitalize">
-                                                                    {key.replace(/_/g, ' ')}
+                                                                    {(key as string).replace(/_/g, ' ')}
                                                                 </span>
                                                             </button>
                                                         ))}
@@ -703,7 +626,7 @@ function TeamItem({ team, mode, onEdit, onDelete, isViewer }: {
     onDelete: () => void;
     isViewer: boolean;
 }) {
-    const initials = team.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    const initials = team.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
 
     if (mode === 'list') {
         return (

@@ -6,7 +6,7 @@ import {
     User, Shield, DollarSign, Clock, 
     Info, AlertCircle, Calendar,
     Briefcase, Smartphone, Mail,
-    MapPin, CreditCard, Phone
+    MapPin, CreditCard, Phone, Globe2
 } from 'lucide-react';
 import { 
     Button, 
@@ -195,7 +195,7 @@ export function MemberFormPage() {
             }
         >
             <div className="max-w-4xl mx-auto pb-20">
-                <div className="flex bg-surface-subtle p-1.5 rounded-2xl border border-border w-fit mb-10 shadow-shell-sm overflow-x-auto custom-scrollbar">
+                <div className="flex mx-auto bg-surface p-1.5 rounded-2xl border border-border w-fit mb-10 shadow-sm overflow-x-auto custom-scrollbar">
                     {tabs.map(tab => (
                         <button
                             key={tab}
@@ -212,8 +212,8 @@ export function MemberFormPage() {
 
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     {activeTab === 'General' && (
-                        <Card className="p-10 border-border/60 shadow-shell-sm overflow-visible">
-                            <div className="flex items-center gap-6 mb-10 pb-10 border-b border-border/40">
+                        <Card className="p-8 md:p-12 border-border/60 shadow-premium overflow-visible">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-12 pb-8 border-b border-border/60">
                                 <div className="w-20 h-20 rounded-[28px] bg-primary/5 flex items-center justify-center text-primary text-2xl font-bold border border-primary/10 shadow-inner overflow-hidden">
                                     {avatarUrl ? (
                                         <SecureImage 
@@ -232,7 +232,7 @@ export function MemberFormPage() {
                                 <StatusBadge variant={role === 'Admin' ? 'success' : 'default'}>{role.toUpperCase()}</StatusBadge>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
                                 <FormField
                                     label="Full Identity"
                                     value={fullName}
@@ -240,29 +240,24 @@ export function MemberFormPage() {
                                     icon={<User className="w-4 h-4" />}
                                     placeholder="Enter full name..."
                                 />
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-muted ml-1">Access Protocol (Role)</label>
-                                    <div className="relative group">
-                                        <select
-                                            value={role}
-                                            onChange={e => setRole(e.target.value as Role)}
-                                            disabled={role === 'Owner'}
-                                            className={clsx(
-                                                "w-full px-6 py-4 bg-surface-subtle border border-border rounded-xl text-sm font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer",
-                                                role === 'Owner' && "opacity-50 cursor-not-allowed"
-                                            )}
-                                        >
-                                            {role === 'Owner' ? (
-                                                <option value="Owner">Owner</option>
-                                            ) : (
-                                                ['User', 'Viewer', 'Manager', 'Admin'].map(r => <option key={r} value={r}>{r}</option>)
-                                            )}
-                                        </select>
-                                    </div>
-                                    {role === 'Owner' && (
-                                        <p className="text-[10px] text-text-muted mt-2 italic">Ownership can only be transferred from Organization Settings.</p>
-                                    )}
-                                </div>
+                                <FormSelect
+                                    label="Access Protocol (Role)"
+                                    value={role}
+                                    onChange={(v: Role) => setRole(v)}
+                                    disabled={role === 'Owner'}
+                                    icon={<Shield className="w-4 h-4" />}
+                                    options={
+                                        role === 'Owner' 
+                                            ? [{ label: 'Owner', value: 'Owner' }]
+                                            : [
+                                                { label: 'User', value: 'User' },
+                                                { label: 'Viewer', value: 'Viewer' },
+                                                { label: 'Manager', value: 'Manager' },
+                                                { label: 'Admin', value: 'Admin' }
+                                            ]
+                                    }
+                                    description={role === 'Owner' ? "Ownership can only be transferred from Organization Settings." : undefined}
+                                />
                                 <FormField
                                     label="Geographic Location (City/Country)"
                                     value={location}
@@ -284,29 +279,30 @@ export function MemberFormPage() {
                                     icon={<Shield className="w-4 h-4" />}
                                     placeholder="e.g. EMP-101..."
                                 />
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-muted ml-1">Employment Type</label>
-                                    <select
-                                        value={employeeType}
-                                        onChange={e => setEmployeeType(e.target.value)}
-                                        className="w-full px-6 py-4 bg-surface-subtle border border-border rounded-xl text-sm font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none"
-                                    >
-                                        {['Full-time', 'Part-time', 'Contract', 'Intern'].map(t => <option key={t} value={t}>{t}</option>)}
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-muted ml-1">Timezone Context</label>
-                                    <select
-                                        value={timezone}
-                                        onChange={e => setTimezone(e.target.value)}
-                                        className="w-full px-6 py-4 bg-surface-subtle border border-border rounded-xl text-sm font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none"
-                                    >
-                                        <option value="UTC">Universal Time (UTC)</option>
-                                        <option value="Asia/Kolkata">India (GMT+5:30)</option>
-                                        <option value="America/New_York">New York (EST)</option>
-                                        <option value="Europe/London">London (GMT)</option>
-                                    </select>
-                                </div>
+                                <FormSelect
+                                    label="Employment Type"
+                                    value={employeeType}
+                                    onChange={setEmployeeType}
+                                    icon={<Briefcase className="w-4 h-4" />}
+                                    options={[
+                                        { label: 'Full-time', value: 'Full-time' },
+                                        { label: 'Part-time', value: 'Part-time' },
+                                        { label: 'Contract', value: 'Contract' },
+                                        { label: 'Intern', value: 'Intern' }
+                                    ]}
+                                />
+                                <FormSelect
+                                    label="Timezone Context"
+                                    value={timezone}
+                                    onChange={setTimezone}
+                                    icon={<Globe2 className="w-4 h-4" />}
+                                    options={[
+                                        { label: 'Universal Time (UTC)', value: 'UTC' },
+                                        { label: 'India (GMT+5:30)', value: 'Asia/Kolkata' },
+                                        { label: 'New York (EST)', value: 'America/New_York' },
+                                        { label: 'London (GMT)', value: 'Europe/London' }
+                                    ]}
+                                />
                                 <FormField
                                     label="Nickname / Alias"
                                     value={nickname}
@@ -653,19 +649,19 @@ export function MemberFormPage() {
 
 function FormField({ label, value, onChange, type = 'text', icon, placeholder }: any) {
     return (
-        <div className="space-y-2 group">
-            <label className="text-[10px] font-bold text-text-muted ml-1 transition-colors group-focus-within:text-primary">{label}</label>
-            <div className="relative">
+        <div className="space-y-2 group flex flex-col">
+            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em]">{label}</label>
+            <div className="relative mt-auto">
                 {type === 'date' ? (
                     <DatePicker 
                         value={value}
                         onChange={onChange}
-                        className="w-full"
+                        className="w-full h-[52px]"
                     />
                 ) : (
                     <>
                         {icon && (
-                            <div className="absolute left-6 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors">
+                            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors">
                                 {icon}
                             </div>
                         )}
@@ -675,13 +671,44 @@ function FormField({ label, value, onChange, type = 'text', icon, placeholder }:
                             onChange={e => onChange(e.target.value)}
                             placeholder={placeholder}
                             className={clsx(
-                                "w-full py-4 bg-surface-subtle border border-border rounded-2xl text-sm font-bold text-text-primary outline-none focus:border-primary transition-all placeholder:opacity-40",
-                                icon ? "pl-14 pr-6" : "px-6"
+                                "w-full h-[52px] bg-surface border border-border rounded-xl text-[13px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400",
+                                icon ? "pl-12 pr-5" : "px-5"
                             )}
                         />
                     </>
                 )}
             </div>
+        </div>
+    );
+}
+
+function FormSelect({ label, value, onChange, options, disabled, icon, description }: any) {
+    return (
+        <div className="space-y-2 group flex flex-col">
+            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em]">{label}</label>
+            <div className="relative mt-auto">
+                {icon && (
+                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors pointer-events-none">
+                        {icon}
+                    </div>
+                )}
+                <select
+                    value={value}
+                    onChange={e => onChange(e.target.value)}
+                    disabled={disabled}
+                    className={clsx(
+                        "w-full h-[52px] bg-surface border border-border rounded-xl text-[13px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all appearance-none cursor-pointer",
+                        icon ? "pl-12 pr-10" : "px-5 pr-10",
+                        disabled && "opacity-50 cursor-not-allowed bg-surface-subtle"
+                    )}
+                >
+                    {options.map((opt: any) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                </select>
+                <ChevronLeft className="w-4 h-4 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 -rotate-90 pointer-events-none" />
+            </div>
+            {description && <p className="text-[10px] text-text-muted italic mt-1">{description}</p>}
         </div>
     );
 }

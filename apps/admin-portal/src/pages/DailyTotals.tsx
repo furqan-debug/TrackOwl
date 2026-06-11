@@ -1,27 +1,10 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { 
-    Calendar, ChevronLeft, ChevronRight, 
-    Users, Download, Filter, 
-    Shield, RefreshCw
-} from 'lucide-react';
-import { 
-    PageHeader, Card, Button, StatusBadge, 
-    LoadingState, EmptyState 
-} from '../components/ui';
-import clsx from 'clsx';
-import { 
-    getDayIndexInTz,
-    getEffectiveEnd,
-    fetchAllActivitySamples
-} from '../lib/dataUtils';
+import { reportService } from '../services/report.service';
+import type { DayTotal } from '../services/report.service';
 import { useAuth } from '../context/AuthContext';
-
-interface DayTotal {
-    member: string;
-    totals: number[]; // 7 days (Mon-Sun)
-    weeklyTotal: number;
-}
+import { ChevronLeft, ChevronRight, RefreshCw, Download, Calendar, Shield, Users, Filter } from 'lucide-react';
+import { PageHeader, LoadingState, EmptyState, Card, Button, StatusBadge } from '../components/ui';
+import clsx from 'clsx';
 
 // Module-level cache
 let dailyTotalsCache: any = null;
@@ -63,155 +46,19 @@ export function DailyTotals() {
             const end = new Date(weekDates[6]);
             end.setHours(23, 59, 59, 999);
 
-            // Fetch members
-            const { data: members } = await supabase.from('members')
-                .select('id, full_name, timezone, idle_limit')
-                .eq('organization_id', organizationId)
-                .order('full_name', { ascending: true });
-            if (members) {
-                setAllMembers(members);
-            }
+            const { data: result, members } = await reportService.fetchDailyTotals({
+                start,
+                end,
+                organizationId: organizationId ?? undefined,
+                selectedMemberId
+            });
 
-            let sessQuery = supabase.from('sessions')
-                .select('id, user_id, started_at, ended_at')
-                .eq('organization_id', organizationId)
-                .lt('started_at', end.toISOString())
-                .or(`ended_at.is.null,ended_at.gt.${start.toISOString()}`);
-            
-            if (selectedMemberId.toLowerCase() !== 'all') {
-                sessQuery = sessQuery.eq('user_id', selectedMemberId);
-            }
-            
-            const { data: sessions } = await sessQuery;
+            setData(result);
+            setAllMembers(members);
 
-            // Fetch samples — filter by session IDs to avoid fetching org-wide data
-            // when a specific member is selected (and to stay within pagination limits)
-            const filteredSessionIds = (sessions || []).map((s: any) => s.id);
-            // Fetch samples
-            const samples = await fetchAllActivitySamples(
-                supabase,
-                start.toISOString(),
-                end.toISOString(),
-                'session_id, recorded_at, idle, activity_percent',
-                { 
-                    organizationId: organizationId ?? undefined, 
-                    sessionIds: filteredSessionIds.length > 0 ? filteredSessionIds : undefined 
-                }
-            );
-
-            if (members && sessions) {
-                const memberMap: Record<string, {name: string, tz: string | null}> = {};
-                members.forEach(m => {
-                    memberMap[m.id] = { name: m.full_name, tz: m.timezone };
-                });
-
-                const sessionToUserId = new Map();
-                (sessions || []).forEach(s => sessionToUserId.set(s.id, s.user_id));
-
-                // Deduplicate: 1 unique sample per user per minute
-                const seen = new Set<string>();
-                const dedupedSamples: any[] = [];
-                const sortedSamples = [...(samples || [])].sort((a, b) => (b.activity_percent ?? 0) - (a.activity_percent ?? 0));
-
-                sortedSamples.forEach((s: any) => {
-                    const uid = sessionToUserId.get(s.session_id);
-                    if (!uid || !memberMap[uid]) return;
-                    const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
-                    const key = `${uid}_${minute}`;
-                    if (seen.has(key)) return;
-                    seen.add(key);
-                    dedupedSamples.push(s);
-                });
-
-                // Group samples by user to apply threshold logic
-                const userSamples = new Map<string, any[]>();
-                dedupedSamples.forEach(s => {
-                    const uid = sessionToUserId.get(s.session_id);
-                    if (!uid) return;
-                    if (!userSamples.has(uid)) userSamples.set(uid, []);
-                    userSamples.get(uid)!.push(s);
-                });
-
-                const stats: Record<string, number[]> = {};
-                members.forEach(m => stats[m.id] = [0,0,0,0,0,0,0]);
-
-                // Create a member detail map for fast access
-                const memberDetailMap = new Map(members.map(m => [m.id, m]));
-
-                userSamples.forEach((samples, uid) => {
-                    const limit = memberDetailMap.get(uid)?.idle_limit ?? 10;
-                    const sorted = samples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-                    
-                    // Index samples by minute for fast lookup in productiveMinutes.forEach
-                    const sampleByMinute = new Map();
-                    sorted.forEach(s => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
-
-                    let currentBlock: any[] = [];
-                    const productiveMinutes = new Set<string>();
-
-                    for (let i = 0; i < sorted.length; i++) {
-                        const s = sorted[i];
-                        const prev = i > 0 ? sorted[i-1] : null;
-                        const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
-                        const isContiguous = prev && gapMs <= 125000;
-
-                        if (s.idle && isContiguous) {
-                            currentBlock.push(s);
-                        } else if (s.idle && !prev) {
-                            currentBlock = [s];
-                        } else if (s.idle && !isContiguous) {
-                            if (currentBlock.length < limit) {
-                                currentBlock.forEach(b => productiveMinutes.add(b.recorded_at.substring(0, 16)));
-                            }
-                            currentBlock = [s];
-                        } else {
-                            productiveMinutes.add(s.recorded_at.substring(0, 16));
-                            if (currentBlock.length < limit) {
-                                currentBlock.forEach(b => productiveMinutes.add(b.recorded_at.substring(0, 16)));
-                            }
-                            currentBlock = [];
-                        }
-                    }
-                    if (currentBlock.length < limit) {
-                        currentBlock.forEach(b => productiveMinutes.add(b.recorded_at.substring(0, 16)));
-                    }
-
-                    if (productiveMinutes.size > 0) {
-                        productiveMinutes.forEach(minuteStr => {
-                            const s = sampleByMinute.get(minuteStr);
-                            if (s) {
-                                const dayIdxRaw = getDayIndexInTz(s.recorded_at, memberMap[uid].tz);
-                                const dayIdx = (dayIdxRaw + 6) % 7; 
-                                stats[uid][dayIdx] += (1 / 60);
-                            }
-                        });
-                    } else {
-                        // FALLBACK: Use session durations if no samples exist for this user
-                        const userSess = sessions.filter((s: any) => s.user_id === uid);
-                        userSess.forEach((s: any) => {
-                            const { endMs } = getEffectiveEnd(s.started_at, s.ended_at);
-                            const startMs = new Date(s.started_at).getTime();
-                            const durationHrs = (endMs - startMs) / (1000 * 60 * 60);
-                            
-                            const dayIdxRaw = getDayIndexInTz(s.started_at, memberMap[uid].tz);
-                            const dayIdx = (dayIdxRaw + 6) % 7; 
-                            stats[uid][dayIdx] += durationHrs;
-                        });
-                    }
-                });
-
-                const result: DayTotal[] = Object.entries(stats).map(([uid, totals]) => ({
-                    member: memberMap[uid].name,
-                    totals: totals.map(t => Math.round(t * 10) / 10),
-                    weeklyTotal: Math.round(totals.reduce((a, b) => a + b, 0) * 10) / 10
-                })).sort((a, b) => b.weeklyTotal - a.weeklyTotal);
-
-                setData(result);
-
-                // Update cache
-                dailyTotalsCache = { data: result, members: members };
-                dailyTotalsCacheKey = cacheKey;
-            }
+            // Update cache
+            dailyTotalsCache = { data: result, members: members };
+            dailyTotalsCacheKey = cacheKey;
         } catch (err) {
             console.error("Error fetching daily totals:", err);
         } finally {

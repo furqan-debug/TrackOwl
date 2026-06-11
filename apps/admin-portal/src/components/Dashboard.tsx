@@ -433,7 +433,7 @@ export function Dashboard() {
             setAppUsage(finalAppUsage);
 
             // Chart Data Transformation
-            const dailyData = getDailyActivityData(productiveSamples, weekStart, weekEnd);
+            const dailyData = getDailyActivityData(productiveSamples);
             setChartData(dailyData);
 
             // Update Cache

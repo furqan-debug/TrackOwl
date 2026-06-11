@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
+import { activityService } from '../services/activity.service';
 import {
     Mouse, Keyboard, Activity as ActivityIcon,
     Zap, Users,
@@ -76,15 +76,17 @@ export function Activity() {
 
 
     useEffect(() => {
-        if (!organizationId) return;
-        supabase.from('members')
-            .select('id, auth_user_id, full_name, timezone, keep_idle, email, avatar_url, idle_limit')
-            .eq('organization_id', organizationId)
-            .eq('status', 'Active')
-            .order('full_name', { ascending: true })
-            .then(({ data }) => {
-                if (data) setMembers(data);
-            });
+        import('../lib/supabase').then(({ supabase }) => {
+            if (!organizationId) return;
+            supabase.from('members')
+                .select('id, auth_user_id, full_name, timezone, keep_idle, email, avatar_url, idle_limit')
+                .eq('organization_id', organizationId)
+                .eq('status', 'Active')
+                .order('full_name', { ascending: true })
+                .then(({ data }) => {
+                    if (data) setMembers(data);
+                });
+        });
     }, [organizationId]);
 
     const fetchData = useCallback(async (isSilent = false, forceRefresh = false, overrideLimit?: number) => {
@@ -104,82 +106,31 @@ export function Activity() {
         else setRefreshing(true);
 
         try {
-            const selectedMember = members.find(m => m.id === selectedMemberId);
+            if (!organizationId) return;
+
             const start = new Date(`${selectedDate}T00:00:00`).toISOString();
             const end = new Date(`${selectedDate}T23:59:59.999`).toISOString();
 
-            const memberUserIds = selectedMemberId.toLowerCase() !== 'all'
-                ? Array.from(new Set([selectedMember?.id, selectedMember?.auth_user_id].filter(Boolean) as string[]))
-                : [];
+            const data = await activityService.fetchActivity(
+                organizationId,
+                start,
+                end,
+                members,
+                selectedMemberId,
+                currentLimit
+            );
 
-            if (selectedMemberId.toLowerCase() !== 'all' && memberUserIds.length === 0) {
-                setSamples([]);
-                setScreenshots([]);
-                setSessionMinutes(0);
-                return;
-            }
-
-            let sessionsQuery = supabase
-                .from('sessions')
-                .select('id, user_id, started_at, ended_at')
-                .eq('organization_id', organizationId)
-                .lt('started_at', end)
-                .or(`ended_at.is.null,ended_at.gt.${start}`);
-
-            if (memberUserIds.length > 0) {
-                sessionsQuery = sessionsQuery.in('user_id', memberUserIds);
-            }
-
-            const { data: sessionRows } = await sessionsQuery;
-            const sessions = sessionRows || [];
-            const sessionIds = sessions.map(s => s.id);
-
-            if (sessionIds.length === 0) {
-                setSamples([]);
-                setScreenshots([]);
-                setSessionMinutes(0);
-                return;
-            }
-
-            const [{ data: actData }, { data: ssData, count: totalSS }] = await Promise.all([
-                supabase.from('activity_samples')
-                    .select('id, session_id, recorded_at, mouse_clicks, key_presses, app_name, window_title, idle, activity_percent')
-                    .eq('organization_id', organizationId)
-                    .in('session_id', sessionIds)
-                    .gte('recorded_at', start)
-                    .lte('recorded_at', end)
-                    .order('recorded_at', { ascending: true }),
-                supabase.from('screenshots')
-                    .select('id, session_id, recorded_at, file_url', { count: 'exact' })
-                    .eq('organization_id', organizationId)
-                    .in('session_id', sessionIds)
-                    .gte('recorded_at', start)
-                    .lte('recorded_at', end)
-                    .order('recorded_at', { ascending: false })
-                    .limit(currentLimit)
-            ]);
-
-            setHasMoreScreenshots((totalSS || 0) > currentLimit);
-
-            const startMs = new Date(start).getTime();
-            const endMs = new Date(end).getTime();
-            const mins = sessions.reduce((acc, s) => {
-                const sStart = new Date(s.started_at).getTime();
-                const sEnd = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
-                const overlap = Math.max(0, Math.min(sEnd, endMs) - Math.max(sStart, startMs));
-                return acc + overlap / 60000;
-            }, 0);
-
-            setSamples(actData || []);
-            setScreenshots(ssData || []);
-            setSessionMinutes(mins);
+            setSamples(data.samples);
+            setScreenshots(data.screenshots);
+            setSessionMinutes(data.sessionMinutes);
+            setHasMoreScreenshots(data.hasMoreScreenshots);
 
             // Update cache
             activityCache = {
-                samples: actData || [],
-                screenshots: ssData || [],
-                sessionMinutes: mins,
-                hasMoreScreenshots: (totalSS || 0) > currentLimit
+                samples: data.samples,
+                screenshots: data.screenshots,
+                sessionMinutes: data.sessionMinutes,
+                hasMoreScreenshots: data.hasMoreScreenshots
             };
             activityCacheKey = cacheKey;
         } catch (error) {

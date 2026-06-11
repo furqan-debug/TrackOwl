@@ -1,19 +1,12 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { reportService } from '../services/report.service';
+import type { MemberFinancial } from '../services/report.service';
 import { CircleDollarSign, TrendingUp, Clock, Download } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import clsx from 'clsx';
 import { PageLayout, Card, KpiCard, EmptyState, LoadingState } from '../components/ui';
 
-interface MemberFinancial {
-    member_id: string;
-    full_name: string;
-    pay_rate: number;
-    bill_rate: number;
-    totalMinutes: number;
-    totalCost: number;
-    sessions: number;
-}
+// MemberFinancial imported from report.service.ts
 
 
 
@@ -43,54 +36,7 @@ export function Financials() {
         const { start, end } = getDateRange();
 
         try {
-            // Fetch members with real pay/bill rates from the members table (include auth_user_id for legacy session fallback)
-            const [{ data: membersData, error: memberErr }, { data: sessions, error: sessionErr }] = await Promise.all([
-                supabase.from('members').select('id, full_name, pay_rate, bill_rate, auth_user_id'),
-                supabase.from('sessions')
-                    .select('id, user_id, started_at, ended_at')
-                    .gte('started_at', start)
-                    .lte('started_at', end),
-            ]);
-
-            if (memberErr) throw memberErr;
-            if (sessionErr) throw sessionErr;
-
-            // Map sessions.user_id → member info (supporting both member.id and legacy member.auth_user_id)
-            const memberMap: Record<string, { name: string; pay_rate: number; bill_rate: number }> = {};
-            (membersData || []).forEach(m => {
-                const info = { name: m.full_name, pay_rate: m.pay_rate ?? 0, bill_rate: m.bill_rate ?? 0 };
-                memberMap[m.id] = info;
-                if (m.auth_user_id) {
-                    memberMap[m.auth_user_id] = info;
-                }
-            });
-
-            const statsMap: Record<string, { minutes: number; sessions: number }> = {};
-            (sessions || []).forEach(s => {
-                const mid = s.user_id;
-                if (!mid) return;
-                if (!statsMap[mid]) statsMap[mid] = { minutes: 0, sessions: 0 };
-                statsMap[mid].sessions++;
-                const startMs = new Date(s.started_at).getTime();
-                const endMs = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
-                statsMap[mid].minutes += Math.max(0, Math.round((endMs - startMs) / 60000));
-            });
-
-            const result: MemberFinancial[] = Object.entries(statsMap).map(([uid, data]) => {
-                // Find member data using the user_id from sessions
-                const info = memberMap[uid];
-                return {
-                    member_id: uid,
-                    full_name: info ? info.name : (uid.slice(0, 8) + '…'),
-                    pay_rate: info ? info.pay_rate : 0,
-                    bill_rate: info ? info.bill_rate : 0,
-                    totalMinutes: data.minutes,
-                    // calculate cost only if rate exists
-                    totalCost: info ? Math.round((data.minutes / 60) * info.pay_rate * 100) / 100 : 0,
-                    sessions: data.sessions,
-                };
-            }).sort((a, b) => b.totalCost - a.totalCost);
-
+            const result = await reportService.fetchFinancials(start, end);
             setMembers(result);
         } catch (error) {
             console.error('Error fetching financials:', error);

@@ -1,3 +1,5 @@
+import type { ActivitySample, Session, AppSupabaseClient } from '../types';
+
 /**
  * Shared data utilities for standardized session and duration calculations.
  */
@@ -245,9 +247,9 @@ export function getDayIndexInTz(date: string | Date | number, targetTz?: string 
 /**
  * Hubstaff Logic: Groups samples into 10-minute blocks.
  */
-export function getHubstaffBlocks(samples: any[], targetTz?: string | null): HubstaffBlock[] {
+export function getHubstaffBlocks(samples: ActivitySample[], targetTz?: string | null): HubstaffBlock[] {
     // Maps a UTC-block-key → { samples, localHour, localBlockMin }
-    const blocks: Map<string, { samples: any[]; localHour: number; localBlockMin: number }> = new Map();
+    const blocks: Map<string, { samples: ActivitySample[]; localHour: number; localBlockMin: number }> = new Map();
 
     const tz = targetTz || undefined;
 
@@ -322,17 +324,17 @@ export function getHubstaffBlocks(samples: any[], targetTz?: string | null): Hub
  * Threshold-aware: Only counts idle minutes if they form a contiguous block
  * >= idleLimit (in minutes).
  */
-export function calculateStatsFromSamples(samples: any[], idleLimit: number = 0) {
+export function calculateStatsFromSamples(samples: ActivitySample[], idleLimit: number = 0) {
     if (!samples || samples.length === 0) {
         return { totalMinutes: 0, productiveMinutes: 0, idleMinutes: 0 };
     }
 
     // 1. Deduplicate by minute (YYYY-MM-DDTHH:mm) and sort
-    const minuteMap = new Map<string, any>();
+    const minuteMap = new Map<string, ActivitySample>();
     samples.forEach(s => {
         const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
         // If duplicates exist, prefer non-idle ones for accuracy
-        if (!minuteMap.has(minute) || (minuteMap.get(minute).idle && !s.idle)) {
+        if (!minuteMap.has(minute) || (minuteMap.get(minute)?.idle && !s.idle)) {
             minuteMap.set(minute, s);
         }
     });
@@ -349,7 +351,7 @@ export function calculateStatsFromSamples(samples: any[], idleLimit: number = 0)
         actualIdleMins = dedupedSorted.filter(s => s.idle).length;
     } else {
         // Block-aware idle detection: Only subtract if idle for >= idleLimit
-        let currentBlock: any[] = [];
+        let currentBlock: ActivitySample[] = [];
 
         for (let i = 0; i < dedupedSorted.length; i++) {
             const s = dedupedSorted[i];
@@ -384,7 +386,7 @@ export function calculateStatsFromSamples(samples: any[], idleLimit: number = 0)
     };
 }
 
-export function calculateIdleMinutes(samples: any[], idleLimit: number = 0): number {
+export function calculateIdleMinutes(samples: ActivitySample[], idleLimit: number = 0): number {
     const stats = calculateStatsFromSamples(samples, idleLimit);
     return stats.idleMinutes;
 }
@@ -392,7 +394,7 @@ export function calculateIdleMinutes(samples: any[], idleLimit: number = 0): num
 /**
  * Compatibility wrapper for productive minutes calculation.
  */
-export function calculateProductiveMinutes(samples: any[], idleLimit: number = 0): number {
+export function calculateProductiveMinutes(samples: ActivitySample[], idleLimit: number = 0): number {
     const stats = calculateStatsFromSamples(samples, idleLimit);
     return stats.productiveMinutes;
 }
@@ -401,12 +403,12 @@ export function calculateProductiveMinutes(samples: any[], idleLimit: number = 0
  * Fetches sessions while bypassing the standard 1000-row API limit.
  */
 export async function fetchAllSessions(
-    supabase: any,
+    supabase: AppSupabaseClient,
     start: Date,
     end: Date,
     organizationId?: string,
     userId?: string
-): Promise<any[]> {
+): Promise<Session[]> {
     const PAGE_SIZE = 1000;
 
     // 1. Get total count
@@ -429,7 +431,7 @@ export async function fetchAllSessions(
 
     const totalPages = Math.ceil(count / PAGE_SIZE);
     const BATCH_SIZE = 5;
-    let allSessions: any[] = [];
+    const allSessions: Session[] = [];
 
     for (let i = 0; i < totalPages; i += BATCH_SIZE) {
         const batchPromises = [];
@@ -463,7 +465,7 @@ export async function fetchAllSessions(
  * Uses range pagination to retrieve all samples within a given time window.
  */
 export async function fetchAllActivitySamples(
-    supabase: any,
+    supabase: AppSupabaseClient,
     startIso: string,
     endIso: string,
     selectQuery: string = '*',
@@ -472,7 +474,7 @@ export async function fetchAllActivitySamples(
         sessionIds?: string[];
         userId?: string;
     }
-): Promise<any[]> {
+): Promise<ActivitySample[]> {
     const PAGE_SIZE = 1000;
 
     // 1. First, get the total count efficiently
@@ -499,7 +501,7 @@ export async function fetchAllActivitySamples(
 
     const totalPages = Math.ceil(count / PAGE_SIZE);
     const BATCH_SIZE = 5; // Fetch 5 pages in parallel at a time
-    let allSamples: any[] = [];
+    const allSamples: ActivitySample[] = [];
 
     for (let i = 0; i < totalPages; i += BATCH_SIZE) {
         const batchPromises = [];
@@ -524,7 +526,7 @@ export async function fetchAllActivitySamples(
 
         const results = await Promise.all(batchPromises);
         results.forEach(res => {
-            if (res.data) allSamples.push(...res.data);
+            if (res.data) allSamples.push(...(res.data as any[]));
             if (res.error) console.error("Error fetching batch page:", res.error);
         });
     }
@@ -535,7 +537,7 @@ export async function fetchAllActivitySamples(
 /**
  * Transforms raw activity samples into daily hour totals for chart visualization.
  */
-export function getDailyActivityData(samples: any[], _weekStart: Date, _weekEnd: Date) {
+export function getDailyActivityData(samples: ActivitySample[]) {
     const dailyMinutes: Record<string, number> = {};
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
