@@ -159,7 +159,7 @@ function PasswordStrength({ password }: { password: string }) {
    Main page
 ───────────────────────────────────────── */
 export function SecurityPage() {
-    const { refreshAal } = useAuth();
+    const { refreshAal, session } = useAuth();
 
     // ── 2FA state ──
     const [factors, setFactors] = useState<any[]>([]);
@@ -198,6 +198,10 @@ export function SecurityPage() {
     useEffect(() => { fetchFactors(); }, []);
 
     const isMfaEnabled = factors.some(f => f.factor_type === 'totp' && f.status === 'verified');
+    
+    // Determine if the user is using ONLY an OAuth provider (like Google) and no email/password
+    const providers = session?.user?.app_metadata?.providers || [];
+    const isOAuthOnly = providers.includes('google') && !providers.includes('email');
 
     /* ── 2FA handlers ── */
     const handleOpenMfaSetup = async () => {
@@ -463,78 +467,95 @@ export function SecurityPage() {
                         </div>
                     </div>
 
-                    {/* Form */}
-                    <form onSubmit={handleChangePassword} className="px-6 py-6 space-y-4">
-
-                        {/* Success */}
-                        {pwSuccess && (
-                            <div className="flex items-center gap-3 px-4 py-3 rounded-xl
-                                            bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[13px] font-medium">
-                                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                                {pwSuccess}
+                    {/* Form or OAuth Message */}
+                    {isOAuthOnly ? (
+                        <div className="px-6 py-10 flex flex-col items-center justify-center text-center space-y-4">
+                            <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-2 shadow-glow-primary">
+                                <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                                </svg>
                             </div>
-                        )}
+                            <p className="text-[15px] font-bold text-text-main">Connected with Google</p>
+                            <p className="text-[13px] text-text-muted leading-relaxed max-w-sm">
+                                Your account uses Google for authentication. You do not have a separate password for TrackOwl. Please manage your login credentials through your Google Account.
+                            </p>
+                        </div>
+                    ) : (
+                        <form onSubmit={handleChangePassword} className="px-6 py-6 space-y-4">
 
-                        {/* Error */}
-                        {pwError && (
-                            <div className="flex items-center gap-3 px-4 py-3 rounded-xl
-                                            bg-rose-500/10 border border-rose-500/25 text-rose-400 text-[13px] font-medium">
-                                <AlertTriangle className="w-4 h-4 shrink-0" />
-                                {pwError}
-                            </div>
-                        )}
+                            {/* Success */}
+                            {pwSuccess && (
+                                <div className="flex items-center gap-3 px-4 py-3 rounded-xl
+                                                bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[13px] font-medium">
+                                    <CheckCircle2 className="w-4 h-4 shrink-0" />
+                                    {pwSuccess}
+                                </div>
+                            )}
 
-                        <PasswordField
-                            id="current-password"
-                            label="Current Password"
-                            value={currentPw}
-                            onChange={setCurrentPw}
-                            placeholder="Enter your current password"
-                            autoComplete="current-password"
-                        />
+                            {/* Error */}
+                            {pwError && (
+                                <div className="flex items-center gap-3 px-4 py-3 rounded-xl
+                                                bg-rose-500/10 border border-rose-500/25 text-rose-400 text-[13px] font-medium">
+                                    <AlertTriangle className="w-4 h-4 shrink-0" />
+                                    {pwError}
+                                </div>
+                            )}
 
-                        <div className="space-y-1.5">
                             <PasswordField
-                                id="new-password"
-                                label="New Password"
-                                value={newPw}
-                                onChange={setNewPw}
-                                placeholder="At least 8 characters"
+                                id="current-password"
+                                label="Current Password"
+                                value={currentPw}
+                                onChange={setCurrentPw}
+                                placeholder="Enter your current password"
+                                autoComplete="current-password"
+                            />
+
+                            <div className="space-y-1.5">
+                                <PasswordField
+                                    id="new-password"
+                                    label="New Password"
+                                    value={newPw}
+                                    onChange={setNewPw}
+                                    placeholder="At least 8 characters"
+                                    autoComplete="new-password"
+                                />
+                                <PasswordStrength password={newPw} />
+                            </div>
+
+                            <PasswordField
+                                id="confirm-password"
+                                label="Confirm New Password"
+                                value={confirmPw}
+                                onChange={setConfirmPw}
+                                placeholder="Re-enter new password"
                                 autoComplete="new-password"
                             />
-                            <PasswordStrength password={newPw} />
-                        </div>
 
-                        <PasswordField
-                            id="confirm-password"
-                            label="Confirm New Password"
-                            value={confirmPw}
-                            onChange={setConfirmPw}
-                            placeholder="Re-enter new password"
-                            autoComplete="new-password"
-                        />
+                            {/* Hint: mismatch */}
+                            {confirmPw && newPw !== confirmPw && (
+                                <p className="text-[11px] text-rose-400 font-medium">Passwords don't match</p>
+                            )}
 
-                        {/* Hint: mismatch */}
-                        {confirmPw && newPw !== confirmPw && (
-                            <p className="text-[11px] text-rose-400 font-medium">Passwords don't match</p>
-                        )}
-
-                        <div className="pt-2">
-                            <button
-                                type="submit"
-                                disabled={pwLoading || !currentPw || !newPw || !confirmPw}
-                                className="h-10 px-6 rounded-xl bg-primary text-white text-[12px] font-bold
-                                           hover:brightness-110 active:scale-[0.98] transition-all
-                                           disabled:opacity-40 disabled:cursor-not-allowed
-                                           flex items-center gap-2 shadow-glow-primary"
-                            >
-                                {pwLoading
-                                    ? <Loader2 className="w-4 h-4 animate-spin" />
-                                    : <Lock className="w-4 h-4" />}
-                                Update Password
-                            </button>
-                        </div>
-                    </form>
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={pwLoading || !currentPw || !newPw || !confirmPw}
+                                    className="h-10 px-6 rounded-xl bg-primary text-white text-[12px] font-bold
+                                               hover:brightness-110 active:scale-[0.98] transition-all
+                                               disabled:opacity-40 disabled:cursor-not-allowed
+                                               flex items-center gap-2 shadow-glow-primary"
+                                >
+                                    {pwLoading
+                                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                                        : <Lock className="w-4 h-4" />}
+                                    Update Password
+                                </button>
+                            </div>
+                        </form>
+                    )}
                 </div>
 
             </div>
