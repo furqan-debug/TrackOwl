@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '../lib/supabase';
+import { reportService } from '../services/report.service';
 import {
     Monitor, Camera,
     Clock, Activity as ActivityIcon, Users,
@@ -23,13 +24,7 @@ import {
     LoadingState, EmptyState
 } from '../components/ui';
 import clsx from 'clsx';
-import {
-    formatDuration,
-    calculateActivityScore,
-    getGroupingDateInTz,
-    getEffectiveEnd,
-    fetchAllActivitySamples
-} from '../lib/dataUtils';
+import { formatDuration } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
 
 // Official TrackOwl Brand Palette
@@ -124,9 +119,7 @@ export function Reports() {
         if (data) setMembers(data);
     }
 
-    function getMemberSessionUserIds(member: { id: string; auth_user_id?: string | null }): string[] {
-        return Array.from(new Set([member.id, member.auth_user_id].filter(Boolean) as string[]));
-    }
+
 
     function getDateRange(): { start: string; end: string } {
         if (range === 'Custom' && customStart && customEnd) {
@@ -138,7 +131,7 @@ export function Reports() {
         const now = new Date();
         now.setDate(now.getDate() + offset);
 
-        let start = new Date(now);
+        const start = new Date(now);
         let end = new Date(now);
 
         if (range === 'Today') {
@@ -202,290 +195,37 @@ export function Reports() {
 
         setLoading(true);
 
-        const membersForLookup = members.length > 0
-            ? members
-            : (await supabase
-                .from('members')
-                .select('id, auth_user_id, email, full_name, pay_rate, bill_rate, timezone, employee_id')
-                .eq('organization_id', organizationId)
-                .eq('status', 'Active')).data || [];
-
-        const allMemberSessionUserIds = Array.from(
-            new Set(
-                membersForLookup.flatMap((m: any) => [m.id, m.auth_user_id].filter(Boolean) as string[])
-            )
-        );
-
-        let filteredSessionUserIds: string[] = [];
-
-        if (selectedMemberId !== 'All') {
-            const selectedMember = membersForLookup.find(m => m.id === selectedMemberId);
-            filteredSessionUserIds = selectedMember
-                ? getMemberSessionUserIds(selectedMember)
-                : [];
-        } else if (selectedTeamId !== 'All') {
-            const { data: tm } = await supabase.from('team_members').select('member_id').eq('team_id', selectedTeamId);
-            const teamMemberIds = tm?.map(t => t.member_id) || [];
-
-            if (teamMemberIds.length > 0) {
-                const membersById = new Map(membersForLookup.map(m => [m.id, m]));
-                filteredSessionUserIds = Array.from(
-                    new Set(
-                        teamMemberIds.flatMap(memberId => {
-                            const member = membersById.get(memberId);
-                            return member ? getMemberSessionUserIds(member) : [memberId];
-                        })
-                    )
-                );
-            }
-        }
-
-        if ((selectedMemberId !== 'All' || selectedTeamId !== 'All') && filteredSessionUserIds.length === 0) {
-            setDailyActivity([]); setAppBreakdown([]);
-            setTotalSessions(0); setScreenshotCount(0); setTotalMins(0);
-            setAvgActivity(0); setTotalCosts(0); setTotalBilled(0);
-            setLoading(false); return;
-        }
-
         try {
-            let sessionsQuery = supabase
-                .from('sessions')
-                .select('id, user_id, started_at, ended_at')
-                .eq('organization_id', organizationId)
-                .lt('started_at', end)
-                .or(`ended_at.is.null,ended_at.gt.${start}`);
-
-            const scopedUserIds = filteredSessionUserIds.length > 0 ? filteredSessionUserIds : allMemberSessionUserIds;
-            if (scopedUserIds.length === 0) {
-                setLoading(false); return;
-            }
-            sessionsQuery = sessionsQuery.in('user_id', scopedUserIds);
-
-            const { data: sessionData } = await sessionsQuery;
-            const filteredSessions = sessionData || [];
-            if ((selectedMemberId !== 'All' || selectedTeamId !== 'All') && filteredSessions.length === 0) {
-                setDailyActivity([]); setAppBreakdown([]); setLoading(false); return;
-            }
-
-            const activeSessionIds = filteredSessions.map(s => s.id);
-
-            let ssQuery = supabase
-                .from('screenshots')
-                .select('id', { count: 'exact', head: true })
-                .gte('recorded_at', start)
-                .lte('recorded_at', end);
-
-            if (activeSessionIds.length > 0) ssQuery = ssQuery.in('session_id', activeSessionIds);
-
-            const [samples, { count: ssCount }] = await Promise.all([
-                fetchAllActivitySamples(supabase, start, end, 'session_id, recorded_at, activity_percent, idle, app_name', {
-                    organizationId: organizationId ?? undefined,
-                    sessionIds: activeSessionIds.length > 0 ? activeSessionIds : undefined
-                }),
-                ssQuery,
-            ]);
-
-            const allSamples = samples || [];
-            const activeSessionIdsSet = new Set(activeSessionIds);
-            const inScopeSamples = allSamples.filter(s => activeSessionIdsSet.has(s.session_id));
-
-            const membersMap = new Map<string, any>();
-            const memberTzs = new Map<string, string | undefined>();
-
-            membersForLookup.forEach((m: any) => {
-                membersMap.set(m.id, m);
-                memberTzs.set(m.id, m.timezone);
-                if (m.auth_user_id) {
-                    membersMap.set(m.auth_user_id, m);
-                    memberTzs.set(m.auth_user_id, m.timezone);
-                }
+            const data = await reportService.fetchReports({
+                start,
+                end,
+                organizationId: organizationId ?? undefined,
+                selectedTeamId,
+                selectedMemberId,
+                membersForLookup: members
             });
 
-            const sessionToUserId = new Map(filteredSessions.map(sess => [sess.id, sess.user_id]));
-            const seen = new Set<string>();
-            const dedupedSamples: any[] = [];
-            [...inScopeSamples].sort((a, b) => (b.activity_percent ?? 0) - (a.activity_percent ?? 0)).forEach(s => {
-                const uid = sessionToUserId.get(s.session_id);
-                if (!uid) return;
-                const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
-                const key = `${uid}_${minute}`;
-                if (seen.has(key)) return;
-                seen.add(key);
-                dedupedSamples.push(s);
-            });
-
-            const dailyMap: Record<string, { activitySum: number; total_samples: number; total_minutes: number }> = {};
-            let costs = 0;
-            let billed = 0;
-            const productiveSamples: any[] = [];
-
-            // Group deduped samples by user to apply idle threshold
-            const samplesByUser = new Map<string, any[]>();
-            dedupedSamples.forEach(s => {
-                const uid = sessionToUserId.get(s.session_id);
-                if (!uid) return;
-                if (!samplesByUser.has(uid)) samplesByUser.set(uid, []);
-                samplesByUser.get(uid)!.push(s);
-            });
-
-            samplesByUser.forEach((userSamps, uid) => {
-                const member = membersMap.get(uid);
-                const limit = member?.idle_limit ?? 0;
-
-                if (limit <= 1) {
-                    productiveSamples.push(...userSamps);
-                } else {
-                    // Apply Hubstaff-style block logic: 
-                    // samples in idle blocks >= limit are truly idle (ignored)
-                    const sorted = userSamps.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-                    let currentBlock: any[] = [];
-
-                    for (let i = 0; i < sorted.length; i++) {
-                        const s = sorted[i];
-                        const prev = i > 0 ? sorted[i - 1] : null;
-                        const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
-                        const isContiguous = prev && gapMs <= 125000;
-
-                        if (s.idle && isContiguous) {
-                            currentBlock.push(s);
-                        } else if (s.idle && !prev) {
-                            currentBlock = [s];
-                        } else if (s.idle && !isContiguous) {
-                            if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
-                            currentBlock = [s];
-                        } else {
-                            productiveSamples.push(s); // Not idle
-                            if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
-                            currentBlock = [];
-                        }
-                    }
-                    if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
-                }
-            });
-
-            productiveSamples.forEach(s => {
-                const uid = sessionToUserId.get(s.session_id);
-                if (!uid) return;
-
-                const day = getGroupingDateInTz(s.recorded_at, memberTzs.get(uid));
-                if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
-
-                dailyMap[day].activitySum += (s.activity_percent || 0);
-                dailyMap[day].total_samples++;
-                dailyMap[day].total_minutes++;
-
-                const member = membersMap.get(uid);
-                if (member) {
-                    costs += (1 / 60) * (member.pay_rate || 0);
-                    billed += (1 / 60) * (member.bill_rate || 0);
-                }
-            });
-
-            const dailyActivityList = Object.entries(dailyMap).sort().map(([date, v]) => ({
-                date: new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                activity: v.total_samples > 0 ? Math.round(v.activitySum / v.total_samples) : 0,
-                minutes: Math.round(v.total_minutes),
-            }));
-            setDailyActivity(dailyActivityList);
-
-            const appMap: Record<string, number> = {};
-            productiveSamples.forEach(s => {
-                const app = s.app_name || 'Unknown';
-                appMap[app] = (appMap[app] || 0) + 1;
-            });
-            const appBreakdownList = Object.entries(appMap).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name, value }));
-            setAppBreakdown(appBreakdownList);
-
-            let totalSessionMins = 0;
-            filteredSessions.forEach(s => {
-                const { endMs } = getEffectiveEnd(s.started_at, s.ended_at);
-                totalSessionMins += (endMs - new Date(s.started_at).getTime()) / 60000;
-            });
-
-            const calculatedTotalMins = Math.max(productiveSamples.length, Math.round(totalSessionMins));
-            const calculatedAvgActivity = calculateActivityScore(productiveSamples);
-            setTotalSessions(filteredSessions.length);
-            setScreenshotCount(ssCount || 0);
-            setTotalMins(calculatedTotalMins);
-            setAvgActivity(calculatedAvgActivity);
-            setTotalCosts(costs);
-            setTotalBilled(billed);
-            // --- Build Weekly Table Data (Aligned to Monday) ---
-            const dateList: string[] = [];
-            let curr = new Date(start);
-            curr.setHours(12, 0, 0, 0); // Force middle of day to avoid timezone flip-flops
-            const stop = new Date(end);
-
-            while (curr <= stop) {
-                dateList.push(curr.toISOString().split('T')[0]);
-                curr.setDate(curr.getDate() + 1);
-            }
-
-            const memberRows: Record<string, any> = {};
-
-            // Initialize rows for all active members (or filtered ones)
-            membersForLookup.forEach(m => {
-                // If member filter is active, only include that member
-                if (selectedMemberId !== 'All' && m.id !== selectedMemberId) return;
-
-                memberRows[m.id] = {
-                    memberId: m.id,
-                    fullName: m.full_name || m.email || 'Unknown',
-                    email: m.email || '',
-                    employeeId: m.employee_id || '',
-                    dailyMins: {},
-                    totalMins: 0,
-                    activitySum: 0,
-                    activitySamples: 0
-                };
-            });
-
-            // Populate daily minutes and activity from productive samples
-            productiveSamples.forEach(s => {
-                const uid = sessionToUserId.get(s.session_id);
-                if (!uid) return;
-
-                const member = membersMap.get(uid);
-                if (!member || !memberRows[member.id]) return;
-
-                const day = getGroupingDateInTz(s.recorded_at, memberTzs.get(uid));
-                const row = memberRows[member.id];
-
-                row.dailyMins[day] = (row.dailyMins[day] || 0) + 1;
-                row.totalMins++;
-
-                if (s.activity_percent !== undefined && s.activity_percent !== null) {
-                    row.activitySum += s.activity_percent;
-                    row.activitySamples++;
-                }
-            });
-
-            const finalRows = Object.values(memberRows)
-                .map((row: any) => ({
-                    memberId: row.memberId,
-                    fullName: row.fullName,
-                    email: row.email,
-                    employeeId: row.employeeId,
-                    dailyMins: row.dailyMins,
-                    totalMins: row.totalMins,
-                    activityScore: row.activitySamples > 0 ? Math.round(row.activitySum / row.activitySamples) : 0
-                }))
-                .filter(row => row.totalMins > 0) // Only show users with activity
-                .sort((a, b) => b.totalMins - a.totalMins);
-
-            setTableData({ dates: dateList, rows: finalRows });
+            setDailyActivity(data.dailyActivityList);
+            setAppBreakdown(data.appBreakdownList);
+            setScreenshotCount(data.screenshotCount);
+            setTotalSessions(data.totalSessions);
+            setTotalMins(data.calculatedTotalMins);
+            setAvgActivity(data.calculatedAvgActivity);
+            setTotalCosts(data.totalCosts);
+            setTotalBilled(data.totalBilled);
+            setTableData(data.tableData);
 
             // Update cache
             reportsCache = {
-                dailyActivity: dailyActivityList,
-                appBreakdown: appBreakdownList,
-                screenshotCount: ssCount || 0,
-                totalSessions: filteredSessions.length,
-                totalMins: calculatedTotalMins,
-                avgActivity: calculatedAvgActivity,
-                totalCosts: costs,
-                totalBilled: billed,
-                tableData: { dates: dateList, rows: finalRows }
+                dailyActivity: data.dailyActivityList,
+                appBreakdown: data.appBreakdownList,
+                screenshotCount: data.screenshotCount,
+                totalSessions: data.totalSessions,
+                totalMins: data.calculatedTotalMins,
+                avgActivity: data.calculatedAvgActivity,
+                totalCosts: data.totalCosts,
+                totalBilled: data.totalBilled,
+                tableData: data.tableData
             };
             reportsCacheKey = cacheKey;
 
@@ -503,14 +243,14 @@ export function Reports() {
         csvContent += '"TrackOwl Timesheet Matrix Report"\r\n';
         csvContent += `"Generated on: ${new Date().toLocaleDateString('en-US')}","Date Range: ${new Date(getDateRange().start).toLocaleDateString('en-US')} - ${new Date(getDateRange().end).toLocaleDateString('en-US')}"\r\n\r\n`;
 
-        let headers = ["Member"];
+        const headers = ["Member"];
         if (showEmpId) headers.push("Emp ID");
         if (showEmail) headers.push("Email");
         headers.push(...tableData.dates.map(d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })), "Total", "Score");
         csvContent += headers.join(",") + "\r\n";
 
         tableData.rows.forEach(row => {
-            let rowData = [`"${row.fullName}"`];
+            const rowData = [`"${row.fullName}"`];
             if (showEmpId) rowData.push(`"${row.employeeId || ''}"`);
             if (showEmail) rowData.push(`"${row.email || ''}"`);
             rowData.push(
@@ -521,7 +261,7 @@ export function Reports() {
             csvContent += rowData.join(",") + "\r\n";
         });
 
-        let totalsRow = ["Totals"];
+        const totalsRow = ["Totals"];
         if (showEmpId) totalsRow.push("");
         if (showEmail) totalsRow.push("");
         totalsRow.push(

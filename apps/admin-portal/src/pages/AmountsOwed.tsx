@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { reportService } from '../services/report.service'; import type { OwedRow } from '../services/report.service';
 import { 
     Download, Filter, 
     BadgeDollarSign, MoreHorizontal, TrendingUp,
@@ -11,14 +11,7 @@ import {
 } from '../components/ui';
 import clsx from 'clsx';
 
-interface OwedRow {
-    member_id: string;
-    full_name: string;
-    pay_rate: number;
-    totalHours: number;
-    amountOwed: number;
-    lastTracked: string;
-}
+// OwedRow imported from report.service.ts
 
 export function AmountsOwed() {
     const [loading, setLoading] = useState(true);
@@ -43,95 +36,15 @@ export function AmountsOwed() {
             start = new Date(0);
         }
 
-        const [{ data: members }, { data: sessions }] = await Promise.all([
-            supabase.from('members').select('id, full_name, pay_rate'),
-            supabase.from('sessions')
-                .select('id, user_id, started_at')
-                .gte('started_at', start.toISOString())
-        ]);
-
-        if (!members || !sessions) {
+        try {
+            const result = await reportService.fetchAmountsOwed(start);
+            setData(result);
+        } catch (error) {
+            console.error('Failed to fetch amounts owed:', error);
+            setData([]);
+        } finally {
             setLoading(false);
-            return;
         }
-
-        // Build a map of session_id -> user_id for quick lookup
-        const sessionToUser: Record<string, string> = {};
-        const sessionIds: string[] = [];
-        sessions.forEach((s: any) => {
-            sessionToUser[s.id] = s.user_id;
-            sessionIds.push(s.id);
-        });
-
-        // Fetch all activity samples for these sessions (paginated)
-        let allSamples: any[] = [];
-        if (sessionIds.length > 0) {
-            const PAGE_SIZE = 1000;
-            for (let page = 0; page < 100; page++) {
-                const { data: samplesPage, error } = await supabase
-                    .from('activity_samples')
-                    .select('session_id, idle, recorded_at')
-                    .in('session_id', sessionIds)
-                    .gte('recorded_at', start.toISOString())
-                    .order('recorded_at', { ascending: true })
-                    .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-
-                if (error || !samplesPage || samplesPage.length === 0) break;
-                allSamples.push(...samplesPage);
-                if (samplesPage.length < PAGE_SIZE) break;
-            }
-        }
-
-        // Deduplicate: 1 unique sample per user per minute
-        const seen = new Set<string>();
-        const dedupedSamples: any[] = [];
-        allSamples.sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1));
-        allSamples.forEach(s => {
-            const uid = sessionToUser[s.session_id];
-            if (!uid) return;
-            const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
-            const key = `${uid}_${minute}`;
-            if (seen.has(key)) return;
-            seen.add(key);
-            dedupedSamples.push({ ...s, user_id: uid });
-        });
-
-        // Calculate productive minutes per user: Total - Idle
-        const userMins: Record<string, { productive: number; lastTracked: string }> = {};
-        dedupedSamples.forEach(s => {
-            const uid = s.user_id;
-            if (!userMins[uid]) userMins[uid] = { productive: 0, lastTracked: s.recorded_at };
-            // Only count as productive if not idle
-            if (s.idle !== true) {
-                userMins[uid].productive += 1;
-            }
-            if (s.recorded_at > userMins[uid].lastTracked) {
-                userMins[uid].lastTracked = s.recorded_at;
-            }
-        });
-
-        const memberMap: Record<string, { name: string; pay_rate: number }> = {};
-        members.forEach(m => {
-            memberMap[m.id] = { name: m.full_name, pay_rate: m.pay_rate ?? 0 };
-        });
-
-        const result: OwedRow[] = Object.entries(userMins)
-            .filter(([uid]) => memberMap[uid])
-            .map(([uid, stats]) => {
-                const hours = stats.productive / 60;
-                const payRate = memberMap[uid].pay_rate;
-                return {
-                    member_id: uid,
-                    full_name: memberMap[uid].name,
-                    pay_rate: payRate,
-                    totalHours: Math.round(hours * 100) / 100,
-                    amountOwed: Math.round(hours * payRate * 100) / 100,
-                    lastTracked: new Date(stats.lastTracked).toLocaleDateString()
-                };
-            }).sort((a, b) => b.amountOwed - a.amountOwed);
-
-        setData(result);
-        setLoading(false);
     }
 
     const totalOwed = data.reduce((acc, row) => acc + row.amountOwed, 0);

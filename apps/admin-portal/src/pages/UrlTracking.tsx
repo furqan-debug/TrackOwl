@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { useEffect, useState, useCallback } from 'react';
+import { activityService } from '../services/activity.service';
+import type { DomainEntry } from '../services/activity.service';
 import { Globe, TrendingUp, Clock, Search, BarChart2, Users } from 'lucide-react';
 import clsx from 'clsx';
 import {
@@ -7,14 +8,8 @@ import {
     PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { PageLayout, Card, FilterSelect } from '../components/ui';
-import { fetchAllActivitySamples } from '../lib/dataUtils';
 
-interface DomainEntry {
-    domain: string;
-    count: number;
-    percent: number;
-    category: string;
-}
+// DomainEntry imported from activity.service.ts
 
 interface MemberInfo {
     id: string;
@@ -25,18 +20,7 @@ interface MemberInfo {
 
 const COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#14b8a6'];
 
-const CATEGORIES: Record<string, string> = {
-    'github.com': 'Development', 'stackoverflow.com': 'Development', 'localhost': 'Development',
-    'google.com': 'Search', 'bing.com': 'Search',
-    'youtube.com': 'Media', 'netflix.com': 'Media',
-    'slack.com': 'Communication', 'teams.microsoft.com': 'Communication', 'discord.com': 'Communication',
-    'notion.so': 'Productivity', 'figma.com': 'Productivity', 'linear.app': 'Productivity',
-    'twitter.com': 'Social', 'x.com': 'Social', 'linkedin.com': 'Social', 'facebook.com': 'Social',
-};
-function categorize(domain: string): string {
-    const match = Object.keys(CATEGORIES).find(k => domain.includes(k));
-    return match ? CATEGORIES[match]! : 'Other';
-}
+// categorize logic moved to activity.service.ts
 
 const RANGES = ['Today', 'Last 7 Days', 'Last 30 Days'] as const;
 type Range = typeof RANGES[number];
@@ -51,26 +35,15 @@ export function UrlTracking() {
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
 
     useEffect(() => {
-        supabase.from('members').select('id, auth_user_id, full_name, timezone').eq('status', 'Active').then(({ data }) => {
-            if (data) setMembers(data);
+        import('../lib/supabase').then(({ supabase }) => {
+            supabase.from('members').select('id, auth_user_id, full_name, timezone').eq('status', 'Active').then(({ data }) => {
+                if (data) setMembers(data);
+            });
         });
     }, []);
 
-    useEffect(() => { fetchDomains(); }, [range, selectedMemberId, members]);
-
-    useEffect(() => {
-        if (range !== 'Today') return;
-        if (selectedMemberId !== 'all' && members.length === 0) return;
-        const timer = setInterval(() => {
-            fetchDomains();
-        }, 15000);
-        return () => clearInterval(timer);
-    }, [range, selectedMemberId, members]);
-
-
-    async function fetchDomains() {
+    const fetchDomains = useCallback(async () => {
         setLoading(true);
-        const selectedMember = members.find(m => m.id === selectedMemberId);
 
         const now = new Date();
         let startLocal: Date;
@@ -85,72 +58,30 @@ export function UrlTracking() {
         const start = startLocal.toISOString();
         const end = now.toISOString();
         
-        const scopedUserIds = selectedMemberId.toLowerCase() !== 'all'
-            ? Array.from(new Set([selectedMember?.id, selectedMember?.auth_user_id].filter(Boolean) as string[]))
-            : Array.from(new Set(members.flatMap(m => [m.id, m.auth_user_id].filter(Boolean) as string[])));
-
-        if (scopedUserIds.length === 0) {
-            setDomains([]);
-            setHourlyData(Array.from({ length: 24 }, (_, h) => ({ hour: `${h}:00`, count: 0 })));
+        try {
+            const { domains: sorted, hourlyData: hData } = await activityService.fetchDomains(start, end, members, selectedMemberId);
+            setDomains(sorted);
+            setHourlyData(hData);
+        } catch (error) {
+            console.error('Error fetching domains:', error);
+        } finally {
             setLoading(false);
-            return;
         }
+    }, [range, selectedMemberId, members]);
 
-        const { data: userSessions } = await supabase
-            .from('sessions')
-            .select('id')
-            .in('user_id', scopedUserIds)
-            .lt('started_at', end)
-            .or(`ended_at.is.null,ended_at.gt.${start}`);
+    useEffect(() => { fetchDomains(); }, [fetchDomains]);
 
-        const sessionIds = userSessions?.map(s => s.id) || [];
+    useEffect(() => {
+        if (range !== 'Today') return;
+        if (selectedMemberId !== 'all' && members.length === 0) return;
+        const timer = setInterval(() => {
+            fetchDomains();
+        }, 15000);
+        return () => clearInterval(timer);
+    }, [range, selectedMemberId, members, fetchDomains]);
 
-        if (sessionIds.length === 0) {
-            setDomains([]);
-            setHourlyData(Array.from({ length: 24 }, (_, h) => ({ hour: `${h}:00`, count: 0 })));
-            setLoading(false);
-            return;
-        }
 
-        // Use paginated fetcher to avoid 1000-row limit
-        const rawSamples = await fetchAllActivitySamples(
-            supabase,
-            start,
-            end,
-            'domain, recorded_at',
-            { sessionIds }
-        );
 
-        // Filter to rows with actual domain data
-        const data = (rawSamples || []).filter(r => (r.domain || '').trim() !== '');
-
-        const domainMap: Record<string, number> = {};
-        const hourMap: Record<number, number> = {};
-
-        data.forEach(row => {
-            if (!row.domain) return;
-            domainMap[row.domain] = (domainMap[row.domain] || 0) + 1;
-            const h = new Date(row.recorded_at).getHours();
-            hourMap[h] = (hourMap[h] || 0) + 1;
-        });
-
-        const total = Object.values(domainMap).reduce((a, b) => a + b, 0) || 1;
-        const sorted: DomainEntry[] = Object.entries(domainMap)
-            .sort((a, b) => b[1] - a[1])
-            .map(([domain, count]) => ({
-                domain,
-                count,
-                percent: Math.round((count / total) * 100),
-                category: categorize(domain),
-            }));
-
-        setDomains(sorted);
-        setHourlyData(Array.from({ length: 24 }, (_, h) => ({
-            hour: `${h}:00`,
-            count: hourMap[h] || 0,
-        })));
-        setLoading(false);
-    }
 
     const filtered = domains.filter(d =>
         d.domain.toLowerCase().includes(search.toLowerCase())

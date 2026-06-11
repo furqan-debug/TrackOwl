@@ -16,6 +16,7 @@ import {
 } from '../components/ui';
 import { SecureImage } from '../components/ui/SecureImage';
 import { supabase } from '../lib/supabase';
+import { memberService } from '../services/member.service';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Role = 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
@@ -93,20 +94,8 @@ export function People() {
     async function fetchMembers() {
         setLoading(true);
         try {
-            const { data, error } = await supabase
-                .from('members')
-                .select('*, project_members(count), sessions(count)')
-                .order('created_at', { ascending: false });
-                
-            if (error) throw error;
-            if (data) {
-                const formatted = data.map((d: any) => ({
-                    ...d,
-                    projectsCount: d.project_members?.[0]?.count || 0,
-                    sessionCount: d.sessions?.[0]?.count || 0
-                }));
-                setMembers(formatted as any);
-            }
+            const data = await memberService.fetchMembers();
+            setMembers(data as any);
         } catch (e) {
             console.error('Fetch members error:', e);
         } finally {
@@ -209,8 +198,7 @@ export function People() {
         if (!confirm('Are you sure you want to permanently delete this member? This will destroy all their tracked time, screenshots, and data forever. This action cannot be undone.')) return;
         setMembers(prev => prev.filter(m => m.id !== id));
         try {
-            const { error } = await supabase.from('members').delete().eq('id', id);
-            if (error) throw error;
+            await memberService.deleteMember(id);
         } catch { fetchMembers(); }
     }
 
@@ -218,17 +206,15 @@ export function People() {
         if (!confirm('Are you sure you want to reactivate this member? They will regain access and tracking capabilities.')) return;
         setMembers(prev => prev.map(m => m.id === id ? { ...m, status: 'Active' } : m));
         try {
-            const { error } = await supabase.from('members').update({ status: 'Active' }).eq('id', id);
-            if (error) throw error;
+            await memberService.reactivateMember(id);
         } catch { fetchMembers(); }
     }
 
     const handleBatchDelete = async () => {
         if (!window.confirm(`Are you sure you want to remove ${selectedIds.size} members?`)) return;
         setLoading(true);
-        for (const id of Array.from(selectedIds)) {
-            await supabase.from('members').delete().eq('id', id);
-        }
+        const ids = Array.from(selectedIds);
+        await memberService.bulkDeleteMembers(ids);
         setMembers((prev: MemberRow[]) => prev.filter(m => !selectedIds.has(m.id)));
         setSelectedIds(new Set());
         setLoading(false);
@@ -511,14 +497,17 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
     }, []);
 
     return (
-        <tr className={clsx(
-            "group/row transition-all",
+        <tr 
+            onClick={() => onEdit()}
+            className={clsx(
+            "group/row transition-all cursor-pointer",
             isSelected ? "bg-primary/5" : "hover:bg-surface-hover/50"
         )}>
             <td className="pl-8 py-5">
                 <input
                     type="checkbox"
                     checked={isSelected}
+                    onClick={(e) => e.stopPropagation()}
                     onChange={onToggle}
                     className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer transition-all"
                 />
@@ -537,7 +526,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                         )}
                     </div>
                     <div className="min-w-0">
-                        <span onClick={onEdit} className="text-[15px] font-bold text-text-main hover:text-primary cursor-pointer block transition-colors truncate">
+                        <span onClick={(e) => { e.stopPropagation(); onEdit(); }} className="text-[15px] font-bold text-text-main hover:text-primary cursor-pointer block transition-colors truncate">
                             {m.full_name}
                         </span>
                         <span className="text-[12px] font-medium text-text-muted block truncate">
@@ -613,7 +602,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     {m.status.toUpperCase()}
                 </StatusBadge>
             </td>
-            <td className="pr-8 py-5 text-right relative" ref={dropRef}>
+            <td className="pr-8 py-5 text-right relative" ref={dropRef} onClick={(e) => e.stopPropagation()}>
                 <button
                     onClick={() => setOpen(!open)}
                     className="p-2.5 bg-surface border border-border rounded-xl text-text-muted hover:text-primary hover:border-primary/30 transition-all shadow-shell-sm group/btn"

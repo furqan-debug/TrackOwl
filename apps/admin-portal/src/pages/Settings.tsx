@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Save, CheckCircle, Database, Activity,
     ShieldCheck, Mail, HardDrive, Loader2, RefreshCw
@@ -50,7 +50,7 @@ export function SettingsPage() {
     const [error, setError] = useState<string | null>(null);
     const [activeCategory, setActiveCategory] = useState<SettingCategory>('governance');
 
-    async function fetchSettings() {
+    const fetchSettings = useCallback(async () => {
         if (!profile?.organization_id) return;
         setLoading(true);
         try {
@@ -64,19 +64,19 @@ export function SettingsPage() {
             if (data?.settings && Object.keys(data.settings).length > 0) {
                 setSettings({ ...DEFAULTS, ...data.settings });
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Failed to load settings:', err);
             setError("Failed to load organization policies.");
         } finally {
             setLoading(false);
         }
-    }
+    }, [profile?.organization_id]);
 
     useEffect(() => {
         if (profile?.organization_id) {
             fetchSettings();
         }
-    }, [profile?.organization_id]);
+    }, [profile?.organization_id, fetchSettings]);
 
     function update<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
         if (isViewer) return;
@@ -121,9 +121,9 @@ export function SettingsPage() {
 
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Settings sync failed:', err);
-            setError(err.message || "Failed to synchronize policies.");
+            setError(err instanceof Error ? err.message : "Failed to synchronize policies.");
         } finally {
             setSaving(false);
         }

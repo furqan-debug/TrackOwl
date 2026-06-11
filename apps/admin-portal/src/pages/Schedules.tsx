@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { 
     ChevronLeft, ChevronRight, 
@@ -25,19 +25,20 @@ export function Schedules() {
     const [loading, setLoading] = useState(true);
     const [weekOffset, setWeekOffset] = useState(0);
 
-    const today = new Date();
-    const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay() + weekOffset * 7);
-    weekStart.setHours(0, 0, 0, 0);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-    weekEnd.setHours(23, 59, 59, 999);
-
-    useEffect(() => {
-        fetchSchedules();
+    const { weekStart, weekEnd } = useMemo(() => {
+        const today = new Date();
+        const start = new Date(today);
+        start.setDate(today.getDate() - today.getDay() + weekOffset * 7);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        end.setHours(23, 59, 59, 999);
+        return { weekStart: start, weekEnd: end };
     }, [weekOffset]);
 
-    async function fetchSchedules() {
+
+
+    const fetchSchedules = useCallback(async () => {
         setLoading(true);
 
         const { data } = await supabase
@@ -61,7 +62,11 @@ export function Schedules() {
 
         setBlocks(result);
         setLoading(false);
-    }
+    }, [weekStart, weekEnd]);
+
+    useEffect(() => {
+        fetchSchedules();
+    }, [fetchSchedules]);
 
     const weekDays = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(weekStart);
@@ -182,7 +187,7 @@ export function Schedules() {
                                 <tr>
                                     <th className="w-32 pb-6 text-right pr-6 text-[9px] font-bold text-text-muted tracking-[0.3em] font-mono italic opacity-40">Timeline</th>
                                     {weekDays.map((d, i) => {
-                                        const isToday = d.toDateString() === today.toDateString();
+                                        const isToday = d.toDateString() === new Date().toDateString();
                                         return (
                                             <th key={i} className="pb-6">
                                                 <div className={clsx(

@@ -421,9 +421,9 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
             </td>
             <td className="px-6 py-5 text-center">
                 <div className="h-14 flex items-center justify-center -space-x-2">
-                    {project.memberCount > 0 ? (
+                    {(project.memberCount || 0) > 0 ? (
                         <>
-                            {[0, 1, 2].slice(0, project.memberCount).map((_, i) => (
+                            {[0, 1, 2].slice(0, project.memberCount || 0).map((_, i) => (
                                 <div
                                     key={i}
                                     className="w-8 h-8 rounded-lg border-2 border-white bg-main flex items-center justify-center text-text-muted shadow-shell-sm"
@@ -431,9 +431,9 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                                     <Users className="w-3 h-3" />
                                 </div>
                             ))}
-                            {project.memberCount > 3 && (
+                            {(project.memberCount || 0) > 3 && (
                                 <div className="w-8 h-8 rounded-lg border-2 border-white bg-slate-900 flex items-center justify-center text-[9px] font-bold text-white shadow-shell-sm">
-                                    +{project.memberCount - 3}
+                                    +{(project.memberCount || 0) - 3}
                                 </div>
                             )}
                         </>
@@ -445,9 +445,9 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
             <td className="px-6 py-5 min-w-[200px]">
                 <div className="h-14 flex flex-col justify-center gap-1.5">
                     <span className="text-[13px] font-bold text-text-main">
-                        {project.budget_type === 'No budget' ? 'No budget limits' : project.budget_type}
+                        {project.budget_type && project.budget_type !== 'No budget' ? project.budget_type : 'No budget limits'}
                     </span>
-                    {limit > 0 && project.budget_type !== 'No budget' && (
+                    {limit > 0 && project.budget_type && project.budget_type !== 'No budget' && (
                         <span className="text-[11px] font-bold text-text-muted tracking-tight">
                             Limit: <span className="text-primary">{limit}</span> {project.budget_type.includes('hours') ? 'hrs' : project.budget_type.includes('amount') ? 'USD' : ''}
                         </span>

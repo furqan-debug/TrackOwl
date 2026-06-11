@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Inbox, Clock, CheckCircle, Search, Filter, MessageCircle, Send, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
@@ -35,19 +35,41 @@ export function SupportAdminDashboard() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const secret = localStorage.getItem('support_admin_token') === 'authorized' ? 'supersecret123' : '';
 
+  const fetchTickets = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.rpc('admin_get_tickets', { secret });
+      if (error) throw error;
+      setTickets(data || []);
+    } catch (err) {
+      console.error('Failed to fetch tickets:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [secret]);
+
+  const fetchMessages = useCallback(async (ticketId: string) => {
+    try {
+      const { data, error } = await supabase.rpc('admin_get_messages', { secret, p_ticket_id: ticketId });
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (err) {
+      console.error('Failed to fetch messages:', err);
+    }
+  }, [secret]);
+
   useEffect(() => {
     if (!secret) {
       navigate('/support-admin/login');
       return;
     }
     fetchTickets();
-  }, [secret, navigate]);
+  }, [secret, navigate, fetchTickets]);
 
   useEffect(() => {
     if (selectedTicket) {
       fetchMessages(selectedTicket.id);
     }
-  }, [selectedTicket]);
+  }, [selectedTicket, fetchMessages]);
 
   useEffect(() => {
     fetchTickets();
@@ -75,33 +97,13 @@ export function SupportAdminDashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedTicket]);
+  }, [selectedTicket, fetchTickets, fetchMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const fetchTickets = async () => {
-    try {
-      const { data, error } = await supabase.rpc('admin_get_tickets', { secret });
-      if (error) throw error;
-      setTickets(data || []);
-    } catch (err) {
-      console.error('Failed to fetch tickets:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const fetchMessages = async (ticketId: string) => {
-    try {
-      const { data, error } = await supabase.rpc('admin_get_messages', { secret, p_ticket_id: ticketId });
-      if (error) throw error;
-      setMessages(data || []);
-    } catch (err) {
-      console.error('Failed to fetch messages:', err);
-    }
-  };
 
   const handleSendReply = async (e: React.FormEvent) => {
     e.preventDefault();

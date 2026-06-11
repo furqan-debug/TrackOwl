@@ -250,124 +250,14 @@ pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
     });
 }
 
-// ─── Active window detection (Windows) ────────────────────────────────────────
+// ─── Active window detection (Cross-platform) ──────────────────────────────────
 /// Returns (app_name, window_title) of the currently focused window.
-#[cfg(target_os = "windows")]
 pub fn get_active_window() -> (String, String) {
-    use std::ptr;
-    // SAFETY: Win32 API calls are safe here since we are reading read-only window info
-    unsafe {
-        // Get handle to foreground window
-        let hwnd = winapi_get_foreground_window();
-        if hwnd == 0 {
-            return ("Unknown".to_string(), "Unknown".to_string());
-        }
-
-        let title = get_window_text(hwnd);
-        let app_name = get_process_name(hwnd);
-        let _ = ptr::null::<i32>(); // suppress unused import warning
-        (app_name, title)
+    if let Ok(active_window) = active_win_pos_rs::get_active_window() {
+        (active_window.app_name, active_window.title)
+    } else {
+        ("Unknown".to_string(), "Unknown".to_string())
     }
-}
-
-#[cfg(target_os = "macos")]
-pub fn get_active_window() -> (String, String) {
-    let script = r#"
-        try
-            tell application "System Events"
-                set frontApp to first application process whose frontmost is true
-                set appName to name of frontApp
-            end tell
-            
-            set windowTitle to ""
-            try
-                tell application "System Events"
-                    set windowTitle to name of front window of frontApp
-                end tell
-            end try
-            
-            return appName & ":::" & windowTitle
-        on error
-            return "Unknown:::Unknown"
-        end try
-    "#;
-    
-    if let Ok(output) = std::process::Command::new("osascript")
-        .args(["-e", script])
-        .output()
-    {
-        let result = String::from_utf8_lossy(&output.stdout).trim().to_string();
-        if let Some((app, title)) = result.split_once(":::") {
-            return (app.to_string(), title.to_string());
-        }
-    }
-    ("Unknown".to_string(), "Unknown".to_string())
-}
-
-#[cfg(target_os = "linux")]
-pub fn get_active_window() -> (String, String) {
-    ("Unknown".to_string(), "Unknown".to_string())
-}
-
-// Internal Windows helpers using raw FFI (no external crate needed)
-#[cfg(target_os = "windows")]
-unsafe fn winapi_get_foreground_window() -> usize {
-    #[link(name = "user32")]
-    extern "system" {
-        fn GetForegroundWindow() -> usize;
-    }
-    GetForegroundWindow()
-}
-
-#[cfg(target_os = "windows")]
-unsafe fn get_window_text(hwnd: usize) -> String {
-    #[link(name = "user32")]
-    extern "system" {
-        fn GetWindowTextW(hwnd: usize, lpstring: *mut u16, nmaxcount: i32) -> i32;
-    }
-    let mut buf = vec![0u16; 512];
-    let len = GetWindowTextW(hwnd, buf.as_mut_ptr(), buf.len() as i32);
-    String::from_utf16_lossy(&buf[..len.max(0) as usize])
-}
-
-#[cfg(target_os = "windows")]
-unsafe fn get_process_name(hwnd: usize) -> String {
-    #[link(name = "user32")]
-    extern "system" {
-        fn GetWindowThreadProcessId(hwnd: usize, lpdwprocessid: *mut u32) -> u32;
-    }
-    #[link(name = "kernel32")]
-    extern "system" {
-        fn OpenProcess(dwdesiredaccess: u32, binherithandle: i32, dwprocessid: u32) -> usize;
-        fn CloseHandle(hobject: usize) -> i32;
-    }
-    #[link(name = "psapi")]
-    extern "system" {
-        fn GetModuleBaseNameW(hprocess: usize, hmodule: usize, lpbasename: *mut u16, nsize: u32) -> u32;
-    }
-
-    let mut pid: u32 = 0;
-    GetWindowThreadProcessId(hwnd, &mut pid);
-    if pid == 0 {
-        return "Unknown".to_string();
-    }
-
-    // PROCESS_QUERY_INFORMATION | PROCESS_VM_READ
-    let hprocess = OpenProcess(0x0410, 0, pid);
-    if hprocess == 0 {
-        return "Unknown".to_string();
-    }
-
-    let mut name_buf = vec![0u16; 256];
-    let len = GetModuleBaseNameW(hprocess, 0, name_buf.as_mut_ptr(), name_buf.len() as u32);
-    CloseHandle(hprocess);
-
-    if len == 0 {
-        return "Unknown".to_string();
-    }
-    String::from_utf16_lossy(&name_buf[..len as usize])
-        .trim_end_matches(".exe")
-        .to_string()
 }
 
 // ─── Browser URL extraction (PowerShell UIAutomation) ────────────────────────
@@ -805,9 +695,12 @@ fn capture_screenshot() -> Option<String> {
     use std::fs;
     use image::GenericImageView;
 
-    let temp_path = format!("/tmp/trackowl_ss_{}.jpg", rand_ms(10000, 1));
+    let temp_dir = std::env::temp_dir();
+    let temp_path = temp_dir.join(format!("trackowl_ss_{}.jpg", rand_ms(10000, 1)));
+    let temp_path_str = temp_path.to_str().unwrap_or("/tmp/trackowl_ss_fallback.jpg");
+    
     let output = Command::new("screencapture")
-        .args(["-x", "-t", "jpg", &temp_path])
+        .args(["-x", "-t", "jpg", temp_path_str])
         .output()
         .ok()?;
         
