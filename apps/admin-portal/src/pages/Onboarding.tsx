@@ -77,6 +77,7 @@ export function Onboarding() {
                         .update({
                             status: 'Active',
                             organization_id: orgData.id,
+                            organization_name: orgData.name,
                             auth_user_id: user.id,
                             role: 'Owner'
                         })
@@ -93,6 +94,7 @@ export function Onboarding() {
                             role: 'Owner',
                             status: 'Active',
                             organization_id: orgData.id,
+                            organization_name: orgData.name,
                             auth_user_id: user.id
                         });
 

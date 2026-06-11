@@ -11,6 +11,7 @@ interface MemberProfile {
     role: 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
     status: 'Active' | 'Inactive' | 'Pending';
     organization_id: string | null;
+    organization_name: string | null;
     location: string | null;
     created_at: string;
 }
