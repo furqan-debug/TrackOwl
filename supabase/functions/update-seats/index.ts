@@ -72,7 +72,7 @@ serve(async (req) => {
       throw new Error("Could not find a valid subscription item to update.");
     }
 
-    const billableSeats = Math.max(1, seatsCount - 1);
+    const billableSeats = Math.max(0, seatsCount - 1);
 
     // Update the subscription item quantity
     await stripe.subscriptions.update(org.stripe_subscription_id, {

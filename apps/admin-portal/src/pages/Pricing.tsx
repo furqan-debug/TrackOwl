@@ -54,8 +54,8 @@ export function Pricing() {
         setLoading(selectedPlan.planType);
         setShowDowngradeWarning(false);
 
-        // STRIPE REDIRECT FOR PREMIUM AND BASIC PLANS
-        if (selectedPlan.planType === 'Premium' || selectedPlan.planType === 'Basic') {
+        // STRIPE REDIRECT FOR PREMIUM AND BASIC PLANS (Only if paid seats > 0)
+        if ((selectedPlan.planType === 'Premium' || selectedPlan.planType === 'Basic') && seats > 1) {
             try {
                 const { data: { session: currentSession } } = await supabase.auth.getSession();
                 const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`, {
