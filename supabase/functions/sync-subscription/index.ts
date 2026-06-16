@@ -49,7 +49,21 @@ serve(async (req) => {
       .eq("id", member.organization_id)
       .single();
 
-    if (!org?.stripe_subscription_id) {
+    let subscriptionId = org?.stripe_subscription_id;
+
+    // Self-healing: If DB lost the subscription ID but we have a customer, fetch from Stripe
+    if (!subscriptionId && org?.stripe_customer_id) {
+      const activeSubs = await stripe.subscriptions.list({
+        customer: org.stripe_customer_id,
+        status: "active",
+        limit: 1,
+      });
+      if (activeSubs.data.length > 0) {
+        subscriptionId = activeSubs.data[0].id;
+      }
+    }
+
+    if (!subscriptionId) {
       return new Response(JSON.stringify({ synced: false, reason: "no_subscription" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
@@ -57,7 +71,7 @@ serve(async (req) => {
     }
 
     // Fetch live subscription from Stripe
-    const subscription = await stripe.subscriptions.retrieve(org.stripe_subscription_id);
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
     const billableSeats = subscription.items.data[0]?.quantity ?? 1;
     const totalSeats = billableSeats + 1; // +1 for free owner seat
@@ -73,6 +87,7 @@ serve(async (req) => {
           ? new Date(subscription.trial_end * 1000).toISOString()
           : null,
         seats_purchased: totalSeats,
+        stripe_subscription_id: subscriptionId,
       })
       .eq("id", member.organization_id);
 
