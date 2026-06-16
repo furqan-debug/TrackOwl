@@ -86,11 +86,11 @@ serve(async (req) => {
     }
 
     const isDecrease = seatsCount < org.seats_purchased;
+    const isNetIncrease = seatsCount > org.seats_purchased;
 
     // 4. Update quantity in Stripe.
-    // - Increases: "always_invoice" immediately charges the card for the prorated
-    //   amount (remaining days × price per seat) and creates a real paid invoice.
-    // - Decreases: "none" — no refund; the lower quantity takes effect at next renewal.
+    // - Increases (Net New Seats): "always_invoice" immediately charges the card for prorated amount.
+    // - Decreases or Restorations: "none" — no refund/charge; takes effect at next renewal.
     await stripe.subscriptions.update(org.stripe_subscription_id, {
       items: [
         {
@@ -98,28 +98,34 @@ serve(async (req) => {
           quantity: Math.max(0, seatsCount - 1),
         },
       ],
-      proration_behavior: isDecrease ? "none" : "always_invoice",
+      proration_behavior: isNetIncrease ? "always_invoice" : "none",
     });
 
     // 5. Update local database seats_purchased (instant update)
-    let updatePayload: any = { seats_purchased: seatsCount };
+    const { data: orgData } = await supabase
+      .from("organizations")
+      .select("settings")
+      .eq("id", org.id)
+      .single();
+    const settings = orgData?.settings || {};
+
+    let updatePayload: any = { seats_purchased: seatsCount, settings };
 
     if (isDecrease) {
-      const { data: orgData } = await supabase
-        .from("organizations")
-        .select("settings")
-        .eq("id", org.id)
-        .single();
-      const settings = orgData?.settings || {};
-      
       // Preserve seats until the end of the current billing cycle
       settings.keep_seats_until = subscription.current_period_end; // unix timestamp
       settings.preserved_seats = org.seats_purchased;
+      settings.target_seats = seatsCount;
       
       updatePayload = {
         seats_purchased: org.seats_purchased, // Don't instantly drop them locally
         settings,
       };
+    } else {
+      // Clean up any pending downgrades if they upgrade again
+      delete settings.keep_seats_until;
+      delete settings.preserved_seats;
+      delete settings.target_seats;
     }
 
     const { error: dbErr } = await supabase

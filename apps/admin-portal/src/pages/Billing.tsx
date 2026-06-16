@@ -125,7 +125,7 @@ export function Billing() {
         if (organization?.id) {
             fetchMemberCount();
             fetchBillingHistory();
-            setSeatsToPurchase(organization.seats_purchased || 5);
+            setSeatsToPurchase(organization.settings?.target_seats || organization.seats_purchased || 5);
             // Silently backfill current_period_end / seats if missing (runs once per session)
             // Also run if stripe_subscription_id is missing but customer exists, so self-healing can run
             const needsSync = (organization.stripe_subscription_id && !organization.current_period_end) || 
@@ -542,11 +542,22 @@ export function Billing() {
                         </div>
                     </Card>
                 </div>
-
                 {/* Row 2 - Left: Seat Management (Spans 8 Columns) */}
                 <div className="lg:col-span-8">
                     <Card className="p-8 border border-border/30 bg-surface rounded-2xl shadow-soft h-full flex flex-col justify-between">
                         <div>
+                            {/* Handle Pending Seat Downgrades */}
+                            {organization.settings?.keep_seats_until && organization.settings?.target_seats && (
+                                <div className="mb-6 bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
+                                    <p className="text-xs text-amber-500 font-bold">
+                                        Pending downgrade to {organization.settings.target_seats} seat(s) on {new Date(organization.settings.keep_seats_until * 1000).toLocaleDateString()}.
+                                    </p>
+                                    <p className="text-[10px] text-amber-500/80 mt-1">
+                                        You can still use {organization.seats_purchased} seats until the current period expires. To cancel this downgrade, increase the seats below back to {organization.seats_purchased} and click Update.
+                                    </p>
+                                </div>
+                            )}
+
                             <div className="mb-6">
                                 <h3 className="text-lg font-black text-text-main tracking-tight mb-1">Manage Seats</h3>
                                 <p className="text-[12.5px] font-semibold text-slate-600 dark:text-slate-300">Purchase additional seats to invite more team members.</p>
@@ -556,7 +567,7 @@ export function Billing() {
                                 <div className="flex items-center gap-4 px-3 py-1.5 bg-main/60 rounded-md border border-border/20 w-fit shadow-sm">
                                     <button
                                         onClick={() => setSeatsToPurchase(Math.max(Math.max(1, memberCount), seatsToPurchase - 1))}
-                                        disabled={seatsToPurchase <= Math.max(1, memberCount)}
+                                        disabled={seatsToPurchase <= Math.max(1, memberCount) || (organization.settings?.target_seats && seatsToPurchase <= organization.settings.target_seats)}
                                         className="w-9 h-9 flex items-center justify-center rounded-md bg-surface border border-border/30 text-text-main hover:text-primary hover:border-primary/55 transition-all active:scale-95 disabled:opacity-30 disabled:cursor-not-allowed shadow-sm cursor-pointer"
                                     >
                                         <Minus className="w-4 h-4" />
@@ -575,9 +586,9 @@ export function Billing() {
                                 <div className="flex-1 space-y-1.5">
                                     <div className="flex flex-col">
                                         <p className="text-[10.5px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mb-0.5">
-                                            {seatsToPurchase === organization.seats_purchased 
+                                            {seatsToPurchase === (organization.settings?.target_seats || organization.seats_purchased) 
                                                 ? 'Current Subscription' 
-                                                : (seatsToPurchase < organization.seats_purchased 
+                                                : (seatsToPurchase < (organization.settings?.target_seats || organization.seats_purchased) 
                                                     ? 'Next Renewal Total' 
                                                     : 'New Subscription Total')}
                                         </p>
@@ -596,35 +607,30 @@ export function Billing() {
                                         </p>
                                     </div>
                                     
-                                    {seatsToPurchase !== organization.seats_purchased && (
+                                    {seatsToPurchase !== (organization.settings?.target_seats || organization.seats_purchased) && (
                                         <div className="pt-1.5 border-t border-border/30 animate-in fade-in slide-in-from-top-1">
-                                            {seatsToPurchase > organization.seats_purchased ? (
-                                                <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wide">
-                                                    Additional: +${(
-                                                        (seatsToPurchase - organization.seats_purchased) * 
+                                            {seatsToPurchase < (organization.settings?.target_seats || organization.seats_purchased) ? (
+                                                <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-wide">
+                                                    Savings: -${(
+                                                        ((organization.settings?.target_seats || organization.seats_purchased) - seatsToPurchase) * 
                                                         (organization.plan_type === 'Premium' 
                                                             ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99) 
                                                             : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99)
                                                         ) * 
                                                         (organization.subscription_period === 'Yearly' ? 12 : 1)
-                                                    ).toFixed(2)} {organization.subscription_period === 'Yearly' ? '/yr' : '/mo'} (for {seatsToPurchase - organization.seats_purchased} new seat{seatsToPurchase - organization.seats_purchased > 1 ? 's' : ''})
+                                                    ).toFixed(2)} {organization.subscription_period === 'Yearly' ? '/yr' : '/mo'} (at next renewal)
                                                 </p>
                                             ) : (
-                                                <div className="space-y-1">
-                                                    <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-wide">
-                                                        Savings: -${(
-                                                            (organization.seats_purchased - seatsToPurchase) * 
-                                                            (organization.plan_type === 'Premium' 
-                                                                ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99) 
-                                                                : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99)
-                                                            ) * 
-                                                            (organization.subscription_period === 'Yearly' ? 12 : 1)
-                                                        ).toFixed(2)} {organization.subscription_period === 'Yearly' ? '/yr' : '/mo'} (at next renewal)
-                                                    </p>
-                                                    <p className="text-[11px] font-medium text-amber-500 leading-snug">
-                                                        ⚠️ Note: Reducing seats takes effect on your next renewal. No refunds or prorated credits are issued for the current period.
-                                                    </p>
-                                                </div>
+                                                <p className="text-[10px] font-bold text-amber-500 uppercase tracking-wide">
+                                                    Additional: +${(
+                                                        (seatsToPurchase - (organization.settings?.target_seats || organization.seats_purchased)) * 
+                                                        (organization.plan_type === 'Premium' 
+                                                            ? (organization.subscription_period === 'Monthly' ? 6.99 : 4.99) 
+                                                            : (organization.subscription_period === 'Monthly' ? 3.99 : 2.99)
+                                                        ) * 
+                                                        (organization.subscription_period === 'Yearly' ? 12 : 1)
+                                                    ).toFixed(2)} {organization.subscription_period === 'Yearly' ? '/yr' : '/mo'} (for {seatsToPurchase - (organization.settings?.target_seats || organization.seats_purchased)} new seat{seatsToPurchase - (organization.settings?.target_seats || organization.seats_purchased) > 1 ? 's' : ''})
+                                                </p>
                                             )}
                                         </div>
                                     )}
@@ -639,11 +645,11 @@ export function Billing() {
 
                                 <button
                                     onClick={handleUpdateSeats}
-                                    disabled={saving || (organization.subscription_status !== 'None' && seatsToPurchase === organization.seats_purchased)}
+                                    disabled={saving || (organization.subscription_status !== 'None' && seatsToPurchase === (organization.settings?.target_seats || organization.seats_purchased))}
                                     style={{ color: 'var(--bg-surface)' }}
                                     className={clsx(
                                         "px-8 h-11 bg-primary hover:bg-primary-hover font-black rounded-md text-[10px] uppercase tracking-wider shadow-md active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer",
-                                        (saving || (organization.subscription_status !== 'None' && seatsToPurchase === organization.seats_purchased)) && "opacity-50 cursor-not-allowed"
+                                        (saving || (organization.subscription_status !== 'None' && seatsToPurchase === (organization.settings?.target_seats || organization.seats_purchased))) && "opacity-50 cursor-not-allowed"
                                     )}
                                 >
                                     {organization.subscription_status === 'None' ? 'Upgrade to Get Seats' : (saving ? 'Saving...' : 'Update Seats')}

@@ -96,6 +96,7 @@ serve(async (req) => {
         // Period expired; drop the seats down to the new quantity and clean up settings
         delete currentSettings.keep_seats_until;
         delete currentSettings.preserved_seats;
+        delete currentSettings.target_seats;
       }
     }
 
