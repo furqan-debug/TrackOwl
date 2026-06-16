@@ -46,7 +46,7 @@ serve(async (req) => {
 
     const { data: org, error: orgErr } = await supabase
       .from("organizations")
-      .select("stripe_customer_id")
+      .select("stripe_customer_id, stripe_subscription_id")
       .eq("id", member.organization_id)
       .single();
 
@@ -57,6 +57,28 @@ serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 200,
       });
+    }
+
+    // SELF-HEALING: If DB is missing stripe_subscription_id, recover it and seats_purchased
+    if (!org.stripe_subscription_id) {
+      const activeSubs = await stripe.subscriptions.list({
+        customer: org.stripe_customer_id,
+        status: "active",
+        limit: 1,
+      });
+      if (activeSubs.data.length > 0) {
+        const sub = activeSubs.data[0];
+        const billable = sub.items.data[0]?.quantity ?? 1;
+        
+        await supabase
+          .from("organizations")
+          .update({
+            stripe_subscription_id: sub.id,
+            seats_purchased: billable + 1,
+            current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+          })
+          .eq("id", member.organization_id);
+      }
     }
 
     // 3. Fetch all invoices from Stripe (paid, open, draft)
