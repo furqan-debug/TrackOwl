@@ -59,7 +59,7 @@ serve(async (req) => {
     // Fetch live subscription from Stripe
     const subscription = await stripe.subscriptions.retrieve(org.stripe_subscription_id);
 
-    const billableSeats = subscription.items.data[0]?.quantity || 1;
+    const billableSeats = subscription.items.data[0]?.quantity ?? 1;
     const totalSeats = billableSeats + 1; // +1 for free owner seat
 
     // Update DB with fresh values
