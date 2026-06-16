@@ -102,9 +102,29 @@ serve(async (req) => {
     });
 
     // 5. Update local database seats_purchased (instant update)
+    let updatePayload: any = { seats_purchased: seatsCount };
+
+    if (isDecrease) {
+      const { data: orgData } = await supabase
+        .from("organizations")
+        .select("settings")
+        .eq("id", org.id)
+        .single();
+      const settings = orgData?.settings || {};
+      
+      // Preserve seats until the end of the current billing cycle
+      settings.keep_seats_until = subscription.current_period_end; // unix timestamp
+      settings.preserved_seats = org.seats_purchased;
+      
+      updatePayload = {
+        seats_purchased: org.seats_purchased, // Don't instantly drop them locally
+        settings,
+      };
+    }
+
     const { error: dbErr } = await supabase
       .from("organizations")
-      .update({ seats_purchased: seatsCount })
+      .update(updatePayload)
       .eq("id", org.id);
 
     if (dbErr) {

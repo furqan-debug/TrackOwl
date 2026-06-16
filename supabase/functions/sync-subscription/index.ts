@@ -74,7 +74,30 @@ serve(async (req) => {
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
     const billableSeats = subscription.items.data[0]?.quantity ?? 1;
-    const totalSeats = billableSeats + 1; // +1 for free owner seat
+    let totalSeats = billableSeats + 1; // +1 for free owner seat
+
+    const { data: orgData } = await supabase
+      .from("organizations")
+      .select("settings")
+      .eq("id", member.organization_id)
+      .single();
+
+    const currentSettings = orgData?.settings || {};
+
+    // Check for pending seat downgrades
+    if (currentSettings.keep_seats_until) {
+      const keepUntil = currentSettings.keep_seats_until;
+      const now = Math.floor(Date.now() / 1000);
+      
+      if (now < keepUntil) {
+        // Still in the current period; keep the higher seat count active locally
+        totalSeats = Math.max(totalSeats, currentSettings.preserved_seats || 1);
+      } else {
+        // Period expired; drop the seats down to the new quantity and clean up settings
+        delete currentSettings.keep_seats_until;
+        delete currentSettings.preserved_seats;
+      }
+    }
 
     // Update DB with fresh values
     await supabase
@@ -88,6 +111,7 @@ serve(async (req) => {
           : null,
         seats_purchased: totalSeats,
         stripe_subscription_id: subscriptionId,
+        settings: currentSettings,
       })
       .eq("id", member.organization_id);
 

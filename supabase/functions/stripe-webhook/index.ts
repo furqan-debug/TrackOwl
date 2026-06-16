@@ -101,6 +101,21 @@ serve(async (req) => {
         delete currentSettings.pending_downgrade;
       }
 
+      // Check for pending seat downgrades
+      if (currentSettings.keep_seats_until) {
+        const keepUntil = currentSettings.keep_seats_until;
+        const now = Math.floor(Date.now() / 1000);
+        
+        if (now < keepUntil) {
+          // Still in the current period; keep the higher seat count active locally
+          totalSeats = Math.max(totalSeats, currentSettings.preserved_seats || 1);
+        } else {
+          // Period expired; drop the seats down to the new quantity and clean up settings
+          delete currentSettings.keep_seats_until;
+          delete currentSettings.preserved_seats;
+        }
+      }
+
       // Sync organization profile in Supabase
       const { data: updatedOrg, error: orgUpdateErr } = await supabase
         .from("organizations")
