@@ -62,6 +62,10 @@ export function SupportWidget() {
   const location = useLocation();
   const { organization, profile, user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+
+  if (location.pathname === '/') {
+    return null;
+  }
   
   // Chat state
   const [botMode, setBotMode] = useState<'normal' | 'awaiting_ticket' | 'live_chat'>('normal');
