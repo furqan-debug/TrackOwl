@@ -127,7 +127,11 @@ export function Billing() {
             fetchBillingHistory();
             setSeatsToPurchase(organization.seats_purchased || 5);
             // Silently backfill current_period_end / seats if missing (runs once per session)
-            if (organization.stripe_subscription_id && !organization.current_period_end) {
+            // Also run if stripe_subscription_id is missing but customer exists, so self-healing can run
+            const needsSync = (organization.stripe_subscription_id && !organization.current_period_end) || 
+                              (!organization.stripe_subscription_id && organization.stripe_customer_id);
+                              
+            if (needsSync) {
                 supabase.functions.invoke('sync-subscription')
                     .then(() => refreshOrganization())
                     .catch(() => {}); // silent — no UX impact
