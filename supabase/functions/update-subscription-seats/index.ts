@@ -95,7 +95,7 @@ serve(async (req) => {
       items: [
         {
           id: subItemId,
-          quantity: Math.max(1, seatsCount - 1),
+          quantity: Math.max(0, seatsCount - 1),
         },
       ],
       proration_behavior: isDecrease ? "none" : "always_invoice",

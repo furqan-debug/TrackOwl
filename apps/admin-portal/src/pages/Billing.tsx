@@ -256,8 +256,35 @@ export function Billing() {
 
         setSaving(true);
         try {
-            // Check if we are running in real Stripe or mock sandbox
-            const isMockMode = !organization.stripe_subscription_id || organization.stripe_customer_id?.startsWith('cus_mock_');
+            const isMockCustomer = organization.stripe_customer_id?.startsWith('cus_mock_');
+            
+            // If they are adding paid seats but have no subscription yet, create checkout session
+            if (!organization.stripe_subscription_id && !isMockCustomer && seatsToPurchase > 1) {
+                const { data: { session: currentSession } } = await supabase.auth.getSession();
+                const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/create-checkout-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${currentSession?.access_token}`,
+                        'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({
+                        planType: organization.plan_type,
+                        billingCycle: organization.subscription_period || 'Monthly',
+                        seatsCount: seatsToPurchase - 1, // Pass only paid seats
+                        isTrial: false
+                    })
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.error || `Server returned ${response.status}`);
+                if (result?.url) {
+                    window.location.href = result.url;
+                    return;
+                }
+            }
+
+            const isMockMode = !organization.stripe_subscription_id || isMockCustomer;
 
             if (isMockMode) {
                 // Developer sandbox simulation mode:
