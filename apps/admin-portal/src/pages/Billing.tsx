@@ -146,7 +146,7 @@ export function Billing() {
     async function fetchBillingHistory() {
         setLoadingInvoices(true);
         try {
-            const isMockMode = !organization?.stripe_subscription_id || organization?.stripe_customer_id?.startsWith('cus_mock_');
+            const isMockMode = !organization?.stripe_customer_id || organization?.stripe_customer_id?.startsWith('cus_mock_');
 
             if (isMockMode) {
                 setInvoices([
