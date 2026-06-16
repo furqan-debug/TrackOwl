@@ -134,9 +134,7 @@ export function Login() {
       if (verifyError) throw verifyError;
 
       const levels = await refreshAal();
-      if (levels?.currentLevel === 'aal2') {
-        navigate('/');
-      } else {
+      if (levels?.currentLevel !== 'aal2') {
         throw new Error('Verification completed but assurance level is insufficient');
       }
     } catch (err: any) {
@@ -172,9 +170,7 @@ export function Login() {
       if (verifyError) throw verifyError;
 
       const levels = await refreshAal();
-      if (levels?.currentLevel === 'aal2') {
-        navigate('/');
-      } else {
+      if (levels?.currentLevel !== 'aal2') {
         throw new Error('Enrollment verified but assurance level is insufficient');
       }
     } catch (err: any) {
