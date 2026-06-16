@@ -63,7 +63,7 @@ export function SupportWidget() {
   const { organization, profile, user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
-  if (location.pathname === '/') {
+  if (!location.pathname.startsWith('/dashboard')) {
     return null;
   }
   
