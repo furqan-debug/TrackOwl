@@ -63,9 +63,6 @@ export function SupportWidget() {
   const { organization, profile, user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
-  if (!location.pathname.startsWith('/dashboard')) {
-    return null;
-  }
   
   // Chat state
   const [botMode, setBotMode] = useState<'normal' | 'awaiting_ticket' | 'live_chat'>('normal');
@@ -257,6 +254,10 @@ export function SupportWidget() {
       setLocalMessages(prev => [...prev, { sender: 'bot', text: response }]);
     }, 1000);
   };
+
+  if (!location.pathname.startsWith('/dashboard')) {
+    return null;
+  }
 
   if (!isOpen) {
     return (
