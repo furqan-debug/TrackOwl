@@ -30,6 +30,7 @@ dist-ssr/
 src-tauri/target/
 src-tauri/bin/
 bin/
+tmp_target/
 *.exe
 *.msi
 
