@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { KeyRound, Lock, AlertCircle, ArrowLeft, QrCode } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import logoLight from '../../assets/branding/logo-light.svg';
 
 export function Login() {
-  const navigate = useNavigate();
   const { session, loading: authLoading, isSuperAdmin, aalLevel, nextAalLevel, refreshAal, signOut } = useAuth();
 
   const [password, setPassword] = useState('');
