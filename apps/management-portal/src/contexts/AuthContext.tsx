@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return null;
   };
 
-  const checkSuperAdminStatus = async (userEmail: string) => {
+  const checkSuperAdminStatus = async () => {
     try {
       const { data: isSuperAdmin, error } = await supabase.rpc('is_super_admin');
 
@@ -59,7 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     if (currentUser && currentUser.email) {
       // 1. Fetch super admin profile
-      const isAdmin = await checkSuperAdminStatus(currentUser.email);
+      const isAdmin = await checkSuperAdminStatus();
       if (isAdmin) {
         // 2. Fetch AAL assurance levels
         await fetchAal();
