@@ -40,15 +40,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkSuperAdminStatus = async (userEmail: string) => {
     try {
-      const { data, error } = await supabase
-        .from('members')
-        .select('is_super_admin')
-        .eq('email', userEmail)
-        .single();
+      const { data: isSuperAdmin, error } = await supabase.rpc('is_super_admin');
 
       if (error) throw error;
-      setIsSuperAdmin(!!data?.is_super_admin);
-      return !!data?.is_super_admin;
+      setIsSuperAdmin(!!isSuperAdmin);
+      return !!isSuperAdmin;
     } catch (err) {
       console.error('Error checking super admin status:', err);
       setIsSuperAdmin(false);

@@ -88,12 +88,18 @@ export function Login() {
     setLoading(true);
     setErrorMsg('');
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: 'developer@digireps.co',
         password,
       });
 
-      if (error) throw error;
+      if (signInError) throw signInError;
+
+      const { data: isSuperAdmin, error: rpcError } = await supabase.rpc('is_super_admin');
+        
+      if (rpcError) throw rpcError;
+        
+      if (!isSuperAdmin) throw new Error('Unauthorized');
       
       // The AuthContext will handle checking super admin status and AAL transitions.
       // We don't need to manually navigate yet; the reactive state will take care of rendering the next step.
