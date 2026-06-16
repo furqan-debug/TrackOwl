@@ -88,17 +88,28 @@ serve(async (req) => {
       })),
     }));
 
-    // 4. Fetch payment methods
-    const paymentMethods = await stripe.paymentMethods.list({
-      customer: org.stripe_customer_id,
-      type: "card",
-    });
+    // 4. Fetch payment methods and Customer to get the default
+    const [paymentMethods, customerRes] = await Promise.all([
+      stripe.paymentMethods.list({ customer: org.stripe_customer_id, type: "card" }),
+      stripe.customers.retrieve(org.stripe_customer_id)
+    ]);
 
-    const defaultPaymentMethod = paymentMethods.data[0] ? {
-      brand: paymentMethods.data[0].card?.brand,
-      last4: paymentMethods.data[0].card?.last4,
-      exp_month: paymentMethods.data[0].card?.exp_month,
-      exp_year: paymentMethods.data[0].card?.exp_year,
+    const customer = customerRes as Stripe.Customer;
+    const defaultPmId = customer?.invoice_settings?.default_payment_method as string | null;
+
+    let targetPm = paymentMethods.data[0]; // fallback to first if no default set
+    if (defaultPmId) {
+      const foundDefault = paymentMethods.data.find(pm => pm.id === defaultPmId);
+      if (foundDefault) {
+        targetPm = foundDefault;
+      }
+    }
+
+    const defaultPaymentMethod = targetPm ? {
+      brand: targetPm.card?.brand,
+      last4: targetPm.card?.last4,
+      exp_month: targetPm.card?.exp_month,
+      exp_year: targetPm.card?.exp_year,
     } : null;
 
     return new Response(JSON.stringify({ invoices: formattedInvoices, paymentMethod: defaultPaymentMethod }), {
