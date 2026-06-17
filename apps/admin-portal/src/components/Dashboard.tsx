@@ -864,8 +864,8 @@ export function Dashboard() {
                 {/* 📊 Secondary Metrics Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Project Velocity Chart */}
-                    <div className="glass-panel rounded-[12px] shadow-premium p-5 md:p-10 border border-border">
-                        <div className="flex items-center justify-between mb-5 md:mb-10">
+                    <div className="glass-panel rounded-[12px] shadow-premium overflow-hidden flex flex-col border border-border h-[450px]">
+                        <div className="px-5 py-5 md:px-10 md:py-8 border-b border-border bg-surface/50 flex items-center justify-between shrink-0">
                             <div>
                                 <h3 className="text-[13px] md:text-[14px] font-bold tracking-tight mb-1" style={{ color: 'var(--chart-gold)' }}>Time Distribution</h3>
                                 <p className="text-[10px] font-bold text-text-muted tracking-[0.1em]">Active hours per project</p>
@@ -874,7 +874,8 @@ export function Dashboard() {
                                 <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />
                             </div>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+                        <div className="flex-1 overflow-y-auto p-5 md:p-10">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
                             {projectActivity.length === 0 ? (
                                 <div className="col-span-2 py-10 opacity-50"><EmptyState icon={<Camera />} title="Awaiting distribution data" /></div>
                             ) : (
@@ -904,12 +905,13 @@ export function Dashboard() {
                                     </div>
                                 ))
                             )}
+                            </div>
                         </div>
                     </div>
 
                     {/* App ecosystem Ledger */}
-                    <div className="glass-panel rounded-[12px] shadow-premium overflow-hidden flex flex-col border border-border self-start">
-                        <div className="px-5 py-5 md:px-10 md:py-8 border-b border-border bg-surface/50 flex items-center justify-between">
+                    <div className="glass-panel rounded-[12px] shadow-premium overflow-hidden flex flex-col border border-border h-[450px]">
+                        <div className="px-5 py-5 md:px-10 md:py-8 border-b border-border bg-surface/50 flex items-center justify-between shrink-0">
                             <div>
                                 <h3 className="text-[13px] md:text-[14px] font-bold tracking-tight mb-1" style={{ color: 'var(--chart-gold)' }}>Application Ecosystem</h3>
                                 <p className="text-[10px] font-bold text-text-muted tracking-[0.1em]">Most utilized tools and platforms</p>
@@ -919,14 +921,14 @@ export function Dashboard() {
                             </div>
                         </div>
                         {/* Wrap overlay + scrollable list in a non-scrolling relative container */}
-                        <div className="flex-1 relative overflow-hidden max-h-[300px]">
+                        <div className="flex-1 relative overflow-hidden">
                             {!isPremium && (
                                 <FeatureLockOverlay
                                     title="App Tracking"
                                     description="Upgrade to Premium to see exactly which tools and applications your team is using."
                                 />
                             )}
-                            <div className="h-full overflow-y-auto no-scrollbar divide-y divide-border">
+                            <div className="h-full overflow-y-auto divide-y divide-border">
                                 {appUsage.length === 0 ? (
                                     <EmptyState icon={<Monitor />} title="Awaiting application data" className="py-12" />
                                 ) : (
