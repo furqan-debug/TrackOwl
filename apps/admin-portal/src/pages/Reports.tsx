@@ -93,7 +93,7 @@ export function Reports() {
 
     useEffect(() => {
         fetchReports();
-    }, [range, offset, selectedTeamId, selectedMemberId]);
+    }, [range, offset, selectedTeamId, selectedMemberId, members]);
 
     function shiftRange(direction: number) {
         let days = 0;
@@ -177,7 +177,7 @@ export function Reports() {
 
     async function fetchReports(forceRefresh = false) {
         const { start, end } = getDateRange();
-        const cacheKey = `${start}_${end}_${selectedTeamId}_${selectedMemberId}`;
+        const cacheKey = `${start}_${end}_${selectedTeamId}_${selectedMemberId}_${members.length}`;
 
         if (!forceRefresh && reportsCache && reportsCacheKey === cacheKey) {
             setDailyActivity(reportsCache.dailyActivity);
