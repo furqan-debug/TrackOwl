@@ -908,7 +908,7 @@ export function Dashboard() {
                     </div>
 
                     {/* App ecosystem Ledger */}
-                    <div className="glass-panel rounded-[12px] shadow-premium overflow-hidden flex flex-col border border-border">
+                    <div className="glass-panel rounded-[12px] shadow-premium overflow-hidden flex flex-col border border-border self-start">
                         <div className="px-5 py-5 md:px-10 md:py-8 border-b border-border bg-surface/50 flex items-center justify-between">
                             <div>
                                 <h3 className="text-[13px] md:text-[14px] font-bold tracking-tight mb-1" style={{ color: 'var(--chart-gold)' }}>Application Ecosystem</h3>
