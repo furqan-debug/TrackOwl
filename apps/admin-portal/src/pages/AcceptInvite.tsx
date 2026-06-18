@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { User, Phone, Lock, Eye, EyeOff, AlertCircle, Rocket, Download, LayoutDashboard, ArrowRight, Apple, Monitor } from 'lucide-react';
+import { User, Phone, Lock, Eye, EyeOff, AlertCircle, Rocket, Download, LayoutDashboard, ArrowRight, Apple, Monitor, CheckCircle2 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
@@ -153,77 +153,96 @@ export function AcceptInvite() {
                 <div className="absolute inset-0 bg-gradient-mesh z-0" />
                 <div className="relative z-10 w-full max-w-[560px]">
                     <Card className="overflow-hidden border-none shadow-2xl">
-                        <div className="bg-gradient-to-br from-indigo-600 to-violet-700 px-8 py-12 text-center text-white relative overflow-hidden">
-                            <div className="absolute inset-0 bg-black/10" />
-                            <div className="relative z-10">
-                                <div className="w-20 h-20 bg-surface/20 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl border border-white/20">
-                                    <Rocket className="w-10 h-10" />
+                        <div className="bg-gradient-to-br from-emerald-500/10 to-teal-500/5 px-8 py-12 text-center relative overflow-hidden border-b border-border/50">
+                            <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay" />
+                            <div className="relative z-10 flex flex-col items-center">
+                                <div className="w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center mb-6 relative">
+                                    <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping opacity-20" />
+                                    <CheckCircle2 className="w-10 h-10 text-emerald-500" />
                                 </div>
-                                <h1 className="text-4xl font-bold tracking-tight mb-2 font-head">Account Activated!</h1>
-                                <p className="text-indigo-100 font-medium">Welcome to the team, {fullName.split(' ')[0]}!</p>
+                                <h1 className="text-3xl font-bold tracking-tight mb-2 text-text-primary font-head">Account Activated!</h1>
+                                <p className="text-text-secondary font-medium">Welcome to the team, <span className="text-text-primary font-bold">{fullName.split(' ')[0]}</span>!</p>
                             </div>
                         </div>
 
-                        <div className="p-10 space-y-10">
+                        <div className="p-10">
                             {role === 'User' ? (
-                                <div className="space-y-8">
-                                    <div className="space-y-4 text-center">
-                                        <h2 className="text-xl font-bold text-text-primary font-head ">Next Steps</h2>
-                                        <div className="grid gap-4 text-left">
-                                            {[
-                                                { icon: <Download className="w-5 h-5" />, title: 'Download Tracker', desc: 'Install the TrackOwl app to begin tracking your work.' },
-                                                { icon: <User className="w-5 h-5" />, title: 'Sign In', desc: 'Use your work email and the new password to log in.' },
-                                                { icon: <Rocket className="w-5 h-5" />, title: 'Start Working', desc: 'Select your project and click "Start" to begin your shift.' },
-                                            ].map((step, i) => (
-                                                <div key={i} className="flex gap-4 p-4 rounded-xl bg-surface/5 border border-white/10 hover:border-white/20 transition-colors">
-                                                    <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400 shrink-0 border border-indigo-500/20">
-                                                        {step.icon}
-                                                    </div>
-                                                    <div>
-                                                        <p className="font-bold text-text-primary text-sm">{step.title}</p>
-                                                        <p className="text-xs text-text-secondary">{step.desc}</p>
-                                                    </div>
+                                <div className="space-y-2">
+                                    <h2 className="text-sm font-bold text-text-primary tracking-widest uppercase mb-6 ml-2 opacity-80">Your Next Steps</h2>
+                                    <div className="relative space-y-0">
+                                        {/* Connecting line */}
+                                        <div className="absolute left-[23px] top-6 bottom-6 w-0.5 bg-gradient-to-b from-indigo-500/30 via-border to-transparent" />
+                                        
+                                        {[
+                                            { icon: <Download className="w-5 h-5" />, title: 'Download Tracker', desc: 'Install the TrackOwl app to begin tracking your work.' },
+                                            { icon: <User className="w-5 h-5" />, title: 'Sign In', desc: 'Use your work email and the new password to log in.' },
+                                            { icon: <Rocket className="w-5 h-5" />, title: 'Start Working', desc: 'Select your project and click "Start" to begin your shift.' },
+                                        ].map((step, i) => (
+                                            <div key={i} className="relative flex gap-5 p-4 rounded-2xl hover:bg-surface/50 transition-colors group">
+                                                <div className="w-12 h-12 rounded-full bg-background border-2 border-indigo-500/20 group-hover:border-indigo-500/50 flex items-center justify-center text-indigo-500 shrink-0 shadow-sm relative z-10 transition-colors">
+                                                    {step.icon}
                                                 </div>
-                                            ))}
-                                        </div>
+                                                <div className="pt-2">
+                                                    <p className="font-bold text-text-primary text-sm mb-1">{step.title}</p>
+                                                    <p className="text-xs text-text-secondary leading-relaxed">{step.desc}</p>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                    <div className="space-y-3 pt-2">
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <Button 
-                                                className="w-full py-4 text-sm font-semibold bg-gradient-to-b from-[#0078D7] to-[#005a9e] hover:from-[#006abc] hover:to-[#004d8c] text-white border-none shadow-lg shadow-[#0078D7]/20"
-                                                leftIcon={<Monitor className="w-5 h-5" />}
-                                                onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_x64_en-US.msi'}
-                                            >
-                                                Windows
-                                            </Button>
-                                            <Button 
-                                                className="w-full py-4 text-sm font-semibold bg-gradient-to-b from-[#2d2d2d] to-[#111111] hover:from-[#1f1f1f] hover:to-[#000000] text-white border-none shadow-lg shadow-black/20"
-                                                leftIcon={<Apple className="w-5 h-5" />}
-                                                onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_aarch64.dmg'}
-                                            >
-                                                macOS
-                                            </Button>
+
+                                    <div className="mt-8 p-6 rounded-2xl bg-gradient-to-br from-indigo-500/5 to-violet-500/5 border border-indigo-500/10 relative overflow-hidden">
+                                        <div className="absolute -right-4 -top-4 opacity-[0.03] pointer-events-none transform rotate-12">
+                                            <Monitor className="w-48 h-48" />
                                         </div>
-                                        <p className="text-center text-[11px] font-medium text-text-muted">
-                                            Using an older Intel Mac? <a href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_x64.dmg" className="text-indigo-500 hover:text-indigo-400 hover:underline transition-colors">Download Intel version</a>
-                                        </p>
+                                        <div className="relative z-10">
+                                            <div className="mb-5 text-center">
+                                                <h3 className="font-bold text-text-primary text-sm">Get the Desktop App</h3>
+                                                <p className="text-xs text-text-secondary mt-1">Required to track time and activity on your projects.</p>
+                                            </div>
+                                            <div className="space-y-3 pt-2">
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <Button 
+                                                        className="w-full py-4 text-sm font-semibold bg-gradient-to-b from-[#0078D7] to-[#005a9e] hover:from-[#006abc] hover:to-[#004d8c] text-white border-none shadow-lg shadow-[#0078D7]/20"
+                                                        leftIcon={<Monitor className="w-5 h-5" />}
+                                                        onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_x64_en-US.msi'}
+                                                    >
+                                                        Windows
+                                                    </Button>
+                                                    <Button 
+                                                        className="w-full py-4 text-sm font-semibold bg-gradient-to-b from-[#2d2d2d] to-[#111111] hover:from-[#1f1f1f] hover:to-[#000000] text-white border-none shadow-lg shadow-black/20"
+                                                        leftIcon={<Apple className="w-5 h-5" />}
+                                                        onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_aarch64.dmg'}
+                                                    >
+                                                        macOS
+                                                    </Button>
+                                                </div>
+                                                <p className="text-center text-[11px] font-medium text-text-muted mt-3">
+                                                    Using an older Intel Mac? <a href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_x64.dmg" className="text-indigo-500 hover:text-indigo-400 hover:underline transition-colors">Download Intel version</a>
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="space-y-6 text-center">
+                                <div className="space-y-8 text-center py-6">
+                                    <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center mx-auto mb-2 border border-indigo-500/20">
+                                        <LayoutDashboard className="w-8 h-8 text-indigo-500" />
+                                    </div>
                                     <div className="space-y-3">
-                                        <h2 className="text-xl font-bold text-text-primary font-head ">Manager Access</h2>
+                                        <h2 className="text-xl font-bold text-text-primary font-head ">Manager Access Granted</h2>
                                         <p className="text-sm text-text-secondary leading-relaxed max-w-sm mx-auto">
-                                            As a <span className="text-indigo-400 font-bold">{role}</span>, you have full access to manage teams, review activity, and view reports.
+                                            As a <span className="text-indigo-500 font-bold">{role}</span>, you have full access to manage teams, review activity, and view comprehensive reports.
                                         </p>
                                     </div>
-                                    <Button 
-                                        className="w-full py-4" 
-                                        onClick={() => navigate('/login')}
-                                        leftIcon={<LayoutDashboard className="w-5 h-5" />}
-                                    >
-                                        Go to Admin Dashboard
-                                    </Button>
+                                    <div className="pt-4">
+                                        <Button 
+                                            className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20" 
+                                            onClick={() => navigate('/login')}
+                                            rightIcon={<ArrowRight className="w-5 h-5" />}
+                                        >
+                                            Go to Admin Dashboard
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
 
