@@ -56,7 +56,7 @@ let activityCache: any = null;
 let activityCacheKey: string | null = null;
 
 export function Activity() {
-    const { profile } = useAuth();
+    const { profile, managedMemberIds } = useAuth();
     const organizationId = profile?.organization_id;
     const [samples, setSamples] = useState<ActivitySample[]>([]);
     const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
@@ -78,14 +78,19 @@ export function Activity() {
     useEffect(() => {
         import('../lib/supabase').then(({ supabase }) => {
             if (!organizationId) return;
-            supabase.from('members')
+            let query = supabase.from('members')
                 .select('id, auth_user_id, full_name, timezone, keep_idle, email, avatar_url, idle_limit')
                 .eq('organization_id', organizationId)
                 .eq('status', 'Active')
-                .order('full_name', { ascending: true })
-                .then(({ data }) => {
-                    if (data) setMembers(data);
-                });
+                .order('full_name', { ascending: true });
+                
+            if (profile?.role === 'Manager' && managedMemberIds) {
+                query = query.in('id', managedMemberIds);
+            }
+            
+            query.then(({ data }) => {
+                if (data) setMembers(data);
+            });
         });
     }, [organizationId]);
 

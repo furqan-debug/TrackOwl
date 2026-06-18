@@ -2,11 +2,17 @@ import { supabase } from '../lib/supabase';
 import type { Member } from '../types';
 
 export const memberService = {
-  async fetchMembers(): Promise<Member[]> {
-    const { data, error } = await supabase
+  async fetchMembers(managedMemberIds?: string[] | null): Promise<Member[]> {
+    let query = supabase
         .from('members')
         .select('*, project_members(count), sessions(count)')
         .order('created_at', { ascending: false });
+
+    if (managedMemberIds) {
+        query = query.in('id', managedMemberIds);
+    }
+
+    const { data, error } = await query;
 
     if (error) throw error;
     

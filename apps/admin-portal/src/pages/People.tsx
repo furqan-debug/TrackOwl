@@ -63,7 +63,7 @@ interface MemberRow extends DbMember {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 export function People() {
-    const { profile, organization } = useAuth();
+    const { profile, organization, managedMemberIds } = useAuth();
     const navigate = useNavigate();
     const isViewer = profile?.role === 'Viewer';
     const [members, setMembers] = useState<MemberRow[]>([]);
@@ -94,7 +94,7 @@ export function People() {
     async function fetchMembers() {
         setLoading(true);
         try {
-            const data = await memberService.fetchMembers();
+            const data = await memberService.fetchMembers(profile?.role === 'Manager' ? managedMemberIds : null);
             setMembers(data as any);
         } catch (e) {
             console.error('Fetch members error:', e);

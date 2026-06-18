@@ -42,6 +42,8 @@ interface AuthContextType {
     isPremium: boolean;
     /** True when org is on Basic plan (or free/None) — opposite of isPremium (excluding locked) */
     isBasic: boolean;
+    managedMemberIds: string[] | null;
+    managedProjectIds: string[] | null;
     aalLevel: 'aal1' | 'aal2' | null;
     nextAalLevel: 'aal1' | 'aal2' | null;
     refreshAal: () => Promise<{ currentLevel: 'aal1' | 'aal2'; nextLevel: 'aal1' | 'aal2' } | null>;
@@ -69,6 +71,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [organization, setOrganization] = useState<OrganizationProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [managedMemberIds, setManagedMemberIds] = useState<string[] | null>(null);
+    const [managedProjectIds, setManagedProjectIds] = useState<string[] | null>(null);
     const [aalLevel, setAalLevel] = useState<'aal1' | 'aal2' | null>(null);
     const [nextAalLevel, setNextAalLevel] = useState<'aal1' | 'aal2' | null>(null);
 
@@ -175,8 +179,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 
                 if (orgError) console.error('[AuthContext] Org fetch error:', orgError);
                 setOrganization(org);
+                
+                if (member.role === 'Manager') {
+                    const { data: managedTeams } = await supabase.from('teams').select('id').eq('manager_id', member.id);
+                    const { data: leadTeams } = await supabase.from('team_members').select('team_id').eq('member_id', member.id).eq('is_lead', true);
+                    
+                    const teamIds = new Set([
+                        ...(managedTeams?.map(t => t.id) || []),
+                        ...(leadTeams?.map(t => t.team_id) || [])
+                    ]);
+
+                    if (teamIds.size > 0) {
+                        const { data: teamMembers } = await supabase.from('team_members').select('member_id').in('team_id', Array.from(teamIds));
+                        const { data: projectTeams } = await supabase.from('project_teams').select('project_id').in('team_id', Array.from(teamIds));
+                        
+                        // Managers always see themselves
+                        const memberIds = new Set([member.id, ...(teamMembers?.map(tm => tm.member_id) || [])]);
+                        setManagedMemberIds(Array.from(memberIds));
+                        setManagedProjectIds(projectTeams?.map(pt => pt.project_id) || []);
+                    } else {
+                        setManagedMemberIds([member.id]);
+                        setManagedProjectIds([]);
+                    }
+                } else {
+                    setManagedMemberIds(null);
+                    setManagedProjectIds(null);
+                }
             } else {
                 setOrganization(null);
+                setManagedMemberIds(null);
+                setManagedProjectIds(null);
             }
 
             setError(null);
@@ -205,6 +237,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         setProfile(null);
         setOrganization(null);
+        setManagedMemberIds(null);
+        setManagedProjectIds(null);
         setAalLevel(null);
         setNextAalLevel(null);
     };
@@ -234,6 +268,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         .eq('id', member.organization_id)
                         .single();
                     setOrganization(org);
+
+                    if (member.role === 'Manager') {
+                        const { data: managedTeams } = await supabase.from('teams').select('id').eq('manager_id', member.id);
+                        const { data: leadTeams } = await supabase.from('team_members').select('team_id').eq('member_id', member.id).eq('is_lead', true);
+                        
+                        const teamIds = new Set([
+                            ...(managedTeams?.map(t => t.id) || []),
+                            ...(leadTeams?.map(t => t.team_id) || [])
+                        ]);
+
+                        if (teamIds.size > 0) {
+                            const { data: teamMembers } = await supabase.from('team_members').select('member_id').in('team_id', Array.from(teamIds));
+                            const { data: projectTeams } = await supabase.from('project_teams').select('project_id').in('team_id', Array.from(teamIds));
+                            
+                            const memberIds = new Set([member.id, ...(teamMembers?.map(tm => tm.member_id) || [])]);
+                            setManagedMemberIds(Array.from(memberIds));
+                            setManagedProjectIds(projectTeams?.map(pt => pt.project_id) || []);
+                        } else {
+                            setManagedMemberIds([member.id]);
+                            setManagedProjectIds([]);
+                        }
+                    } else {
+                        setManagedMemberIds(null);
+                        setManagedProjectIds(null);
+                    }
+                } else {
+                    setManagedMemberIds(null);
+                    setManagedProjectIds(null);
                 }
 
                 await fetchAal();
@@ -287,6 +349,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             refreshAal,
             refreshProfile,
             refreshOrganization,
+            managedMemberIds,
+            managedProjectIds,
             signOut,
         }}>
             {children}
