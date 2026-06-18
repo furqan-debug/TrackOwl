@@ -275,8 +275,7 @@ export function Timesheets() {
                     let effectiveEndMs = nowMs;
                     if (s.ended_at) {
                         effectiveEndMs = new Date(s.ended_at).getTime();
-                    } else if (nowMs - lastSampleTime > 15 * 60000) {
-                        // If no activity for 15 mins, don't assume it's still running
+                    } else {
                         effectiveEndMs = lastSampleTime;
                     }
 
@@ -294,7 +293,8 @@ export function Timesheets() {
                         offline_mins: offlineMins,
                         user_name: member?.full_name || 'System User',
                         display_timezone: tz,
-                        is_active: isTrulyActive // Add this to the session object
+                        is_active: isTrulyActive,
+                        effective_end: new Date(effectiveEndMs).toISOString()
                     });
                 }
             });
@@ -573,6 +573,9 @@ function DailyView({ entries, selectedMember, toProperCase }: {
 
             if (s.is_active) {
                 row.is_active = true;
+                if (s.effective_end && (!row.max_end || new Date(s.effective_end) > new Date(row.max_end))) {
+                    row.max_end = s.effective_end;
+                }
             } else if (s.ended_at && (!row.max_end || new Date(s.ended_at) > new Date(row.max_end))) {
                 row.max_end = s.ended_at;
             }
@@ -594,12 +597,9 @@ function DailyView({ entries, selectedMember, toProperCase }: {
 
     const renderTimeDisplay = (s: any) => {
         const startTime = s.isAggregated ? s.min_start : s.started_at;
-        const endTime = s.isAggregated ? s.max_end : s.ended_at;
-        const active = s.is_active;
+        const endTime = s.isAggregated ? s.max_end : (s.effective_end || s.ended_at);
 
         const start = new Date(startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase();
-
-        if (active) return `${start} – Now`;
 
         const end = endTime ?
             new Date(endTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase() :
