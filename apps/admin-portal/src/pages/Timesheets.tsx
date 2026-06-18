@@ -32,6 +32,7 @@ interface Session {
     user_name?: string;
     display_timezone?: string;
     is_active?: boolean;
+    effective_end?: string;
 }
 
 interface DailyEntry {
