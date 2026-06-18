@@ -336,6 +336,7 @@ export function Timesheets() {
             const { error } = await supabase.from('sessions').insert({
                 project_id: addTimeData.projectId,
                 user_id: addTimeData.userId,
+                organization_id: organizationId,
                 started_at: new Date(startStr).toISOString(),
                 ended_at: new Date(endStr).toISOString(),
                 manual: true
