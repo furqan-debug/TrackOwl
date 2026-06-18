@@ -6,6 +6,8 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
     error?: string;
     /** Optional icon on the left */
     leftIcon?: React.ReactNode;
+    /** Optional element on the right */
+    rightElement?: React.ReactNode;
     className?: string;
 }
 
@@ -13,6 +15,7 @@ export function Input({
     label,
     error,
     leftIcon,
+    rightElement,
     className,
     id,
     ...rest
@@ -44,6 +47,11 @@ export function Input({
                     )}
                     {...rest}
                 />
+                {rightElement && (
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                        {rightElement}
+                    </div>
+                )}
             </div>
             {error && (
                 <p className="mt-2 text-[11px] font-bold text-rose-500 ml-1 ">{error}</p>
