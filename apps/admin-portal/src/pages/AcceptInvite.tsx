@@ -234,9 +234,7 @@ export function AcceptInvite() {
             <div className="relative z-10 w-full max-w-[480px]">
                 <div className="mb-8 text-center">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass mb-6">
-                        <div className="w-5 h-5 rounded-md bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                             <div className="w-2.5 h-2.5 border-2 border-white rounded-[1px] rotate-45" />
-                        </div>
+                        <img src="/logo.png" alt="TrackOwl Logo" className="w-5 h-5 object-contain" />
                         <span className="text-[10px] font-bold tracking-[0.2em] text-text-secondary">TrackOwl Invitation</span>
                     </div>
                     
@@ -280,6 +278,7 @@ export function AcceptInvite() {
                                     placeholder="At least 8 characters"
                                     leftIcon={<Lock className="w-4 h-4 text-text-muted" />}
                                     className="pr-10"
+                                    error={password.length > 0 && password.length < 8 ? "Password must be at least 8 characters" : undefined}
                                 />
                                 <button
                                     type="button"
