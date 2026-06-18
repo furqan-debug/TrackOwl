@@ -4,7 +4,8 @@ import {
     ChevronLeft, ChevronRight,
     Users,
     Plus, Filter,
-    Clock, FolderOpen
+    Clock, FolderOpen,
+    MoreVertical, Edit2, Trash2
 } from 'lucide-react';
 import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker } from '../components/ui';
 import clsx from 'clsx';
@@ -87,6 +88,11 @@ export function Timesheets() {
         startTime: '09:00',
         endTime: '17:00'
     });
+
+    const [showEditTimeModal, setShowEditTimeModal] = useState(false);
+    const [editingSession, setEditingSession] = useState<Session | null>(null);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    const [deletingSession, setDeletingSession] = useState<Session | null>(null);
 
     const range = useMemo(() => {
         const start = new Date(selectedDate);
@@ -343,12 +349,66 @@ export function Timesheets() {
             } as any);
             if (error) throw error;
             setShowAddTime(false);
-            fetchTimesheets();
+            fetchTimesheets(true);
         } catch (err) {
             console.error('Failed to add manual time:', err);
             alert('Error adding manual time entry.');
         }
     }
+
+    async function handleEditSubmit() {
+        if (!editingSession || !addTimeData.projectId || !addTimeData.userId) return;
+        try {
+            const startStr = `${addTimeData.date}T${addTimeData.startTime}:00`;
+            const endStr = `${addTimeData.date}T${addTimeData.endTime}:00`;
+            const { error } = await supabase.from('sessions').update({
+                project_id: addTimeData.projectId,
+                user_id: addTimeData.userId,
+                started_at: new Date(startStr).toISOString(),
+                ended_at: new Date(endStr).toISOString()
+            }).eq('id', editingSession.id);
+            if (error) throw error;
+            setShowEditTimeModal(false);
+            setEditingSession(null);
+            fetchTimesheets(true);
+        } catch (err) {
+            console.error('Failed to edit manual time:', err);
+            alert('Error editing time entry.');
+        }
+    }
+
+    async function handleDeleteSubmit() {
+        if (!deletingSession) return;
+        try {
+            const { error } = await supabase.from('sessions').delete().eq('id', deletingSession.id);
+            if (error) throw error;
+            setShowDeleteConfirm(false);
+            setDeletingSession(null);
+            fetchTimesheets(true);
+        } catch (err) {
+            console.error('Failed to delete time:', err);
+            alert('Error deleting time entry.');
+        }
+    }
+
+    const openEditModal = (session: Session) => {
+        const start = new Date(session.started_at);
+        const end = session.ended_at ? new Date(session.ended_at) : new Date(session.effective_end || new Date());
+        setAddTimeData({
+            projectId: session.project_id || '',
+            userId: session.user_id || '',
+            date: start.toISOString().split('T')[0],
+            startTime: start.toTimeString().substring(0, 5),
+            endTime: end.toTimeString().substring(0, 5)
+        });
+        setEditingSession(session);
+        setShowEditTimeModal(true);
+    };
+
+    const openDeleteModal = (session: Session) => {
+        setDeletingSession(session);
+        setShowDeleteConfirm(true);
+    };
 
     const navigateDate = (direction: number) => {
         const next = new Date(selectedDate);
@@ -433,7 +493,16 @@ export function Timesheets() {
                         <Filter className="w-4 h-4" /> Filter
                     </button>
 
-                    <button onClick={() => setShowAddTime(true)} className="flex items-center gap-3 px-8 h-12 bg-primary text-white rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">
+                    <button onClick={() => {
+                        setAddTimeData({
+                            projectId: '',
+                            userId: '',
+                            date: new Date().toISOString().split('T')[0],
+                            startTime: '09:00',
+                            endTime: '17:00'
+                        });
+                        setShowAddTime(true);
+                    }} className="flex items-center gap-3 px-8 h-12 bg-primary text-white rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">
                         <Plus className="w-5 h-5" /> Add time
                     </button>
                 </div>
@@ -444,7 +513,7 @@ export function Timesheets() {
             <main className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar">
                 {loading ? <div className="flex items-center justify-center h-64"><LoadingState /></div> : (
                     <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-1 duration-400">
-                        {viewMode === 'daily' && <DailyView entries={entries} selectedMember={selectedMember} toProperCase={toProperCase} />}
+                        {viewMode === 'daily' && <DailyView entries={entries} selectedMember={selectedMember} toProperCase={toProperCase} onEditSession={openEditModal} onDeleteSession={openDeleteModal} />}
                         {viewMode === 'weekly' && <WeeklyView entries={entries} onNavigate={(d) => { setSelectedDate(new Date(d + 'T12:00:00')); setViewMode('daily'); }} />}
                         {viewMode === 'calendar' && <CalendarView entries={entries} />}
                     </div>
@@ -481,7 +550,7 @@ export function Timesheets() {
                                 onChange={(val) => setAddTimeData({ ...addTimeData, userId: val })}
                                 options={[
                                     { id: '', name: 'Select member...' },
-                                    ...members.map(m => ({ id: m.id, name: m.full_name }))
+                                    ...members.map(m => ({ id: m.auth_user_id || m.id, name: m.full_name }))
                                 ]}
                             />
                         </div>
@@ -522,11 +591,74 @@ export function Timesheets() {
                     </div>
                 </div>
             </Modal>
+
+            <Modal isOpen={showEditTimeModal} onClose={() => setShowEditTimeModal(false)} title="Edit Time Entry">
+                <div className="space-y-5 py-4">
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-text-muted ">Team Member</label>
+                        <div className="h-11">
+                            <FilterSelect
+                                icon={<Users className="w-3.5 h-3.5" />}
+                                value={addTimeData.userId}
+                                onChange={(val) => setAddTimeData({ ...addTimeData, userId: val })}
+                                options={[
+                                    { id: '', name: 'Select member...' },
+                                    ...members.map(m => ({ id: m.auth_user_id || m.id, name: m.full_name }))
+                                ]}
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-text-muted ">Project</label>
+                        <div className="h-11">
+                            <FilterSelect
+                                icon={<FolderOpen className="w-3.5 h-3.5" />}
+                                value={addTimeData.projectId}
+                                onChange={(val) => setAddTimeData({ ...addTimeData, projectId: val })}
+                                options={[
+                                    { id: '', name: 'Select project...' },
+                                    ...projects.map(p => ({ id: p.id, name: p.name }))
+                                ]}
+                            />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-[10px] font-bold text-text-muted ">Date</label>
+                        <DatePicker
+                            value={addTimeData.date}
+                            onChange={(val) => setAddTimeData({ ...addTimeData, date: val })}
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-text-muted ">Start</label>
+                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({ ...addTimeData, startTime: e.target.value })} />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-text-muted ">End</label>
+                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({ ...addTimeData, endTime: e.target.value })} />
+                        </div>
+                    </div>
+                    <div className="flex justify-end pt-2">
+                        <button onClick={handleEditSubmit} className="px-8 h-11 bg-primary text-white rounded-md text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">Save Changes</button>
+                    </div>
+                </div>
+            </Modal>
+
+            <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Delete Time Entry">
+                <div className="space-y-6 py-4">
+                    <p className="text-[14px] text-text-muted">Are you sure you want to delete this time entry? This action cannot be undone.</p>
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button onClick={() => setShowDeleteConfirm(false)} className="px-6 h-11 bg-surface-hover border border-border text-text-muted rounded-md text-[11px] font-bold shadow-shell-sm hover:text-text-main transition-all">Cancel</button>
+                        <button onClick={handleDeleteSubmit} className="px-8 h-11 bg-red-500 text-white rounded-md text-[11px] font-bold shadow-shell-sm hover:bg-red-600 transition-all">Delete Entry</button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
 
-function DailyView({ entries, selectedMember, toProperCase }: {
+function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDeleteSession }: {
     entries: DailyEntry[],
     selectedMember: string,
     toProperCase: (s: string) => string
@@ -637,15 +769,16 @@ function DailyView({ entries, selectedMember, toProperCase }: {
                 })}
             </div>
 
-            <div className="bg-surface rounded-md border border-border shadow-shell-sm overflow-hidden">
+            <div className="bg-surface rounded-md border border-border shadow-shell-sm overflow-visible">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
                         <tr className="bg-surface-hover/30">
-                            <th className="py-6 px-10 text-[11px] font-bold text-text-muted border-b border-border uppercase tracking-widest">Scope & Member</th>
-                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest">Score</th>
-                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest">Idle</th>
-                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest">Duration</th>
-                            <th className="py-6 px-10 text-[11px] font-bold text-text-muted border-b border-border text-right uppercase tracking-widest">Window</th>
+                            <th className="py-6 px-10 text-[11px] font-bold text-text-muted border-b border-border uppercase tracking-widest w-1/3">Scope & Member</th>
+                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Score</th>
+                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Idle</th>
+                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Duration</th>
+                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-right uppercase tracking-widest">Window</th>
+                            <th className="py-6 px-4 border-b border-border w-12"></th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -669,7 +802,7 @@ function DailyView({ entries, selectedMember, toProperCase }: {
                                 </td>
                                 <td className="py-8 px-6 text-center text-[15px] font-bold text-text-muted tabular-nums">{s.idle_percent}%</td>
                                 <td className="py-8 px-6 text-center text-[18px] font-bold text-text-main tabular-nums">{formatDuration((s.duration_mins || 0) + (s.offline_mins || 0))}</td>
-                                <td className="py-8 px-10 text-right">
+                                <td className="py-8 px-6 text-right">
                                     <div className="flex flex-col items-end gap-1">
                                         <span className="text-[14px] font-bold text-text-muted tabular-nums">
                                             {renderTimeDisplay(s)}
@@ -680,6 +813,23 @@ function DailyView({ entries, selectedMember, toProperCase }: {
                                             </span>
                                         )}
                                     </div>
+                                </td>
+                                <td className="py-8 px-4 text-center">
+                                    {!s.isAggregated && (
+                                        <div className="relative group/actions inline-block text-left">
+                                            <button className="p-2 hover:bg-surface-hover rounded-md text-text-muted hover:text-text-main transition-colors">
+                                                <MoreVertical className="w-5 h-5" />
+                                            </button>
+                                            <div className="absolute right-0 top-full mt-1 w-36 bg-surface border border-border rounded-lg shadow-shell-md opacity-0 invisible group-hover/actions:opacity-100 group-hover/actions:visible transition-all z-50 overflow-hidden">
+                                                <button onClick={() => onEditSession(s)} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2">
+                                                    <Edit2 className="w-4 h-4 text-text-muted" /> Edit Time
+                                                </button>
+                                                <button onClick={() => onDeleteSession(s)} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 flex items-center gap-2 border-t border-border/50">
+                                                    <Trash2 className="w-4 h-4" /> Delete Time
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </td>
                             </tr>
                         ))}
