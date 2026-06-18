@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
-    Users, Search, Trash2, Shield, LayoutGrid, List,
+    Search, Trash2, LayoutGrid, List,
     UsersRound, Plus, Pencil, Check,
-    Briefcase, Info, User
+    Briefcase, Info
 } from 'lucide-react';
 import clsx from 'clsx';
 import { supabase } from '../lib/supabase';
@@ -133,33 +133,6 @@ export function Teams() {
         manage_financials: false,
         receive_notifications: true
     };
-
-    function toggleLead(memberId: string) {
-        const next = new Set(selectedLeadIds);
-        if (next.has(memberId)) {
-            next.delete(memberId);
-            const nextPerms = { ...leadPermissions };
-            delete nextPerms[memberId];
-            setLeadPermissions(nextPerms);
-        } else {
-            next.add(memberId);
-            setLeadPermissions({
-                ...leadPermissions,
-                [memberId]: { ...DEFAULT_PERMISSIONS }
-            });
-        }
-        setSelectedLeadIds(next);
-    }
-
-    function updateLeadPermission(memberId: string, key: keyof LeadPermissions, value: boolean) {
-        setLeadPermissions({
-            ...leadPermissions,
-            [memberId]: {
-                ...leadPermissions[memberId],
-                [key]: value
-            }
-        });
-    }
 
     async function handleSave() {
         setLoading(true);
