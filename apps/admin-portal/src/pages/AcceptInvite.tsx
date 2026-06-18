@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { User, Phone, Lock, Eye, EyeOff, AlertCircle, Rocket, Download, LayoutDashboard, ArrowRight } from 'lucide-react';
+import { User, Phone, Lock, Eye, EyeOff, AlertCircle, Rocket, Download, LayoutDashboard, ArrowRight, Apple, Monitor } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
@@ -187,13 +187,27 @@ export function AcceptInvite() {
                                             ))}
                                         </div>
                                     </div>
-                                    <Button 
-                                        className="w-full py-4 text-base" 
-                                        leftIcon={<Download className="w-5 h-5" />}
-                                        onClick={() => window.location.href = '/#download'}
-                                    >
-                                        Download Tracker App
-                                    </Button>
+                                    <div className="space-y-3 pt-2">
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <Button 
+                                                className="w-full py-4 text-sm font-semibold bg-gradient-to-b from-[#0078D7] to-[#005a9e] hover:from-[#006abc] hover:to-[#004d8c] text-white border-none shadow-lg shadow-[#0078D7]/20"
+                                                leftIcon={<Monitor className="w-5 h-5" />}
+                                                onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_x64_en-US.msi'}
+                                            >
+                                                Windows
+                                            </Button>
+                                            <Button 
+                                                className="w-full py-4 text-sm font-semibold bg-gradient-to-b from-[#2d2d2d] to-[#111111] hover:from-[#1f1f1f] hover:to-[#000000] text-white border-none shadow-lg shadow-black/20"
+                                                leftIcon={<Apple className="w-5 h-5" />}
+                                                onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_aarch64.dmg'}
+                                            >
+                                                macOS
+                                            </Button>
+                                        </div>
+                                        <p className="text-center text-[11px] font-medium text-text-muted">
+                                            Using an older Intel Mac? <a href="https://github.com/furqan-debug/TrackOwl/releases/download/v1.4.7/TrackOwl_1.4.7_x64.dmg" className="text-indigo-500 hover:text-indigo-400 hover:underline transition-colors">Download Intel version</a>
+                                        </p>
+                                    </div>
                                 </div>
                             ) : (
                                 <div className="space-y-6 text-center">
