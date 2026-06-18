@@ -187,7 +187,11 @@ export function AcceptInvite() {
                                             ))}
                                         </div>
                                     </div>
-                                    <Button className="w-full py-4 text-base" leftIcon={<Download className="w-5 h-5" />}>
+                                    <Button 
+                                        className="w-full py-4 text-base" 
+                                        leftIcon={<Download className="w-5 h-5" />}
+                                        onClick={() => window.location.href = '/#download'}
+                                    >
                                         Download Tracker App
                                     </Button>
                                 </div>

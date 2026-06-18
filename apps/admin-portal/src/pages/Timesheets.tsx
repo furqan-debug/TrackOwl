@@ -57,7 +57,7 @@ let timesheetsCache: any = null;
 let timesheetsCacheKey: string | null = null;
 
 export function Timesheets() {
-    const { profile } = useAuth();
+    const { profile, managedMemberIds, managedProjectIds } = useAuth();
     const organizationId = profile?.organization_id;
     const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'calendar'>('daily');
     const [entries, setEntries] = useState<DailyEntry[]>([]);
@@ -130,19 +130,31 @@ export function Timesheets() {
     }, [range, selectedMember, filterProjectId, activeTimezone, members, projects, organizationId]);
 
     async function fetchMembers() {
-        const { data } = await supabase.from('members')
+        let query = supabase.from('members')
             .select('id, auth_user_id, full_name, timezone, idle_limit')
             .eq('organization_id', organizationId)
             .order('full_name');
+            
+        if (profile?.role === 'Manager' && managedMemberIds) {
+            query = query.in('id', managedMemberIds);
+        }
+        
+        const { data } = await query;
         setMembers(data as MemberInfo[] || []);
     }
 
     async function fetchProjects() {
-        const { data } = await supabase.from('projects')
+        let query = supabase.from('projects')
             .select('id, name')
             .eq('organization_id', organizationId)
             .eq('status', 'Active')
             .order('name');
+            
+        if (profile?.role === 'Manager' && managedProjectIds) {
+            query = query.in('id', managedProjectIds);
+        }
+        
+        const { data } = await query;
         setProjects(data || []);
     }
 
@@ -171,10 +183,26 @@ export function Timesheets() {
                 const userIds = Array.from(new Set([member?.id, member?.auth_user_id].filter(Boolean) as string[]));
                 if (userIds.length > 0) {
                     query = query.in('user_id', userIds);
+                } else {
+                    query = query.in('user_id', ['none']);
+                }
+            } else if (profile?.role === 'Manager') {
+                const userIds = Array.from(new Set(members.flatMap(m => [m.id, m.auth_user_id].filter(Boolean) as string[])));
+                if (userIds.length > 0) {
+                    query = query.in('user_id', userIds);
+                } else {
+                    query = query.in('user_id', ['none']);
                 }
             }
+            
             if (filterProjectId !== 'all' && filterProjectId !== '') {
                 query = query.eq('project_id', filterProjectId);
+            } else if (profile?.role === 'Manager' && managedProjectIds) {
+                if (managedProjectIds.length > 0) {
+                    query = query.in('project_id', managedProjectIds);
+                } else {
+                    query = query.in('project_id', ['none']);
+                }
             }
 
             const { data: rawSessions, error: sessionErr } = await query;

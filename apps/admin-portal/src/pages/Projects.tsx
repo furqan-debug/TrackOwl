@@ -52,7 +52,7 @@ let projectsCache: any = null;
 let projectsCacheKey: string | null = null;
 
 export function Projects() {
-    const { profile } = useAuth();
+    const { profile, managedProjectIds } = useAuth();
     const isViewer = profile?.role === 'Viewer';
     const navigate = useNavigate();
 
@@ -75,7 +75,7 @@ export function Projects() {
         else setRefreshing(true);
 
         try {
-            const { data, error } = await supabase
+            let query = supabase
                 .from('projects')
                 .select(`
                     *,
@@ -86,6 +86,16 @@ export function Projects() {
                 `)
                 .eq('status', activeTab)
                 .order('created_at', { ascending: false });
+                
+            if (profile?.role === 'Manager' && managedProjectIds) {
+                if (managedProjectIds.length > 0) {
+                    query = query.in('id', managedProjectIds);
+                } else {
+                    query = query.in('id', ['none']);
+                }
+            }
+
+            const { data, error } = await query;
 
             if (error) throw error;
 

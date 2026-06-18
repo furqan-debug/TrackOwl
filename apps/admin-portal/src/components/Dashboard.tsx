@@ -88,7 +88,7 @@ interface DashStats {
     trendProductivity: number;
 }
 export function Dashboard() {
-    const { profile, isPremium } = useAuth();
+    const { profile, managedMemberIds, managedProjectIds, isPremium } = useAuth();
     const organizationId = profile?.organization_id;
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -185,22 +185,44 @@ export function Dashboard() {
             prevWeekEnd.setDate(prevWeekEnd.getDate() - 7);
             const prevWeekEndIso = prevWeekEnd.toISOString();
 
+            let membersQuery = supabase.from('members').select('id, full_name, avatar_url, status, email, idle_limit').eq('organization_id', organizationId);
+            if (profile?.role === 'Manager' && managedMemberIds) membersQuery = membersQuery.in('id', managedMemberIds);
+
+            let projectsQuery = supabase.from('projects').select('id, name, color').eq('organization_id', organizationId);
+            if (profile?.role === 'Manager' && managedProjectIds) projectsQuery = projectsQuery.in('id', managedProjectIds);
+
+            let sessionsQuery = supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').eq('organization_id', organizationId).gte('started_at', startIso).lte('started_at', endIso);
+            if (profile?.role === 'Manager' && managedMemberIds) sessionsQuery = sessionsQuery.in('user_id', managedMemberIds);
+
+            let prevSessionsQuery = supabase.from('sessions').select('id, user_id').eq('organization_id', organizationId).gte('started_at', prevWeekStartIso).lte('started_at', prevWeekEndIso);
+            if (profile?.role === 'Manager' && managedMemberIds) prevSessionsQuery = prevSessionsQuery.in('user_id', managedMemberIds);
+
             const [
                 { data: members },
                 { data: projects },
                 { data: sessions },
+                { data: prevSessions }
+            ] = await Promise.all([
+                membersQuery,
+                projectsQuery,
+                sessionsQuery,
+                prevSessionsQuery
+            ]);
+
+            const currentSessionIds = sessions?.map(s => s.id) || [];
+            const prevSessionIds = prevSessions?.map(s => s.id) || [];
+
+            let screenshotsQuery = supabase.from('screenshots').select('id, session_id, file_url, recorded_at').eq('organization_id', organizationId).gte('recorded_at', startIso).lte('recorded_at', endIso).order('recorded_at', { ascending: false }).limit(300);
+            if (profile?.role === 'Manager' && currentSessionIds.length > 0) screenshotsQuery = screenshotsQuery.in('session_id', currentSessionIds);
+
+            const [
                 { data: screenshots },
                 activitySamples,
-                { data: prevSessions },
                 prevActivitySamples
             ] = await Promise.all([
-                supabase.from('members').select('id, full_name, avatar_url, status, email, idle_limit').eq('organization_id', organizationId),
-                supabase.from('projects').select('id, name, color').eq('organization_id', organizationId),
-                supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').eq('organization_id', organizationId).gte('started_at', startIso).lte('started_at', endIso),
-                supabase.from('screenshots').select('id, session_id, file_url, recorded_at').eq('organization_id', organizationId).gte('recorded_at', startIso).lte('recorded_at', endIso).order('recorded_at', { ascending: false }).limit(300),
-                fetchAllActivitySamples(supabase, startIso, endIso, 'session_id, recorded_at, activity_percent, idle, app_name', { organizationId }),
-                supabase.from('sessions').select('id, user_id').eq('organization_id', organizationId).gte('started_at', prevWeekStartIso).lte('started_at', prevWeekEndIso),
-                fetchAllActivitySamples(supabase, prevWeekStartIso, prevWeekEndIso, 'session_id, recorded_at, activity_percent, idle', { organizationId })
+                currentSessionIds.length > 0 ? screenshotsQuery : { data: [] },
+                currentSessionIds.length > 0 ? fetchAllActivitySamples(supabase, startIso, endIso, 'session_id, recorded_at, activity_percent, idle, app_name', { organizationId, sessionIds: currentSessionIds }) : [],
+                prevSessionIds.length > 0 ? fetchAllActivitySamples(supabase, prevWeekStartIso, prevWeekEndIso, 'session_id, recorded_at, activity_percent, idle', { organizationId, sessionIds: prevSessionIds }) : []
             ]);
 
             if (!members || !projects || !sessions) return;

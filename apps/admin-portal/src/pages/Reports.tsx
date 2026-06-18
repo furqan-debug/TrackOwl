@@ -45,7 +45,7 @@ let reportsCache: any = null;
 let reportsCacheKey: string | null = null;
 
 export function Reports() {
-    const { profile } = useAuth();
+    const { profile, managedMemberIds } = useAuth();
     const organizationId = profile?.organization_id;
     const [range, setRange] = useState<Range>('Last 7 Days');
     const [offset, setOffset] = useState(0); // offset in days
@@ -111,11 +111,17 @@ export function Reports() {
     }
 
     async function fetchMembers() {
-        const { data } = await supabase.from('members')
+        let query = supabase.from('members')
             .select('id, auth_user_id, email, full_name, pay_rate, bill_rate, timezone, idle_limit, employee_id')
             .eq('organization_id', organizationId)
             .eq('status', 'Active')
             .order('full_name', { ascending: true });
+            
+        if (profile?.role === 'Manager' && managedMemberIds) {
+            query = query.in('id', managedMemberIds);
+        }
+
+        const { data } = await query;
         if (data) setMembers(data);
     }
 
