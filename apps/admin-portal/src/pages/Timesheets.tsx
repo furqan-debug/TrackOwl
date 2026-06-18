@@ -661,7 +661,9 @@ export function Timesheets() {
 function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDeleteSession }: {
     entries: DailyEntry[],
     selectedMember: string,
-    toProperCase: (s: string) => string
+    toProperCase: (s: string) => string,
+    onEditSession: (s: any) => void,
+    onDeleteSession: (s: any) => void
 }) {
     const day = entries[0];
 
