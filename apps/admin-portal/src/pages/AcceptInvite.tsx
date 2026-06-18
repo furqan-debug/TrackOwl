@@ -279,14 +279,16 @@ export function AcceptInvite() {
                                     leftIcon={<Lock className="w-4 h-4 text-text-muted" />}
                                     className="pr-10"
                                     error={password.length > 0 && password.length < 8 ? "Password must be at least 8 characters" : undefined}
+                                    rightElement={
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPw(!showPw)}
+                                            className="text-text-muted hover:text-text-primary transition-colors"
+                                        >
+                                            {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                        </button>
+                                    }
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPw(!showPw)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors mt-3"
-                                >
-                                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </button>
                             </div>
                         </div>
 
