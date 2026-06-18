@@ -100,7 +100,8 @@ export const teamService = {
         const memberInserts = Array.from(payload.selectedMemberIds).map(mid => ({
             team_id: teamId,
             member_id: mid,
-            is_lead: payload.selectedLeadIds.has(mid)
+            is_lead: payload.selectedLeadIds.has(mid),
+            organization_id: payload.organization_id
         }));
         await supabase.from('team_members').insert(memberInserts);
     }
@@ -121,6 +122,7 @@ export const teamService = {
         const permInserts = Array.from(payload.selectedLeadIds).map(mid => ({
             team_id: teamId,
             member_id: mid,
+            organization_id: payload.organization_id,
             ...(payload.leadPermissions[mid] || payload.defaultPermissions)
         }));
         await supabase.from('team_lead_permissions').insert(permInserts);

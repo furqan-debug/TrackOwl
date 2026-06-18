@@ -395,7 +395,7 @@ export function Timesheets() {
                             options={[
                                 { id: 'User Local', name: 'User Local (Auto)' },
                                 { id: 'UTC', name: 'UTC (Universal)' },
-                                ...Array.from(new Set(members.map(m => m.timezone).filter(Boolean))).sort().map(tz => ({ id: tz as string, name: tz as string }))
+                                ...Array.from(new Set(members.map(m => m.timezone).filter(tz => tz && tz !== 'UTC'))).sort().map(tz => ({ id: tz as string, name: tz as string }))
                             ]}
                         />
                     </div>

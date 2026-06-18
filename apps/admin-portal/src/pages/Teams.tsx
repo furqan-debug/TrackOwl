@@ -232,47 +232,33 @@ export function Teams() {
             }
         >
             <div className="space-y-8">
-                {/* Stats Row */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <Card className="!p-8 bg-surface-solid border-border shadow-shell-sm">
-                        <p className="text-[11px] font-bold text-text-muted mb-3">Total Teams</p>
-                        <h2 className="text-4xl font-bold text-text-primary tracking-tight">{teams.length}</h2>
-                    </Card>
-                    <Card className="!p-8 bg-surface-solid border-border shadow-shell-sm">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-[11px] font-bold text-text-muted mb-3">Total Members</p>
-                                <h2 className="text-4xl font-bold text-text-primary tracking-tight">
-                                    {teams.reduce((acc, t) => acc + (t.member_count || 0), 0)}
-                                </h2>
-                            </div>
-                            <div className="w-12 h-12 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-shell-sm mt-1">
-                                <Users className="w-6 h-6" strokeWidth={2} />
-                            </div>
+                {/* Compact Stats & Search Toolbar */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-solid border border-border p-4 rounded-xl shadow-shell-sm">
+                    <div className="flex items-center gap-8 px-2">
+                        <div className="flex flex-col">
+                            <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Total Teams</span>
+                            <span className="text-xl font-bold text-text-primary">{teams.length}</span>
                         </div>
-                    </Card>
-                    <Card className="!p-8 bg-surface-solid border-border shadow-shell-sm">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <p className="text-[11px] font-bold text-text-muted mb-3">Avg. Team Size</p>
-                                <h2 className="text-4xl font-bold text-text-primary tracking-tight">
-                                    {teams.length > 0 ? (teams.reduce((acc, t) => acc + (t.member_count || 0), 0) / teams.length).toFixed(1) : '0'}
-                                </h2>
-                            </div>
-                            <div className="w-12 h-12 rounded-xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary shadow-shell-sm mt-1">
-                                <Shield className="w-6 h-6" strokeWidth={2} />
-                            </div>
+                        <div className="w-px h-8 bg-border/60"></div>
+                        <div className="flex flex-col">
+                            <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Total Members</span>
+                            <span className="text-xl font-bold text-text-primary">{teams.reduce((acc, t) => acc + (t.member_count || 0), 0)}</span>
                         </div>
-                    </Card>
-                </div>
-                {/* Search Bar */}
-                <div className="max-w-2xl">
-                    <Input
-                        placeholder="Search teams or managers..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        leftIcon={<Search className="w-4 h-4" />}
-                    />
+                        <div className="w-px h-8 bg-border/60"></div>
+                        <div className="flex flex-col">
+                            <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Avg. Team Size</span>
+                            <span className="text-xl font-bold text-text-primary">{teams.length > 0 ? (teams.reduce((acc, t) => acc + (t.member_count || 0), 0) / teams.length).toFixed(1) : '0'}</span>
+                        </div>
+                    </div>
+                    
+                    <div className="w-full md:w-80">
+                        <Input
+                            placeholder="Search teams or managers..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            leftIcon={<Search className="w-4 h-4 text-text-muted" />}
+                        />
+                    </div>
                 </div>
 
                 {loading && teams.length === 0 ? (
@@ -311,7 +297,7 @@ export function Teams() {
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 title={editingTeam ? 'Edit Team' : 'Create New Team'}
-                subtitle={`Step ${wizardStep} of 4`}
+                subtitle={`Step ${wizardStep} of 3`}
                 footer={
                     <div className="flex items-center justify-between w-full">
                         <Button
@@ -323,7 +309,7 @@ export function Teams() {
                         </Button>
                         <div className="flex items-center gap-6">
                             <div className="flex gap-2">
-                                {[1, 2, 3, 4].map((s) => (
+                                {[1, 2, 3].map((s) => (
                                     <div
                                         key={s}
                                         className={clsx(
@@ -333,7 +319,7 @@ export function Teams() {
                                     />
                                 ))}
                             </div>
-                            {wizardStep < 4 ? (
+                            {wizardStep < 3 ? (
                                 <Button
                                     onClick={() => setWizardStep(wizardStep + 1)}
                                     disabled={wizardStep === 1 && !name}
@@ -456,87 +442,6 @@ export function Teams() {
                         <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <Shield className="w-5 h-5 text-primary" />
-                                    <p className="text-sm font-semibold text-text-primary">Assign Team Leads</p>
-                                </div>
-                                <StatusBadge variant={selectedLeadIds.size > 0 ? "success" : "default"}>
-                                    {selectedLeadIds.size} Leads
-                                </StatusBadge>
-                            </div>
-                            
-                            {selectedMemberIds.size === 0 ? (
-                                <div className="text-center py-20 bg-border/5 border border-dashed border-border rounded-2xl">
-                                    <Shield className="w-12 h-12 text-text-muted/20 mx-auto mb-4" />
-                                    <p className="text-sm text-text-muted">Add team members first to designate leads</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-6 max-h-[420px] overflow-y-auto pr-4 custom-scrollbar">
-                                    {Array.from(selectedMemberIds).map(mid => {
-                                        const member = members.find(m => m.id === mid);
-                                        const isLead = selectedLeadIds.has(mid);
-                                        if (!member) return null;
-
-                                        return (
-                                            <div key={mid} className={clsx(
-                                                "rounded-3xl border transition-all overflow-hidden",
-                                                isLead ? "bg-surface-solid border-primary/30 shadow-shell-md shadow-primary/5" : "bg-border/5 border-border"
-                                            )}>
-                                                <div className="p-5 flex items-center justify-between border-b border-border/40">
-                                                    <div className="flex items-center gap-4">
-                                                        <div className={clsx(
-                                                            "w-12 h-12 rounded-[18px] flex items-center justify-center transition-all",
-                                                            isLead ? "bg-primary text-white shadow-shell-md shadow-primary/20" : "bg-border/20 text-text-muted"
-                                                        )}>
-                                                            <User className="w-6 h-6" />
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-semibold text-text-primary text-sm leading-none mb-1">{member.full_name}</p>
-                                                            <p className="text-xs text-text-muted">{isLead ? 'Team Lead' : 'Member'}</p>
-                                                        </div>
-                                                    </div>
-                                                    <Button 
-                                                        variant={isLead ? "primary" : "secondary"}
-                                                        size="sm"
-                                                        onClick={() => toggleLead(mid)}
-                                                        className="px-6"
-                                                    >
-                                                        {isLead ? 'Remove Lead' : 'Make Lead'}
-                                                    </Button>
-                                                </div>
-
-                                                {isLead && (
-                                                    <div className="p-6 bg-surface-solid grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-400">
-                                                        {(Object.keys(DEFAULT_PERMISSIONS) as Array<keyof LeadPermissions>).map(key => (
-                                                            <button
-                                                                key={key as string}
-                                                                onClick={() => updateLeadPermission(mid, key, !leadPermissions[mid]?.[key])}
-                                                                className="flex items-center gap-4 text-left group"
-                                                            >
-                                                                <div className={clsx(
-                                                                    "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
-                                                                    leadPermissions[mid]?.[key] ? "bg-emerald-500 border-emerald-500 shadow-shell-sm shadow-emerald-500/20" : "border-border group-hover:border-text-muted/40"
-                                                                )}>
-                                                                    {leadPermissions[mid]?.[key] && <Check className="w-4 h-4 text-white stroke-[4]" />}
-                                                                </div>
-                                                                <span className="text-xs font-medium text-text-muted group-hover:text-text-primary transition-colors capitalize">
-                                                                    {(key as string).replace(/_/g, ' ')}
-                                                                </span>
-                                                            </button>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {wizardStep === 4 && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
                                     <Briefcase className="w-5 h-5 text-primary" />
                                     <p className="text-sm font-semibold text-text-primary">Link Projects</p>
                                 </div>
@@ -626,73 +531,77 @@ function TeamItem({ team, mode, onEdit, onDelete, isViewer }: {
     onDelete: () => void;
     isViewer: boolean;
 }) {
-    const initials = team.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase();
-
     if (mode === 'list') {
         return (
-            <div className="px-10 py-8 flex items-center group/row hover:bg-primary/[0.02] transition-all border-b last:border-0 border-border">
-                <div className="w-14 h-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-primary font-bold text-lg mr-8 shadow-shell-sm">
-                    {initials}
+            <div className="px-6 py-4 flex items-center group/row hover:bg-surface-hover transition-colors border-b last:border-0 border-border">
+                <div className="flex-1 min-w-0 pr-6">
+                    <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-bold text-text-primary text-sm tracking-tight truncate">{team.name}</h3>
+                    </div>
+                    <p className="text-xs text-text-muted font-medium truncate opacity-80">{team.description || 'No description provided'}</p>
                 </div>
-                <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-text-primary tracking-tight text-xl mb-1 group-hover/row:text-primary transition-colors">{team.name}</h3>
-                    <p className="text-xs text-text-muted font-medium truncate max-w-xl opacity-80">{team.description || 'No description provided'}</p>
+                
+                <div className="w-48 shrink-0 flex flex-col justify-center border-l border-border/50 pl-6">
+                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Manager</span>
+                    <span className="text-sm font-semibold text-text-primary truncate">{team.manager_name || 'Unassigned'}</span>
                 </div>
-                <div className="px-12 shrink-0 border-x border-border/60">
-                    <p className="text-[10px] font-bold text-text-muted mb-2">Members</p>
-                    <div className="flex items-center gap-3 text-primary font-bold">
-                        <UsersRound className="w-4 h-4" strokeWidth={2} />
-                        <span className="text-sm">{team.member_count}</span>
+                
+                <div className="w-32 shrink-0 flex flex-col justify-center border-l border-border/50 px-6">
+                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Members</span>
+                    <div className="flex items-center gap-1.5 text-text-primary font-semibold text-sm">
+                        <UsersRound className="w-3.5 h-3.5 text-text-muted" />
+                        {team.member_count}
                     </div>
                 </div>
-                <div className="flex items-center gap-3 ml-auto opacity-0 group-hover/row:opacity-100 transition-all translate-x-4 group-hover/row:translate-x-0">
-                    <Button variant="secondary" size="sm" onClick={onEdit} disabled={isViewer} className="shadow-shell-sm">
+
+                <div className="w-20 shrink-0 flex justify-end gap-1 opacity-0 group-hover/row:opacity-100 transition-opacity">
+                    <button onClick={onEdit} disabled={isViewer} className="p-1.5 rounded-md hover:bg-surface-solid text-text-muted hover:text-primary transition-colors">
                         <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button variant="danger" size="sm" onClick={onDelete} disabled={isViewer} className="shadow-shell-sm">
+                    </button>
+                    <button onClick={onDelete} disabled={isViewer} className="p-1.5 rounded-md hover:bg-surface-solid text-text-muted hover:text-rose-500 transition-colors">
                         <Trash2 className="w-4 h-4" />
-                    </Button>
+                    </button>
                 </div>
             </div>
         );
     }
 
     return (
-        <Card className="h-full flex flex-col group/card hover:border-primary/40 transition-all duration-500 bg-surface-solid border-border shadow-shell-sm hover:shadow-md" noPadding>
-            <div className="p-8 pb-0">
-                <div className="flex items-start justify-between mb-10">
-                    <div className="w-16 h-16 rounded-3xl bg-primary/5 border border-primary/10 flex items-center justify-center font-bold text-primary text-2xl shadow-shell-sm group-hover/card:scale-105 transition-transform duration-500">
-                        {initials}
+        <Card className="h-full flex flex-col group/card hover:border-text-muted/30 transition-colors bg-surface-solid border-border shadow-none" noPadding>
+            <div className="p-5 pb-4 flex-1">
+                <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-surface flex items-center justify-center border border-border">
+                            <Briefcase className="w-4 h-4 text-text-muted" />
+                        </div>
+                        <h3 className="text-base font-bold text-text-primary tracking-tight leading-tight">{team.name}</h3>
                     </div>
-                    <div className="flex gap-2">
-                        <Button variant="secondary" size="sm" onClick={onEdit} disabled={isViewer} className="shadow-shell-sm opacity-0 group-hover/card:opacity-100 transition-opacity">
-                            <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button variant="danger" size="sm" onClick={onDelete} disabled={isViewer} className="shadow-shell-sm opacity-0 group-hover/card:opacity-100 transition-opacity">
-                            <Trash2 className="w-4 h-4" />
-                        </Button>
+                    <div className="flex gap-1 -mt-1 -mr-1">
+                        <button onClick={onEdit} disabled={isViewer} className="p-1.5 rounded-md hover:bg-surface text-text-muted hover:text-primary transition-colors">
+                            <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                        <button onClick={onDelete} disabled={isViewer} className="p-1.5 rounded-md hover:bg-surface text-text-muted hover:text-rose-500 transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                     </div>
                 </div>
 
-                <h3 className="text-2xl font-bold text-text-primary tracking-tight mb-2 group-hover/card:text-primary transition-colors">{team.name}</h3>
-                <p className="text-sm font-medium text-text-muted leading-relaxed line-clamp-2 h-10 mb-8 opacity-70">
-                    {team.description || "No description provided for this team."}
+                <p className="text-xs font-medium text-text-muted leading-relaxed line-clamp-2">
+                    {team.description || "No description provided."}
                 </p>
             </div>
 
-            <div className="mt-auto p-8 pt-6 border-t border-border bg-border/[0.02] flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/5 flex items-center justify-center text-primary shadow-shell-sm">
-                        <Shield className="w-5 h-5" strokeWidth={2} />
-                    </div>
-                    <div>
-                        <p className="text-[10px] font-bold text-text-muted mb-1 opacity-60">Manager</p>
-                        <p className="text-sm font-bold text-text-primary truncate max-w-[140px] tracking-tight">{team.manager_name || 'Unassigned'}</p>
-                    </div>
+            <div className="px-5 py-3 border-t border-border bg-surface/50 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Manager</span>
+                    <span className="text-xs font-semibold text-text-primary truncate max-w-[120px]">{team.manager_name || 'Unassigned'}</span>
                 </div>
-                <div className="flex items-center gap-2.5 px-4 py-2 bg-surface-solid border border-border rounded-xl shadow-shell-sm">
-                    <UsersRound className="w-4 h-4 text-primary" strokeWidth={2} />
-                    <span className="text-sm font-bold text-text-primary">{team.member_count}</span>
+                <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider">Members</span>
+                    <div className="flex items-center gap-1.5 text-text-primary font-semibold text-xs">
+                        <UsersRound className="w-3 h-3 text-text-muted" />
+                        {team.member_count}
+                    </div>
                 </div>
             </div>
         </Card>
