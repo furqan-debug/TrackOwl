@@ -64,7 +64,7 @@ export function Timesheets() {
     const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'calendar'>('daily');
     const [entries, setEntries] = useState<DailyEntry[]>([]);
     const [members, setMembers] = useState<MemberInfo[]>([]);
-    const [activeTimezone, setActiveTimezone] = useState<string>('User Local');
+    const [activeTimezone, setActiveTimezone] = useState<string>('Admin Local');
     const [projects, setProjects] = useState<any[]>([]);
     const [selectedMember, setSelectedMember] = useState<string>('all');
     const [filterProjectId, setFilterProjectId] = useState<string>('all');
@@ -247,12 +247,14 @@ export function Timesheets() {
                 }
             }
 
+            const gridTz = (activeTimezone === 'User Local' || activeTimezone === 'Admin Local') ? undefined : activeTimezone;
+
             const dailyMap: Record<string, DailyEntry> = {};
             const numDays = viewMode === 'daily' ? 1 : 7;
             for (let i = 0; i < numDays; i++) {
                 const d = new Date(range.start);
                 d.setDate(range.start.getDate() + i);
-                const key = getGroupingDateInTz(d, undefined);
+                const key = getGroupingDateInTz(d, gridTz);
                 dailyMap[key] = { date: key, sessions: [], totalMinutes: 0, activeMinutes: 0, activityPercent: 0 };
             }
 
@@ -264,7 +266,11 @@ export function Timesheets() {
 
             sessions.forEach((s: Session) => {
                 const member = memberMap.get(s.user_id);
-                const tz = activeTimezone === 'User Local' ? (member?.timezone || undefined) : activeTimezone;
+                let tz;
+                if (activeTimezone === 'User Local') tz = member?.timezone || undefined;
+                else if (activeTimezone === 'Admin Local') tz = undefined;
+                else tz = activeTimezone;
+                
                 const dayKey = getGroupingDateInTz(s.started_at, tz);
                 const key = dailyMap[dayKey] ? dayKey : null;
 
@@ -453,6 +459,7 @@ export function Timesheets() {
                             value={activeTimezone}
                             onChange={setActiveTimezone}
                             options={[
+                                { id: 'Admin Local', name: 'Admin Local (Browser)' },
                                 { id: 'User Local', name: 'User Local (Auto)' },
                                 { id: 'UTC', name: 'UTC (Universal)' },
                                 ...Array.from(new Set(members.map(m => m.timezone).filter(tz => tz && tz !== 'UTC'))).sort().map(tz => ({ id: tz as string, name: tz as string }))
