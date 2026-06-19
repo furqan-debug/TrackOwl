@@ -253,7 +253,7 @@ export function Reports() {
         if (showEmpId) headers.push("Emp ID");
         if (showEmail) headers.push("Email");
         headers.push(...tableData.dates.map(d => new Date(d + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })), "Total", "Score");
-        csvContent += headers.join(",") + "\r\n";
+        csvContent += headers.map(h => `"${h}"`).join(",") + "\r\n";
 
         tableData.rows.forEach(row => {
             const rowData = [`"${row.fullName}"`];
@@ -267,9 +267,9 @@ export function Reports() {
             csvContent += rowData.join(",") + "\r\n";
         });
 
-        const totalsRow = ["Totals"];
-        if (showEmpId) totalsRow.push("");
-        if (showEmail) totalsRow.push("");
+        const totalsRow = [`"Totals"`];
+        if (showEmpId) totalsRow.push(`""`);
+        if (showEmail) totalsRow.push(`""`);
         totalsRow.push(
             ...tableData.dates.map(date => {
                 const dayTotal = tableData.rows.reduce((sum, r) => sum + (r.dailyMins[date] || 0), 0);
