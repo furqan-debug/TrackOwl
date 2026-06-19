@@ -52,7 +52,7 @@ serve(async (req) => {
       // Stripe quantity = billable seats only. Add 1 for the free owner seat
       // so seats_purchased reflects the true total available seats.
       const billableSeats = subscription.items.data[0]?.quantity ?? 1;
-      const totalSeats = billableSeats + 1;
+      let totalSeats = billableSeats + 1;
 
       // Map plan type from Stripe Price/Product ID
       const priceId = subscription.items.data[0]?.price.id;
