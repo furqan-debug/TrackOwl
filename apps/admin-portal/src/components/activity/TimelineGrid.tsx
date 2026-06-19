@@ -63,10 +63,10 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
                                         >
                                             {hasData && (
                                                 <>
-                                                    <span className="text-[13px] font-bold text-white leading-none z-10 transition-transform group-hover/block:scale-125 duration-500">
+                                                    <span className="text-[14px] font-bold text-white leading-none z-10 transition-transform group-hover/block:scale-125 duration-500">
                                                         {intensity}%
                                                     </span>
-                                                    <span className="text-[8px] font-black text-white/50 tracking-[0.1em] mt-1.5 z-10 opacity-0 group-hover/block:opacity-100 translate-y-1 group-hover/block:translate-y-0 transition-all duration-500">
+                                                    <span className="text-[9px] font-black text-white/50 tracking-[0.1em] mt-1.5 z-10 opacity-0 group-hover/block:opacity-100 translate-y-1 group-hover/block:translate-y-0 transition-all duration-500">
                                                         {block.minutesTracked}m trace
                                                     </span>
                                                     {/* Background Glow */}
