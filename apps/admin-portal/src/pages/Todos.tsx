@@ -46,9 +46,11 @@ export function Todos() {
     const [statusFilter, setStatusFilter] = useState('All');
     const [todos, setTodos] = useState<Todo[]>([]);
     const [projects, setProjects] = useState<Project[]>([]);
+    const [allMembers, setAllMembers] = useState<Array<{ id: string; full_name: string; email: string }>>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
+    const [assigneeSearch, setAssigneeSearch] = useState('');
 
     // Modal state
     const [showModal, setShowModal] = useState(false);
@@ -96,8 +98,10 @@ export function Todos() {
             }
 
             const { data: pData } = await supabase.from('projects').select('id, name').order('name');
+            const { data: mData } = await supabase.from('members').select('id, full_name, email').eq('status', 'Active').order('full_name');
             if (safeTodoData) setTodos(safeTodoData as Todo[]);
             if (pData) setProjects(pData);
+            if (mData) setAllMembers(mData);
         } catch (err) {
             console.error(err);
         } finally {
@@ -193,6 +197,7 @@ export function Todos() {
     function handleCloseModal() {
         setShowModal(false);
         setEditTodo(null);
+        setAssigneeSearch('');
     }
 
     const filteredTodos = useMemo(() => {
@@ -302,9 +307,52 @@ export function Todos() {
             </div>
 
             {/* MODALS remain similar in logic but use the new Input styles */}
-            <Modal isOpen={showModal} onClose={handleCloseModal} title={editTodo ? 'Refine Objective' : 'New objective'} subtitle="Specify deliverables and resource allocation.">
+            <Modal isOpen={showModal} onClose={handleCloseModal} title={editTodo ? 'Refine Objective' : 'New objective'} subtitle="Specify deliverables and resource allocation." allowOverflow={true}>
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <Input label="Title" required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="Deliverable name..." leftIcon={<Tag className="w-4 h-4" />} />
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between px-1">
+                            <label className="text-[10px] font-black text-text-muted uppercase tracking-wider">Assign Objectives To</label>
+                            <input
+                                type="text"
+                                placeholder="Search assignees..."
+                                value={assigneeSearch}
+                                onChange={e => setAssigneeSearch(e.target.value)}
+                                className="text-[11px] font-semibold text-text-main placeholder:text-slate-300 outline-none border border-border rounded-lg px-2.5 py-1 bg-surface-hover w-48 shadow-inner focus:border-primary/50 transition-colors"
+                            />
+                        </div>
+                        <div className="border border-border rounded-xl p-3 bg-surface-hover max-h-[160px] overflow-y-auto custom-scrollbar space-y-1.5 shadow-inner">
+                            {allMembers
+                                .filter(m => m.full_name.toLowerCase().includes(assigneeSearch.toLowerCase()) || m.email.toLowerCase().includes(assigneeSearch.toLowerCase()))
+                                .map(member => {
+                                    const isAssigned = formData.assignee_ids.includes(member.id);
+                                    return (
+                                        <label key={member.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-surface/50 cursor-pointer transition-all">
+                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
+                                                    {getInitials(member.full_name)}
+                                                </div>
+                                                <div className="truncate">
+                                                    <p className="text-[12px] font-bold text-text-main leading-tight">{member.full_name}</p>
+                                                    <p className="text-[9px] text-text-muted font-mono truncate">{member.email}</p>
+                                                </div>
+                                            </div>
+                                            <input
+                                                type="checkbox"
+                                                checked={isAssigned}
+                                                onChange={() => {
+                                                    const next = isAssigned 
+                                                        ? formData.assignee_ids.filter(id => id !== member.id)
+                                                        : [...formData.assignee_ids, member.id];
+                                                    setFormData({ ...formData, assignee_ids: next });
+                                                }}
+                                                className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
+                                            />
+                                        </label>
+                                    );
+                                })}
+                        </div>
+                    </div>
                     <div className="space-y-1.5">
                         <label className="text-[10px] font-black text-text-muted px-1">Context / Details</label>
                         <textarea rows={3} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="w-full px-4 py-3 bg-surface-hover border border-border rounded-xl text-sm font-medium text-text-main placeholder:text-slate-300 outline-none focus:border-primary transition-all resize-none" />
