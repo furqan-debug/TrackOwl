@@ -153,7 +153,7 @@ export function ProjectFormPage() {
                         Array.from(userIds).map(mid => ({ 
                             project_id: projectId, 
                             member_id: mid,
-                            organization_id: profile?.organization_id 
+                            organization_id: profile?.organization_id
                         }))
                     );
                     if (insMemErr) throw insMemErr;
@@ -167,8 +167,7 @@ export function ProjectFormPage() {
                     const { error: insTeamErr } = await supabase.from('project_teams').insert(
                         Array.from(teamIds).map(tid => ({ 
                             project_id: projectId, 
-                            team_id: tid,
-                            organization_id: profile?.organization_id
+                            team_id: tid
                         }))
                     );
                     if (insTeamErr) throw insTeamErr;

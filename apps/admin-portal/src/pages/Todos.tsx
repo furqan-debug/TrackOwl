@@ -5,8 +5,7 @@ import {
     User, Calendar, 
     LayoutGrid, List, MoreHorizontal, 
     Trash2, Tag, 
-    CheckSquare, ClipboardList, Timer, RefreshCw, 
-    Users
+    CheckSquare, ClipboardList, Timer, RefreshCw
 } from 'lucide-react';
 import { 
     PageLayout, Button, 
@@ -215,67 +214,69 @@ export function Todos() {
             description="Fine-grained management of project scope and team deliverables."
             actions={
                 <div className="flex items-center gap-4">
-                    <div className="flex bg-surface border border-border rounded-lg p-1 shadow-shell-sm">
-                        <button onClick={() => setViewMode('list')} className={clsx("p-1.5 rounded-md transition-all", viewMode === 'list' ? "bg-slate-900 text-white shadow-shell-sm" : "text-text-muted hover:text-slate-600")}>
+                    <div className="flex bg-surface border border-border rounded-xl p-1 shadow-shell-sm">
+                        <button onClick={() => setViewMode('list')} className={clsx("p-2 rounded-lg transition-all", viewMode === 'list' ? "bg-slate-900 text-white shadow-shell-sm" : "text-text-muted hover:text-slate-900 hover:bg-surface-hover")}>
                             <List className="w-4 h-4" />
                         </button>
-                        <button onClick={() => setViewMode('grid')} className={clsx("p-1.5 rounded-md transition-all", viewMode === 'grid' ? "bg-slate-900 text-white shadow-shell-sm" : "text-text-muted hover:text-slate-600")}>
+                        <button onClick={() => setViewMode('grid')} className={clsx("p-2 rounded-lg transition-all", viewMode === 'grid' ? "bg-slate-900 text-white shadow-shell-sm" : "text-text-muted hover:text-slate-900 hover:bg-surface-hover")}>
                             <LayoutGrid className="w-4 h-4" />
                         </button>
                     </div>
                     {!isViewer && (
-                        <Button onClick={handleOpenCreate} variant="primary" className="shadow-shell-sm px-6">
-                            <Plus className="w-4 h-4 mr-2" />
+                        <Button 
+                            onClick={handleOpenCreate} 
+                            variant="primary" 
+                            className="shadow-shell-sm h-12 px-8 rounded-xl font-bold text-[14px] flex items-center gap-3"
+                        >
+                            <Plus className="w-5 h-5" />
                             Add Task
                         </Button>
                     )}
                 </div>
             }
         >
-            <div className="flex flex-col gap-6 pb-20">
+            <div className="flex flex-col gap-8 pb-20">
                 
                 {/* 📊 KPI Strip */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <StatMetric icon={<Timer className="w-5 h-5" />} label="In Flight" value={todos.filter(t => t.status !== 'Done').length} sub="Pending objectives" />
-                    <StatMetric icon={<CheckSquare className="w-5 h-5" />} label="Resolved" value={todos.filter(t => t.status === 'Done').length} sub="Successfully closed" />
-                    <StatMetric icon={<ClipboardList className="w-5 h-5" />} label="Resource Load" value={todos.filter(t => getTodoAssigneeIds(t).length > 0).length} sub="Tasks with owners" />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 lg:gap-10">
+                    <StatMetric icon={<Timer className="w-5 h-5" />} label="In Flight" value={todos.filter(t => t.status !== 'Done').length} sub="Pending objectives" accent="brand-gradient" />
+                    <StatMetric icon={<CheckSquare className="w-5 h-5" />} label="Resolved" value={todos.filter(t => t.status === 'Done').length} sub="Successfully closed" accent="brand-gradient" />
+                    <StatMetric icon={<ClipboardList className="w-5 h-5" />} label="Resource Load" value={todos.filter(t => getTodoAssigneeIds(t).length > 0).length} sub="Tasks with owners" accent="brand-gradient" />
                 </div>
 
                 {/* 🏛️ Task Ledger Container */}
-                <div className="bg-surface border border-border rounded-xl shadow-shell-sm overflow-hidden flex flex-col min-h-[600px]">
-                    <div className="px-8 py-5 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface-hover/30">
-                        <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shadow-shell-sm">
-                                <Search className="w-4 h-4 text-text-muted" />
-                            </div>
-                            <div className="relative group min-w-[320px]">
-                                <input
-                                    type="text"
-                                    placeholder="Filter objectives..."
-                                    value={searchTerm}
-                                    onChange={e => setSearchTerm(e.target.value)}
-                                    className="w-full bg-transparent border-none text-sm font-black text-text-main tracking-tight placeholder:text-slate-300 outline-none"
-                                />
-                            </div>
+                <div className="bg-surface border border-border rounded-[24px] shadow-shell-sm overflow-hidden flex flex-col min-h-[600px]">
+                    <div className="px-8 py-6 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-surface shrink-0">
+                        <div className="relative group/search w-[420px]">
+                            <Search className="w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within/search:text-primary transition-colors" />
+                            <input
+                                type="text"
+                                placeholder="Filter objectives..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full h-12 pl-14 pr-6 bg-surface-solid border border-border rounded-xl text-[14px] font-medium text-text-main placeholder:text-text-muted/60 outline-none focus:border-primary shadow-shell-sm focus:shadow-shell transition-all duration-300"
+                            />
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <div className="flex bg-main/50 p-1 rounded-lg border border-border shadow-inner">
+                            <div className="bg-surface border border-border p-1.5 rounded-2xl flex items-center shadow-shell-sm">
                                 {['All', 'Todo', 'In Progress', 'Done'].map((s) => (
                                     <button
                                         key={s}
                                         onClick={() => setStatusFilter(s)}
                                         className={clsx(
-                                            "px-3 py-1 rounded-md text-[9px] font-black transition-all",
-                                            statusFilter === s ? "bg-surface text-text-main shadow-shell-sm border border-border" : "text-text-muted hover:text-slate-600"
+                                            "px-6 py-2.5 rounded-xl text-[13px] font-bold transition-all",
+                                            statusFilter === s
+                                                ? "bg-slate-900 text-white shadow-shell-sm"
+                                                : "text-text-muted hover:text-slate-900 hover:bg-surface-hover"
                                         )}
                                     >
                                         {s === 'Done' ? 'Closed' : s}
                                     </button>
                                 ))}
                             </div>
-                            <button onClick={() => fetchData(true)} className={clsx("p-2 bg-surface border border-border rounded-lg hover:bg-surface-hover transition-all text-text-muted shadow-shell-sm", refreshing && "animate-spin text-primary")}>
-                                <RefreshCw className="w-4 h-4" />
+                            <button onClick={() => fetchData(true)} className={clsx("w-12 h-12 flex items-center justify-center bg-surface border border-border rounded-xl hover:bg-surface-hover transition-all text-text-muted shadow-shell-sm", refreshing && "text-primary", "active:scale-95 duration-200")}>
+                                <RefreshCw className={clsx("w-5 h-5", refreshing && "animate-spin")} />
                             </button>
                         </div>
                     </div>
@@ -284,7 +285,7 @@ export function Todos() {
                         {filteredTodos.length === 0 ? (
                             <EmptyState icon={<CheckCircle2 />} title="Objectives Cleared" description="No tasks match your current criteria." />
                         ) : viewMode === 'list' ? (
-                            <div className="divide-y divide-slate-50">
+                            <div className="divide-y divide-slate-100/80">
                                 {filteredTodos.map((todo) => (
                                     <TodoListItem key={todo.id} todo={todo} onToggle={() => toggleStatus(todo)} onEdit={() => handleOpenEdit(todo)} onDelete={() => setDeletingTodo(todo)} isViewer={isViewer} />
                                 ))}
@@ -348,68 +349,194 @@ export function Todos() {
     );
 }
 
+function getInitials(nameOrEmail: string) {
+    if (!nameOrEmail) return '?';
+    const clean = nameOrEmail.includes('@') ? nameOrEmail.split('@')[0] : nameOrEmail;
+    const parts = clean.trim().split(/[\s._-]+/);
+    if (parts.length >= 2) {
+        return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+    return clean.charAt(0).toUpperCase();
+}
+
 function TodoListItem({ todo, onToggle, onEdit, onDelete, isViewer }: { todo: Todo; onToggle: () => void; onEdit: () => void; onDelete: () => void; isViewer: boolean }) {
     const assigneeNames = todo.todo_assignees?.map(a => a.members?.full_name).filter(Boolean) as string[] | undefined;
-    const assigneeLabel = assigneeNames && assigneeNames.length > 0 ? assigneeNames.join(', ') : todo.members?.full_name;
 
     return (
-        <div className="py-5 px-4 hover:bg-surface-hover/50 transition-all group flex items-start gap-5 rounded-xl border-b border-slate-50 last:border-0">
-            <button onClick={onToggle} disabled={isViewer} className={clsx("mt-1.5 shrink-0 transition-all", todo.status === 'Done' ? "text-emerald-500" : "text-text-muted hover:text-primary")}>
-                {todo.status === 'Done' ? <CheckCircle2 className="w-5 h-5 stroke-[2.5]" /> : <Circle className="w-5 h-5 stroke-[2.5]" />}
+        <div className="py-5 px-6 hover:bg-surface-hover/50 transition-all group flex items-center gap-6 border-b border-slate-100 last:border-0 rounded-2xl">
+            <button onClick={onToggle} disabled={isViewer} className={clsx("shrink-0 transition-all", todo.status === 'Done' ? "text-emerald-500" : "text-text-muted hover:text-primary")}>
+                {todo.status === 'Done' ? <CheckCircle2 className="w-6 h-6 stroke-[2.5]" /> : <Circle className="w-6 h-6 stroke-[2.5]" />}
             </button>
             <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-3 mb-1.5">
-                    <h4 className={clsx("text-sm font-black tracking-tight transition-all", todo.status === 'Done' ? "text-text-muted line-through" : "text-text-main")}>
+                <div className="flex items-center gap-3 mb-2.5">
+                    <h4 className={clsx("text-[15px] font-bold tracking-tight transition-all leading-tight", todo.status === 'Done' ? "text-text-muted line-through" : "text-text-main")}>
                         {todo.title}
                     </h4>
                     {todo.projects && (
-                        <span className="px-2 py-0.5 rounded text-[9px] font-black " style={{ backgroundColor: `${todo.projects.color}10`, color: todo.projects.color }}>
+                        <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-bold border" style={{ backgroundColor: `${todo.projects.color}10`, color: todo.projects.color, borderColor: `${todo.projects.color}20` }}>
                             {todo.projects.name}
                         </span>
                     )}
                 </div>
-                {todo.description && <p className={clsx("text-[11px] font-medium mb-3 line-clamp-1", todo.status === 'Done' ? "text-text-muted" : "text-text-muted")}>{todo.description}</p>}
+                {todo.description && (
+                    <p className={clsx("text-[12px] font-medium text-text-muted mb-3.5 line-clamp-1 leading-relaxed", todo.status === 'Done' && "line-through opacity-70")}>
+                        {todo.description}
+                    </p>
+                )}
                 <div className="flex items-center gap-5">
-                    {assigneeLabel && (
-                        <div className="flex items-center gap-2 text-[10px] font-black text-text-muted tracking-tight">
-                            <Users className="w-3.5 h-3.5" /> {assigneeLabel}
+                    {assigneeNames && assigneeNames.length > 0 ? (
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center -space-x-1.5 overflow-hidden">
+                                {assigneeNames.slice(0, 3).map((name, i) => (
+                                    <div
+                                        key={i}
+                                        className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-surface bg-primary/10 text-primary text-[10px] font-bold shadow-shell-sm"
+                                        title={name}
+                                    >
+                                        {getInitials(name)}
+                                    </div>
+                                ))}
+                                {assigneeNames.length > 3 && (
+                                    <div 
+                                        className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-surface bg-slate-900 text-white text-[9px] font-bold shadow-shell-sm"
+                                        title={assigneeNames.slice(3).join(', ')}
+                                    >
+                                        +{assigneeNames.length - 3}
+                                    </div>
+                                )}
+                            </div>
+                            <span className="text-[11px] font-bold text-text-muted">
+                                {assigneeNames[0].split(' ')[0]}{assigneeNames.length > 1 ? ` +${assigneeNames.length - 1}` : ''}
+                            </span>
                         </div>
-                    )}
+                    ) : todo.members?.full_name ? (
+                        <div className="flex items-center gap-2">
+                            <div
+                                className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-surface bg-primary/10 text-primary text-[10px] font-bold shadow-shell-sm"
+                                title={todo.members.full_name}
+                            >
+                                {getInitials(todo.members.full_name)}
+                            </div>
+                            <span className="text-[11px] font-bold text-text-muted">
+                                {todo.members.full_name.split(' ')[0]}
+                            </span>
+                        </div>
+                    ) : null}
+                    
                     {todo.due_date && (
-                        <div className={clsx("flex items-center gap-2 text-[10px] font-black tracking-tight", new Date(todo.due_date) < new Date() && todo.status !== 'Done' ? "text-rose-500" : "text-text-muted")}>
-                            <Calendar className="w-3.5 h-3.5" /> {new Date(todo.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        <div className={clsx(
+                            "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[11px] font-semibold tracking-tight shadow-shell-sm",
+                            new Date(todo.due_date) < new Date() && todo.status !== 'Done' 
+                                ? "bg-rose-50 border-rose-100 text-rose-500" 
+                                : "bg-surface border-border text-text-muted"
+                        )}>
+                            <Calendar className="w-3.5 h-3.5 opacity-70" /> 
+                            {new Date(todo.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                         </div>
                     )}
                 </div>
             </div>
-            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all shrink-0">
-                <button onClick={onEdit} className="p-2 text-text-muted hover:text-slate-900" title="Modify"><MoreHorizontal className="w-4 h-4" /></button>
-                <button onClick={onDelete} className="p-2 text-slate-100 hover:text-rose-500 transition-colors" title="Remove"><Trash2 className="w-4 h-4" /></button>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                <Button
+                    onClick={onEdit}
+                    variant="ghost"
+                    size="sm"
+                    className="w-9 h-9 p-0 rounded-lg text-text-muted hover:text-primary hover:bg-surface-hover hover:border hover:border-slate-200 flex items-center justify-center transition-all"
+                >
+                    <MoreHorizontal className="w-4 h-4" />
+                </Button>
+                <Button
+                    onClick={() => !isViewer && onDelete()}
+                    disabled={isViewer}
+                    variant="ghost"
+                    size="sm"
+                    className="w-9 h-9 p-0 rounded-lg text-text-muted hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-all"
+                >
+                    <Trash2 className="w-4 h-4" />
+                </Button>
             </div>
         </div>
     );
 }
 
 function TodoGridItem({ todo, onToggle, onEdit, onDelete, isViewer }: { todo: Todo; onToggle: () => void; onEdit: () => void; onDelete: () => void; isViewer: boolean }) {
+    const assigneeNames = todo.todo_assignees?.map(a => a.members?.full_name).filter(Boolean) as string[] | undefined;
+
     return (
-        <div className="bg-surface border border-border rounded-xl p-6 hover:shadow-lg hover:border-primary/20 transition-all group flex flex-col h-full relative overflow-hidden">
+        <div className="bg-surface border border-border rounded-2xl p-6 hover:shadow-elevated hover:border-primary/20 transition-all group flex flex-col h-full relative overflow-hidden">
             <div className="flex justify-between items-start mb-4">
-                <span className="px-2 py-0.5 rounded text-[9px] font-black bg-surface-hover text-text-muted border border-border">
-                    {todo.projects?.name || 'Sandbox'}
-                </span>
+                {todo.projects ? (
+                    <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-bold border" style={{ backgroundColor: `${todo.projects.color}10`, color: todo.projects.color, borderColor: `${todo.projects.color}20` }}>
+                        {todo.projects.name}
+                    </span>
+                ) : (
+                    <span className="px-2.5 py-0.5 rounded-lg text-[10px] font-bold bg-surface-hover text-text-muted border border-border">
+                        Sandbox
+                    </span>
+                )}
                 <button onClick={onToggle} disabled={isViewer} className={clsx("transition-all", todo.status === 'Done' ? "text-emerald-500" : "text-text-muted hover:text-primary")}>
                     {todo.status === 'Done' ? <CheckCircle2 className="w-5 h-5 stroke-[2.5]" /> : <Circle className="w-5 h-5 stroke-[2.5]" />}
                 </button>
             </div>
-            <button onClick={onEdit} className={clsx("text-base font-black mb-3 tracking-tight text-left leading-tight", todo.status === 'Done' ? "text-text-muted line-through" : "text-text-main hover:text-primary")}>
+            
+            <button onClick={onEdit} className={clsx("text-base font-bold mb-3 tracking-tight text-left leading-tight hover:text-primary transition-all", todo.status === 'Done' ? "text-text-muted line-through" : "text-text-main")}>
                 {todo.title}
             </button>
-            <div className="mt-auto pt-4 border-t border-slate-50 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-full bg-main flex items-center justify-center"><User className="w-3 h-3 text-text-muted" /></div>
-                    <span className="text-[10px] font-black text-text-muted ">{todo.members?.full_name?.split(' ')[0] || 'User'}</span>
+            
+            {todo.description && (
+                <p className={clsx("text-[12px] font-medium text-text-muted mb-4 line-clamp-3 leading-relaxed", todo.status === 'Done' && "line-through opacity-70")}>
+                    {todo.description}
+                </p>
+            )}
+
+            <div className="mt-auto pt-4 border-t border-border flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    {assigneeNames && assigneeNames.length > 0 ? (
+                        <div className="flex items-center -space-x-1.5 overflow-hidden">
+                            {assigneeNames.slice(0, 3).map((name, i) => (
+                                <div
+                                    key={i}
+                                    className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-surface bg-primary/10 text-primary text-[10px] font-bold shadow-shell-sm"
+                                    title={name}
+                                >
+                                    {getInitials(name)}
+                                </div>
+                            ))}
+                            {assigneeNames.length > 3 && (
+                                <div 
+                                    className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-surface bg-slate-900 text-white text-[9px] font-bold shadow-shell-sm"
+                                    title={assigneeNames.slice(3).join(', ')}
+                                >
+                                    +{assigneeNames.length - 3}
+                                </div>
+                            )}
+                        </div>
+                    ) : todo.members?.full_name ? (
+                        <div
+                            className="inline-flex items-center justify-center w-6 h-6 rounded-full border border-surface bg-primary/10 text-primary text-[10px] font-bold shadow-shell-sm"
+                            title={todo.members.full_name}
+                        >
+                            {getInitials(todo.members.full_name)}
+                        </div>
+                    ) : (
+                        <div className="w-6 h-6 rounded-full bg-main flex items-center justify-center"><User className="w-3 h-3 text-text-muted" /></div>
+                    )}
+                    <span className="text-[11px] font-bold text-text-muted">
+                        {assigneeNames && assigneeNames.length > 0 
+                            ? `${assigneeNames[0].split(' ')[0]}${assigneeNames.length > 1 ? ` +${assigneeNames.length - 1}` : ''}`
+                            : todo.members?.full_name?.split(' ')[0] || 'Unassigned'}
+                    </span>
                 </div>
-                <button onClick={() => !isViewer && onDelete()} className="opacity-0 group-hover:opacity-100 text-rose-300 hover:text-rose-500 transition-all"><Trash2 className="w-3.5 h-3.5" /></button>
+                
+                <div className="flex items-center gap-1.5">
+                    {todo.due_date && (
+                        <div className={clsx("flex items-center gap-1 text-[10px] font-bold text-text-muted", new Date(todo.due_date) < new Date() && todo.status !== 'Done' && "text-rose-500 bg-rose-50 px-1.5 py-0.5 rounded-md border border-rose-100")}>
+                            <Calendar className="w-3 h-3" />
+                            {new Date(todo.due_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                        </div>
+                    )}
+                    <button onClick={() => !isViewer && onDelete()} className="opacity-0 group-hover:opacity-100 p-1.5 text-text-muted hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all"><Trash2 className="w-4 h-4" /></button>
+                </div>
             </div>
             {todo.status === 'Done' && <div className="absolute top-0 right-0 w-12 h-12 bg-emerald-500/5 [clip-path:polygon(100%_0,0_0,100%_100%)]" />}
         </div>
