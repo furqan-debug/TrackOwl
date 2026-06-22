@@ -366,13 +366,16 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
     const limit = project.budget_limit || 0;
 
     return (
-        <tr className={clsx(
-            "group/row transition-all",
-            isSelected ? "bg-surface-hover" : "hover:bg-surface-hover/50"
-        )}>
-            <td className="pl-8 py-5">
+        <tr 
+            onClick={onEdit}
+            className={clsx(
+                "group/row transition-all cursor-pointer",
+                isSelected ? "bg-surface-hover" : "hover:bg-surface-hover/50"
+            )}
+        >
+            <td className="pl-8 py-5" onClick={(e) => e.stopPropagation()}>
                 <button
-                    onClick={onSelect}
+                    onClick={(e) => { e.stopPropagation(); onSelect(); }}
                     className={clsx(
                         "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
                         isSelected
@@ -398,7 +401,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                     <div className="min-w-0">
                         <div className="flex flex-col gap-2">
                             <button
-                                onClick={onEdit}
+                                onClick={(e) => { e.stopPropagation(); onEdit(); }}
                                 className="text-[18px] font-bold text-text-main hover:text-primary transition-all truncate block max-w-[280px] tracking-tight"
                             >
                                 {project.name}
@@ -467,9 +470,9 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                     )}
                 </div>
             </td>
-            <td className="pr-8 py-5 text-right relative" ref={dropRef}>
+            <td className="pr-8 py-5 text-right relative" ref={dropRef} onClick={(e) => e.stopPropagation()}>
                 <button
-                    onClick={() => setShowMenu(!showMenu)}
+                    onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-slate-900 hover:bg-surface-hover hover:border hover:border-slate-200 transition-all"
                 >
                     <MoreHorizontal className="w-4 h-4" />
