@@ -8,7 +8,7 @@ interface MemberProfile {
     full_name: string;
     avatar_url: string | null;
     phone: string | null;
-    role: 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
+    role: 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer' | 'Client';
     status: 'Active' | 'Inactive' | 'Pending';
     organization_id: string | null;
     organization_name: string | null;
@@ -201,6 +201,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         setManagedMemberIds([member.id]);
                         setManagedProjectIds([]);
                     }
+                } else if (member.role === 'Client') {
+                    const { data: clientData } = await supabase
+                        .from('clients')
+                        .select('id')
+                        .ilike('email', email)
+                        .maybeSingle();
+
+                    if (clientData) {
+                        const { data: clientProjects } = await supabase
+                            .from('projects')
+                            .select('id')
+                            .eq('client_id', clientData.id);
+
+                        const projectIds = clientProjects?.map(p => p.id) || [];
+                        setManagedProjectIds(projectIds);
+
+                        if (projectIds.length > 0) {
+                            const { data: projMembers } = await supabase
+                                .from('project_members')
+                                .select('member_id')
+                                .in('project_id', projectIds);
+
+                            const { data: projTeams } = await supabase
+                                .from('project_teams')
+                                .select('team_id')
+                                .in('project_id', projectIds);
+
+                            const teamIds = projTeams?.map(pt => pt.team_id) || [];
+                            let teamMemberIds: string[] = [];
+                            if (teamIds.length > 0) {
+                                const { data: tMembers } = await supabase
+                                    .from('team_members')
+                                    .select('member_id')
+                                    .in('team_id', teamIds);
+                                teamMemberIds = tMembers?.map(tm => tm.member_id) || [];
+                            }
+
+                            const memberIds = new Set([
+                                ...(projMembers?.map(pm => pm.member_id) || []),
+                                ...teamMemberIds
+                            ]);
+
+                            setManagedMemberIds(Array.from(memberIds));
+                        } else {
+                            setManagedMemberIds([]);
+                        }
+                    } else {
+                        setManagedProjectIds([]);
+                        setManagedMemberIds([]);
+                    }
                 } else {
                     setManagedMemberIds(null);
                     setManagedProjectIds(null);
@@ -288,6 +338,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         } else {
                             setManagedMemberIds([member.id]);
                             setManagedProjectIds([]);
+                        }
+                    } else if (member.role === 'Client') {
+                        const { data: clientData } = await supabase
+                            .from('clients')
+                            .select('id')
+                            .ilike('email', session.user.email)
+                            .maybeSingle();
+
+                        if (clientData) {
+                            const { data: clientProjects } = await supabase
+                                .from('projects')
+                                .select('id')
+                                .eq('client_id', clientData.id);
+
+                            const projectIds = clientProjects?.map(p => p.id) || [];
+                            setManagedProjectIds(projectIds);
+
+                            if (projectIds.length > 0) {
+                                const { data: projMembers } = await supabase
+                                    .from('project_members')
+                                    .select('member_id')
+                                    .in('project_id', projectIds);
+
+                                const { data: projTeams } = await supabase
+                                    .from('project_teams')
+                                    .select('team_id')
+                                    .in('project_id', projectIds);
+
+                                const teamIds = projTeams?.map(pt => pt.team_id) || [];
+                                let teamMemberIds: string[] = [];
+                                if (teamIds.length > 0) {
+                                    const { data: tMembers } = await supabase
+                                        .from('team_members')
+                                        .select('member_id')
+                                        .in('team_id', teamIds);
+                                    teamMemberIds = tMembers?.map(tm => tm.member_id) || [];
+                                }
+
+                                const memberIds = new Set([
+                                    ...(projMembers?.map(pm => pm.member_id) || []),
+                                    ...teamMemberIds
+                                ]);
+
+                                setManagedMemberIds(Array.from(memberIds));
+                            } else {
+                                setManagedMemberIds([]);
+                            }
+                        } else {
+                            setManagedProjectIds([]);
+                            setManagedMemberIds([]);
                         }
                     } else {
                         setManagedMemberIds(null);

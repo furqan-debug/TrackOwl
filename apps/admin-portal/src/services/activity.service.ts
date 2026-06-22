@@ -57,7 +57,11 @@ export const activityService = {
         const selectedMember = members.find(m => m.id === selectedMemberId);
         const scopedUserIds = selectedMemberId.toLowerCase() !== 'all'
             ? Array.from(new Set([selectedMember?.id, selectedMember?.auth_user_id].filter(Boolean) as string[]))
-            : [];
+            : Array.from(new Set(members.flatMap(m => [m.id, m.auth_user_id].filter(Boolean) as string[])));
+
+        if (scopedUserIds.length === 0) {
+            return [];
+        }
 
         let sessionsQuery = supabase.from('sessions').select('id, user_id').eq('organization_id', organizationId).lt('started_at', end).or(`ended_at.is.null,ended_at.gt.${start}`);
         if (scopedUserIds.length > 0) sessionsQuery = sessionsQuery.in('user_id', scopedUserIds);
@@ -219,9 +223,9 @@ export const activityService = {
         
         const memberUserIds = selectedMemberId.toLowerCase() !== 'all'
             ? Array.from(new Set([selectedMember?.id, selectedMember?.auth_user_id].filter(Boolean) as string[]))
-            : [];
+            : Array.from(new Set(members.flatMap(m => [m.id, m.auth_user_id].filter(Boolean) as string[])));
 
-        if (selectedMemberId.toLowerCase() !== 'all' && memberUserIds.length === 0) {
+        if (memberUserIds.length === 0) {
             return { samples: [], screenshots: [], sessionMinutes: 0, hasMoreScreenshots: false };
         }
 

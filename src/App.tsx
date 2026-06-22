@@ -1469,6 +1469,12 @@ export default function App() {
         return `TrackOwl Error: Member profile not found for ${authData.user.email}. Please contact your administrator. (UID: ${authData.user.id.substring(0, 8)})`;
       }
 
+      if (member.role === 'Client') {
+        console.error('[Login] Client role is not allowed to use the tracker app');
+        await sb.auth.signOut();
+        return 'Clients are restricted to the Admin Portal and cannot use the tracker application.';
+      }
+
       const tz = await syncTimezone(sb, member.id, member.timezone);
       const userObj: User = {
         id: member.id,

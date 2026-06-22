@@ -85,6 +85,17 @@ export function Clients() {
                 .single();
 
             if (!error && data) {
+                // Send invite email asynchronously via send-invite-email function
+                supabase.functions.invoke('send-invite-email', {
+                    body: {
+                        email: data.email,
+                        role: 'Client',
+                        admin_portal_url: window.location.origin
+                    }
+                }).catch(err => {
+                    console.error('Error invoking send-invite-email function:', err);
+                });
+
                 setClients([data, ...clients]);
                 handleCloseModal();
             }

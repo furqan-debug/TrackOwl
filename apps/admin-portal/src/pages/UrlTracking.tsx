@@ -8,6 +8,7 @@ import {
     PieChart, Pie, Cell, Legend
 } from 'recharts';
 import { PageLayout, Card, FilterSelect } from '../components/ui';
+import { useAuth } from '../context/AuthContext';
 
 // DomainEntry imported from activity.service.ts
 
@@ -26,6 +27,8 @@ const RANGES = ['Today', 'Last 7 Days', 'Last 30 Days'] as const;
 type Range = typeof RANGES[number];
 
 export function UrlTracking() {
+    const { profile, managedMemberIds } = useAuth();
+    const organizationId = profile?.organization_id;
     const [domains, setDomains] = useState<DomainEntry[]>([]);
     const [hourlyData, setHourlyData] = useState<{ hour: string; count: number }[]>([]);
     const [loading, setLoading] = useState(true);
@@ -36,11 +39,23 @@ export function UrlTracking() {
 
     useEffect(() => {
         import('../lib/supabase').then(({ supabase }) => {
-            supabase.from('members').select('id, auth_user_id, full_name, timezone').eq('status', 'Active').then(({ data }) => {
+            if (!organizationId) return;
+            let query = supabase.from('members')
+                .select('id, auth_user_id, full_name, timezone')
+                .eq('organization_id', organizationId)
+                .eq('status', 'Active');
+
+            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+            if (isScoped && managedMemberIds) {
+                const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
+                query = query.in('id', memberIdsFilter);
+            }
+
+            query.then(({ data }) => {
                 if (data) setMembers(data);
             });
         });
-    }, []);
+    }, [organizationId, profile?.role, managedMemberIds]);
 
     const fetchDomains = useCallback(async () => {
         setLoading(true);

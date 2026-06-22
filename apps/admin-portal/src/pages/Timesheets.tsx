@@ -142,8 +142,10 @@ export function Timesheets() {
             .eq('organization_id', organizationId)
             .order('full_name');
             
-        if (profile?.role === 'Manager' && managedMemberIds) {
-            query = query.in('id', managedMemberIds);
+        const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+        if (isScoped && managedMemberIds) {
+            const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
+            query = query.in('id', memberIdsFilter);
         }
         
         const { data } = await query;
@@ -157,8 +159,10 @@ export function Timesheets() {
             .eq('status', 'Active')
             .order('name');
             
-        if (profile?.role === 'Manager' && managedProjectIds) {
-            query = query.in('id', managedProjectIds);
+        const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+        if (isScoped && managedProjectIds) {
+            const projectIdsFilter = managedProjectIds.length > 0 ? managedProjectIds : ['00000000-0000-0000-0000-000000000000'];
+            query = query.in('id', projectIdsFilter);
         }
         
         const { data } = await query;
@@ -193,7 +197,7 @@ export function Timesheets() {
                 } else {
                     query = query.in('user_id', ['none']);
                 }
-            } else if (profile?.role === 'Manager') {
+            } else if (profile?.role === 'Manager' || profile?.role === 'Client') {
                 const userIds = Array.from(new Set(members.flatMap(m => [m.id, m.auth_user_id].filter(Boolean) as string[])));
                 if (userIds.length > 0) {
                     query = query.in('user_id', userIds);
@@ -204,11 +208,11 @@ export function Timesheets() {
             
             if (filterProjectId !== 'all' && filterProjectId !== '') {
                 query = query.eq('project_id', filterProjectId);
-            } else if (profile?.role === 'Manager' && managedProjectIds) {
+            } else if ((profile?.role === 'Manager' || profile?.role === 'Client') && managedProjectIds) {
                 if (managedProjectIds.length > 0) {
                     query = query.in('project_id', managedProjectIds);
                 } else {
-                    query = query.in('project_id', ['none']);
+                    query = query.in('project_id', ['00000000-0000-0000-0000-000000000000']);
                 }
             }
 

@@ -84,8 +84,10 @@ export function Activity() {
                 .eq('status', 'Active')
                 .order('full_name', { ascending: true });
                 
-            if (profile?.role === 'Manager' && managedMemberIds) {
-                query = query.in('id', managedMemberIds);
+            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+            if (isScoped && managedMemberIds) {
+                const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
+                query = query.in('id', memberIdsFilter);
             }
             
             query.then(({ data }) => {
@@ -96,7 +98,7 @@ export function Activity() {
 
     const fetchData = useCallback(async (isSilent = false, forceRefresh = false, overrideLimit?: number) => {
         const currentLimit = overrideLimit ?? screenshotLimit;
-        const cacheKey = `${selectedDate}_${selectedMemberId}_${currentLimit}`;
+        const cacheKey = `${profile?.id}_${selectedDate}_${selectedMemberId}_${currentLimit}`;
 
         if (!forceRefresh && activityCache && activityCacheKey === cacheKey) {
             setSamples(activityCache.samples);
