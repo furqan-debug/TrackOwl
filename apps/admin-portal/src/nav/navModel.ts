@@ -12,7 +12,7 @@ import {
 
 export type BadgeType = 'new' | 'bolt' | null;
 
-export type Role = 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
+export type Role = 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer' | 'Client';
 
 export interface NavChild {
     name: string;
@@ -57,7 +57,12 @@ export const navStructure: NavGroup[] = [
             { name: 'Clients', path: '/dashboard/projects/clients', allowedRoles: ['Owner', 'Admin', 'Manager'] },
         ]
     },
-    { name: 'Calendar', icon: CalendarIcon, path: '/dashboard/calendar' },
+    { 
+        name: 'Calendar', 
+        icon: CalendarIcon, 
+        path: '/dashboard/calendar',
+        allowedRoles: ['Owner', 'Admin', 'Manager', 'User', 'Viewer']
+    },
     {
         name: 'Reports',
         icon: FileText,
@@ -77,6 +82,7 @@ export const navStructure: NavGroup[] = [
         name: 'Settings',
         icon: Settings,
         path: '/dashboard/settings',
+        allowedRoles: ['Owner', 'Admin', 'Manager', 'User', 'Viewer'],
         children: [
             { name: 'Org Settings', path: '/dashboard/settings', allowedRoles: ['Owner'] },
             { name: 'Security & 2FA', path: '/dashboard/settings/security' },

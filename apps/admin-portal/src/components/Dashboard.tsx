@@ -185,17 +185,21 @@ export function Dashboard() {
             prevWeekEnd.setDate(prevWeekEnd.getDate() - 7);
             const prevWeekEndIso = prevWeekEnd.toISOString();
 
+            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+            const memberIdsFilter = isScoped && managedMemberIds ? (managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000']) : null;
+            const projectIdsFilter = isScoped && managedProjectIds ? (managedProjectIds.length > 0 ? managedProjectIds : ['00000000-0000-0000-0000-000000000000']) : null;
+
             let membersQuery = supabase.from('members').select('id, full_name, avatar_url, status, email, idle_limit').eq('organization_id', organizationId);
-            if (profile?.role === 'Manager' && managedMemberIds) membersQuery = membersQuery.in('id', managedMemberIds);
+            if (memberIdsFilter) membersQuery = membersQuery.in('id', memberIdsFilter);
 
             let projectsQuery = supabase.from('projects').select('id, name, color').eq('organization_id', organizationId);
-            if (profile?.role === 'Manager' && managedProjectIds) projectsQuery = projectsQuery.in('id', managedProjectIds);
+            if (projectIdsFilter) projectsQuery = projectsQuery.in('id', projectIdsFilter);
 
             let sessionsQuery = supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').eq('organization_id', organizationId).gte('started_at', startIso).lte('started_at', endIso);
-            if (profile?.role === 'Manager' && managedMemberIds) sessionsQuery = sessionsQuery.in('user_id', managedMemberIds);
+            if (memberIdsFilter) sessionsQuery = sessionsQuery.in('user_id', memberIdsFilter);
 
             let prevSessionsQuery = supabase.from('sessions').select('id, user_id').eq('organization_id', organizationId).gte('started_at', prevWeekStartIso).lte('started_at', prevWeekEndIso);
-            if (profile?.role === 'Manager' && managedMemberIds) prevSessionsQuery = prevSessionsQuery.in('user_id', managedMemberIds);
+            if (memberIdsFilter) prevSessionsQuery = prevSessionsQuery.in('user_id', memberIdsFilter);
 
             const [
                 { data: members },
@@ -213,7 +217,7 @@ export function Dashboard() {
             const prevSessionIds = prevSessions?.map(s => s.id) || [];
 
             let screenshotsQuery = supabase.from('screenshots').select('id, session_id, file_url, recorded_at').eq('organization_id', organizationId).gte('recorded_at', startIso).lte('recorded_at', endIso).order('recorded_at', { ascending: false }).limit(300);
-            if (profile?.role === 'Manager' && currentSessionIds.length > 0) screenshotsQuery = screenshotsQuery.in('session_id', currentSessionIds);
+            if (isScoped && currentSessionIds.length > 0) screenshotsQuery = screenshotsQuery.in('session_id', currentSessionIds);
 
             const [
                 { data: screenshots },

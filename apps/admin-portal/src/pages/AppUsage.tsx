@@ -34,7 +34,7 @@ let appUsageCache: any = null;
 let appUsageCacheKey: string | null = null;
 
 export function AppUsage() {
-    const { profile } = useAuth();
+    const { profile, managedMemberIds } = useAuth();
     const organizationId = profile?.organization_id;
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -49,19 +49,26 @@ export function AppUsage() {
     useEffect(() => {
         import('../lib/supabase').then(({ supabase }) => {
             if (!organizationId) return;
-            supabase.from('members')
+            let query = supabase.from('members')
                 .select('id, auth_user_id, full_name, email, idle_limit')
                 .eq('organization_id', organizationId)
                 .eq('status', 'Active')
-                .order('full_name', { ascending: true })
-                .then(({ data }) => {
-                    if (data) setMembers(data);
-                });
+                .order('full_name', { ascending: true });
+
+            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+            if (isScoped && managedMemberIds) {
+                const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
+                query = query.in('id', memberIdsFilter);
+            }
+
+            query.then(({ data }) => {
+                if (data) setMembers(data);
+            });
         });
-    }, [organizationId]);
+    }, [organizationId, profile?.role, managedMemberIds]);
 
     const fetchData = useCallback(async (isSilent = false, forceRefresh = false) => {
-        const cacheKey = `${selectedDate}_${selectedMemberId}`;
+        const cacheKey = `${profile?.id}_${selectedDate}_${selectedMemberId}`;
         if (!forceRefresh && appUsageCache && appUsageCacheKey === cacheKey) {
             setApps(appUsageCache.apps);
             setLoading(false);
