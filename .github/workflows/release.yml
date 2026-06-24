@@ -45,7 +45,9 @@ jobs:
         if: matrix.platform == 'macos-latest'
         run: |
           mkdir -p ${{ runner.temp }}/private_keys
-          echo "${{ secrets.APPLE_API_KEY_CONTENT }}" > ${{ runner.temp }}/private_keys/AuthKey_${{ secrets.APPLE_API_KEY }}.p8
+          cat << 'EOF' > ${{ runner.temp }}/private_keys/AuthKey_${{ secrets.APPLE_API_KEY }}.p8
+          ${{ secrets.APPLE_API_KEY_CONTENT }}
+          EOF
 
       # Build & Publish Release via tauri-action
       - name: Build & Publish Release
