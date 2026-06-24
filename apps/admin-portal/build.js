@@ -23,9 +23,9 @@ try {
   execSync('npm run build', { cwd: helpCenterPath, stdio: 'inherit' });
 
   // 3. Copy the Help Center build into the Admin Portal's dist directory
-  console.log('\n>>> Copying Help Center to dist/help...');
+  console.log('\n>>> Copying Help Center to dist/support...');
   const helpDist = path.join(helpCenterPath, 'dist');
-  const targetDir = path.join(__dirname, 'dist', 'help');
+  const targetDir = path.join(__dirname, 'dist', 'support');
 
   fs.cpSync(helpDist, targetDir, { recursive: true });
   
