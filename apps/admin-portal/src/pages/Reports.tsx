@@ -395,7 +395,7 @@ export function Reports() {
 
     return (
         <PageLayout
-            maxWidth="7xl"
+            maxWidth="full"
             title="Reports"
             description="Detailed activity analytics and time distribution."
             actions={
