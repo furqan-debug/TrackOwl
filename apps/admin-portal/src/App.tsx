@@ -22,6 +22,7 @@ import { SettingsPage } from './pages/Settings';
 import { SecurityPage } from './pages/Security';
 import { ProfilePage } from './pages/Profile';
 import { Landing } from './pages/Landing';
+import { Privacy } from './pages/Privacy';
 import { Signup } from './pages/Signup';
 import { Onboarding } from './pages/Onboarding';
 import { AcceptInvite } from './pages/AcceptInvite';
@@ -88,6 +89,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/" element={<><AuthRedirect /><Landing /></>} />
+            <Route path="/privacy" element={<Privacy />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/accept-invite" element={<AcceptInvite />} />
