@@ -561,7 +561,7 @@ export function Timesheets() {
                                 onChange={(val) => setAddTimeData({ ...addTimeData, userId: val })}
                                 options={[
                                     { id: '', name: 'Select member...' },
-                                    ...members.map(m => ({ id: m.auth_user_id || m.id, name: m.full_name }))
+                                    ...members.map(m => ({ id: m.id, name: m.full_name }))
                                 ]}
                             />
                         </div>
@@ -614,7 +614,7 @@ export function Timesheets() {
                                 onChange={(val) => setAddTimeData({ ...addTimeData, userId: val })}
                                 options={[
                                     { id: '', name: 'Select member...' },
-                                    ...members.map(m => ({ id: m.auth_user_id || m.id, name: m.full_name }))
+                                    ...members.map(m => ({ id: m.id, name: m.full_name }))
                                 ]}
                             />
                         </div>
