@@ -34,7 +34,7 @@ export function PageLayout({
     const isFav = isFavorite(location.pathname);
 
     const maxClass =
-        maxWidth === '7xl' ? 'max-w-7xl mx-auto' : maxWidth === '6xl' ? 'max-w-6xl mx-auto' : 'max-w-[1600px] mx-auto';
+        maxWidth === '7xl' ? 'max-w-7xl mx-auto' : maxWidth === '6xl' ? 'max-w-6xl mx-auto' : 'max-w-none w-full';
 
     return (
         <div className={clsx("p-4 md:px-10 md:py-12 w-full animate-in fade-in slide-in-from-top-4 duration-1000", maxClass)}>
