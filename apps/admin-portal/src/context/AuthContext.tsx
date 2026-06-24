@@ -168,6 +168,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 return;
             }
 
+            if (member.status === 'Inactive') {
+                setError('Your account is inactive. Please contact your administrator.');
+                setProfile(null);
+                setOrganization(null);
+                setLoading(false);
+                fetchInProgress.current = null;
+                await supabase.auth.signOut();
+                return;
+            }
+
             setProfile(member);
 
             if (member.organization_id) {
@@ -309,6 +319,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 
                 if (memberError) throw memberError;
                 
+                if (member.status === 'Inactive') {
+                    setError('Your account is inactive. Please contact your administrator.');
+                    setProfile(null);
+                    setOrganization(null);
+                    setLoading(false);
+                    await supabase.auth.signOut();
+                    return null;
+                }
+
                 setProfile(member);
 
                 if (member.organization_id) {

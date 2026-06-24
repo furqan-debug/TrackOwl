@@ -128,6 +128,12 @@ export function Clients() {
             .single();
 
         if (!error && data) {
+            // Update the matching member status if their account exists
+            await supabase
+                .from('members')
+                .update({ status: newStatus })
+                .eq('email', client.email);
+
             setClients(clients.map(c => c.id === data.id ? data : c));
         }
     }

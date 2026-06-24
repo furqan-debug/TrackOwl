@@ -293,7 +293,7 @@ function ArticlePage() {
 
 export default function App() {
   return (
-    <BrowserRouter basename="/help">
+    <BrowserRouter basename="/support">
       <Layout>
         <Routes>
           <Route path="/" element={<HomePage />} />

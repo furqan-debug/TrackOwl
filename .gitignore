@@ -19,6 +19,11 @@
 # Security & Secrets
 *.key
 *.pub
+*.p12
+*.p8
+*.cer
+*.pem
+*.certSigningRequest
 signing.key
 myapp.key
 ~/.tauri/
