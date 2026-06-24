@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import HeaderLogo from '../assets/branding/header-2.svg';
 
