@@ -41,6 +41,12 @@ jobs:
       - name: Install Frontend Dependencies
         run: npm ci
 
+      - name: Setup Apple API Key (macOS Notarization)
+        if: matrix.platform == 'macos-latest'
+        run: |
+          mkdir -p ${{ runner.temp }}/private_keys
+          echo "${{ secrets.APPLE_API_KEY_CONTENT }}" > ${{ runner.temp }}/private_keys/AuthKey_${{ secrets.APPLE_API_KEY }}.p8
+
       # Build & Publish Release via tauri-action
       - name: Build & Publish Release
         uses: tauri-apps/tauri-action@v0
@@ -54,10 +60,10 @@ jobs:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          # Temporarily disabled to prevent freezing during notarization
-          # APPLE_ID: ${{ secrets.APPLE_ID }}
-          # APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_PATH: ${{ runner.temp }}/private_keys/AuthKey_${{ secrets.APPLE_API_KEY }}.p8
         with:
           tagName: v__VERSION__ # Uses package.json version automatically
           releaseName: 'TrackOwl v__VERSION__'
