@@ -132,12 +132,12 @@ jobs:
           security unlock-keychain -p "" $KEYCHAIN_PATH
           
           # Import Mac App Distribution Certificate
-          echo "$MAC_APP_CERT" | base64 --decode > app_cert.p12
+          node -e "require('fs').writeFileSync('app_cert.p12', Buffer.from(process.env.MAC_APP_CERT.replace(/\s+/g, ''), 'base64'))"
           if [ ! -s app_cert.p12 ]; then echo "Error: app_cert.p12 is empty. Check MAC_APP_CERTIFICATE secret." && exit 1; fi
           security import app_cert.p12 -k $KEYCHAIN_PATH -P "$MAC_APP_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productbuild
           
           # Import Mac Installer Distribution Certificate
-          echo "$MAC_INSTALLER_CERT" | base64 --decode > inst_cert.p12
+          node -e "require('fs').writeFileSync('inst_cert.p12', Buffer.from(process.env.MAC_INSTALLER_CERT.replace(/\s+/g, ''), 'base64'))"
           if [ ! -s inst_cert.p12 ]; then echo "Error: inst_cert.p12 is empty. Check MAC_INSTALLER_CERTIFICATE secret." && exit 1; fi
           security import inst_cert.p12 -k $KEYCHAIN_PATH -P "$MAC_INSTALLER_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productbuild
           
