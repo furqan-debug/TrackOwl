@@ -46,6 +46,9 @@
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
       }
+    },
+    "macos": {
+      "entitlements": "Entitlements.macOS.plist"
     }
   },
   "plugins": {
