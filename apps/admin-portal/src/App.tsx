@@ -25,6 +25,7 @@ import { Landing } from './pages/Landing';
 import { Privacy } from './pages/Privacy';
 import { Terms } from './pages/Terms';
 import { SecurityPolicy } from './pages/SecurityPolicy';
+import { About } from './pages/About';
 import { Signup } from './pages/Signup';
 import { Onboarding } from './pages/Onboarding';
 import { AcceptInvite } from './pages/AcceptInvite';
@@ -94,6 +95,7 @@ function App() {
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/security" element={<SecurityPolicy />} />
+            <Route path="/about" element={<About />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/accept-invite" element={<AcceptInvite />} />
