@@ -133,23 +133,21 @@ jobs:
           
           # Install OpenSSL 3 to handle modern PKCS12 files
           brew install openssl@3 || true
-          OPENSSL_BIN=$(brew --prefix openssl@3)/bin/openssl
+          OPENSSL3_BIN=$(brew --prefix openssl@3)/bin/openssl
           
           # Import Mac App Distribution Certificate
           node -e "require('fs').writeFileSync('app_cert.p12', Buffer.from(process.env.MAC_APP_CERT.replace(/\s+/g, ''), 'base64'))"
           if [ ! -s app_cert.p12 ]; then echo "Error: app_cert.p12 is empty." && exit 1; fi
-          $OPENSSL_BIN pkcs12 -in app_cert.p12 -nokeys -passin pass:"$MAC_APP_PASSWORD" -out app_cert.pem
-          $OPENSSL_BIN pkcs12 -in app_cert.p12 -nocerts -nodes -passin pass:"$MAC_APP_PASSWORD" -out app_key.pem
-          security import app_cert.pem -k $KEYCHAIN_PATH -T /usr/bin/codesign -T /usr/bin/productbuild
-          security import app_key.pem -k $KEYCHAIN_PATH -T /usr/bin/codesign -T /usr/bin/productbuild
+          $OPENSSL3_BIN pkcs12 -in app_cert.p12 -nodes -passin pass:"$MAC_APP_PASSWORD" -out app_cert.pem
+          /usr/bin/openssl pkcs12 -export -in app_cert.pem -out app_cert_legacy.p12 -passout pass:"$MAC_APP_PASSWORD"
+          security import app_cert_legacy.p12 -k $KEYCHAIN_PATH -P "$MAC_APP_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productbuild || true
           
           # Import Mac Installer Distribution Certificate
           node -e "require('fs').writeFileSync('inst_cert.p12', Buffer.from(process.env.MAC_INSTALLER_CERT.replace(/\s+/g, ''), 'base64'))"
           if [ ! -s inst_cert.p12 ]; then echo "Error: inst_cert.p12 is empty." && exit 1; fi
-          $OPENSSL_BIN pkcs12 -in inst_cert.p12 -nokeys -passin pass:"$MAC_INSTALLER_PASSWORD" -out inst_cert.pem
-          $OPENSSL_BIN pkcs12 -in inst_cert.p12 -nocerts -nodes -passin pass:"$MAC_INSTALLER_PASSWORD" -out inst_key.pem
-          security import inst_cert.pem -k $KEYCHAIN_PATH -T /usr/bin/codesign -T /usr/bin/productbuild
-          security import inst_key.pem -k $KEYCHAIN_PATH -T /usr/bin/codesign -T /usr/bin/productbuild
+          $OPENSSL3_BIN pkcs12 -in inst_cert.p12 -nodes -passin pass:"$MAC_INSTALLER_PASSWORD" -out inst_cert.pem
+          /usr/bin/openssl pkcs12 -export -in inst_cert.pem -out inst_cert_legacy.p12 -passout pass:"$MAC_INSTALLER_PASSWORD"
+          security import inst_cert_legacy.p12 -k $KEYCHAIN_PATH -P "$MAC_INSTALLER_PASSWORD" -T /usr/bin/codesign -T /usr/bin/productbuild || true
           
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" $KEYCHAIN_PATH
           
