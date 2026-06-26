@@ -251,14 +251,15 @@ export function Timesheets() {
                 }
             }
 
-            const gridTz = (activeTimezone === 'User Local' || activeTimezone === 'Admin Local') ? undefined : activeTimezone;
-
             const dailyMap: Record<string, DailyEntry> = {};
             const numDays = viewMode === 'daily' ? 1 : 7;
             for (let i = 0; i < numDays; i++) {
                 const d = new Date(range.start);
                 d.setDate(range.start.getDate() + i);
-                const key = getGroupingDateInTz(d, gridTz);
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const key = `${year}-${month}-${day}`;
                 dailyMap[key] = { date: key, sessions: [], totalMinutes: 0, activeMinutes: 0, activityPercent: 0 };
             }
 
