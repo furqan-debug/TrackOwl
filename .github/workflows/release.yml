@@ -155,14 +155,31 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           node -e "require('fs').writeFileSync(process.env.HOME + '/Library/MobileDevice/Provisioning Profiles/profile.provisionprofile', Buffer.from(process.env.MAC_PROFILE.replace(/\s+/g, ''), 'base64'))"
           
+      - name: Extract Certificate Identities
+        run: |
+          node -e "
+            const crypto = require('crypto');
+            const fs = require('fs');
+            function getCN(pemFile) {
+              const pem = fs.readFileSync(pemFile);
+              const cert = new crypto.X509Certificate(pem);
+              const cnParts = cert.subject.split('\n').find(l => l.startsWith('CN='));
+              return cnParts ? cnParts.substring(3) : '';
+            }
+            const appCN = getCN('app_cert.pem');
+            const instCN = getCN('inst_cert.pem');
+            console.log('App Identity: ' + appCN);
+            console.log('Installer Identity: ' + instCN);
+            fs.appendFileSync(process.env.GITHUB_ENV, 'APPLE_SIGNING_IDENTITY=' + appCN + '\n');
+            fs.appendFileSync(process.env.GITHUB_ENV, 'INSTALLER_SIGNING_IDENTITY=' + instCN + '\n');
+          "
+
       - name: Build App Store App Bundle
-        env:
-          APPLE_SIGNING_IDENTITY: "3rd Party Mac Developer Application"
         run: npm run tauri build -- --target aarch64-apple-darwin --bundles app
         
       - name: Create Mac App Store PKG
         run: |
-          xcrun productbuild --component "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/TrackOwl.app" /Applications TrackOwl.pkg --sign "3rd Party Mac Developer Installer"
+          xcrun productbuild --component "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/TrackOwl.app" /Applications TrackOwl.pkg --sign "$INSTALLER_SIGNING_IDENTITY"
           mkdir -p pkg-output
           mv TrackOwl.pkg pkg-output/
         
