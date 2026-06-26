@@ -155,11 +155,19 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           node -e "require('fs').writeFileSync(process.env.HOME + '/Library/MobileDevice/Provisioning Profiles/profile.provisionprofile', Buffer.from(process.env.MAC_PROFILE.replace(/\s+/g, ''), 'base64'))"
           
-      - name: Build App Store PKG
-        run: npm run tauri build -- --target aarch64-apple-darwin --bundles pkg
+      - name: Build App Store App Bundle
+        env:
+          APPLE_SIGNING_IDENTITY: "3rd Party Mac Developer Application"
+        run: npm run tauri build -- --target aarch64-apple-darwin --bundles app
+        
+      - name: Create Mac App Store PKG
+        run: |
+          xcrun productbuild --component "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/TrackOwl.app" /Applications TrackOwl.pkg --sign "3rd Party Mac Developer Installer"
+          mkdir -p pkg-output
+          mv TrackOwl.pkg pkg-output/
         
       - name: Upload PKG Artifact
         uses: actions/upload-artifact@v4
         with:
           name: AppStore-PKG
-          path: src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.pkg
+          path: pkg-output/*.pkg
