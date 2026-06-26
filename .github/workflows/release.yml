@@ -153,22 +153,13 @@ jobs:
           
           # Install Provisioning Profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo $MAC_PROFILE | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/profile.provisionprofile
+          node -e "require('fs').writeFileSync(process.env.HOME + '/Library/MobileDevice/Provisioning Profiles/profile.provisionprofile', Buffer.from(process.env.MAC_PROFILE.replace(/\s+/g, ''), 'base64'))"
           
       - name: Build App Store PKG
         run: npm run tauri build -- --target aarch64-apple-darwin --bundles pkg
         
-      - name: Upload to App Store Connect
-        env:
-          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
-        run: |
-          mkdir -p $RUNNER_TEMP/private_keys
-          echo "$APPLE_API_KEY_CONTENT" > $RUNNER_TEMP/private_keys/AuthKey_$APPLE_API_KEY.p8
-          
-          # Use xcrun altool to upload the .pkg
-          xcrun altool --upload-app -f src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.pkg \
-            -t macos \
-            --apiKey $APPLE_API_KEY \
-            --apiIssuer $APPLE_API_ISSUER
+      - name: Upload PKG Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AppStore-PKG
+          path: src-tauri/target/aarch64-apple-darwin/release/bundle/macos/*.pkg
