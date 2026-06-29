@@ -49,12 +49,7 @@ jobs:
           ${{ secrets.APPLE_API_KEY_CONTENT }}
           EOF
 
-      - name: Add src-tauri to PATH (Windows only)
-        if: matrix.platform == 'windows-latest'
-        run: echo "${{ github.workspace }}/src-tauri" >> $GITHUB_PATH
-        shell: bash
-
-      # Build & Publish Release via tauri-action
+      # Build & Publish Release via tauri-action (no signCommand — signing done below)
       - name: Build & Publish Release
         uses: tauri-apps/tauri-action@v0
         env:
@@ -62,13 +57,7 @@ jobs:
           # Tauri updater signing key config
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          
-          # SSL.com OV Code Signing configuration
-          ES_USERNAME: ${{ secrets.ES_USERNAME }}
-          ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
-          CREDENTIAL_ID: ${{ secrets.CREDENTIAL_ID }}
-          ES_TOTP_SECRET: ${{ secrets.ES_TOTP_SECRET }}
-          
+
           # Apple Code Signing & Notarization config (macOS only)
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
           APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
@@ -78,7 +67,7 @@ jobs:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_PATH: ${{ runner.temp }}/private_keys/AuthKey_${{ secrets.APPLE_API_KEY }}.p8
         with:
-          tagName: v__VERSION__ # Uses package.json version automatically
+          tagName: v__VERSION__
           releaseName: 'TrackOwl v__VERSION__'
           releaseBody: |
             TrackOwl v__VERSION__ — Desktop App Release.
@@ -89,6 +78,40 @@ jobs:
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
+
+      # Sign Windows installers using SSL.com eSigner after the build completes
+      - name: Sign Windows NSIS Installer (.exe) with SSL.com eSigner
+        if: matrix.platform == 'windows-latest'
+        uses: sslcom/esigner-codesign@develop
+        with:
+          command: sign
+          username: ${{ secrets.ES_USERNAME }}
+          password: ${{ secrets.ES_PASSWORD }}
+          credential_id: ${{ secrets.CREDENTIAL_ID }}
+          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+          file_path: ${{ github.workspace }}/src-tauri/target/release/bundle/nsis/TrackOwl_${{ github.ref_name }}_x64-setup.exe
+          override: true
+
+      - name: Sign Windows MSI Installer (.msi) with SSL.com eSigner
+        if: matrix.platform == 'windows-latest'
+        uses: sslcom/esigner-codesign@develop
+        with:
+          command: sign
+          username: ${{ secrets.ES_USERNAME }}
+          password: ${{ secrets.ES_PASSWORD }}
+          credential_id: ${{ secrets.CREDENTIAL_ID }}
+          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+          file_path: ${{ github.workspace }}/src-tauri/target/release/bundle/msi/TrackOwl_${{ github.ref_name }}_x64_en-US.msi
+          override: true
+
+      # Re-upload the signed Windows installers to the GitHub release
+      - name: Upload Signed Windows Installers to Release
+        if: matrix.platform == 'windows-latest'
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            src-tauri/target/release/bundle/nsis/TrackOwl_${{ github.ref_name }}_x64-setup.exe
+            src-tauri/target/release/bundle/msi/TrackOwl_${{ github.ref_name }}_x64_en-US.msi
 
   publish-latest-json:
     needs: publish
