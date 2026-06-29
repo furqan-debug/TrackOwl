@@ -114,6 +114,14 @@ jobs:
 
           Write-Host "CodeSignTool found at: $($CST_BAT.FullName)"
 
+          # Set CODE_SIGN_TOOL_PATH so the bat file can find its bundled JDK and jar
+          $env:CODE_SIGN_TOOL_PATH = $CST_BAT.DirectoryName
+          Write-Host "CODE_SIGN_TOOL_PATH set to: $env:CODE_SIGN_TOOL_PATH"
+
+          # List contents to verify JDK and jar are present
+          Write-Host "CodeSignTool directory contents:"
+          Get-ChildItem -Path $env:CODE_SIGN_TOOL_PATH | ForEach-Object { Write-Host "  $_" }
+
           # Sign each file
           foreach ($file in @($NSIS_EXE, $MSI_FILE)) {
             if (Test-Path $file) {
