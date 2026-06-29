@@ -298,9 +298,19 @@ export function MemberFormPage() {
                                     icon={<Globe2 className="w-4 h-4" />}
                                     options={[
                                         { label: 'Universal Time (UTC)', value: 'UTC' },
-                                        { label: 'India (GMT+5:30)', value: 'Asia/Kolkata' },
-                                        { label: 'New York (EST)', value: 'America/New_York' },
-                                        { label: 'London (GMT)', value: 'Europe/London' }
+                                        { label: 'US Pacific Time (PT)', value: 'America/Los_Angeles' },
+                                        { label: 'US Mountain Time (MT)', value: 'America/Denver' },
+                                        { label: 'US Central Time (CT)', value: 'America/Chicago' },
+                                        { label: 'US Eastern Time (ET)', value: 'America/New_York' },
+                                        { label: 'Canada (Toronto)', value: 'America/Toronto' },
+                                        { label: 'UK (London)', value: 'Europe/London' },
+                                        { label: 'Europe (Central)', value: 'Europe/Paris' },
+                                        { label: 'Pakistan (PKT)', value: 'Asia/Karachi' },
+                                        { label: 'India (IST)', value: 'Asia/Kolkata' },
+                                        { label: 'Bangladesh (BST)', value: 'Asia/Dhaka' },
+                                        { label: 'Philippines (PHT)', value: 'Asia/Manila' },
+                                        { label: 'Singapore (SGT)', value: 'Asia/Singapore' },
+                                        { label: 'Australia (Sydney)', value: 'Australia/Sydney' }
                                     ]}
                                 />
                                 <FormField

@@ -21,6 +21,7 @@ interface AppSettings {
     notifyDailyLimit: boolean;
     autoStopOnIdle: boolean;
     idleAutoStopMinutes: number;
+    orgTimezone: string;
 }
 
 const DEFAULTS: AppSettings = {
@@ -36,6 +37,7 @@ const DEFAULTS: AppSettings = {
     notifyDailyLimit: true,
     autoStopOnIdle: false,
     idleAutoStopMinutes: 30,
+    orgTimezone: 'UTC',
 };
 
 type SettingCategory = 'governance' | 'monitoring' | 'telemetry' | 'notifications' | 'system';
@@ -261,6 +263,27 @@ export function SettingsPage() {
                                     unit="hrs" min={1} max={168}
                                     onChange={v => update('weeklyHoursLimit', v)}
                                 />
+                                <div className="h-px bg-white/5" />
+                                <SelectControl
+                                    label="Organization Timezone"
+                                    description="The default timezone for reports and timesheets if no other is selected."
+                                    value={settings.orgTimezone || 'UTC'}
+                                    options={[
+                                        { id: 'UTC', label: 'UTC' },
+                                        { id: 'America/Los_Angeles', label: 'Pacific Time (US & Canada)' },
+                                        { id: 'America/Denver', label: 'Mountain Time (US & Canada)' },
+                                        { id: 'America/Chicago', label: 'Central Time (US & Canada)' },
+                                        { id: 'America/New_York', label: 'Eastern Time (US & Canada)' },
+                                        { id: 'Europe/London', label: 'London' },
+                                        { id: 'Europe/Berlin', label: 'Berlin' },
+                                        { id: 'Asia/Dubai', label: 'Dubai' },
+                                        { id: 'Asia/Karachi', label: 'Islamabad, Karachi' },
+                                        { id: 'Asia/Kolkata', label: 'New Delhi, Kolkata' },
+                                        { id: 'Asia/Manila', label: 'Manila' },
+                                        { id: 'Australia/Sydney', label: 'Sydney' }
+                                    ]}
+                                    onChange={v => update('orgTimezone', v)}
+                                />
                             </div>
                         </div>
                     )}
@@ -435,6 +458,27 @@ function RangeControl({ label, description, value, unit, min, max, step = 1, onC
                 onChange={e => onChange(Number(e.target.value))}
                 className="w-full rounded-full appearance-none cursor-pointer"
             />
+        </div>
+    );
+}
+
+function SelectControl({ label, description, value, options, onChange }: {
+    label: string; description: string; value: string; options: {id: string, label: string}[];
+    onChange: (v: string) => void;
+}) {
+    return (
+        <div className="flex items-center justify-between gap-12">
+            <div className="space-y-1 flex-1">
+                <p className="text-[14px] font-bold text-text-main">{label}</p>
+                <p className="text-[13px] text-text-muted opacity-60 leading-relaxed">{description}</p>
+            </div>
+            <select
+                value={value}
+                onChange={e => onChange(e.target.value)}
+                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+                {options.map(o => <option key={o.id} value={o.id} className="bg-main text-text-main">{o.label}</option>)}
+            </select>
         </div>
     );
 }

@@ -65,6 +65,7 @@ export function Timesheets() {
     const [entries, setEntries] = useState<DailyEntry[]>([]);
     const [members, setMembers] = useState<MemberInfo[]>([]);
     const [activeTimezone, setActiveTimezone] = useState<string>('User Local');
+    const [orgTimezone, setOrgTimezone] = useState<string>('UTC');
     const [projects, setProjects] = useState<any[]>([]);
     const [selectedMember, setSelectedMember] = useState<string>('all');
     const [filterProjectId, setFilterProjectId] = useState<string>('all');
@@ -114,6 +115,7 @@ export function Timesheets() {
     useEffect(() => {
         if (organizationId) {
             fetchMembers();
+            fetchOrgSettings();
             fetchProjects();
         }
     }, [organizationId]);
@@ -135,6 +137,12 @@ export function Timesheets() {
         if (selectedMember !== 'all' && members.length === 0) return;
         fetchTimesheets();
     }, [range, selectedMember, filterProjectId, activeTimezone, members, projects, organizationId]);
+
+    async function fetchOrgSettings() {
+        if (!organizationId) return;
+        const { data } = await supabase.from('organizations').select('settings').eq('id', organizationId).single();
+        if (data?.settings?.orgTimezone) setOrgTimezone(data.settings.orgTimezone);
+    }
 
     async function fetchMembers() {
         let query = supabase.from('members')
@@ -226,6 +234,10 @@ export function Timesheets() {
                 if (m.auth_user_id) memberMap.set(m.auth_user_id, m);
             });
 
+            console.log('RAW SESSIONS FROM DB:', rawSessions);
+            if (rawSessions && rawSessions.length > 0) {
+                console.log('FIRST SESSION:', JSON.stringify(rawSessions[0], null, 2));
+            }
             const sessions = (rawSessions || []).map((s: any) => ({
                 ...s,
                 project_name: projectMap.get(s.project_id) || 'No Project'
@@ -274,9 +286,16 @@ export function Timesheets() {
                 let tz;
                 if (activeTimezone === 'User Local') tz = member?.timezone || undefined;
                 else if (activeTimezone === 'Admin Local') tz = undefined;
+                else if (activeTimezone === 'Org Local') tz = orgTimezone;
                 else tz = activeTimezone;
                 
                 const dayKey = getGroupingDateInTz(s.started_at, tz);
+                
+                // DEBUG LOG FOR FIRST SESSION
+                if (s.id === sessions[0]?.id) {
+                    console.log(`DEBUG: started_at=${s.started_at}, tz=${tz}, dayKey=${dayKey}`);
+                }
+                
                 const key = dailyMap[dayKey] ? dayKey : null;
 
                 if (key) {
@@ -299,7 +318,9 @@ export function Timesheets() {
                         effectiveEndMs = nowMs; // default to now if no samples and no end
                     }
 
-                    const durationMins = (effectiveEndMs - new Date(s.started_at).getTime()) / 60000;
+                    let durationMins = (effectiveEndMs - new Date(s.started_at).getTime()) / 60000;
+                    if (durationMins < 0) durationMins = 0; // Prevent negative durations, but don't drop the session
+                    
                     const offlineMins = samples.filter((samp: any) => samp.is_offline).length;
 
                     const isTrulyActive = !s.ended_at && (nowMs - (samples.length > 0 ? lastSampleTime : new Date(s.started_at).getTime()) < 15 * 60000);
@@ -471,6 +492,7 @@ export function Timesheets() {
                             onChange={setActiveTimezone}
                             options={[
                                 { id: 'Admin Local', name: 'Admin Local (Browser)' },
+                                { id: 'Org Local', name: 'Organization Timezone' },
                                 { id: 'User Local', name: 'User Local (Auto)' },
                                 { id: 'UTC', name: 'UTC (Universal)' },
                                 ...Array.from(new Set(members.map(m => m.timezone).filter(tz => tz && tz !== 'UTC'))).sort().map(tz => ({ id: tz as string, name: tz as string }))
@@ -797,6 +819,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Score</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Idle</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Duration</th>
+                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-40">Timezone</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-right uppercase tracking-widest">Window</th>
                             <th className="py-6 px-4 border-b border-border w-12"></th>
                         </tr>
@@ -822,6 +845,11 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                 </td>
                                 <td className="py-8 px-6 text-center text-[15px] font-bold text-text-muted tabular-nums">{s.idle_percent}%</td>
                                 <td className="py-8 px-6 text-center text-[18px] font-bold text-text-main tabular-nums">{formatDuration(s.duration_mins || 0)}</td>
+                                <td className="py-8 px-6 text-center text-[13px] font-bold text-text-muted">
+                                    <span className="px-2.5 py-1 rounded bg-white/5 border border-white/5 font-mono text-[12px] opacity-80">
+                                        {s.display_timezone || 'UTC'}
+                                    </span>
+                                </td>
                                 <td className="py-8 px-6 text-right">
                                     <div className="flex flex-col items-end gap-1">
                                         <span className="text-[14px] font-bold text-text-muted tabular-nums">

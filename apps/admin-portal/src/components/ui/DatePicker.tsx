@@ -24,9 +24,19 @@ export function DatePicker({
     displayValue
 }: DatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
-    const [viewDate, setViewDate] = useState(value ? new Date(value) : new Date());
+    const [viewDate, setViewDate] = useState(() => {
+        if (value) {
+            const [year, month, day] = value.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+        return new Date();
+    });
 
-    const selectedDate = useMemo(() => value ? new Date(value) : null, [value]);
+    const selectedDate = useMemo(() => {
+        if (!value) return null;
+        const [year, month, day] = value.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    }, [value]);
 
     const daysInMonth = useMemo(() => {
         const year = viewDate.getFullYear();
@@ -79,7 +89,8 @@ export function DatePicker({
     const formatDisplayDate = (val: string) => {
         if (displayValue) return displayValue;
         if (!val) return placeholder;
-        const d = new Date(val);
+        const [year, month, day] = val.split('-').map(Number);
+        const d = new Date(year, month - 1, day);
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
 
