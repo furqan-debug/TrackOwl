@@ -86,29 +86,54 @@ jobs:
         run: echo "NUM=$($env:GITHUB_REF_NAME -replace '^v','')" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
-      - name: Sign Windows NSIS Installer (.exe) with SSL.com eSigner
+      - name: Sign Windows Installers with SSL.com eSigner
         if: matrix.platform == 'windows-latest'
-        uses: sslcom/esigner-codesign@develop
-        with:
-          command: sign
-          username: ${{ secrets.ES_USERNAME }}
-          password: ${{ secrets.ES_PASSWORD }}
-          credential_id: ${{ secrets.CREDENTIAL_ID }}
-          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
-          file_path: ${{ github.workspace }}/src-tauri/target/release/bundle/nsis/TrackOwl_${{ steps.version.outputs.NUM }}_x64-setup.exe
-          override: true
+        shell: pwsh
+        env:
+          ES_USERNAME: ${{ secrets.ES_USERNAME }}
+          ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+          CREDENTIAL_ID: ${{ secrets.CREDENTIAL_ID }}
+          ES_TOTP_SECRET: ${{ secrets.ES_TOTP_SECRET }}
+        run: |
+          $VERSION = "${{ steps.version.outputs.NUM }}"
+          $NSIS_EXE = "${{ github.workspace }}\src-tauri\target\release\bundle\nsis\TrackOwl_${VERSION}_x64-setup.exe"
+          $MSI_FILE = "${{ github.workspace }}\src-tauri\target\release\bundle\msi\TrackOwl_${VERSION}_x64_en-US.msi"
 
-      - name: Sign Windows MSI Installer (.msi) with SSL.com eSigner
-        if: matrix.platform == 'windows-latest'
-        uses: sslcom/esigner-codesign@develop
-        with:
-          command: sign
-          username: ${{ secrets.ES_USERNAME }}
-          password: ${{ secrets.ES_PASSWORD }}
-          credential_id: ${{ secrets.CREDENTIAL_ID }}
-          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
-          file_path: ${{ github.workspace }}/src-tauri/target/release/bundle/msi/TrackOwl_${{ steps.version.outputs.NUM }}_x64_en-US.msi
-          override: true
+          # Download and extract CodeSignTool
+          $CST_URL = "https://github.com/SSLcom/CodeSignTool/releases/download/v1.3.0/CodeSignTool-v1.3.0-windows.zip"
+          $CST_ZIP = "${{ runner.temp }}\CodeSignTool.zip"
+          $CST_DIR = "${{ runner.temp }}\CodeSignTool"
+          Invoke-WebRequest -Uri $CST_URL -OutFile $CST_ZIP
+          Expand-Archive -Path $CST_ZIP -DestinationPath $CST_DIR -Force
+          $CST_BAT = Get-ChildItem -Path $CST_DIR -Recurse -Filter "CodeSignTool.bat" | Select-Object -First 1
+
+          if (-not $CST_BAT) {
+            Write-Error "CodeSignTool.bat not found after extraction"
+            exit 1
+          }
+
+          Write-Host "CodeSignTool found at: $($CST_BAT.FullName)"
+
+          # Sign each file
+          foreach ($file in @($NSIS_EXE, $MSI_FILE)) {
+            if (Test-Path $file) {
+              Write-Host "Signing: $file"
+              & $CST_BAT.FullName sign `
+                -username="$env:ES_USERNAME" `
+                -password="$env:ES_PASSWORD" `
+                -credential_id="$env:CREDENTIAL_ID" `
+                -totp_secret="$env:ES_TOTP_SECRET" `
+                -input_file_path="$file" `
+                -override
+              if ($LASTEXITCODE -ne 0) {
+                Write-Error "Signing failed for $file with exit code $LASTEXITCODE"
+                exit 1
+              }
+              Write-Host "Successfully signed: $file"
+            } else {
+              Write-Warning "File not found, skipping: $file"
+            }
+          }
 
       # Re-upload the signed Windows installers to the GitHub release
       - name: Upload Signed Windows Installers to Release
