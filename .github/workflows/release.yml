@@ -183,6 +183,11 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri build -- --target aarch64-apple-darwin --bundles app
         
+      - name: Embed Provisioning Profile & Re-Sign
+        run: |
+          cp ~/Library/MobileDevice/Provisioning\ Profiles/profile.provisionprofile "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/TrackOwl.app/Contents/embedded.provisionprofile"
+          codesign --force --sign "$APPLE_SIGNING_IDENTITY" --entitlements src-tauri/Entitlements.macOS.plist --options runtime "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/TrackOwl.app"
+        
       - name: Create Mac App Store PKG
         run: |
           xcrun productbuild --component "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/TrackOwl.app" /Applications TrackOwl.pkg --sign "$INSTALLER_SIGNING_IDENTITY"
