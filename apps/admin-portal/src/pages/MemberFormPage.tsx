@@ -45,7 +45,7 @@ export function MemberFormPage() {
     const [department, setDepartment] = useState('');
     const [employeeId, setEmployeeId] = useState('');
     const [employeeType, setEmployeeType] = useState('Full-time');
-    const [timezone, setTimezone] = useState('UTC');
+    const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
     const [email, setEmail] = useState('');
     
     // Missing Fields State
