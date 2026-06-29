@@ -64,7 +64,7 @@ export function Timesheets() {
     const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'calendar'>('daily');
     const [entries, setEntries] = useState<DailyEntry[]>([]);
     const [members, setMembers] = useState<MemberInfo[]>([]);
-    const [activeTimezone, setActiveTimezone] = useState<string>('Admin Local');
+    const [activeTimezone, setActiveTimezone] = useState<string>('User Local');
     const [projects, setProjects] = useState<any[]>([]);
     const [selectedMember, setSelectedMember] = useState<string>('all');
     const [filterProjectId, setFilterProjectId] = useState<string>('all');

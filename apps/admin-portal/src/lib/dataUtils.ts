@@ -223,7 +223,13 @@ export function getGroupingDateInTz(date: string | Date | number, targetTz?: str
     try {
         return d.toLocaleDateString('en-CA', { timeZone: targetTz || undefined });
     } catch (e) {
-        return d.toISOString().split('T')[0];
+        // If the timezone string is invalid, fallback to the browser's local timezone
+        try {
+            return d.toLocaleDateString('en-CA');
+        } catch (e2) {
+            // Absolute last resort
+            return d.toISOString().split('T')[0];
+        }
     }
 }
 
