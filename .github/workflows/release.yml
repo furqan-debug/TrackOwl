@@ -112,7 +112,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         
       - name: Add Rust Target
-        run: rustup target add aarch64-apple-darwin
+        run: |
+          rustup target add aarch64-apple-darwin
+          rustup target add x86_64-apple-darwin
         
       - name: Install Frontend Dependencies
         run: npm ci
@@ -181,16 +183,16 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: npm run tauri build -- --target aarch64-apple-darwin --bundles app
+        run: npm run tauri build -- --target universal-apple-darwin --bundles app
         
       - name: Embed Provisioning Profile & Re-Sign
         run: |
-          cp ~/Library/MobileDevice/Provisioning\ Profiles/profile.provisionprofile "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/TrackOwl.app/Contents/embedded.provisionprofile"
-          codesign --force --sign "$APPLE_SIGNING_IDENTITY" --entitlements src-tauri/Entitlements.macOS.plist --options runtime "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/TrackOwl.app"
+          cp ~/Library/MobileDevice/Provisioning\ Profiles/profile.provisionprofile "src-tauri/target/universal-apple-darwin/release/bundle/macos/TrackOwl.app/Contents/embedded.provisionprofile"
+          codesign --force --sign "$APPLE_SIGNING_IDENTITY" --entitlements src-tauri/Entitlements.macOS.plist --options runtime "src-tauri/target/universal-apple-darwin/release/bundle/macos/TrackOwl.app"
         
       - name: Create Mac App Store PKG
         run: |
-          xcrun productbuild --component "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/TrackOwl.app" /Applications TrackOwl.pkg --sign "$INSTALLER_SIGNING_IDENTITY"
+          xcrun productbuild --component "src-tauri/target/universal-apple-darwin/release/bundle/macos/TrackOwl.app" /Applications TrackOwl.pkg --sign "$INSTALLER_SIGNING_IDENTITY"
           mkdir -p pkg-output
           mv TrackOwl.pkg pkg-output/
         
