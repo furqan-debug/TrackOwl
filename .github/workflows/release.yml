@@ -49,6 +49,11 @@ jobs:
           ${{ secrets.APPLE_API_KEY_CONTENT }}
           EOF
 
+      - name: Add src-tauri to PATH (Windows only)
+        if: matrix.platform == 'windows-latest'
+        run: echo "${{ github.workspace }}/src-tauri" >> $GITHUB_PATH
+        shell: bash
+
       # Build & Publish Release via tauri-action
       - name: Build & Publish Release
         uses: tauri-apps/tauri-action@v0
