@@ -170,7 +170,7 @@ export function Timesheets() {
     }
 
     async function fetchTimesheets(forceRefresh = false) {
-        const cacheKey = `${range.start.toISOString()}_${range.end.toISOString()}_${selectedMember}_${filterProjectId}_${activeTimezone}`;
+        const cacheKey = `${range.start.toISOString()}_${range.end.toISOString()}_${selectedMember}_${filterProjectId}_${activeTimezone}_${viewMode}`;
         if (!forceRefresh && timesheetsCache && timesheetsCacheKey === cacheKey) {
             setEntries(timesheetsCache.entries);
             setLoading(false);
@@ -293,14 +293,16 @@ export function Timesheets() {
                     let effectiveEndMs = nowMs;
                     if (s.ended_at) {
                         effectiveEndMs = new Date(s.ended_at).getTime();
-                    } else {
+                    } else if (samples.length > 0) {
                         effectiveEndMs = lastSampleTime;
+                    } else {
+                        effectiveEndMs = nowMs; // default to now if no samples and no end
                     }
 
                     const durationMins = (effectiveEndMs - new Date(s.started_at).getTime()) / 60000;
                     const offlineMins = samples.filter((samp: any) => samp.is_offline).length;
 
-                    const isTrulyActive = !s.ended_at && (nowMs - lastSampleTime < 15 * 60000);
+                    const isTrulyActive = !s.ended_at && (nowMs - (samples.length > 0 ? lastSampleTime : new Date(s.started_at).getTime()) < 15 * 60000);
 
                     dailyMap[key].sessions.push({
                         ...s,
@@ -405,12 +407,16 @@ export function Timesheets() {
     const openEditModal = (session: Session) => {
         const start = new Date(session.started_at);
         const end = session.ended_at ? new Date(session.ended_at) : new Date(session.effective_end || new Date());
+        
+        const pad = (n: number) => n.toString().padStart(2, '0');
+        const localDateStr = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
+
         setAddTimeData({
             projectId: session.project_id || '',
             userId: session.user_id || '',
-            date: start.toISOString().split('T')[0],
-            startTime: start.toTimeString().substring(0, 5),
-            endTime: end.toTimeString().substring(0, 5)
+            date: localDateStr,
+            startTime: pad(start.getHours()) + ':' + pad(start.getMinutes()),
+            endTime: pad(end.getHours()) + ':' + pad(end.getMinutes())
         });
         setEditingSession(session);
         setShowEditTimeModal(true);
@@ -635,7 +641,7 @@ export function Timesheets() {
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-text-muted ">Date</label>
+                        <label className="text-[10px] font-bold text-text-muted ">Date (Local Timezone)</label>
                         <DatePicker
                             value={addTimeData.date}
                             onChange={(val) => setAddTimeData({ ...addTimeData, date: val })}
@@ -815,7 +821,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                     </div>
                                 </td>
                                 <td className="py-8 px-6 text-center text-[15px] font-bold text-text-muted tabular-nums">{s.idle_percent}%</td>
-                                <td className="py-8 px-6 text-center text-[18px] font-bold text-text-main tabular-nums">{formatDuration((s.duration_mins || 0) + (s.offline_mins || 0))}</td>
+                                <td className="py-8 px-6 text-center text-[18px] font-bold text-text-main tabular-nums">{formatDuration(s.duration_mins || 0)}</td>
                                 <td className="py-8 px-6 text-right">
                                     <div className="flex flex-col items-end gap-1">
                                         <span className="text-[14px] font-bold text-text-muted tabular-nums">
