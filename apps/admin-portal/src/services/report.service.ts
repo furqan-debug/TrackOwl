@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { fetchAllActivitySamples, getDayIndexInTz, getEffectiveEnd, calculateActivityScore, getGroupingDateInTz } from '../lib/dataUtils';
+import { getDayIndexInTz, getEffectiveEnd, calculateActivityScore, getGroupingDateInTz } from '../lib/dataUtils';
 
 export interface OwedRow {
     member_id: string;
@@ -95,17 +95,16 @@ export const reportService = {
     
     const { data: sessions } = await sessQuery;
 
-    const filteredSessionIds = (sessions || []).map((s: any) => s.id);
-    const samples = await fetchAllActivitySamples(
-        supabase,
-        start.toISOString(),
-        end.toISOString(),
-        'session_id, recorded_at, idle, activity_percent',
-        { 
-            organizationId: organizationId ?? undefined, 
-            sessionIds: filteredSessionIds.length > 0 ? filteredSessionIds : undefined 
-        }
-    );
+    const { data: samplesData, error: samplesErr } = await supabase.rpc('get_raw_activity_samples', {
+        p_org_id: organizationId,
+        p_start_iso: start.toISOString(),
+        p_end_iso: end.toISOString(),
+        p_member_ids: selectedMemberId.toLowerCase() !== 'all' ? [selectedMemberId] : null
+    });
+    if (samplesErr) {
+        console.error("Error fetching daily totals samples:", samplesErr);
+    }
+    const samples = samplesData || [];
 
     if (!members || !sessions) {
         return { data: [], members: members || [] };
@@ -361,13 +360,17 @@ export const reportService = {
 
     if (activeSessionIds.length > 0) ssQuery = ssQuery.in('session_id', activeSessionIds);
 
-    const [samples, { count: ssCount }] = await Promise.all([
-        fetchAllActivitySamples(supabase, start, end, 'session_id, recorded_at, activity_percent, idle, app_name', {
-            organizationId: organizationId ?? undefined,
-            sessionIds: activeSessionIds.length > 0 ? activeSessionIds : undefined
+    const [samplesResult, { count: ssCount }] = await Promise.all([
+        supabase.rpc('get_raw_activity_samples', {
+            p_org_id: organizationId,
+            p_start_iso: start,
+            p_end_iso: end,
+            p_member_ids: scopedUserIds.length > 0 ? scopedUserIds : null
         }),
         ssQuery,
     ]);
+
+    const samples = (samplesResult.data as any[]) || [];
 
     const allSamples = samples || [];
     const activeSessionIdsSet = new Set(activeSessionIds);
