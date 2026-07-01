@@ -244,22 +244,17 @@ export function Timesheets() {
             })) as Session[];
 
             const sessionIds = sessions.map((s: Session) => s.id);
-            let activityData: any[] = [];
+            let sessionStats: any[] = [];
 
             if (sessionIds.length > 0) {
                 try {
-                    activityData = await fetchAllActivitySamples(
-                        supabase,
-                        fetchStart.toISOString(),
-                        fetchEnd.toISOString(),
-                        'session_id, recorded_at, idle, activity_percent, is_offline',
-                        {
-                            organizationId: organizationId ?? undefined,
-                            sessionIds
-                        }
-                    );
+                    const { data: statsData, error: statsErr } = await supabase.rpc('get_sessions_activity_stats', {
+                        p_session_ids: sessionIds
+                    });
+                    if (statsErr) throw statsErr;
+                    sessionStats = statsData || [];
                 } catch (actErr) {
-                    console.error('Activity fetch failed (non-blocking):', actErr);
+                    console.error('Activity stats fetch failed:', actErr);
                 }
             }
 
@@ -274,12 +269,6 @@ export function Timesheets() {
                 const key = `${year}-${month}-${day}`;
                 dailyMap[key] = { date: key, sessions: [], totalMinutes: 0, activeMinutes: 0, activityPercent: 0 };
             }
-
-            const sessionSamplesMap: Record<string, any[]> = {};
-            (activityData || []).forEach((a: any) => {
-                if (!sessionSamplesMap[a.session_id]) sessionSamplesMap[a.session_id] = [];
-                sessionSamplesMap[a.session_id].push(a);
-            });
 
             sessions.forEach((s: Session) => {
                 const member = memberMap.get(s.user_id);
@@ -299,31 +288,28 @@ export function Timesheets() {
                 const key = dailyMap[dayKey] ? dayKey : null;
 
                 if (key) {
-                    const samples = sessionSamplesMap[s.id] || [];
-                    const score = calculateActivityScore(samples);
+                    const stats = sessionStats.find((st: any) => st.session_id === s.id);
+                    const sampleCount = stats ? parseInt(stats.sample_count) : 0;
+                    const activitySum = stats ? parseInt(stats.activity_sum) : 0;
+                    const lastSampleTime = stats && stats.last_sample_at ? new Date(stats.last_sample_at).getTime() : new Date(s.started_at).getTime();
+                    const offlineMins = stats ? parseInt(stats.offline_count) : 0;
 
-                    // Improved duration calculation:
-                    // If ended_at is null, check if the last sample is recent.
-                    // If the last sample is > 10 mins ago, use the last sample's time as the effective end.
-                    const lastSample = samples.length > 0 ? samples.sort((a: any, b: any) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())[0] : null;
-                    const lastSampleTime = lastSample ? new Date(lastSample.recorded_at).getTime() : new Date(s.started_at).getTime();
+                    const score = sampleCount > 0 ? Math.round(activitySum / sampleCount) : 0;
+
                     const nowMs = new Date().getTime();
-
                     let effectiveEndMs = nowMs;
                     if (s.ended_at) {
                         effectiveEndMs = new Date(s.ended_at).getTime();
-                    } else if (samples.length > 0) {
+                    } else if (sampleCount > 0) {
                         effectiveEndMs = lastSampleTime;
                     } else {
-                        effectiveEndMs = nowMs; // default to now if no samples and no end
+                        effectiveEndMs = nowMs;
                     }
 
                     let durationMins = (effectiveEndMs - new Date(s.started_at).getTime()) / 60000;
-                    if (durationMins < 0) durationMins = 0; // Prevent negative durations, but don't drop the session
+                    if (durationMins < 0) durationMins = 0;
                     
-                    const offlineMins = samples.filter((samp: any) => samp.is_offline).length;
-
-                    const isTrulyActive = !s.ended_at && (nowMs - (samples.length > 0 ? lastSampleTime : new Date(s.started_at).getTime()) < 15 * 60000);
+                    const isTrulyActive = !s.ended_at && (nowMs - lastSampleTime < 15 * 60000);
 
                     dailyMap[key].sessions.push({
                         ...s,
