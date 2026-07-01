@@ -28,86 +28,44 @@ export interface MemberFinancial {
 
 export const reportService = {
   async fetchAmountsOwed(start: Date): Promise<OwedRow[]> {
-    const [{ data: members }, { data: sessions }] = await Promise.all([
-        supabase.from('members').select('id, full_name, pay_rate'),
-        supabase.from('sessions')
-            .select('id, user_id, started_at')
-            .gte('started_at', start.toISOString())
-    ]);
+    const { data: members, error: memberErr } = await supabase
+        .from('members')
+        .select('id, full_name, pay_rate, organization_id');
 
-    if (!members || !sessions) {
+    if (memberErr || !members || members.length === 0) {
         return [];
     }
 
-    const sessionToUser: Record<string, string> = {};
-    const sessionIds: string[] = [];
-    sessions.forEach((s: any) => {
-        sessionToUser[s.id] = s.user_id;
-        sessionIds.push(s.id);
+    const orgId = members[0].organization_id;
+    const { data: stats, error: statsErr } = await supabase.rpc('get_amounts_owed_stats', {
+        p_org_id: orgId,
+        p_start_iso: start.toISOString()
     });
 
-    const allSamples: any[] = [];
-    if (sessionIds.length > 0) {
-        const PAGE_SIZE = 1000;
-        for (let page = 0; page < 100; page++) {
-            const { data: samplesPage, error } = await supabase
-                .from('activity_samples')
-                .select('session_id, idle, recorded_at')
-                .in('session_id', sessionIds)
-                .gte('recorded_at', start.toISOString())
-                .order('recorded_at', { ascending: true })
-                .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
-
-            if (error || !samplesPage || samplesPage.length === 0) break;
-            allSamples.push(...samplesPage);
-            if (samplesPage.length < PAGE_SIZE) break;
-        }
+    if (statsErr) {
+        console.error("Error fetching amounts owed stats:", statsErr);
+        return [];
     }
-
-    const seen = new Set<string>();
-    const dedupedSamples: any[] = [];
-    allSamples.sort((a, b) => (a.recorded_at > b.recorded_at ? 1 : -1));
-    allSamples.forEach(s => {
-        const uid = sessionToUser[s.session_id];
-        if (!uid) return;
-        const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
-        const key = `${uid}_${minute}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        dedupedSamples.push({ ...s, user_id: uid });
-    });
-
-    const userMins: Record<string, { productive: number; lastTracked: string }> = {};
-    dedupedSamples.forEach(s => {
-        const uid = s.user_id;
-        if (!userMins[uid]) userMins[uid] = { productive: 0, lastTracked: s.recorded_at };
-        if (s.idle !== true) {
-            userMins[uid].productive += 1;
-        }
-        if (s.recorded_at > userMins[uid].lastTracked) {
-            userMins[uid].lastTracked = s.recorded_at;
-        }
-    });
 
     const memberMap: Record<string, { name: string; pay_rate: number }> = {};
     members.forEach((m: any) => {
         memberMap[m.id] = { name: m.full_name, pay_rate: m.pay_rate ?? 0 };
     });
 
-    const result: OwedRow[] = Object.entries(userMins)
-        .filter(([uid]) => memberMap[uid])
-        .map(([uid, stats]) => {
-            const hours = stats.productive / 60;
-            const payRate = memberMap[uid].pay_rate;
+    const result: OwedRow[] = (stats || [])
+        .filter((s: any) => memberMap[s.user_id])
+        .map((s: any) => {
+            const hours = (s.productive_mins || 0) / 60;
+            const payRate = memberMap[s.user_id].pay_rate;
             return {
-                member_id: uid,
-                full_name: memberMap[uid].name,
+                member_id: s.user_id,
+                full_name: memberMap[s.user_id].name,
                 pay_rate: payRate,
                 totalHours: Math.round(hours * 100) / 100,
                 amountOwed: Math.round(hours * payRate * 100) / 100,
-                lastTracked: new Date(stats.lastTracked).toLocaleDateString()
+                lastTracked: s.last_tracked ? new Date(s.last_tracked).toLocaleDateString() : 'Never'
             };
-        }).sort((a, b) => b.amountOwed - a.amountOwed);
+        }).sort((a: any, b: any) => b.amountOwed - a.amountOwed);
 
     return result;
   },
