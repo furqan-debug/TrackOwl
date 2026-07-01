@@ -16,9 +16,7 @@ import { FeatureLockOverlay } from './access/FeatureLockOverlay';
 import { SecureImage } from './ui/SecureImage';
 import {
     getEffectiveEnd,
-    formatDuration,
-    fetchAllActivitySamples,
-    getDailyActivityData
+    formatDuration
 } from '../lib/dataUtils';
 import {
     ResponsiveContainer,
@@ -197,185 +195,103 @@ export function Dashboard() {
 
             let sessionsQuery = supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').eq('organization_id', organizationId).gte('started_at', startIso).lte('started_at', endIso);
             if (memberIdsFilter) sessionsQuery = sessionsQuery.in('user_id', memberIdsFilter);
-
-            let prevSessionsQuery = supabase.from('sessions').select('id, user_id').eq('organization_id', organizationId).gte('started_at', prevWeekStartIso).lte('started_at', prevWeekEndIso);
-            if (memberIdsFilter) prevSessionsQuery = prevSessionsQuery.in('user_id', memberIdsFilter);
-
             const [
                 { data: members },
                 { data: projects },
-                { data: sessions },
-                { data: prevSessions }
+                { data: sessions }
             ] = await Promise.all([
                 membersQuery,
                 projectsQuery,
-                sessionsQuery,
-                prevSessionsQuery
+                sessionsQuery
             ]);
-
-            const currentSessionIds = sessions?.map(s => s.id) || [];
-            const prevSessionIds = prevSessions?.map(s => s.id) || [];
-
-            let screenshotsQuery = supabase.from('screenshots').select('id, session_id, file_url, recorded_at').eq('organization_id', organizationId).gte('recorded_at', startIso).lte('recorded_at', endIso).order('recorded_at', { ascending: false }).limit(300);
-            if (isScoped && currentSessionIds.length > 0) screenshotsQuery = screenshotsQuery.in('session_id', currentSessionIds);
-
-            const [
-                { data: screenshots },
-                activitySamples,
-                prevActivitySamples
-            ] = await Promise.all([
-                currentSessionIds.length > 0 ? screenshotsQuery : { data: [] },
-                currentSessionIds.length > 0 ? fetchAllActivitySamples(supabase, startIso, endIso, 'session_id, recorded_at, activity_percent, idle, app_name', { organizationId, sessionIds: currentSessionIds }) : [],
-                prevSessionIds.length > 0 ? fetchAllActivitySamples(supabase, prevWeekStartIso, prevWeekEndIso, 'session_id, recorded_at, activity_percent, idle', { organizationId, sessionIds: prevSessionIds }) : []
-            ]);
-
             if (!members || !projects || !sessions) return;
 
+            // Fetch pre-aggregated metrics from the database RPC
+            const { data: aggregated, error: rpcErr } = await supabase.rpc('get_dashboard_metrics', {
+                p_org_id: organizationId,
+                p_start_iso: startIso,
+                p_end_iso: endIso,
+                p_prev_start_iso: prevWeekStartIso,
+                p_prev_end_iso: prevWeekEndIso,
+                p_member_ids: memberIdsFilter,
+                p_project_ids: projectIdsFilter
+            });
+
+            if (rpcErr) throw rpcErr;
+
+            // Fetch latest active sample check for online status
+            let latestActiveSamples: any[] = [];
+            const activeSessionIds = sessions.filter(s => !s.ended_at || s.ended_at > nowIso).map(s => s.id);
+            if (activeSessionIds.length > 0) {
+                const { data: actSamps } = await supabase
+                    .from('activity_samples')
+                    .select('session_id, idle, recorded_at')
+                    .in('session_id', activeSessionIds)
+                    .order('recorded_at', { ascending: false });
+                latestActiveSamples = actSamps || [];
+            }
+
             const projectMap = Object.fromEntries(projects.map(p => [p.id, p]));
-            const sessionToUserMap = Object.fromEntries(sessions.map(s => [s.id, s.user_id]));
-            const sessionToProjectMap = Object.fromEntries(sessions.map(s => [s.id, s.project_id]));
-
-            let totalMins = 0;
-            let activitySum = 0;
-            let activityCount = 0;
-            const projectsWorked = new Set<string>();
-            const activeMemberIds = new Set<string>();
-
             const userRows: Record<string, UserActivityRow> = {};
-            const projStats: Record<string, { mins: number, activitySum: number, activityCount: number }> = {};
-            const appStats: Record<string, number> = {};
 
+            const totalMins = aggregated.total_mins || 0;
+            const activitySum = aggregated.activity_sum || 0;
+            const activityCount = aggregated.activity_count || 0;
+
+            const currAvgScore = activityCount > 0 ? Math.round(activitySum / activityCount) : 0;
+            const prevTotalMins = aggregated.prev_total_mins || 0;
+            const prevAvgScore = (aggregated.prev_activity_count || 0) > 0 ? Math.round(aggregated.prev_activity_sum / aggregated.prev_activity_count) : 0;
+            const trendFocus = prevAvgScore > 0 ? currAvgScore - prevAvgScore : (currAvgScore > 0 ? currAvgScore : 0);
+            const trendProductivity = prevTotalMins > 0 ? Math.round(((totalMins - prevTotalMins) / prevTotalMins) * 100) : (totalMins > 0 ? 100 : 0);
+
+            // Populate user stats
             members.forEach(m => {
+                const uStats = (aggregated.user_stats || {})[m.id] || { mins: 0, activity_sum: 0, cnt: 0 };
+                const uScreens = (aggregated.screenshots || []).filter((s: any) => s.user_id === m.id);
                 userRows[m.id] = {
                     userId: m.id,
                     fullName: m.full_name,
                     avatarUrl: m.avatar_url,
-                    activityScore: 0,
-                    totalMinutes: 0,
-                    screenshots: []
+                    activityScore: uStats.cnt > 0 ? Math.round(uStats.activity_sum / uStats.cnt) : 0,
+                    totalMinutes: uStats.mins,
+                    screenshots: uScreens
                 };
             });
 
-            const membersMap = new Map(members.map(m => [m.id, m]));
-
-            const getProductiveSamples = (samples: any[], sessionMap: Record<string, string>, memMap: Map<string, any>) => {
-                const samplesByUser = new Map<string, any[]>();
-                samples.forEach(s => {
-                    const uid = sessionMap[s.session_id];
-                    if (!uid) return;
-                    if (!samplesByUser.has(uid)) samplesByUser.set(uid, []);
-                    samplesByUser.get(uid)!.push(s);
-                });
-
-                const result: any[] = [];
-                samplesByUser.forEach((userSamps, uid) => {
-                    const limit = memMap.get(uid)?.idle_limit ?? 0;
-                    if (limit <= 1) {
-                        result.push(...userSamps);
-                    } else {
-                        const sorted = userSamps.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-                        let currentBlock: any[] = [];
-                        for (let i = 0; i < sorted.length; i++) {
-                            const s = sorted[i];
-                            const prev = i > 0 ? sorted[i - 1] : null;
-                            const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
-                            const isContiguous = prev && gapMs <= 125000;
-
-                            if (s.idle && isContiguous) {
-                                currentBlock.push(s);
-                            } else if (s.idle && !prev) {
-                                currentBlock = [s];
-                            } else if (s.idle && !isContiguous) {
-                                if (currentBlock.length < limit) result.push(...currentBlock);
-                                currentBlock = [s];
-                            } else {
-                                result.push(s);
-                                if (currentBlock.length < limit) result.push(...currentBlock);
-                                currentBlock = [];
-                            }
-                        }
-                        if (currentBlock.length < limit) result.push(...currentBlock);
-                    }
-                });
-                return result;
+            const finalStats = {
+                totalProductiveMinutes: totalMins,
+                avgActivityScore: currAvgScore,
+                projectsWorked: aggregated.projects_worked || 0,
+                activeMembers: aggregated.active_members || 0,
+                totalScreenshots: aggregated.screenshot_count || 0,
+                trendFocus,
+                trendProductivity
             };
 
-            const productiveSamples = getProductiveSamples(activitySamples, sessionToUserMap, membersMap);
+            const finalUserActivity = Object.values(userRows)
+                .filter(r => r.totalMinutes > 0 || r.screenshots.length > 0)
+                .sort((a, b) => b.totalMinutes - a.totalMinutes)
+                .slice(0, 4);
 
-            productiveSamples.forEach(sample => {
-                const userId = sessionToUserMap[sample.session_id];
-                const projectId = sessionToProjectMap[sample.session_id];
-                if (!userId) return;
+            const finalProjectActivity = Object.entries(aggregated.proj_stats || {})
+                .map(([id, p]: [string, any]) => ({
+                    id,
+                    name: projectMap[id]?.name || 'Unknown',
+                    minutes: p.mins,
+                    activityScore: p.cnt > 0 ? Math.round(p.activity_sum / p.cnt) : 0,
+                    color: projectMap[id]?.color || 'var(--color-chart-main)'
+                }))
+                .sort((a, b) => b.minutes - a.minutes);
 
-                const score = sample.activity_percent ?? 50;
-                totalMins++;
-                activitySum += score;
-                activityCount++;
-                if (projectId) projectsWorked.add(projectId);
-                activeMemberIds.add(userId);
-
-                if (projectId) {
-                    if (!projStats[projectId]) projStats[projectId] = { mins: 0, activitySum: 0, activityCount: 0 };
-                    projStats[projectId].mins++;
-                    projStats[projectId].activitySum += score;
-                    projStats[projectId].activityCount++;
-                }
-
-                if (sample.app_name) {
-                    appStats[sample.app_name] = (appStats[sample.app_name] || 0) + 1;
-                }
-            });
-
-            // 2. Pre-index samples for faster lookup
-            const samplesBySession = new Map<string, any[]>();
-            activitySamples.forEach(s => {
-                if (!samplesBySession.has(s.session_id)) samplesBySession.set(s.session_id, []);
-                samplesBySession.get(s.session_id)!.push(s);
-            });
-
-            screenshots?.forEach(ss => {
-                const userId = sessionToUserMap[ss.session_id];
-                if (userId && userRows[userId]) {
-                    // Limit to 3 screenshots per user
-                    if (userRows[userId].screenshots.length < 3) {
-                        const sessSamples = samplesBySession.get(ss.session_id) || [];
-                        const ssTime = new Date(ss.recorded_at).getTime();
-
-                        // Find activity percent for this screenshot (within 10m window)
-                        const activityPercent = sessSamples.find(s => Math.abs(new Date(s.recorded_at).getTime() - ssTime) < 600000)?.activity_percent ?? 50;
-
-                        userRows[userId].screenshots.push({
-                            id: ss.id,
-                            path: ss.file_url,
-                            recordedAt: ss.recorded_at,
-                            activityPercent: activityPercent
-                        });
-                    }
-                }
-            });
-
-            // Index sessions by user for fast lookup
-            const sessionsByUser = new Map<string, any[]>();
-            sessions.forEach(s => {
-                if (!sessionsByUser.has(s.user_id)) sessionsByUser.set(s.user_id, []);
-                sessionsByUser.get(s.user_id)!.push(s);
-            });
-
-            Object.entries(userRows).forEach(([uId, row]) => {
-                const userSessions = sessionsByUser.get(uId) || [];
-                const userSessionIds = userSessions.map(s => s.id);
-                const userSamples: any[] = [];
-                userSessionIds.forEach(sid => {
-                    const sessSamples = samplesBySession.get(sid);
-                    if (sessSamples) userSamples.push(...sessSamples);
-                });
-
-                if (userSamples.length > 0) {
-                    const sum = userSamples.reduce((acc, s) => acc + (s.activity_percent ?? (s.idle ? 0 : 50)), 0);
-                    row.activityScore = Math.round(sum / userSamples.length);
-                    row.totalMinutes = userSamples.filter(s => !s.idle).length;
-                }
-            });
+            const totalSamplesForApps = Object.values(aggregated.app_usage || {}).reduce((a: any, b: any) => a + b, 0) as number;
+            const finalAppUsage = Object.entries(aggregated.app_usage || {})
+                .map(([name, count]: [string, any]) => ({
+                    name,
+                    minutes: count,
+                    percent: totalSamplesForApps > 0 ? (count / totalSamplesForApps) * 100 : 0
+                }))
+                .sort((a, b) => b.minutes - a.minutes)
+                .slice(0, 5);
 
             const online: OnlineMember[] = members.map(m => {
                 const activeSession = sessions.find(s => s.user_id === m.id && (!s.ended_at || s.ended_at > nowIso));
@@ -387,7 +303,7 @@ export function Dashboard() {
                 });
                 let status: 'working' | 'idle' | 'offline' = 'offline';
                 if (activeSession) {
-                    const latestSample = activitySamples.filter(s => s.session_id === activeSession.id).sort((a, b) => new Date(b.recorded_at).getTime() - new Date(a.recorded_at).getTime())[0];
+                    const latestSample = latestActiveSamples.find(s => s.session_id === activeSession.id);
                     status = (latestSample && !latestSample.idle) ? 'working' : 'idle';
                 }
                 return {
@@ -402,55 +318,6 @@ export function Dashboard() {
                 };
             }).sort((a, b) => (a.status === 'offline' ? 1 : 0) - (b.status === 'offline' ? 1 : 0));
 
-            let prevTotalMins = 0;
-            let prevActivitySum = 0;
-            let prevActivityCount = 0;
-
-            if (prevSessions && prevActivitySamples) {
-                const prevSessionToUserMap = Object.fromEntries(prevSessions.map((s: any) => [s.id, s.user_id]));
-                const prevProductiveSamples = getProductiveSamples(prevActivitySamples, prevSessionToUserMap, membersMap);
-
-                prevProductiveSamples.forEach(sample => {
-                    prevTotalMins++;
-                    prevActivitySum += sample.activity_percent ?? 50;
-                    prevActivityCount++;
-                });
-            }
-
-            const currAvgScore = activityCount > 0 ? Math.round(activitySum / activityCount) : 0;
-            const prevAvgScore = prevActivityCount > 0 ? Math.round(prevActivitySum / prevActivityCount) : 0;
-            const trendFocus = prevAvgScore > 0 ? currAvgScore - prevAvgScore : (currAvgScore > 0 ? currAvgScore : 0);
-
-            const trendProductivity = prevTotalMins > 0 ? Math.round(((totalMins - prevTotalMins) / prevTotalMins) * 100) : (totalMins > 0 ? 100 : 0);
-
-            const finalStats = {
-                totalProductiveMinutes: totalMins,
-                avgActivityScore: currAvgScore,
-                projectsWorked: projectsWorked.size,
-                activeMembers: activeMemberIds.size,
-                totalScreenshots: screenshots?.length || 0,
-                trendFocus,
-                trendProductivity
-            };
-
-            const finalUserActivity = Object.values(userRows)
-                .filter(r => r.totalMinutes > 0 || r.screenshots.length > 0)
-                .sort((a, b) => b.totalMinutes - a.totalMinutes)
-                .slice(0, 4);
-
-            const finalProjectActivity = Object.entries(projStats)
-                .map(([id, p]) => ({ id, name: projectMap[id]?.name || 'Unknown', minutes: p.mins, activityScore: p.activityCount > 0 ? Math.round(p.activitySum / p.activityCount) : 0, color: projectMap[id]?.color || 'var(--color-chart-main)' }))
-                .sort((a, b) => b.minutes - a.minutes);
-
-            const totalSamplesForApps = Object.values(appStats).reduce((a, b) => a + b, 0);
-            const finalAppUsage = Object.entries(appStats)
-                .map(([name, count]) => ({
-                    name,
-                    minutes: count,
-                    percent: totalSamplesForApps > 0 ? (count / totalSamplesForApps) * 100 : 0
-                }))
-                .sort((a, b) => b.minutes - a.minutes).slice(0, 10);
-
             // Update State
             setStats(finalStats);
             setUserActivity(finalUserActivity);
@@ -459,7 +326,14 @@ export function Dashboard() {
             setAppUsage(finalAppUsage);
 
             // Chart Data Transformation
-            const dailyData = getDailyActivityData(productiveSamples);
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const dailyData = days.map(day => {
+                const count = (aggregated.daily_stats || {})[day] || 0;
+                return {
+                    name: day,
+                    hours: Math.round((count / 60) * 100) / 100
+                };
+            });
             setChartData(dailyData);
 
             // Update Cache
