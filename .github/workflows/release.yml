@@ -260,8 +260,27 @@ jobs:
         
       - name: Embed Provisioning Profile & Re-Sign
         run: |
-          cp ~/Library/MobileDevice/Provisioning\ Profiles/profile.provisionprofile "src-tauri/target/universal-apple-darwin/release/bundle/macos/TrackOwl.app/Contents/embedded.provisionprofile"
-          codesign --force --sign "$APPLE_SIGNING_IDENTITY" --entitlements src-tauri/Entitlements.macOS.plist --options runtime "src-tauri/target/universal-apple-darwin/release/bundle/macos/TrackOwl.app"
+          PROFILE_PATH="$HOME/Library/MobileDevice/Provisioning Profiles/profile.provisionprofile"
+          APP_PATH="src-tauri/target/universal-apple-darwin/release/bundle/macos/TrackOwl.app"
+          ENTITLEMENTS_PATH="src-tauri/Entitlements.macOS.plist"
+          
+          # Embed profile
+          cp "$PROFILE_PATH" "$APP_PATH/Contents/embedded.provisionprofile"
+          
+          # Extract Team ID and App ID from provisioning profile
+          security cms -D -i "$PROFILE_PATH" > profile.plist
+          APP_ID=$(/usr/libexec/PlistBuddy -c "Print Entitlements:com.apple.application-identifier" profile.plist 2>/dev/null || /usr/libexec/PlistBuddy -c "Print Entitlements:application-identifier" profile.plist)
+          TEAM_ID=$(/usr/libexec/PlistBuddy -c "Print Entitlements:com.apple.developer.team-identifier" profile.plist)
+          
+          echo "Extracted App ID: $APP_ID"
+          echo "Extracted Team ID: $TEAM_ID"
+          
+          # Inject them into Entitlements.macOS.plist
+          /usr/libexec/PlistBuddy -c "Add :com.apple.application-identifier string $APP_ID" "$ENTITLEMENTS_PATH" || true
+          /usr/libexec/PlistBuddy -c "Add :com.apple.developer.team-identifier string $TEAM_ID" "$ENTITLEMENTS_PATH" || true
+          
+          # Re-sign the outer bundle using the new injected entitlements
+          codesign --force --sign "$APPLE_SIGNING_IDENTITY" --entitlements "$ENTITLEMENTS_PATH" --options runtime "$APP_PATH"
         
       - name: Create Mac App Store PKG
         run: |
