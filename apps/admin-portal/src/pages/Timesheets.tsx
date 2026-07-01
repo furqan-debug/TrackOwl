@@ -11,9 +11,7 @@ import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker } from '../co
 import clsx from 'clsx';
 import {
     formatDuration,
-    calculateActivityScore,
-    getGroupingDateInTz,
-    fetchAllActivitySamples
+    getGroupingDateInTz
 } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
 
