@@ -6,8 +6,8 @@ import {
   ShieldAlert, Eye, EyeOff, MapPin, MonitorPlay, MousePointerClick,
   ClipboardList, Calendar, Circle, ChevronDown, ChevronUp,
   User as UserIcon, Save, RefreshCcw,
-  HelpCircle, LifeBuoy, MessageSquare, Send, ArrowLeft,
-  Bell, ShieldCheck, Smartphone
+   LifeBuoy, MessageSquare, Send, ArrowLeft,
+   Bell, ShieldCheck, Smartphone
 } from 'lucide-react';
 import { trackerAPI } from './tauri-ipc';
 
@@ -1832,7 +1832,7 @@ export default function App() {
         )}
         {screen === 'projects' && (
           <motion.div key="projects" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
-            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} onSupport={() => setScreen('support')} trackingError={trackingError} setTrackingError={setTrackingError} todos={todos} onTodoDone={handleTodoDone} />
+            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} trackingError={trackingError} setTrackingError={setTrackingError} todos={todos} onTodoDone={handleTodoDone} />
           </motion.div>
         )}
         {screen === 'consent' && (
@@ -1854,7 +1854,6 @@ export default function App() {
               liveIdleSeconds={liveIdleSeconds}
               onStop={handleStop}
               onSettings={() => setScreen('settings')}
-              onSupport={() => setScreen('support')}
               todos={todos}
               onTodoDone={handleTodoDone}
               projects={projects}
@@ -2063,7 +2062,7 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // Topbar
 // ─────────────────────────────────────────────────────────────────────────────
-function Topbar({ user, onLogout, onSettings, onSupport, todoBadge, disabled }: { user?: User; onLogout?: () => void; onSettings?: () => void; onSupport?: () => void; todoBadge?: number; disabled?: boolean }) {
+function Topbar({ user, onLogout, onSettings, todoBadge, disabled }: { user?: User; onLogout?: () => void; onSettings?: () => void; todoBadge?: number; disabled?: boolean }) {
   const initials = user?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'U';
   return (
     <header className="app-topbar">
@@ -2093,9 +2092,6 @@ function Topbar({ user, onLogout, onSettings, onSupport, todoBadge, disabled }: 
               ) : initials}
             </div>
           </div>
-          <button onClick={disabled ? undefined : onSupport} className="btn btn-ghost" title="Support" style={{ padding: '0.3rem', color: '#fff' }} disabled={disabled}>
-            <HelpCircle size={16} />
-          </button>
           <button onClick={disabled ? undefined : onLogout} className="btn btn-ghost" title={disabled ? "Stop timer to sign out" : "Sign out"} style={{ padding: '0.3rem', color: '#fff' }} disabled={disabled}>
             <LogOut size={16} />
           </button>
@@ -2157,13 +2153,12 @@ function MyTasksPanel({ todos, onDone, disabled }: { todos: Todo[]; onDone: (id:
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Projects
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, onSupport, trackingError, setTrackingError, todos, onTodoDone }: {
+function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone }: {
   user: User;
   projects: Project[];
   onSelect: (p: Project) => void;
   onLogout: () => void;
   onSettings: () => void;
-  onSupport: () => void;
   trackingError?: string | null;
   setTrackingError: (err: string | null) => void;
   todos: Todo[];
@@ -2190,7 +2185,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, onSupp
 
   return (
     <div className="projects-layout">
-      <Topbar user={user} onLogout={onLogout} onSettings={onSettings} onSupport={onSupport} todoBadge={todos.length} />
+      <Topbar user={user} onLogout={onLogout} onSettings={onSettings} todoBadge={todos.length} />
 
       <div className="projects-scroll">
         {/* Stats bar */}
@@ -2355,7 +2350,7 @@ function ConsentItem({ icon, title, desc }: { icon: React.ReactNode; title: stri
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Tracker
 // ─────────────────────────────────────────────────────────────────────────────
-function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, elapsedStart, isPaused, isTracking, liveIdleSeconds = 0, onStop, onSettings, onSupport, todos, onTodoDone, projects }: {
+function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, elapsedStart, isPaused, isTracking, liveIdleSeconds = 0, onStop, onSettings, todos, onTodoDone, projects }: {
   user: User;
   project: Project;
   sessionId?: string | null;
@@ -2367,7 +2362,6 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, el
   liveIdleSeconds?: number;
   onStop: () => void;
   onSettings: () => void;
-  onSupport: () => void;
   todos: Todo[];
   onTodoDone: (id: string) => void;
   projects: Project[];
@@ -2403,7 +2397,7 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, el
 
   return (
     <div className="tracker-layout">
-      <Topbar user={user} onLogout={onStop} onSettings={onSettings} onSupport={onSupport} todoBadge={todos.length} disabled={true} />
+      <Topbar user={user} onLogout={onStop} onSettings={onSettings} todoBadge={todos.length} disabled={true} />
 
       <div className="tracker-body">
         <motion.div className="tracker-widget" initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.35 }}>
