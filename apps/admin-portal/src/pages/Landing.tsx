@@ -784,15 +784,15 @@ export function Landing() {
                 </section>
 
                 {/* DOWNLOAD SECTION */}
-                <section id="download" className="py-24 bg-blue-600 relative overflow-hidden">
+                <section id="download" className="py-24 bg-gradient-to-br from-[#B8860B] via-[#D4AF37] to-[#B8860B] relative overflow-hidden">
                     {/* Background decorations */}
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500 rounded-full blur-3xl opacity-50 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-700 rounded-full blur-3xl opacity-50 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-[#FFD700] rounded-full blur-3xl opacity-35 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#8A6508] rounded-full blur-3xl opacity-35 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8 relative z-10">
                         <div className="text-center mb-12">
                             <h2 className="text-4xl font-black text-white mb-6">Download the TrackOwl™ desktop app</h2>
-                            <p className="text-xl text-blue-100 font-medium max-w-2xl mx-auto">
+                            <p className="text-xl text-[#F5E6CA] font-medium max-w-2xl mx-auto">
                                 The lightweight, secure desktop client your team needs to log time, capture activity, and stay productive.
                             </p>
                         </div>
@@ -800,7 +800,7 @@ export function Landing() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {/* Windows */}
                             <div className="bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
-                                <div className="w-16 h-16 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
+                                <div className="w-16 h-16 bg-[#F5E6CA] rounded-2xl flex items-center justify-center text-[#B8860B] mb-6">
                                     <Monitor className="w-8 h-8" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Windows</h3>
@@ -808,13 +808,13 @@ export function Landing() {
                                 <div className="w-full flex flex-col gap-3 mt-auto">
                                     <a
                                         href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.33/TrackOwl_2.0.33_x64-setup.exe"
-                                        className="relative w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                                        className="relative w-full py-3 px-4 bg-[#B8860B] hover:bg-[#A67809] text-white text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
                                         <Download className="w-4 h-4" /> Download .exe
                                         {recommendedOS === 'windows' && <span className="absolute -top-3 -right-2 bg-amber-400 text-amber-900 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full shadow-md">⭐ Recommended</span>}
                                     </a>
                                     <a
                                         href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.33/TrackOwl_2.0.33_x64_en-US.msi"
-                                        className="w-full py-3 px-4 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
+                                        className="w-full py-3 px-4 bg-[#F5E6CA] hover:bg-[#EADCBF] text-[#B8860B] border border-[#EADCBF] text-base font-bold rounded-lg transition-colors flex items-center justify-center gap-2">
                                         <Download className="w-4 h-4" /> Download .msi
                                     </a>
                                 </div>
