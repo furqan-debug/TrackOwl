@@ -104,7 +104,7 @@ BEGIN
   ) t;
 
   -- 5. User stats (minutes and score)
-  SELECT COALESCE(jsonb_object_agg(user_id, json_build_object('mins', mins, 'activity_sum', act_sum, 'cnt', cnt)), '{}'::jsonb)
+  SELECT COALESCE(jsonb_object_agg(user_id::text, json_build_object('mins', mins, 'activity_sum', act_sum, 'cnt', cnt)), '{}'::jsonb)
   INTO v_user_stats
   FROM (
     SELECT 
@@ -123,7 +123,7 @@ BEGIN
   ) t;
 
   -- 6. Project stats
-  SELECT COALESCE(jsonb_object_agg(project_id, json_build_object('mins', mins, 'activity_sum', act_sum, 'cnt', cnt)), '{}'::jsonb)
+  SELECT COALESCE(jsonb_object_agg(project_id::text, json_build_object('mins', mins, 'activity_sum', act_sum, 'cnt', cnt)), '{}'::jsonb)
   INTO v_proj_stats
   FROM (
     SELECT 
