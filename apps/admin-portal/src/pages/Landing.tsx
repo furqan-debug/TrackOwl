@@ -257,7 +257,7 @@ export function Landing() {
                         </a>
                         <button
                             onClick={() => navigate('/login')}
-                            className="hidden sm:block text-base font-bold text-white hover:text-[#facc15] transition-colors"
+                            className="text-sm sm:text-base font-bold text-white hover:text-[#facc15] transition-colors"
                         >
                             Log in
                         </button>
@@ -278,10 +278,10 @@ export function Landing() {
                     <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#002766] blur-[150px] rounded-full pointer-events-none" />
                     <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[150px] rounded-full pointer-events-none" />
 
-                    <div className="mx-auto max-w-[1400px] px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center relative z-10">
+                    <div className="mx-auto max-w-[1400px] px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center relative z-10 w-full">
 
                         {/* Hero Text Content */}
-                        <div className="col-span-12 lg:col-span-5 flex flex-col items-start text-left">
+                        <div className="col-span-1 lg:col-span-5 flex flex-col items-start text-left w-full min-w-0">
                             <motion.div
                                 initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
@@ -332,7 +332,7 @@ export function Landing() {
                                 <button
                                     onClick={() => navigate('/signup')}
                                     className="w-full sm:w-auto px-8 py-3.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-base font-black rounded-full shadow-[0_4px_20px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group"
-                                >
+                                 >
                                     Start free trial
                                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </button>
@@ -358,7 +358,7 @@ export function Landing() {
                         </div>
 
                         {/* Hero Dashboard Mockup Container */}
-                        <div className="col-span-12 lg:col-span-7 relative lg:-mr-32 xl:-mr-48 z-20 mt-12 lg:mt-0">
+                        <div className="col-span-1 lg:col-span-7 relative lg:-mr-32 xl:-mr-48 z-20 mt-12 lg:mt-0 w-full min-w-0">
                             <motion.div
                                 initial={{ opacity: 0, y: 40, rotateY: 10 }}
                                 animate={{ opacity: 1, y: 0, rotateY: 0 }}
@@ -905,7 +905,7 @@ export function Landing() {
                         <div>
                             <h4 className="text-white font-bold mb-6 tracking-wide">Company</h4>
                             <ul className="space-y-4 text-sm text-slate-400">
-                                <li><a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-white transition-colors">About us</a></li>
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('/about'); }} className="hover:text-white transition-colors">About us</a></li>
                                 <li><a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-white transition-colors">Careers</a></li>
                                 <li><a href="mailto:hello@trackowl.io" className="hover:text-white transition-colors">Contact</a></li>
                             </ul>
@@ -914,9 +914,9 @@ export function Landing() {
                         <div>
                             <h4 className="text-white font-bold mb-6 tracking-wide">Legal</h4>
                             <ul className="space-y-4 text-sm text-slate-400">
-                                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-white transition-colors">Privacy policy</a></li>
-                                <li><a href="#" onClick={(e) => e.preventDefault()} className="hover:text-white transition-colors">Terms of service</a></li>
-                                <li><a href="#security" className="hover:text-white transition-colors">Security</a></li>
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('/privacy'); }} className="hover:text-white transition-colors">Privacy policy</a></li>
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('/terms'); }} className="hover:text-white transition-colors">Terms of service</a></li>
+                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('/security'); }} className="hover:text-white transition-colors">Security</a></li>
                             </ul>
                         </div>
 
