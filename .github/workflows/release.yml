@@ -143,13 +143,43 @@ jobs:
             }
           }
 
-      # Re-upload the signed Windows installers to the GitHub release
+      # Regenerate Tauri updater .sig files after code signing
+      # Code signing modifies the .exe binary, invalidating the original .sig
+      - name: Regenerate Updater Signatures After Code Signing
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          $VERSION = "${{ steps.version.outputs.NUM }}"
+          $NSIS_EXE = "${{ github.workspace }}\src-tauri\target\release\bundle\nsis\TrackOwl_${VERSION}_x64-setup.exe"
+          $SIG_FILE = "${NSIS_EXE}.sig"
+
+          if (Test-Path $NSIS_EXE) {
+            Write-Host "Regenerating .sig for signed .exe..."
+            # Delete old .sig
+            if (Test-Path $SIG_FILE) { Remove-Item $SIG_FILE }
+            # Generate new .sig using Tauri signer
+            npx tauri signer sign "$NSIS_EXE" --private-key "$env:TAURI_SIGNING_PRIVATE_KEY" --password "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
+            if (Test-Path $SIG_FILE) {
+              Write-Host "New .sig generated successfully: $SIG_FILE"
+            } else {
+              Write-Error ".sig file was not generated!"
+              exit 1
+            }
+          } else {
+            Write-Warning "NSIS exe not found: $NSIS_EXE"
+          }
+
+      # Re-upload the signed Windows installers + new .sig to the GitHub release
       - name: Upload Signed Windows Installers to Release
         if: matrix.platform == 'windows-latest'
         uses: softprops/action-gh-release@v1
         with:
           files: |
             src-tauri/target/release/bundle/nsis/TrackOwl_${{ steps.version.outputs.NUM }}_x64-setup.exe
+            src-tauri/target/release/bundle/nsis/TrackOwl_${{ steps.version.outputs.NUM }}_x64-setup.exe.sig
             src-tauri/target/release/bundle/msi/TrackOwl_${{ steps.version.outputs.NUM }}_x64_en-US.msi
 
   publish-latest-json:
