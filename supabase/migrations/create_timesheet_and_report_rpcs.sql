@@ -59,3 +59,41 @@ BEGIN
   GROUP BY s.user_id;
 END;
 $$ LANGUAGE plpgsql;
+
+-- 3. RPC to bypass PostgREST max_rows limit and fetch raw activity samples in a single call
+DROP FUNCTION IF EXISTS public.get_raw_activity_samples(uuid, timestamptz, timestamptz, text[]);
+
+CREATE OR REPLACE FUNCTION public.get_raw_activity_samples(
+  p_org_id uuid,
+  p_start_iso timestamptz,
+  p_end_iso timestamptz,
+  p_member_ids text[] DEFAULT NULL
+)
+RETURNS jsonb
+SECURITY DEFINER
+STABLE
+AS $$
+DECLARE
+  v_result jsonb;
+BEGIN
+  SELECT jsonb_agg(row_to_json(t))
+  INTO v_result
+  FROM (
+    SELECT 
+      a.session_id,
+      a.recorded_at,
+      a.activity_percent,
+      a.idle,
+      a.app_name
+    FROM activity_samples a
+    JOIN sessions s ON a.session_id = s.id
+    WHERE a.organization_id = p_org_id
+      AND a.recorded_at >= p_start_iso
+      AND a.recorded_at <= p_end_iso
+      AND (p_member_ids IS NULL OR s.user_id = ANY(p_member_ids::uuid[]))
+    ORDER BY a.recorded_at ASC
+  ) t;
+  
+  RETURN COALESCE(v_result, '[]'::jsonb);
+END;
+$$ LANGUAGE plpgsql;
