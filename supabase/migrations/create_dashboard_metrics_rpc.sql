@@ -42,8 +42,10 @@ BEGIN
   WHERE ss.organization_id = p_org_id
     AND ss.recorded_at >= p_start_iso 
     AND ss.recorded_at <= p_end_iso
+    -- user_id is UUID in sessions, cast filter text[] to uuid[]
     AND (p_member_ids IS NULL OR s.user_id = ANY(p_member_ids::uuid[]))
-    AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids::uuid[]));
+    -- project_id is TEXT in sessions, compare directly with filter text[]
+    AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids));
 
   -- 2. General counts for current week
   SELECT 
@@ -62,7 +64,7 @@ BEGIN
     AND a.recorded_at >= p_start_iso 
     AND a.recorded_at <= p_end_iso
     AND (p_member_ids IS NULL OR s.user_id = ANY(p_member_ids::uuid[]))
-    AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids::uuid[]));
+    AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids));
     
   v_activity_count := v_total_mins;
 
@@ -79,7 +81,7 @@ BEGIN
     AND a.recorded_at >= p_prev_start_iso 
     AND a.recorded_at <= p_prev_end_iso
     AND (p_member_ids IS NULL OR s.user_id = ANY(p_member_ids::uuid[]))
-    AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids::uuid[]));
+    AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids));
     
   v_prev_activity_count := v_prev_total_mins;
 
@@ -94,7 +96,7 @@ BEGIN
       AND a.recorded_at >= p_start_iso 
       AND a.recorded_at <= p_end_iso
       AND (p_member_ids IS NULL OR s.user_id = ANY(p_member_ids::uuid[]))
-      AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids::uuid[]))
+      AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids))
       AND a.app_name IS NOT NULL
       AND TRIM(a.app_name) != ''
       AND LOWER(a.app_name) != 'program manager'
@@ -118,7 +120,7 @@ BEGIN
       AND a.recorded_at >= p_start_iso 
       AND a.recorded_at <= p_end_iso
       AND (p_member_ids IS NULL OR s.user_id = ANY(p_member_ids::uuid[]))
-      AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids::uuid[]))
+      AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids))
     GROUP BY s.user_id
   ) t;
 
@@ -138,7 +140,7 @@ BEGIN
       AND a.recorded_at <= p_end_iso
       AND s.project_id IS NOT NULL
       AND (p_member_ids IS NULL OR s.user_id = ANY(p_member_ids::uuid[]))
-      AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids::uuid[]))
+      AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids))
     GROUP BY s.project_id
   ) t;
 
@@ -163,7 +165,7 @@ BEGIN
       AND a.recorded_at >= p_start_iso 
       AND a.recorded_at <= p_end_iso
       AND (p_member_ids IS NULL OR s.user_id = ANY(p_member_ids::uuid[]))
-      AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids::uuid[]))
+      AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids))
     GROUP BY day_name
   ) t;
 
@@ -201,7 +203,7 @@ BEGIN
         AND ss.recorded_at >= p_start_iso 
         AND ss.recorded_at <= p_end_iso
         AND (p_member_ids IS NULL OR s.user_id = ANY(p_member_ids::uuid[]))
-        AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids::uuid[]))
+        AND (p_project_ids IS NULL OR s.project_id = ANY(p_project_ids))
     ) t_inner
     WHERE rn <= 3
   ) t_screenshots;
