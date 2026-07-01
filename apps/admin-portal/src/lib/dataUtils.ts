@@ -506,7 +506,7 @@ export async function fetchAllActivitySamples(
     if (count === 0) return [];
 
     const totalPages = Math.ceil(count / PAGE_SIZE);
-    const BATCH_SIZE = 5; // Fetch 5 pages in parallel at a time
+    const BATCH_SIZE = 100; // Fetch up to 100 pages in parallel at a time
     const allSamples: ActivitySample[] = [];
 
     for (let i = 0; i < totalPages; i += BATCH_SIZE) {
