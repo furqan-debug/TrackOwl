@@ -784,15 +784,15 @@ export function Landing() {
                 </section>
 
                 {/* DOWNLOAD SECTION */}
-                <section id="download" className="py-24 bg-gradient-to-br from-[#B8860B] via-[#D4AF37] to-[#B8860B] relative overflow-hidden">
+                <section id="download" className="py-24 bg-[#f1bc34] relative overflow-hidden">
                     {/* Background decorations */}
-                    <div className="absolute top-0 right-0 w-96 h-96 bg-[#FFD700] rounded-full blur-3xl opacity-35 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#8A6508] rounded-full blur-3xl opacity-35 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl opacity-30 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-black/10 rounded-full blur-3xl opacity-20 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8 relative z-10">
                         <div className="text-center mb-12">
-                            <h2 className="text-4xl font-black text-white mb-6">Download the TrackOwl™ desktop app</h2>
-                            <p className="text-xl text-[#F5E6CA] font-medium max-w-2xl mx-auto">
+                            <h2 className="text-4xl font-black text-[#001B4D] mb-6">Download the TrackOwl™ desktop app</h2>
+                            <p className="text-xl text-[#001B4D]/80 font-medium max-w-2xl mx-auto">
                                 The lightweight, secure desktop client your team needs to log time, capture activity, and stay productive.
                             </p>
                         </div>
