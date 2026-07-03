@@ -1,10 +1,21 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Eye, Shield, Cpu } from 'lucide-react';
+import { Eye, Shield, Cpu, ArrowUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import HeaderLogo from '../assets/branding/header-2.svg';
 import { Footer } from '../components/Footer';
 
 export function About() {
     const navigate = useNavigate();
+    const [showScrollTop, setShowScrollTop] = useState(false);
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setShowScrollTop(window.scrollY > 400);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
 
     return (
         <div className="min-h-screen bg-white font-sans tracking-[0.03em] text-slate-900 overflow-x-hidden flex flex-col justify-between">
@@ -165,6 +176,22 @@ export function About() {
             </section>
 
             <Footer />
+
+            {/* Scroll to Top Button */}
+            <AnimatePresence>
+                {showScrollTop && (
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        className="fixed bottom-6 right-6 z-[120] p-3.5 rounded-full bg-[#001338] text-[#F7BC00] shadow-2xl hover:bg-[#002766] transition-all hover:scale-110 active:scale-95 border border-white/10 cursor-pointer flex items-center justify-center"
+                        title="Scroll to Top"
+                    >
+                        <ArrowUp className="w-5 h-5" strokeWidth={3} />
+                    </motion.button>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
