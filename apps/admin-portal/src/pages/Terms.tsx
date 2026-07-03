@@ -202,6 +202,32 @@ export function Terms() {
                 </div>
             </main>
             </div>
+
+            {/* FINAL CTA SECTION */}
+            <section className="bg-[#001338] py-16 md:py-24 relative z-10 border-b border-white/10">
+                <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center flex flex-col items-center">
+                    <img src={HeaderLogo} className="h-16 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] mb-6" alt="TrackOwl" />
+                    <h2 className="text-4xl md:text-6xl font-black text-white mb-6">Gain complete workforce visibility</h2>
+                    <p className="text-2xl text-slate-300 font-medium mb-10 max-w-3xl leading-relaxed">
+                        Track productivity, improve accountability, and operate with confidence using TrackOwl™.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
+                        <button
+                            onClick={() => navigate('/signup')}
+                            className="w-full sm:w-auto px-12 py-5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-lg font-black rounded-full shadow-[0_4px_20px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95 cursor-pointer">
+                            Start free trial
+                        </button>
+                        <button
+                            onClick={() => window.location.href = 'mailto:hello@trackowl.io'}
+                            className="w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold rounded-full transition-all active:scale-95 cursor-pointer">
+                            Schedule a demo
+                        </button>
+                    </div>
+                    <p className="text-lg font-medium text-slate-400">Built for modern businesses managing remote teams at scale.</p>
+                </div>
+            </section>
+
             <Footer />
         </div>
     );
