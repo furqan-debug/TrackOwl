@@ -6,7 +6,7 @@ export function Privacy() {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans tracking-[0.03em] text-slate-900 overflow-x-hidden flex flex-col justify-between">
+        <div className="min-h-screen bg-white font-sans tracking-[0.03em] text-slate-900 overflow-x-hidden flex flex-col justify-between">
             <div>
                 {/* Navigation */}
                 <header className="bg-[#001338] py-5 shadow-md">
@@ -17,9 +17,10 @@ export function Privacy() {
                     </nav>
                 </header>
 
-                <main className="mx-auto max-w-4xl px-6 py-16">
-                <div className="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-200">
-                    <h1 className="text-4xl font-black text-[#001b4d] mb-2">Privacy Policy</h1>
+                <main className="mx-auto max-w-5xl px-6 py-20">
+                    <h1 className="text-4xl md:text-5xl font-black text-[#001b4d] mb-4">
+                        Privacy <span className="text-[#facc15]">Policy</span>
+                    </h1>
                     <div className="text-xs font-bold text-slate-400 mb-8 space-y-1">
                         <p>Effective Date: 20th May 20, 2026</p>
                         <p>Last Updated: 20th May 20, 2026</p>
@@ -244,8 +245,7 @@ export function Privacy() {
                         <p>📧 <a href="mailto:privacy@trackowl.io" className="text-blue-600 hover:underline">privacy@trackowl.io</a></p>
                         <p className="text-sm text-slate-400 mt-4">Developed by DigiReps™, a brand of Digify Global LLC</p>
                     </div>
-                </div>
-            </main>
+                </main>
             </div>
 
             {/* FINAL CTA SECTION */}

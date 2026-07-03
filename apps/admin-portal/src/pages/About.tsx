@@ -7,7 +7,7 @@ export function About() {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans tracking-[0.03em] text-slate-900 overflow-x-hidden flex flex-col justify-between">
+        <div className="min-h-screen bg-white font-sans tracking-[0.03em] text-slate-900 overflow-x-hidden flex flex-col justify-between">
             <div>
                 {/* Navigation */}
                 <header className="bg-[#001338] py-5 shadow-md">

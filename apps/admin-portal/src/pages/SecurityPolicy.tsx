@@ -6,7 +6,7 @@ export function SecurityPolicy() {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans tracking-[0.03em] text-slate-900 overflow-x-hidden flex flex-col justify-between">
+        <div className="min-h-screen bg-white font-sans tracking-[0.03em] text-slate-900 overflow-x-hidden flex flex-col justify-between">
             <div>
                 {/* Navigation */}
                 <header className="bg-[#001338] py-5 shadow-md">
@@ -17,9 +17,10 @@ export function SecurityPolicy() {
                     </nav>
                 </header>
 
-                <main className="mx-auto max-w-4xl px-6 py-16">
-                <div className="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-200">
-                    <h1 className="text-4xl font-black text-[#001b4d] mb-6">Security</h1>
+                <main className="mx-auto max-w-5xl px-6 py-20">
+                    <h1 className="text-4xl md:text-5xl font-black text-[#001b4d] mb-6">
+                        Security <span className="text-[#facc15]">Policy</span>
+                    </h1>
 
                     <div className="prose prose-lg text-slate-600 font-medium leading-relaxed space-y-6">
                         <p>At TrackOwl, security is not treated as a secondary feature — it is a core architectural principle embedded throughout our infrastructure, application design, operational workflows, and development lifecycle.</p>
@@ -149,8 +150,7 @@ export function SecurityPolicy() {
                         <p>📧 <a href="mailto:security@trackowl.io" className="text-blue-600 hover:underline">security@trackowl.io</a></p>
                         <p className="text-sm text-slate-400 mt-4">Developed by DigiReps™, a brand of Digify Global LLC</p>
                     </div>
-                </div>
-            </main>
+                </main>
             </div>
 
             {/* FINAL CTA SECTION */}
