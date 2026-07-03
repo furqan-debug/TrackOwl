@@ -5,6 +5,8 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useNavigate } from 'react-router-dom';
 
+import LogoIcon from '../assets/branding/3.svg';
+
 type Step = 'form' | 'sent';
 
 export function ForgotPassword() {
@@ -32,116 +34,123 @@ export function ForgotPassword() {
         }
     }
 
-    if (step === 'sent') {
-        return (
-            <div className="min-h-screen bg-main flex flex-col items-center relative overflow-hidden flex items-center justify-center p-8">
-                {/* Subtle Premium Background Decoration */}
-                <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
-                    <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-[120px]" />
-                    <div className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-accent/10 blur-[120px]" />
-                </div>
-                
-                <div className="relative z-10 w-full max-w-[520px] text-center animate-in fade-in zoom-in duration-1000">
-                    <div className="glass-panel p-12 shadow-premium border border-border rounded-[56px] space-y-10 relative overflow-hidden">
-                        <div className="w-24 h-24 bg-emerald-500/5 border border-emerald-500/10 rounded-[40px] flex items-center justify-center mx-auto shadow-shell-sm transition-all duration-700">
-                            <CheckCircle2 className="w-12 h-12 text-emerald-500" />
-                        </div>
-                        
-                        <div className="space-y-6">
-                            <h1 className="text-4xl md:text-5xl font-black heading-gradient">Dispatch Complete</h1>
-                            <p className="text-text-muted font-medium text-lg leading-relaxed max-w-[380px] mx-auto tracking-tight">
-                                A secure recovery vector has been dispatched to:<br/>
-                                <span className="text-primary font-bold underline underline-offset-8 decoration-primary/30 mt-4 inline-block">{email}</span>
-                            </p>
-                        </div>
-
-                        <div className="pt-10 border-t border-border/50">
-                            <p className="text-[11px] font-black text-text-muted mb-8 tracking-[0.2em] uppercase opacity-40 leading-relaxed">
-                                No dispatch received? Conduct a verification of your junk directory or initialize a secondary request.
-                            </p>
-                            <Button
-                                variant="secondary"
-                                className="w-full h-14 rounded-2xl text-[13px] font-black border-border bg-surface/30 hover:bg-surface-hover text-text-main transition-all uppercase tracking-widest"
-                                onClick={() => { setStep('form'); setFormError(null); }}
-                            >
-                                Retry Transmission
-                            </Button>
-                        </div>
-                    </div>
-                    
-                    <button
-                        onClick={() => navigate('/login')}
-                        className="mt-12 inline-flex items-center gap-4 text-[11px] font-black text-text-muted hover:text-primary transition-all tracking-[0.3em] uppercase group opacity-60 hover:opacity-100"
-                    >
-                        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-                        Return to Login
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="min-h-screen bg-main flex flex-col items-center relative overflow-hidden">
-            {/* Subtle Premium Background Decoration */}
-            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none opacity-40">
-                <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-primary/5 blur-[120px]" />
-                <div className="absolute -bottom-[20%] -right-[10%] w-[60%] h-[60%] rounded-full bg-accent/10 blur-[120px]" />
+        <div className="min-h-screen bg-white flex relative overflow-hidden w-full">
+            
+            {/* LEFT SIDE: FORM PANEL */}
+            <div className="w-full lg:w-1/2 flex flex-col justify-between p-8 sm:p-12 md:p-20 relative z-20 overflow-y-auto min-h-screen">
+                
+                {/* Header Logo */}
+                <div className="flex items-center gap-2 cursor-pointer mb-12 lg:mb-0" onClick={() => navigate('/')}>
+                    <img src={LogoIcon} alt="TrackOwl" className="h-10 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
+                </div>
+
+                {/* Form Main Wrapper */}
+                <div className="w-full max-w-[440px] mx-auto my-auto py-8">
+                    {step === 'sent' ? (
+                        <div className="text-center py-8 animate-in fade-in zoom-in-95 duration-500">
+                            <div className="w-16 h-16 bg-green-500/10 rounded-xl flex items-center justify-center mx-auto mb-6 border border-green-500/20 text-green-500">
+                                <CheckCircle2 className="w-8 h-8" />
+                            </div>
+                            <h3 className="text-2xl font-black text-slate-900 mb-3">Reset link sent</h3>
+                            <p className="text-slate-500 text-sm font-medium leading-relaxed mb-6">
+                                A secure recovery link has been dispatched to:<br/>
+                                <span className="text-[#F7BC00] font-bold underline underline-offset-4 mt-2 inline-block">{email}</span>
+                            </p>
+                            <Button
+                                onClick={() => { setStep('form'); setFormError(null); }}
+                                className="w-full h-12 bg-slate-900 text-white rounded-xl font-bold text-sm shadow-md transition-all border-0 mb-4"
+                            >
+                                Resend Email
+                            </Button>
+                            <button
+                                onClick={() => navigate('/login')}
+                                className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1 mx-auto"
+                            >
+                                <ArrowLeft className="w-4 h-4" /> Return to sign in
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="mb-8">
+                                <button
+                                    type="button"
+                                    onClick={() => navigate('/login')}
+                                    className="inline-flex items-center gap-2 text-xs font-bold text-[#F7BC00] hover:text-[#e5af00] transition-colors mb-6"
+                                >
+                                    <ArrowLeft className="w-4 h-4" />
+                                    <span>Back to login</span>
+                                </button>
+                                <h1 className="text-3xl font-black text-[#001338] tracking-tight mb-2">Reset password</h1>
+                                <p className="text-slate-500 font-semibold text-sm">
+                                    We'll send a password reset link to your email.
+                                </p>
+                            </div>
+
+                            <div className="w-full">
+                                <form onSubmit={handleSubmit} className="space-y-5">
+                                    <Input
+                                        label="Work Email"
+                                        type="email"
+                                        required
+                                        value={email}
+                                        onChange={e => setEmail(e.target.value)}
+                                        placeholder="name@company.com"
+                                        className="h-12 rounded-xl text-sm px-4 bg-slate-50/50 border-slate-200 focus:border-[#F7BC00]/40 focus:ring-[#F7BC00]/5 transition-all text-slate-900"
+                                        leftIcon={<Mail className="w-4 h-4 text-slate-400" />}
+                                        autoFocus
+                                    />
+
+                                    {formError && (
+                                        <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-550/5 border border-rose-500/20 text-rose-600 text-sm font-semibold animate-in zoom-in-95 duration-300">
+                                            <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+                                            <p className="leading-relaxed">{formError}</p>
+                                        </div>
+                                    )}
+
+                                    <Button
+                                        type="submit"
+                                        disabled={submitting || !email.trim()}
+                                        className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 border-0 active:scale-[0.98]"
+                                    >
+                                        {submitting ? 'Sending link...' : 'Send reset link'}
+                                        {!submitting && <ArrowRight className="w-4 h-4" />}
+                                    </Button>
+                                </form>
+                            </div>
+                        </>
+                    )}
+                </div>
+
+                {/* Footer Link section */}
+                <div className="text-center pt-8 border-t border-slate-100">
+                    <p className="text-sm font-semibold text-slate-500">
+                        Need help?{' '}
+                        <a href="mailto:hello@trackowl.io" className="text-[#F7BC00] hover:text-[#e5af00] font-bold transition-colors">
+                            Contact support
+                        </a>
+                    </p>
+                </div>
             </div>
 
-            <div className="flex-1 w-full max-w-[1210px] flex items-center justify-center p-8 relative z-20">
-                <div className="w-full max-w-[520px]">
-                    <div className="mb-12 text-center animate-in fade-in slide-in-from-bottom-6 duration-1000">
-                        <button
-                            type="button"
-                            onClick={() => navigate('/login')}
-                            className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-surface/50 backdrop-blur-md border border-border shadow-soft hover:shadow-shell-md hover:scale-105 transition-all mb-10 group"
-                        >
-                            <ArrowLeft className="w-4 h-4 text-primary group-hover:-translate-x-1 transition-transform" />
-                            <span className="text-[11px] font-black tracking-widest text-text-main uppercase">Back to Login</span>
-                        </button>
-                        
-                        <h1 className="text-5xl md:text-6xl font-black heading-gradient mb-6">Recover Access</h1>
-                        <p className="text-text-muted font-medium text-lg leading-relaxed max-w-[400px] mx-auto tracking-tight">
-                            Initialize a secure credential override protocol for your operator account.
-                        </p>
-                    </div>
+            {/* RIGHT SIDE: PREMIUM ILLUSTRATION PANEL */}
+            <div className="hidden lg:flex lg:w-1/2 bg-[#001338] relative items-end p-20 z-10 overflow-hidden">
+                {/* Background glowing shapes */}
+                <div className="absolute top-[-10%] right-[-10%] w-[80%] h-[80%] bg-[#002766] blur-[150px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-[-10%] left-[-10%] w-[60%] h-[60%] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
+                <div className="absolute top-[30%] left-[20%] w-[10%] h-[10%] bg-[#F7BC00]/10 blur-[50px] rounded-full pointer-events-none" />
+                
+                {/* Decorative Matrix Grid */}
+                <div className="absolute inset-0 opacity-[0.03] bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:24px_24px] pointer-events-none" />
 
-                    <div className="glass-panel p-8 md:p-12 shadow-premium rounded-[40px] border border-border animate-in fade-in slide-in-from-bottom-10 duration-1000">
-                        <form onSubmit={handleSubmit} className="space-y-10 relative z-10">
-                            <Input
-                                label="Operator Email Identity"
-                                type="email"
-                                required
-                                value={email}
-                                onChange={e => setEmail(e.target.value)}
-                                placeholder="name@company.com"
-                                className="h-16 rounded-2xl text-base px-6 bg-surface/50 border-border focus:border-primary/40 focus:ring-primary/5 transition-all"
-                                leftIcon={<Mail className="w-5 h-5 text-text-muted" />}
-                                autoFocus
-                            />
-
-                            {formError && (
-                                <div className="flex items-start gap-4 p-6 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-rose-500 text-sm font-bold animate-in zoom-in-95 duration-300">
-                                    <ShieldAlert className="w-5 h-5 shrink-0" />
-                                    <p className="leading-relaxed">{formError}</p>
-                                </div>
-                            )}
-
-                            <Button
-                                type="submit"
-                                disabled={submitting || !email.trim()}
-                                className="w-full h-16 bg-primary text-white rounded-2xl font-bold text-lg group shadow-lg hover:shadow-primary/20 active:scale-[0.98] transition-all duration-300 border-0"
-                            >
-                                {submitting ? 'Authenticating...' : 'Initialize Dispatch'}
-                                <ArrowRight className="w-5 h-5 ml-4 group-hover:translate-x-2 transition-transform" />
-                            </Button>
-                        </form>
-                    </div>
-                    
-                    <p className="mt-16 text-center text-[10px] font-black text-text-muted tracking-[0.3em] uppercase opacity-40 leading-relaxed max-w-[400px] mx-auto">
-                        Security override links expire in 3600 seconds. <br/>
-                        Verified operator access required.
+                {/* Branding text at bottom */}
+                <div className="relative z-20 text-white max-w-lg">
+                    <span className="text-[#F7BC00] text-xs font-bold uppercase tracking-widest block mb-4">Security override</span>
+                    <h2 className="text-4xl font-black leading-[1.2] mb-4">
+                        Secure access recovery.
+                    </h2>
+                    <p className="text-slate-300 font-medium text-base leading-relaxed">
+                        Verify your identity to initiate an automated credential override link. Security links expire within 60 minutes.
                     </p>
                 </div>
             </div>
