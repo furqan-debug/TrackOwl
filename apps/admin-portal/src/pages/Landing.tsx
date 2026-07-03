@@ -17,7 +17,8 @@ import {
     ChevronDown,
     ArrowRight,
     FileText,
-    Download
+    Download,
+    ArrowUp
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
@@ -30,6 +31,7 @@ export function Landing() {
     const [isScrolled, setIsScrolled] = useState(false);
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
     const [recommendedOS, setRecommendedOS] = useState<'windows' | 'mac-silicon' | 'mac-intel' | 'linux' | null>(null);
+    const [showScrollTop, setShowScrollTop] = useState(false);
 
     useEffect(() => {
         const detectOS = async () => {
@@ -92,6 +94,7 @@ export function Landing() {
     useEffect(() => {
         const handleScroll = () => {
             setIsScrolled(window.scrollY > 20);
+            setShowScrollTop(window.scrollY > 400);
         };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
@@ -938,6 +941,22 @@ export function Landing() {
                     </div>
                 </div>
             </footer>
+
+            {/* Scroll to Top Button */}
+            <AnimatePresence>
+                {showScrollTop && (
+                    <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                        className="fixed bottom-6 right-6 z-[120] p-3.5 rounded-full bg-[#001338] text-[#F7BC00] shadow-2xl hover:bg-[#002766] transition-all hover:scale-110 active:scale-95 border border-white/10 cursor-pointer flex items-center justify-center"
+                        title="Scroll to Top"
+                    >
+                        <ArrowUp className="w-5 h-5" strokeWidth={3} />
+                    </motion.button>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
