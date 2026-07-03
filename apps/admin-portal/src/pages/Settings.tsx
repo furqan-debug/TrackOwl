@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Save, CheckCircle, Database, Activity,
-    ShieldCheck, Mail, HardDrive, Loader2, RefreshCw
+    ShieldCheck, Mail, HardDrive, Loader2, RefreshCw, ChevronDown, Check
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PageLayout } from '../components/ui';
@@ -466,19 +466,60 @@ function SelectControl({ label, description, value, options, onChange }: {
     label: string; description: string; value: string; options: {id: string, label: string}[];
     onChange: (v: string) => void;
 }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const selectedOption = options.find(o => o.id === value) || options[0];
+
     return (
-        <div className="flex items-center justify-between gap-12">
+        <div className="flex items-center justify-between gap-12 relative" ref={dropdownRef}>
             <div className="space-y-1 flex-1">
                 <p className="text-[14px] font-bold text-text-main">{label}</p>
                 <p className="text-[13px] text-text-muted opacity-60 leading-relaxed">{description}</p>
             </div>
-            <select
-                value={value}
-                onChange={e => onChange(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-text-main focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-                {options.map(o => <option key={o.id} value={o.id} className="bg-main text-text-main">{o.label}</option>)}
-            </select>
+            
+            <div className="relative min-w-[240px]">
+                <button
+                    type="button"
+                    onClick={() => setIsOpen(!isOpen)}
+                    className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-text-main flex items-center justify-between transition-all focus:outline-none focus:ring-2 focus:ring-[#F7BC00]/40 text-left shadow-md"
+                >
+                    <span className="truncate">{selectedOption?.label}</span>
+                    <ChevronDown className={clsx("w-4 h-4 text-text-muted transition-transform shrink-0 ml-2", isOpen && "rotate-180")} />
+                </button>
+
+                {isOpen && (
+                    <div className="absolute right-0 mt-2 w-full max-h-60 overflow-y-auto bg-[#0b172a] border border-white/10 rounded-xl py-1 shadow-2xl z-[150] animate-in fade-in slide-in-from-top-2 duration-200 [scrollbar-width:thin]">
+                        {options.map(o => (
+                            <button
+                                key={o.id}
+                                type="button"
+                                onClick={() => {
+                                    onChange(o.id);
+                                    setIsOpen(false);
+                                }}
+                                className={clsx(
+                                    "w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between hover:bg-white/5",
+                                    o.id === value ? "text-[#F7BC00] font-bold bg-white/5" : "text-text-main font-semibold"
+                                )}
+                            >
+                                <span className="truncate">{o.label}</span>
+                                {o.id === value && <Check className="w-4 h-4 shrink-0 ml-2 text-[#F7BC00]" />}
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }
