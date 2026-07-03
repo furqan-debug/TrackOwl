@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { 
@@ -6,7 +6,8 @@ import {
     User, Shield, DollarSign, Clock, 
     Info, AlertCircle, Calendar,
     Briefcase, Smartphone, Mail,
-    MapPin, CreditCard, Phone, Globe2
+    MapPin, CreditCard, Phone, Globe2,
+    Check
 } from 'lucide-react';
 import { 
     Button, 
@@ -693,30 +694,73 @@ function FormField({ label, value, onChange, type = 'text', icon, placeholder }:
 }
 
 function FormSelect({ label, value, onChange, options, disabled, icon, description }: any) {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const activeLabel = options.find((o: any) => o.value === value)?.label || value;
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     return (
-        <div className="space-y-2 group flex flex-col">
-            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em]">{label}</label>
+        <div ref={containerRef} className="space-y-2 group flex flex-col relative">
+            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em]">
+                {label}
+            </label>
             <div className="relative mt-auto">
-                {icon && (
-                    <div className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors pointer-events-none">
-                        {icon}
-                    </div>
-                )}
-                <select
-                    value={value}
-                    onChange={e => onChange(e.target.value)}
-                    disabled={disabled}
+                <div 
+                    onClick={() => !disabled && setIsOpen(!isOpen)}
                     className={clsx(
-                        "w-full h-[52px] bg-surface border border-border rounded-xl text-[13px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all appearance-none cursor-pointer",
+                        "w-full h-[52px] bg-surface border rounded-xl text-[13px] font-bold text-text-primary outline-none transition-all flex items-center justify-between select-none cursor-pointer",
                         icon ? "pl-12 pr-10" : "px-5 pr-10",
-                        disabled && "opacity-50 cursor-not-allowed bg-surface-subtle"
+                        isOpen ? "border-primary ring-4 ring-primary/10" : "border-border",
+                        disabled ? "opacity-50 cursor-not-allowed bg-surface-subtle" : "hover:border-[var(--border-hover)]"
                     )}
                 >
-                    {options.map((opt: any) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                </select>
-                <ChevronLeft className="w-4 h-4 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 -rotate-90 pointer-events-none" />
+                    {icon && (
+                        <div className={clsx(
+                            "absolute left-5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none",
+                            isOpen ? "text-primary" : "text-text-muted"
+                        )}>
+                            {icon}
+                        </div>
+                    )}
+                    <span className="truncate">{activeLabel}</span>
+                    <ChevronLeft className={clsx(
+                        "w-4 h-4 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 transition-transform duration-300 pointer-events-none",
+                        isOpen ? "-rotate-90 text-primary" : "-rotate-90"
+                    )} />
+                </div>
+
+                {isOpen && (
+                    <div className="absolute top-[calc(100%+6px)] left-0 w-full bg-main border border-border rounded-xl shadow-premium z-[100] flex flex-col p-1.5 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[240px] overflow-y-auto no-scrollbar">
+                        {options.map((opt: any) => (
+                            <div
+                                key={opt.value}
+                                onClick={() => {
+                                    onChange(opt.value);
+                                    setIsOpen(false);
+                                }}
+                                className={clsx(
+                                    "flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-all text-[12px] font-bold mb-0.5 last:mb-0",
+                                    value === opt.value 
+                                        ? "bg-surface-hover text-primary" 
+                                        : "text-text-primary hover:bg-surface"
+                                )}
+                            >
+                                <span>{opt.label}</span>
+                                {value === opt.value && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
             {description && <p className="text-[10px] text-text-muted italic mt-1">{description}</p>}
         </div>
