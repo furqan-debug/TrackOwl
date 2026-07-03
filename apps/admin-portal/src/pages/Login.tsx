@@ -187,7 +187,7 @@ export function Login() {
     }
 
     return (
-        <div className="min-h-screen bg-white flex relative overflow-hidden w-full">
+        <div className="min-h-screen bg-white flex relative overflow-hidden w-full light [color-scheme:light]">
             
             {/* LEFT SIDE: FORM PANEL */}
             <div className="w-full lg:w-1/2 flex flex-col justify-between p-8 sm:p-12 md:p-20 relative z-20 overflow-y-auto min-h-screen">
@@ -274,14 +274,14 @@ export function Login() {
                                         </div>
                                     )}
 
-                                    <Button
+                                    <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 border-0 active:scale-[0.98]"
+                                        className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 border-0 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                                     >
                                         {loading ? 'Signing in...' : 'Sign in'}
                                         {!loading && <ArrowRight className="w-4 h-4" />}
-                                    </Button>
+                                    </button>
                                 </form>
                             </>
                         )}
