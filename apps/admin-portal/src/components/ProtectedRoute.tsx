@@ -11,10 +11,10 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
     const { profile, loading, session, signOut, aalLevel, nextAalLevel } = useAuth();
     const location = useLocation();
 
-    if (loading) {
+    if (loading || (session && !profile)) {
         return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-                <div className="w-8 h-8 border-2 border-white/20 border-t-white/70 rounded-full animate-spin" />
+            <div className="min-h-screen bg-[#001338] flex items-center justify-center">
+                <div className="w-8 h-8 border-2 border-white/20 border-t-[#F7BC00] rounded-full animate-spin" />
             </div>
         );
     }
