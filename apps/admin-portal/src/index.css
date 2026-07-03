@@ -116,6 +116,35 @@
     font-family: var(--font-sans);
   }
 
+  /* Force light-mode variables on specific elements even when ancestor is .dark */
+  .light {
+    color-scheme: light;
+    color: #001B4D;
+    --color-primary: #001B4D;
+    --primary: #001B4D;
+    --primary-hover: #002766;
+    --accent: #B8860B;
+    --accent-hover: #A67809;
+    --accent-soft: #FDE047;
+    --gold-shiny: #C5A028;
+    --gold-light: #F5E6CA;
+    --gold-vibrant: #D4AF37;
+    --bg-main: #F8FAFC;
+    --bg-surface: #FFFFFF;
+    --bg-surface-hover: #F5F7FB;
+    --bg-menu-active: #0A2A6B;
+    --color-sidebar-bg: #001B4D;
+    --text-main: #001B4D;
+    --text-secondary: #475569;
+    --text-muted: #64748B;
+    --text-gold: #B8860B;
+    --border-color: #E2E8F0;
+    --border-soft: #EEF2F7;
+    --divider: #F1F5F9;
+    --border-input: #CBD5E1;
+    --border-btn-secondary: #D6DEE8;
+  }
+
   /* all dark colors defined here */
   .dark {
     color-scheme: dark;

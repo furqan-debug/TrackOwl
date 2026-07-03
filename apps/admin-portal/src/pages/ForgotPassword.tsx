@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Mail, ArrowLeft, ArrowRight, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useNavigate } from 'react-router-dom';
 
@@ -35,7 +34,7 @@ export function ForgotPassword() {
     }
 
     return (
-        <div className="min-h-screen bg-white flex relative overflow-hidden w-full">
+        <div className="min-h-screen bg-white flex relative overflow-hidden w-full light [color-scheme:light]">
             
             {/* LEFT SIDE: FORM PANEL */}
             <div className="w-full lg:w-1/2 flex flex-col justify-between p-8 sm:p-12 md:p-20 relative z-20 overflow-y-auto min-h-screen">
@@ -57,12 +56,12 @@ export function ForgotPassword() {
                                 A secure recovery link has been dispatched to:<br/>
                                 <span className="text-[#F7BC00] font-bold underline underline-offset-4 mt-2 inline-block">{email}</span>
                             </p>
-                            <Button
+                            <button
                                 onClick={() => { setStep('form'); setFormError(null); }}
-                                className="w-full h-12 bg-slate-900 text-white rounded-xl font-bold text-sm shadow-md transition-all border-0 mb-4"
+                                className="w-full h-12 bg-slate-900 text-white rounded-xl font-bold text-sm shadow-md transition-all border-0 mb-4 cursor-pointer"
                             >
                                 Resend Email
-                            </Button>
+                            </button>
                             <button
                                 onClick={() => navigate('/login')}
                                 className="text-xs font-bold text-slate-500 hover:text-slate-800 transition-colors flex items-center gap-1 mx-auto"
@@ -108,14 +107,14 @@ export function ForgotPassword() {
                                         </div>
                                     )}
 
-                                    <Button
+                                    <button
                                         type="submit"
                                         disabled={submitting || !email.trim()}
-                                        className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 border-0 active:scale-[0.98]"
+                                        className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 border-0 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                                     >
                                         {submitting ? 'Sending link...' : 'Send reset link'}
                                         {!submitting && <ArrowRight className="w-4 h-4" />}
-                                    </Button>
+                                    </button>
                                 </form>
                             </div>
                         </>
