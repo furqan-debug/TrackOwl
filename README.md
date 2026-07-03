@@ -161,3 +161,17 @@ cd admin-portal && npm run dev
 # Desktop Client
 npm run dev
 ```
+
+## Security & Hardening
+
+The repository undergoes regular audits and security hardening:
+
+* **NPM Package Overrides**: Nested dependencies are strictly locked in `apps/admin-portal/package.json` to prevent security issues:
+  * ReDoS (Regular Expression Denial of Service) in `path-to-regexp` and `minimatch`.
+  * Windows-specific Arbitrary File Read in `esbuild`.
+  * HTTP Request/Response Smuggling or WebSocket decompression issues in `undici`.
+* **Rust/Cargo Audits**: Key vulnerabilities in Tauri's native dependencies are mitigated:
+  * Upgraded `rustls-webpki` and `tar-rs` to eliminate CRL bit string DoS and path traversal risks.
+  * Upgraded `tauri` Core to patch remote IPC origin confusion vulnerabilities.
+  * Upgraded `openssl` to patch buffer overflows in `digest_final()` and memory disclosure in cookies.
+
