@@ -492,14 +492,14 @@ function SelectControl({ label, description, value, options, onChange }: {
                 <button
                     type="button"
                     onClick={() => setIsOpen(!isOpen)}
-                    className="w-full bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-text-main flex items-center justify-between transition-all focus:outline-none focus:ring-2 focus:ring-[#F7BC00]/40 text-left shadow-md"
+                    className="w-full bg-surface hover:bg-surface-hover border border-border rounded-xl px-4 py-2.5 text-sm text-text-main flex items-center justify-between transition-all focus:outline-none focus:ring-2 focus:ring-primary/40 text-left shadow-md"
                 >
                     <span className="truncate">{selectedOption?.label}</span>
                     <ChevronDown className={clsx("w-4 h-4 text-text-muted transition-transform shrink-0 ml-2", isOpen && "rotate-180")} />
                 </button>
 
                 {isOpen && (
-                    <div className="absolute right-0 mt-2 w-full max-h-60 overflow-y-auto bg-[#0b172a] border border-white/10 rounded-xl py-1 shadow-2xl z-[150] animate-in fade-in slide-in-from-top-2 duration-200 [scrollbar-width:thin]">
+                    <div className="absolute right-0 mt-2 w-full max-h-60 overflow-y-auto bg-surface border border-border rounded-xl py-1 shadow-2xl z-[150] animate-in fade-in slide-in-from-top-2 duration-200 [scrollbar-width:thin]">
                         {options.map(o => (
                             <button
                                 key={o.id}
@@ -509,12 +509,12 @@ function SelectControl({ label, description, value, options, onChange }: {
                                     setIsOpen(false);
                                 }}
                                 className={clsx(
-                                    "w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between hover:bg-white/5",
-                                    o.id === value ? "text-[#F7BC00] font-bold bg-white/5" : "text-text-main font-semibold"
+                                    "w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center justify-between hover:bg-surface-hover",
+                                    o.id === value ? "text-primary font-bold bg-primary/5" : "text-text-main font-semibold"
                                 )}
                             >
                                 <span className="truncate">{o.label}</span>
-                                {o.id === value && <Check className="w-4 h-4 shrink-0 ml-2 text-[#F7BC00]" />}
+                                {o.id === value && <Check className="w-4 h-4 shrink-0 ml-2 text-primary" />}
                             </button>
                         ))}
                     </div>
