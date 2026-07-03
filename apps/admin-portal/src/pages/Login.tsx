@@ -9,7 +9,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 
-import LogoIcon from '../assets/branding/header-2.svg';
+import LogoIcon from '../assets/branding/3.svg';
 
 /* ─────────────────────────────────────────
    Individual digit box for OTP input

@@ -5,7 +5,7 @@ import { Mail, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-r
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 
-import LogoIcon from '../assets/branding/header-2.svg';
+import LogoIcon from '../assets/branding/3.svg';
 
 export function Signup() {
     const navigate = useNavigate();
