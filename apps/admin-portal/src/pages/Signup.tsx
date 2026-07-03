@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Mail, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-react';
-import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 
 import LogoIcon from '../assets/branding/3.svg';
@@ -69,7 +68,7 @@ export function Signup() {
     };
 
     return (
-        <div className="min-h-screen bg-white flex relative overflow-hidden w-full">
+        <div className="min-h-screen bg-white flex relative overflow-hidden w-full light [color-scheme:light]">
             
             {/* LEFT SIDE: FORM PANEL */}
             <div className="w-full lg:w-1/2 flex flex-col justify-between p-8 sm:p-12 md:p-20 relative z-20 overflow-y-auto min-h-screen">
@@ -88,12 +87,12 @@ export function Signup() {
                             </div>
                             <h3 className="text-2xl font-black text-slate-900 mb-3">Check your email</h3>
                             <p className="text-slate-500 text-sm font-medium leading-relaxed mb-6">{successMsg}</p>
-                            <Button 
+                            <button 
                                 onClick={() => navigate('/login')}
-                                className="w-full h-12 bg-slate-900 text-white rounded-xl font-bold text-sm shadow-md transition-all border-0"
+                                className="w-full h-12 bg-slate-900 text-white rounded-xl font-bold text-sm shadow-md transition-all border-0 cursor-pointer"
                             >
                                 Proceed to Login
-                            </Button>
+                            </button>
                         </div>
                     ) : (
                         <>
@@ -178,14 +177,14 @@ export function Signup() {
                                         </div>
                                     )}
 
-                                    <Button
+                                    <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 border-0 active:scale-[0.98]"
+                                        className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 border-0 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                                     >
                                         {loading ? 'Creating workspace...' : 'Create workspace'}
                                         {!loading && <ArrowRight className="w-4 h-4" />}
-                                    </Button>
+                                    </button>
                                 </form>
                             </div>
                         </>
