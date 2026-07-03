@@ -1,21 +1,23 @@
 import { useNavigate } from 'react-router-dom';
 import HeaderLogo from '../assets/branding/header-2.svg';
+import { Footer } from '../components/Footer';
 
 export function SecurityPolicy() {
     const navigate = useNavigate();
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans tracking-[0.03em] text-slate-900 overflow-x-hidden">
-            {/* Navigation */}
-            <header className="bg-[#001338] py-5 shadow-md">
-                <nav className="mx-auto flex max-w-[1400px] h-14 items-center justify-between px-6">
-                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-                        <img src={HeaderLogo} alt="TrackOwl" className="h-10 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
-                    </div>
-                </nav>
-            </header>
+        <div className="min-h-screen bg-slate-50 font-sans tracking-[0.03em] text-slate-900 overflow-x-hidden flex flex-col justify-between">
+            <div>
+                {/* Navigation */}
+                <header className="bg-[#001338] py-5 shadow-md">
+                    <nav className="mx-auto flex max-w-[1400px] h-14 items-center justify-between px-6">
+                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+                            <img src={HeaderLogo} alt="TrackOwl" className="h-10 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
+                        </div>
+                    </nav>
+                </header>
 
-            <main className="mx-auto max-w-4xl px-6 py-16">
+                <main className="mx-auto max-w-4xl px-6 py-16">
                 <div className="bg-white p-8 md:p-12 rounded-[2rem] shadow-sm border border-slate-200">
                     <h1 className="text-4xl font-black text-[#001b4d] mb-6">Security</h1>
 
@@ -149,6 +151,8 @@ export function SecurityPolicy() {
                     </div>
                 </div>
             </main>
+            </div>
+            <Footer />
         </div>
     );
 }

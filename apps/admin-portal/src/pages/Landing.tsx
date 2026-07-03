@@ -25,6 +25,7 @@ import { twMerge } from 'tailwind-merge';
 import HeaderLogo from '../assets/branding/header-2.svg';
 import HeroDashboard from '../assets/branding/hero-dashboard.png';
 import ShowcaseDashboard from '../assets/branding/showcase-dashboard.png';
+import { Footer } from '../components/Footer';
 
 export function Landing() {
     const navigate = useNavigate();
@@ -891,56 +892,7 @@ export function Landing() {
             </section>
 
             {/* FOOTER */}
-            <footer className="bg-[#001338] pt-20 pb-10 relative z-10">
-                <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16">
-                        <div>
-                            <h4 className="text-white font-bold mb-6 tracking-wide">Product</h4>
-                            <ul className="space-y-4 text-sm text-slate-400">
-                                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
-                                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
-                                <li><a href="#security" className="hover:text-white transition-colors">Security</a></li>
-                                <li><a href="#showcase" className="hover:text-white transition-colors">Integrations</a></li>
-                                <li><a href="/help" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Help Center</a></li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="text-white font-bold mb-6 tracking-wide">Company</h4>
-                            <ul className="space-y-4 text-sm text-slate-400">
-                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('/about'); }} className="hover:text-white transition-colors">About us</a></li>
-                                <li><a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-white transition-colors">Careers</a></li>
-                                <li><a href="mailto:hello@trackowl.io" className="hover:text-white transition-colors">Contact</a></li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="text-white font-bold mb-6 tracking-wide">Legal</h4>
-                            <ul className="space-y-4 text-sm text-slate-400">
-                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('/privacy'); }} className="hover:text-white transition-colors">Privacy policy</a></li>
-                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('/terms'); }} className="hover:text-white transition-colors">Terms of service</a></li>
-                                <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('/security'); }} className="hover:text-white transition-colors">Security</a></li>
-                            </ul>
-                        </div>
-
-                        <div>
-                            <h4 className="text-white font-bold mb-6 tracking-wide">Contact</h4>
-                            <ul className="space-y-4 text-sm text-slate-400">
-                                <li>
-                                    <a href="mailto:hello@trackowl.io" className="hover:text-[#facc15] font-medium transition-colors flex items-center gap-2">
-                                        hello@trackowl.io
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500">
-                        <img src={HeaderLogo} className="h-6 object-contain opacity-50 hover:opacity-100 transition-opacity" alt="TrackOwl" />
-                        <p>TrackOwl™ , a product by DigiReps™</p>
-                    </div>
-                </div>
-            </footer>
+            <Footer />
 
             {/* Scroll to Top Button */}
             <AnimatePresence>
