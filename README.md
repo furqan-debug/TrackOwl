@@ -1,5 +1,6 @@
 # TrackOwl
 
+[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/furqan-debug/TrackOwl)](https://github.com/furqan-debug/TrackOwl/pulls)
 TrackOwl is a time tracking and workforce monitoring platform built around three applications:
 
 * An Electron desktop client for activity tracking
