@@ -423,8 +423,24 @@ fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>
 
     if let Some(sid) = session_id {
         let token = auth_arc.lock().unwrap().clone();
-        let body = serde_json::json!({ "p_session_id": sid }).to_string();
-        let _ = supabase_post(&cfg, "rpc/rpc_stop_session", &body, token.as_deref(), None);
+        let stop_time = chrono::Utc::now().to_rfc3339();
+        let body = serde_json::json!({
+            "p_session_id": sid,
+            "p_ended_at": stop_time
+        }).to_string();
+
+        match supabase_post(&cfg, "rpc/rpc_stop_session_v2", &body, token.as_deref(), None) {
+            Ok(_) => {
+                println!("[lib] ✅ Successfully stopped session {}", sid);
+            }
+            Err(e) => {
+                println!("[lib] ⚠️ Failed to stop session on server (likely offline): {}. Caching stop locally.", e);
+                let db_lock = db_arc.lock().unwrap();
+                if let Some(conn) = db_lock.as_ref() {
+                    let _ = cache::cache_session_stop(conn, &sid, &stop_time);
+                }
+            }
+        }
     }
 
     TrackingResult { status: "stopped".to_string(), session_id: None, error: None }

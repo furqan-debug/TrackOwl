@@ -94,7 +94,12 @@ pub fn init_db() -> rusqlite::Result<Connection> {
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             captured_at INTEGER NOT NULL  -- Unix timestamp in milliseconds
         );
-        CREATE INDEX IF NOT EXISTS idx_screenshot_time ON screenshot_log(captured_at);",
+        CREATE INDEX IF NOT EXISTS idx_screenshot_time ON screenshot_log(captured_at);
+        CREATE TABLE IF NOT EXISTS pending_session_stops (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id  TEXT    NOT NULL,
+            ended_at    TEXT    NOT NULL
+        );",
     )?;
     Ok(conn)
 }
@@ -233,6 +238,27 @@ pub fn sync_once(
         Err(_) => return, // Already syncing
     };
 
+    // Sync any pending session stops first
+    let stops = get_pending_session_stops(conn).unwrap_or_default();
+    if !stops.is_empty() {
+        let token = auth_token.lock().unwrap().clone().unwrap_or_default();
+        for (id, sid, ended_at) in &stops {
+            let body = serde_json::json!({
+                "p_session_id": sid,
+                "p_ended_at": ended_at
+            }).to_string();
+            match crate::supabase_post(cfg, "rpc/rpc_stop_session_v2", &body, Some(&token), None) {
+                Ok(_) => {
+                    let _ = delete_pending_session_stop(conn, *id);
+                    println!("[cache] ✅ Synced offline session stop for session {}", sid);
+                }
+                Err(e) => {
+                    eprintln!("[cache] Failed to sync offline session stop for session {}: {}", sid, e);
+                }
+            }
+        }
+    }
+
     let samples = match get_unsynced_samples(conn) {
         Ok(s) => s,
         Err(e) => { eprintln!("[cache] get_unsynced error: {}", e); return; }
@@ -300,6 +326,37 @@ pub fn sync_from_arc(
         Ok(g) => g,
         Err(_) => return, // Already syncing
     };
+
+    let stops = {
+        let db_lock = db_arc.lock().unwrap();
+        if let Some(conn) = db_lock.as_ref() {
+            get_pending_session_stops(conn).unwrap_or_default()
+        } else {
+            Vec::new()
+        }
+    };
+
+    if !stops.is_empty() {
+        let token = auth_token.lock().unwrap().clone().unwrap_or_default();
+        for (id, sid, ended_at) in &stops {
+            let body = serde_json::json!({
+                "p_session_id": sid,
+                "p_ended_at": ended_at
+            }).to_string();
+            match crate::supabase_post(cfg, "rpc/rpc_stop_session_v2", &body, Some(&token), None) {
+                Ok(_) => {
+                    let mut db_lock = db_arc.lock().unwrap();
+                    if let Some(conn) = db_lock.as_mut() {
+                        let _ = delete_pending_session_stop(conn, *id);
+                    }
+                    println!("[cache] ✅ Synced offline session stop for session {}", sid);
+                }
+                Err(e) => {
+                    eprintln!("[cache] Failed to sync offline session stop for session {}: {}", sid, e);
+                }
+            }
+        }
+    }
 
     let samples = {
         let db_lock = db_arc.lock().unwrap();
@@ -369,5 +426,32 @@ pub fn sync_from_arc(
 
 fn s_format_error(e: rusqlite::Error) -> String {
     e.to_string()
+}
+
+pub fn cache_session_stop(conn: &Connection, session_id: &str, ended_at: &str) -> rusqlite::Result<()> {
+    conn.execute(
+        "INSERT INTO pending_session_stops (session_id, ended_at) VALUES (?1, ?2)",
+        params![session_id, ended_at],
+    )?;
+    Ok(())
+}
+
+pub fn get_pending_session_stops(conn: &Connection) -> rusqlite::Result<Vec<(i64, String, String)>> {
+    let mut stmt = conn.prepare(
+        "SELECT id, session_id, ended_at FROM pending_session_stops ORDER BY id ASC LIMIT 10"
+    )?;
+    let rows = stmt.query_map([], |row| {
+        Ok((
+            row.get::<_, i64>(0)?,
+            row.get::<_, String>(1)?,
+            row.get::<_, String>(2)?,
+        ))
+    })?;
+    rows.collect()
+}
+
+pub fn delete_pending_session_stop(conn: &Connection, id: i64) -> rusqlite::Result<()> {
+    conn.execute("DELETE FROM pending_session_stops WHERE id = ?1", params![id])?;
+    Ok(())
 }
 
