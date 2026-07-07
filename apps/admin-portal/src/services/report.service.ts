@@ -488,57 +488,45 @@ export const reportService = {
         if (!uid) return;
 
         const member = membersMap.get(uid);
-        const sessionSamples = samplesBySession.get(sess.id) || [];
+        const { endMs } = getEffectiveEnd(sess.started_at, sess.ended_at);
+        const sessionMins = Math.max(0, Math.round((endMs - new Date(sess.started_at).getTime()) / 60000));
 
-        if (sessionSamples.length > 0) {
-            // Process each sample for automated tracking sessions
-            sessionSamples.forEach(s => {
-                const day = getGroupingDateInTz(s.recorded_at, memberTzs.get(uid));
-                if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
+        if (sessionMins > 0) {
+            const day = getGroupingDateInTz(sess.started_at, memberTzs.get(uid));
+            if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
 
-                dailyMap[day].activitySum += (s.activity_percent || 0);
-                dailyMap[day].total_samples++;
-                dailyMap[day].total_minutes++;
+            // Add session minutes directly to daily total tracked minutes
+            dailyMap[day].total_minutes += sessionMins;
 
-                if (member) {
-                    costs += (1 / 60) * (member.pay_rate || 0);
-                    billed += (1 / 60) * (member.bill_rate || 0);
-                }
+            if (member) {
+                costs += (sessionMins / 60) * (member.pay_rate || 0);
+                billed += (sessionMins / 60) * (member.bill_rate || 0);
+            }
 
-                if (member && memberRows[member.id]) {
-                    const row = memberRows[member.id];
-                    row.dailyMins[day] = (row.dailyMins[day] || 0) + 1;
-                    row.totalMins++;
-
-                    if (s.activity_percent !== undefined && s.activity_percent !== null) {
-                        row.activitySum += s.activity_percent;
-                        row.activitySamples++;
-                    }
-                }
-            });
-        } else {
-            // Process manual/sampleless session duration
-            const { endMs } = getEffectiveEnd(sess.started_at, sess.ended_at);
-            const sessionMins = Math.max(0, Math.round((endMs - new Date(sess.started_at).getTime()) / 60000));
-
-            if (sessionMins > 0) {
-                const day = getGroupingDateInTz(sess.started_at, memberTzs.get(uid));
-                if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
-
-                dailyMap[day].total_minutes += sessionMins;
-
-                if (member) {
-                    costs += (sessionMins / 60) * (member.pay_rate || 0);
-                    billed += (sessionMins / 60) * (member.bill_rate || 0);
-                }
-
-                if (member && memberRows[member.id]) {
-                    const row = memberRows[member.id];
-                    row.dailyMins[day] = (row.dailyMins[day] || 0) + sessionMins;
-                    row.totalMins += sessionMins;
-                }
+            if (member && memberRows[member.id]) {
+                const row = memberRows[member.id];
+                row.dailyMins[day] = (row.dailyMins[day] || 0) + sessionMins;
+                row.totalMins += sessionMins;
             }
         }
+
+        // Process activity samples separately for accurate productivity scoring
+        const sessionSamples = samplesBySession.get(sess.id) || [];
+        sessionSamples.forEach(s => {
+            const day = getGroupingDateInTz(s.recorded_at, memberTzs.get(uid));
+            if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
+
+            dailyMap[day].activitySum += (s.activity_percent || 0);
+            dailyMap[day].total_samples++;
+
+            if (member && memberRows[member.id]) {
+                const row = memberRows[member.id];
+                if (s.activity_percent !== undefined && s.activity_percent !== null) {
+                    row.activitySum += s.activity_percent;
+                    row.activitySamples++;
+                }
+            }
+        });
     });
 
     const dailyActivityList = Object.entries(dailyMap).sort().map(([date, v]) => ({
