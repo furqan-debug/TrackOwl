@@ -447,45 +447,14 @@ export const reportService = {
         }
     });
 
-    productiveSamples.forEach(s => {
-        const uid = sessionToUserId.get(s.session_id);
-        if (!uid) return;
-
-        const day = getGroupingDateInTz(s.recorded_at, memberTzs.get(uid));
-        if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
-
-        dailyMap[day].activitySum += (s.activity_percent || 0);
-        dailyMap[day].total_samples++;
-        dailyMap[day].total_minutes++;
-
-        const member = membersMap.get(uid);
-        if (member) {
-            costs += (1 / 60) * (member.pay_rate || 0);
-            billed += (1 / 60) * (member.bill_rate || 0);
+    // Pre-group productive samples by session to quickly find session-specific samples
+    const samplesBySession = new Map<string, any[]>();
+    productiveSamples.forEach(sample => {
+        if (!samplesBySession.has(sample.session_id)) {
+            samplesBySession.set(sample.session_id, []);
         }
+        samplesBySession.get(sample.session_id)!.push(sample);
     });
-
-    const dailyActivityList = Object.entries(dailyMap).sort().map(([date, v]) => ({
-        date: new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        activity: v.total_samples > 0 ? Math.round(v.activitySum / v.total_samples) : 0,
-        minutes: Math.round(v.total_minutes),
-    }));
-
-    const appMap: Record<string, number> = {};
-    productiveSamples.forEach(s => {
-        const app = s.app_name || 'Unknown';
-        appMap[app] = (appMap[app] || 0) + 1;
-    });
-    const appBreakdownList = Object.entries(appMap).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name, value }));
-
-    let totalSessionMins = 0;
-    filteredSessions.forEach(s => {
-        const { endMs } = getEffectiveEnd(s.started_at, s.ended_at);
-        totalSessionMins += (endMs - new Date(s.started_at).getTime()) / 60000;
-    });
-
-    const calculatedTotalMins = Math.max(productiveSamples.length, Math.round(totalSessionMins));
-    const calculatedAvgActivity = calculateActivityScore(productiveSamples);
 
     const dateList: string[] = [];
     const curr = new Date(start);
@@ -514,24 +483,85 @@ export const reportService = {
         };
     });
 
-    productiveSamples.forEach(s => {
-        const uid = sessionToUserId.get(s.session_id);
+    filteredSessions.forEach(sess => {
+        const uid = sess.user_id;
         if (!uid) return;
 
         const member = membersMap.get(uid);
-        if (!member || !memberRows[member.id]) return;
+        const sessionSamples = samplesBySession.get(sess.id) || [];
 
-        const day = getGroupingDateInTz(s.recorded_at, memberTzs.get(uid));
-        const row = memberRows[member.id];
+        if (sessionSamples.length > 0) {
+            // Process each sample for automated tracking sessions
+            sessionSamples.forEach(s => {
+                const day = getGroupingDateInTz(s.recorded_at, memberTzs.get(uid));
+                if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
 
-        row.dailyMins[day] = (row.dailyMins[day] || 0) + 1;
-        row.totalMins++;
+                dailyMap[day].activitySum += (s.activity_percent || 0);
+                dailyMap[day].total_samples++;
+                dailyMap[day].total_minutes++;
 
-        if (s.activity_percent !== undefined && s.activity_percent !== null) {
-            row.activitySum += s.activity_percent;
-            row.activitySamples++;
+                if (member) {
+                    costs += (1 / 60) * (member.pay_rate || 0);
+                    billed += (1 / 60) * (member.bill_rate || 0);
+                }
+
+                if (member && memberRows[member.id]) {
+                    const row = memberRows[member.id];
+                    row.dailyMins[day] = (row.dailyMins[day] || 0) + 1;
+                    row.totalMins++;
+
+                    if (s.activity_percent !== undefined && s.activity_percent !== null) {
+                        row.activitySum += s.activity_percent;
+                        row.activitySamples++;
+                    }
+                }
+            });
+        } else {
+            // Process manual/sampleless session duration
+            const { endMs } = getEffectiveEnd(sess.started_at, sess.ended_at);
+            const sessionMins = Math.max(0, Math.round((endMs - new Date(sess.started_at).getTime()) / 60000));
+
+            if (sessionMins > 0) {
+                const day = getGroupingDateInTz(sess.started_at, memberTzs.get(uid));
+                if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
+
+                dailyMap[day].total_minutes += sessionMins;
+
+                if (member) {
+                    costs += (sessionMins / 60) * (member.pay_rate || 0);
+                    billed += (sessionMins / 60) * (member.bill_rate || 0);
+                }
+
+                if (member && memberRows[member.id]) {
+                    const row = memberRows[member.id];
+                    row.dailyMins[day] = (row.dailyMins[day] || 0) + sessionMins;
+                    row.totalMins += sessionMins;
+                }
+            }
         }
     });
+
+    const dailyActivityList = Object.entries(dailyMap).sort().map(([date, v]) => ({
+        date: new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        activity: v.total_samples > 0 ? Math.round(v.activitySum / v.total_samples) : 0,
+        minutes: Math.round(v.total_minutes),
+    }));
+
+    const appMap: Record<string, number> = {};
+    productiveSamples.forEach(s => {
+        const app = s.app_name || 'Unknown';
+        appMap[app] = (appMap[app] || 0) + 1;
+    });
+    const appBreakdownList = Object.entries(appMap).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name, value }));
+
+    let totalSessionMins = 0;
+    filteredSessions.forEach(s => {
+        const { endMs } = getEffectiveEnd(s.started_at, s.ended_at);
+        totalSessionMins += (endMs - new Date(s.started_at).getTime()) / 60000;
+    });
+
+    const calculatedTotalMins = Math.max(productiveSamples.length, Math.round(totalSessionMins));
+    const calculatedAvgActivity = calculateActivityScore(productiveSamples);
 
     const finalRows = Object.values(memberRows)
         .map((row: any) => ({
