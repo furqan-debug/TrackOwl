@@ -46,7 +46,7 @@ export function Privacy() {
                         <hr className="border-slate-200 my-8" />
                         
                         <h2 className="text-2xl font-bold text-[#001b4d] mt-8 mb-4">1. About TrackOwl</h2>
-                        <p>TrackOwl is a workforce analytics and time tracking platform developed by DigiReps™ to help organizations:</p>
+                        <p>TrackOwl is a workforce analytics and time tracking platform developed by DigiReps® to help organizations:</p>
                         <ul className="list-disc pl-6 space-y-2">
                             <li>Monitor productivity and operational performance</li>
                             <li>Track work hours and attendance</li>
@@ -255,7 +255,7 @@ export function Privacy() {
                         <p>For privacy-related questions, concerns, or requests, please contact:</p>
                         <p className="font-bold">TrackOwl Privacy Team</p>
                         <p>📧 <a href="mailto:privacy@trackowl.io" className="text-blue-600 hover:underline">privacy@trackowl.io</a></p>
-                        <p className="text-sm text-slate-400 mt-4">Developed by DigiReps™, a brand of Digify Global LLC</p>
+                        <p className="text-sm text-slate-400 mt-4">Developed by DigiReps®, a brand of Digify Global LLC</p>
                     </div>
                 </main>
             </div>
