@@ -249,7 +249,7 @@ export function Landing() {
                         <a href="#industries" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">Industries</a>
                         <a href="#how-it-works" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">How it works</a>
                         <a href="#pricing" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">Pricing</a>
-                        <a href="#faq" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">FAQ</a>
+                        <a href="#faq" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">FAQ's</a>
                     </div>
 
                     <div className="flex items-center gap-6">
