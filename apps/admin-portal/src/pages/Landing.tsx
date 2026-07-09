@@ -67,7 +67,7 @@ function ContactModal({ isOpen, onClose, initialRequestType }: ContactModalProps
                 subject: `${requestType === 'sales' ? 'Sales Inquiry' : 'Demo Booking'}: ${name} (${company})`,
                 status: 'open',
                 email: email,
-                description: `Name: ${name}\nCompany: ${company}\nTeam Size: ${teamSize}\nRequest Type: ${requestType}\n\nMessage:\n${message}`
+                message: `Name: ${name}\nCompany: ${company}\nTeam Size: ${teamSize}\nRequest Type: ${requestType}\n\nMessage:\n${message}`
             });
 
             if (dbError) throw dbError;
