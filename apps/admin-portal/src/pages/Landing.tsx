@@ -489,30 +489,30 @@ export function Landing() {
                     </motion.div>
 
                     <div className="hidden xl:flex items-center gap-8">
-                        <a href="#features" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">Features</a>
-                        <a href="#showcase" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">Solutions</a>
-                        <a href="#industries" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">Industries</a>
-                        <a href="#how-it-works" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">How it works</a>
-                        <a href="#pricing" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">Pricing</a>
-                        <a href="#faq" className="text-base font-semibold text-slate-300 hover:text-white transition-colors">FAQ's</a>
+                        <a href="#features" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">Features</a>
+                        <a href="#showcase" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">Solutions</a>
+                        <a href="#industries" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">Industries</a>
+                        <a href="#how-it-works" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">How it works</a>
+                        <a href="#pricing" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">Pricing</a>
+                        <a href="#faq" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">FAQ's</a>
                     </div>
 
                     <div className="flex items-center gap-6">
                         <a
                             href="#download"
-                            className="hidden lg:flex items-center gap-2 text-base font-bold text-white hover:text-blue-400 transition-colors"
+                            className="hidden lg:flex items-center gap-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
                         >
                             <Download className="w-4 h-4" /> Download
                         </a>
                         <button
                             onClick={() => navigate('/login')}
-                            className="text-sm sm:text-base font-bold text-white hover:text-[#facc15] transition-colors"
+                            className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
                         >
                             Log in
                         </button>
                         <button
                             onClick={() => navigate('/signup')}
-                            className="px-5 sm:px-6 py-2 sm:py-2.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-sm sm:text-base font-black rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95"
+                            className="px-5 sm:px-6 py-2 sm:py-2.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-sm sm:text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95"
                         >
                             Start free trial
                         </button>
@@ -546,8 +546,8 @@ export function Landing() {
                                 className="text-4xl sm:text-5xl lg:text-[64px] font-extrabold tracking-tight leading-[1.05] text-white mb-6"
                             >
                                 Time tracking<br />built for<br />
-                                <span className="text-[#facc15] block mt-2">
-                                    <AnimatePresence mode="popLayout">
+                                <span className="text-[#facc15] block mt-2 min-h-[75px] sm:min-h-[85px] lg:min-h-[110px]">
+                                    <AnimatePresence mode="wait">
                                         <motion.span
                                             key={currentSlide}
                                             initial={{ y: 20, opacity: 0 }}
@@ -566,7 +566,7 @@ export function Landing() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2 }}
-                                className="text-base sm:text-lg text-slate-300 leading-relaxed mb-8 max-w-lg font-medium"
+                                className="text-base sm:text-lg text-slate-300/90 leading-relaxed mb-8 max-w-lg font-normal tracking-wide"
                             >
                                 TrackOwl™ helps businesses monitor productivity, track work hours, and gain real-time workforce visibility — without micromanagement.<br /><br />
                                 Built for remote, hybrid, and distributed teams that need operational clarity at scale.
