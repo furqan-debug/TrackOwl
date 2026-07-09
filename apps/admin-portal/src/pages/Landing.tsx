@@ -556,7 +556,7 @@ export function Landing() {
                         <a href="#industries" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">Industries</a>
                         <a href="#how-it-works" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">How it works</a>
                         <a href="#pricing" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">Pricing</a>
-                        <a href="#faq" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">FAQ's</a>
+                        <a href="#faq" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">FAQs</a>
                     </div>
 
                     <div className="flex items-center gap-6">
