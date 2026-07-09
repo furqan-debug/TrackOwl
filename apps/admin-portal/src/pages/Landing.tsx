@@ -62,7 +62,11 @@ function ContactModal({ isOpen, onClose, initialRequestType }: ContactModalProps
         setError(null);
 
         try {
-            const web3FormsKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || "YOUR_KEY_HERE";
+            const web3FormsKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
+            
+            if (!web3FormsKey || web3FormsKey === "YOUR_KEY_HERE" || web3FormsKey.trim() === "") {
+                throw new Error("Web3Forms Access Key is not configured. Please add the VITE_WEB3FORMS_ACCESS_KEY environment variable in your Vercel settings to enable email notifications.");
+            }
             
             const response = await fetch("https://api.web3forms.com/submit", {
                 method: "POST",
