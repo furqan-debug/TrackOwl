@@ -66,8 +66,7 @@ function ContactModal({ isOpen, onClose, initialRequestType }: ContactModalProps
             const { error: dbError } = await supabase.from('support_tickets').insert({
                 subject: `${requestType === 'sales' ? 'Sales Inquiry' : 'Demo Booking'}: ${name} (${company})`,
                 status: 'open',
-                email: email,
-                message: `Name: ${name}\nCompany: ${company}\nTeam Size: ${teamSize}\nRequest Type: ${requestType}\n\nMessage:\n${message}`
+                message: `Name: ${name}\nEmail: ${email}\nCompany: ${company}\nTeam Size: ${teamSize}\nRequest Type: ${requestType}\n\nMessage:\n${message}`
             });
 
             if (dbError) throw dbError;
