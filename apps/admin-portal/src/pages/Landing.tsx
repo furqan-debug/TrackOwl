@@ -21,14 +21,245 @@ import {
     ArrowUp,
     Palette,
     Laptop,
-    ShoppingCart
+    ShoppingCart,
+    X,
+    Send,
+    Loader2
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
+import { supabase } from '../lib/supabase';
 
 import HeaderLogo from '../assets/branding/header-2.svg';
 import HeroDashboard from '../assets/branding/hero-dashboard.png';
 import ShowcaseDashboard from '../assets/branding/showcase-dashboard.png';
 import { Footer } from '../components/Footer';
+
+interface ContactModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    initialRequestType: 'sales' | 'demo' | 'general';
+}
+
+function ContactModal({ isOpen, onClose, initialRequestType }: ContactModalProps) {
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [company, setCompany] = useState('');
+    const [teamSize, setTeamSize] = useState('1-5');
+    const [message, setMessage] = useState('');
+    const [requestType, setRequestType] = useState(initialRequestType);
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        setRequestType(initialRequestType);
+    }, [initialRequestType]);
+
+    if (!isOpen) return null;
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+
+        try {
+            const { error: dbError } = await supabase.from('support_tickets').insert({
+                subject: `${requestType === 'sales' ? 'Sales Inquiry' : 'Demo Booking'}: ${name} (${company})`,
+                status: 'open',
+                email: email,
+                description: `Name: ${name}\nCompany: ${company}\nTeam Size: ${teamSize}\nRequest Type: ${requestType}\n\nMessage:\n${message}`
+            });
+
+            if (dbError) throw dbError;
+
+            const web3FormsKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || "YOUR_KEY_HERE";
+            
+            const response = await fetch("https://api.web3forms.com/submit", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json"
+                },
+                body: JSON.stringify({
+                    access_key: web3FormsKey,
+                    name: name,
+                    email: email,
+                    subject: `TrackOwl Lead - ${requestType === 'sales' ? 'Talk to Sales' : 'Schedule a Demo'}: ${name} (${company})`,
+                    to: "nash@digireps.co",
+                    from_name: "TrackOwl Contact System",
+                    message: `You have received a new contact submission from TrackOwl Landing Page.
+                    
+Request Type: ${requestType === 'sales' ? 'Talk to Sales' : 'Schedule a Demo'}
+Name: ${name}
+Email: ${email}
+Company: ${company}
+Team Size: ${teamSize}
+
+Message:
+${message}`
+                })
+            });
+
+            const web3Data = await response.json();
+            console.log("Web3Forms Submission status:", web3Data);
+
+            setSuccess(true);
+        } catch (err: any) {
+            console.error("Submission failed:", err);
+            setError(err.message || "Something went wrong. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] text-left">
+                {/* Header */}
+                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-[#001338] text-white">
+                    <div>
+                        <h3 className="text-xl font-bold">Contact TrackOwl</h3>
+                        <p className="text-xs text-slate-300">We'll get back to you shortly</p>
+                    </div>
+                    <button 
+                        onClick={onClose}
+                        className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                    >
+                        <X className="w-5 h-5" />
+                    </button>
+                </div>
+
+                {success ? (
+                    <div className="p-8 text-center flex flex-col items-center justify-center space-y-4">
+                        <div className="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center mb-2">
+                            <Check className="w-8 h-8" strokeWidth={3} />
+                        </div>
+                        <h4 className="text-2xl font-bold text-slate-900">Thank you!</h4>
+                        <p className="text-sm text-slate-500 max-w-sm">
+                            Your details have been submitted. A TrackOwl sales representative will email you at <span className="font-bold">{email}</span> shortly.
+                        </p>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSuccess(false);
+                                setName('');
+                                setEmail('');
+                                setCompany('');
+                                setTeamSize('1-5');
+                                setMessage('');
+                                onClose();
+                            }}
+                            className="mt-6 px-6 py-2.5 bg-[#001338] hover:bg-[#002766] text-white text-sm font-bold rounded-xl transition-all"
+                        >
+                            Close
+                        </button>
+                    </div>
+                ) : (
+                    <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1 text-slate-700">
+                        {error && (
+                            <div className="p-3 bg-red-50 text-red-600 text-xs rounded-xl border border-red-100 font-bold">
+                                {error}
+                            </div>
+                        )}
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Request Type</label>
+                            <select 
+                                value={requestType}
+                                onChange={(e) => setRequestType(e.target.value as any)}
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-800 bg-slate-50 focus:border-blue-600 outline-none"
+                            >
+                                <option value="sales">Talk to Sales</option>
+                                <option value="demo">Book / Schedule a Demo</option>
+                                <option value="general">General Inquiry</option>
+                            </select>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Full Name</label>
+                                <input 
+                                    type="text" 
+                                    required
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    placeholder="John Doe"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 focus:border-blue-600 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Business Email</label>
+                                <input 
+                                    type="email" 
+                                    required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="john@company.com"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 focus:border-blue-600 outline-none"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Company Name</label>
+                                <input 
+                                    type="text" 
+                                    required
+                                    value={company}
+                                    onChange={(e) => setCompany(e.target.value)}
+                                    placeholder="Acme Corp"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 focus:border-blue-600 outline-none"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Team Size</label>
+                                <select 
+                                    value={teamSize}
+                                    onChange={(e) => setTeamSize(e.target.value)}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 bg-white focus:border-blue-600 outline-none"
+                                >
+                                    <option value="1-5">1-5 members</option>
+                                    <option value="6-15">6-15 members</option>
+                                    <option value="16-50">16-50 members</option>
+                                    <option value="51-200">51-200 members</option>
+                                    <option value="200+">200+ members</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Your Message</label>
+                            <textarea 
+                                required
+                                rows={3}
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                placeholder="Describe what you're looking for..."
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 focus:border-blue-600 outline-none resize-none"
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="w-full py-3.5 bg-[#001338] hover:bg-[#002766] text-white text-base font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 mt-4 disabled:opacity-75"
+                        >
+                            {loading ? (
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <>
+                                    <Send className="w-4 h-4" />
+                                    Submit Request
+                                </>
+                            )}
+                        </button>
+                    </form>
+                )}
+            </div>
+        </div>
+    );
+}
 
 export function Landing() {
     const navigate = useNavigate();
@@ -36,6 +267,8 @@ export function Landing() {
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
     const [recommendedOS, setRecommendedOS] = useState<'windows' | 'mac-silicon' | 'mac-intel' | 'linux' | null>(null);
     const [showScrollTop, setShowScrollTop] = useState(false);
+    const [isContactOpen, setIsContactOpen] = useState(false);
+    const [contactType, setContactType] = useState<'sales' | 'demo' | 'general'>('sales');
 
     useEffect(() => {
         const detectOS = async () => {
@@ -349,7 +582,7 @@ export function Landing() {
                                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </button>
                                 <button
-                                    onClick={() => window.location.href = 'mailto:hello@trackowl.io'}
+                                    onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
                                     className="w-full sm:w-auto px-8 py-3.5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-base font-bold rounded-full transition-all active:scale-95 flex items-center justify-center">
                                     Book a demo
                                 </button>
@@ -718,7 +951,7 @@ export function Landing() {
                                     <span className="text-3xl font-black text-slate-900">Custom</span>
                                 </div>
                                 <button
-                                    onClick={() => window.location.href = 'mailto:hello@trackowl.io'}
+                                    onClick={() => { setContactType('sales'); setIsContactOpen(true); }}
                                     className="w-full py-4 rounded-lg bg-[#facc15] hover:bg-[#eab308] text-[#001b4d] text-lg font-bold transition-colors shadow-md mt-auto">
                                     Talk to sales
                                 </button>
@@ -890,7 +1123,7 @@ export function Landing() {
                             Start free trial
                         </button>
                         <button
-                            onClick={() => window.location.href = 'mailto:hello@trackowl.io'}
+                            onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
                             className="w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold rounded-full transition-all active:scale-95">
                             Schedule a demo
                         </button>
@@ -901,6 +1134,12 @@ export function Landing() {
 
             {/* FOOTER */}
             <Footer />
+
+            <ContactModal 
+                isOpen={isContactOpen} 
+                onClose={() => setIsContactOpen(false)} 
+                initialRequestType={contactType} 
+            />
 
             {/* Scroll to Top Button */}
             <AnimatePresence>
