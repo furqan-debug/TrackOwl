@@ -481,7 +481,7 @@ export function Landing() {
                 {/* INDUSTRIES SECTION */}
                 <section id="industries" className="py-16 bg-slate-50">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center">
-                        <h2 className="text-2xl font-black text-[#001b4d] mb-10">Built for modern businesses</h2>
+                        <h2 className="text-3xl font-black text-[#001b4d] mb-10">Built for modern businesses</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-12 max-w-5xl mx-auto justify-items-center">
                             {industries.map((ind, i) => {
                                 const Icon = ind.icon;
