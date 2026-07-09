@@ -689,11 +689,11 @@ export function Landing() {
 
                         <div>
                             <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-[#001b4d] mb-6 leading-tight">One platform.<br />Complete operational visibility.</h2>
-                            <p className="text-lg font-medium text-slate-500 mb-8 leading-relaxed max-w-md text-justify">
+                            <p className="text-lg text-slate-500 mb-8 leading-relaxed max-w-md text-left font-normal">
                                 TrackOwl™ centralizes time tracking, team monitoring, analytics, screenshots, attendance, app usage, and reporting into a unified operational dashboard.
                             </p>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-6">
                                 {[
                                     'Real-time team monitoring',
                                     'Team attendance management',
@@ -703,11 +703,11 @@ export function Landing() {
                                     'Secure workforce analytics',
                                     'Screenshot visibility system'
                                 ].map((hl, i) => (
-                                    <div key={i} className="flex items-center gap-2">
-                                        <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center shrink-0">
-                                            <Check className="w-4 h-4 text-white" strokeWidth={3} />
+                                    <div key={i} className="flex items-start gap-3">
+                                        <div className="w-5 h-5 rounded-full bg-blue-600/15 flex items-center justify-center shrink-0 mt-0.5">
+                                            <Check className="w-3.5 h-3.5 text-blue-600" strokeWidth={3.5} />
                                         </div>
-                                        <span className="text-base font-bold text-slate-800">{hl}</span>
+                                        <span className="text-sm sm:text-base font-semibold text-slate-700 leading-tight">{hl}</span>
                                     </div>
                                 ))}
                             </div>
