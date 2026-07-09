@@ -669,7 +669,7 @@ export function Landing() {
                                         </div>
                                         <div>
                                             <h4 className="text-xl font-bold text-slate-900 mb-2">{f.title}</h4>
-                                            <p className="text-base font-medium text-slate-500 leading-relaxed">{f.desc}</p>
+                                            <p className="text-base font-medium text-slate-500 leading-relaxed text-justify">{f.desc}</p>
                                         </div>
                                     </div>
                                 );
@@ -689,7 +689,7 @@ export function Landing() {
 
                         <div>
                             <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-[#001b4d] mb-6 leading-tight">One platform.<br />Complete operational visibility.</h2>
-                            <p className="text-lg font-medium text-slate-500 mb-8 leading-relaxed max-w-md">
+                            <p className="text-lg font-medium text-slate-500 mb-8 leading-relaxed max-w-md text-justify">
                                 TrackOwl™ centralizes time tracking, team monitoring, analytics, screenshots, attendance, app usage, and reporting into a unified operational dashboard.
                             </p>
 
@@ -756,7 +756,7 @@ export function Landing() {
                                             </div>
                                             <h3 className="text-xl font-bold text-slate-900">{s.title}</h3>
                                         </div>
-                                        <p className="text-base font-medium text-slate-500 leading-relaxed mb-6">{s.desc}</p>
+                                         <p className="text-base font-medium text-slate-500 leading-relaxed mb-6 text-justify">{s.desc}</p>
 
                                         {/* Little illustrations inside the card */}
                                         <div className="mt-auto w-full h-24 bg-white rounded-xl border border-slate-100 flex items-center justify-center p-3">
@@ -864,7 +864,7 @@ export function Landing() {
                                 </div>
 
                                 <h2 className="text-3xl font-extrabold tracking-tight mb-4 relative z-10">Enterprise-grade security & privacy</h2>
-                                <p className="text-lg text-slate-300 mb-8 max-w-md relative z-10">
+                                <p className="text-lg text-slate-300 mb-8 max-w-md relative z-10 text-justify">
                                     TrackOwl™ is built with security, transparency, and ethical monitoring at its core.
                                 </p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 relative z-10">
@@ -891,7 +891,7 @@ export function Landing() {
                                 </div>
 
                                 <h3 className="text-2xl font-bold text-[#001b4d] mb-4 mt-16 lg:mt-0 max-w-[200px]">Privacy commitment</h3>
-                                <p className="text-lg text-slate-600 font-medium leading-relaxed max-w-[300px]">
+                                <p className="text-lg text-slate-600 font-medium leading-relaxed max-w-[300px] text-justify">
                                     Tracking-related information is visible only to authorized administrators and the associated user account owner.
                                 </p>
                             </div>
@@ -990,7 +990,7 @@ export function Landing() {
                                                     exit={{ height: 0 }}
                                                     className="overflow-hidden"
                                                 >
-                                                    <div className="pb-5 text-slate-500 text-base font-medium leading-relaxed">
+                                                    <div className="pb-5 text-slate-500 text-base font-medium leading-relaxed text-justify">
                                                         {faqs[i].a}
                                                     </div>
                                                 </motion.div>
@@ -1019,7 +1019,7 @@ export function Landing() {
                                                     exit={{ height: 0 }}
                                                     className="overflow-hidden"
                                                 >
-                                                    <div className="pb-5 text-slate-500 text-base font-medium leading-relaxed">
+                                                    <div className="pb-5 text-slate-500 text-base font-medium leading-relaxed text-justify">
                                                         {faqs[i].a}
                                                     </div>
                                                 </motion.div>
