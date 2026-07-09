@@ -18,7 +18,10 @@ import {
     ArrowRight,
     FileText,
     Download,
-    ArrowUp
+    ArrowUp,
+    Palette,
+    Laptop,
+    ShoppingCart
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
@@ -170,7 +173,12 @@ export function Landing() {
         { name: 'Customer support teams', icon: MessageSquare, color: 'text-blue-500' },
         { name: 'Virtual assistants', icon: Users, color: 'text-blue-400' },
         { name: 'Enterprise operations', icon: Briefcase, color: 'text-blue-600' },
-        { name: 'Distributed workforces', icon: Globe, color: 'text-blue-500' }
+        { name: 'Distributed workforces', icon: Globe, color: 'text-blue-500' },
+        { name: 'Consulting firms', icon: FileText, color: 'text-yellow-600' },
+        { name: 'Marketing agencies', icon: TrendingUp, color: 'text-emerald-500' },
+        { name: 'Design studios', icon: Palette, color: 'text-pink-500' },
+        { name: 'Freelancers & Contractors', icon: Laptop, color: 'text-indigo-500' },
+        { name: 'E-commerce teams', icon: ShoppingCart, color: 'text-cyan-500' }
     ];
 
     const steps = [
@@ -474,7 +482,7 @@ export function Landing() {
                 <section id="industries" className="py-16 bg-slate-50">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center">
                         <h2 className="text-2xl font-black text-[#001b4d] mb-10">Built for modern businesses</h2>
-                        <div className="flex flex-wrap justify-center gap-8 md:gap-12">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-12 max-w-5xl mx-auto justify-items-center">
                             {industries.map((ind, i) => {
                                 const Icon = ind.icon;
                                 return (
