@@ -543,7 +543,7 @@ export function Landing() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="text-4xl sm:text-5xl lg:text-[64px] font-extrabold tracking-tight leading-[1.05] text-white mb-6"
+                                className="text-4xl sm:text-5xl lg:text-[64px] font-extrabold tracking-normal leading-[1.15] text-white mb-6"
                             >
                                 Time tracking<br />built for<br />
                                 <span className="text-[#facc15] block mt-2 min-h-[75px] sm:min-h-[85px] lg:min-h-[110px]">
