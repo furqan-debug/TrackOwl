@@ -27,7 +27,6 @@ import {
     Loader2
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
-import { supabase } from '../lib/supabase';
 
 import HeaderLogo from '../assets/branding/header-2.svg';
 import HeroDashboard from '../assets/branding/hero-dashboard.png';
@@ -63,14 +62,6 @@ function ContactModal({ isOpen, onClose, initialRequestType }: ContactModalProps
         setError(null);
 
         try {
-            const { error: dbError } = await supabase.from('support_tickets').insert({
-                subject: `${requestType === 'sales' ? 'Sales Inquiry' : 'Demo Booking'}: ${name} (${company})`,
-                status: 'open',
-                message: `Name: ${name}\nEmail: ${email}\nCompany: ${company}\nTeam Size: ${teamSize}\nRequest Type: ${requestType}\n\nMessage:\n${message}`
-            });
-
-            if (dbError) throw dbError;
-
             const web3FormsKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || "YOUR_KEY_HERE";
             
             const response = await fetch("https://api.web3forms.com/submit", {
@@ -101,6 +92,10 @@ ${message}`
 
             const web3Data = await response.json();
             console.log("Web3Forms Submission status:", web3Data);
+
+            if (!response.ok || !web3Data.success) {
+                throw new Error(web3Data.message || "Failed to submit request. Please verify VITE_WEB3FORMS_ACCESS_KEY is set.");
+            }
 
             setSuccess(true);
         } catch (err: any) {
