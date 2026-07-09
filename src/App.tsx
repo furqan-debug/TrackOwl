@@ -10,6 +10,7 @@ import {
    Bell, ShieldCheck, Smartphone
 } from 'lucide-react';
 import { trackerAPI } from './tauri-ipc';
+import { UpdaterOverlay } from './components/UpdaterOverlay';
 
 import './App.css';
 
@@ -58,6 +59,10 @@ interface User {
     close_behavior?: 'quit' | 'minimize';
   };
   plan_type?: string;
+  organization_settings?: {
+    autoStopOnIdle?: boolean;
+    idleAutoStopMinutes?: number;
+  };
 }
 
 async function syncTimezone(sb: any, memberId: string, memberTz: string | null | undefined) {
@@ -984,13 +989,13 @@ export default function App() {
       if (!session) { clearSession(); return; }
 
       let { data: member } = await sb.from('members')
-        .select('*, organizations(plan_type)')
+        .select('*, organizations(plan_type, settings)')
         .eq('auth_user_id', session.user.id)
         .single();
 
       if (!member && session.user.email) {
         const { data: byEmail } = await sb.from('members')
-          .select('*, organizations(plan_type)')
+          .select('*, organizations(plan_type, settings)')
           .eq('email', session.user.email)
           .single();
         if (byEmail && !byEmail.auth_user_id) {
@@ -1018,7 +1023,8 @@ export default function App() {
           keep_idle: member.keep_idle,
           phone: member.phone,
           custom_fields: member.custom_fields || {},
-          plan_type: member.organizations?.plan_type || 'Basic'
+          plan_type: member.organizations?.plan_type || 'Basic',
+          organization_settings: member.organizations?.settings || {}
         };
         console.log('USER LOADED (Session):', userObj);
         setUser(userObj);
@@ -1302,6 +1308,34 @@ export default function App() {
     return () => { if (interval) clearInterval(interval); };
   }, [user?.id, screen, projects]);
 
+  // Automatically terminate session if the user remains idle for too long (Inactivity Auto-Stop)
+  useEffect(() => {
+    if (!isTracking || !idlePaused || !user) return;
+
+    const autoStopEnabled = user.organization_settings?.autoStopOnIdle ?? false;
+    const maxIdleMins = user.organization_settings?.idleAutoStopMinutes ?? 60;
+
+    if (!autoStopEnabled) return;
+
+    console.log('[idle-autostop] Auto-stop timer started. Limit:', maxIdleMins, 'minutes');
+    const idleStart = Date.now();
+
+    const interval = setInterval(() => {
+      const idleTimeElapsedMins = (Date.now() - idleStart) / 60000;
+      if (idleTimeElapsedMins >= maxIdleMins) {
+        console.log('[idle-autostop] Inactivity limit reached. Automatically stopping session...');
+        discardIdleTime(user.idle_limit || 10, false);
+        handleStop();
+        trackerAPI.showNotification(
+          'Tracking Auto-Stopped',
+          `Your tracking session was ended automatically after ${Math.round(idleTimeElapsedMins)} minutes of inactivity.`
+        );
+      }
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [isTracking, idlePaused, user, user?.organization_settings?.autoStopOnIdle, user?.organization_settings?.idleAutoStopMinutes]);
+
   // Standalone effect to sync location once per session
   useEffect(() => {
     if (!user?.id) return;
@@ -1448,12 +1482,12 @@ export default function App() {
 
       console.log('[Login] Fetching member profile for user:', authData.user.id);
       let { data: member, error: memberError } = await sb
-        .from('members').select('*, organizations(plan_type)').eq('auth_user_id', authData.user.id).single();
+        .from('members').select('*, organizations(plan_type, settings)').eq('auth_user_id', authData.user.id).single();
 
       // Fallback: lookup by email if auth_user_id is not yet linked
       if ((memberError || !member) && authData.user.email) {
         console.log('[Login] Profile not found by ID, attempting email fallback:', authData.user.email);
-        const { data: byEmail } = await sb.from('members').select('*, organizations(plan_type)').eq('email', authData.user.email).single();
+        const { data: byEmail } = await sb.from('members').select('*, organizations(plan_type, settings)').eq('email', authData.user.email).single();
         if (byEmail && !byEmail.auth_user_id) {
           console.log('[Login] Found unlinked profile by email, linking now...');
           const { error: updateError } = await sb.from('members').update({ auth_user_id: authData.user.id }).eq('id', byEmail.id);
@@ -1493,7 +1527,8 @@ export default function App() {
         keep_idle: member.keep_idle,
         phone: member.phone,
         custom_fields: member.custom_fields || {},
-        plan_type: member.organizations?.plan_type || 'Basic'
+        plan_type: member.organizations?.plan_type || 'Basic',
+        organization_settings: member.organizations?.settings || {}
       };
       const { data: projectsData } = await sb.from('projects')
         .select('*, project_members!inner(member_id)')
@@ -2498,6 +2533,7 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, el
 
       <MyTasksPanel todos={todos} onDone={onTodoDone} />
 
+      <UpdaterOverlay />
     </div>
   );
 }
