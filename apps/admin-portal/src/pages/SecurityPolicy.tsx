@@ -160,7 +160,7 @@ export function SecurityPolicy() {
                         <p>For security concerns, vulnerability reports, or incident-related communication:</p>
                         <p className="font-bold">TrackOwl Security Team</p>
                         <p>📧 <a href="mailto:security@trackowl.io" className="text-blue-600 hover:underline">security@trackowl.io</a></p>
-                        <p className="text-sm text-slate-400 mt-4">Developed by DigiReps™, a brand of Digify Global LLC</p>
+                        <p className="text-sm text-slate-400 mt-4">Developed by DigiReps®, a brand of Digify Global LLC</p>
                     </div>
                 </main>
             </div>

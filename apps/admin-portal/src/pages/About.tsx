@@ -55,11 +55,11 @@ export function About() {
                                 The TrackOwl Way
                             </h2>
                             <p className="text-slate-500 font-semibold leading-relaxed mb-8">
-                                A product by DigiReps™. Designed to bring operational clarity without micromanagement.
+                                A product by DigiReps®. Designed to bring operational clarity without micromanagement.
                             </p>
                             <div className="space-y-4">
                                 <div className="p-4 rounded-xl bg-slate-100 border border-slate-200/60 text-xs font-bold text-slate-600">
-                                    ESTABLISHED BY DIGIREPS™
+                                    ESTABLISHED BY DIGIREPS®
                                 </div>
                                 <div className="p-4 rounded-xl bg-slate-100 border border-slate-200/60 text-xs font-bold text-slate-600">
                                     DESIGNED FOR ETHICAL WORKFORCES
