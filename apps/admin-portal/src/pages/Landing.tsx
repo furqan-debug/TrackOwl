@@ -506,13 +506,13 @@ export function Landing() {
                         </a>
                         <button
                             onClick={() => navigate('/login')}
-                            className="text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+                            className="text-sm font-semibold text-slate-300 hover:text-white cursor-pointer transition-colors"
                         >
                             Log in
                         </button>
                         <button
                             onClick={() => navigate('/signup')}
-                            className="px-5 sm:px-6 py-2 sm:py-2.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-sm sm:text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95"
+                            className="px-5 sm:px-6 py-2 sm:py-2.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-sm sm:text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] cursor-pointer transition-all hover:scale-105 active:scale-95"
                         >
                             Start free trial
                         </button>
@@ -696,11 +696,10 @@ export function Landing() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-6">
                                 {[
                                     'Real-time team monitoring',
-                                    'Team attendance management',
-                                    'Smart productivity analytics',
-                                    'Detailed operational reporting',
-                                    'App & website usage tracking',
-                                    'Secure workforce analytics',
+                                    'Productivity analytics',
+                                    'Operational reporting',
+                                    'App & website usage',
+                                    'Workforce analytics',
                                     'Screenshot visibility system'
                                 ].map((hl, i) => (
                                     <div key={i} className="flex items-start gap-3">
@@ -718,7 +717,7 @@ export function Landing() {
                 {/* INDUSTRIES SECTION */}
                 <section id="industries" className="py-16 bg-slate-50">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center">
-                        <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d] mb-10">Built for modern businesses</h2>
+                        <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d] mb-20">Built for modern businesses</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-12 max-w-5xl mx-auto justify-items-center">
                             {industries.map((ind, i) => {
                                 const Icon = ind.icon;
