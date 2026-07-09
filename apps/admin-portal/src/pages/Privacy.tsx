@@ -4,10 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowUp } from 'lucide-react';
 import HeaderLogo from '../assets/branding/header-2.svg';
 import { Footer } from '../components/Footer';
+import { ContactModal } from './Landing';
 
 export function Privacy() {
     const navigate = useNavigate();
     const [showScrollTop, setShowScrollTop] = useState(false);
+    const [isContactOpen, setIsContactOpen] = useState(false);
+    const [contactType, setContactType] = useState<'sales' | 'demo' | 'general'>('sales');
 
     useEffect(() => {
         const handleScroll = () => {
@@ -272,11 +275,11 @@ export function Privacy() {
                     <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
                         <button
                             onClick={() => navigate('/signup')}
-                            className="w-full sm:w-auto px-12 py-5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-lg font-black rounded-full shadow-[0_4px_20px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95 cursor-pointer">
+                            className="w-full sm:w-auto px-12 py-5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-lg font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] transition-all hover:scale-105 active:scale-95 cursor-pointer">
                             Start free trial
                         </button>
                         <button
-                            onClick={() => window.location.href = 'mailto:hello@trackowl.io'}
+                            onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
                             className="w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold rounded-full transition-all active:scale-95 cursor-pointer">
                             Schedule a demo
                         </button>
@@ -302,6 +305,7 @@ export function Privacy() {
                     </motion.button>
                 )}
             </AnimatePresence>
+            <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} initialRequestType={contactType} />
         </div>
     );
 }
