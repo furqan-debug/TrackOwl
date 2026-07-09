@@ -49,6 +49,22 @@ function ContactModal({ isOpen, onClose, initialRequestType }: ContactModalProps
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [requestTypeOpen, setRequestTypeOpen] = useState(false);
+    const [teamSizeOpen, setTeamSizeOpen] = useState(false);
+
+    const requestTypeOptions = [
+        { value: 'sales', label: 'Talk to Sales' },
+        { value: 'demo', label: 'Book / Schedule a Demo' },
+        { value: 'general', label: 'General Inquiry' }
+    ];
+
+    const teamSizeOptions = [
+        { value: '1-5', label: '1-5 members' },
+        { value: '6-15', label: '6-15 members' },
+        { value: '16-50', label: '16-50 members' },
+        { value: '51-200', label: '51-200 members' },
+        { value: '200+', label: '200+ members' }
+    ];
 
     useEffect(() => {
         setRequestType(initialRequestType);
@@ -168,15 +184,39 @@ ${message}`
 
                         <div>
                             <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Request Type</label>
-                            <select 
-                                value={requestType}
-                                onChange={(e) => setRequestType(e.target.value as any)}
-                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-bold text-slate-800 bg-slate-50 focus:border-blue-600 outline-none"
-                            >
-                                <option value="sales">Talk to Sales</option>
-                                <option value="demo">Book / Schedule a Demo</option>
-                                <option value="general">General Inquiry</option>
-                            </select>
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setRequestTypeOpen(!requestTypeOpen)}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 bg-slate-50 focus:border-blue-600 outline-none flex items-center justify-between cursor-pointer"
+                                >
+                                    <span>{requestTypeOptions.find(o => o.value === requestType)?.label || 'Select request type'}</span>
+                                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${requestTypeOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {requestTypeOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setRequestTypeOpen(false)} />
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1.5 overflow-hidden">
+                                            {requestTypeOptions.map((opt) => (
+                                                <div
+                                                    key={opt.value}
+                                                    onClick={() => {
+                                                        setRequestType(opt.value as any);
+                                                        setRequestTypeOpen(false);
+                                                    }}
+                                                    className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${
+                                                        requestType === opt.value
+                                                            ? 'bg-blue-600 text-white font-bold'
+                                                            : 'text-slate-700 hover:bg-slate-50'
+                                                    }`}
+                                                >
+                                                    {opt.label}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -218,17 +258,39 @@ ${message}`
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Team Size</label>
-                                <select 
-                                    value={teamSize}
-                                    onChange={(e) => setTeamSize(e.target.value)}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 bg-white focus:border-blue-600 outline-none"
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onClick={() => setTeamSizeOpen(!teamSizeOpen)}
+                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 bg-white focus:border-blue-600 outline-none flex items-center justify-between cursor-pointer"
                                 >
-                                    <option value="1-5">1-5 members</option>
-                                    <option value="6-15">6-15 members</option>
-                                    <option value="16-50">16-50 members</option>
-                                    <option value="51-200">51-200 members</option>
-                                    <option value="200+">200+ members</option>
-                                </select>
+                                    <span>{teamSizeOptions.find(o => o.value === teamSize)?.label || 'Select team size'}</span>
+                                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${teamSizeOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {teamSizeOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setTeamSizeOpen(false)} />
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1.5 overflow-hidden">
+                                            {teamSizeOptions.map((opt) => (
+                                                <div
+                                                    key={opt.value}
+                                                    onClick={() => {
+                                                        setTeamSize(opt.value);
+                                                        setTeamSizeOpen(false);
+                                                    }}
+                                                    className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${
+                                                        teamSize === opt.value
+                                                            ? 'bg-blue-600 text-white font-bold'
+                                                            : 'text-slate-700 hover:bg-slate-50'
+                                                    }`}
+                                                >
+                                                    {opt.label}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
                             </div>
                         </div>
 
