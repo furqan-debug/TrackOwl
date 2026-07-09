@@ -910,36 +910,36 @@ export function Landing() {
                             {/* Basic */}
                             <div className="p-8 rounded-[1.5rem] bg-white border border-slate-200 flex flex-col h-full">
                                 <div className="flex-1 mb-8">
-                                    <h3 className="text-2xl font-black text-slate-900 mb-3">Basic</h3>
+                                    <h3 className="text-2xl font-bold text-slate-900 mb-3">Basic</h3>
                                     <p className="text-base font-medium text-slate-500 leading-relaxed">For small teams getting started with time tracking.</p>
                                 </div>
                                 <div className="mb-6">
-                                    <span className="text-4xl font-black text-slate-900">$2.99</span>
+                                    <span className="text-4xl font-extrabold text-slate-900">$2.99</span>
                                     <span className="text-base font-bold text-slate-500"> /user</span>
                                 </div>
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="w-full py-4 rounded-lg bg-green-500 hover:bg-green-600 text-white text-lg font-bold transition-colors shadow-md mt-auto">
+                                    className="w-full py-4 rounded-lg bg-green-500 hover:bg-green-600 text-white text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
                                     Get started
                                 </button>
                             </div>
 
                             {/* Premium (Most Popular) */}
                             <div className="p-8 rounded-[1.5rem] bg-white border-2 border-blue-600 flex flex-col relative shadow-[0_10px_30px_rgba(37,99,235,0.15)] transform md:-translate-y-2 h-full mt-8 md:mt-0">
-                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-[#facc15] text-[#001b4d] text-sm font-black rounded-full tracking-wider shadow-sm border-2 border-white">
+                                <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-[#facc15] text-[#001b4d] text-sm font-bold rounded-full tracking-wider shadow-sm border-2 border-white">
                                     Most popular
                                 </div>
                                 <div className="flex-1 mb-8 pt-2">
-                                    <h3 className="text-2xl font-black text-slate-900 mb-3">Premium</h3>
+                                    <h3 className="text-2xl font-bold text-slate-900 mb-3">Premium</h3>
                                     <p className="text-base font-medium text-slate-500 leading-relaxed pr-4">Advanced analytics and operational reporting for scaling businesses.</p>
                                 </div>
                                 <div className="mb-6">
-                                    <span className="text-4xl font-black text-slate-900">$4.99</span>
+                                    <span className="text-4xl font-extrabold text-slate-900">$4.99</span>
                                     <span className="text-base font-bold text-slate-500"> /user</span>
                                 </div>
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="w-full py-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold transition-colors shadow-md mt-auto">
+                                    className="w-full py-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
                                     Start free trial
                                 </button>
                             </div>
@@ -947,15 +947,15 @@ export function Landing() {
                             {/* Enterprise */}
                             <div className="p-8 rounded-[1.5rem] bg-white border border-slate-200 flex flex-col h-full">
                                 <div className="flex-1 mb-8">
-                                    <h3 className="text-2xl font-black text-slate-900 mb-3">Enterprise</h3>
+                                    <h3 className="text-2xl font-bold text-slate-900 mb-3">Enterprise</h3>
                                     <p className="text-base font-medium text-slate-500 leading-relaxed">Custom infrastructure, enterprise onboarding, and large-scale workforce management solutions.</p>
                                 </div>
                                 <div className="mb-6 flex items-center h-[48px]">
-                                    <span className="text-3xl font-black text-slate-900">Custom</span>
+                                    <span className="text-3xl font-extrabold text-slate-900">Custom</span>
                                 </div>
                                 <button
                                     onClick={() => { setContactType('sales'); setIsContactOpen(true); }}
-                                    className="w-full py-4 rounded-lg bg-[#facc15] hover:bg-[#eab308] text-[#001b4d] text-lg font-bold transition-colors shadow-md mt-auto">
+                                    className="w-full py-4 rounded-lg bg-[#facc15] hover:bg-[#eab308] text-[#001b4d] text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
                                     Talk to sales
                                 </button>
                             </div>
@@ -1122,12 +1122,12 @@ export function Landing() {
                     <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
                         <button
                             onClick={() => navigate('/signup')}
-                            className="w-full sm:w-auto px-12 py-5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-lg font-black rounded-full shadow-[0_4px_20px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95">
+                            className="w-full sm:w-auto px-12 py-5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-lg font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] cursor-pointer transition-all hover:scale-105 active:scale-95">
                             Start free trial
                         </button>
                         <button
                             onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
-                            className="w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold rounded-full transition-all active:scale-95">
+                            className="w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold cursor-pointer rounded-full transition-all active:scale-95">
                             Schedule a demo
                         </button>
                     </div>
