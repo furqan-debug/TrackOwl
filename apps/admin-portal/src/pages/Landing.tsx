@@ -39,7 +39,7 @@ interface ContactModalProps {
     initialRequestType: 'sales' | 'demo' | 'general';
 }
 
-function ContactModal({ isOpen, onClose, initialRequestType }: ContactModalProps) {
+export function ContactModal({ isOpen, onClose, initialRequestType }: ContactModalProps) {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [company, setCompany] = useState('');
