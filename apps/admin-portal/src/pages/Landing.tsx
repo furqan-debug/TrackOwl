@@ -67,6 +67,11 @@ function ContactModal({ isOpen, onClose, initialRequestType }: ContactModalProps
             if (!web3FormsKey || web3FormsKey === "YOUR_KEY_HERE" || web3FormsKey.trim() === "") {
                 throw new Error("Web3Forms Access Key is not configured. Please add the VITE_WEB3FORMS_ACCESS_KEY environment variable in your Vercel settings to enable email notifications.");
             }
+
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!uuidRegex.test(web3FormsKey.trim())) {
+                throw new Error("The VITE_WEB3FORMS_ACCESS_KEY you entered in Vercel is not in the correct format. It must be a 36-character UUID (e.g., 12345678-abcd-1234-abcd-123456789abc). Please make sure you copied the Access Key sent to your email (furqan@digireps.co) and not a form name or other ID.");
+            }
             
             const response = await fetch("https://api.web3forms.com/submit", {
                 method: "POST",
