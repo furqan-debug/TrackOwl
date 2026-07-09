@@ -469,14 +469,14 @@ export function Landing() {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans tracking-[0.03em] text-slate-900 selection:bg-blue-500/20 selection:text-blue-900 overflow-x-hidden relative">
+        <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-blue-500/20 selection:text-blue-900 overflow-x-hidden relative">
 
             {/* Navigation */}
             <header className={twMerge(
                 "fixed top-0 left-0 right-0 z-[100] transition-all duration-500",
                 isScrolled
                     ? "bg-[#001338]/95 backdrop-blur-xl border-b border-white/10 py-2 sm:py-3 shadow-2xl"
-                    : "bg-[#001338] border-transparent py-3 sm:py-5"
+                    : "bg-transparent border-transparent py-3 sm:py-5"
             )}>
                 <nav className="mx-auto flex max-w-[1400px] h-14 sm:h-20 items-center justify-between px-4 sm:px-6 lg:px-8 relative">
                     <motion.div
@@ -580,7 +580,7 @@ export function Landing() {
                             >
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="w-full sm:w-auto px-8 py-3.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-base font-black rounded-full shadow-[0_4px_20px_rgba(250,204,21,0.4)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group"
+                                    className="w-full sm:w-auto px-8 py-3.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group"
                                  >
                                     Start free trial
                                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -612,10 +612,10 @@ export function Landing() {
                                 initial={{ opacity: 0, y: 40, rotateY: 10 }}
                                 animate={{ opacity: 1, y: 0, rotateY: 0 }}
                                 transition={{ duration: 0.8, delay: 0.4 }}
-                                className="relative rounded-[1.5rem] border-[6px] border-[#001b4d] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] bg-white overflow-hidden"
+                                className="relative rounded-[1.5rem] border-[6px] border-slate-800/80 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] bg-white overflow-hidden"
                             >
                                 {/* Browser-like Header */}
-                                <div className="h-10 bg-[#001b4d] flex items-center px-4 gap-2">
+                                <div className="h-10 bg-slate-800/80 flex items-center px-4 gap-2 border-b border-white/5">
                                     <div className="flex gap-1.5">
                                         <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
                                         <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
