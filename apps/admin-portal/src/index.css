@@ -544,7 +544,8 @@
     transform: translateZ(20px) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
   }
 
-  /* Anti-blur rendering fixes for 3D transformed images */
+  /* Anti-blur rendering and high-quality scaling fixes for all images (especially transformed/scaled ones like avatars) */
+  img,
   .mockup-3d-card img, 
   .mockup-desktop-float img {
     backface-visibility: hidden;
