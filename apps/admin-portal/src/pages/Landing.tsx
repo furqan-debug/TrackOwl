@@ -534,7 +534,7 @@ export function Landing() {
                             <motion.div
                                 initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 border border-blue-400/30 text-sm font-bold text-blue-300 mb-6"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#facc15]/10 border border-[#facc15]/20 text-sm font-bold text-[#facc15] mb-6"
                             >
                                 #1 workforce analytics platform
                             </motion.div>
@@ -568,7 +568,7 @@ export function Landing() {
                                 transition={{ delay: 0.2 }}
                                 className="text-base sm:text-lg text-slate-300/90 leading-relaxed mb-8 max-w-lg font-normal tracking-wide"
                             >
-                                TrackOwl™ helps businesses monitor productivity, track work hours, and gain real-time workforce visibility — without micromanagement.<br /><br />
+                                TrackOwl™ helps businesses monitor productivity, track work hours, and gain real-time workforce visibility, without micromanagement.<br /><br />
                                 Built for remote, hybrid, and distributed teams that need operational clarity at scale.
                             </motion.p>
 
