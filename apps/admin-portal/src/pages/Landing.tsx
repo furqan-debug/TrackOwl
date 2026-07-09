@@ -543,7 +543,7 @@ export function Landing() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="text-4xl sm:text-5xl lg:text-[64px] font-black tracking-normal leading-[1.05] text-white mb-6"
+                                className="text-4xl sm:text-5xl lg:text-[64px] font-extrabold tracking-tight leading-[1.05] text-white mb-6"
                             >
                                 Time tracking<br />built for<br />
                                 <span className="text-[#facc15] block mt-2">
@@ -655,7 +655,7 @@ export function Landing() {
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
                         <div className="text-center max-w-3xl mx-auto mb-16">
                             <h2 className="text-[#facc15] text-base font-black mb-3">Powerful features</h2>
-                            <h3 className="text-3xl md:text-5xl font-black text-[#001b4d] mb-4">Powerful workforce intelligence</h3>
+                            <h3 className="text-3xl md:text-5xl font-extrabold tracking-tight text-[#001b4d] mb-4">Powerful workforce intelligence</h3>
                             <p className="text-lg font-medium text-slate-500">Everything you need to track, monitor, and optimize your team performance.</p>
                         </div>
 
@@ -688,7 +688,7 @@ export function Landing() {
                         </div>
 
                         <div>
-                            <h2 className="text-3xl md:text-5xl font-black text-[#001b4d] mb-6 leading-tight">One platform.<br />Complete operational visibility.</h2>
+                            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-[#001b4d] mb-6 leading-tight">One platform.<br />Complete operational visibility.</h2>
                             <p className="text-lg font-medium text-slate-500 mb-8 leading-relaxed max-w-md">
                                 TrackOwl™ centralizes time tracking, team monitoring, analytics, screenshots, attendance, app usage, and reporting into a unified operational dashboard.
                             </p>
@@ -718,7 +718,7 @@ export function Landing() {
                 {/* INDUSTRIES SECTION */}
                 <section id="industries" className="py-16 bg-slate-50">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center">
-                        <h2 className="text-3xl font-black text-[#001b4d] mb-10">Built for modern businesses</h2>
+                        <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d] mb-10">Built for modern businesses</h2>
                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-12 max-w-5xl mx-auto justify-items-center">
                             {industries.map((ind, i) => {
                                 const Icon = ind.icon;
@@ -737,7 +737,7 @@ export function Landing() {
                 <section id="how-it-works" className="py-24 bg-white">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl font-black text-[#001b4d]">Simple setup. Powerful insights.</h2>
+                            <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d]">Simple setup. Powerful insights.</h2>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
@@ -832,7 +832,7 @@ export function Landing() {
                 <section className="py-16 bg-slate-50">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
                         <div className="text-center mb-12">
-                            <h2 className="text-3xl font-black text-[#001b4d]">What teams are saying</h2>
+                            <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d]">What teams are saying</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {testimonials.map((t, i) => (
@@ -863,7 +863,7 @@ export function Landing() {
                                     <Shield className="w-64 h-64 text-blue-400" strokeWidth={1} />
                                 </div>
 
-                                <h2 className="text-3xl font-black mb-4 relative z-10">Enterprise-grade security & privacy</h2>
+                                <h2 className="text-3xl font-extrabold tracking-tight mb-4 relative z-10">Enterprise-grade security & privacy</h2>
                                 <p className="text-lg text-slate-300 mb-8 max-w-md relative z-10">
                                     TrackOwl™ is built with security, transparency, and ethical monitoring at its core.
                                 </p>
@@ -904,7 +904,7 @@ export function Landing() {
                 <section id="pricing" className="py-16 bg-slate-50">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
                         <div className="text-center mb-12">
-                            <h2 className="text-3xl font-black text-[#001b4d]">Flexible plans for every team</h2>
+                            <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d]">Flexible plans for every team</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
 
@@ -1115,7 +1115,7 @@ export function Landing() {
             <section className="bg-[#001338] py-16 md:py-24 relative z-10 border-b border-white/10">
                 <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center flex flex-col items-center">
                     <img src={HeaderLogo} className="h-16 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] mb-6" alt="TrackOwl" />
-                    <h2 className="text-4xl md:text-6xl font-black text-white mb-6">Gain complete workforce visibility</h2>
+                    <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6">Gain complete workforce visibility</h2>
                     <p className="text-2xl text-slate-300 font-medium mb-10 max-w-3xl leading-relaxed">
                         Track productivity, improve accountability, and operate with confidence using TrackOwl™.
                     </p>
