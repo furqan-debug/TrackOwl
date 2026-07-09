@@ -39,7 +39,7 @@ export function Terms() {
                     </div>
 
                     <div className="prose prose-lg text-slate-600 font-medium leading-relaxed space-y-6">
-                        <p>These Terms of Service (“Terms”) govern access to and use of TrackOwl, including all associated software, applications, dashboards, APIs, websites, and services provided by Digify Global LLC d/b/a DigiReps™ (“TrackOwl,” “we,” “our,” or “us”).</p>
+                        <p>These Terms of Service (“Terms”) govern access to and use of TrackOwl, including all associated software, applications, dashboards, APIs, websites, and services provided by Digify Global LLC d/b/a DigiReps® (“TrackOwl,” “we,” “our,” or “us”).</p>
                         <p>By accessing or using TrackOwl, you agree to be bound by these Terms.</p>
                         <p>If you do not agree to these Terms, you may not use the platform.</p>
                         
@@ -128,7 +128,7 @@ export function Terms() {
                         <hr className="border-slate-200 my-8" />
 
                         <h2 className="text-2xl font-bold text-[#001b4d] mt-8 mb-4">7. Intellectual Property</h2>
-                        <p>All software, branding, interfaces, content, infrastructure, designs, codebases, analytics systems, and proprietary technologies associated with TrackOwl remain the exclusive property of DigiReps™ / Digify Global LLC.</p>
+                        <p>All software, branding, interfaces, content, infrastructure, designs, codebases, analytics systems, and proprietary technologies associated with TrackOwl remain the exclusive property of DigiReps® / Digify Global LLC.</p>
                         <p>Using the platform does not grant ownership rights to customers beyond the limited license necessary to access the services.</p>
                         <p>Users may not copy, reproduce, distribute, modify, or commercially exploit TrackOwl intellectual property without written authorization.</p>
 
@@ -167,7 +167,7 @@ export function Terms() {
                         <hr className="border-slate-200 my-8" />
 
                         <h2 className="text-2xl font-bold text-[#001b4d] mt-8 mb-4">10. Limitation of Liability</h2>
-                        <p>To the maximum extent permitted by law, TrackOwl and DigiReps™ shall not be liable for:</p>
+                        <p>To the maximum extent permitted by law, TrackOwl and DigiReps® shall not be liable for:</p>
                         <ul className="list-disc pl-6 space-y-2">
                             <li>Indirect or consequential damages</li>
                             <li>Loss of profits or revenue</li>
@@ -210,7 +210,7 @@ export function Terms() {
                         <p>For legal or service-related inquiries:</p>
                         <p className="font-bold">TrackOwl Legal Team</p>
                         <p>📧 <a href="mailto:legal@trackowl.io" className="text-blue-600 hover:underline">legal@trackowl.io</a></p>
-                        <p className="text-sm text-slate-400 mt-4">Developed by DigiReps™, a brand of Digify Global LLC</p>
+                        <p className="text-sm text-slate-400 mt-4">Developed by DigiReps®, a brand of Digify Global LLC</p>
                     </div>
                 </main>
             </div>

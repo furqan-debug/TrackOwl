@@ -69,7 +69,7 @@ export function Footer() {
 
                 <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500">
                     <img src={HeaderLogo} className="h-6 object-contain opacity-50 hover:opacity-100 transition-opacity cursor-pointer" alt="TrackOwl" onClick={() => { navigate('/'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />
-                    <p>TrackOwl™ , a product by DigiReps™</p>
+                    <p>TrackOwl™ , a product by DigiReps®</p>
                 </div>
             </div>
         </footer>
