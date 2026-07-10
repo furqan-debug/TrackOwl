@@ -65,13 +65,27 @@ static IS_LISTENER_SPAWNED: std::sync::atomic::AtomicBool = std::sync::atomic::A
 pub fn check_macos_accessibility() -> bool {
     #[link(name = "ApplicationServices", kind = "framework")]
     extern "C" {
-        fn AXIsProcessTrusted() -> bool;
+        fn AXIsProcessTrustedWithOptions(options: core_foundation::dictionary::CFDictionaryRef) -> bool;
+        static kAXTrustedCheckOptionPrompt: core_foundation::string::CFStringRef;
     }
-    let is_trusted = unsafe { AXIsProcessTrusted() };
+    
+    let is_trusted = unsafe {
+        use core_foundation::dictionary::CFDictionary;
+        use core_foundation::string::CFString;
+        use core_foundation::boolean::CFBoolean;
+        use core_foundation::base::TCFType;
+
+        let key = CFString::wrap_under_get_rule(kAXTrustedCheckOptionPrompt);
+        let val = CFBoolean::true_value();
+        
+        let dict = CFDictionary::from_CFType_pairs(&[(key.as_CFType(), val.as_CFType())]);
+        
+        AXIsProcessTrustedWithOptions(dict.as_concrete_TypeRef())
+    };
     
     println!(
         "[TRACKOWL_ACCESSIBILITY] trusted={} pid={} exe={:?}",
-        unsafe { AXIsProcessTrusted() },
+        is_trusted,
         std::process::id(),
         std::env::current_exe()
     );
