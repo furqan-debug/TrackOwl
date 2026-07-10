@@ -162,7 +162,7 @@ export function SecurityPolicy() {
                         <h2 className="text-2xl font-bold text-[#001b4d] mt-8 mb-4">9. Contact Security Team</h2>
                         <p>For security concerns, vulnerability reports, or incident-related communication:</p>
                         <p className="font-bold">TrackOwl Security Team</p>
-                        <p>📧 <a href="mailto:security@trackowl.io" className="text-blue-600 hover:underline">security@trackowl.io</a></p>
+                        <p>📧 <a href="mailto:contact@trackowl.io" className="text-blue-600 hover:underline">contact@trackowl.io</a></p>
                         <p className="text-sm text-slate-400 mt-4">Developed by DigiReps®, a brand of Digify Global LLC</p>
                     </div>
                 </main>

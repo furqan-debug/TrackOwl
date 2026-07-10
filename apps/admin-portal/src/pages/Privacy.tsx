@@ -218,7 +218,7 @@ export function Privacy() {
                             <li>Request export of your data</li>
                             <li>Withdraw consent where applicable</li>
                         </ul>
-                        <p>Requests may be submitted to: <a href="mailto:privacy@trackowl.io" className="text-blue-600 hover:underline">privacy@trackowl.io</a></p>
+                        <p>Requests may be submitted to: <a href="mailto:contact@trackowl.io" className="text-blue-600 hover:underline">contact@trackowl.io</a></p>
                         <p>We may require identity verification before processing certain requests.</p>
 
                         <hr className="border-slate-200 my-8" />
@@ -257,7 +257,7 @@ export function Privacy() {
                         <h2 className="text-2xl font-bold text-[#001b4d] mt-8 mb-4">13. Contact Information</h2>
                         <p>For privacy-related questions, concerns, or requests, please contact:</p>
                         <p className="font-bold">TrackOwl Privacy Team</p>
-                        <p>📧 <a href="mailto:privacy@trackowl.io" className="text-blue-600 hover:underline">privacy@trackowl.io</a></p>
+                        <p>📧 <a href="mailto:contact@trackowl.io" className="text-blue-600 hover:underline">contact@trackowl.io</a></p>
                         <p className="text-sm text-slate-400 mt-4">Developed by DigiReps®, a brand of Digify Global LLC</p>
                     </div>
                 </main>
