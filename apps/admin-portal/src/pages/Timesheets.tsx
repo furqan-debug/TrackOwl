@@ -303,11 +303,15 @@ export function Timesheets() {
                     const score = sampleCount > 0 ? Math.round(activitySum / sampleCount) : 0;
 
                     const nowMs = new Date().getTime();
+                    const isTrulyActive = !s.ended_at && (nowMs - startedAtMs < 14 * 60 * 60 * 1000);
+
                     let effectiveEndMs = nowMs;
                     if (s.ended_at) {
                         effectiveEndMs = parseDbTimestamp(s.ended_at) || new Date(s.ended_at).getTime();
+                    } else if (isTrulyActive) {
+                        effectiveEndMs = nowMs;
                     } else if (sampleCount > 0) {
-                        effectiveEndMs = lastSampleTime;
+                        effectiveEndMs = Math.max(lastSampleTime, startedAtMs);
                     } else {
                         effectiveEndMs = nowMs;
                     }
@@ -326,8 +330,6 @@ export function Timesheets() {
 
                     let durationMins = (overlapEndMs - overlapStartMs) / 60000;
                     if (durationMins < 0) durationMins = 0;
-                    
-                    const isTrulyActive = !s.ended_at && (nowMs - lastSampleTime < 15 * 60000);
 
                     dailyMap[key].sessions.push({
                         ...s,
@@ -339,7 +341,7 @@ export function Timesheets() {
                         user_name: member?.full_name || 'System User',
                         display_timezone: tz,
                         is_active: isTrulyActive,
-                        effective_end: new Date(effectiveEndMs).toISOString()
+                        effective_end: isTrulyActive ? undefined : new Date(effectiveEndMs).toISOString()
                     });
                 }
             });
