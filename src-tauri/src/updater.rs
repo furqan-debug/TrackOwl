@@ -21,8 +21,8 @@ pub struct UpdateStatus {
 /// Emits "update-available" event to the frontend if a newer version exists.
 /// Call this once on startup (in a background thread after a short delay).
 pub async fn check_for_updates(app: AppHandle) {
-    // Wait 15s after launch so we don't slow down startup
-    tokio::time::sleep(std::time::Duration::from_secs(15)).await;
+    // Wait 2s after launch so we don't slow down startup
+    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
 
     let updater: tauri_plugin_updater::Updater = match app.updater() {
         Ok(u) => u,
