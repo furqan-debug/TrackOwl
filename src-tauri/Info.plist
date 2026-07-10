@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSScreenCaptureUsageDescription</key>
+    <string>TrackOwl requires screen recording permission to take periodic screenshots for time tracking purposes.</string>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>TrackOwl requires Apple Events to track which applications are active.</string>
+</dict>
+</plist>
