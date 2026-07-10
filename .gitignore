@@ -3,6 +3,7 @@
 *.log
 *.txt
 *.json
+!robots.txt
 !package.json
 !package-lock.json
 !tsconfig*.json
