@@ -212,7 +212,7 @@ export function Terms() {
                         <h2 className="text-2xl font-bold text-[#001b4d] mt-8 mb-4">13. Contact Information</h2>
                         <p>For legal or service-related inquiries:</p>
                         <p className="font-bold">TrackOwl Legal Team</p>
-                        <p>📧 <a href="mailto:legal@trackowl.io" className="text-blue-600 hover:underline">legal@trackowl.io</a></p>
+                        <p>📧 <a href="mailto:contact@trackowl.io" className="text-blue-600 hover:underline">contact@trackowl.io</a></p>
                         <p className="text-sm text-slate-400 mt-4">Developed by DigiReps®, a brand of Digify Global LLC</p>
                     </div>
                 </main>
