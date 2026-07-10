@@ -289,22 +289,42 @@ export function Timesheets() {
                     const stats = sessionStats.find((st: any) => st.session_id === s.id);
                     const sampleCount = stats ? parseInt(stats.sample_count) : 0;
                     const activitySum = stats ? parseInt(stats.activity_sum) : 0;
-                    const lastSampleTime = stats && stats.last_sample_at ? new Date(stats.last_sample_at).getTime() : new Date(s.started_at).getTime();
                     const offlineMins = stats ? parseInt(stats.offline_count) : 0;
+
+                    const parseDbTimestamp = (ts: string | null | undefined) => {
+                        if (!ts) return null;
+                        const normalized = (ts.endsWith('Z') || ts.includes('+') || /-\d{2}:\d{2}$/.test(ts)) ? ts : ts + 'Z';
+                        return new Date(normalized).getTime();
+                    };
+
+                    const startedAtMs = parseDbTimestamp(s.started_at) || new Date(s.started_at).getTime();
+                    const lastSampleTime = stats && stats.last_sample_at ? (parseDbTimestamp(stats.last_sample_at) || startedAtMs) : startedAtMs;
 
                     const score = sampleCount > 0 ? Math.round(activitySum / sampleCount) : 0;
 
                     const nowMs = new Date().getTime();
                     let effectiveEndMs = nowMs;
                     if (s.ended_at) {
-                        effectiveEndMs = new Date(s.ended_at).getTime();
+                        effectiveEndMs = parseDbTimestamp(s.ended_at) || new Date(s.ended_at).getTime();
                     } else if (sampleCount > 0) {
                         effectiveEndMs = lastSampleTime;
                     } else {
                         effectiveEndMs = nowMs;
                     }
 
-                    let durationMins = (effectiveEndMs - new Date(s.started_at).getTime()) / 60000;
+                    // Convert to target timezone dates to measure local day bounds overlap
+                    const startLocalStr = new Date(startedAtMs).toLocaleString('en-US', { timeZone: tz });
+                    const endLocalStr = new Date(effectiveEndMs).toLocaleString('en-US', { timeZone: tz });
+                    const startLocal = new Date(startLocalStr);
+                    const endLocal = new Date(endLocalStr);
+
+                    const dayStartLocal = new Date(`${key}T00:00:00`);
+                    const dayEndLocal = new Date(`${key}T23:59:59.999`);
+
+                    const overlapStartMs = Math.max(startLocal.getTime(), dayStartLocal.getTime());
+                    const overlapEndMs = Math.min(endLocal.getTime(), dayEndLocal.getTime());
+
+                    let durationMins = (overlapEndMs - overlapStartMs) / 60000;
                     if (durationMins < 0) durationMins = 0;
                     
                     const isTrulyActive = !s.ended_at && (nowMs - lastSampleTime < 15 * 60000);
