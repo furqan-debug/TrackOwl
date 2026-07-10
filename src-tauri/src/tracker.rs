@@ -254,7 +254,10 @@ pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
 /// Returns (app_name, window_title) of the currently focused window.
 pub fn get_active_window() -> (String, String) {
     if let Ok(active_window) = active_win_pos_rs::get_active_window() {
-        (active_window.app_name, active_window.title)
+        (
+            active_window.app_name.replace('\0', ""),
+            active_window.title.replace('\0', "")
+        )
     } else {
         ("Unknown".to_string(), "Unknown".to_string())
     }
