@@ -41,7 +41,7 @@ export function Footer() {
                         <h4 className="text-white font-bold mb-6 tracking-wide">Company</h4>
                         <ul className="space-y-4 text-sm text-slate-400">
                             <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('/about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-white transition-colors">About us</a></li>
-                            <li><a href="mailto:hello@trackowl.io" className="hover:text-white transition-colors">Contact</a></li>
+                            <li><a href="mailto:contact@trackowl.io" className="hover:text-white transition-colors">Contact</a></li>
                         </ul>
                     </div>
 
@@ -58,8 +58,8 @@ export function Footer() {
                         <h4 className="text-white font-bold mb-6 tracking-wide">Contact</h4>
                         <ul className="space-y-4 text-sm text-slate-400">
                             <li>
-                                <a href="mailto:hello@trackowl.io" className="hover:text-[#facc15] font-medium transition-colors flex items-center gap-2">
-                                    hello@trackowl.io
+                                <a href="mailto:contact@trackowl.io" className="hover:text-[#facc15] font-medium transition-colors flex items-center gap-2">
+                                    contact@trackowl.io
                                 </a>
                             </li>
                         </ul>

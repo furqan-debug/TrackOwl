@@ -125,7 +125,7 @@ export function ForgotPassword() {
                 <div className="text-center pt-8 border-t border-slate-100">
                     <p className="text-sm font-semibold text-slate-500">
                         Need help?{' '}
-                        <a href="mailto:hello@trackowl.io" className="text-[#F7BC00] hover:text-[#e5af00] font-bold transition-colors">
+                        <a href="mailto:contact@trackowl.io" className="text-[#F7BC00] hover:text-[#e5af00] font-bold transition-colors">
                             Contact support
                         </a>
                     </p>
