@@ -1787,6 +1787,11 @@ export default function App() {
     const unlistenAvailable = trackerAPI.onUpdateAvailable((info: any) => {
       if (info.available && info.version) {
         setUpdateVersion(info.version);
+        setUpdateInstalling(true);
+        trackerAPI.installUpdate().catch((e) => {
+          console.error('Auto update failed:', e);
+          setUpdateInstalling(false);
+        });
       }
     });
 
@@ -1828,33 +1833,72 @@ export default function App() {
       {/* Auto-update banner */}
       {updateVersion && (
         <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
-          background: 'var(--primary-brand)', color: '#fff', fontSize: '11px',
-          padding: '5px 12px', display: 'flex',
-          alignItems: 'center', justifyContent: 'space-between',
+          position: 'fixed', inset: 0, zIndex: 99999,
+          background: '#001338', display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', padding: '24px',
+          textAlign: 'center', userSelect: 'none'
         }}>
-          <span>⬆ v{updateVersion} available</span>
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <button
-              disabled={updateInstalling}
-              onClick={async () => {
-                setUpdateInstalling(true);
-                try {
-                  await trackerAPI.installUpdate();
-                } catch (e) {
-                  console.error('Update failed:', e);
-                  setUpdateInstalling(false);
-                  alert('Update failed to install. Please try again later.');
-                }
-              }}
-              style={{ background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '4px', color: '#fff', fontSize: '11px', padding: '2px 7px', cursor: 'pointer' }}
-            >
-              {updateInstalling ? `⏳ ${updateProgress}%` : 'Install & Restart'}
-            </button>
-            <button
-              onClick={() => setUpdateVersion(null)}
-              style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.7)', fontSize: '14px', cursor: 'pointer', padding: '0 2px' }}
-            >×</button>
+          <div style={{ maxWidth: '400px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '32px' }}>
+            <img 
+              src="/header-white.svg" 
+              style={{ height: '64px', objectFit: 'contain', filter: 'drop-shadow(0 0 20px rgba(250, 204, 21, 0.6))' }}
+              className="animate-pulse"
+              alt="TrackOwl" 
+            />
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#fff', letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', margin: 0 }}>
+                <RefreshCcw className="animate-spin" style={{ width: '28px', height: '28px', color: '#facc15' }} />
+                Updating TrackOwl
+              </h2>
+              <p style={{ fontSize: '14px', fontWeight: '500', color: '#cbd5e1', margin: 0 }}>
+                Installing Version {updateVersion} — Please do not close the application.
+              </p>
+            </div>
+
+            {!updateInstalling ? (
+              <div style={{ width: '100%', padding: '16px', background: 'rgba(127,29,29,0.4)', border: '1px solid rgba(239,68,68,0.2)', color: '#fca5a5', fontSize: '14px', borderRadius: '12px', fontWeight: '500' }}>
+                <p style={{ fontWeight: '700', margin: '0 0 4px 0' }}>Update Failed</p>
+                <button
+                  onClick={async () => {
+                    setUpdateInstalling(true);
+                    try {
+                      await trackerAPI.installUpdate();
+                    } catch (e) {
+                      console.error('Update retry failed:', e);
+                      setUpdateInstalling(false);
+                    }
+                  }}
+                  style={{ marginTop: '16px', padding: '10px 24px', background: '#dc2626', color: '#fff', border: 'none', fontSize: '12px', fontWeight: '700', borderRadius: '8px', cursor: 'pointer' }}
+                >
+                  Retry Update
+                </button>
+              </div>
+            ) : (
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '12px', fontWeight: '700', color: '#94a3b8', padding: '0 4px' }}>
+                  <span>{updateProgress === 100 ? 'Installing...' : 'Downloading assets...'}</span>
+                  <span style={{ color: '#facc15', fontFamily: 'monospace' }}>{updateProgress}%</span>
+                </div>
+                
+                <div style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.05)', height: '12px', borderRadius: '9999px', overflow: 'hidden', padding: '2px' }}>
+                  <div 
+                    style={{ 
+                      height: '100%', borderRadius: '9999px', transition: 'all 300ms ease',
+                      width: `${updateProgress}%`,
+                      background: 'linear-gradient(90deg, #facc15 0%, #eab308 100%)',
+                      boxShadow: '0 0 10px rgba(250, 204, 21, 0.4)'
+                    }}
+                  />
+                </div>
+
+                {updateProgress === 100 && (
+                  <p className="animate-bounce" style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '600', marginTop: '16px', margin: 0 }}>
+                    Finalizing installation and restarting...
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
