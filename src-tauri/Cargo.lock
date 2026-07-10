@@ -1061,6 +1061,7 @@ dependencies = [
  "active-win-pos-rs",
  "base64 0.22.1",
  "chrono",
+ "core-foundation 0.9.4",
  "image 0.24.9",
  "rdev",
  "rusqlite",

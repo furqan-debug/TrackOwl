@@ -1,7 +1,7 @@
 {
   "name": "trackowl",
   "private": true,
-  "version": "2.0.37",
+  "version": "2.0.38",
   "type": "module",
   "description": "TrackOwl Time Tracker — Desktop App",
   "author": {
