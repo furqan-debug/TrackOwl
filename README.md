@@ -164,6 +164,9 @@ npm run dev
 
 ## Security & Hardening
 
+> [!WARNING]
+> **Secret Rotation Warning:** If you are migrating a repository where keys or access tokens were previously hardcoded in files, those values still exist in the Git commit history. You MUST rotate all previously exposed keys (such as Supabase Anon/Service keys and Support Access Secrets) immediately to ensure database security.
+
 The repository undergoes regular audits and security hardening:
 
 * **NPM Package Overrides**: Nested dependencies are strictly locked in `apps/admin-portal/package.json` to prevent security issues:

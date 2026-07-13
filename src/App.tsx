@@ -14,8 +14,12 @@ import { UpdaterOverlay } from './components/UpdaterOverlay';
 
 import './App.css';
 
-const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || 'https://lgmggbnaoyoapxqsfgzv.supabase.co') as string;
-const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnbWdnYm5hb3lvYXB4cXNmZ3p2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NTMxNDIsImV4cCI6MjA4ODEyOTE0Mn0.GkzsADYd-kpJYTgY9EZGwgy5kvN6nyYmfVoLUHRJQI4') as string;
+const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || '') as string;
+const SUPABASE_ANON_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || '') as string;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.warn('⚠️ Supabase URL or Anon Key is missing from environment variables.');
+}
 
 
 let _supabase: any = null;
@@ -149,21 +153,19 @@ const TOKEN_KEY = 'digireps_token';
 const USER_KEY = 'digireps_user';
 const CONSENT_KEY = 'digireps_consent_v1';
 
-function loadSession(): { token: string; user: User } | null {
+function loadSession(): { token: string } | null {
   try {
     const token = localStorage.getItem(TOKEN_KEY);
-    const user = JSON.parse(localStorage.getItem(USER_KEY) || 'null');
-    if (token && user) return { token, user };
+    if (token) return { token };
   } catch { }
   return null;
 }
-function saveSession(token: string, user: User) {
+function saveSession(token: string) {
   localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 function clearSession() {
   localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(USER_KEY); // Clean up legacy key
 }
 function hasConsented(): boolean {
   return localStorage.getItem(CONSENT_KEY) === 'true';
@@ -281,11 +283,12 @@ function AppFooter({ lastSyncTime, isSyncing, onSync, isOnline }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Settings
 // ─────────────────────────────────────────────────────────────────────────────
-function SettingsScreen({ user, onSave, onBack, onLogout }: {
+function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
   user: User;
   onSave: (updated: Partial<User>) => Promise<void>;
   onBack: () => void;
   onLogout: () => void;
+  onDeleteAccount: () => Promise<void>;
 }) {
   const [fullName, setFullName] = useState(user.full_name);
   const [phone, setPhone] = useState(user.phone || '');
@@ -297,7 +300,21 @@ function SettingsScreen({ user, onSave, onBack, onLogout }: {
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [orgName, setOrgName] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleDeleteAccount() {
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      await onDeleteAccount();
+    } catch (err: any) {
+      setDeleteError(err.message || 'Failed to delete account. Please try again.');
+      setDeleteLoading(false);
+    }
+  }
 
   useEffect(() => {
     // Sync to Rust on mount
@@ -505,9 +522,53 @@ function SettingsScreen({ user, onSave, onBack, onLogout }: {
               <LogOut size={16} />
               <span>Log Out</span>
             </button>
+            <button
+              onClick={() => { setShowDeleteConfirm(true); setDeleteError(null); }}
+              className="btn-delete-account"
+              style={{ marginTop: '0.5rem', background: 'transparent', border: '1px solid var(--error, #ef4444)', color: 'var(--error, #ef4444)', borderRadius: 8, padding: '0.5rem 1rem', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}
+            >
+              <Trash2 size={14} />
+              <span>Delete My Account</span>
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: 'var(--card-bg)', borderRadius: 16, padding: '1.75rem', maxWidth: 360, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', border: '1px solid var(--border-light)' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
+              <div style={{ background: 'rgba(239,68,68,0.1)', borderRadius: '50%', width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                <Trash2 size={22} style={{ color: '#ef4444' }} />
+              </div>
+              <h3 style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Delete Account?</h3>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+                This will permanently delete your account and all associated tracked time, screenshots, and activity data. <strong>This cannot be undone.</strong>
+              </p>
+            </div>
+            {deleteError && (
+              <p style={{ color: '#ef4444', fontSize: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>{deleteError}</p>
+            )}
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleteLoading}
+                style={{ flex: 1, padding: '0.625rem', borderRadius: 8, border: '1px solid var(--border-light)', background: 'transparent', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading}
+                style={{ flex: 1, padding: '0.625rem', borderRadius: 8, border: 'none', background: '#ef4444', color: '#fff', fontWeight: 700, fontSize: '0.875rem', cursor: deleteLoading ? 'not-allowed' : 'pointer', opacity: deleteLoading ? 0.7 : 1 }}
+              >
+                {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1026,7 +1087,7 @@ export default function App() {
           plan_type: member.organizations?.plan_type || 'Basic',
           organization_settings: member.organizations?.settings || {}
         };
-        console.log('USER LOADED (Session):', userObj);
+        console.log('USER LOADED (Session)');
         setUser(userObj);
         const { data: projs } = await sb.from('projects')
           .select('*, project_members!inner(member_id)')
@@ -1101,13 +1162,13 @@ export default function App() {
         getSupabase().then(async (sb: any) => {
           const { data: { session } } = await sb.auth.getSession();
           if (session?.access_token) {
-            trackerAPI.setAuthToken(session.access_token);
+            trackerAPI.setAuthToken(session.access_token, SUPABASE_URL, SUPABASE_ANON_KEY);
             return;
           }
           const refreshed = await sb.auth.refreshSession();
           const refreshedToken = refreshed?.data?.session?.access_token;
           if (refreshedToken) {
-            trackerAPI.setAuthToken(refreshedToken);
+            trackerAPI.setAuthToken(refreshedToken, SUPABASE_URL, SUPABASE_ANON_KEY);
           }
         });
       }
@@ -1117,13 +1178,13 @@ export default function App() {
       const pushLatestToken = async () => {
         const { data: { session } } = await sb.auth.getSession();
         if (session?.access_token) {
-          trackerAPI.setAuthToken(session.access_token);
+          trackerAPI.setAuthToken(session.access_token, SUPABASE_URL, SUPABASE_ANON_KEY);
           return;
         }
         const refreshed = await sb.auth.refreshSession();
         const refreshedToken = refreshed?.data?.session?.access_token;
         if (refreshedToken) {
-          trackerAPI.setAuthToken(refreshedToken);
+          trackerAPI.setAuthToken(refreshedToken, SUPABASE_URL, SUPABASE_ANON_KEY);
         }
       };
 
@@ -1132,7 +1193,7 @@ export default function App() {
       const { data: { subscription } } = sb.auth.onAuthStateChange((_event: string, nextSession: any) => {
         const token = nextSession?.access_token;
         if (token) {
-          trackerAPI.setAuthToken(token);
+          trackerAPI.setAuthToken(token, SUPABASE_URL, SUPABASE_ANON_KEY);
         }
       });
 
@@ -1402,7 +1463,7 @@ export default function App() {
           { event: 'UPDATE', schema: 'public', table: 'members', filter: `id=eq.${user.id}` },
           (payload: any) => {
             const updated = payload.new;
-            console.log('Member profile updated (real-time):', updated);
+            console.log('Member profile updated (real-time)');
 
             // Update local state
             setUser(prev => prev ? { ...prev, ...updated } : null);
@@ -1474,11 +1535,7 @@ export default function App() {
         return authError?.message || 'Login failed';
       }
 
-      console.log('[Login] Session established:', {
-        id: authData.user.id,
-        email: authData.user.email,
-        aud: authData.user.aud
-      });
+      console.log('[Login] Session established');
 
       console.log('[Login] Fetching member profile for user:', authData.user.id);
       let { data: member, error: memberError } = await sb
@@ -1486,7 +1543,7 @@ export default function App() {
 
       // Fallback: lookup by email if auth_user_id is not yet linked
       if ((memberError || !member) && authData.user.email) {
-        console.log('[Login] Profile not found by ID, attempting email fallback:', authData.user.email);
+        console.log('[Login] Profile not found by ID, attempting fallback');
         const { data: byEmail } = await sb.from('members').select('*, organizations(plan_type, settings)').eq('email', authData.user.email).single();
         if (byEmail && !byEmail.auth_user_id) {
           console.log('[Login] Found unlinked profile by email, linking now...');
@@ -1534,9 +1591,9 @@ export default function App() {
         .select('*, project_members!inner(member_id)')
         .eq('project_members.member_id', userObj.id);
       const token = authData.session.access_token;
-      trackerAPI.setAuthToken(token);
+      trackerAPI.setAuthToken(token, SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      if (rememberMe) saveSession(token, userObj);
+      if (rememberMe) saveSession(token);
       setUser(userObj);
       const projectList = projectsData || [];
       setProjects(projectList);
@@ -1593,7 +1650,7 @@ export default function App() {
       const sb = await getSupabase();
 
       if (user?.tracking_enabled === false) {
-        console.log('TRACKING BLOCKED: tracking_enabled is false', user);
+        console.log('TRACKING BLOCKED: tracking_enabled is false');
         setTrackingError('Tracking has been disabled for your account by an administrator.');
         setIsTracking(false);
         setActiveProject(null);
@@ -1733,6 +1790,37 @@ export default function App() {
       realtimeRef.current = null;
       getSupabase().then((sb: any) => sb.removeChannel(ch));
     }
+    setScreen('login');
+  }
+
+  async function handleDeleteAccount() {
+    const sb = await getSupabase();
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error('No active session. Please log in again.');
+
+    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const response = await fetch(`${apiBase}/api/auth/delete-account`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || 'Failed to delete account');
+
+    // Clear all local state and log out
+    await handleStop();
+    clearSession();
+    setUser(null);
+    setProjects([]);
+    setTodos([]);
+    if (realtimeRef.current) {
+      const ch = realtimeRef.current;
+      realtimeRef.current = null;
+      sb.removeChannel(ch);
+    }
+    await sb.auth.signOut();
     setScreen('login');
   }
 
@@ -1941,7 +2029,7 @@ export default function App() {
         )}
         {screen === 'settings' && user && (
           <motion.div key="settings" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
-            <SettingsScreen user={user} onSave={handleUpdateProfile} onBack={() => setScreen('projects')} onLogout={handleLogout} />
+            <SettingsScreen user={user} onSave={handleUpdateProfile} onBack={() => setScreen('projects')} onLogout={handleLogout} onDeleteAccount={handleDeleteAccount} />
           </motion.div>
         )}
         {screen === 'support' && user && (

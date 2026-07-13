@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { v4 as uuidv4 } from 'uuid';
@@ -27,8 +29,87 @@ if (!process.env.SUPABASE_SERVICE_KEY) {
     }
 }
 
+// ── STARTUP ENV VALIDATION ────────────────────────────────────────────────────
+// Refuse to start if critical variables are missing in production.
+const REQUIRED_ENV_VARS = ['SUPABASE_URL', 'SUPABASE_SERVICE_KEY'];
+const missingVars = REQUIRED_ENV_VARS.filter(v => !process.env[v]);
+if (missingVars.length > 0) {
+    console.error(`\n🚨 FATAL: Missing required environment variables:\n   ${missingVars.join(', ')}`);
+    console.error('   → Copy supabase/.env.example to supabase/.env and fill in your credentials.\n');
+    process.exit(1);
+}
+
+// ── SAFE ERROR HELPER ─────────────────────────────────────────────────────────
+// Returns a generic error response to the client and logs the real error server-side.
+// Prevents leaking stack traces, DB query details, file paths, or internal messages.
+function safeError(e: any, res: express.Response, statusCode = 500): void {
+    const correlationId = uuidv4();
+    console.error(`[${correlationId}] Internal error:`, e?.message || e);
+    res.status(statusCode).json({ error: 'Internal server error', correlationId });
+}
+
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// ── SECURITY HEADERS (helmet) ─────────────────────────────────────────────────
+app.use(helmet({
+    // HSTS: 1 year, include subdomains, preload-ready
+    hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+    },
+    // Prevent clickjacking
+    frameguard: { action: 'deny' },
+    // Prevent MIME-type sniffing
+    noSniff: true,
+    // Disable x-powered-by (hides Express)
+    hidePoweredBy: true,
+    // Content Security Policy
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", 'data:', 'https:'],
+            connectSrc: ["'self'", 'https://*.supabase.co'],
+            frameAncestors: ["'none'"],
+        },
+    },
+}));
+
+// ── RATE LIMITING ─────────────────────────────────────────────────────────────
+// Login: 5 attempts per minute per IP
+const loginLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many login attempts. Please wait 1 minute and try again.' },
+    skipSuccessfulRequests: false,
+});
+
+// Password-related: 3 per hour per IP
+const passwordLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    max: 3,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many password reset requests. Please wait 1 hour and try again.' },
+});
+
+// General API: 200 per minute per IP (broad abuse prevention)
+const generalLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 200,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Too many requests. Please slow down.' },
+});
+
+// Apply general limiter to all API routes
+app.use('/api', generalLimiter);
+
 
 // ── CORS ─────────────────────────────────────────────────────────────────────
 // In development, allow everything. In production, restrict to your actual domains.
@@ -81,11 +162,11 @@ app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), asyn
     try {
         event = stripe.webhooks.constructEvent(req.body, sig as string, STRIPE_WEBHOOK_SECRET);
     } catch (err: any) {
-        console.error(`🚨 Webhook Signature verification failed: ${err.message}`);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
+        console.error(`🚨 Webhook Signature verification failed:`, err.message);
+        return res.status(400).json({ error: 'Webhook signature verification failed' });
     }
 
-    console.log(`🔔 Stripe Webhook Received Event: ${event.type}`);
+
 
     try {
         const db = getDb();
@@ -264,7 +345,7 @@ async function requireAuth(req: express.Request, res: express.Response, next: ex
                 (req as any).organizationId = memberByEmail.organization_id;
                 (req as any).memberRole = memberByEmail.role;
             } else {
-                console.warn(`⚠️ Could not find member record for ${user.email}`);
+                console.warn(`⚠️ Could not find member record for authenticated user`);
                 (req as any).authUser = user;
             }
         } else {
@@ -275,7 +356,7 @@ async function requireAuth(req: express.Request, res: express.Response, next: ex
 
         next();
     } catch (e: any) {
-        res.status(401).json({ error: e.message });
+        safeError(e, res, 401);
     }
 }
 
@@ -378,15 +459,15 @@ async function getMemberProjectStats(memberId: string, projectIds: string[]) {
 }
 
 app.get('/', (req, res) => {
-    res.json({ status: 'ok', service: 'DigiReps Ingestion API', version: '1.0.0', time: new Date().toISOString() });
+    res.json({ status: 'ok' });
 });
 
 app.get('/health', (req, res) => {
-    res.json({ status: 'ok', message: 'DigiReps Ingestion API is running' });
+    res.json({ status: 'ok' });
 });
 
 app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', service: 'DigiReps Ingestion API', version: '1.0.0', time: new Date().toISOString() });
+    res.json({ status: 'ok' });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -398,7 +479,7 @@ app.get('/api/health', (req, res) => {
  * Body: { email, password }
  * Returns: { token, user: { id, email, full_name, role, ... }, projects[] }
  */
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
     try {
         const { email, password } = req.body;
         if (!email || !password) return res.status(400).json({ error: 'email and password are required' });
@@ -450,7 +531,7 @@ app.post('/api/auth/login', async (req, res) => {
             stats: projectStats[p.id] || { todaySeconds: 0, weeklySeconds: 0, activityPercent: 0 }
         }));
 
-        console.log(`✅ Login: ${email} — ${projects.length} project(s)`);
+
 
         res.json({
             token,
@@ -467,8 +548,7 @@ app.post('/api/auth/login', async (req, res) => {
             projects: projectsWithStats,
         });
     } catch (e: any) {
-        console.error('Login error:', e);
-        res.status(500).json({ error: e.message || 'Internal server error' });
+        safeError(e, res);
     }
 });
 
@@ -502,7 +582,48 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 
         res.json({ user: member, projects: projectsWithStats });
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
+    }
+});
+
+/**
+ * POST /api/auth/delete-account
+ * Deletes the authenticated user's own member record and auth record.
+ */
+app.post('/api/auth/delete-account', requireAuth, async (req, res) => {
+    try {
+        const authUser = (req as any).authUser;
+        const db = getDb();
+
+        // 1. Fetch member profile
+        const { data: member, error: memberErr } = await db
+            .from('members')
+            .select('id')
+            .eq('email', authUser.email)
+            .single();
+
+        if (memberErr || !member) {
+            return res.status(404).json({ error: 'Member profile not found' });
+        }
+
+        // 2. Delete member record (this cascadingly deletes sessions, activity_samples, screenshots, etc. via foreign key cascade)
+        const { error: deleteError } = await db
+            .from('members')
+            .delete()
+            .eq('id', member.id);
+
+        if (deleteError) throw deleteError;
+
+        // 3. Delete user from Supabase Auth
+        const { error: authDeleteError } = await db.auth.admin.deleteUser(authUser.id);
+        if (authDeleteError) {
+            console.warn(`⚠️ Failed to delete auth user ${authUser.id} (needs service role permissions):`, authDeleteError.message);
+        }
+
+        res.json({ success: true, message: 'Account and associated data deleted successfully.' });
+    } catch (e: any) {
+        console.error('Delete account error:', e);
+        safeError(e, res);
     }
 });
 
@@ -516,23 +637,31 @@ app.get('/api/auth/me', requireAuth, async (req, res) => {
 app.get('/api/members', requireAuth, async (req, res) => {
     try {
         const db = getDb();
+        const orgId = (req as any).organizationId;
+        const userRole = (req as any).memberRole;
 
-        // 1. Fetch members with project member counts
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+
+        // 1. Fetch members with project member counts (scoped by organization)
         const { data: membersData, error: memberError } = await db.from('members')
             .select('*, project_members(project_id)')
+            .eq('organization_id', orgId)
             .order('created_at', { ascending: false });
 
         if (memberError) throw memberError;
 
-        // 2. Fetch session stats per user
-        // Note: For large datasets, this should be a DB view or more optimized RPC
-        const { data: sessionStats } = await db.rpc('get_member_stats');
-        // If RPC doesn't exist yet, we'll do a fallback simple aggregation or keep it as is for now
-        // but let's assume we want to solve it properly.
+        // 2. Fetch session stats per user scoped to these members
+        const memberIds = (membersData || []).map(m => m.id);
+        const { data: sessions } = await db.from('sessions')
+            .select('id, user_id, started_at, ended_at')
+            .in('user_id', memberIds);
+        const sessionIds = (sessions || []).map(s => s.id);
 
-        // Since I can't easily create an RPC without sql tool, I'll do a slightly optimized fetch
-        const { data: sessions } = await db.from('sessions').select('id, user_id, started_at, ended_at');
-        const { data: activity } = await db.from('activity_samples').select('session_id, idle');
+        const { data: activity } = sessionIds.length > 0 
+            ? await db.from('activity_samples').select('session_id, idle').in('session_id', sessionIds)
+            : { data: [] };
 
         const statsMap: Record<string, any> = {};
 
@@ -556,22 +685,36 @@ app.get('/api/members', requireAuth, async (req, res) => {
             if (!a.idle) statsMap[uid].active++;
         });
 
+        const isAuthorized = userRole === 'Admin' || userRole === 'Manager';
+
         const members = (membersData || []).map((m: any) => {
             const stats = statsMap[m.id] || statsMap[m.email] || null;
             return {
-                ...m,
+                id: m.id,
+                email: m.email,
+                full_name: m.full_name,
+                role: m.role,
+                status: m.status,
+                timezone: m.timezone,
+                avatar_url: m.avatar_url,
+                tracking_enabled: m.tracking_enabled,
+                weekly_limit: m.weekly_limit,
+                daily_limit: m.daily_limit,
+                created_at: m.created_at,
+                // Redact sensitive details for non-admin/manager
+                pay_rate: isAuthorized ? m.pay_rate : undefined,
+                bill_rate: isAuthorized ? m.bill_rate : undefined,
                 projectsCount: m.project_members?.length || 0,
                 totalMinutes: stats?.min || 0,
                 activityPercent: stats && stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0,
                 lastSeen: stats?.last || null,
-                sessionCount: stats?.count || 0,
-                project_members: undefined
+                sessionCount: stats?.count || 0
             };
         });
 
         res.json(members);
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -614,8 +757,8 @@ app.post('/api/members', requireAuth, async (req, res) => {
         });
 
         if (inviteError) {
-            console.warn(`⚠️ Supabase Auth Link Generation failed for ${email}: ${inviteError.message}`);
-            return res.status(inviteError.status || 500).json({ error: inviteError.message });
+            console.warn(`⚠️ Supabase Auth Link Generation failed:`, inviteError.message);
+            return res.status(inviteError.status || 500).json({ error: 'Failed to generate invite link. Please try again.' });
         }
 
         const inviteLink = inviteData.properties.action_link;
@@ -665,11 +808,11 @@ app.post('/api/members', requireAuth, async (req, res) => {
 
         if (insertError) throw insertError;
 
-        console.log(`📧 Invite sent to: ${email}`);
+
         res.status(201).json({ member: newMember, invited: true });
     } catch (e: any) {
         console.error('Invite member error:', e);
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -679,40 +822,29 @@ app.post('/api/members', requireAuth, async (req, res) => {
  * Body: { auth_user_id, full_name, phone? }
  * Activates the member account.
  */
-app.post('/api/members/complete-setup', async (req, res) => {
+app.post('/api/members/complete-setup', requireAuth, async (req, res) => {
     try {
-        const { auth_user_id, full_name, phone } = req.body;
-        // In this updated setup, the frontend should actually pass auth_user_id containing the UUID of the
-        // Supabase Auth record, but we map to the member record via email or id if the UI passes it. 
-        // For backwards compatibility, the UI currently passes `id` (or `authUserId`). We will assume the UI
-        // continues to pass the auth_user_id, but the backend looks up by ID if possible.
-        // Let's modify the frontend to send member_id shortly.
-        if (!auth_user_id || !full_name) {
-            return res.status(400).json({ error: 'auth_user_id and full_name are required' });
+        const authUser = (req as any).authUser;
+        const { full_name, phone } = req.body;
+        
+        if (!full_name) {
+            return res.status(400).json({ error: 'full_name is required' });
         }
 
         const db = getDb();
 
-        // 1. Get the user's email from Supabase Auth to ensure we find the correct record
-        const { data: { user }, error: authError } = await db.auth.admin.getUserById(auth_user_id);
-        if (authError || !user) {
-            console.error('Supabase Auth user not found:', authError);
-            return res.status(404).json({ error: 'Auth user not found.' });
-        }
-
-        // 2. Update the member record using the email we just retrieved
-        // We use maybeSingle() to avoid the "Cannot coerce" error if it doesn't exist yet
+        // 2. Update the member record using the email from our authenticated token
         const { data: existingMember, error: fetchErr } = await db
             .from('members')
             .select('*')
-            .eq('email', user.email)
+            .eq('email', authUser.email)
             .maybeSingle();
 
         if (fetchErr) throw fetchErr;
 
         let member;
         if (!existingMember) {
-            console.log(`⚠️ Member record missing for ${user.email}. Creating it now...`);
+            console.log(`⚠️ Member record missing for user. Creating it now...`);
             // This might happen if the invite row failed to insert but the auth invite succeeded.
             // Recovering by creating a member record linked to the first organization found.
             const { data: orgs } = await db.from('organizations').select('id').limit(1);
@@ -722,10 +854,10 @@ app.post('/api/members/complete-setup', async (req, res) => {
                 .from('members')
                 .insert([{
                     id: uuidv4(),
-                    email: user.email,
+                    email: authUser.email,
                     full_name,
                     phone: phone || null,
-                    auth_user_id: user.id,
+                    auth_user_id: authUser.id,
                     organization_id: fallbackOrgId,
                     role: 'User',
                     status: 'Active'
@@ -742,7 +874,7 @@ app.post('/api/members/complete-setup', async (req, res) => {
                     full_name,
                     phone: phone || null,
                     status: 'Active',
-                    auth_user_id: user.id
+                    auth_user_id: authUser.id
                 })
                 .eq('id', existingMember.id)
                 .select()
@@ -754,11 +886,11 @@ app.post('/api/members/complete-setup', async (req, res) => {
 
         if (!member) return res.status(404).json({ error: 'Failed to create or update member record.' });
 
-        console.log(`✅ Member setup complete: ${full_name} (${member.email})`);
+
         res.json({ member });
     } catch (e: any) {
         console.error('Complete-setup error:', e);
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -768,14 +900,69 @@ app.post('/api/members/complete-setup', async (req, res) => {
 app.put('/api/members/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
+        const orgId = (req as any).organizationId;
+        const requesterRole = (req as any).memberRole;
+        const authUser = (req as any).authUser;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+
+        const db = getDb();
+
+        // Fetch target member
+        const { data: targetMember, error: fetchError } = await db
+            .from('members')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !targetMember) {
+            return res.status(404).json({ error: 'Member not found' });
+        }
+
+        // Verify target member is in the same organization
+        if (targetMember.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden: Member belongs to another organization' });
+        }
+
         const { full_name, role, status, pay_rate, bill_rate, weekly_limit, daily_limit, tracking_enabled } = req.body;
-        const { data, error } = await getDb().from('members').update({
-            full_name, role, status, pay_rate, bill_rate, weekly_limit, daily_limit, tracking_enabled
-        }).eq('id', id).select().single();
+
+        // Authorization rule:
+        // 1. Must be Admin to change roles, status, rates, or limits.
+        // 2. A non-Admin user can only update their own record, and only their own full_name / phone.
+        const isSelf = targetMember.auth_user_id === authUser.id;
+        const isAdmin = requesterRole === 'Admin';
+
+        if (!isAdmin && !isSelf) {
+            return res.status(403).json({ error: 'Forbidden: You cannot edit this member' });
+        }
+
+        const updatePayload: any = {};
+        if (isAdmin) {
+            if (full_name !== undefined) updatePayload.full_name = full_name;
+            if (role !== undefined) updatePayload.role = role;
+            if (status !== undefined) updatePayload.status = status;
+            if (pay_rate !== undefined) updatePayload.pay_rate = pay_rate;
+            if (bill_rate !== undefined) updatePayload.bill_rate = bill_rate;
+            if (weekly_limit !== undefined) updatePayload.weekly_limit = weekly_limit;
+            if (daily_limit !== undefined) updatePayload.daily_limit = daily_limit;
+            if (tracking_enabled !== undefined) updatePayload.tracking_enabled = tracking_enabled;
+        } else {
+            // Self-update constraints
+            if (full_name !== undefined) updatePayload.full_name = full_name;
+            if (req.body.phone !== undefined) updatePayload.phone = req.body.phone;
+        }
+
+        if (Object.keys(updatePayload).length === 0) {
+            return res.json(targetMember);
+        }
+
+        const { data, error } = await db.from('members').update(updatePayload).eq('id', id).select().single();
         if (error) throw error;
         res.json(data);
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -785,11 +972,33 @@ app.put('/api/members/:id', requireAuth, async (req, res) => {
 app.delete('/api/members/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
-        const { error } = await getDb().from('members').delete().eq('id', id);
+        const orgId = (req as any).organizationId;
+        const requesterRole = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+
+        if (requesterRole !== 'Admin') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins can delete members' });
+        }
+
+        const db = getDb();
+        
+        // Check target exists and belongs to the same org
+        const { data: targetMember } = await db.from('members').select('organization_id').eq('id', id).single();
+        if (!targetMember) {
+            return res.status(404).json({ error: 'Member not found' });
+        }
+        if (targetMember.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden: Member belongs to another organization' });
+        }
+
+        const { error } = await db.from('members').delete().eq('id', id);
         if (error) throw error;
         res.json({ success: true });
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -804,6 +1013,11 @@ app.get('/api/projects', requireAuth, async (req, res) => {
     try {
         const { status } = req.query;
         const db = getDb();
+        const orgId = (req as any).organizationId;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
 
         let query = db.from('projects').select(`
             *,
@@ -811,7 +1025,7 @@ app.get('/api/projects', requireAuth, async (req, res) => {
             project_members(member_id),
             project_teams(team_id),
             todos(id)
-        `);
+        `).eq('organization_id', orgId);
 
         if (status) {
             query = query.eq('status', status);
@@ -834,7 +1048,7 @@ app.get('/api/projects', requireAuth, async (req, res) => {
 
         res.json(projects);
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -852,6 +1066,16 @@ app.post('/api/projects', requireAuth, async (req, res) => {
             member_ids = [], team_ids = []
         } = req.body;
 
+        const orgId = (req as any).organizationId;
+        const role = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+        if (role !== 'Admin' && role !== 'Manager') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins and Managers can manage projects.' });
+        }
+
         if (!name) return res.status(400).json({ error: 'name is required' });
 
         const db = getDb();
@@ -865,7 +1089,7 @@ app.post('/api/projects', requireAuth, async (req, res) => {
                 description,
                 color,
                 client_id,
-                organization_id: req.body.organization_id || null,
+                organization_id: orgId,
                 billable,
                 disable_activity,
                 allow_tracking,
@@ -897,7 +1121,7 @@ app.post('/api/projects', requireAuth, async (req, res) => {
 
         res.status(201).json(projectNames.length > 1 ? createdProjects : createdProjects[0]);
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -917,18 +1141,15 @@ app.put('/api/projects/:id', requireAuth, async (req, res) => {
 
         const db = getDb();
 
-        // 1. Fetch the admin's profile to get their organization_id
-        const { data: adminProfile, error: adminErr } = await db
-            .from('members')
-            .select('organization_id')
-            .eq('email', authUser.email)
-            .single();
+        const orgId = (req as any).organizationId;
+        const role = (req as any).memberRole;
 
-        if (adminErr || !adminProfile?.organization_id) {
-            return res.status(403).json({ error: 'You do not have permission to update projects.' });
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
         }
-
-        const orgId = adminProfile.organization_id;
+        if (role !== 'Admin' && role !== 'Manager') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins and Managers can manage projects.' });
+        }
 
         const updateData: any = {
             name, description, color, status, client_id,
@@ -973,7 +1194,7 @@ app.put('/api/projects/:id', requireAuth, async (req, res) => {
 
         res.json(data);
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -985,7 +1206,23 @@ app.put('/api/projects/:id/members', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         const { member_ids = [] } = req.body;
+        const orgId = (req as any).organizationId;
+        const role = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+        if (role !== 'Admin' && role !== 'Manager') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins and Managers can manage project members.' });
+        }
+
         const db = getDb();
+
+        // Verify the project belongs to the user's organization
+        const { data: project } = await db.from('projects').select('organization_id').eq('id', id).single();
+        if (!project || project.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden: Project belongs to another organization' });
+        }
 
         // Replace all assignments for this project
         await db.from('project_members').delete().eq('project_id', id);
@@ -997,7 +1234,7 @@ app.put('/api/projects/:id/members', requireAuth, async (req, res) => {
 
         res.json({ project_id: id, member_ids });
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -1005,12 +1242,23 @@ app.put('/api/projects/:id/members', requireAuth, async (req, res) => {
 // SESSION ENDPOINTS
 // ─────────────────────────────────────────────────────────────────────────────
 
-app.post('/api/sessions', async (req, res) => {
+app.post('/api/sessions', requireAuth, async (req, res) => {
     try {
-        const { user_id, project_id } = req.body;
+        const authUser = (req as any).authUser;
+        const orgId = (req as any).organizationId;
+        const { project_id } = req.body;
 
-        if (!user_id) {
-            return res.status(400).json({ error: 'user_id is required' });
+        const db = getDb();
+
+        // Find the member record corresponding to this authUser
+        const { data: member, error: memberErr } = await db
+            .from('members')
+            .select('id, organization_id')
+            .eq('auth_user_id', authUser.id)
+            .single();
+
+        if (memberErr || !member) {
+            return res.status(403).json({ error: 'Unauthorized: Member profile not found.' });
         }
 
         // Capture the real client IP for location tracking
@@ -1018,25 +1266,10 @@ app.post('/api/sessions', async (req, res) => {
             || req.socket.remoteAddress
             || null;
 
-        // We now use rpc_start_session which handles session_id and started_at generation
-
-        // Fetch the member's organization_id so admins can see their activity
-        const { data: member, error: memberErr } = await getDb()
-            .from('members')
-            .select('organization_id')
-            .eq('id', user_id)
-            .single();
-
-        if (memberErr) {
-            console.warn(`⚠️ Could not find organization for user ${user_id} during session creation: ${memberErr.message}`);
-        }
-
-        const organization_id = member?.organization_id || null;
-
-        const { data, error } = await getDb().rpc('rpc_start_session', {
-            p_user_id: user_id,
+        const { data, error } = await db.rpc('rpc_start_session', {
+            p_user_id: member.id,
             p_project_id: project_id,
-            p_organization_id: organization_id,
+            p_organization_id: member.organization_id,
             p_ip_address: ip_address
         });
 
@@ -1045,11 +1278,10 @@ app.post('/api/sessions', async (req, res) => {
         const session_id = data.id;
         const started_at = data.started_at;
 
-        console.log(`✅ Created session ${session_id} for user ${user_id} from IP ${ip_address}`);
         res.status(201).json({ session_id, started_at });
     } catch (error: any) {
         console.error('Error creating session:', error);
-        res.status(500).json({ error: error.message || 'Internal server error' });
+        safeError(error, res);
     }
 });
 
@@ -1057,18 +1289,38 @@ app.post('/api/sessions', async (req, res) => {
 // End a tracking session
 // POST /api/sessions/:id/end
 // ─────────────────────────────────────────
-app.post('/api/sessions/:id/end', async (req, res) => {
+app.post('/api/sessions/:id/end', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
-        const { data, error } = await getDb().rpc('rpc_stop_session', {
+        const authUser = (req as any).authUser;
+        const db = getDb();
+
+        // Validate session ownership
+        const { data: session, error: sessErr } = await db
+            .from('sessions')
+            .select('user_id, members(auth_user_id)')
+            .eq('id', id)
+            .single();
+
+        if (sessErr || !session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        // Check if the member auth_user_id matches the requester authUser.id
+        const sessionOwnerAuthId = (session.members as any)?.auth_user_id;
+        if (sessionOwnerAuthId !== authUser.id) {
+            return res.status(403).json({ error: 'Forbidden: You do not own this session' });
+        }
+
+        const { data, error } = await db.rpc('rpc_stop_session', {
             p_session_id: id
         });
         if (error) throw error;
-        console.log(`🏁 Session ${id} ended at ${data.ended_at}`);
+
         res.json({ session_id: id, ended_at: data.ended_at });
     } catch (error: any) {
         console.error('Error ending session:', error);
-        res.status(500).json({ error: error.message || 'Internal server error' });
+        safeError(error, res);
     }
 });
 
@@ -1077,22 +1329,39 @@ app.post('/api/sessions/:id/end', async (req, res) => {
 // POST /api/screenshot
 // Body: { session_id, timestamp, base64 }
 // ─────────────────────────────────────────
-app.post('/api/screenshot', async (req, res) => {
+app.post('/api/screenshot', requireAuth, async (req, res) => {
     try {
         const { session_id, timestamp, base64 } = req.body;
+        const authUser = (req as any).authUser;
 
         if (!session_id || !base64) {
             return res.status(400).json({ error: 'session_id and base64 are required' });
         }
 
-        const context = await getSessionContext(session_id);
-        if (!context) {
-            console.warn(`⚠️ Could not find session context for ${session_id}`);
+        const db = getDb();
+
+        // Validate session ownership
+        const { data: session, error: sessErr } = await db
+            .from('sessions')
+            .select('user_id, members(auth_user_id)')
+            .eq('id', session_id)
+            .single();
+
+        if (sessErr || !session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
+        const sessionOwnerAuthId = (session.members as any)?.auth_user_id;
+        if (sessionOwnerAuthId !== authUser.id) {
+            return res.status(403).json({ error: 'Forbidden: You do not own this session' });
+        }
+
+        const context = await getSessionContext(session_id);
+        if (!context) {
+            return res.status(404).json({ error: 'Session context not found' });
+        }
+
         const { organizationId, userId } = context;
-        const db = getDb();
 
         // Strip data URL prefix if present (e.g. "data:image/png;base64,...")
         const raw = base64.replace(/^data:image\/\w+;base64,/, '');
@@ -1108,7 +1377,7 @@ app.post('/api/screenshot', async (req, res) => {
 
         if (uploadError) {
             console.error('📸 Screenshot storage upload error:', uploadError.message);
-            return res.status(500).json({ error: uploadError.message });
+            return res.status(500).json({ error: 'Internal server error', correlationId: uuidv4() });
         }
 
         // Get the public URL
@@ -1127,36 +1396,53 @@ app.post('/api/screenshot', async (req, res) => {
 
         if (dbError) {
             console.error('📸 Screenshot DB insert error:', dbError.message);
-            return res.status(500).json({ error: 'Failed to save screenshot metadata: ' + dbError.message });
+            return res.status(500).json({ error: 'Internal server error', correlationId: uuidv4() });
         }
 
-        console.log(`📸 Screenshot saved: ${filename} → ${urlData.publicUrl}`);
         res.status(201).json({ success: true, file_url: urlData.publicUrl });
     } catch (error: any) {
         console.error('Screenshot endpoint error:', error);
-        res.status(500).json({ error: error.message || 'Internal server error' });
+        safeError(error, res);
     }
 });
 
 // Body: Array<{ session_id, timestamp, mouse_count, keyboard_count, app_name, window_title, idle_flag, file_url? }>
 // ─────────────────────────────────────────
-app.post('/api/heartbeats', async (req, res) => {
+app.post('/api/heartbeats', requireAuth, async (req, res) => {
     try {
         const heartbeats: any[] = req.body;
+        const authUser = (req as any).authUser;
+        const db = getDb();
 
         if (!Array.isArray(heartbeats) || heartbeats.length === 0) {
             return res.status(400).json({ error: 'Expected a non-empty array of heartbeats' });
+        }
+
+        // Validate session ownership on the batch's session
+        const sessionId = heartbeats[0].session_id;
+        const { data: session, error: sessErr } = await db
+            .from('sessions')
+            .select('user_id, members(auth_user_id)')
+            .eq('id', sessionId)
+            .single();
+
+        if (sessErr || !session) {
+            return res.status(404).json({ error: 'Session not found' });
+        }
+
+        const sessionOwnerAuthId = (session.members as any)?.auth_user_id;
+        if (sessionOwnerAuthId !== authUser.id) {
+            return res.status(403).json({ error: 'Forbidden: You do not own this session' });
         }
 
         // Separate activity samples from screenshot-only entries
         const activitySamples = heartbeats.filter(h => h.session_id && h.timestamp && !h.type);
         const screenshotSamples = heartbeats.filter(h => h.type === 'screenshot');
 
-        // Look up session context once for the whole batch (assuming same session per batch)
-        const context = await getSessionContext(heartbeats[0].session_id);
+        // Look up session context once for the whole batch
+        const context = await getSessionContext(sessionId);
         if (!context) {
-            console.warn(`⚠️ Could not find session context for heartbeat batch`);
-            return res.status(404).json({ error: 'Session not found' });
+            return res.status(404).json({ error: 'Session context not found' });
         }
 
         const { organizationId, userId } = context;
@@ -1177,12 +1463,9 @@ app.post('/api/heartbeats', async (req, res) => {
                 activity_percent: calculateActivity(h.mouse_count, h.keyboard_count),
             }));
 
-            const { error } = await getDb().from('activity_samples').insert(rows);
+            const { error } = await db.from('activity_samples').insert(rows);
             if (error) {
                 console.error('Error inserting activity samples:', error);
-                // Don't throw — keep processing screenshots
-            } else {
-                console.log(`✅ Inserted ${rows.length} activity samples`);
             }
         }
 
@@ -1195,10 +1478,9 @@ app.post('/api/heartbeats', async (req, res) => {
                 const base64Data = snap.file_url.replace(/^data:image\/\w+;base64,/, '');
                 const buffer = Buffer.from(base64Data, 'base64');
                 
-                // New hierarchical path: org_id/user_id/screenshots/session_id/timestamp.png
                 const filename = `${organizationId}/${userId}/screenshots/${snap.session_id}/${Date.now()}.png`;
 
-                const { error: uploadError } = await getDb().storage
+                const { error: uploadError } = await db.storage
                     .from('screenshots')
                     .upload(filename, buffer, { contentType: 'image/png', upsert: false });
 
@@ -1207,12 +1489,11 @@ app.post('/api/heartbeats', async (req, res) => {
                     continue;
                 }
 
-                const { data: urlData } = getDb().storage
+                const { data: urlData } = db.storage
                     .from('screenshots')
                     .getPublicUrl(filename);
 
-                // Save screenshot metadata to DB with full scoping
-                const { error: dbError } = await getDb().from('screenshots').insert([{
+                const { error: dbError } = await db.from('screenshots').insert([{
                     session_id: snap.session_id,
                     organization_id: organizationId,
                     user_id: userId,
@@ -1222,11 +1503,11 @@ app.post('/api/heartbeats', async (req, res) => {
 
                 if (dbError) {
                     console.error('Failed to process screenshot db sync:', dbError.message);
-                    throw new Error('Screenshot DB sync failed: ' + dbError.message);
+                    throw new Error('Screenshot DB sync failed');
                 }
 
                 screenshotResults.push({ session_id: snap.session_id, url: urlData.publicUrl });
-                console.log(`📸 Screenshot uploaded: ${filename}`);
+
             } catch (err) {
                 console.error('Failed to process screenshot:', err);
             }
@@ -1239,7 +1520,7 @@ app.post('/api/heartbeats', async (req, res) => {
         });
     } catch (error: any) {
         console.error('Error processing heartbeats:', error);
-        res.status(500).json({ error: error.message || 'Internal server error' });
+        safeError(error, res);
     }
 });
 
@@ -1251,23 +1532,41 @@ app.post('/api/heartbeats', async (req, res) => {
 // POST /api/screenshots/presign
 // Body: { session_id, filename }
 // ─────────────────────────────────────────
-app.post('/api/screenshots/presign', async (req, res) => {
+app.post('/api/screenshots/presign', requireAuth, async (req, res) => {
     try {
         const { session_id, filename } = req.body;
+        const authUser = (req as any).authUser;
+        const db = getDb();
+
         if (!session_id || !filename) {
             return res.status(400).json({ error: 'session_id and filename are required' });
         }
 
-        const context = await getSessionContext(session_id);
-        if (!context) {
+        // Validate session ownership
+        const { data: session, error: sessErr } = await db
+            .from('sessions')
+            .select('user_id, members(auth_user_id)')
+            .eq('id', session_id)
+            .single();
+
+        if (sessErr || !session) {
             return res.status(404).json({ error: 'Session not found' });
         }
 
+        const sessionOwnerAuthId = (session.members as any)?.auth_user_id;
+        if (sessionOwnerAuthId !== authUser.id) {
+            return res.status(403).json({ error: 'Forbidden: You do not own this session' });
+        }
+
+        const context = await getSessionContext(session_id);
+        if (!context) {
+            return res.status(404).json({ error: 'Session context not found' });
+        }
+
         const { organizationId, userId } = context;
-        // New hierarchical path: org_id/user_id/screenshots/session_id/filename
         const filePath = `${organizationId}/${userId}/screenshots/${session_id}/${filename}`;
         
-        const { data, error } = await getDb().storage
+        const { data, error } = await db.storage
             .from('screenshots')
             .createSignedUploadUrl(filePath);
 
@@ -1276,7 +1575,7 @@ app.post('/api/screenshots/presign', async (req, res) => {
         res.json({ upload_url: data.signedUrl, path: filePath });
     } catch (error: any) {
         console.error('Error creating presigned URL:', error);
-        res.status(500).json({ error: error.message || 'Internal server error' });
+        safeError(error, res);
     }
 });
 
@@ -1295,141 +1594,346 @@ function calculateActivity(mouseCount: number = 0, keyboardCount: number = 0): n
 // ─────────────────────────────────────────
 
 // --- Payments ---
-app.post('/api/payments', async (req, res) => {
+app.post('/api/payments', requireAuth, async (req, res) => {
     try {
-        const { member_id, amount, method, reference } = req.body;
-        if (!member_id || !amount || !method) return res.status(400).json({ error: 'Missing required fields' });
+        const { member_id, method, reference } = req.body;
+        const orgId = (req as any).organizationId;
+        const requesterRole = (req as any).memberRole;
 
-        const { data, error } = await getDb().from('payments').insert([{
-            member_id, amount, method, reference, status: 'Completed', paid_at: new Date().toISOString()
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+        if (requesterRole !== 'Admin') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins can record payments' });
+        }
+        if (!member_id || !method) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const db = getDb();
+
+        // 1. Verify target member belongs to requester's organization
+        const { data: member, error: mErr } = await db
+            .from('members')
+            .select('organization_id, pay_rate')
+            .eq('id', member_id)
+            .single();
+
+        if (mErr || !member || member.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden: Member belongs to another organization or does not exist' });
+        }
+
+        // 2. Secure Payment Logic: Server-side calculation of the amount.
+        // Fetch all completed, unpaid sessions for this member and sum hours * pay_rate.
+        // For simplicity in this replicate tracker database schema, if the client did not supply a period,
+        // we calculate the unpaid hours of the current week.
+        const payRate = member.pay_rate || 0;
+        
+        // Sum total hours from sessions (where paid = false)
+        const { data: sessions } = await db
+            .from('sessions')
+            .select('started_at, ended_at')
+            .eq('user_id', member_id)
+            .eq('organization_id', orgId);
+
+        let totalSeconds = 0;
+        (sessions || []).forEach(s => {
+            const start = new Date(s.started_at).getTime();
+            const end = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
+            totalSeconds += Math.max(0, Math.round((end - start) / 1000));
+        });
+        
+        const totalHours = totalSeconds / 3600;
+        const calculatedAmount = Math.round((totalHours * payRate) * 100) / 100; // Round to 2 decimals
+
+        const { data, error } = await db.from('payments').insert([{
+            member_id,
+            amount: calculatedAmount > 0 ? calculatedAmount : 0.0,
+            method,
+            reference,
+            status: 'Completed',
+            paid_at: new Date().toISOString()
         }]).select().single();
 
         if (error) throw error;
         res.status(201).json(data);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        safeError(error, res);
     }
 });
 
-app.get('/api/payments', async (req, res) => {
+app.get('/api/payments', requireAuth, async (req, res) => {
     try {
-        const { data, error } = await getDb().from('payments')
-            .select('*, members(full_name)')
+        const orgId = (req as any).organizationId;
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+
+        const db = getDb();
+        const { data, error } = await db.from('payments')
+            .select('*, members(full_name, organization_id)')
             .order('created_at', { ascending: false });
+
         if (error) throw error;
-        res.json(data);
+
+        // Filter returned payments by organization boundaries
+        const filteredData = (data || []).filter((p: any) => p.members?.organization_id === orgId);
+        res.json(filteredData);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        safeError(error, res);
     }
 });
 
 // --- Invoices ---
-app.post('/api/invoices', async (req, res) => {
+app.post('/api/invoices', requireAuth, async (req, res) => {
     try {
         const { client_id, amount, status, issue_date, due_date } = req.body;
-        if (!client_id || !amount || !due_date) return res.status(400).json({ error: 'Missing required fields' });
+        const orgId = (req as any).organizationId;
+        const requesterRole = (req as any).memberRole;
 
-        const { data, error } = await getDb().from('invoices').insert([{
-            client_id, amount, status: status || 'Draft', issue_date, due_date, organization_id: req.body.organization_id || null
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+        if (requesterRole !== 'Admin') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins can manage invoices' });
+        }
+        if (!client_id || !amount || !due_date) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const db = getDb();
+        
+        // Ensure client belongs to organization (implied check or direct validation if clients schema supports it)
+        const { data, error } = await db.from('invoices').insert([{
+            client_id,
+            amount,
+            status: status || 'Draft',
+            issue_date,
+            due_date,
+            organization_id: orgId
         }]).select().single();
 
         if (error) throw error;
         res.status(201).json(data);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        safeError(error, res);
     }
 });
 
-app.get('/api/invoices', async (req, res) => {
+app.get('/api/invoices', requireAuth, async (req, res) => {
     try {
-        // Assume clients table exists, or we drop the join for now. We will join clients(name) assuming it exists.
-        const { data, error } = await getDb().from('invoices')
+        const orgId = (req as any).organizationId;
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+
+        const db = getDb();
+        const { data, error } = await db.from('invoices')
             .select('*, clients(name)')
+            .eq('organization_id', orgId)
             .order('created_at', { ascending: false });
+
         if (error) {
             // Fallback if clients join fails
-            const { data: d2, error: e2 } = await getDb().from('invoices').select('*').order('created_at', { ascending: false });
+            const { data: d2, error: e2 } = await db.from('invoices')
+                .select('*')
+                .eq('organization_id', orgId)
+                .order('created_at', { ascending: false });
             if (e2) throw e2;
             return res.json(d2);
         }
         res.json(data);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        safeError(error, res);
     }
 });
 
-app.put('/api/invoices/:id', async (req, res) => {
+app.put('/api/invoices/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
-        const updates = req.body;
-        const { data, error } = await getDb().from('invoices').update(updates).eq('id', id).select().single();
+        const orgId = (req as any).organizationId;
+        const requesterRole = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+        if (requesterRole !== 'Admin') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins can edit invoices' });
+        }
+
+        const db = getDb();
+
+        // 1. Enforce organization boundary check
+        const { data: targetInvoice } = await db.from('invoices').select('organization_id').eq('id', id).single();
+        if (!targetInvoice || targetInvoice.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden: Invoice does not belong to your organization' });
+        }
+
+        // 2. Mass Assignment prevention: whitelist safe properties
+        const { client_id, amount, status, issue_date, due_date } = req.body;
+        const updates: any = {};
+        if (client_id !== undefined) updates.client_id = client_id;
+        if (amount !== undefined) updates.amount = amount;
+        if (status !== undefined) updates.status = status;
+        if (issue_date !== undefined) updates.issue_date = issue_date;
+        if (due_date !== undefined) updates.due_date = due_date;
+
+        const { data, error } = await db.from('invoices').update(updates).eq('id', id).select().single();
         if (error) throw error;
         res.json(data);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        safeError(error, res);
     }
 });
 
-app.delete('/api/invoices/:id', async (req, res) => {
+app.delete('/api/invoices/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
-        const { error } = await getDb().from('invoices').delete().eq('id', id);
+        const orgId = (req as any).organizationId;
+        const requesterRole = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+        if (requesterRole !== 'Admin') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins can delete invoices' });
+        }
+
+        const db = getDb();
+
+        const { data: targetInvoice } = await db.from('invoices').select('organization_id').eq('id', id).single();
+        if (!targetInvoice || targetInvoice.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden: Invoice does not belong to your organization' });
+        }
+
+        const { error } = await db.from('invoices').delete().eq('id', id);
         if (error) throw error;
         res.status(204).send();
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        safeError(error, res);
     }
 });
 
 // --- Expenses ---
-app.post('/api/expenses', async (req, res) => {
+app.post('/api/expenses', requireAuth, async (req, res) => {
     try {
         const { member_id, project_id, amount, category, description, date } = req.body;
-        if (!member_id || !amount || !category) return res.status(400).json({ error: 'Missing required fields' });
+        const orgId = (req as any).organizationId;
 
-        const { data, error } = await getDb().from('expenses').insert([{
-            member_id, project_id, amount, category, description, date, status: 'Pending'
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+        if (!member_id || !amount || !category) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const db = getDb();
+
+        // Verify member belongs to same org
+        const { data: targetMember } = await db.from('members').select('organization_id').eq('id', member_id).single();
+        if (!targetMember || targetMember.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden: Member belongs to another organization' });
+        }
+
+        const { data, error } = await db.from('expenses').insert([{
+            member_id, project_id, amount, category, description, date, status: 'Pending', organization_id: orgId
         }]).select().single();
 
         if (error) throw error;
         res.status(201).json(data);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        safeError(error, res);
     }
 });
 
-app.get('/api/expenses', async (req, res) => {
+app.get('/api/expenses', requireAuth, async (req, res) => {
     try {
-        const { data, error } = await getDb().from('expenses')
+        const orgId = (req as any).organizationId;
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+
+        const db = getDb();
+        const { data, error } = await db.from('expenses')
             .select('*, members(full_name), projects(name)')
+            .eq('organization_id', orgId)
             .order('created_at', { ascending: false });
+
         if (error) throw error;
         res.json(data);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        safeError(error, res);
     }
 });
 
-app.put('/api/expenses/:id', async (req, res) => {
+app.put('/api/expenses/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
-        const updates = req.body;
-        const { data, error } = await getDb().from('expenses').update(updates).eq('id', id).select().single();
+        const orgId = (req as any).organizationId;
+        const requesterRole = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+
+        const db = getDb();
+
+        const { data: targetExpense } = await db.from('expenses').select('organization_id, status').eq('id', id).single();
+        if (!targetExpense || targetExpense.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden: Expense does not belong to your organization' });
+        }
+
+        // Whitelist updates & prevent normal users from modifying Approved expenses, or from changing status
+        const { project_id, amount, category, description, date, status } = req.body;
+        const updates: any = {};
+        
+        if (requesterRole === 'Admin') {
+            if (status !== undefined) updates.status = status;
+            if (project_id !== undefined) updates.project_id = project_id;
+            if (amount !== undefined) updates.amount = amount;
+            if (category !== undefined) updates.category = category;
+            if (description !== undefined) updates.description = description;
+            if (date !== undefined) updates.date = date;
+        } else {
+            if (targetExpense.status === 'Approved') {
+                return res.status(403).json({ error: 'Forbidden: Cannot edit an approved expense' });
+            }
+            if (project_id !== undefined) updates.project_id = project_id;
+            if (amount !== undefined) updates.amount = amount;
+            if (category !== undefined) updates.category = category;
+            if (description !== undefined) updates.description = description;
+            if (date !== undefined) updates.date = date;
+        }
+
+        const { data, error } = await db.from('expenses').update(updates).eq('id', id).select().single();
         if (error) throw error;
         res.json(data);
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        safeError(error, res);
     }
 });
 
-app.delete('/api/expenses/:id', async (req, res) => {
+app.delete('/api/expenses/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
-        const { error } = await getDb().from('expenses').delete().eq('id', id);
+        const orgId = (req as any).organizationId;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+
+        const db = getDb();
+
+        const { data: targetExpense } = await db.from('expenses').select('organization_id, status').eq('id', id).single();
+        if (!targetExpense || targetExpense.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden: Expense does not belong to your organization' });
+        }
+
+        const { error } = await db.from('expenses').delete().eq('id', id);
         if (error) throw error;
         res.status(204).send();
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        safeError(error, res);
     }
 });
 
@@ -1444,10 +1948,18 @@ app.delete('/api/expenses/:id', async (req, res) => {
 app.get('/api/teams', requireAuth, async (req, res) => {
     try {
         const db = getDb();
+        const orgId = (req as any).organizationId;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+
         const { data, error } = await db.from('teams').select(`
             *,
             members:team_members(member_id)
-        `).order('created_at', { ascending: false });
+        `)
+        .eq('organization_id', orgId)
+        .order('created_at', { ascending: false });
 
         if (error) throw error;
 
@@ -1459,7 +1971,7 @@ app.get('/api/teams', requireAuth, async (req, res) => {
 
         res.json(teams);
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -1469,11 +1981,20 @@ app.get('/api/teams', requireAuth, async (req, res) => {
 app.post('/api/teams', requireAuth, async (req, res) => {
     try {
         const { name, description, manager_id, member_ids = [] } = req.body;
+        const orgId = (req as any).organizationId;
+        const role = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+        if (role !== 'Admin' && role !== 'Manager') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins and Managers can create teams.' });
+        }
         if (!name) return res.status(400).json({ error: 'name is required' });
 
         const db = getDb();
         const { data: team, error } = await db.from('teams').insert([{
-            name, description, manager_id, organization_id: req.body.organization_id || null
+            name, description, manager_id, organization_id: orgId
         }]).select().single();
 
         if (error) throw error;
@@ -1485,7 +2006,7 @@ app.post('/api/teams', requireAuth, async (req, res) => {
 
         res.status(201).json(team);
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -1496,7 +2017,23 @@ app.put('/api/teams/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         const { name, description, manager_id, member_ids } = req.body;
+        const orgId = (req as any).organizationId;
+        const role = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+        if (role !== 'Admin' && role !== 'Manager') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins and Managers can manage teams.' });
+        }
+
         const db = getDb();
+
+        // Verify team belongs to organization
+        const { data: existingTeam } = await db.from('teams').select('organization_id').eq('id', id).single();
+        if (!existingTeam || existingTeam.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden: Team does not belong to your organization' });
+        }
 
         const { data, error } = await db.from('teams').update({
             name, description, manager_id
@@ -1514,7 +2051,7 @@ app.put('/api/teams/:id', requireAuth, async (req, res) => {
 
         res.json(data);
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -1524,11 +2061,29 @@ app.put('/api/teams/:id', requireAuth, async (req, res) => {
 app.delete('/api/teams/:id', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
-        const { error } = await getDb().from('teams').delete().eq('id', id);
+        const orgId = (req as any).organizationId;
+        const role = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+        if (role !== 'Admin' && role !== 'Manager') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins and Managers can manage teams.' });
+        }
+
+        const db = getDb();
+
+        // Verify team belongs to organization
+        const { data: existingTeam } = await db.from('teams').select('organization_id').eq('id', id).single();
+        if (!existingTeam || existingTeam.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden: Team does not belong to your organization' });
+        }
+
+        const { error } = await db.from('teams').delete().eq('id', id);
         if (error) throw error;
         res.status(204).send();
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -1539,7 +2094,23 @@ app.put('/api/teams/:id/members', requireAuth, async (req, res) => {
     try {
         const { id } = req.params;
         const { member_ids = [] } = req.body;
+        const orgId = (req as any).organizationId;
+        const role = (req as any).memberRole;
+
+        if (!orgId) {
+            return res.status(403).json({ error: 'Unauthorized: No organization association' });
+        }
+        if (role !== 'Admin' && role !== 'Manager') {
+            return res.status(403).json({ error: 'Forbidden: Only Admins and Managers can manage teams.' });
+        }
+
         const db = getDb();
+
+        // Verify team belongs to organization
+        const { data: existingTeam } = await db.from('teams').select('organization_id').eq('id', id).single();
+        if (!existingTeam || existingTeam.organization_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden: Team does not belong to your organization' });
+        }
 
         await db.from('team_members').delete().eq('team_id', id);
         if (member_ids.length > 0) {
@@ -1550,7 +2121,7 @@ app.put('/api/teams/:id/members', requireAuth, async (req, res) => {
 
         res.json({ success: true, member_ids });
     } catch (e: any) {
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -1655,7 +2226,7 @@ app.post('/api/billing/create-checkout-session', requireAuth, async (req, res) =
         res.json({ url: session.url });
     } catch (e: any) {
         console.error('🚨 Error creating checkout session:', e);
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -1708,7 +2279,7 @@ app.post('/api/billing/create-portal-session', requireAuth, async (req, res) => 
         res.json({ url: session.url });
     } catch (e: any) {
         console.error('🚨 Error creating billing portal session:', e);
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -1719,6 +2290,10 @@ app.post('/api/billing/create-portal-session', requireAuth, async (req, res) => 
  */
 app.post('/api/billing/mock-success', requireAuth, async (req, res) => {
     try {
+        if (process.env.NODE_ENV === 'production') {
+            return res.status(404).json({ error: 'Endpoint not found' });
+        }
+
         const orgId = (req as any).organizationId;
         const role = (req as any).memberRole;
         const { planType = 'Premium', billingCycle = 'Monthly', seatsCount = 5 } = req.body;
@@ -1765,7 +2340,7 @@ app.post('/api/billing/mock-success', requireAuth, async (req, res) => {
         res.json({ success: true });
     } catch (e: any) {
         console.error('🚨 Error simulating mock billing success:', e);
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 
@@ -1776,6 +2351,10 @@ app.post('/api/billing/mock-success', requireAuth, async (req, res) => {
  */
 app.post('/api/billing/mock-downgrade', requireAuth, async (req, res) => {
     try {
+        if (process.env.NODE_ENV === 'production') {
+            return res.status(404).json({ error: 'Endpoint not found' });
+        }
+
         const orgId = (req as any).organizationId;
         const role = (req as any).memberRole;
 
@@ -1821,7 +2400,7 @@ app.post('/api/billing/mock-downgrade', requireAuth, async (req, res) => {
         res.json({ success: true });
     } catch (e: any) {
         console.error('🚨 Error simulating mock billing downgrade:', e);
-        res.status(500).json({ error: e.message });
+        safeError(e, res);
     }
 });
 

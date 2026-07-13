@@ -1,7 +1,8 @@
-// Use global fetch
+require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../supabase/.env') });
 
-const supabaseUrl = 'https://lgmggbnaoyoapxqsfgzv.supabase.co';
-const serviceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnbWdnYm5hb3lvYXB4cXNmZ3p2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjU1MzE0MiwiZXhwIjoyMDg4MTI5MTQyfQ.SAPAT4OpGOAGmj2cTGHiprG--Lapj5bx5GezGF1PUy4';
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_KEY;
 
 async function getOpenApi() {
     const res = await fetch(`${supabaseUrl}/rest/v1/`, {

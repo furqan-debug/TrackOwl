@@ -39,9 +39,9 @@ impl Default for AppState {
             active_session_id: None,
             auth_token: Arc::new(Mutex::new(None)),
             supabase_url: std::env::var("VITE_SUPABASE_URL")
-                .unwrap_or_else(|_| "https://lgmggbnaoyoapxqsfgzv.supabase.co".to_string()),
+                .unwrap_or_default(),
             supabase_anon_key: std::env::var("VITE_SUPABASE_ANON_KEY")
-                .unwrap_or_else(|_| "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnbWdnYm5hb3lvYXB4cXNmZ3p2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NTMxNDIsImV4cCI6MjA4ODEyOTE0Mn0.GkzsADYd-kpJYTgY9EZGwgy5kvN6nyYmfVoLUHRJQI4".to_string()),
+                .unwrap_or_default(),
             user_id: None,
             org_id: None,
             tracking_running: Arc::new(Mutex::new(false)),
@@ -521,10 +521,26 @@ async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
     updater::install_update(app).await
 }
 
-/// invoke('set_auth_token', { token })
+/// invoke('set_auth_token', { token, supabaseUrl, supabaseAnonKey })
 #[tauri::command]
-fn set_auth_token(state: tauri::State<'_, Mutex<AppState>>, token: String) -> Result<(), String> {
-    *state.lock().unwrap().auth_token.lock().unwrap() = Some(token);
+fn set_auth_token(
+    state: tauri::State<'_, Mutex<AppState>>,
+    token: String,
+    supabase_url: Option<String>,
+    supabase_anon_key: Option<String>,
+) -> Result<(), String> {
+    let mut s = state.lock().unwrap();
+    *s.auth_token.lock().unwrap() = Some(token);
+    if let Some(url) = supabase_url {
+        if !url.is_empty() {
+            s.supabase_url = url;
+        }
+    }
+    if let Some(key) = supabase_anon_key {
+        if !key.is_empty() {
+            s.supabase_anon_key = key;
+        }
+    }
     Ok(())
 }
 

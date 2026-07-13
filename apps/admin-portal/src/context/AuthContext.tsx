@@ -138,7 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function fetchProfile(email: string, retries = 3, silent = false) {
         // If we're already fetching for this email, don't start another one
         if (fetchInProgress.current === email && retries === 3) {
-            console.log(`[AuthContext] Fetch already in progress for ${email}, skipping duplicate call.`);
+            console.log(`[AuthContext] Fetch already in progress, skipping duplicate call.`);
             return;
         }
         
@@ -146,7 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!silent) setLoading(true);
 
         try {
-            console.log(`[AuthContext] Fetching profile for ${email}... (Retries left: ${retries})`);
+            console.log(`[AuthContext] Fetching profile... (Retries left: ${retries})`);
             
             const { data: member, error: memberError } = await supabase
                 .from('members')

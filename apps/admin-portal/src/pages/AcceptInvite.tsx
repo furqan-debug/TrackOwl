@@ -89,7 +89,7 @@ export function AcceptInvite() {
             });
 
             const result = await response.json();
-            console.log('--- ONBOARDING RESPONSE ---', result);
+            console.log('--- ONBOARDING COMPLETE ---');
 
             if (!response.ok) {
                 throw new Error(result?.error || `Server error: ${response.status}`);

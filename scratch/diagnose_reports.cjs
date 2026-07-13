@@ -1,7 +1,11 @@
+require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../supabase/.env') });
+
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = 'https://lgmggbnaoyoapxqsfgzv.supabase.co';
-const serviceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnbWdnYm5hb3lvYXB4cXNmZ3p2Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3MjU1MzE0MiwiZXhwIjoyMDg4MTI5MTQyfQ.SAPAT4OpGOAGmj2cTGHiprG--Lapj5bx5GezGF1PUy4';
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+const anonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 
 const supabase = createClient(supabaseUrl, serviceKey);
 global.serviceSupabase = supabase;
@@ -111,7 +115,7 @@ async function runDiagnosis() {
     const userToken = authSessionData.session.access_token;
     console.log("Token acquired!");
 
-    const userSupabase = createClient(supabaseUrl, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnbWdnYm5hb3lvYXB4cXNmZ3p2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NTMxNDIsImV4cCI6MjA4ODEyOTE0Mn0.GkzsADYd-kpJYTgY9EZGwgy5kvN6nyYmfVoLUHRJQI4', {
+    const userSupabase = createClient(supabaseUrl, anonKey, {
         global: {
             headers: {
                 Authorization: `Bearer ${userToken}`

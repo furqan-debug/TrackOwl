@@ -16,13 +16,13 @@ CREATE POLICY "Users can insert messages to their tickets" ON support_messages
 
 
 -- RPC Functions for the Support Admin Dashboard
--- These bypass RLS intentionally to allow the shared secret 'supersecret123' to grant admin access.
+-- These bypass RLS intentionally to allow the configured access secret to grant admin access.
 
 -- Fetch all tickets
 CREATE OR REPLACE FUNCTION admin_get_tickets(secret TEXT)
 RETURNS SETOF support_tickets AS $$
 BEGIN
-  IF secret = 'supersecret123' THEN
+  IF secret = coalesce(current_setting('app.settings.support_admin_secret', true), '') AND secret <> '' THEN
     RETURN QUERY SELECT * FROM support_tickets ORDER BY updated_at DESC;
   ELSE
     RAISE EXCEPTION 'Unauthorized';
@@ -35,7 +35,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION admin_get_messages(secret TEXT, p_ticket_id UUID)
 RETURNS SETOF support_messages AS $$
 BEGIN
-  IF secret = 'supersecret123' THEN
+  IF secret = coalesce(current_setting('app.settings.support_admin_secret', true), '') AND secret <> '' THEN
     RETURN QUERY SELECT * FROM support_messages WHERE ticket_id = p_ticket_id ORDER BY created_at ASC;
   ELSE
     RAISE EXCEPTION 'Unauthorized';
@@ -50,7 +50,7 @@ RETURNS support_messages AS $$
 DECLARE
   new_msg support_messages;
 BEGIN
-  IF secret = 'supersecret123' THEN
+  IF secret = coalesce(current_setting('app.settings.support_admin_secret', true), '') AND secret <> '' THEN
     -- Insert the message
     INSERT INTO support_messages (ticket_id, sender_id, is_ai, message)
     VALUES (p_ticket_id, NULL, false, p_message)
@@ -71,7 +71,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION admin_update_ticket_status(secret TEXT, p_ticket_id UUID, p_status TEXT)
 RETURNS void AS $$
 BEGIN
-  IF secret = 'supersecret123' THEN
+  IF secret = coalesce(current_setting('app.settings.support_admin_secret', true), '') AND secret <> '' THEN
     UPDATE support_tickets SET status = p_status, updated_at = NOW() WHERE id = p_ticket_id;
   ELSE
     RAISE EXCEPTION 'Unauthorized';
