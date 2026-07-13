@@ -33,7 +33,7 @@ export function SupportAdminDashboard() {
   const [replyText, setReplyText] = useState('');
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const secret = localStorage.getItem('support_admin_token') === 'authorized' ? 'supersecret123' : '';
+  const secret = localStorage.getItem('support_admin_token') || '';
 
   const fetchTickets = useCallback(async () => {
     try {
@@ -133,7 +133,7 @@ export function SupportAdminDashboard() {
     if (!selectedTicket) return;
     try {
       const { error } = await supabase.rpc('admin_update_ticket_status', {
-        secret: 'supersecret123',
+        secret,
         p_ticket_id: selectedTicket.id,
         p_status: newStatus
       });

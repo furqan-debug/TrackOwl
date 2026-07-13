@@ -1,8 +1,17 @@
 
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import https from 'https';
 
-const url = "https://lgmggbnaoyoapxqsfgzv.supabase.co";
-const anon_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnbWdnYm5hb3lvYXB4cXNmZ3p2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NTMxNDIsImV4cCI6MjA4ODEyOTE0Mn0.GkzsADYd-kpJYTgY9EZGwgy5kvN6nyYmfVoLUHRJQI4";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+const url = process.env.VITE_SUPABASE_URL || '';
+const anon_key = process.env.VITE_SUPABASE_ANON_KEY || '';
 
 const filename = "plain_test.png";
 const storage_url = `${url}/storage/v1/object/screenshots/${filename}`;

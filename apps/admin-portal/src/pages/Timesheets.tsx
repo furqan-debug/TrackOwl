@@ -232,10 +232,7 @@ export function Timesheets() {
                 if (m.auth_user_id) memberMap.set(m.auth_user_id, m);
             });
 
-            console.log('RAW SESSIONS FROM DB:', rawSessions);
-            if (rawSessions && rawSessions.length > 0) {
-                console.log('FIRST SESSION:', JSON.stringify(rawSessions[0], null, 2));
-            }
+            console.log(`[Timesheets] Loaded ${(rawSessions || []).length} session(s)`);
             const sessions = (rawSessions || []).map((s: any) => ({
                 ...s,
                 project_name: projectMap.get(s.project_id) || 'No Project'

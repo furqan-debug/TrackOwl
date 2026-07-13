@@ -30,10 +30,14 @@ export const trackerAPI = {
   },
 
   /** Update Rust-side token for background sync calls */
-  setAuthToken: async (token: string) => {
+  setAuthToken: async (token: string, supabaseUrl?: string, supabaseAnonKey?: string) => {
     const invoke = getInvoke();
     if (!invoke) return;
-    return invoke('set_auth_token', { token });
+    return invoke('set_auth_token', { 
+      token, 
+      supabaseUrl: supabaseUrl || '', 
+      supabaseAnonKey: supabaseAnonKey || '' 
+    });
   },
 
   /** Stop the current tracking session */
