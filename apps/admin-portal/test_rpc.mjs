@@ -1,5 +1,16 @@
-const supabaseUrl = 'https://lgmggbnaoyoapxqsfgzv.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnbWdnYm5hb3lvYXB4cXNmZ3p2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI1NTMxNDIsImV4cCI6MjA4ODEyOTE0Mn0.GkzsADYd-kpJYTgY9EZGwgy5kvN6nyYmfVoLUHRJQI4';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || 'https://lgmggbnaoyoapxqsfgzv.supabase.co';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+const supportSecret = process.env.SUPPORT_ADMIN_SECRET || '';
 
 async function test() {
   const res = await fetch(`${supabaseUrl}/rest/v1/rpc/admin_update_ticket_status`, {
@@ -9,7 +20,7 @@ async function test() {
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      secret: 'supersecret123',
+      secret: supportSecret,
       p_ticket_id: 'a650dfbd-d771-4f75-a0f6-4737d5953268', // Using the ID from the screenshot
       p_status: 'in progress'
     })

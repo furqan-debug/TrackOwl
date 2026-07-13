@@ -9,12 +9,11 @@ export function SupportAdminLogin() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Use a hardcoded secret for demonstration, in production this should be env var or backend check
-    if (secret === 'supersecret123') {
-      localStorage.setItem('support_admin_token', 'authorized');
+    if (secret.trim()) {
+      localStorage.setItem('support_admin_token', secret.trim());
       navigate('/support-admin/dashboard');
     } else {
-      setError('Invalid credentials');
+      setError('Please enter a valid access key');
     }
   };
 

@@ -23,11 +23,11 @@ export function ForgotPassword() {
         setSubmitting(true);
         try {
             const redirectTo = `${window.location.origin}/update-password`;
-            const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
-            if (error) throw new Error(error.message);
+            await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
             setStep('sent');
         } catch (err: any) {
-            setFormError(err.message);
+            // Silently complete to prevent user enumeration
+            setStep('sent');
         } finally {
             setSubmitting(false);
         }
