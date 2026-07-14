@@ -268,6 +268,7 @@ export function Privacy() {
                 <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center flex flex-col items-center">
                     <img src={HeaderLogo} className="h-16 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] mb-6" alt="TrackOwl" />
                     <h2 className="text-4xl md:text-6xl font-black text-white mb-6">Gain complete workforce visibility</h2>
+                    
                     <p className="text-2xl text-slate-300 font-medium mb-10 max-w-3xl leading-relaxed">
                         Track productivity, improve accountability, and operate with confidence using TrackOwl™.
                     </p>
