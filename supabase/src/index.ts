@@ -1246,7 +1246,7 @@ app.post('/api/sessions', requireAuth, async (req, res) => {
     try {
         const authUser = (req as any).authUser;
         const orgId = (req as any).organizationId;
-        const { project_id } = req.body;
+        const { project_id, app_version, os_platform } = req.body;
 
         const db = getDb();
 
@@ -1268,9 +1268,11 @@ app.post('/api/sessions', requireAuth, async (req, res) => {
 
         const { data, error } = await db.rpc('rpc_start_session', {
             p_user_id: member.id,
-            p_project_id: project_id,
-            p_organization_id: member.organization_id,
-            p_ip_address: ip_address
+            p_project_id: project_id || null,
+            p_organization_id: member.organization_id || null,
+            p_ip_address: ip_address,
+            p_app_version: app_version || null,
+            p_os_platform: os_platform || null
         });
 
         if (error) throw error;
