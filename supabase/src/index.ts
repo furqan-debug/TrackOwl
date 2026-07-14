@@ -932,7 +932,7 @@ app.put('/api/members/:id', requireAuth, async (req, res) => {
         // 1. Must be Admin to change roles, status, rates, or limits.
         // 2. A non-Admin user can only update their own record, and only their own full_name / phone.
         const isSelf = targetMember.auth_user_id === authUser.id;
-        const isAdmin = requesterRole === 'Admin';
+        const isAdmin = requesterRole === 'Admin' || requesterRole === 'Owner';
 
         if (!isAdmin && !isSelf) {
             return res.status(403).json({ error: 'Forbidden: You cannot edit this member' });
@@ -979,7 +979,7 @@ app.delete('/api/members/:id', requireAuth, async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized: No organization association' });
         }
 
-        if (requesterRole !== 'Admin') {
+        if (requesterRole !== 'Admin' && requesterRole !== 'Owner') {
             return res.status(403).json({ error: 'Forbidden: Only Admins can delete members' });
         }
 
