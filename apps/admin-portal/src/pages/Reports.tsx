@@ -609,7 +609,13 @@ export function Reports() {
                             </div>
                             <div className="h-[300px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={dailyActivity} barSize={32}>
+                                    <BarChart 
+                                        data={dailyActivity.map(item => ({ 
+                                            ...item, 
+                                            hours: Number((item.minutes / 60).toFixed(2)) 
+                                        }))} 
+                                        barSize={32}
+                                    >
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.03)" />
                                         <XAxis
                                             dataKey="date"
@@ -622,10 +628,12 @@ export function Reports() {
                                             axisLine={false}
                                             tickLine={false}
                                             tick={{ fill: 'rgba(100,116,139,0.7)', fontSize: 10, fontWeight: 700 }}
+                                            domain={[0, 'auto']}
+                                            tickFormatter={(val) => `${val}h`}
                                         />
-                                        <Tooltip content={<CustomTooltip unit="min" />} cursor={{ fill: 'rgba(64,102,211,0.02)' }} />
+                                        <Tooltip content={<CustomTooltip unit="h" />} cursor={{ fill: 'rgba(64,102,211,0.02)' }} />
                                         <Bar
-                                            dataKey="minutes"
+                                            dataKey="hours"
                                             fill={BRAND_PRIMARY}
                                             radius={[4, 4, 0, 0]}
                                         />
@@ -840,17 +848,28 @@ export function Reports() {
 
 function CustomTooltip({ active, payload, label, unit }: any) {
     if (active && payload && payload.length) {
+        let value = payload[0].value;
+        let labelText = '% Activity';
+        if (unit === 'min') {
+            labelText = 'Mins Capture';
+        } else if (unit === 'h') {
+            labelText = 'Hours Worked';
+            const totalMinutes = Math.round(value * 60);
+            const hrs = Math.floor(totalMinutes / 60);
+            const mins = totalMinutes % 60;
+            value = mins > 0 ? `${hrs}h ${mins}m` : `${hrs}h`;
+        }
         return (
             <div className="p-4 bg-surface/90 backdrop-blur-md rounded-2xl shadow-2xl border border-border min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
                 <p className="text-[9px] font-black text-text-muted mb-3 pb-2 border-b border-slate-50">{label}</p>
                 <div className="flex items-center gap-4">
                     <div className="w-2 h-2 rounded-full ring-4 ring-[var(--chart-gold)]/10 shadow-[0_0_12px_rgba(197,138,42,0.4)]" style={{ backgroundColor: 'var(--chart-gold)' }} />
                     <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-black text-text-main tracking-tighter tabular-nums">
-                            {payload[0].value}
+                        <span className="text-2xl font-black text-text-main tracking-tighter tabular-nums">
+                            {value}
                         </span>
                         <span className="text-[10px] font-black text-text-muted ">
-                            {unit === 'min' ? 'Mins Capture' : '% Activity'}
+                            {labelText}
                         </span>
                     </div>
                 </div>
