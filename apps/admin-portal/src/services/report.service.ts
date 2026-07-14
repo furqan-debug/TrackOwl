@@ -519,10 +519,12 @@ export const reportService = {
         } else {
             // Process manual/sampleless session duration
             const { endMs } = getEffectiveEnd(sess.started_at, sess.ended_at);
-            const sessionMins = Math.max(0, Math.round((endMs - new Date(sess.started_at).getTime()) / 60000));
+            const clampedStartMs = Math.max(new Date(sess.started_at).getTime(), new Date(start).getTime());
+            const clampedEndMs = Math.min(endMs, new Date(end).getTime());
+            const sessionMins = Math.max(0, Math.round((clampedEndMs - clampedStartMs) / 60000));
 
             if (sessionMins > 0) {
-                const day = getGroupingDateInTz(sess.started_at, memberTzs.get(uid));
+                const day = getGroupingDateInTz(new Date(clampedStartMs).toISOString(), memberTzs.get(uid));
                 if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
 
                 dailyMap[day].total_minutes += sessionMins;
@@ -557,7 +559,9 @@ export const reportService = {
     let totalSessionMins = 0;
     filteredSessions.forEach(s => {
         const { endMs } = getEffectiveEnd(s.started_at, s.ended_at);
-        totalSessionMins += (endMs - new Date(s.started_at).getTime()) / 60000;
+        const clampedStartMs = Math.max(new Date(s.started_at).getTime(), new Date(start).getTime());
+        const clampedEndMs = Math.min(endMs, new Date(end).getTime());
+        totalSessionMins += Math.max(0, (clampedEndMs - clampedStartMs) / 60000);
     });
 
     const calculatedTotalMins = Math.max(productiveSamples.length, Math.round(totalSessionMins));
