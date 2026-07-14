@@ -321,6 +321,8 @@ fn start_tracking(
         "p_project_id": project_id,
         "p_organization_id": org_id,
         "p_ip_address": ip_address,
+        "p_app_version": env!("CARGO_PKG_VERSION"),
+        "p_os_platform": std::env::consts::OS,
     }).to_string();
 
     match supabase_post(&cfg, "rpc/rpc_start_session", &body, Some(&token), None) {

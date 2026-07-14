@@ -13,7 +13,9 @@ CREATE OR REPLACE FUNCTION public.rpc_start_session(
     p_user_id uuid, 
     p_project_id text DEFAULT NULL, 
     p_organization_id uuid DEFAULT NULL, 
-    p_ip_address text DEFAULT NULL
+    p_ip_address text DEFAULT NULL,
+    p_app_version text DEFAULT NULL,
+    p_os_platform text DEFAULT NULL
 )
 RETURNS json
 LANGUAGE plpgsql
@@ -44,7 +46,9 @@ BEGIN
         organization_id,
         ip_address,
         started_at,
-        ended_at
+        ended_at,
+        app_version,
+        os_platform
     )
     VALUES (
         p_user_id,
@@ -52,14 +56,17 @@ BEGIN
         p_organization_id,
         p_ip_address,
         v_now,
-        NULL
+        NULL,
+        p_app_version,
+        p_os_platform
     )
     ON CONFLICT (user_id) WHERE (ended_at IS NULL)
     DO UPDATE SET 
         project_id = EXCLUDED.project_id,
         organization_id = EXCLUDED.organization_id,
         ip_address = EXCLUDED.ip_address,
-        started_at = EXCLUDED.started_at,
+        app_version = EXCLUDED.app_version,
+        os_platform = EXCLUDED.os_platform,
         started_at = v_now -- Ensure the NEW start time is used even if updating
     RETURNING id INTO v_session_id;
 
