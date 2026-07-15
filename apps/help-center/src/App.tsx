@@ -4,7 +4,8 @@ import {
   Search, ChevronRight, BookOpen, Clock, Moon, Sun,
   Rocket, Building, Users, UsersRound, FolderKanban, CheckSquare,
   Monitor, Camera, Activity, CalendarClock, MapPin, DollarSign,
-  CreditCard, FileText, Briefcase, Settings, Blocks, ShieldCheck, HelpCircle
+  CreditCard, FileText, Briefcase, Settings, Blocks, ShieldCheck, HelpCircle,
+  Mail, MessageSquare, ExternalLink
 } from 'lucide-react';
 import { marked } from 'marked';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -164,6 +165,54 @@ function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ContactBanner() {
+  return (
+    <div className="contact-banner">
+      <div className="contact-banner-inner">
+        <div className="contact-banner-text">
+          <h2 className="contact-banner-title">Need help? We're here for you.</h2>
+          <p className="contact-banner-subtitle">
+            Can't find what you're looking for? Our support team responds within 24 hours on business days.
+          </p>
+        </div>
+        <div className="contact-banner-actions">
+          <a href="mailto:support@trackowl.io" className="contact-btn contact-btn-primary">
+            <Mail size={18} />
+            Email Support
+          </a>
+          <a href="https://trackowl.io" target="_blank" rel="noreferrer" className="contact-btn contact-btn-secondary">
+            <ExternalLink size={18} />
+            Visit trackowl.io
+          </a>
+        </div>
+      </div>
+      <div className="contact-channels">
+        <div className="contact-channel">
+          <MessageSquare size={20} className="contact-channel-icon" />
+          <div>
+            <div className="contact-channel-label">Email</div>
+            <a href="mailto:support@trackowl.io" className="contact-channel-value">support@trackowl.io</a>
+          </div>
+        </div>
+        <div className="contact-channel">
+          <Clock size={20} className="contact-channel-icon" />
+          <div>
+            <div className="contact-channel-label">Response Time</div>
+            <div className="contact-channel-value">Within 24 hours (Mon–Fri)</div>
+          </div>
+        </div>
+        <div className="contact-channel">
+          <BookOpen size={20} className="contact-channel-icon" />
+          <div>
+            <div className="contact-channel-label">Documentation</div>
+            <div className="contact-channel-value">Browse articles below</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function HomePage() {
   return (
     <div className="home-page animate-fade-in">
@@ -171,6 +220,8 @@ function HomePage() {
         <h1 className="home-title">TrackOwl Support</h1>
         <p className="home-subtitle">Find help, articles, and step-by-step guides for everything TrackOwl.</p>
       </div>
+
+      <ContactBanner />
 
       <div className="category-grid">
         {categories.map(cat => {
