@@ -43,7 +43,6 @@ tauri-plugin-notification = "2"
 # requires Accessibility APIs that Apple does not permit for this purpose.
 tauri-plugin-updater = { version = "2", optional = true }
 tauri-plugin-dialog = "2"
-tauri-plugin-process = { version = "2", optional = true }
 tauri-plugin-single-instance = "2"
 tokio = { version = "1", features = ["time"] }
 ureq = { version = "2", features = ["native-tls", "json"] }
