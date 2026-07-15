@@ -187,15 +187,15 @@ function ContactBanner() {
           </p>
         </div>
         <div className="contact-banner-actions">
-          <a
-            href="mailto:support@trackowl.io"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
+          <button
+            onClick={() => {
+              window.location.href = 'mailto:support@trackowl.io';
+            }}
             className="contact-btn contact-btn-primary"
           >
             <Mail size={18} />
             Email Support
-          </a>
+          </button>
           <a
             href="https://trackowl.io"
             target="_blank"
