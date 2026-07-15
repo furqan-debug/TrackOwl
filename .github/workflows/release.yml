@@ -4,21 +4,42 @@ on:
   push:
     tags:
       - 'v*' # Triggers when you push a version tag like v1.2.7 or v1.3.0
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - windows
+          - macos
 
 jobs:
+  setup-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event.inputs.platform }}" == "all" ]; then
+            echo 'matrix=[{"platform":"macos-latest","args":"--target aarch64-apple-darwin"},{"platform":"macos-latest","args":"--target x86_64-apple-darwin"},{"platform":"windows-latest","args":""}]' >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.platform }}" == "windows" ]; then
+            echo 'matrix=[{"platform":"windows-latest","args":""}]' >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.platform }}" == "macos" ]; then
+            echo 'matrix=[{"platform":"macos-latest","args":"--target aarch64-apple-darwin"},{"platform":"macos-latest","args":"--target x86_64-apple-darwin"}]' >> $GITHUB_OUTPUT
+          fi
+
   publish:
+    needs: setup-matrix
     permissions:
       contents: write
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - platform: macos-latest
-            args: '--target aarch64-apple-darwin'
-          - platform: macos-latest
-            args: '--target x86_64-apple-darwin'
-          - platform: windows-latest
-            args: ''
+        include: ${{ fromJson(needs.setup-matrix.outputs.matrix) }}
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -75,15 +96,17 @@ jobs:
             This release packages TrackOwl for both Windows and macOS platforms.
             - **Windows**: `.exe` and `.msi` installers.
             - **macOS**: `.dmg` Disk Image and `.app` bundles (including signature files for the auto-updater).
-          releaseDraft: false
+          releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
 
-      # Extract version number without 'v' prefix (tag v2.0.27 → 2.0.27)
+      # Extract version number from package.json for manual workflow_dispatch triggers
       - name: Extract Version Number
         if: matrix.platform == 'windows-latest'
         id: version
-        run: echo "NUM=$($env:GITHUB_REF_NAME -replace '^v','')" >> $env:GITHUB_OUTPUT
+        run: |
+          $ver = (Get-Content package.json | ConvertFrom-Json).version
+          echo "NUM=$ver" >> $env:GITHUB_OUTPUT
         shell: pwsh
 
       - name: Sign Windows Installers with SSL.com eSigner
@@ -200,6 +223,7 @@ jobs:
           files: latest.json
 
   publish-appstore:
+    if: github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'macos'
     runs-on: macos-latest
     steps:
       - name: Checkout Repository
