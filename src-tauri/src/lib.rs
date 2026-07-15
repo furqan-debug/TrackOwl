@@ -668,6 +668,7 @@ fn update_plan(state: tauri::State<'_, Mutex<AppState>>, plan: String) -> Result
 pub fn run() {
     let state = AppState::default();
 
+    #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()
         .manage(Mutex::new(state))
         .plugin(tauri_plugin_opener::init())
@@ -689,6 +690,7 @@ pub fn run() {
                 });
         }))
         .setup(move |app: &mut tauri::App| {
+            #[allow(unused_variables)]
             let app_handle = app.handle().clone();
             
             // --- System Tray ---

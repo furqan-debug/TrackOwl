@@ -41,7 +41,7 @@ tauri-plugin-notification = "2"
 # require Accessibility permission. Window-title / active-app tracking
 # via active-win-pos-rs is disabled entirely in the MAS build because it
 # requires Accessibility APIs that Apple does not permit for this purpose.
-tauri-plugin-updater = { version = "2", optional = true }
+tauri-plugin-updater = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-single-instance = "2"
 tokio = { version = "1", features = ["time"] }
