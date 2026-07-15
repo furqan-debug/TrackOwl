@@ -374,3 +374,126 @@ a:hover { color: var(--primary-hover); }
 .not-found { text-align: center; padding: 4rem 2rem; }
 .not-found h2 { font-size: 2rem; margin-bottom: 1rem; }
 .not-found p { color: var(--text-secondary); margin-bottom: 1.5rem; }
+
+/* --- Contact Banner --- */
+.contact-banner {
+  margin: 0 auto 2.5rem;
+  max-width: 1200px;
+  width: 100%;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 60%, #3b82f6 100%);
+  border-radius: 1rem;
+  padding: 2rem 2.5rem;
+  color: white;
+}
+
+.contact-banner-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.75rem;
+}
+
+.contact-banner-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+  color: white;
+}
+
+.contact-banner-subtitle {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.8);
+  max-width: 480px;
+}
+
+.contact-banner-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.contact-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.25rem;
+  border-radius: 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-decoration: none;
+}
+
+.contact-btn-primary {
+  background: white;
+  color: #1d4ed8 !important;
+}
+
+.contact-btn-primary:hover {
+  background: #f0f9ff;
+  transform: translateY(-1px);
+}
+
+.contact-btn-secondary {
+  background: rgba(255,255,255,0.15);
+  color: white !important;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.contact-btn-secondary:hover {
+  background: rgba(255,255,255,0.25);
+  transform: translateY(-1px);
+}
+
+.contact-channels {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  border-top: 1px solid rgba(255,255,255,0.2);
+  padding-top: 1.5rem;
+}
+
+.contact-channel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.contact-channel-icon {
+  color: rgba(255,255,255,0.7);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.contact-channel-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 0.2rem;
+}
+
+.contact-channel-value {
+  font-size: 0.9rem;
+  color: white;
+  font-weight: 500;
+}
+
+a.contact-channel-value {
+  color: white !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+a.contact-channel-value:hover {
+  color: #bfdbfe !important;
+}
+
+.dark .contact-banner {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
+}
