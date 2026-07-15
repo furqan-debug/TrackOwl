@@ -192,10 +192,12 @@ function Layout({ children }: { children: React.ReactNode }) {
         
         <div className="footer-enterprise-bottom">
           <div className="footer-enterprise-bottom-container">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f1f5ff', fontWeight: '800', fontSize: '1.05rem', cursor: 'pointer' }} onClick={() => window.open('https://trackowl.io', '_blank')}>
-              <img src="/icon.png" style={{ height: '24px', width: '24px', objectFit: 'contain' }} alt="TrackOwl Logo" />
-              <span>TrackOwl</span>
-            </div>
+            <img 
+              src="/support/header-2.svg" 
+              className="footer-enterprise-logo-img" 
+              alt="TrackOwl" 
+              onClick={() => window.open('https://trackowl.io', '_blank')} 
+            />
             <p>TrackOwl™ , a product by DigiReps®</p>
           </div>
         </div>
