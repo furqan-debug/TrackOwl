@@ -497,3 +497,49 @@ a.contact-channel-value:hover {
 .dark .contact-banner {
   background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 60%, #2563eb 100%);
 }
+
+/* Email address row */
+.contact-email-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 0.6rem;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.contact-email-address {
+  flex: 1;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: white;
+  letter-spacing: 0.01em;
+  word-break: break-all;
+}
+
+.contact-copy-btn {
+  background: rgba(255,255,255,0.2);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.35);
+  border-radius: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+  flex-shrink: 0;
+  font-family: inherit;
+}
+
+.contact-copy-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+/* Reset button element so contact-btn-primary button looks like the anchor version */
+button.contact-btn {
+  border: none;
+  font-family: inherit;
+  line-height: 1;
+}
