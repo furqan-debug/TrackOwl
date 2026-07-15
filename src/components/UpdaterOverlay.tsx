@@ -2,6 +2,13 @@ import { useEffect, useState } from 'react';
 import { listen, type Event } from '@tauri-apps/api/event';
 import { invoke } from '@tauri-apps/api/core';
 import { Loader2 } from 'lucide-react';
+
+// In the Mac App Store build (VITE_APP_STORE=true) self-updating is
+// forbidden by Apple Guideline 2.4.5(vii). The entire component is a
+// no-op so that no Tauri event listeners are registered and no update
+// UI is ever rendered.
+const IS_APP_STORE = import.meta.env.VITE_APP_STORE === 'true';
+
 interface UpdateStatus {
   available: boolean;
   version: string | null;
@@ -15,6 +22,9 @@ export function UpdaterOverlay() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // App Store build: do nothing — updater not compiled in.
+    if (IS_APP_STORE) return;
+
     let unlistenAvailable: (() => void) | undefined;
     let unlistenProgress: (() => void) | undefined;
 
@@ -44,12 +54,14 @@ export function UpdaterOverlay() {
 
   // Auto-trigger update when detected
   useEffect(() => {
+    if (IS_APP_STORE) return;
     if (updateInfo && !installing && !error) {
       handleUpdate();
     }
   }, [updateInfo]);
 
   const handleUpdate = async () => {
+    if (IS_APP_STORE) return;
     setInstalling(true);
     setError(null);
     try {
@@ -61,7 +73,8 @@ export function UpdaterOverlay() {
     }
   };
 
-  if (!updateInfo) return null;
+  // App Store build or no update pending — render nothing.
+  if (IS_APP_STORE || !updateInfo) return null;
 
   return (
     <div className="fixed inset-0 z-[9999] bg-[#001338] flex flex-col items-center justify-center p-6 text-center select-none">
