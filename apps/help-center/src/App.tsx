@@ -5,7 +5,7 @@ import {
   Rocket, Building, Users, UsersRound, FolderKanban, CheckSquare,
   Monitor, Camera, Activity, CalendarClock, MapPin, DollarSign,
   CreditCard, FileText, Briefcase, Settings, Blocks, ShieldCheck, HelpCircle,
-  Mail, ExternalLink
+  Mail, ExternalLink, X, Check, ChevronDown, Loader2
 } from 'lucide-react';
 import { marked } from 'marked';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -166,76 +166,266 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function ContactBanner() {
-  const [copied, setCopied] = useState(false);
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [company, setCompany] = useState('');
+    const [teamSize, setTeamSize] = useState('1-5');
+    const [message, setMessage] = useState('');
+    const [requestType, setRequestType] = useState('general');
+    const [loading, setLoading] = useState(false);
+    const [success, setSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [requestTypeOpen, setRequestTypeOpen] = useState(false);
+    const [teamSizeOpen, setTeamSizeOpen] = useState(false);
 
-  const copyEmail = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    navigator.clipboard.writeText('support@trackowl.io').then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
+    const requestTypeOptions = [
+        { value: 'general', label: 'General Inquiry / Support' },
+        { value: 'sales', label: 'Talk to Sales' },
+        { value: 'demo', label: 'Book / Schedule a Demo' }
+    ];
 
-  return (
-    <div className="contact-banner">
-      <div className="contact-banner-inner">
-        <div className="contact-banner-text">
-          <h2 className="contact-banner-title">Need help? We're here for you.</h2>
-          <p className="contact-banner-subtitle">
-            Our support team responds within 24 hours on business days (Mon–Fri).
-          </p>
-        </div>
-        <div className="contact-banner-actions">
-          <button
-            onClick={() => {
-              window.location.href = 'mailto:support@trackowl.io';
-            }}
-            className="contact-btn contact-btn-primary"
-          >
-            <Mail size={18} />
-            Email Support
-          </button>
-          <a
-            href="https://trackowl.io"
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="contact-btn contact-btn-secondary"
-          >
-            <ExternalLink size={18} />
-            Visit trackowl.io
-          </a>
-        </div>
-      </div>
+    const teamSizeOptions = [
+        { value: '1-5', label: '1-5 members' },
+        { value: '6-15', label: '6-15 members' },
+        { value: '16-50', label: '16-50 members' },
+        { value: '51-200', label: '51-200 members' },
+        { value: '200+', label: '200+ members' }
+    ];
 
-      {/* Email address — prominent, copy-on-click */}
-      <div className="contact-email-row">
-        <Mail size={20} className="contact-channel-icon" />
-        <span className="contact-email-address">support@trackowl.io</span>
-        <button onClick={copyEmail} className="contact-copy-btn">
-          {copied ? '✓ Copied!' : 'Copy'}
-        </button>
-      </div>
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
 
-      <div className="contact-channels">
-        <div className="contact-channel">
-          <Clock size={20} className="contact-channel-icon" />
-          <div>
-            <div className="contact-channel-label">Response Time</div>
-            <div className="contact-channel-value">Within 24 hours (Mon–Fri)</div>
-          </div>
+        try {
+            const rawKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
+            const cleanKey = (rawKey || '').trim();
+            
+            if (!cleanKey) {
+                throw new Error("Access Key configuration missing. Please report this to support@trackowl.io");
+            }
+
+            const response = await fetch("https://api.web3forms.com/submit", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json"
+                },
+                body: JSON.stringify({
+                    access_key: cleanKey,
+                    name: name,
+                    email: email,
+                    subject: `TrackOwl Support/Lead (${requestType}): ${name} (${company || 'No Company'})`,
+                    to: "nash@digireps.co",
+                    from_name: "TrackOwl Support System",
+                    message: `You have received a new support contact submission from TrackOwl Help Center.
+
+Request Type: ${requestTypeOptions.find(o => o.value === requestType)?.label}
+Name: ${name}
+Email: ${email}
+Company: ${company || 'N/A'}
+Team Size: ${teamSize}
+
+Message:
+${message}`
+                })
+            });
+
+            const web3Data = await response.json();
+
+            if (!response.ok || !web3Data.success) {
+                throw new Error(web3Data.message || "Failed to submit request.");
+            }
+
+            setSuccess(true);
+        } catch (err: any) {
+            console.error("Submission failed:", err);
+            setError(err.message || "Something went wrong. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="support-form-container">
+            <div className="support-form-header">
+                <div>
+                    <h3 className="support-form-title">Contact TrackOwl</h3>
+                    <p className="support-form-subtitle">We'll get back to you shortly</p>
+                </div>
+            </div>
+
+            {success ? (
+                <div className="support-form-success">
+                    <div className="success-icon-wrapper">
+                        <Check className="success-check-icon" strokeWidth={3} />
+                    </div>
+                    <h4 className="success-title">Thank you!</h4>
+                    <p className="success-desc">
+                        Your details have been submitted. A TrackOwl support representative will email you at <span className="success-email-highlight">{email}</span> shortly.
+                    </p>
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setSuccess(false);
+                            setName('');
+                            setEmail('');
+                            setCompany('');
+                            setTeamSize('1-5');
+                            setMessage('');
+                        }}
+                        className="support-form-reset-btn"
+                    >
+                        Send Another Message
+                    </button>
+                </div>
+            ) : (
+                <form onSubmit={handleSubmit} className="support-form-body">
+                    {error && (
+                        <div className="support-form-error">
+                            {error}
+                        </div>
+                    )}
+
+                    <div className="support-form-row">
+                        <div className="support-form-field">
+                            <label className="support-form-label">Request Type</label>
+                            <div className="support-dropdown-wrapper">
+                                <button
+                                    type="button"
+                                    onClick={() => setRequestTypeOpen(!requestTypeOpen)}
+                                    className="support-dropdown-trigger"
+                                >
+                                    <span>{requestTypeOptions.find(o => o.value === requestType)?.label || 'Select request type'}</span>
+                                    <ChevronDown className={`support-dropdown-chevron ${requestTypeOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {requestTypeOpen && (
+                                    <>
+                                        <div className="support-dropdown-backdrop" onClick={() => setRequestTypeOpen(false)} />
+                                        <div className="support-dropdown-menu">
+                                            {requestTypeOptions.map((opt) => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setRequestType(opt.value);
+                                                        setRequestTypeOpen(false);
+                                                    }}
+                                                    className={`support-dropdown-item ${requestType === opt.value ? 'active' : ''}`}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="support-form-grid">
+                        <div className="support-form-field">
+                            <label className="support-form-label">Full Name</label>
+                            <input
+                                type="text"
+                                required
+                                placeholder="John Doe"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                                className="support-form-input"
+                            />
+                        </div>
+
+                        <div className="support-form-field">
+                            <label className="support-form-label">Business Email</label>
+                            <input
+                                type="email"
+                                required
+                                placeholder="john@company.com"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                className="support-form-input"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="support-form-grid">
+                        <div className="support-form-field">
+                            <label className="support-form-label">Company Name</label>
+                            <input
+                                type="text"
+                                placeholder="Acme Corp"
+                                value={company}
+                                onChange={(e) => setCompany(e.target.value)}
+                                className="support-form-input"
+                            />
+                        </div>
+
+                        <div className="support-form-field">
+                            <label className="support-form-label">Team Size</label>
+                            <div className="support-dropdown-wrapper">
+                                <button
+                                    type="button"
+                                    onClick={() => setTeamSizeOpen(!teamSizeOpen)}
+                                    className="support-dropdown-trigger"
+                                >
+                                    <span>{teamSizeOptions.find(o => o.value === teamSize)?.label || 'Select team size'}</span>
+                                    <ChevronDown className={`support-dropdown-chevron ${teamSizeOpen ? 'rotate-180' : ''}`} />
+                                </button>
+                                {teamSizeOpen && (
+                                    <>
+                                        <div className="support-dropdown-backdrop" onClick={() => setTeamSizeOpen(false)} />
+                                        <div className="support-dropdown-menu">
+                                            {teamSizeOptions.map((opt) => (
+                                                <button
+                                                    key={opt.value}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setTeamSize(opt.value);
+                                                        setTeamSizeOpen(false);
+                                                    }}
+                                                    className={`support-dropdown-item ${teamSize === opt.value ? 'active' : ''}`}
+                                                >
+                                                    {opt.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="support-form-field">
+                        <label className="support-form-label">Your Message</label>
+                        <textarea
+                            required
+                            rows={4}
+                            placeholder="Describe what you're looking for..."
+                            value={message}
+                            onChange={(e) => setMessage(e.target.value)}
+                            className="support-form-textarea"
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className="support-form-submit-btn"
+                    >
+                        {loading ? (
+                            <>
+                                <Loader2 className="animate-spin w-5 h-5 mr-2" />
+                                Submitting...
+                            </>
+                        ) : (
+                            'Submit Request'
+                        )}
+                    </button>
+                </form>
+            )}
         </div>
-        <div className="contact-channel">
-          <BookOpen size={20} className="contact-channel-icon" />
-          <div>
-            <div className="contact-channel-label">Documentation</div>
-            <div className="contact-channel-value">Browse articles below</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }
 
 
