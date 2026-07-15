@@ -437,9 +437,7 @@ function HomePage() {
         <p className="home-subtitle">Find help, articles, and step-by-step guides for everything TrackOwl.</p>
       </div>
 
-      <ContactBanner />
-
-      <div className="category-grid">
+      <div className="category-grid" style={{ marginBottom: '4rem' }}>
         {categories.map(cat => {
           const meta = categoryMeta[cat] || { icon: HelpCircle, desc: "Explore documentation and guides for this module." };
           const Icon = meta.icon;
@@ -454,6 +452,8 @@ function HomePage() {
           );
         })}
       </div>
+
+      <ContactBanner />
     </div>
   );
 }
