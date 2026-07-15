@@ -5,7 +5,7 @@ import {
   Rocket, Building, Users, UsersRound, FolderKanban, CheckSquare,
   Monitor, Camera, Activity, CalendarClock, MapPin, DollarSign,
   CreditCard, FileText, Briefcase, Settings, Blocks, ShieldCheck, HelpCircle,
-  Mail, MessageSquare, ExternalLink
+  Mail, ExternalLink
 } from 'lucide-react';
 import { marked } from 'marked';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -166,34 +166,60 @@ function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function ContactBanner() {
+  const [copied, setCopied] = useState(false);
+
+  const openEmail = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.open('mailto:support@trackowl.io', '_self');
+  };
+
+  const copyEmail = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText('support@trackowl.io').then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <div className="contact-banner">
       <div className="contact-banner-inner">
         <div className="contact-banner-text">
           <h2 className="contact-banner-title">Need help? We're here for you.</h2>
           <p className="contact-banner-subtitle">
-            Can't find what you're looking for? Our support team responds within 24 hours on business days.
+            Our support team responds within 24 hours on business days (Mon–Fri).
           </p>
         </div>
         <div className="contact-banner-actions">
-          <a href="mailto:support@trackowl.io" className="contact-btn contact-btn-primary">
+          <button onClick={openEmail} className="contact-btn contact-btn-primary">
             <Mail size={18} />
             Email Support
-          </a>
-          <a href="https://trackowl.io" target="_blank" rel="noreferrer" className="contact-btn contact-btn-secondary">
+          </button>
+          <a
+            href="https://trackowl.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="contact-btn contact-btn-secondary"
+          >
             <ExternalLink size={18} />
             Visit trackowl.io
           </a>
         </div>
       </div>
+
+      {/* Email address — prominent, copy-on-click */}
+      <div className="contact-email-row">
+        <Mail size={20} className="contact-channel-icon" />
+        <span className="contact-email-address">support@trackowl.io</span>
+        <button onClick={copyEmail} className="contact-copy-btn">
+          {copied ? '✓ Copied!' : 'Copy'}
+        </button>
+      </div>
+
       <div className="contact-channels">
-        <div className="contact-channel">
-          <MessageSquare size={20} className="contact-channel-icon" />
-          <div>
-            <div className="contact-channel-label">Email</div>
-            <a href="mailto:support@trackowl.io" className="contact-channel-value">support@trackowl.io</a>
-          </div>
-        </div>
         <div className="contact-channel">
           <Clock size={20} className="contact-channel-icon" />
           <div>
@@ -212,6 +238,7 @@ function ContactBanner() {
     </div>
   );
 }
+
 
 function HomePage() {
   return (
