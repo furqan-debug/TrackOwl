@@ -699,81 +699,59 @@ a:hover { color: var(--primary-hover); }
 
 /* --- Enterprise Footer (Landing Page Replica) --- */
 .footer-enterprise {
-  background-color: #05060f;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 4rem 2rem 2rem;
+  background-color: #001338;
+  padding: 5rem 2rem 2.5rem;
   color: #94a3b8;
   font-family: 'Inter', sans-serif;
+  position: relative;
+  z-index: 10;
   margin-top: 5rem;
 }
 
 .footer-enterprise-container {
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 0 auto 4rem;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 2.5rem;
-  padding-bottom: 3rem;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3rem;
+}
+
+@media (min-width: 768px) {
+  .footer-enterprise-container {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .footer-enterprise-col {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
-}
-
-.footer-enterprise-brand {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: #f1f5ff;
-}
-
-.footer-enterprise-logo {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.5rem;
-  background: linear-gradient(135deg, #6366f1, #a855f7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-}
-
-.footer-enterprise-tagline {
-  font-size: 0.85rem;
-  line-height: 1.6;
-  color: #64748b;
-  max-width: 250px;
+  gap: 1rem;
 }
 
 .footer-enterprise-heading {
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: #f1f5ff;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  color: #ffffff;
   margin-bottom: 0.5rem;
+  letter-spacing: 0.02em;
 }
 
 .footer-enterprise-col a {
   font-size: 0.875rem;
   color: #94a3b8;
   text-decoration: none;
-  transition: color 0.15s;
+  transition: color 0.2s ease;
 }
 
 .footer-enterprise-col a:hover {
-  color: #f1f5ff;
+  color: #ffffff;
 }
 
 .footer-enterprise-bottom {
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding-top: 2rem;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
+  font-weight: 500;
   color: #64748b;
 }
 
@@ -787,18 +765,16 @@ a:hover { color: var(--primary-hover); }
   gap: 1rem;
 }
 
-.footer-enterprise-bottom-links {
-  display: flex;
-  gap: 1.5rem;
+.footer-enterprise-logo-img {
+  height: 24px;
+  object-fit: contain;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+  cursor: pointer;
 }
 
-.footer-enterprise-bottom-links a {
-  color: #64748b;
-  text-decoration: none;
-}
-
-.footer-enterprise-bottom-links a:hover {
-  color: #94a3b8;
+.footer-enterprise-logo-img:hover {
+  opacity: 1;
 }
 
 /* --- FAQs Section --- */
