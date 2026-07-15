@@ -287,6 +287,8 @@ jobs:
           # VITE_APP_STORE=true tells the frontend to disable the updater UI
           # (Apple Guideline 2.4.5 vii — no self-updating in MAS apps)
           VITE_APP_STORE: "true"
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         run: npm run tauri build -- --target universal-apple-darwin --bundles app --features app-store
         
       - name: Embed Provisioning Profile & Re-Sign
