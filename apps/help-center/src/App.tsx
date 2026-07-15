@@ -189,7 +189,6 @@ function ContactBanner() {
         <div className="contact-banner-actions">
           <a
             href="mailto:support@trackowl.io"
-            target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
             className="contact-btn contact-btn-primary"
