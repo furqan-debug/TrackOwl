@@ -168,12 +168,6 @@ function Layout({ children }: { children: React.ReactNode }) {
 function ContactBanner() {
   const [copied, setCopied] = useState(false);
 
-  const openEmail = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    window.open('mailto:support@trackowl.io', '_self');
-  };
-
   const copyEmail = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -193,10 +187,16 @@ function ContactBanner() {
           </p>
         </div>
         <div className="contact-banner-actions">
-          <button onClick={openEmail} className="contact-btn contact-btn-primary">
+          <a
+            href="mailto:support@trackowl.io"
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="contact-btn contact-btn-primary"
+          >
             <Mail size={18} />
             Email Support
-          </button>
+          </a>
           <a
             href="https://trackowl.io"
             target="_blank"
