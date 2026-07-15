@@ -155,8 +155,7 @@ function Layout({ children }: { children: React.ReactNode }) {
             <a href="https://trackowl.io#features" target="_blank" rel="noopener noreferrer">Features</a>
             <a href="https://trackowl.io#pricing" target="_blank" rel="noopener noreferrer">Pricing</a>
             <a href="https://trackowl.io#security" target="_blank" rel="noopener noreferrer">Security</a>
-            <a href="https://trackowl.io#showcase" target="_blank" rel="noopener noreferrer">Integrations</a>
-            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Help Center</a>
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); setTimeout(() => { window.scrollTo({ top: 0, behavior: 'auto' }); }, 50); }}>Support</a>
           </div>
           
           <div className="footer-enterprise-col">
