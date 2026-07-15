@@ -7,7 +7,7 @@ import {
   ClipboardList, Calendar, Circle, ChevronDown, ChevronUp,
   User as UserIcon, Save, RefreshCcw,
    LifeBuoy, MessageSquare, Send, ArrowLeft,
-   Bell, ShieldCheck, Smartphone
+   Bell, ShieldCheck, Smartphone, Trash2
 } from 'lucide-react';
 import { trackerAPI } from './tauri-ipc';
 import { UpdaterOverlay } from './components/UpdaterOverlay';
