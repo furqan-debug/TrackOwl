@@ -522,22 +522,154 @@ function FAQsAccordion() {
   );
 }
 
+function LiveActivityTicker() {
+  const [time, setTime] = useState({ h: 4, m: 12, s: 34 });
+  const [pulse, setPulse] = useState([45, 62, 55, 70, 80, 50, 65, 75, 82, 60, 58, 67, 72, 85, 90]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(prev => {
+        let ns = prev.s + 1;
+        let nm = prev.m;
+        let nh = prev.h;
+        if (ns >= 60) {
+          ns = 0;
+          nm += 1;
+        }
+        if (nm >= 60) {
+          nm = 0;
+          nh += 1;
+        }
+        return { h: nh, m: nm, s: ns };
+      });
+
+      setPulse(prev => {
+        const nextVal = Math.max(20, Math.min(100, prev[prev.length - 1] + (Math.random() * 30 - 15)));
+        return [...prev.slice(1), Math.round(nextVal)];
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatTime = (val: number) => String(val).padStart(2, '0');
+
+  return (
+    <div className="live-ticker-container">
+      <div className="live-ticker-header">
+        <div className="live-badge-glow">
+          <span className="live-dot animate-pulse-green">●</span>
+          <span className="live-badge-text">LIVE ACTIVITY SIMULATOR</span>
+        </div>
+        <div className="live-time-counter">
+          Logged Today: <span className="mono-time">{formatTime(time.h)}h {formatTime(time.m)}m {formatTime(time.s)}s</span>
+        </div>
+      </div>
+      <div className="live-ticker-body">
+        <div className="live-sparkline">
+          {pulse.map((val, idx) => (
+            <div 
+              key={idx} 
+              className="spark-bar" 
+              style={{ 
+                height: `${val}%`,
+                background: val > 75 ? 'var(--gold)' : 'var(--primary)'
+              }} 
+            />
+          ))}
+        </div>
+        <div className="live-status-metrics">
+          <div className="metric-item">
+            <span className="metric-val">82%</span>
+            <span className="metric-label">Avg Activity Pulse</span>
+          </div>
+          <div className="metric-item">
+            <span className="metric-val">Active</span>
+            <span className="metric-label">App State</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function HomePage() {
+  const featuredCats = ["Getting Started", "Desktop App"];
+  const trackingCats = ["Activity & App Usage", "Screenshots", "Locations & Job Sites", "Time Tracking"];
+  const adminCats = ["Organizations", "Projects", "Billing & Subscriptions", "Settings", "Security & Privacy", "Integrations", "Teams", "Tasks", "Reports", "Clients"];
+
+  // Filter actual categories available in the app config list
+  const featuredList = categories.filter(c => featuredCats.includes(c));
+  const trackingList = categories.filter(c => trackingCats.includes(c));
+  const adminList = categories.filter(c => !featuredCats.includes(c) && !trackingCats.includes(c));
+
   return (
     <div className="home-page animate-fade-in">
       <div className="home-hero">
-        <h1 className="home-title">TrackOwl Support</h1>
-        <p className="home-subtitle">Find help, articles, and step-by-step guides for everything TrackOwl.</p>
+        <div className="time-tracker-badge">
+          <Clock size={14} style={{ marginRight: '6px' }} /> 
+          TrackOwl Help & Support System
+        </div>
+        <h1 className="home-title">How can we help you track today?</h1>
+        <p className="home-subtitle">
+          Explore comprehensive installation guides, feature walkthroughs, and settings documentation.
+        </p>
       </div>
 
-      <div className="category-grid" style={{ marginBottom: '5rem' }}>
-        {categories.map(cat => {
+      {/* SECTION 1: KEY PATHWAYS */}
+      <h3 className="section-group-title">Primary Setup & Onboarding</h3>
+      <div className="category-featured-grid">
+        {featuredList.map(cat => {
           const meta = categoryMeta[cat] || { icon: HelpCircle, desc: "Explore documentation and guides for this module." };
           const Icon = meta.icon;
           return (
-            <Link key={cat} to={`/category/${encodeURIComponent(cat)}`} className="category-card">
+            <Link key={cat} to={`/category/${encodeURIComponent(cat)}`} className="category-card featured-card">
+              <div className="card-accent-border"></div>
+              <div className="category-card-layout-inner">
+                <div className="category-icon-wrapper">
+                  <Icon size={28} />
+                </div>
+                <div className="category-card-content">
+                  <h3 className="category-card-title">{cat}</h3>
+                  <p className="category-card-desc">{meta.desc}</p>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* SIGNATURE INTERACTIVE LOGGING TICKER */}
+      <LiveActivityTicker />
+
+      {/* SECTION 2: WORKSPACE & PRODUCTIVITY MONITORING */}
+      <h3 className="section-group-title">Time & Productivity Tracking</h3>
+      <div className="category-sub-grid">
+        {trackingList.map(cat => {
+          const meta = categoryMeta[cat] || { icon: HelpCircle, desc: "Explore documentation and guides for this module." };
+          const Icon = meta.icon;
+          return (
+            <Link key={cat} to={`/category/${encodeURIComponent(cat)}`} className="category-card tracker-theme-card">
               <div className="category-icon-wrapper">
-                <Icon size={24} className="category-icon" />
+                <Icon size={20} />
+              </div>
+              <h3 className="category-card-title">{cat}</h3>
+              <p className="category-card-desc">{meta.desc}</p>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* SECTION 3: SYSTEM ADMIN & ORGANIZATION MANAGEMENT */}
+      <h3 className="section-group-title">Workspace & Administration</h3>
+      <div className="category-sub-grid" style={{ marginBottom: '5rem' }}>
+        {adminList.map(cat => {
+          const meta = categoryMeta[cat] || { icon: HelpCircle, desc: "Explore documentation and guides for this module." };
+          const Icon = meta.icon;
+          return (
+            <Link key={cat} to={`/category/${encodeURIComponent(cat)}`} className="category-card admin-theme-card">
+              <div className="category-icon-wrapper">
+                <Icon size={20} />
               </div>
               <h3 className="category-card-title">{cat}</h3>
               <p className="category-card-desc">{meta.desc}</p>
