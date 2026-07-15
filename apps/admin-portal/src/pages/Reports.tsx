@@ -24,6 +24,7 @@ import {
     LoadingState, EmptyState
 } from '../components/ui';
 import clsx from 'clsx';
+import Lenis from 'lenis';
 import { formatDuration } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
 
@@ -85,6 +86,29 @@ export function Reports() {
         }[];
     }>({ dates: [], rows: [] });
 
+    useEffect(() => {
+        if (!scrollRef.current) return;
+
+        const lenis = new Lenis({
+            wrapper: scrollRef.current,
+            content: scrollRef.current.querySelector('table') || undefined,
+            infinite: false,
+            gestureOrientation: 'vertical',
+            lerp: 0.1,
+        });
+
+        let frameId: number;
+        function raf(time: number) {
+            lenis.raf(time);
+            frameId = requestAnimationFrame(raf);
+        }
+        frameId = requestAnimationFrame(raf);
+
+        return () => {
+            lenis.destroy();
+            cancelAnimationFrame(frameId);
+        };
+    }, [tableData]);
 
     useEffect(() => {
         fetchTeams();
@@ -736,32 +760,32 @@ export function Reports() {
                                 </div>
                             </div>
 
-                            <div ref={scrollRef} className="overflow-x-auto custom-scrollbar">
+                             <div ref={scrollRef} className="overflow-x-auto overflow-y-auto max-h-[720px] custom-scrollbar">
                                 <table className="w-full border-collapse min-w-max">
                                     <thead>
                                         <tr className="bg-surface-hover/50">
-                                            <th className="sticky left-0 z-20 bg-surface-hover/90 backdrop-blur-md py-4 px-8 text-[11px] font-bold text-text-muted border-b border-border text-left w-[220px]">
+                                            <th className="sticky top-0 left-0 z-40 bg-surface-hover/90 backdrop-blur-md py-4 px-8 text-[11px] font-bold text-text-muted border-b border-border text-left w-[220px]">
                                                 Member
                                             </th>
                                             {showEmpId && (
-                                                <th className="py-4 px-4 text-[11px] font-bold text-text-muted border-b border-border text-left w-[120px]">
+                                                <th className="sticky top-0 z-30 bg-surface-hover/90 backdrop-blur-md py-4 px-4 text-[11px] font-bold text-text-muted border-b border-border text-left w-[120px]">
                                                     Emp ID
                                                 </th>
                                             )}
                                             {showEmail && (
-                                                <th className="py-4 px-4 text-[11px] font-bold text-text-muted border-b border-border text-left w-[240px]">
+                                                <th className="sticky top-0 z-30 bg-surface-hover/90 backdrop-blur-md py-4 px-4 text-[11px] font-bold text-text-muted border-b border-border text-left w-[240px]">
                                                     Email
                                                 </th>
                                             )}
                                             {tableData.dates.map(date => (
-                                                <th key={date} className="py-4 px-4 text-[10px] font-bold text-text-muted border-b border-border text-center w-[120px]">
+                                                <th key={date} className="sticky top-0 z-30 bg-surface-hover/90 backdrop-blur-md py-4 px-4 text-[10px] font-bold text-text-muted border-b border-border text-center w-[120px]">
                                                     {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                                                 </th>
                                             ))}
-                                            <th className="py-4 px-6 text-[10px] font-bold border-b border-border text-right w-[100px]" style={{ color: 'var(--chart-gold)' }}>
+                                            <th className="sticky top-0 z-30 bg-surface-hover/90 backdrop-blur-md py-4 px-6 text-[10px] font-bold border-b border-border text-right w-[100px]" style={{ color: 'var(--chart-gold)' }}>
                                                 Total
                                             </th>
-                                            <th className="py-4 px-6 text-[10px] font-bold border-b border-border text-right w-[100px]" style={{ color: 'var(--chart-gold)' }}>
+                                            <th className="sticky top-0 z-30 bg-surface-hover/90 backdrop-blur-md py-4 px-6 text-[10px] font-bold border-b border-border text-right w-[100px]" style={{ color: 'var(--chart-gold)' }}>
                                                 Score
                                             </th>
                                         </tr>
@@ -807,26 +831,26 @@ export function Reports() {
                                         ))}
                                     </tbody>
                                     <tfoot>
-                                        <tr className="bg-surface-hover/50 border-t border-border">
-                                            <td className="sticky left-0 z-20 bg-surface-hover/90 backdrop-blur-md py-6 px-8 text-[11px] font-bold text-text-main ">
+                                        <tr className="bg-surface-hover/50">
+                                            <td className="sticky bottom-0 left-0 z-40 bg-surface-hover/90 backdrop-blur-md py-6 px-8 text-[11px] font-bold text-text-main border-t border-border">
                                                 Totals
                                             </td>
-                                            {showEmpId && <td className="py-6 px-4"></td>}
-                                            {showEmail && <td className="py-6 px-4"></td>}
+                                            {showEmpId && <td className="sticky bottom-0 z-30 bg-surface-hover/90 backdrop-blur-md py-6 px-4 border-t border-border"></td>}
+                                            {showEmail && <td className="sticky bottom-0 z-30 bg-surface-hover/90 backdrop-blur-md py-6 px-4 border-t border-border"></td>}
                                             {tableData.dates.map(date => {
                                                 const dayTotal = tableData.rows.reduce((sum, r) => sum + (r.dailyMins[date] || 0), 0);
                                                 return (
-                                                    <td key={date} className="py-6 px-4 text-[12px] font-bold text-center tabular-nums" style={{ color: 'var(--chart-gold)' }}>
+                                                    <td key={date} className="sticky bottom-0 z-30 bg-surface-hover/90 backdrop-blur-md py-6 px-4 text-[12px] font-bold text-center tabular-nums border-t border-border" style={{ color: 'var(--chart-gold)' }}>
                                                         {dayTotal > 0 ? formatDuration(dayTotal) : <span className="text-text-muted">—</span>}
                                                     </td>
                                                 );
                                             })}
-                                            <td className="py-6 px-6 text-right">
+                                            <td className="sticky bottom-0 z-30 bg-surface-hover/90 backdrop-blur-md py-6 px-6 text-right border-t border-border">
                                                 <span className="text-[13px] font-bold tabular-nums" style={{ color: 'var(--chart-gold)' }}>
                                                     {formatDuration(tableData.rows.reduce((sum, r) => sum + r.totalMins, 0))}
                                                 </span>
                                             </td>
-                                            <td className="py-6 px-6 text-right">
+                                            <td className="sticky bottom-0 z-30 bg-surface-hover/90 backdrop-blur-md py-6 px-6 text-right border-t border-border">
                                                 <span className="text-[13px] font-bold tabular-nums" style={{ color: 'var(--chart-gold)' }}>
                                                     {tableData.rows.length > 0 ? Math.round(tableData.rows.reduce((sum, r) => sum + r.activityScore, 0) / tableData.rows.length) : 0}%
                                                 </span>
