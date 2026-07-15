@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Required: Mac App Store sandbox -->
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <!-- Outgoing network connections (Supabase REST API, IP geolocation) -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+    <!-- Allow user to open/save files via NSOpenPanel / NSSavePanel -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    <!--
+        com.apple.security.network.server is intentionally NOT included.
+        TrackOwl does not open any local listening socket; all traffic is
+        outgoing-only to Supabase. Apple Guideline 2.4.5(i) requires this
+        entitlement to be absent unless a local server is demonstrably needed.
+    -->
+</dict>
+</plist>
