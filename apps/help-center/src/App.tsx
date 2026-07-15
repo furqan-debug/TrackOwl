@@ -101,7 +101,7 @@ function Layout({ children }: { children: React.ReactNode }) {
     <div className="layout">
       <header className="header">
         <Link to="/" className="header-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img src="/support/logo-dark.svg" style={{ height: '32px', objectFit: 'contain' }} alt="TrackOwl" />
+          <img src="/support/logo-light.svg" style={{ height: '32px', objectFit: 'contain' }} alt="TrackOwl" />
         </Link>
 
         <div className="search-container" style={{ marginLeft: 'auto' }}>
