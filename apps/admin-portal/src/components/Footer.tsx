@@ -32,7 +32,6 @@ export function Footer() {
                             <li><a href="#features" onClick={(e) => handleAnchorClick(e, '#features')} className="hover:text-white transition-colors">Features</a></li>
                             <li><a href="#pricing" onClick={(e) => handleAnchorClick(e, '#pricing')} className="hover:text-white transition-colors">Pricing</a></li>
                             <li><a href="#security" onClick={(e) => handleAnchorClick(e, '#security')} className="hover:text-white transition-colors">Security</a></li>
-                            <li><a href="#showcase" onClick={(e) => handleAnchorClick(e, '#showcase')} className="hover:text-white transition-colors">Integrations</a></li>
                             <li><a href="/help" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Help Center</a></li>
                         </ul>
                     </div>
