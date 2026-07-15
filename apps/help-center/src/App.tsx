@@ -161,41 +161,41 @@ function Layout({ children }: { children: React.ReactNode }) {
       <footer className="footer-enterprise">
         <div className="footer-enterprise-container">
           <div className="footer-enterprise-col">
-            <Link to="/" className="footer-enterprise-brand">
-              <div className="footer-enterprise-logo">
-                <BookOpen size={16} />
-              </div>
-              TrackOwl Support
-            </Link>
-            <p className="footer-enterprise-tagline">
-              Smart time tracking for remote teams, by <strong>DigiReps</strong>.
-            </p>
-          </div>
-          <div className="footer-enterprise-col">
             <div className="footer-enterprise-heading">Product</div>
             <a href="https://trackowl.io#features" target="_blank" rel="noopener noreferrer">Features</a>
             <a href="https://trackowl.io#pricing" target="_blank" rel="noopener noreferrer">Pricing</a>
-            <a href="https://trackowl.io#download" target="_blank" rel="noopener noreferrer">Download</a>
-          </div>
-          <div className="footer-enterprise-col">
-            <div className="footer-enterprise-heading">Account</div>
-            <a href="https://TrackOwl-ai.vercel.app/login" target="_blank" rel="noopener noreferrer">Sign In</a>
-            <a href="https://TrackOwl-ai.vercel.app/signup" target="_blank" rel="noopener noreferrer">Start Free Trial</a>
-          </div>
-          <div className="footer-enterprise-col">
-            <div className="footer-enterprise-heading">Support</div>
+            <a href="https://trackowl.io#security" target="_blank" rel="noopener noreferrer">Security</a>
+            <a href="https://trackowl.io#showcase" target="_blank" rel="noopener noreferrer">Integrations</a>
             <Link to="/">Help Center</Link>
-            <a href="mailto:support@digireps.io">Contact Support</a>
-            <a href="https://github.com/furqan-debug/TrackOwl/releases" target="_blank" rel="noopener noreferrer">Release Notes</a>
+          </div>
+          
+          <div className="footer-enterprise-col">
+            <div className="footer-enterprise-heading">Company</div>
+            <a href="https://trackowl.io/about" target="_blank" rel="noopener noreferrer">About us</a>
+            <a href="mailto:contact@trackowl.io">Contact</a>
+          </div>
+
+          <div className="footer-enterprise-col">
+            <div className="footer-enterprise-heading">Legal</div>
+            <a href="https://trackowl.io/privacy" target="_blank" rel="noopener noreferrer">Privacy policy</a>
+            <a href="https://trackowl.io/terms" target="_blank" rel="noopener noreferrer">Terms of service</a>
+            <a href="https://trackowl.io/security" target="_blank" rel="noopener noreferrer">Security</a>
+          </div>
+
+          <div className="footer-enterprise-col">
+            <div className="footer-enterprise-heading">Contact</div>
+            <a href="mailto:contact@trackowl.io" style={{ color: '#facc15', fontWeight: '500' }}>
+              contact@trackowl.io
+            </a>
           </div>
         </div>
+        
         <div className="footer-enterprise-bottom">
           <div className="footer-enterprise-bottom-container">
-            <p>© {new Date().getFullYear()} TrackOwl by DigiReps. All rights reserved.</p>
-            <div className="footer-enterprise-bottom-links">
-              <a href="#">Privacy Policy</a>
-              <a href="#">Terms of Service</a>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img src="/header-white.svg" style={{ height: '20px', opacity: 0.5 }} alt="TrackOwl" />
             </div>
+            <p>TrackOwl™ , a product by DigiReps®</p>
           </div>
         </div>
       </footer>
