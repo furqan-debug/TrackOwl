@@ -5,7 +5,7 @@ import {
   Rocket, Building, Users, UsersRound, FolderKanban, CheckSquare,
   Monitor, Camera, Activity, CalendarClock, MapPin, DollarSign,
   CreditCard, FileText, Briefcase, Settings, Blocks, ShieldCheck, HelpCircle,
-  Mail, ExternalLink, X, Check, ChevronDown, Loader2
+  Check, ChevronDown, Loader2
 } from 'lucide-react';
 import { marked } from 'marked';
 import { motion, AnimatePresence } from 'framer-motion';
