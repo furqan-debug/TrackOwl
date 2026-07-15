@@ -156,7 +156,7 @@ function Layout({ children }: { children: React.ReactNode }) {
             <a href="https://trackowl.io#pricing" target="_blank" rel="noopener noreferrer">Pricing</a>
             <a href="https://trackowl.io#security" target="_blank" rel="noopener noreferrer">Security</a>
             <a href="https://trackowl.io#showcase" target="_blank" rel="noopener noreferrer">Integrations</a>
-            <Link to="/">Help Center</Link>
+            <a href="#" onClick={(e) => { e.preventDefault(); navigate('/'); window.scrollTo({ top: 0, behavior: 'smooth' }); }}>Help Center</a>
           </div>
           
           <div className="footer-enterprise-col">
