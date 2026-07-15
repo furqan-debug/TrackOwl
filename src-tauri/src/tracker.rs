@@ -184,10 +184,10 @@ pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
         const K_CG_EVENT_MOUSE_MOVED: u32 = 5;
         const K_CG_EVENT_SCROLL_WHEEL: u32 = 22;
 
-        let mut last_mouse_clicks = 0;
-        let mut last_key_presses = 0;
-        let mut last_mouse_moves = 0;
-        let mut last_scrolls = 0;
+        let mut last_mouse_clicks;
+        let mut last_key_presses;
+        let mut last_mouse_moves;
+        let mut last_scrolls;
 
         // Initialize counters
         unsafe {
