@@ -596,7 +596,6 @@ function LiveActivityTicker() {
 function HomePage() {
   const featuredCats = ["Getting Started", "Desktop App"];
   const trackingCats = ["Activity & App Usage", "Screenshots", "Locations & Job Sites", "Time Tracking"];
-  const adminCats = ["Organizations", "Projects", "Billing & Subscriptions", "Settings", "Security & Privacy", "Integrations", "Teams", "Tasks", "Reports", "Clients"];
 
   // Filter actual categories available in the app config list
   const featuredList = categories.filter(c => featuredCats.includes(c));
