@@ -668,13 +668,18 @@ fn update_plan(state: tauri::State<'_, Mutex<AppState>>, plan: String) -> Result
 pub fn run() {
     let state = AppState::default();
 
-    tauri::Builder::default()
+    let mut builder = tauri::Builder::default()
         .manage(Mutex::new(state))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
-        .plugin(tauri_plugin_dialog::init())
-        #[cfg(not(feature = "app-store"))]
-        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_dialog::init());
+
+    #[cfg(not(feature = "app-store"))]
+    {
+        builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+    }
+
+    builder
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = app.get_webview_window("main")
                 .map(|w| {
