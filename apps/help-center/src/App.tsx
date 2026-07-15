@@ -158,8 +158,46 @@ function Layout({ children }: { children: React.ReactNode }) {
         </AnimatePresence>
       </main>
       
-      <footer className="footer">
-         <p>© {new Date().getFullYear()} TrackOwl. All rights reserved.</p>
+      <footer className="footer-enterprise">
+        <div className="footer-enterprise-container">
+          <div className="footer-enterprise-col">
+            <Link to="/" className="footer-enterprise-brand">
+              <div className="footer-enterprise-logo">
+                <BookOpen size={16} />
+              </div>
+              TrackOwl Support
+            </Link>
+            <p className="footer-enterprise-tagline">
+              Smart time tracking for remote teams, by <strong>DigiReps</strong>.
+            </p>
+          </div>
+          <div className="footer-enterprise-col">
+            <div className="footer-enterprise-heading">Product</div>
+            <a href="https://trackowl.io#features" target="_blank" rel="noopener noreferrer">Features</a>
+            <a href="https://trackowl.io#pricing" target="_blank" rel="noopener noreferrer">Pricing</a>
+            <a href="https://trackowl.io#download" target="_blank" rel="noopener noreferrer">Download</a>
+          </div>
+          <div className="footer-enterprise-col">
+            <div className="footer-enterprise-heading">Account</div>
+            <a href="https://TrackOwl-ai.vercel.app/login" target="_blank" rel="noopener noreferrer">Sign In</a>
+            <a href="https://TrackOwl-ai.vercel.app/signup" target="_blank" rel="noopener noreferrer">Start Free Trial</a>
+          </div>
+          <div className="footer-enterprise-col">
+            <div className="footer-enterprise-heading">Support</div>
+            <Link to="/">Help Center</Link>
+            <a href="mailto:support@digireps.io">Contact Support</a>
+            <a href="https://github.com/furqan-debug/TrackOwl/releases" target="_blank" rel="noopener noreferrer">Release Notes</a>
+          </div>
+        </div>
+        <div className="footer-enterprise-bottom">
+          <div className="footer-enterprise-bottom-container">
+            <p>© {new Date().getFullYear()} TrackOwl by DigiReps. All rights reserved.</p>
+            <div className="footer-enterprise-bottom-links">
+              <a href="#">Privacy Policy</a>
+              <a href="#">Terms of Service</a>
+            </div>
+          </div>
+        </div>
       </footer>
     </div>
   );
@@ -429,6 +467,61 @@ ${message}`
 }
 
 
+function FAQsAccordion() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const faqs = [
+    {
+      q: "Why is the desktop app asking for Screen Recording permission?",
+      a: "TrackOwl uses macOS's built-in screen capture capability to take periodic screenshots during your active tracked sessions. This is a core feature for team transparency and accountability. You can grant this in System Settings → Privacy & Security → Screen Recording."
+    },
+    {
+      q: "How does offline tracking work?",
+      a: "If you lose connection, TrackOwl keeps recording time, activity levels, and queueing screenshots locally in a secure SQLite database on your device. Once you're back online, it syncs everything automatically to the cloud."
+    },
+    {
+      q: "Is my tracking data secure?",
+      a: "Yes. All data transmitted between the desktop app and our servers is encrypted using TLS 1.3. Data at rest is stored in highly secure, isolated databases with Supabase. We do not track keystrokes (only counts) and screens can be optionally blurred under company settings."
+    },
+    {
+      q: "How do I update the application?",
+      a: "If you installed the application from the Mac App Store, updates are handled directly by the App Store. If you downloaded it from our website, the app will securely notify you and auto-update in the background."
+    },
+    {
+      q: "How do I cancel my subscription or delete my account?",
+      a: "You can manage or cancel your subscription at any time under Settings → Billing on the TrackOwl web portal. To permanently delete your account and all associated logs, contact support@digireps.io."
+    }
+  ];
+
+  return (
+    <div className="faq-section">
+      <h2 className="faq-title">Frequently Asked Questions</h2>
+      <div className="faq-accordion">
+        {faqs.map((faq, index) => {
+          const isOpen = openIndex === index;
+          return (
+            <div key={index} className={`faq-item ${isOpen ? 'open' : ''}`}>
+              <button 
+                type="button" 
+                onClick={() => setOpenIndex(isOpen ? null : index)} 
+                className="faq-question"
+              >
+                <span>{faq.q}</span>
+                <ChevronDown className="faq-chevron" />
+              </button>
+              {isOpen && (
+                <div className="faq-answer">
+                  <p>{faq.a}</p>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function HomePage() {
   return (
     <div className="home-page animate-fade-in">
@@ -437,7 +530,7 @@ function HomePage() {
         <p className="home-subtitle">Find help, articles, and step-by-step guides for everything TrackOwl.</p>
       </div>
 
-      <div className="category-grid" style={{ marginBottom: '4rem' }}>
+      <div className="category-grid" style={{ marginBottom: '5rem' }}>
         {categories.map(cat => {
           const meta = categoryMeta[cat] || { icon: HelpCircle, desc: "Explore documentation and guides for this module." };
           const Icon = meta.icon;
@@ -452,6 +545,8 @@ function HomePage() {
           );
         })}
       </div>
+
+      <FAQsAccordion />
 
       <ContactBanner />
     </div>
