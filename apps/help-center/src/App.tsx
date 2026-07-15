@@ -85,17 +85,12 @@ const categoryMeta: Record<string, { icon: any, desc: string }> = {
 
 function Layout({ children }: { children: React.ReactNode }) {
   const [search, setSearch] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [darkMode]);
+    document.documentElement.classList.add('dark');
+  }, []);
 
   const searchResults = useMemo(() => {
     if (!search) return [];
@@ -105,12 +100,11 @@ function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="layout">
       <header className="header">
-        <Link to="/" className="header-logo">
-          <BookOpen color="var(--primary)" size={24} />
-          TrackOwl Help Center
+        <Link to="/" className="header-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img src="/support/header-2.svg" style={{ height: '32px', objectFit: 'contain' }} alt="TrackOwl" />
         </Link>
 
-        <div className="search-container">
+        <div className="search-container" style={{ marginLeft: 'auto' }}>
           <Search className="search-icon" size={18} />
           <input 
             type="text" 
@@ -137,10 +131,6 @@ function Layout({ children }: { children: React.ReactNode }) {
             </div>
           )}
         </div>
-
-        <button onClick={() => setDarkMode(!darkMode)} className="theme-toggle">
-          {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-        </button>
       </header>
 
       <main className="content-wrapper">
