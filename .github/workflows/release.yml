@@ -284,15 +284,19 @@ jobs:
 
       - name: Build App Store App Bundle
         env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-        run: npm run tauri build -- --target universal-apple-darwin --bundles app
+          # VITE_APP_STORE=true tells the frontend to disable the updater UI
+          # (Apple Guideline 2.4.5 vii — no self-updating in MAS apps)
+          VITE_APP_STORE: "true"
+        run: npm run tauri build -- --target universal-apple-darwin --bundles app --features app-store
         
       - name: Embed Provisioning Profile & Re-Sign
         run: |
           PROFILE_PATH="$HOME/Library/MobileDevice/Provisioning Profiles/profile.provisionprofile"
           APP_PATH="src-tauri/target/universal-apple-darwin/release/bundle/macos/TrackOwl.app"
-          ENTITLEMENTS_PATH="src-tauri/Entitlements.macOS.plist"
+          # Use the App Store-specific entitlements which:
+          #   - omits network.server (no local listening socket — Guideline 2.4.5(i))
+          #   - omits allow-jit / disable-library-validation (not MAS-safe)
+          ENTITLEMENTS_PATH="src-tauri/Entitlements.AppStore.plist"
           
           # Embed profile
           cp "$PROFILE_PATH" "$APP_PATH/Contents/embedded.provisionprofile"
@@ -305,11 +309,11 @@ jobs:
           echo "Extracted App ID: $APP_ID"
           echo "Extracted Team ID: $TEAM_ID"
           
-          # Inject them into Entitlements.macOS.plist
+          # Inject application-identifier and team-identifier into App Store entitlements
           /usr/libexec/PlistBuddy -c "Add :com.apple.application-identifier string $APP_ID" "$ENTITLEMENTS_PATH" || true
           /usr/libexec/PlistBuddy -c "Add :com.apple.developer.team-identifier string $TEAM_ID" "$ENTITLEMENTS_PATH" || true
           
-          # Re-sign the outer bundle using the new injected entitlements
+          # Re-sign the outer bundle using the App Store entitlements
           codesign --force --sign "$APPLE_SIGNING_IDENTITY" --entitlements "$ENTITLEMENTS_PATH" --options runtime "$APP_PATH"
         
       - name: Create Mac App Store PKG

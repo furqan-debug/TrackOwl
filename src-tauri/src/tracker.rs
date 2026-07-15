@@ -61,7 +61,7 @@ pub struct ScreenshotPayload {
 // ─── Global input hook — runs on a dedicated thread ─────────────────────────
 static IS_LISTENER_SPAWNED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", not(feature = "app-store")))]
 pub fn check_macos_accessibility() -> bool {
     #[link(name = "ApplicationServices", kind = "framework")]
     extern "C" {
@@ -93,7 +93,7 @@ pub fn check_macos_accessibility() -> bool {
     is_trusted
 }
 
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", not(feature = "app-store")))]
 pub fn open_macos_accessibility_settings() {
     let _ = std::process::Command::new("open")
         .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")
@@ -122,16 +122,10 @@ pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
         return; // Already spawned!
     }
 
-    #[cfg(target_os = "macos")]
-    {
-        println!("[tracker-diag] spawn_input_listener checking accessibility...");
-        if !check_macos_accessibility() {
-            println!("[tracker-diag] macOS Accessibility permissions not granted. Delaying listener.");
-            IS_LISTENER_SPAWNED.store(false, Ordering::SeqCst);
-            return;
-        }
-    }
-    println!("[tracker-diag] Accessibility granted. Spawning input listener thread.");
+    // NOTE: On macOS (both MAS and non-MAS builds) we use CGEventSourceCounterForEventType
+    // (HID system counters) which does NOT require Accessibility permission.
+    // The AX permission gate that was previously here has been removed.
+    // (Documented in Cargo.toml feature comment for the app-store flag.)
 
     #[cfg(not(target_os = "macos"))]
     thread::spawn(move || {
@@ -399,11 +393,19 @@ pub fn start_sample_loop(
                 counts.active_seconds.swap(0, Ordering::Relaxed),
             );
 
+            // Window title / app name: only available in non-MAS builds because
+            // active-win-pos-rs uses Accessibility APIs (AXIsProcessTrusted) which
+            // Apple disallows for non-accessibility purposes (Guideline 2.4.5).
+            // In the App Store build, these fields are left empty; time, activity
+            // percentage, and screenshots continue to function normally.
+            #[cfg(not(feature = "app-store"))]
             let (app_name, window_title) = if plan_type == "Premium" || plan_type == "Trial" {
                 get_active_window()
             } else {
                 (String::new(), String::new())
             };
+            #[cfg(feature = "app-store")]
+            let (app_name, window_title) = (String::new(), String::new());
             
             let domain = if plan_type == "Premium" || plan_type == "Trial" {
                 if last_title.as_ref() == Some(&window_title) {

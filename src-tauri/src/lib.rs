@@ -4,6 +4,7 @@
 
 mod tracker;
 mod cache;
+#[cfg(not(feature = "app-store"))]
 mod updater;
 
 use tauri::Manager;
@@ -239,7 +240,7 @@ fn start_tracking(
         }
     }
 
-    #[cfg(target_os = "macos")]
+    #[cfg(all(target_os = "macos", not(feature = "app-store")))]
     {
         println!("[tracker-diag] start_tracking called. Checking macOS permissions.");
         if !tracker::check_macos_accessibility() {
@@ -256,6 +257,19 @@ fn start_tracking(
         if !tracker::check_macos_screen_recording() {
             // CGRequestScreenCaptureAccess (now used in check_macos_screen_recording) 
             // automatically prompts the user if permission is missing.
+            return TrackingResult {
+                status: "error".to_string(),
+                session_id: None,
+                error: Some("macOS Screen Recording Permission Required: Please grant Screen Recording permission to 'TrackOwl' in System Settings (Privacy & Security -> Screen Recording), then try starting again.".to_string()),
+            };
+        }
+    }
+    #[cfg(all(target_os = "macos", feature = "app-store"))]
+    {
+        // App Store build: skip Accessibility permission check (not needed for
+        // CGEventSourceCounterForEventType-based input monitoring).
+        // Screen recording is still required for screenshots.
+        if !tracker::check_macos_screen_recording() {
             return TrackingResult {
                 status: "error".to_string(),
                 session_id: None,
@@ -518,6 +532,7 @@ fn show_notification_cmd(app: tauri::AppHandle, title: String, body: String) -> 
 }
 
 /// invoke('install_update')
+#[cfg(not(feature = "app-store"))]
 #[tauri::command]
 async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
     updater::install_update(app).await
@@ -658,7 +673,9 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_dialog::init())
+        #[cfg(not(feature = "app-store"))]
         .plugin(tauri_plugin_process::init())
+        #[cfg(not(feature = "app-store"))]
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             let _ = app.get_webview_window("main")
@@ -698,6 +715,7 @@ pub fn run() {
                 .build(app)?;
 
             tauri::async_runtime::spawn(async move {
+                #[cfg(not(feature = "app-store"))]
                 updater::check_for_updates(app_handle).await;
             });
 
@@ -747,6 +765,7 @@ pub fn run() {
             pause_tracking,
             resume_tracking,
             show_notification_cmd,
+            #[cfg(not(feature = "app-store"))]
             install_update,
             set_auth_token,
             get_inactivity_status,
