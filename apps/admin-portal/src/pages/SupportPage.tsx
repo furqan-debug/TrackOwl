@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Routes, Route, Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { 
   Search, ChevronRight, BookOpen, Clock,
@@ -92,6 +92,11 @@ function Layout({ children, search, setSearch }: { children: React.ReactNode; se
   const navigate = useNavigate();
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [contactType, setContactType] = useState<'sales' | 'demo' | 'general'>('demo');
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   const searchResults = useMemo(() => {
     if (!search) return [];
