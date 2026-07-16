@@ -157,9 +157,10 @@
     --text-main: #F8FAFC;
     --text-secondary: #E2E8F0;
     --text-muted: #CBD5E1;
-    --border-color: rgba(255, 255, 255, 0.06);
-    --border-soft: rgba(255, 255, 255, 0.04);
-    --border-hover: rgba(255, 255, 255, 0.15);
+    --border-color: rgba(255, 255, 255, 0.06) !important;
+    --border-soft: rgba(255, 255, 255, 0.04) !important;
+    --border-hover: rgba(255, 255, 255, 0.15) !important;
+    --color-border: rgba(255, 255, 255, 0.06) !important;
 
     /* VIBRANT GOLD (Dark Mode - Maximum Shine) */
     --accent: #FFD700;
