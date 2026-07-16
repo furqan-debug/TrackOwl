@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { useNavigate, Link } from 'react-router-dom';
-=======
-import { useNavigate } from 'react-router-dom';
->>>>>>> 1a3f757750b6081d2d9ea002247c0a3995feabc4
 import HeaderLogo from '../assets/branding/header-2.svg';
 
 export function Footer() {
@@ -36,11 +32,7 @@ export function Footer() {
                             <li><a href="#features" onClick={(e) => handleAnchorClick(e, '#features')} className="hover:text-white transition-colors">Features</a></li>
                             <li><a href="#pricing" onClick={(e) => handleAnchorClick(e, '#pricing')} className="hover:text-white transition-colors">Pricing</a></li>
                             <li><a href="#security" onClick={(e) => handleAnchorClick(e, '#security')} className="hover:text-white transition-colors">Security</a></li>
-<<<<<<< HEAD
                             <li><Link to="/support" className="hover:text-white transition-colors">Help Center</Link></li>
-=======
-                            <li><a href="/help" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Help Center</a></li>
->>>>>>> 1a3f757750b6081d2d9ea002247c0a3995feabc4
                         </ul>
                     </div>
 

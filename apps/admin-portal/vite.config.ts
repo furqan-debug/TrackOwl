@@ -9,16 +9,5 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
-<<<<<<< HEAD
-=======
-  },
-  server: {
-    proxy: {
-      '/help': {
-        target: 'http://localhost:5174',
-        changeOrigin: true,
-      }
-    }
->>>>>>> 1a3f757750b6081d2d9ea002247c0a3995feabc4
   }
 })
