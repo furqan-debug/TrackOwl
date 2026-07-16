@@ -189,7 +189,7 @@ export function Timesheets() {
             const fetchEnd = new Date(range.end.getTime() + 24 * 60 * 60 * 1000);
 
             let query = supabase.from('sessions')
-                .select('id, user_id, project_id, started_at, ended_at')
+                .select('id, user_id, project_id, started_at, ended_at, manual')
                 .eq('organization_id', organizationId)
                 .lt('started_at', fetchEnd.toISOString())
                 .or(`ended_at.is.null,ended_at.gt.${fetchStart.toISOString()}`)
