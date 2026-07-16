@@ -1,0 +1,107 @@
+import { NavLink } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  Building2, 
+  CreditCard, 
+  BarChart3, 
+  Activity, 
+  LifeBuoy, 
+  Settings,
+  X,
+  LogOut
+} from 'lucide-react';
+import { clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+import { useAuth } from '../../contexts/AuthContext';
+
+import iconSvg from '../../assets/branding/icon.svg';
+
+export function cn(...inputs: (string | undefined | null | false)[]) {
+  return twMerge(clsx(inputs));
+}
+
+const navItems = [
+  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Organizations', href: '/organizations', icon: Building2 },
+  { name: 'Billing & Plans', href: '/billing', icon: CreditCard },
+  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'Platform Health', href: '/platform', icon: Activity },
+  { name: 'Support', href: '/support', icon: LifeBuoy },
+  { name: 'Settings', href: '/settings', icon: Settings },
+];
+
+export function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean; setIsOpen: (val: boolean) => void }) {
+  const { user, signOut } = useAuth();
+  return (
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <div className={cn(
+        "fixed inset-y-0 left-0 z-50 w-72 glass border-r border-slate-200/60 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:w-64",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="h-full flex flex-col">
+          <div className="h-16 px-6 flex items-center justify-between border-b border-slate-100">
+            <div className="flex items-center gap-2">
+              <img src={iconSvg} alt="TrackOwl" className="w-8 h-8 object-contain" />
+              <span className="text-xl font-bold tracking-tight text-slate-900">TrackOwl<span className="text-primary">Admin</span></span>
+            </div>
+            <button onClick={() => setIsOpen(false)} className="lg:hidden text-slate-500 hover:text-slate-700">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto py-6 px-4">
+            <nav className="space-y-1">
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.name}
+                  to={item.href}
+                  className={({ isActive }) => cn(
+                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-300",
+                    isActive 
+                      ? "bg-primary text-white shadow-glow translate-x-1" 
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 hover:translate-x-1"
+                  )}
+                >
+                  {({ isActive }) => (
+                    <>
+                      <item.icon className={cn("w-5 h-5 transition-colors duration-300", isActive ? "text-white" : "text-slate-400")} />
+                      {item.name}
+                    </>
+                  )}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+
+          <div className="p-4 border-t border-slate-100 flex flex-col gap-2">
+            <div className="flex items-center gap-3 px-3 py-2">
+              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-medium">
+                {user?.email ? user.email.slice(0, 2).toUpperCase() : 'SA'}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-sm font-medium text-slate-900 truncate">Super Admin</span>
+                <span className="text-xs text-slate-500 truncate">{user?.email || 'developer@digireps.co'}</span>
+              </div>
+            </div>
+            <button
+              onClick={signOut}
+              className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-300 hover:translate-x-1"
+            >
+              <LogOut className="w-4.5 h-4.5" />
+              Sign Out
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}

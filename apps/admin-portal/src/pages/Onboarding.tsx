@@ -1,0 +1,316 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
+import {
+    CheckCircle2,
+    ArrowRight,
+    Rocket,
+    Check,
+    Users,
+    Briefcase
+} from 'lucide-react';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Card } from '../components/ui/Card';
+import clsx from 'clsx';
+import LogoIcon from '../assets/branding/3.svg';
+
+export function Onboarding() {
+    const navigate = useNavigate();
+    const { profile, refreshProfile } = useAuth();
+
+    const [step, setStep] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const [orgName, setOrgName] = useState('');
+    const [orgSize, setOrgSize] = useState('1-10');
+    const [industry, setIndustry] = useState('');
+    const [syncError, setSyncError] = useState(false);
+
+    // Automatic Redirect if already associated with an organization
+    useEffect(() => {
+        if (profile?.organization_id) {
+            navigate('/dashboard', { replace: true });
+        }
+    }, [profile, navigate]);
+
+    const industries = [
+        'Marketing Agency',
+        'Software Development',
+        'Customer Support',
+        'E-commerce',
+        'Real Estate',
+        'Fintech',
+        'Other'
+    ];
+
+    const handleOrgSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+            // 1. Create Organization
+            const { data: orgData, error: orgError } = await supabase
+                .from('organizations')
+                .insert({
+                    name: orgName,
+                    industry: industry,
+                    size: orgSize,
+                    plan_type: 'Basic',
+                    subscription_status: 'None',
+                    seats_purchased: 1
+                })
+                .select()
+                .single();
+
+            if (orgError) throw orgError;
+
+            // 2. Assign User to Organization
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Authentication failed: No user found.");
+
+            if (orgData) {
+                if (profile?.id) {
+                    // Scenario A: Invited user or skeleton profile already exists
+                    const { error: memberError } = await supabase
+                        .from('members')
+                        .update({
+                            status: 'Active',
+                            organization_id: orgData.id,
+                            organization_name: orgData.name,
+                            auth_user_id: user.id,
+                            role: 'Owner'
+                        })
+                        .eq('id', profile.id);
+
+                    if (memberError) throw memberError;
+                } else {
+                    // Scenario B: Fresh owner signup - Insert the member directly
+                    const { error: memberError } = await supabase
+                        .from('members')
+                        .insert({
+                            email: user.email,
+                            full_name: user.user_metadata.full_name || 'Owner',
+                            role: 'Owner',
+                            status: 'Active',
+                            organization_id: orgData.id,
+                            organization_name: orgData.name,
+                            auth_user_id: user.id
+                        });
+
+                    if (memberError) throw memberError;
+                }
+                
+                // 3. Force Sync Profile
+                await refreshProfile();
+            }
+
+            setStep(2);
+        } catch (err: any) {
+            console.error('Onboarding error:', err);
+            alert(err.message || 'Setup failed. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const steps = [
+        { id: 1, label: 'Company' },
+        { id: 2, label: 'Finalize' }
+    ];
+
+    const handleFinalLaunch = async () => {
+        setLoading(true);
+        // Final sanity check before navigating to ensure the ProtectedRoute won't catch them
+        const finalProfile = await refreshProfile();
+        
+        if (finalProfile?.status === 'Active' && finalProfile?.organization_id) {
+            navigate('/dashboard');
+        } else {
+            setSyncError(true);
+            setLoading(false);
+            console.error('Final sync check failed. Profile still not active:', finalProfile);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-main flex flex-col items-center">
+            
+            <div className="w-full max-w-[1200px] px-8 pt-8 flex items-center justify-between">
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+                    <div className="w-32 h-32 flex items-center justify-center overflow-hidden">
+                        <img src={LogoIcon} alt="TrackOwl" className="w-full h-full object-contain" />
+                    </div>
+                    {/* Name removed as per request */}
+                </div>
+                <div className="text-xs font-semibold text-text-muted bg-surface px-3 py-1 rounded-full border border-border">
+                    Step {step} of 2
+                </div>
+            </div>
+
+            <div className="flex-1 w-full max-w-[1210px] grid lg:grid-cols-2 gap-12 items-center px-8 pb-12">
+                
+                <div className="hidden lg:flex flex-col space-y-8 pr-12">
+                    <div className="space-y-4">
+                        <h1 className="text-5xl font-extrabold text-text-main leading-[1.1] tracking-tight">
+                            Build your workspace <br/>in minutes.
+                        </h1>
+                        <p className="text-lg text-text-muted leading-relaxed max-w-[440px]">
+                            Join 2,000+ teams using TrackOwl to streamline their operations and boost performance.
+                        </p>
+                    </div>
+
+                    <div className="space-y-6">
+                        {[
+                            { icon: Check, text: "Unlimited projects & clients", color: "blue" },
+                            { icon: Check, text: "Real-time activity monitoring", color: "blue" },
+                            { icon: Check, text: "Instant report generation", color: "blue" }
+                        ].map((feat, i) => (
+                            <div key={i} className="flex items-center gap-4 group">
+                                <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                                    <feat.icon className="w-3.5 h-3.5" strokeWidth={3} />
+                                </div>
+                                <span className="text-sm font-semibold text-text-main">{feat.text}</span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="pt-8 mt-8 border-t border-border">
+                        <div className="flex items-center gap-4 p-4 rounded-3xl bg-surface border border-border max-w-[340px] shadow-shell-sm">
+                            <div className="w-12 h-12 rounded-2xl bg-surface-hover flex items-center justify-center text-text-muted">
+                                <Rocket className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-blue-600 leading-none mb-1">Freemium</p>
+                                <p className="text-sm font-bold text-text-main">Free Forever · Build your workspace</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="w-full max-w-[520px] mx-auto">
+                    <Card className="p-8 md:p-12 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] bg-surface border-border rounded-[40px] relative overflow-hidden">
+                        
+                        <div className="flex items-center gap-4 mb-10 overflow-x-auto pb-1 no-scrollbar">
+                            {steps.map((s) => (
+                                <div key={s.id} className="flex items-center gap-2 group transition-all shrink-0">
+                                    <div className={clsx(
+                                        "w-2 h-2 rounded-full transition-all duration-300",
+                                        step === s.id ? "bg-blue-600 w-6" : step > s.id ? "bg-slate-900" : "bg-slate-200"
+                                    )} />
+                                    <span className={clsx(
+                                        "text-[10px] font-extrabold ",
+                                        step === s.id ? "text-blue-600" : step > s.id ? "text-text-main" : "text-text-muted"
+                                    )}>
+                                        {s.label}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+
+                        {step === 1 && (
+                            <form onSubmit={handleOrgSubmit} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="space-y-2">
+                                    <h2 className="text-3xl font-extrabold text-text-main tracking-tight leading-none">Your Organization</h2>
+                                    <p className="text-text-muted text-sm">Tell us about your company to tailor your dashboard.</p>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <Input
+                                        label="Name"
+                                        required
+                                        value={orgName}
+                                        onChange={e => setOrgName(e.target.value)}
+                                        placeholder="e.g. Acme Corp"
+                                        className="h-14 rounded-2xl text-base px-5 bg-surface-hover/50"
+                                    />
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-text-muted ml-1">Industry</label>
+                                            <div className="relative">
+                                                <select
+                                                    required
+                                                    value={industry}
+                                                    onChange={e => setIndustry(e.target.value)}
+                                                    className="w-full bg-surface-hover/50 border border-border h-14 rounded-2xl px-5 text-text-main text-sm appearance-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all outline-none"
+                                                >
+                                                    <option value="">Choose...</option>
+                                                    {industries.map(i => <option key={i} value={i}>{i}</option>)}
+                                                </select>
+                                                <Briefcase className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-text-muted ml-1">Team Size</label>
+                                            <div className="relative">
+                                                <select
+                                                    value={orgSize}
+                                                    onChange={e => setOrgSize(e.target.value)}
+                                                    className="w-full bg-surface-hover/50 border border-border h-14 rounded-2xl px-5 text-text-main text-sm appearance-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all outline-none"
+                                                >
+                                                    <option value="1-10">1-10</option>
+                                                    <option value="11-50">11-50</option>
+                                                    <option value="51-200">51-200</option>
+                                                    <option value="201+">201+</option>
+                                                </select>
+                                                <Users className="absolute right-5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <Button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full py-6 bg-blue-600 hover:bg-black shadow-xl shadow-blue-600/10 rounded-2xl font-bold group text-white border-0 transition-all duration-300"
+                                >
+                                    {loading ? 'Setting up...' : 'Create Workspace'}
+                                    {!loading && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />}
+                                </Button>
+                            </form>
+                        )}
+
+
+
+                        {step === 2 && (
+                            <div className="animate-in zoom-in-95 duration-700 text-center py-10">
+                                <div className="relative mb-10 w-fit mx-auto">
+                                    <div className="absolute inset-0 bg-blue-100 blur-3xl rounded-full scale-110" />
+                                    <div className="w-24 h-24 bg-blue-600 rounded-[32px] flex items-center justify-center relative z-10 shadow-2xl rotate-12 transition-transform hover:rotate-0 duration-500">
+                                        <CheckCircle2 className="w-12 h-12 text-white" />
+                                    </div>
+                                </div>
+                                
+                                <h1 className="text-4xl font-extrabold text-text-main mb-3 tracking-tight">Organization Created</h1>
+                                <p className="text-text-muted mb-8 text-lg font-medium">
+                                    Welcome home. <br/>
+                                    <strong>{orgName || 'Your Workspace'}</strong> is ready for action.
+                                </p>
+
+                                {syncError && (
+                                    <div className="mb-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 text-amber-500 text-[10px] font-bold animate-in shake duration-500">
+                                        Sync delay detected. Please try again in a moment.
+                                    </div>
+                                )}
+                                
+                                <Button
+                                    onClick={handleFinalLaunch}
+                                    disabled={loading}
+                                    className="w-full py-6 bg-blue-600 hover:bg-black shadow-2xl shadow-blue-600/10 rounded-2xl font-bold group text-white border-0 transition-all duration-300 mb-6"
+                                >
+                                    {loading ? 'Verifying Link...' : 'Launch Dashboard'}
+                                    {!loading && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />}
+                                </Button>
+                                
+                                <p className="text-[10px] font-bold text-text-muted tracking-[0.2em]">Operational Sync Complete</p>
+                            </div>
+                        )}
+
+                    </Card>
+                </div>
+            </div>
+        </div>
+    );
+}

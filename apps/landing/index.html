@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TrackOwl — Smart Time Tracking for Remote Teams</title>
+  <meta name="description"
+    content="TrackOwl combines activity tracking, automatic time capture, screenshots, and payroll in one powerful dashboard. Built for modern remote teams." />
+  
+  <!-- SEO & Canonical Link -->
+  <link rel="canonical" href="https://www.trackowl.io/" />
+  <meta name="google-site-verification" content="lE6UbYRp1hiLEoDOymJWwLMuuZap93aw3JChPUaLvdc" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.trackowl.io/" />
+  <meta property="og:title" content="TrackOwl — Smart Time Tracking for Remote Teams" />
+  <meta property="og:description"
+    content="Track your remote team's time, activity, and productivity from one powerful dashboard." />
+  <meta property="og:image" content="https://www.trackowl.io/icon.png" />
+
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="https://www.trackowl.io/" />
+  <meta property="twitter:title" content="TrackOwl — Smart Time Tracking for Remote Teams" />
+  <meta property="twitter:description"
+    content="Track your remote team's time, activity, and productivity from one powerful dashboard." />
+  <meta property="twitter:image" content="https://www.trackowl.io/icon.png" />
+
+  <!-- Structured Data / JSON-LD -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "TrackOwl",
+    "operatingSystem": "Windows, macOS",
+    "applicationCategory": "BusinessApplication, Productivity",
+    "offers": {
+      "@type": "Offer",
+      "price": "0.00",
+      "priceCurrency": "USD"
+    },
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.8",
+      "ratingCount": "120"
+    }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ── NAVBAR ────────────────────────────────────────────── -->
+  <nav class="nav" id="navbar">
+    <div class="container nav-inner">
+      <a href="#" class="nav-brand">
+        <div class="nav-logo">
+          <img src="icon.png" alt="TrackOwl Logo" style="width: 24px; height: 24px; object-fit: contain;">
+        </div>
+        <span>TrackOwl</span>
+      </a>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How it works</a></li>
+        <li><a href="#pricing">Pricing</a></li>
+        <li><a href="#download">Download</a></li>
+      </ul>
+      <div class="nav-actions">
+        <a href="https://TrackOwl-ai.vercel.app/login" class="btn-ghost">Sign In</a>
+        <a href="https://TrackOwl-ai.vercel.app/signup" class="btn-nav-primary">Start Free Trial</a>
+      </div>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── HERO ──────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-orbs">
+      <div class="orb orb-1"></div>
+      <div class="orb orb-2"></div>
+      <div class="orb orb-3"></div>
+    </div>
+    <div class="hero-grid-overlay"></div>
+    <div class="container hero-inner">
+      <div class="hero-badge reveal">
+        <span class="badge-dot"></span>
+        Trusted by 100+ remote teams worldwide
+      </div>
+      <h1 class="hero-title reveal">
+        Know exactly what your<br />
+        <span class="text-gradient">remote team is doing</span>
+      </h1>
+      <p class="hero-subtitle reveal">
+        TrackOwl automatically tracks time, captures screenshots, and measures
+        activity — giving you complete visibility without the micromanagement.
+      </p>
+      <div class="hero-cta reveal">
+        <a href="https://TrackOwl-ai.vercel.app/signup" class="btn-primary-hero" id="hero-trial-btn">
+          Start 14-Day Free Trial
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </a>
+        <a href="#download" class="btn-outline-hero" id="hero-download-btn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Download App
+        </a>
+      </div>
+      <p class="hero-note reveal">No credit card required &nbsp;·&nbsp; Cancel anytime &nbsp;·&nbsp; Setup in 5 minutes
+      </p>
+    </div>
+
+    <!-- Dashboard Mockup -->
+    <div class="container">
+      <div class="hero-mockup reveal">
+        <div class="mockup-chrome">
+          <div class="chrome-dots">
+            <span style="background:#ef4444"></span>
+            <span style="background:#f59e0b"></span>
+            <span style="background:#22c55e"></span>
+          </div>
+          <div class="chrome-url">TrackOwl Admin Portal — Team Overview</div>
+        </div>
+        <div class="mockup-body">
+          <div class="mockup-sidebar">
+            <div class="sidebar-logo">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+              TrackOwl
+            </div>
+            <nav class="sidebar-nav">
+              <div class="snav-item active">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="3" width="7" height="7" />
+                  <rect x="14" y="3" width="7" height="7" />
+                  <rect x="3" y="14" width="7" height="7" />
+                  <rect x="14" y="14" width="7" height="7" />
+                </svg>
+                Dashboard
+              </div>
+              <div class="snav-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
+                Members
+              </div>
+              <div class="snav-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                </svg>
+                Projects
+              </div>
+              <div class="snav-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="4" width="18" height="18" rx="2" />
+                  <line x1="16" y1="2" x2="16" y2="6" />
+                  <line x1="8" y1="2" x2="8" y2="6" />
+                  <line x1="3" y1="10" x2="21" y2="10" />
+                </svg>
+                Timesheets
+              </div>
+              <div class="snav-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="1" x2="12" y2="23" />
+                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                </svg>
+                Financials
+              </div>
+            </nav>
+          </div>
+          <div class="mockup-main">
+            <div class="mockup-topbar">
+              <span class="topbar-title">Team Overview</span>
+              <span class="topbar-date">Today · March 19, 2026</span>
+            </div>
+            <div class="mockup-stats">
+              <div class="mstat">
+                <div class="mstat-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </div>
+                <div class="mstat-val">47h 12m</div>
+                <div class="mstat-lbl">Team Hours Today</div>
+              </div>
+              <div class="mstat">
+                <div class="mstat-icon" style="background:linear-gradient(135deg,#22c55e,#0ea5e9)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                  </svg>
+                </div>
+                <div class="mstat-val" style="color:#22c55e">82%</div>
+                <div class="mstat-lbl">Avg Activity</div>
+              </div>
+              <div class="mstat">
+                <div class="mstat-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                  </svg>
+                </div>
+                <div class="mstat-val">8</div>
+                <div class="mstat-lbl">Active Members</div>
+              </div>
+              <div class="mstat">
+                <div class="mstat-icon" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  </svg>
+                </div>
+                <div class="mstat-val">5</div>
+                <div class="mstat-lbl">Active Projects</div>
+              </div>
+            </div>
+            <div class="mockup-table">
+              <div class="mtable-header">
+                <span>Member</span><span>Project</span><span>Today</span><span>Activity</span><span>Status</span>
+              </div>
+              <div class="mtable-row">
+                <span>
+                  <div class="mavatar" style="background:#6366f1">AK</div> Ahmed K.
+                </span>
+                <span>
+                  <div class="proj-dot" style="background:#3b82f6"></div>Website Redesign
+                </span>
+                <span>6h 24m</span>
+                <span>
+                  <div class="bar-wrap">
+                    <div class="bar-fill" style="width:91%;background:linear-gradient(90deg,#22c55e,#0ea5e9)"></div>
+                  </div><b>91%</b>
+                </span>
+                <span>
+                  <div class="status-pill online">Online</div>
+                </span>
+              </div>
+              <div class="mtable-row">
+                <span>
+                  <div class="mavatar" style="background:#f59e0b">SJ</div> Sara J.
+                </span>
+                <span>
+                  <div class="proj-dot" style="background:#8b5cf6"></div>Mobile App
+                </span>
+                <span>5h 50m</span>
+                <span>
+                  <div class="bar-wrap">
+                    <div class="bar-fill" style="width:78%;background:linear-gradient(90deg,#22c55e,#0ea5e9)"></div>
+                  </div><b>78%</b>
+                </span>
+                <span>
+                  <div class="status-pill online">Online</div>
+                </span>
+              </div>
+              <div class="mtable-row">
+                <span>
+                  <div class="mavatar" style="background:#10b981">MR</div> Mike R.
+                </span>
+                <span>
+                  <div class="proj-dot" style="background:#f59e0b"></div>Backend API
+                </span>
+                <span>4h 10m</span>
+                <span>
+                  <div class="bar-wrap">
+                    <div class="bar-fill" style="width:65%;background:linear-gradient(90deg,#f59e0b,#ef4444)"></div>
+                  </div><b>65%</b>
+                </span>
+                <span>
+                  <div class="status-pill away">Away</div>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SOCIAL PROOF ──────────────────────────────────────── -->
+  <div class="proof-strip">
+    <div class="container proof-inner">
+      <span class="proof-label">Loved by teams at</span>
+      <div class="proof-logos">
+        <span>Acme Corp</span>
+        <span>BuildFast</span>
+        <span>NexaWorks</span>
+        <span>Sphere IO</span>
+        <span>DevLink</span>
+        <span>Pixelate</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FEATURES ──────────────────────────────────────────── -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-chip reveal">Features</div>
+        <h2 class="section-title reveal">Everything in one place</h2>
+        <p class="section-sub reveal">Built by remote team managers who were frustrated with fragmented tools.</p>
+      </div>
+      <div class="features-bento reveal">
+        <div class="bento-card bento-wide">
+          <div class="bento-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+              <polyline points="12 6 12 12 16 14" />
+            </svg>
+          </div>
+          <h3>Automatic Time Tracking</h3>
+          <p>The desktop app silently tracks time in the background — no timers to start or forget. Perfect data, zero
+            friction.</p>
+          <div class="bento-visual">
+            <div class="time-ticker">
+              <div class="ticker-row"><span class="ticker-name">Ahmed K.</span><span
+                  class="ticker-time">06:24:37</span><span class="ticker-bar" style="width:91%"></span></div>
+              <div class="ticker-row"><span class="ticker-name">Sara J.</span><span
+                  class="ticker-time">05:50:12</span><span class="ticker-bar" style="width:78%"></span></div>
+              <div class="ticker-row"><span class="ticker-name">Mike R.</span><span
+                  class="ticker-time">04:10:05</span><span class="ticker-bar" style="width:65%"></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="bento-card">
+          <div class="bento-icon" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+          </div>
+          <h3>Smart Screenshots</h3>
+          <p>Random screenshots at configurable intervals. Verify your team is on-task without invasive monitoring.</p>
+        </div>
+        <div class="bento-card">
+          <div class="bento-icon" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+            </svg>
+          </div>
+          <h3>Activity Monitoring</h3>
+          <p>Mouse and keyboard activity is measured as a percentage — no keylogging, ever. Just honest data.</p>
+        </div>
+        <div class="bento-card">
+          <div class="bento-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="3" width="15" height="13" />
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+              <circle cx="5.5" cy="18.5" r="2.5" />
+              <circle cx="18.5" cy="18.5" r="2.5" />
+            </svg>
+          </div>
+          <h3>App & URL Tracking</h3>
+          <p>See which apps and websites your team uses during sessions to identify distractions and top tools.</p>
+        </div>
+        <div class="bento-card">
+          <div class="bento-icon" style="background:linear-gradient(135deg,#8b5cf6,#ec4899)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="1" x2="12" y2="23" />
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+            </svg>
+          </div>
+          <h3>Payroll & Invoicing</h3>
+          <p>Track pay rates, generate client invoices, and record expenses — all synced to tracked hours.</p>
+        </div>
+        <div class="bento-card bento-wide bento-team">
+          <div class="bento-icon" style="background:linear-gradient(135deg,#ec4899,#f59e0b)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
+          <div>
+            <h3>Team Management</h3>
+            <p>Invite members by email, assign them to projects and teams, set hourly rates, and control tracking
+              permissions per person.</p>
+          </div>
+          <div class="team-avatars">
+            <div class="t-avatar" style="background:#6366f1">AK</div>
+            <div class="t-avatar" style="background:#f59e0b">SJ</div>
+            <div class="t-avatar" style="background:#10b981">MR</div>
+            <div class="t-avatar" style="background:#ec4899">LP</div>
+            <div class="t-avatar" style="background:#0ea5e9">TN</div>
+            <div class="t-avatar t-more">+12</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HOW IT WORKS ──────────────────────────────────────── -->
+  <section class="how-section" id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-chip reveal">How it works</div>
+        <h2 class="section-title reveal">Up and running in under 5 minutes</h2>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card reveal">
+          <div class="step-num">01</div>
+          <div class="step-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <h3>Sign up & create your team</h3>
+          <p>Create your admin account, add your organization, and set up projects with hourly rates and budgets in
+            minutes.</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-card reveal">
+          <div class="step-num">02</div>
+          <div class="step-icon" style="background:linear-gradient(135deg,#0ea5e9,#6366f1)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.22h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.64a16 16 0 0 0 6 6l.96-1.91a2 2 0 0 1 2.12-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.5 15z" />
+            </svg>
+          </div>
+          <h3>Invite your team members</h3>
+          <p>Send email invitations. They set their own password and are linked to your workspace automatically — no
+            confusion.</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-card reveal">
+          <div class="step-num">03</div>
+          <div class="step-icon" style="background:linear-gradient(135deg,#10b981,#0ea5e9)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+          </div>
+          <h3>Team downloads the desktop app</h3>
+          <p>Members install the tiny TrackOwl app on Windows or Mac. It runs silently in the system tray — zero
+            setup needed.</p>
+        </div>
+        <div class="step-arrow">→</div>
+        <div class="step-card reveal">
+          <div class="step-num">04</div>
+          <div class="step-icon" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="20" x2="18" y2="10" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+              <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+          </div>
+          <h3>Coach from your dashboard</h3>
+          <p>Watch activity in real time. Review screenshots, timesheets, and app usage — export reports anytime.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── PRICING ────────────────────────────────────────────── -->
+  <section class="pricing-section" id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-chip reveal">Pricing</div>
+        <h2 class="section-title reveal">Simple, transparent pricing</h2>
+        <p class="section-sub reveal">Start free, scale as you grow. No hidden fees ever.</p>
+      </div>
+      <div class="pricing-grid">
+        <div class="price-card reveal">
+          <div class="price-plan">Starter</div>
+          <div class="price-amount">$0<span>/mo</span></div>
+          <div class="price-desc">Perfect for freelancers tracking their own time.</div>
+          <ul class="price-features">
+            <li class="yes">1 user</li>
+            <li class="yes">Unlimited projects</li>
+            <li class="yes">Time tracking</li>
+            <li class="yes">Activity reports</li>
+            <li class="no">Screenshot capture</li>
+            <li class="no">Team management</li>
+          </ul>
+          <a href="https://TrackOwl-ai.vercel.app/signup" class="btn-price-secondary" id="starter-btn">Get Started
+            Free</a>
+        </div>
+        <div class="price-card price-featured reveal">
+          <div class="price-popular">Most Popular</div>
+          <div class="price-plan">Team</div>
+          <div class="price-amount">$7<span>/user/mo</span></div>
+          <div class="price-desc">For growing remote teams that need accountability.</div>
+          <ul class="price-features">
+            <li class="yes">Up to 50 users</li>
+            <li class="yes">Everything in Starter</li>
+            <li class="yes">Screenshot monitoring</li>
+            <li class="yes">App & URL tracking</li>
+            <li class="yes">Payroll & invoicing</li>
+            <li class="yes">Priority support</li>
+          </ul>
+          <a href="https://TrackOwl-ai.vercel.app/signup?plan=team" class="btn-price-primary" id="team-btn">Start 14-Day
+            Trial</a>
+        </div>
+        <div class="price-card reveal">
+          <div class="price-plan">Enterprise</div>
+          <div class="price-amount">Custom</div>
+          <div class="price-desc">For large teams with advanced requirements.</div>
+          <ul class="price-features">
+            <li class="yes">Unlimited users</li>
+            <li class="yes">Everything in Team</li>
+            <li class="yes">SSO / SAML</li>
+            <li class="yes">Custom reporting</li>
+            <li class="yes">Dedicated support</li>
+            <li class="yes">SLA guarantee</li>
+          </ul>
+          <a href="mailto:sales@digireps.io" class="btn-price-secondary" id="enterprise-btn">Contact Sales</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── DOWNLOAD ───────────────────────────────────────────── -->
+  <section class="download-section" id="download">
+    <div class="download-orbs">
+      <div class="dl-orb dl-orb-1"></div>
+      <div class="dl-orb dl-orb-2"></div>
+    </div>
+    <div class="container">
+      <div class="section-header">
+        <div class="section-chip reveal">Download</div>
+        <h2 class="section-title reveal">Get the TrackOwl Desktop App</h2>
+        <p class="section-sub reveal">
+          The lightweight agent your team installs to start tracking. Runs silently in
+          the system tray — no attention needed after setup.
+        </p>
+      </div>
+
+      <!-- OS Selector Tabs -->
+      <div class="os-tabs reveal" role="tablist">
+        <button class="os-tab" id="tab-win" role="tab" aria-selected="false" onclick="switchOS('win')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
+          </svg>
+          Windows
+        </button>
+        <button class="os-tab" id="tab-mac" role="tab" aria-selected="false" onclick="switchOS('mac')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path
+              d="M22 17.607c-.786 2.28-3.139 6.317-5.563 6.361-1.608.031-2.125-.953-3.963-.953-1.837 0-2.412.923-3.932.983-2.572.099-6.542-5.827-6.542-10.995 0-4.747 3.308-7.1 6.198-7.143 1.55-.028 3.014 1.045 3.959 1.045.944 0 2.718-1.29 4.584-1.1.780.032 2.969.315 4.371 2.376l-.047.03zm-5.496-12.5c.53-1.418.168-2.907-.406-3.947-.574-1.04-1.734-1.817-2.785-1.86-.11 1.467.413 2.883 1.027 3.863.614.981 1.75 1.785 2.164 1.944z" />
+          </svg>
+          macOS
+        </button>
+      </div>
+
+      <!-- Download Panels -->
+      <div class="dl-panel reveal" id="panel-win">
+        <div class="dl-info">
+          <div class="dl-os-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
+            </svg>
+          </div>
+          <div class="dl-text">
+            <h3>TrackOwl for Windows</h3>
+            <p>Works on Windows 10 and Windows 11 (64-bit). Auto-updates in the background.</p>
+            <div class="dl-meta">
+              <span class="dl-chip">v2.0.51</span>
+              <span class="dl-chip">64-bit</span>
+              <span class="dl-chip">~5 MB installer</span>
+            </div>
+          </div>
+        </div>
+        <div class="dl-actions">
+          <a href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.51/TrackOwl_2.0.51_x64-setup.exe"
+            class="btn-download-main" id="btn-win-exe">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download .exe Installer
+          </a>
+          <a href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.51/TrackOwl_2.0.51_x64_en-US.msi"
+            class="btn-download-alt" id="btn-win-msi">
+            Download .msi (Enterprise)
+          </a>
+        </div>
+      </div>
+
+      <div class="dl-panel reveal" id="panel-mac" style="display:none">
+        <div class="dl-info">
+          <div class="dl-os-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M22 17.607c-.786 2.28-3.139 6.317-5.563 6.361-1.608.031-2.125-.953-3.963-.953-1.837 0-2.412.923-3.932.983-2.572.099-6.542-5.827-6.542-10.995 0-4.747 3.308-7.1 6.198-7.143 1.55-.028 3.014 1.045 3.959 1.045.944 0 2.718-1.29 4.584-1.1.780.032 2.969.315 4.371 2.376l-.047.03zm-5.496-12.5c.53-1.418.168-2.907-.406-3.947-.574-1.04-1.734-1.817-2.785-1.86-.11 1.467.413 2.883 1.027 3.863.614.981 1.75 1.785 2.164 1.944z" />
+            </svg>
+          </div>
+          <div class="dl-text">
+            <h3>TrackOwl for macOS</h3>
+            <p>Works on macOS 12 Monterey and later. Apple Silicon (M1/M2/M3/M4/M5) and Intel supported.</p>
+            <div class="dl-meta">
+              <span class="dl-chip">v2.0.51</span>
+              <span class="dl-chip">Apple Silicon / Intel</span>
+              <span class="dl-chip">~9 MB</span>
+            </div>
+          </div>
+        </div>
+        <div class="dl-actions">
+          <a href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.51/TrackOwl_2.0.51_aarch64.dmg"
+            class="btn-download-main" id="btn-mac-dmg">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download for Apple Silicon (M1/M2/M3/M4/M5)
+          </a>
+          <a href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.51/TrackOwl_2.0.51_x64.dmg"
+            class="btn-download-alt" id="btn-mac-arm">
+            Download for Intel Macs (v2.0.51)
+          </a>
+        </div>
+      </div>
+
+      <p class="dl-foot">Auto-updates are delivered silently in the background. <a
+          href="https://github.com/furqan-debug/TrackOwl/releases" target="_blank">View all releases on GitHub →</a></p>
+    </div>
+  </section>
+
+  <!-- ── FINAL CTA ──────────────────────────────────────────── -->
+  <section class="cta-section">
+    <div class="cta-orb"></div>
+    <div class="container cta-inner">
+      <div class="cta-chip reveal">Get Started</div>
+      <h2 class="reveal">Ready to take control of your remote team?</h2>
+      <p class="reveal">Join hundreds of companies using TrackOwl to build accountability without micromanaging.</p>
+      <div class="cta-btns reveal">
+        <a href="https://TrackOwl-ai.vercel.app/signup" class="btn-primary-hero" id="cta-trial-btn">
+          Start Your Free Trial
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </a>
+        <a href="#download" class="btn-outline-hero" id="cta-download-btn">Download App</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-col">
+        <a href="#" class="footer-brand">
+          <div class="nav-logo" style="width:32px;height:32px">
+            <img src="icon.png" alt="TrackOwl Logo" style="width: 100%; height: 100%; object-fit: contain;">
+          </div>
+          TrackOwl
+        </a>
+        <p class="footer-tagline">Smart time tracking for remote teams, by <strong>DigiReps</strong>.</p>
+      </div>
+      <div class="footer-col">
+        <div class="footer-heading">Product</div>
+        <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#download">Download</a>
+        <a href="#how-it-works">How it works</a>
+        <a href="/help">Help Center</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-heading">Account</div>
+        <a href="https://TrackOwl-ai.vercel.app/login">Sign In</a>
+        <a href="https://TrackOwl-ai.vercel.app/signup">Start Free Trial</a>
+        <a href="https://TrackOwl-ai.vercel.app/signup?plan=team">Team Plan</a>
+      </div>
+      <div class="footer-col">
+        <div class="footer-heading">Support</div>
+        <a href="/help">Help Center</a>
+        <a href="mailto:support@digireps.io">Contact Support</a>
+        <a href="mailto:sales@digireps.io">Sales</a>
+        <a href="https://github.com/furqan-debug/TrackOwl/releases" target="_blank">Release Notes</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 TrackOwl by DigiReps. All rights reserved.</p>
+      <div class="footer-bottom-links">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ── OS Detection & Tab Switching ────────────────────────────
+    function switchOS(os) {
+      ['win', 'mac'].forEach(o => {
+        document.getElementById('tab-' + o).classList.toggle('active', o === os);
+        document.getElementById('panel-' + o).style.display = o === os ? 'flex' : 'none';
+      });
+    }
+
+    // Auto-detect OS on load
+    const ua = navigator.userAgent.toLowerCase();
+    if (ua.includes('mac os')) {
+      switchOS('mac');
+    } else {
+      switchOS('win');
+    }
+
+    // ── Navbar scroll effect ────────────────────────────────────
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 40);
+    });
+
+    // ── Hamburger menu ──────────────────────────────────────────
+    document.getElementById('hamburger').addEventListener('click', function () {
+      this.classList.toggle('open');
+      document.getElementById('nav-links').classList.toggle('open');
+    });
+
+    // ── Scroll animations ───────────────────────────────────────
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    revealEls.forEach(el => observer.observe(el));
+
+    // ── Smooth scroll ───────────────────────────────────────────
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // close mobile menu
+          document.getElementById('nav-links').classList.remove('open');
+          document.getElementById('hamburger').classList.remove('open');
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

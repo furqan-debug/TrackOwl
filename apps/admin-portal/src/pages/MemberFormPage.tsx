@@ -1,0 +1,769 @@
+import { useEffect, useState, useRef } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { 
+    ChevronLeft, Save, 
+    User, Shield, DollarSign, Clock, 
+    Info, AlertCircle, Calendar,
+    Briefcase, Smartphone, Mail,
+    MapPin, CreditCard, Phone, Globe2,
+    Check
+} from 'lucide-react';
+import { 
+    Button, 
+    Card, 
+    PageLayout, 
+    LoadingState,
+    StatusBadge,
+    DatePicker
+} from '../components/ui';
+import { SecureImage } from '../components/ui/SecureImage';
+import clsx from 'clsx';
+
+type Role = 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
+
+export function MemberFormPage() {
+    const { id } = useParams<{ id: string }>();
+    const navigate = useNavigate();
+    
+    const [searchParams] = useSearchParams();
+    const requestedTab = searchParams.get('tab');
+    const tabs = ['General', 'Compensation', 'Limits', 'Dates', 'Contact', 'Additional'] as const;
+    const initialTab = tabs.find(t => t.toLowerCase() === requestedTab?.toLowerCase()) || 'General';
+
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [activeTab, setActiveTab] = useState<typeof tabs[number]>(initialTab);
+
+    // Form State
+    const [fullName, setFullName] = useState('');
+    const [role, setRole] = useState<Role>('User');
+    const [payRate, setPayRate] = useState('');
+    const [billRate, setBillRate] = useState('');
+    const [weeklyLimit, setWeeklyLimit] = useState('40');
+    const [dailyLimit, setDailyLimit] = useState('8');
+    const [department, setDepartment] = useState('');
+    const [employeeId, setEmployeeId] = useState('');
+    const [employeeType, setEmployeeType] = useState('Full-time');
+    const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
+    const [email, setEmail] = useState('');
+    
+    // Missing Fields State
+    const [osUsername, setOsUsername] = useState('');
+    const [birthday, setBirthday] = useState('');
+    const [hireDate, setHireDate] = useState('');
+    const [terminationDate, setTerminationDate] = useState('');
+    const [workAddress, setWorkAddress] = useState('');
+    const [homeAddress, setHomeAddress] = useState('');
+    const [personalEmail, setPersonalEmail] = useState('');
+    const [workPhone, setWorkPhone] = useState('');
+    const [personalPhone, setPersonalPhone] = useState('');
+    const [ssn, setSsn] = useState('');
+    const [emergencyContact, setEmergencyContact] = useState('');
+    const [skillsNotes, setSkillsNotes] = useState('');
+    const [nickname, setNickname] = useState('');
+    const [idleEnabled, setIdleEnabled] = useState(true);
+    const [idleLimit, setIdleLimit] = useState('10');
+    const [keepIdleMode, setKeepIdleMode] = useState<'prompt' | 'always' | 'never'>('prompt');
+    const [trackingEnabled, setTrackingEnabled] = useState(true);
+    const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+    const [location, setLocation] = useState('');
+
+    useEffect(() => {
+        if (id) loadMember();
+    }, [id]);
+
+    async function loadMember() {
+        try {
+            const { data, error: mError } = await supabase
+                .from('members')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (mError) throw mError;
+            if (data) {
+                setFullName(data.full_name || '');
+                setRole(data.role || 'User');
+                setPayRate(data.pay_rate?.toString() || '');
+                setBillRate(data.bill_rate?.toString() || '');
+                setWeeklyLimit(data.weekly_limit?.toString() || '40');
+                setDailyLimit(data.daily_limit?.toString() || '8');
+                setDepartment(data.department || '');
+                setEmployeeId(data.employee_id || '');
+                setEmployeeType(data.employee_type || 'Full-time');
+                setTimezone(data.timezone || 'UTC');
+                setEmail(data.email || '');
+                
+                // Load Restored Fields
+                setOsUsername(data.os_username || '');
+                setBirthday(data.birthday || '');
+                setHireDate(data.hire_date || '');
+                setTerminationDate(data.termination_date || '');
+                setWorkAddress(data.work_address || '');
+                setHomeAddress(data.home_address || '');
+                setPersonalEmail(data.personal_email || '');
+                setWorkPhone(data.work_phone || '');
+                setPersonalPhone(data.personal_phone || '');
+                setSsn(data.ssn || '');
+                setEmergencyContact(data.emergency_contact || '');
+                setSkillsNotes(data.skills_notes || '');
+                setNickname(data.nickname || '');
+                setIdleEnabled(data.idle_enabled ?? true);
+                setIdleLimit(data.idle_limit?.toString() || '10');
+                setKeepIdleMode(data.keep_idle_mode || 'prompt');
+                setTrackingEnabled(data.tracking_enabled ?? true);
+                setAvatarUrl(data.avatar_url || null);
+                setLocation(data.location || '');
+            }
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    async function handleSave() {
+        setSaving(true);
+        setError(null);
+        try {
+            const patch = {
+                full_name: fullName,
+                role,
+                pay_rate: parseFloat(payRate) || 0,
+                bill_rate: parseFloat(billRate) || 0,
+                weekly_limit: parseInt(weeklyLimit) || 0,
+                daily_limit: parseInt(dailyLimit) || 0,
+                department,
+                employee_id: employeeId,
+                employee_type: employeeType,
+                timezone,
+                
+                // Save Restored Fields
+                os_username: osUsername,
+                birthday: birthday || null,
+                hire_date: hireDate || null,
+                termination_date: terminationDate || null,
+                work_address: workAddress,
+                home_address: homeAddress,
+                personal_email: personalEmail,
+                work_phone: workPhone,
+                personal_phone: personalPhone,
+                ssn: ssn,
+                emergency_contact: emergencyContact,
+                skills_notes: skillsNotes,
+                nickname: nickname,
+                idle_enabled: idleEnabled,
+                idle_limit: parseInt(idleLimit) || 10,
+                keep_idle_mode: keepIdleMode,
+                tracking_enabled: trackingEnabled,
+                location: location,
+            };
+
+            const { error: sError } = await supabase
+                .from('members')
+                .update(patch)
+                .eq('id', id);
+
+            if (sError) throw sError;
+            navigate('/dashboard/people');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setSaving(false);
+        }
+    }
+
+    if (loading) return <div className="h-screen flex items-center justify-center"><LoadingState message="Retrieving member profile..." /></div>;
+
+
+    return (
+        <PageLayout
+            title="Edit Member"
+            description="Manage identity, access control, and workspace parameters"
+            backButton={{ onClick: () => navigate('/dashboard/people'), label: 'Back to Members' }}
+            actions={
+                <Button
+                    variant="primary"
+                    onClick={handleSave}
+                    loading={saving}
+                    leftIcon={<Save className="w-5 h-5" />}
+                    className="px-10 shadow-lg shadow-primary/20"
+                >
+                    Save Changes
+                </Button>
+            }
+        >
+            <div className="max-w-4xl mx-auto pb-20">
+                <div className="flex mx-auto bg-surface p-1.5 rounded-2xl border border-border w-fit mb-10 shadow-sm overflow-x-auto custom-scrollbar">
+                    {tabs.map(tab => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab)}
+                            className={clsx(
+                                "px-6 py-2.5 text-[10px] font-bold rounded-xl transition-all whitespace-nowrap",
+                                activeTab === tab ? "bg-surface text-[var(--chart-gold)] shadow-shell-sm" : "text-text-muted hover:text-text-primary"
+                            )}
+                        >
+                            {tab}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    {activeTab === 'General' && (
+                        <Card className="p-8 md:p-12 border-border/60 shadow-premium overflow-visible">
+                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-12 pb-8 border-b border-border/60">
+                                <div className="w-20 h-20 rounded-[28px] bg-primary/5 flex items-center justify-center text-primary text-2xl font-bold border border-primary/10 shadow-inner overflow-hidden">
+                                    {avatarUrl ? (
+                                        <SecureImage 
+                                            path={avatarUrl} 
+                                            bucket="avatars" 
+                                            className="w-full h-full object-cover" 
+                                        />
+                                    ) : (
+                                        (fullName || 'U').charAt(0).toUpperCase()
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <h3 className="text-xl font-bold text-text-primary tracking-tight mb-1">{fullName || 'Unknown Member'}</h3>
+                                    <p className="text-[11px] font-bold text-text-muted tracking-[0.2em] font-mono">{email}</p>
+                                </div>
+                                <StatusBadge variant={role === 'Admin' ? 'success' : 'default'}>{role.toUpperCase()}</StatusBadge>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
+                                <FormField
+                                    label="Full Identity"
+                                    value={fullName}
+                                    onChange={setFullName}
+                                    icon={<User className="w-4 h-4" />}
+                                    placeholder="Enter full name..."
+                                />
+                                <FormSelect
+                                    label="Access Protocol (Role)"
+                                    value={role}
+                                    onChange={(v: Role) => setRole(v)}
+                                    disabled={role === 'Owner'}
+                                    icon={<Shield className="w-4 h-4" />}
+                                    options={
+                                        role === 'Owner' 
+                                            ? [{ label: 'Owner', value: 'Owner' }]
+                                            : [
+                                                { label: 'User', value: 'User' },
+                                                { label: 'Viewer', value: 'Viewer' },
+                                                { label: 'Manager', value: 'Manager' },
+                                                { label: 'Admin', value: 'Admin' }
+                                            ]
+                                    }
+                                    description={role === 'Owner' ? "Ownership can only be transferred from Organization Settings." : undefined}
+                                />
+                                <FormField
+                                    label="Geographic Location (City/Country)"
+                                    value={location}
+                                    onChange={setLocation}
+                                    icon={<MapPin className="w-4 h-4" />}
+                                    placeholder="e.g. New York, USA..."
+                                />
+                                <FormField
+                                    label="Department / Sector"
+                                    value={department}
+                                    onChange={setDepartment}
+                                    icon={<Briefcase className="w-4 h-4" />}
+                                    placeholder="e.g. Engineering, Sales..."
+                                />
+                                <FormField
+                                    label="Employment ID"
+                                    value={employeeId}
+                                    onChange={setEmployeeId}
+                                    icon={<Shield className="w-4 h-4" />}
+                                    placeholder="e.g. EMP-101..."
+                                />
+                                <FormSelect
+                                    label="Employment Type"
+                                    value={employeeType}
+                                    onChange={setEmployeeType}
+                                    icon={<Briefcase className="w-4 h-4" />}
+                                    options={[
+                                        { label: 'Full-time', value: 'Full-time' },
+                                        { label: 'Part-time', value: 'Part-time' },
+                                        { label: 'Contract', value: 'Contract' },
+                                        { label: 'Intern', value: 'Intern' }
+                                    ]}
+                                />
+                                <FormSelect
+                                    label="Timezone Context"
+                                    value={timezone}
+                                    onChange={setTimezone}
+                                    icon={<Globe2 className="w-4 h-4" />}
+                                    options={[
+                                        { label: 'Universal Time (UTC)', value: 'UTC' },
+                                        { label: 'US Pacific Time (PT)', value: 'America/Los_Angeles' },
+                                        { label: 'US Mountain Time (MT)', value: 'America/Denver' },
+                                        { label: 'US Central Time (CT)', value: 'America/Chicago' },
+                                        { label: 'US Eastern Time (ET)', value: 'America/New_York' },
+                                        { label: 'Canada (Toronto)', value: 'America/Toronto' },
+                                        { label: 'UK (London)', value: 'Europe/London' },
+                                        { label: 'Europe (Central)', value: 'Europe/Paris' },
+                                        { label: 'Pakistan (PKT)', value: 'Asia/Karachi' },
+                                        { label: 'India (IST)', value: 'Asia/Kolkata' },
+                                        { label: 'Bangladesh (BST)', value: 'Asia/Dhaka' },
+                                        { label: 'Philippines (PHT)', value: 'Asia/Manila' },
+                                        { label: 'Singapore (SGT)', value: 'Asia/Singapore' },
+                                        { label: 'Australia (Sydney)', value: 'Australia/Sydney' }
+                                    ]}
+                                />
+                                <FormField
+                                    label="Nickname / Alias"
+                                    value={nickname}
+                                    onChange={setNickname}
+                                    icon={<User className="w-4 h-4" />}
+                                    placeholder="e.g. Furq..."
+                                />
+                            </div>
+                        </Card>
+                    )}
+
+                    {activeTab === 'Compensation' && (
+                        <Card className="p-10 border-border/60 shadow-shell-sm">
+                            <div className="flex items-center gap-4 mb-10">
+                                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                                    <DollarSign className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-text-primary tracking-tight">Compensation Model</h3>
+                                    <p className="text-[11px] font-bold text-text-muted font-mono">Hourly rates and resource valuation</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <div className="space-y-6">
+                                    <FormField
+                                        label="Pay Rate ($/hr)"
+                                        value={payRate}
+                                        onChange={setPayRate}
+                                        type="number"
+                                        icon={<DollarSign className="w-4 h-4" />}
+                                        placeholder="0.00"
+                                    />
+                                    <FormField
+                                        label="Bill Rate ($/hr)"
+                                        value={billRate}
+                                        onChange={setBillRate}
+                                        type="number"
+                                        icon={<DollarSign className="w-4 h-4" />}
+                                        placeholder="0.00"
+                                    />
+                                </div>
+                                <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-3xl p-8 flex items-start gap-5">
+                                    <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 shrink-0">
+                                        <Info className="w-5 h-5" />
+                                    </div>
+                                    <p className="text-xs text-text-muted leading-relaxed font-medium">
+                                        The pay rate reflects the cost of the resource to the organization, while the bill rate is what is charged to the client. These values are used for margin analysis and financial forecasting.
+                                    </p>
+                                </div>
+                            </div>
+                        </Card>
+                    )}
+
+                    {activeTab === 'Limits' && (
+                        <div className="space-y-8">
+                            <Card className="p-10 border-border/60 shadow-shell-sm">
+                                <div className="flex items-center gap-4 mb-10">
+                                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+                                        <Clock className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-text-primary tracking-tight">Working Boundaries</h3>
+                                        <p className="text-[11px] font-bold text-text-muted font-mono">Time thresholds and activity limits</p>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                    <div className="space-y-6">
+                                        <FormField
+                                            label="Weekly Boundary (Hrs)"
+                                            value={weeklyLimit}
+                                            onChange={setWeeklyLimit}
+                                            type="number"
+                                            icon={<Calendar className="w-4 h-4" />}
+                                            placeholder="40"
+                                        />
+                                        <FormField
+                                            label="Daily Boundary (Hrs)"
+                                            value={dailyLimit}
+                                            onChange={setDailyLimit}
+                                            type="number"
+                                            icon={<Clock className="w-4 h-4" />}
+                                            placeholder="8"
+                                        />
+                                    </div>
+                                    <div className="bg-amber-500/5 border border-amber-500/10 rounded-3xl p-8 flex items-start gap-5">
+                                        <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/20 shrink-0">
+                                            <AlertCircle className="w-5 h-5" />
+                                        </div>
+                                        <p className="text-xs text-text-muted leading-relaxed font-medium">
+                                            System thresholds ensure resources do not exceed their allocated capacity. Managers will be notified if a resource approaches their boundary limits.
+                                        </p>
+                                    </div>
+                                </div>
+                            </Card>
+
+                            <Card className="p-10 border-border/60 shadow-shell-sm">
+                                <div className="flex items-center gap-4 mb-10">
+                                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                        <Smartphone className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-text-primary tracking-tight">Tracking Control</h3>
+                                        <p className="text-[11px] font-bold text-text-muted font-mono">Behavioral monitoring and idle detection</p>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-8">
+                                    <div className="flex items-center justify-between p-6 bg-surface-subtle border border-border rounded-2xl">
+                                        <div>
+                                            <label className="text-sm font-bold text-text-primary block">Resource Tracking</label>
+                                            <p className="text-[11px] text-text-muted font-medium mt-1">Enable desktop activity monitoring for this resource</p>
+                                        </div>
+                                        <button
+                                            onClick={() => setTrackingEnabled(!trackingEnabled)}
+                                            className={clsx(
+                                                "relative w-12 h-6 rounded-full transition-all duration-300",
+                                                trackingEnabled ? 'bg-primary' : 'bg-border'
+                                            )}
+                                        >
+                                            <div className={clsx(
+                                                "absolute top-1 w-4 h-4 bg-surface rounded-full transition-all",
+                                                trackingEnabled ? 'left-7' : 'left-1'
+                                            )} />
+                                        </button>
+                                    </div>
+
+                                    <div className="flex items-center justify-between p-6 bg-surface-subtle border border-border rounded-2xl">
+                                        <div>
+                                            <label className="text-sm font-bold text-text-primary block">Idle Detection</label>
+                                            <p className="text-[11px] text-text-muted font-medium mt-1">Automatically stop timer when inactivity is detected</p>
+                                        </div>
+                                        <button
+                                            onClick={() => setIdleEnabled(!idleEnabled)}
+                                            className={clsx(
+                                                "relative w-12 h-6 rounded-full transition-all duration-300",
+                                                idleEnabled ? 'bg-primary' : 'bg-border'
+                                            )}
+                                        >
+                                            <div className={clsx(
+                                                "absolute top-1 w-4 h-4 bg-surface rounded-full transition-all",
+                                                idleEnabled ? 'left-7' : 'left-1'
+                                            )} />
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-4 p-6 bg-surface-subtle border border-border rounded-2xl">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <label className="text-sm font-bold text-text-primary block">Keep Idle Time (Hubstaff Mode)</label>
+                                                <p className="text-[11px] text-text-muted font-medium mt-1">Determine how inactivity is handled in the tracker</p>
+                                            </div>
+                                            <div className="relative group">
+                                                <select
+                                                    value={keepIdleMode}
+                                                    onChange={e => setKeepIdleMode(e.target.value as any)}
+                                                    className="pl-6 pr-10 py-2.5 bg-surface border border-border rounded-xl text-[11px] font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer shadow-shell-sm"
+                                                >
+                                                    <option value="prompt">PROMPT (USER DECIDES)</option>
+                                                    <option value="always">ALWAYS KEEP</option>
+                                                    <option value="never">NEVER KEEP</option>
+                                                </select>
+                                                <ChevronLeft className="w-3 h-3 text-primary absolute right-4 top-1/2 -translate-y-1/2 -rotate-90 pointer-events-none" />
+                                            </div>
+                                        </div>
+                                        <div className="bg-surface/40 p-3 rounded-lg border border-border/40">
+                                            <p className="text-[10px] text-text-muted font-medium italic">
+                                                {keepIdleMode === 'prompt' && "The user will be asked if they want to keep or discard the idle time when they return."}
+                                                {keepIdleMode === 'always' && "All idle time is automatically recorded as billable working hours."}
+                                                {keepIdleMode === 'never' && "All inactive time is automatically discarded and not recorded."}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {idleEnabled && (
+                                        <div className="animate-in slide-in-from-top-4 duration-300">
+                                            <FormField
+                                                label="Idle Threshold (Minutes)"
+                                                value={idleLimit}
+                                                onChange={setIdleLimit}
+                                                type="number"
+                                                icon={<Clock className="w-4 h-4" />}
+                                                placeholder="10"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            </Card>
+                        </div>
+                    )}
+
+                    {activeTab === 'Dates' && (
+                        <Card className="p-10 border-border/60 shadow-shell-sm">
+                            <div className="flex items-center gap-4 mb-10">
+                                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                                    <Calendar className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-text-primary tracking-tight">Temporal Milestones</h3>
+                                    <p className="text-[11px] font-bold text-text-muted font-mono">Employment lifecycle and personal dates</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                                <FormField
+                                    label="Hire Date"
+                                    value={hireDate}
+                                    onChange={setHireDate}
+                                    type="date"
+                                    icon={<Calendar className="w-4 h-4" />}
+                                />
+                                <FormField
+                                    label="Termination Date"
+                                    value={terminationDate}
+                                    onChange={setTerminationDate}
+                                    type="date"
+                                    icon={<Calendar className="w-4 h-4" />}
+                                />
+                                <FormField
+                                    label="Date of Birth"
+                                    value={birthday}
+                                    onChange={setBirthday}
+                                    type="date"
+                                    icon={<Calendar className="w-4 h-4" />}
+                                />
+                                <FormField
+                                    label="Workstation OS Username"
+                                    value={osUsername}
+                                    onChange={setOsUsername}
+                                    icon={<User className="w-4 h-4" />}
+                                    placeholder="e.g. furqan_s..."
+                                />
+                            </div>
+                        </Card>
+                    )}
+
+                    {activeTab === 'Contact' && (
+                        <Card className="p-10 border-border/60 shadow-shell-sm">
+                            <div className="flex items-center gap-4 mb-10">
+                                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
+                                    <Smartphone className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-text-primary tracking-tight">Contact Matrix</h3>
+                                    <p className="text-[11px] font-bold text-text-muted font-mono">Communication channels and physical locations</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                                <FormField
+                                    label="Work Phone"
+                                    value={workPhone}
+                                    onChange={setWorkPhone}
+                                    icon={<Smartphone className="w-4 h-4" />}
+                                    placeholder="+1 (000) 000-0000"
+                                />
+                                <FormField
+                                    label="Personal Phone"
+                                    value={personalPhone}
+                                    onChange={setPersonalPhone}
+                                    icon={<Smartphone className="w-4 h-4" />}
+                                    placeholder="+1 (000) 000-0000"
+                                />
+                                <FormField
+                                    label="Personal / Alternative Email"
+                                    value={personalEmail}
+                                    onChange={setPersonalEmail}
+                                    icon={<Mail className="w-4 h-4" />}
+                                    placeholder="personal@example.com"
+                                />
+                                <div className="md:col-span-2 space-y-6">
+                                    <FormField
+                                        label="Professional Work Address"
+                                        value={workAddress}
+                                        onChange={setWorkAddress}
+                                        icon={<MapPin className="w-4 h-4" />}
+                                        placeholder="Enter work location..."
+                                    />
+                                    <FormField
+                                        label="Primary Residential Address"
+                                        value={homeAddress}
+                                        onChange={setHomeAddress}
+                                        icon={<MapPin className="w-4 h-4" />}
+                                        placeholder="Enter home address..."
+                                    />
+                                </div>
+                            </div>
+                        </Card>
+                    )}
+
+                    {activeTab === 'Additional' && (
+                        <Card className="p-10 border-border/60 shadow-shell-sm">
+                            <div className="flex items-center gap-4 mb-10">
+                                <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
+                                    <Shield className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-text-primary tracking-tight">Legacy & Metadata</h3>
+                                    <p className="text-[11px] font-bold text-text-muted font-mono">Sensitive identification and supplemental data</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+                                <FormField
+                                    label="Social Security Number (SSN)"
+                                    value={ssn}
+                                    onChange={setSsn}
+                                    type="password"
+                                    icon={<CreditCard className="w-4 h-4" />}
+                                    placeholder="XXX-XX-XXXX"
+                                />
+                                <FormField
+                                    label="Emergency Contact Info"
+                                    value={emergencyContact}
+                                    onChange={setEmergencyContact}
+                                    icon={<Phone className="w-4 h-4" />}
+                                    placeholder="Name and Phone Number..."
+                                />
+                                <div className="md:col-span-2 space-y-2">
+                                    <label className="text-[10px] font-bold text-text-muted ml-1">Professional Skills & Observations</label>
+                                    <textarea
+                                        value={skillsNotes}
+                                        onChange={e => setSkillsNotes(e.target.value)}
+                                        placeholder="Enter notes, skill sets, or performance observations..."
+                                        className="w-full px-6 py-4 bg-surface-subtle border border-border rounded-xl text-sm font-bold text-text-primary outline-none focus:border-primary transition-all min-h-[150px] resize-none"
+                                    />
+                                </div>
+                            </div>
+                        </Card>
+                    )}
+                </div>
+
+                {error && (
+                    <div className="mt-8 bg-rose-500/5 border border-rose-500/10 p-6 rounded-3xl flex items-center gap-4 animate-in slide-in-from-top-4">
+                        <AlertCircle className="w-6 h-6 text-rose-500" />
+                        <p className="text-xs font-bold text-rose-500 font-mono">{error}</p>
+                    </div>
+                )}
+            </div>
+        </PageLayout>
+    );
+}
+
+function FormField({ label, value, onChange, type = 'text', icon, placeholder }: any) {
+    return (
+        <div className="space-y-2 group flex flex-col">
+            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em]">{label}</label>
+            <div className="relative mt-auto">
+                {type === 'date' ? (
+                    <DatePicker 
+                        value={value}
+                        onChange={onChange}
+                        className="w-full h-[52px]"
+                    />
+                ) : (
+                    <>
+                        {icon && (
+                            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors">
+                                {icon}
+                            </div>
+                        )}
+                        <input
+                            type={type}
+                            value={value || ''}
+                            onChange={e => onChange(e.target.value)}
+                            placeholder={placeholder}
+                            className={clsx(
+                                "w-full h-[52px] bg-surface border border-border rounded-xl text-[13px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400",
+                                icon ? "pl-12 pr-5" : "px-5"
+                            )}
+                        />
+                    </>
+                )}
+            </div>
+        </div>
+    );
+}
+
+function FormSelect({ label, value, onChange, options, disabled, icon, description }: any) {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    const activeLabel = options.find((o: any) => o.value === value)?.label || value;
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    return (
+        <div ref={containerRef} className="space-y-2 group flex flex-col relative">
+            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em]">
+                {label}
+            </label>
+            <div className="relative mt-auto">
+                <div 
+                    onClick={() => !disabled && setIsOpen(!isOpen)}
+                    className={clsx(
+                        "w-full h-[52px] bg-surface border rounded-xl text-[13px] font-bold text-text-primary outline-none transition-all flex items-center justify-between select-none cursor-pointer",
+                        icon ? "pl-12 pr-10" : "px-5 pr-10",
+                        isOpen ? "border-primary ring-4 ring-primary/10" : "border-border",
+                        disabled ? "opacity-50 cursor-not-allowed bg-surface-subtle" : "hover:border-[var(--border-hover)]"
+                    )}
+                >
+                    {icon && (
+                        <div className={clsx(
+                            "absolute left-5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none",
+                            isOpen ? "text-primary" : "text-text-muted"
+                        )}>
+                            {icon}
+                        </div>
+                    )}
+                    <span className="truncate">{activeLabel}</span>
+                    <ChevronLeft className={clsx(
+                        "w-4 h-4 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 transition-transform duration-300 pointer-events-none",
+                        isOpen ? "-rotate-90 text-primary" : "-rotate-90"
+                    )} />
+                </div>
+
+                {isOpen && (
+                    <div className="absolute top-[calc(100%+6px)] left-0 w-full bg-main border border-border rounded-xl shadow-premium z-[100] flex flex-col p-1.5 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[240px] overflow-y-auto no-scrollbar">
+                        {options.map((opt: any) => (
+                            <div
+                                key={opt.value}
+                                onClick={() => {
+                                    onChange(opt.value);
+                                    setIsOpen(false);
+                                }}
+                                className={clsx(
+                                    "flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-all text-[12px] font-bold mb-0.5 last:mb-0",
+                                    value === opt.value 
+                                        ? "bg-surface-hover text-primary" 
+                                        : "text-text-primary hover:bg-surface"
+                                )}
+                            >
+                                <span>{opt.label}</span>
+                                {value === opt.value && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+            {description && <p className="text-[10px] text-text-muted italic mt-1">{description}</p>}
+        </div>
+    );
+}
+
