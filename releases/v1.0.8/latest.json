@@ -1,0 +1,11 @@
+{
+  "version": "1.0.8",
+  "notes": "Trackora v1.0.8 - Ghost Session Fix & Release Update",
+  "pub_date": "2026-04-02T01:30:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3anppWkErd2Y1bUc3RjFxb2syOXhKRG1IODVsWWdLcjFuaDFBekVkcXFOUVg4YWo2SEQwbEJ0T29MRzBFWlpYNmZVNEJ5Q2MwUFlBOEk2VVFCUm8vM3dVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc1MDc1NzQ3CWZpbGU6VHJhY2tvcmFfMS4wLjhfeDY0LXNldHVwLmV4ZQp5QWtkZTFpd2YxK0JCZ1lWcG1SdHdsNldwVGpuMlhWamVqUjgrZ2QxZ0ZHTkhCUEhacmlDK2tkb2NZUnhzSTRMakJleHVzQlRFMUh1Q2dOdncxUVJEQT09Cg==",
+      "url": "https://github.com/furqan-debug/Trackora/releases/download/v1.0.8/Trackora_1.0.8_x64-setup.exe"
+    }
+  }
+}

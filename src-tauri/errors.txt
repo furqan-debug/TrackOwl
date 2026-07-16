@@ -1,0 +1,51 @@
+cargo :     Checking 
+digireps-tracker v1.0.0 
+(H:\DigiReps\DigiReps 
+Tracker\src-tauri)
+At line:1 char:1
++ cargo check --manifest-path 
+src-tauri/Cargo.toml 2>&1 | Out-File 
+-Fil ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpe 
+   cified: (    Checking di...cker\  
+  src-tauri):String) [], RemoteExc   
+ eption
+    + FullyQualifiedErrorId : Native 
+   CommandError
+ 
+error: mismatched closing delimiter: 
+`}`
+   --> src\tracker.rs:342:18
+    |
+342 |     thread::spawn(move || {
+    |                  ^ unclosed 
+delimiter
+...
+399 |     });
+    |     ^ mismatched closing 
+delimiter
+
+error: unexpected closing delimiter: 
+`)`
+   --> src\tracker.rs:399:6
+    |
+379 |                         if 
+upload_res.is_ok() {
+    |                                
+               - this delimiter 
+might not be properly closed...
+...
+388 |                             }
+    |                             - 
+...as it matches this but it has 
+different indentation
+...
+399 |     });
+    |      ^ unexpected closing 
+delimiter
+
+error: could not compile 
+`digireps-tracker` (lib) due to 2 
+previous errors

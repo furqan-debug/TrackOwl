@@ -1,0 +1,11 @@
+{
+  "version": "1.1.9",
+  "notes": "Trackora v1.1.9 - Atomic session management. Fixed race conditions during tracking start by using server-side RPC functions. Required migration: fix_session_conflicts.sql",
+  "pub_date": "2026-04-16T19:17:52.051Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajNyOVRZWlYzcjluL00xVDVNU2ovQkJTekxkQVk0ejhGWVVSL3ZDY3hUcXMveDhwc1JEM1VnNVMxc0ZieXFaTVgrR0pJZElXTzZjQW9BdnZVOXVGUWdFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2MzY3MDcxCWZpbGU6VHJhY2tvcmFfMS4xLjlfeDY0LXNldHVwLmV4ZQppcUZvSmw2TEJVUEU1UGl1Uk5HYzNyQXpXR3RSTWhLc2h6d24yUCs1VEpnNm13LzdXZVkrU1hVc21VL2R0Q084akg2WWd4MlRCWkI5S1QzK21uM2NEUT09Cg==",
+      "url": "https://github.com/furqan-debug/Trackora/releases/download/v1.1.9/Trackora_1.1.9_x64-setup.exe"
+    }
+  }
+}

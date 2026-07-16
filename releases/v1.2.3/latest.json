@@ -1,0 +1,11 @@
+{
+  "version": "1.2.3",
+  "notes": "Trackora v1.2.3 - Login and project assignment stability fixes, enforced quit-on-close behavior to ensure session synchronization.",
+  "pub_date": "2026-04-22T19:14:11.087Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUcGZIa3dzSit3ajhqS1IzQWQyTnRkWEZ6UmI2UHptcUpWMHF2eVNDTE1DV3JWYVd4UENma3JpNGg3STZrMGNDVzB0ZENQREo0WDBDR1N5Tmp6NGphdXhQMXUvVC81OGdVPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc2ODg1MjUwCWZpbGU6VHJhY2tvcmFfMS4yLjNfeDY0LXNldHVwLmV4ZQpQakRkSTdpQ0NVT1AwQ1JDQ09YaXdJQStSVG1WMGZpaGxrZ0VSMjdMRytmb0s1dkx2NnBiVFpWNmh0L1BaNnMyLzlFWEFJS2tqTDNmQjBKTWk0cFZCQT09Cg==",
+      "url": "https://github.com/furqan-debug/Trackora/releases/download/v1.2.3/Trackora_1.2.3_x64-setup.exe"
+    }
+  }
+}

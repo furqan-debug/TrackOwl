@@ -1,0 +1,36 @@
+﻿cargo :     Checking 
+digireps-tracker v1.0.0 
+(H:\DigiReps\DigiReps 
+Tracker\src-tauri)
+At line:1 char:1
++ cargo check 
+--message-format=short 2> 
+cargo_errors.txt; Get-Content c 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : 
+NotSpe    cified: (    Checking 
+di...cker\    src-tauri):String) 
+[], RemoteExc    eption
+    + FullyQualifiedErrorId : 
+Native    CommandError
+ 
+src\tracker.rs:381:52: 
+error[E0597]: `app_state` does 
+not live long enough: borrowed 
+value does not live long enough
+src\tracker.rs:382:33: 
+error[E0597]: `locked_state` 
+does not live long enough: 
+borrowed value does not live 
+long enough
+src\lib.rs:136:13: warning: 
+variable does not need to be 
+mutable
+warning: `digireps-tracker` 
+(lib) generated 1 warning
+error: could not compile 
+`digireps-tracker` (lib) due to 
+2 previous errors; 1 warning 
+emitted

@@ -1,0 +1,44 @@
+require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../supabase/.env') });
+
+const { createClient } = require('@supabase/supabase-js');
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const serviceKey = process.env.SUPABASE_SERVICE_KEY;
+
+const supabase = createClient(supabaseUrl, serviceKey);
+
+async function checkTypes() {
+    console.log("Checking columns of sessions...");
+    const { data: cols, error } = await supabase
+        .from('sessions')
+        .select('user_id, project_id')
+        .limit(1);
+    
+    if (error) console.error("Error sessions:", error);
+    else console.log("Sessions sample:", cols);
+
+    const { data: info, error: errInfo } = await supabase
+        .rpc('execute_sql', {
+            sql_text: "SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'sessions';"
+        });
+    if (errInfo) {
+        // If execute_sql is not available, we can just print the keys of a record
+        console.log("execute_sql not available, doing query instead.");
+        const { data: sessionsRecord } = await supabase.from('sessions').select('*').limit(1);
+        console.log("sessionsRecord keys/values:", sessionsRecord ? sessionsRecord[0] : null);
+        
+        const { data: membersRecord } = await supabase.from('members').select('*').limit(1);
+        console.log("membersRecord keys/values:", membersRecord ? membersRecord[0] : null);
+
+        const { data: screenshotsRecord } = await supabase.from('screenshots').select('*').limit(1);
+        console.log("screenshotsRecord keys/values:", screenshotsRecord ? screenshotsRecord[0] : null);
+
+        const { data: activityRecord } = await supabase.from('activity_samples').select('*').limit(1);
+        console.log("activityRecord keys/values:", activityRecord ? activityRecord[0] : null);
+    } else {
+        console.log("Sessions columns:", info);
+    }
+}
+
+checkTypes();
