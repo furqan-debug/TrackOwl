@@ -1,0 +1,5 @@
+--- AUTH USERS ---
+ID: 5165e0a8-180f-42ee-9e9e-353f084a394d | Email: furqanfreelance1@gmail.com
+
+--- MEMBERS TABLE ---
+ID: 528fbca9-9e8f-4c9c-b6ad-8dcbba2170ff | Email: furqanfreelance1@gmail.com | AuthID: 5165e0a8-180f-42ee-9e9e-353f084a394d | Role: Admin | Name: Furqan
