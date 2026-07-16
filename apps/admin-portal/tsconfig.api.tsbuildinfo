@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 {"root":["./api/dummy.ts"],"version":"5.9.3"}
+=======
+{"root":["./api/complete-setup.ts","./api/invite.ts"],"version":"5.9.3"}
+>>>>>>> 1a3f757750b6081d2d9ea002247c0a3995feabc4

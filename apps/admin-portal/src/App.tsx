@@ -47,7 +47,10 @@ import { PremiumRoute } from './components/access/PremiumRoute';
 import { SupportAdminLogin } from './pages/SupportAdminLogin';
 import { SupportAdminDashboard } from './pages/SupportAdminDashboard';
 import { SupportWidget } from './components/SupportWidget';
+<<<<<<< HEAD
 import { SupportPage } from './pages/SupportPage';
+=======
+>>>>>>> 1a3f757750b6081d2d9ea002247c0a3995feabc4
 
 import { FavoritesProvider } from './context/FavoritesContext';
 import { AuthProvider } from './context/AuthContext';
@@ -109,11 +112,14 @@ function App() {
             <Route path="/support-admin" element={<Navigate to="/support-admin/login" replace />} />
             <Route path="/support-admin/dashboard" element={<SupportAdminDashboard />} />
 
+<<<<<<< HEAD
             {/* Public Help Center Support Page */}
             <Route path="/support/*" element={<SupportPage />} />
             <Route path="/help/*" element={<Navigate to="/support" replace />} />
             <Route path="/help" element={<Navigate to="/support" replace />} />
 
+=======
+>>>>>>> 1a3f757750b6081d2d9ea002247c0a3995feabc4
             <Route path="/dashboard/*" element={
               <ProtectedRoute>
                 <AppShell>

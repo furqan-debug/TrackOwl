@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Dependency directories
 node_modules/
 jspm_packages/
@@ -25,14 +26,66 @@ Thumbs.db
 # IDE files
 .vscode/
 .idea/
+=======
+# Trackora Specific
+.temp/
+*.log
+*.txt
+*.json
+!robots.txt
+!package.json
+!package-lock.json
+!tsconfig*.json
+!tauri.conf.json
+!latest.json
+!railway.toml
+!vercel.json
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+
+# Security & Secrets
+*.key
+*.pub
+*.p12
+*.p8
+*.cer
+*.pem
+*.certSigningRequest
+signing.key
+myapp.key
+~/.tauri/
+
+# Build Artifacts
+node_modules/
+dist/
+dist-ssr/
+src-tauri/target/
+src-tauri/bin/
+bin/
+tmp_target/
+*.exe
+*.msi
+
+# Editor and System
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+>>>>>>> 1a3f757750b6081d2d9ea002247c0a3995feabc4
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+<<<<<<< HEAD
 
 # Log files
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+=======
+>>>>>>> 1a3f757750b6081d2d9ea002247c0a3995feabc4
