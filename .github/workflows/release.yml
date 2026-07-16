@@ -340,7 +340,7 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :com.apple.developer.team-identifier string $TEAM_ID" "$ENTITLEMENTS_PATH" || true
           
           # Re-sign the inner executable to strip Tauri's default entitlements
-          codesign --force --sign "$APPLE_SIGNING_IDENTITY" --entitlements "$ENTITLEMENTS_PATH" --options runtime "$APP_PATH/Contents/MacOS/TrackOwl"
+          codesign --force --sign "$APPLE_SIGNING_IDENTITY" --entitlements "$ENTITLEMENTS_PATH" --options runtime "$APP_PATH/Contents/MacOS/digireps-tracker"
           
           # Re-sign the outer bundle using the App Store entitlements
           codesign --force --sign "$APPLE_SIGNING_IDENTITY" --entitlements "$ENTITLEMENTS_PATH" --options runtime "$APP_PATH"
@@ -348,7 +348,7 @@ jobs:
           echo "==== OUTER BUNDLE ENTITLEMENTS ===="
           codesign -d --entitlements :- "$APP_PATH"
           echo "==== INNER EXECUTABLE ENTITLEMENTS ===="
-          codesign -d --entitlements :- "$APP_PATH/Contents/MacOS/TrackOwl"
+          codesign -d --entitlements :- "$APP_PATH/Contents/MacOS/digireps-tracker"
           
       - name: Create Mac App Store PKG
         run: |
