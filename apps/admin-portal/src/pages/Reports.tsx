@@ -50,6 +50,22 @@ export function Reports() {
     const organizationId = profile?.organization_id;
     const [range, setRange] = useState<Range>('Last 7 Days');
     const [offset, setOffset] = useState(0); // offset in days
+    const [orgTimezone, setOrgTimezone] = useState<string>('UTC');
+
+    useEffect(() => {
+        async function fetchOrgTimezone() {
+            if (!organizationId) return;
+            const { data } = await supabase
+                .from('organizations')
+                .select('settings')
+                .eq('id', organizationId)
+                .single();
+            if (data?.settings?.orgTimezone) {
+                setOrgTimezone(data.settings.orgTimezone);
+            }
+        }
+        fetchOrgTimezone();
+    }, [organizationId]);
     const [showRangeDropdown, setShowRangeDropdown] = useState(false);
     const [customStart, setCustomStart] = useState<Date | null>(null);
     const [customEnd, setCustomEnd] = useState<Date | null>(null);
@@ -117,7 +133,7 @@ export function Reports() {
 
     useEffect(() => {
         fetchReports();
-    }, [range, offset, selectedTeamId, selectedMemberId, members]);
+    }, [range, offset, selectedTeamId, selectedMemberId, members, orgTimezone]);
 
     function shiftRange(direction: number) {
         let days = 0;
@@ -153,6 +169,41 @@ export function Reports() {
 
 
 
+    function getOrgLocalDate(timeZone: string): Date {
+        const now = new Date();
+        try {
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone,
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                hour12: false
+            });
+            const parts = formatter.formatToParts(now);
+            const map = new Map(parts.map(p => [p.type, p.value]));
+            return new Date(
+                parseInt(map.get('year')!),
+                parseInt(map.get('month')!) - 1,
+                parseInt(map.get('day')!),
+                parseInt(map.get('hour')!),
+                parseInt(map.get('minute')!),
+                parseInt(map.get('second')!)
+            );
+        } catch (e) {
+            return now;
+        }
+    }
+
+    function convertTzDateToUtc(dateStr: string, timeZone: string): Date {
+        const d = new Date(dateStr + 'Z');
+        const local = new Date(d.toLocaleString('en-US', { timeZone }));
+        const diff = d.getTime() - local.getTime();
+        return new Date(d.getTime() + diff);
+    }
+
     function getDateRange(): { start: string; end: string } {
         if (range === 'Custom' && customStart && customEnd) {
             const s = new Date(customStart); s.setHours(0, 0, 0, 0);
@@ -160,51 +211,68 @@ export function Reports() {
             return { start: s.toISOString(), end: e.toISOString() };
         }
 
-        const now = new Date();
-        now.setDate(now.getDate() + offset);
+        const orgNow = getOrgLocalDate(orgTimezone);
+        orgNow.setDate(orgNow.getDate() + offset);
 
-        const start = new Date(now);
-        let end = new Date(now);
+        let startStr = "";
+        let endStr = "";
+
+        const formatIsoPart = (d: Date) => {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        };
 
         if (range === 'Today') {
-            start.setHours(0, 0, 0, 0);
-            end.setHours(23, 59, 59, 999);
+            const dayPart = formatIsoPart(orgNow);
+            startStr = `${dayPart}T00:00:00.000`;
+            endStr = `${dayPart}T23:59:59.999`;
         } else if (range === 'Yesterday') {
-            start.setDate(start.getDate() - 1);
-            start.setHours(0, 0, 0, 0);
-            end.setDate(end.getDate() - 1);
-            end.setHours(23, 59, 59, 999);
+            const yesterday = new Date(orgNow);
+            yesterday.setDate(yesterday.getDate() - 1);
+            const dayPart = formatIsoPart(yesterday);
+            startStr = `${dayPart}T00:00:00.000`;
+            endStr = `${dayPart}T23:59:59.999`;
         } else if (range === 'Last 7 Days') {
-            start.setDate(start.getDate() - 6);
-            start.setHours(0, 0, 0, 0);
-            end.setHours(23, 59, 59, 999);
+            const startD = new Date(orgNow);
+            startD.setDate(startD.getDate() - 6);
+            startStr = `${formatIsoPart(startD)}T00:00:00.000`;
+            endStr = `${formatIsoPart(orgNow)}T23:59:59.999`;
         } else if (range === 'Last Week') {
-            const day = start.getDay();
+            const startD = new Date(orgNow);
+            const day = startD.getDay();
             const diff = day === 0 ? 6 : day - 1; // distance to Monday
-            start.setDate(start.getDate() - diff - 7);
-            start.setHours(0, 0, 0, 0);
-            end = new Date(start);
-            end.setDate(end.getDate() + 6);
-            end.setHours(23, 59, 59, 999);
+            startD.setDate(startD.getDate() - diff - 7);
+            const endD = new Date(startD);
+            endD.setDate(endD.getDate() + 6);
+            startStr = `${formatIsoPart(startD)}T00:00:00.000`;
+            endStr = `${formatIsoPart(endD)}T23:59:59.999`;
         } else if (range === 'Last 2 Weeks') {
-            start.setDate(start.getDate() - 13);
-            start.setHours(0, 0, 0, 0);
-            end.setHours(23, 59, 59, 999);
+            const startD = new Date(orgNow);
+            startD.setDate(startD.getDate() - 13);
+            startStr = `${formatIsoPart(startD)}T00:00:00.000`;
+            endStr = `${formatIsoPart(orgNow)}T23:59:59.999`;
         } else if (range === 'This Month') {
-            start.setDate(1);
-            start.setHours(0, 0, 0, 0);
-            end.setHours(23, 59, 59, 999);
+            const startD = new Date(orgNow);
+            startD.setDate(1);
+            startStr = `${formatIsoPart(startD)}T00:00:00.000`;
+            endStr = `${formatIsoPart(orgNow)}T23:59:59.999`;
         } else if (range === 'Last Month') {
-            start.setMonth(start.getMonth() - 1);
-            start.setDate(1);
-            start.setHours(0, 0, 0, 0);
-            end = new Date(start);
-            end.setMonth(end.getMonth() + 1);
-            end.setDate(0);
-            end.setHours(23, 59, 59, 999);
+            const startD = new Date(orgNow);
+            startD.setMonth(startD.getMonth() - 1);
+            startD.setDate(1);
+            const endD = new Date(startD);
+            endD.setMonth(endD.getMonth() + 1);
+            endD.setDate(0);
+            startStr = `${formatIsoPart(startD)}T00:00:00.000`;
+            endStr = `${formatIsoPart(endD)}T23:59:59.999`;
         }
 
-        return { start: start.toISOString(), end: end.toISOString() };
+        const startUtc = convertTzDateToUtc(startStr, orgTimezone);
+        const endUtc = convertTzDateToUtc(endStr, orgTimezone);
+
+        return { start: startUtc.toISOString(), end: endUtc.toISOString() };
     }
 
     async function fetchReports(forceRefresh = false) {
