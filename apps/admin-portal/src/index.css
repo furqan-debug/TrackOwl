@@ -157,9 +157,9 @@
     --text-main: #F8FAFC;
     --text-secondary: #E2E8F0;
     --text-muted: #CBD5E1;
-    --border-color: rgba(255, 255, 255, 0.15);
-    --border-soft: rgba(255, 255, 255, 0.1);
-    --border-hover: rgba(255, 255, 255, 0.3);
+    --border-color: rgba(255, 255, 255, 0.06);
+    --border-soft: rgba(255, 255, 255, 0.04);
+    --border-hover: rgba(255, 255, 255, 0.15);
 
     /* VIBRANT GOLD (Dark Mode - Maximum Shine) */
     --accent: #FFD700;
@@ -184,11 +184,16 @@
   }
 
   /* Safe Dark Mode Overrides for Hardcoded Light Classes */
-  .dark .border-slate-50 {
+  .dark .border-slate-50,
+  .dark .border-slate-100,
+  .dark .border-slate-200,
+  .dark .border-slate-300 {
     border-color: var(--border-soft) !important;
   }
 
-  .dark .divide-slate-50> :not([hidden])~ :not([hidden]) {
+  .dark .divide-slate-50> :not([hidden])~ :not([hidden]),
+  .dark .divide-slate-100> :not([hidden])~ :not([hidden]),
+  .dark .divide-slate-200> :not([hidden])~ :not([hidden]) {
     border-color: var(--border-soft) !important;
   }
 
