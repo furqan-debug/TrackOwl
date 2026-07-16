@@ -267,7 +267,7 @@ function AppFooter({ lastSyncTime, isSyncing, onSync, isOnline }: {
       <div className="footer-right">
         <div className="footer-meta-item">
           <Smartphone size={12} className="meta-icon" />
-          <span className="footer-version">✨ v{version} (QA Tested)</span>
+          <span className="footer-version">v{version}</span>
         </div>
         {loc && (
           <div className="footer-meta-item">
