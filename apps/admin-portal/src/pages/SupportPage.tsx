@@ -55,6 +55,14 @@ function parseMarkdown(rawContent: string) {
   return { title, category, content, html };
 }
 
+export function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '');
+}
+
 const articles = Object.keys(modules).map((path) => {
   const mod = modules[path] as any;
   const raw = (mod.default ? mod.default : mod) as string;
@@ -583,7 +591,7 @@ function HomePageView({ search, setSearch }: { search: string; setSearch: (s: st
             const meta = categoryMeta[cat] || { icon: HelpCircle, desc: "Explore documentation and guides for this module." };
             const Icon = meta.icon;
             return (
-              <Link key={cat} to={`/support/category/${encodeURIComponent(cat)}`} className="category-card">
+              <Link key={cat} to={`/support/category/${slugify(cat)}`} className="category-card">
                 <div className="category-icon-wrapper">
                   <Icon size={24} className="category-icon" />
                 </div>
@@ -641,7 +649,7 @@ function HomePageView({ search, setSearch }: { search: string; setSearch: (s: st
 
 function CategoryPageView() {
   const { cat } = useParams();
-  const categoryName = decodeURIComponent(cat || '');
+  const categoryName = categories.find(c => slugify(c) === cat) || decodeURIComponent(cat || '');
   const categoryArticles = articles.filter(a => a.category === categoryName);
 
   if (!categoryArticles.length) {
@@ -701,7 +709,7 @@ function ArticlePageView() {
           <div className="article-breadcrumbs">
             <Link to="/support">Help center</Link>
             <ChevronRight size={14} />
-            <Link to={`/support/category/${encodeURIComponent(article.category)}`}>{article.category}</Link>
+            <Link to={`/support/category/${slugify(article.category)}`}>{article.category}</Link>
             <ChevronRight size={14} />
             <span>{article.title}</span>
           </div>
