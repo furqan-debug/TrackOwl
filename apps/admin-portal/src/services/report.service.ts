@@ -84,7 +84,7 @@ export const reportService = {
         .order('full_name', { ascending: true });
 
     let sessQuery = supabase.from('sessions')
-        .select('id, user_id, started_at, ended_at')
+        .select('id, user_id, started_at, ended_at, manual')
         .eq('organization_id', organizationId)
         .lt('started_at', end.toISOString())
         .or(`ended_at.is.null,ended_at.gt.${start.toISOString()}`);
@@ -143,6 +143,21 @@ export const reportService = {
     const stats: Record<string, number[]> = {};
     members.forEach((m: any) => stats[m.id] = [0,0,0,0,0,0,0]);
 
+    // Process manual sessions first
+    sessions.forEach((s: any) => {
+        if (s.manual === true) {
+            const uid = s.user_id;
+            if (!uid || !memberMap[uid]) return;
+            const { endMs } = getEffectiveEnd(s.started_at, s.ended_at);
+            const startMs = new Date(s.started_at).getTime();
+            const durationHrs = (endMs - startMs) / (1000 * 60 * 60);
+
+            const dayIdxRaw = getDayIndexInTz(s.started_at, memberMap[uid].tz);
+            const dayIdx = (dayIdxRaw + 6) % 7;
+            stats[uid][dayIdx] += durationHrs;
+        }
+    });
+
     const memberDetailMap = new Map(members.map((m: any) => [m.id, m]));
 
     userSamples.forEach((samples, uid) => {
@@ -192,7 +207,7 @@ export const reportService = {
                 }
             });
         } else {
-            const userSess = sessions.filter((s: any) => s.user_id === uid);
+            const userSess = sessions.filter((s: any) => s.user_id === uid && s.manual !== true);
             userSess.forEach((s: any) => {
                 const { endMs } = getEffectiveEnd(s.started_at, s.ended_at);
                 const startMs = new Date(s.started_at).getTime();
@@ -322,7 +337,7 @@ export const reportService = {
 
     let sessionsQuery = supabase
         .from('sessions')
-        .select('id, user_id, started_at, ended_at')
+        .select('id, user_id, started_at, ended_at, manual')
         .lt('started_at', end)
         .or(`ended_at.is.null,ended_at.gt.${start}`);
         
@@ -503,7 +518,7 @@ export const reportService = {
         if (!uid) return;
 
         const member = membersMap.get(uid);
-        const sessionSamples = samplesBySession.get(sess.id) || [];
+        const sessionSamples = sess.manual === true ? [] : (samplesBySession.get(sess.id) || []);
 
         if (sessionSamples.length > 0) {
             // Process each sample for automated tracking sessions (Option B - Productive Only)

@@ -328,11 +328,12 @@ export function Timesheets() {
                     let durationMins = (overlapEndMs - overlapStartMs) / 60000;
                     if (durationMins < 0) durationMins = 0;
 
+                    const isManual = s.manual === true;
                     dailyMap[key].sessions.push({
                         ...s,
-                        activity_percent: score,
-                        idle_percent: 100 - score,
-                        manual_percent: 0,
+                        activity_percent: isManual ? 0 : score,
+                        idle_percent: isManual ? 0 : (100 - score),
+                        manual_percent: isManual ? 100 : 0,
                         duration_mins: Math.max(0, durationMins),
                         offline_mins: offlineMins,
                         user_name: member?.full_name || 'System User',
@@ -847,7 +848,14 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                     </div>
                                 </td>
                                 <td className="py-8 px-6 text-center text-[15px] font-bold text-text-muted tabular-nums">{s.idle_percent}%</td>
-                                <td className="py-8 px-6 text-center text-[18px] font-bold text-text-main tabular-nums">{formatDuration(s.duration_mins || 0)}</td>
+                                <td className="py-8 px-6 text-center tabular-nums">
+                                    <div className="flex flex-col items-center justify-center">
+                                        <span className="text-[18px] font-bold text-text-main">{formatDuration(s.duration_mins || 0)}</span>
+                                        {((s.activity_percent === 0 && s.idle_percent === 0) || s.manual === true) && (
+                                            <span className="text-[11px] text-[var(--chart-gold)] font-bold mt-0.5 tracking-tight">(manual)</span>
+                                        )}
+                                    </div>
+                                </td>
                                 <td className="py-8 px-6 text-center text-[13px] font-bold text-text-muted">
                                     <span className="px-2.5 py-1 rounded bg-white/5 border border-white/5 font-mono text-[12px] opacity-80">
                                         {s.display_timezone || 'UTC'}
