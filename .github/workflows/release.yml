@@ -339,9 +339,11 @@ jobs:
           /usr/libexec/PlistBuddy -c "Add :com.apple.application-identifier string $APP_ID" "$ENTITLEMENTS_PATH" || true
           /usr/libexec/PlistBuddy -c "Add :com.apple.developer.team-identifier string $TEAM_ID" "$ENTITLEMENTS_PATH" || true
           
+          # Re-sign the inner executable to strip Tauri's default entitlements
+          codesign --force --sign "$APPLE_SIGNING_IDENTITY" --entitlements "$ENTITLEMENTS_PATH" --options runtime "$APP_PATH/Contents/MacOS/trackowl"
+          
           # Re-sign the outer bundle using the App Store entitlements
           codesign --force --sign "$APPLE_SIGNING_IDENTITY" --entitlements "$ENTITLEMENTS_PATH" --options runtime "$APP_PATH"
-        
       - name: Create Mac App Store PKG
         run: |
           xcrun productbuild --component "src-tauri/target/universal-apple-darwin/release/bundle/macos/TrackOwl.app" /Applications TrackOwl.pkg --sign "$INSTALLER_SIGNING_IDENTITY"
