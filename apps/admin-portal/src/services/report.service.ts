@@ -284,6 +284,7 @@ export const reportService = {
     selectedTeamId: string;
     selectedMemberId: string;
     membersForLookup: any[];
+    orgTimezone?: string;
   }): Promise<{
     dailyActivityList: any[];
     appBreakdownList: any[];
@@ -479,19 +480,48 @@ export const reportService = {
         samplesBySession.get(sample.session_id)!.push(sample);
     });
 
-    const dateList: string[] = [];
-    const curr = new Date(start);
-    const stop = new Date(end);
-    
-    curr.setHours(12, 0, 0, 0); 
-    stop.setHours(12, 0, 0, 0);
+    // Build dateList from the UTC midnight boundaries returned by getDateRange().
+    // We extract the date portion from the ISO string directly (which is already
+    // expressed in org-timezone-aware UTC) rather than using new Date() which
+    // would re-interpret the timestamp in the browser's local timezone and can
+    // shift the date forward or backward by a day on non-UTC devices.
+    function utcDatePart(isoStr: string): string {
+        // isoStr is like "2026-07-16T07:00:00.000Z" — take the UTC date
+        const d = new Date(isoStr);
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(d.getUTCDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
 
-    while (curr.getTime() <= stop.getTime()) {
-        const yyyy = curr.getFullYear();
-        const mm = String(curr.getMonth() + 1).padStart(2, '0');
-        const dd = String(curr.getDate()).padStart(2, '0');
-        dateList.push(`${yyyy}-${mm}-${dd}`);
-        curr.setDate(curr.getDate() + 1);
+    // The org-local calendar dates that the org-tz boundaries span.
+    // Because start is midnight and end is 23:59:59 in org-tz, converting those
+    // UTC values back to org-local dates gives exactly the intended calendar days.
+    function utcToOrgLocalDatePart(isoStr: string, tz: string): string {
+        const d = new Date(isoStr);
+        try {
+            return d.toLocaleDateString('en-CA', { timeZone: tz });
+        } catch {
+            return utcDatePart(isoStr);
+        }
+    }
+
+    const orgTz = (options as any).orgTimezone || 'UTC';
+    const startLocalDate = utcToOrgLocalDatePart(start, orgTz);
+    const endLocalDate = utcToOrgLocalDatePart(end, orgTz);
+
+    const dateList: string[] = [];
+    // Walk YYYY-MM-DD strings without touching Date hours (avoids DST/tz issues)
+    let walkDate = startLocalDate;
+    while (walkDate <= endLocalDate) {
+        dateList.push(walkDate);
+        // Advance by one calendar day using UTC noon to avoid DST edge cases
+        const [y, m, d2] = walkDate.split('-').map(Number);
+        const next = new Date(Date.UTC(y, m - 1, d2 + 1, 12, 0, 0));
+        const ny = next.getUTCFullYear();
+        const nm = String(next.getUTCMonth() + 1).padStart(2, '0');
+        const nd = String(next.getUTCDate()).padStart(2, '0');
+        walkDate = `${ny}-${nm}-${nd}`;
     }
 
     const memberRows: Record<string, any> = {};

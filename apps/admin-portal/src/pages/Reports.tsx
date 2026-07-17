@@ -326,7 +326,8 @@ export function Reports() {
                 organizationId: organizationId ?? undefined,
                 selectedTeamId,
                 selectedMemberId,
-                membersForLookup: members
+                membersForLookup: members,
+                orgTimezone
             });
 
             setDailyActivity(data.dailyActivityList);
