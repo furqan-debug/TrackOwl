@@ -175,33 +175,29 @@ export function Reports() {
     }
 
     /**
-     * Converts a YYYY-MM-DD string and a time (HH:mm:ss.sss) to the UTC instant
-     * that represents that moment in the org's timezone.
-     * Strategy: parse the date string as if it were UTC, then use Intl to find
-     * what the org-local date is, and binary-search until it matches.
-     * This avoids all the pitfalls of getTimezoneOffset() and manual offset math.
+     * Converts a YYYY-MM-DD string to the UTC instant that represents the
+     * start (00:00:00) or end (23:59:59) of that calendar day in the org timezone.
+     *
+     * Uses binary search on Intl.DateTimeFormat — the only 100% correct approach.
+     *
+     * Search bounds: previous-day UTC midnight → two-days-later UTC midnight.
+     * This covers ALL possible UTC offsets (UTC-12 through UTC+14):
+     *   - UTC+14: midnight of day d = (d-1)T10:00Z → covered by lo = (d-1)T00:00Z
+     *   - UTC-12: end of day d = (d+1)T11:59Z → covered by hi = (d+2)T00:00Z
      */
     function orgLocalToUtc(dateStr: string, timeOfDay: 'start' | 'end', tz: string): Date {
-        // dateStr is YYYY-MM-DD, e.g. "2026-07-17"
         const [y, mo, d] = dateStr.split('-').map(Number);
 
-        // Starting estimate: noon UTC on the given calendar date (safe midpoint)
-        let candidate = Date.UTC(y, mo - 1, d, 12, 0, 0, 0);
+        const getOrgDate = (utcMs: number) =>
+            new Date(utcMs).toLocaleDateString('en-CA', { timeZone: tz });
 
-        // Find what calendar date this UTC instant corresponds to in orgTz
-        const getOrgDate = (utcMs: number) => {
-            return new Date(utcMs).toLocaleDateString('en-CA', { timeZone: tz });
-        };
+        // Wide bounds that guarantee we bracket the local midnight for any timezone
+        const lo0 = Date.UTC(y, mo - 1, d - 1, 0, 0, 0);      // prev-day midnight UTC
+        const hi0 = Date.UTC(y, mo - 1, d + 2, 0, 0, 0);      // 2-days-later midnight UTC
 
-        // Binary search to find UTC midnight (start of day) in org timezone
-        // Step 1: walk hour by hour from noon backwards to midnight
-        // (offset can't be more than ±14h)
         if (timeOfDay === 'start') {
-            // We want the UTC ms where org-local date flips FROM the previous day TO dateStr
-            // Walk backward from candidate in 1-minute steps until we cross midnight
-            let lo = candidate - 14 * 3600 * 1000;
-            let hi = candidate + 14 * 3600 * 1000;
-            // Binary search: find the earliest UTC ms where getOrgDate(ms) === dateStr
+            // Find the earliest UTC ms where org-local date becomes dateStr
+            let lo = lo0, hi = hi0;
             while (hi - lo > 1000) {
                 const mid = Math.floor((lo + hi) / 2);
                 if (getOrgDate(mid) >= dateStr) hi = mid;
@@ -209,9 +205,8 @@ export function Reports() {
             }
             return new Date(hi);
         } else {
-            // 'end': find the latest UTC ms where getOrgDate(ms) === dateStr
-            let lo = candidate - 14 * 3600 * 1000;
-            let hi = candidate + 14 * 3600 * 1000;
+            // Find the latest UTC ms where org-local date is still dateStr
+            let lo = lo0, hi = hi0;
             while (hi - lo > 1000) {
                 const mid = Math.floor((lo + hi) / 2);
                 if (getOrgDate(mid) <= dateStr) lo = mid;
