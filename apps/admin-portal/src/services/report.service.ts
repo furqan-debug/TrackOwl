@@ -396,14 +396,11 @@ export const reportService = {
     const inScopeSamples = allSamples.filter(s => activeSessionIdsSet.has(s.session_id));
 
     const membersMap = new Map<string, any>();
-    const memberTzs = new Map<string, string | undefined>();
 
     membersForLookup.forEach((m: any) => {
         membersMap.set(m.id, m);
-        memberTzs.set(m.id, m.timezone);
         if (m.auth_user_id) {
             membersMap.set(m.auth_user_id, m);
-            memberTzs.set(m.auth_user_id, m.timezone);
         }
     });
 
@@ -553,7 +550,7 @@ export const reportService = {
         if (sessionSamples.length > 0) {
             // Process each sample for automated tracking sessions (Option B - Productive Only)
             sessionSamples.forEach(s => {
-                const day = getGroupingDateInTz(s.recorded_at, memberTzs.get(uid));
+                const day = getGroupingDateInTz(s.recorded_at, orgTz);
                 if (!dateListSet.has(day)) return;
 
                 if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
@@ -586,7 +583,7 @@ export const reportService = {
             const sessionMins = Math.max(0, Math.round((clampedEndMs - clampedStartMs) / 60000));
 
             if (sessionMins > 0) {
-                const day = getGroupingDateInTz(new Date(clampedStartMs).toISOString(), memberTzs.get(uid));
+                const day = getGroupingDateInTz(new Date(clampedStartMs).toISOString(), orgTz);
                 if (dateListSet.has(day)) {
                     if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
 
@@ -610,7 +607,7 @@ export const reportService = {
     const dailyActivityList = dateList.map(date => {
         const v = dailyMap[date] || { activitySum: 0, total_samples: 0, total_minutes: 0 };
         return {
-            date: new Date(date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            date: new Date(date + 'T12:00:00Z').toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: orgTz }),
             activity: v.total_samples > 0 ? Math.round(v.activitySum / v.total_samples) : 0,
             minutes: Math.round(v.total_minutes),
         };
@@ -624,8 +621,7 @@ export const reportService = {
     const appBreakdownList = Object.entries(appMap).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name, value }));
 
     const inRangeProductiveSamples = productiveSamples.filter(s => {
-        const uid = sessionToUserId.get(s.session_id);
-        const day = getGroupingDateInTz(s.recorded_at, memberTzs.get(uid));
+        const day = getGroupingDateInTz(s.recorded_at, orgTz);
         return dateListSet.has(day);
     });
 
