@@ -195,6 +195,8 @@ export function formatDateInTz(date: string | Date | number, targetTz?: string |
     }
 }
 
+const formatterCache = new Map<string, Intl.DateTimeFormat>();
+
 /**
  * Returns a sortable date string (YYYY-MM-DD) for a specific timezone
  * so we can group events logically by the member's day.
@@ -203,12 +205,19 @@ export function getGroupingDateInTz(date: string | Date | number, targetTz?: str
     const d = new Date(date);
     if (isNaN(d.getTime())) return '';
     try {
-        const formatter = new Intl.DateTimeFormat('en-CA', {
-            timeZone: targetTz || undefined,
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit'
-        });
+        const cacheKey = targetTz || 'default';
+        let formatter = formatterCache.get(cacheKey);
+        
+        if (!formatter) {
+            formatter = new Intl.DateTimeFormat('en-CA', {
+                timeZone: targetTz || undefined,
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+            formatterCache.set(cacheKey, formatter);
+        }
+        
         const parts = formatter.formatToParts(d);
         const year = parts.find(p => p.type === 'year')?.value;
         const month = parts.find(p => p.type === 'month')?.value;
