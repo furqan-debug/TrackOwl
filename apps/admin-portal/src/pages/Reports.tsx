@@ -174,127 +174,113 @@ export function Reports() {
         return d.toLocaleDateString('en-US', { ...options, timeZone: orgTimezone });
     }
 
-    function getOrgLocalDate(timeZone: string): Date {
-        const now = new Date();
-        try {
-            const formatter = new Intl.DateTimeFormat('en-US', {
-                timeZone,
-                year: 'numeric',
-                month: 'numeric',
-                day: 'numeric',
-                hour: 'numeric',
-                minute: 'numeric',
-                second: 'numeric',
-                hour12: false
-            });
-            const parts = formatter.formatToParts(now);
-            const map = new Map(parts.map(p => [p.type, p.value]));
-            return new Date(
-                parseInt(map.get('year')!),
-                parseInt(map.get('month')!) - 1,
-                parseInt(map.get('day')!),
-                parseInt(map.get('hour')!),
-                parseInt(map.get('minute')!),
-                parseInt(map.get('second')!)
-            );
-        } catch (e) {
-            return now;
-        }
-    }
+    /**
+     * Converts a YYYY-MM-DD string and a time (HH:mm:ss.sss) to the UTC instant
+     * that represents that moment in the org's timezone.
+     * Strategy: parse the date string as if it were UTC, then use Intl to find
+     * what the org-local date is, and binary-search until it matches.
+     * This avoids all the pitfalls of getTimezoneOffset() and manual offset math.
+     */
+    function orgLocalToUtc(dateStr: string, timeOfDay: 'start' | 'end', tz: string): Date {
+        // dateStr is YYYY-MM-DD, e.g. "2026-07-17"
+        const [y, mo, d] = dateStr.split('-').map(Number);
 
-    function convertTzDateToUtc(dateStr: string, timeZone: string): Date {
-        const targetUtc = new Date(dateStr + 'Z');
-        let offsetMs = 0;
-        try {
-            const formatter = new Intl.DateTimeFormat('en-US', {
-                timeZone,
-                timeZoneName: 'longOffset'
-            });
-            const parts = formatter.formatToParts(targetUtc);
-            const tzPart = parts.find(p => p.type === 'timeZoneName');
-            if (tzPart) {
-                const offsetStr = tzPart.value.replace('GMT', '').trim();
-                if (offsetStr && offsetStr !== 'Z') {
-                    const sign = offsetStr[0] === '+' ? 1 : -1;
-                    const timeParts = offsetStr.slice(1).split(':');
-                    const hours = parseInt(timeParts[0], 10);
-                    const minutes = timeParts[1] ? parseInt(timeParts[1], 10) : 0;
-                    offsetMs = sign * (hours * 60 + minutes) * 60 * 1000;
-                }
+        // Starting estimate: noon UTC on the given calendar date (safe midpoint)
+        let candidate = Date.UTC(y, mo - 1, d, 12, 0, 0, 0);
+
+        // Find what calendar date this UTC instant corresponds to in orgTz
+        const getOrgDate = (utcMs: number) => {
+            return new Date(utcMs).toLocaleDateString('en-CA', { timeZone: tz });
+        };
+
+        // Binary search to find UTC midnight (start of day) in org timezone
+        // Step 1: walk hour by hour from noon backwards to midnight
+        // (offset can't be more than ±14h)
+        if (timeOfDay === 'start') {
+            // We want the UTC ms where org-local date flips FROM the previous day TO dateStr
+            // Walk backward from candidate in 1-minute steps until we cross midnight
+            let lo = candidate - 14 * 3600 * 1000;
+            let hi = candidate + 14 * 3600 * 1000;
+            // Binary search: find the earliest UTC ms where getOrgDate(ms) === dateStr
+            while (hi - lo > 1000) {
+                const mid = Math.floor((lo + hi) / 2);
+                if (getOrgDate(mid) >= dateStr) hi = mid;
+                else lo = mid;
             }
-        } catch (e) {
-            console.error('Failed to resolve timezone offset:', e);
+            return new Date(hi);
+        } else {
+            // 'end': find the latest UTC ms where getOrgDate(ms) === dateStr
+            let lo = candidate - 14 * 3600 * 1000;
+            let hi = candidate + 14 * 3600 * 1000;
+            while (hi - lo > 1000) {
+                const mid = Math.floor((lo + hi) / 2);
+                if (getOrgDate(mid) <= dateStr) lo = mid;
+                else hi = mid;
+            }
+            return new Date(lo);
         }
-        return new Date(targetUtc.getTime() - offsetMs);
     }
 
     function getDateRange(): { start: string; end: string } {
         if (range === 'Custom' && customStart && customEnd) {
-            const s = new Date(customStart); s.setHours(0, 0, 0, 0);
-            const e = new Date(customEnd); e.setHours(23, 59, 59, 999);
+            const sStr = (customStart instanceof Date ? customStart : new Date(customStart)).toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            const eStr = (customEnd instanceof Date ? customEnd : new Date(customEnd)).toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            const s = orgLocalToUtc(sStr, 'start', orgTimezone);
+            const e = orgLocalToUtc(eStr, 'end', orgTimezone);
             return { start: s.toISOString(), end: e.toISOString() };
         }
 
-        const orgNow = getOrgLocalDate(orgTimezone);
-        orgNow.setDate(orgNow.getDate() + offset);
+        // Get today's date in org timezone as YYYY-MM-DD
+        const todayInOrg = new Date().toLocaleDateString('en-CA', { timeZone: orgTimezone });
+        const [ty, tm, td] = todayInOrg.split('-').map(Number);
 
-        let startStr = "";
-        let endStr = "";
+        // Apply navigation offset in calendar days
+        const baseDate = new Date(Date.UTC(ty, tm - 1, td + offset, 12, 0, 0));
+        const baseDateStr = baseDate.toLocaleDateString('en-CA', { timeZone: orgTimezone });
 
-        const formatIsoPart = (d: Date) => {
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${y}-${m}-${day}`;
-        };
+
+        let startStr = '';
+        let endStr = '';
 
         if (range === 'Today') {
-            const dayPart = formatIsoPart(orgNow);
-            startStr = `${dayPart}T00:00:00.000`;
-            endStr = `${dayPart}T23:59:59.999`;
+            startStr = baseDateStr;
+            endStr = baseDateStr;
         } else if (range === 'Yesterday') {
-            const yesterday = new Date(orgNow);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const dayPart = formatIsoPart(yesterday);
-            startStr = `${dayPart}T00:00:00.000`;
-            endStr = `${dayPart}T23:59:59.999`;
+            const d2 = new Date(Date.UTC(ty, tm - 1, td + offset - 1, 12, 0, 0));
+            const s = d2.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            startStr = s;
+            endStr = s;
         } else if (range === 'Last 7 Days') {
-            const startD = new Date(orgNow);
-            startD.setDate(startD.getDate() - 6);
-            startStr = `${formatIsoPart(startD)}T00:00:00.000`;
-            endStr = `${formatIsoPart(orgNow)}T23:59:59.999`;
+            const d2 = new Date(Date.UTC(ty, tm - 1, td + offset - 6, 12, 0, 0));
+            startStr = d2.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            endStr = baseDateStr;
         } else if (range === 'Last Week') {
-            const startD = new Date(orgNow);
-            const day = startD.getDay();
-            const diff = day === 0 ? 6 : day - 1; // distance to Monday
-            startD.setDate(startD.getDate() - diff - 7);
-            const endD = new Date(startD);
-            endD.setDate(endD.getDate() + 6);
-            startStr = `${formatIsoPart(startD)}T00:00:00.000`;
-            endStr = `${formatIsoPart(endD)}T23:59:59.999`;
+            // Monday of last week to Sunday of last week
+            const baseMidnight = new Date(Date.UTC(ty, tm - 1, td + offset, 12, 0, 0));
+            const dayOfWeek = parseInt(baseMidnight.toLocaleDateString('en-US', { timeZone: orgTimezone, weekday: 'short' }) === 'Sun' ? '7' :
+                ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(baseMidnight.toLocaleDateString('en-US', { timeZone: orgTimezone, weekday: 'short' })).toString());
+            const daysToLastMon = dayOfWeek + 6;
+            const monD = new Date(Date.UTC(ty, tm - 1, td + offset - daysToLastMon, 12, 0, 0));
+            const sunD = new Date(Date.UTC(ty, tm - 1, td + offset - daysToLastMon + 6, 12, 0, 0));
+            startStr = monD.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            endStr = sunD.toLocaleDateString('en-CA', { timeZone: orgTimezone });
         } else if (range === 'Last 2 Weeks') {
-            const startD = new Date(orgNow);
-            startD.setDate(startD.getDate() - 13);
-            startStr = `${formatIsoPart(startD)}T00:00:00.000`;
-            endStr = `${formatIsoPart(orgNow)}T23:59:59.999`;
+            const d2 = new Date(Date.UTC(ty, tm - 1, td + offset - 13, 12, 0, 0));
+            startStr = d2.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            endStr = baseDateStr;
         } else if (range === 'This Month') {
-            const startD = new Date(orgNow);
-            startD.setDate(1);
-            startStr = `${formatIsoPart(startD)}T00:00:00.000`;
-            endStr = `${formatIsoPart(orgNow)}T23:59:59.999`;
+            const d2 = new Date(Date.UTC(ty, tm - 1, 1, 12, 0, 0));
+            startStr = d2.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            endStr = baseDateStr;
         } else if (range === 'Last Month') {
-            const startD = new Date(orgNow);
-            startD.setMonth(startD.getMonth() - 1);
-            startD.setDate(1);
-            const endD = new Date(startD);
-            endD.setMonth(endD.getMonth() + 1);
-            endD.setDate(0);
-            startStr = `${formatIsoPart(startD)}T00:00:00.000`;
-            endStr = `${formatIsoPart(endD)}T23:59:59.999`;
+            const lastOfLastMonth = new Date(Date.UTC(ty, tm - 1, 0, 12, 0, 0));
+            const firstOfLastMonth = new Date(Date.UTC(ty, tm - 2, 1, 12, 0, 0));
+            startStr = firstOfLastMonth.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            endStr = lastOfLastMonth.toLocaleDateString('en-CA', { timeZone: orgTimezone });
         }
 
-        const startUtc = convertTzDateToUtc(startStr, orgTimezone);
-        const endUtc = convertTzDateToUtc(endStr, orgTimezone);
+        const startUtc = orgLocalToUtc(startStr, 'start', orgTimezone);
+        const endUtc = orgLocalToUtc(endStr, 'end', orgTimezone);
 
         return { start: startUtc.toISOString(), end: endUtc.toISOString() };
     }
