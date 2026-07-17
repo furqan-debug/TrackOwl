@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { getDayIndexInTz, getEffectiveEnd, calculateActivityScore, getGroupingDateInTz } from '../lib/dataUtils';
+import { getDayIndexInTz, getEffectiveEnd, getGroupingDateInTz } from '../lib/dataUtils';
 
 export interface OwedRow {
     member_id: string;
@@ -369,7 +369,7 @@ export const reportService = {
         };
     }
 
-    const activeSessionIds = filteredSessions.map(s => s.id);
+    // activeSessionIds is no longer needed
 
     let ssQuery = supabase
         .from('screenshots')
@@ -382,26 +382,29 @@ export const reportService = {
         ssQuery = ssQuery.in('user_id', scopedUserIds);
     }
 
+    const orgTz = (options as any).orgTimezone || 'UTC';
+
     const t2 = performance.now();
     const [samplesResult, { count: ssCount }] = await Promise.all([
-        supabase.rpc('get_productive_activity_samples', {
+        supabase.rpc('get_reports_aggregated_data', {
             p_org_id: organizationId,
             p_start_iso: start,
             p_end_iso: end,
+            p_org_tz: orgTz,
             p_member_ids: scopedUserIds.length > 0 ? scopedUserIds : null
         }),
         ssQuery,
     ]);
     const t3 = performance.now();
 
-    const samples = (samplesResult.data as any[]) || [];
-    console.log(`[Reports Timing] Productive Activity Samples RPC took ${(t3 - t2).toFixed(2)}ms, returned ${samples.length} samples`);
+    const aggregatedData = samplesResult.data as any || { daily_stats: [], user_daily_stats: [], app_stats: [] };
+    const dbDailyStats = aggregatedData.daily_stats || [];
+    const dbUserDailyStats = aggregatedData.user_daily_stats || [];
+    const dbAppStats = aggregatedData.app_stats || [];
+
+    console.log(`[Reports Timing] Aggregated RPC took ${(t3 - t2).toFixed(2)}ms`);
 
     const t4 = performance.now();
-
-    const allSamples = samples || [];
-    const activeSessionIdsSet = new Set(activeSessionIds);
-    const inScopeSamples = allSamples.filter(s => activeSessionIdsSet.has(s.session_id));
 
     const membersMap = new Map<string, any>();
 
@@ -415,20 +418,6 @@ export const reportService = {
     const dailyMap: Record<string, { activitySum: number; total_samples: number; total_minutes: number }> = {};
     let costs = 0;
     let billed = 0;
-
-    const productiveSamples: any[] = inScopeSamples;
-    const samplesBySession = new Map<string, any[]>();
-    productiveSamples.forEach(sample => {
-        if (!samplesBySession.has(sample.session_id)) {
-            samplesBySession.set(sample.session_id, []);
-        }
-        samplesBySession.get(sample.session_id)!.push(sample);
-    });
-
-    // Track which session IDs have ANY samples in the RPC range (even if all idle).
-    // Sessions with samples (even all-idle) must NEVER fall through to the raw-duration
-    // sampleless fallback — that fallback is only for manual entries and sessions that
-    // genuinely have zero activity_samples rows within this time window.
 
     // Build dateList from the UTC midnight boundaries returned by getDateRange().
     // We extract the date portion from the ISO string directly (which is already
@@ -456,7 +445,6 @@ export const reportService = {
         }
     }
 
-    const orgTz = (options as any).orgTimezone || 'UTC';
     const startLocalDate = utcToOrgLocalDatePart(start, orgTz);
     const endLocalDate = utcToOrgLocalDatePart(end, orgTz);
 
@@ -493,53 +481,51 @@ export const reportService = {
 
     const dateListSet = new Set(dateList);
 
+    // 1. Populate dailyMap from DB aggregates
+    dbDailyStats.forEach((row: any) => {
+        if (dateListSet.has(row.date)) {
+            dailyMap[row.date] = {
+                activitySum: row.activity_sum,
+                total_samples: row.total_minutes,
+                total_minutes: row.total_minutes
+            };
+        }
+    });
+
+    // 2. Populate memberRows and calculate costs from DB aggregates
+    dbUserDailyStats.forEach((row: any) => {
+        const uid = row.user_id;
+        const day = row.date;
+        const mins = row.total_minutes;
+        const actSum = row.activity_sum;
+
+        if (dateListSet.has(day)) {
+            const member = membersMap.get(uid);
+            if (member && memberRows[member.id]) {
+                const r = memberRows[member.id];
+                r.dailyMins[day] = (r.dailyMins[day] || 0) + mins;
+                r.totalMins += mins;
+                r.activitySum += actSum;
+                r.activitySamples += mins;
+
+                costs += (mins / 60) * (member.pay_rate || 0);
+                billed += (mins / 60) * (member.bill_rate || 0);
+            }
+        }
+    });
+
+    // 3. Process Manual Sessions
     filteredSessions.forEach(sess => {
-        const uid = sess.user_id;
-        if (!uid) return;
-
-        const member = membersMap.get(uid);
-        const sessionSamples = sess.manual === true ? [] : (samplesBySession.get(sess.id) || []);
-
-        if (sessionSamples.length > 0) {
-            // Process each sample for automated tracking sessions (Option B - Productive Only)
-            sessionSamples.forEach(s => {
-                const day = getGroupingDateInTz(s.recorded_at, orgTz);
-                if (!dateListSet.has(day)) return;
-
-                if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
-
-                dailyMap[day].activitySum += (s.activity_percent || 0);
-                dailyMap[day].total_samples++;
-                dailyMap[day].total_minutes++;
-
-                if (member) {
-                    costs += (1 / 60) * (member.pay_rate || 0);
-                    billed += (1 / 60) * (member.bill_rate || 0);
-                }
-
-                if (member && memberRows[member.id]) {
-                    const row = memberRows[member.id];
-                    row.dailyMins[day] = (row.dailyMins[day] || 0) + 1;
-                    row.totalMins++;
-
-                    if (s.activity_percent !== undefined && s.activity_percent !== null) {
-                        row.activitySum += s.activity_percent;
-                        row.activitySamples++;
-                    }
-                }
-            });
-        } else if (sess.manual === true) {
-            // Only use raw session duration when there are truly NO activity_samples rows
-            // in the current time window (e.g. manual entries, or sessions not yet
-            // tracked by the agent). Sessions whose samples were all filtered as idle
-            // contribute 0 productive minutes — not their full running time.
+        if (sess.manual === true) {
+            const uid = sess.user_id;
+            const member = uid ? membersMap.get(uid) : null;
+            
             const { endMs } = getEffectiveEnd(sess.started_at, sess.ended_at);
             const clampedStartMs = Math.max(new Date(sess.started_at).getTime(), new Date(start).getTime());
             const clampedEndMs = Math.min(endMs, new Date(end).getTime());
             const sessionMins = Math.max(0, Math.round((clampedEndMs - clampedStartMs) / 60000));
 
             if (sessionMins > 0) {
-
                 const day = getGroupingDateInTz(new Date(clampedStartMs).toISOString(), orgTz);
                 if (dateListSet.has(day)) {
                     if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
@@ -570,20 +556,22 @@ export const reportService = {
         };
     });
 
-    const appMap: Record<string, number> = {};
-    productiveSamples.forEach(s => {
-        const app = s.app_name || 'Unknown';
-        appMap[app] = (appMap[app] || 0) + 1;
-    });
-    const appBreakdownList = Object.entries(appMap).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, value]) => ({ name, value }));
-
-    const inRangeProductiveSamples = productiveSamples.filter(s => {
-        const day = getGroupingDateInTz(s.recorded_at, orgTz);
-        return dateListSet.has(day);
-    });
+    const appBreakdownList = dbAppStats.map((row: any) => ({
+        name: row.app_name,
+        value: row.total_minutes
+    })).slice(0, 8);
 
     const calculatedTotalMins = Math.round(Object.values(dailyMap).reduce((sum, v) => sum + v.total_minutes, 0));
-    const calculatedAvgActivity = calculateActivityScore(inRangeProductiveSamples);
+    
+    let totalActSum = 0;
+    let totalActSamples = 0;
+    dbDailyStats.forEach((r: any) => {
+        if (dateListSet.has(r.date)) {
+            totalActSum += r.activity_sum;
+            totalActSamples += r.total_minutes;
+        }
+    });
+    const calculatedAvgActivity = totalActSamples > 0 ? Math.round(totalActSum / totalActSamples) : 0;
 
     const finalRows = Object.values(memberRows)
         .map((row: any) => ({
