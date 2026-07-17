@@ -587,7 +587,7 @@ export const reportService = {
                     }
                 }
             });
-        } else if (!hasSamplesInScope) {
+        } else if (sess.manual === true) {
             // Only use raw session duration when there are truly NO activity_samples rows
             // in the current time window (e.g. manual entries, or sessions not yet
             // tracked by the agent). Sessions whose samples were all filtered as idle
@@ -598,6 +598,7 @@ export const reportService = {
             const sessionMins = Math.max(0, Math.round((clampedEndMs - clampedStartMs) / 60000));
 
             if (sessionMins > 0) {
+
                 const day = getGroupingDateInTz(new Date(clampedStartMs).toISOString(), orgTz);
                 if (dateListSet.has(day)) {
                     if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
