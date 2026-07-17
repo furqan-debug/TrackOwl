@@ -356,7 +356,10 @@ export const reportService = {
     }
     sessionsQuery = sessionsQuery.in('user_id', scopedUserIds);
 
+    const t0 = performance.now();
     const { data: sessionData } = await sessionsQuery;
+    const t1 = performance.now();
+    console.log(`[Reports Timing] Sessions Query took ${(t1 - t0).toFixed(2)}ms, found ${(sessionData || []).length} sessions`);
     const filteredSessions = sessionData || [];
     if ((selectedMemberId !== 'All' || selectedTeamId !== 'All') && filteredSessions.length === 0) {
         return {
@@ -379,6 +382,7 @@ export const reportService = {
         ssQuery = ssQuery.in('user_id', scopedUserIds);
     }
 
+    const t2 = performance.now();
     const [samplesResult, { count: ssCount }] = await Promise.all([
         supabase.rpc('get_raw_activity_samples', {
             p_org_id: organizationId,
@@ -388,8 +392,12 @@ export const reportService = {
         }),
         ssQuery,
     ]);
+    const t3 = performance.now();
 
     const samples = (samplesResult.data as any[]) || [];
+    console.log(`[Reports Timing] Raw Activity Samples RPC took ${(t3 - t2).toFixed(2)}ms, returned ${samples.length} samples`);
+
+    const t4 = performance.now();
 
     const allSamples = samples || [];
     const activeSessionIdsSet = new Set(activeSessionIds);
@@ -649,6 +657,9 @@ export const reportService = {
         }))
         .filter(row => row.totalMins > 0) 
         .sort((a, b) => b.totalMins - a.totalMins);
+
+    const t5 = performance.now();
+    console.log(`[Reports Timing] Frontend Processing took ${(t5 - t4).toFixed(2)}ms`);
 
     return {
         dailyActivityList,
