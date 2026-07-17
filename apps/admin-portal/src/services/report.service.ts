@@ -481,8 +481,6 @@ export const reportService = {
     // Sessions with samples (even all-idle) must NEVER fall through to the raw-duration
     // sampleless fallback — that fallback is only for manual entries and sessions that
     // genuinely have zero activity_samples rows within this time window.
-    const sessionsWithAnySamples = new Set<string>();
-    inScopeSamples.forEach(s => sessionsWithAnySamples.add(s.session_id));
 
     // Build dateList from the UTC midnight boundaries returned by getDateRange().
     // We extract the date portion from the ISO string directly (which is already
@@ -553,11 +551,6 @@ export const reportService = {
 
         const member = membersMap.get(uid);
         const sessionSamples = sess.manual === true ? [] : (samplesBySession.get(sess.id) || []);
-
-        // A session has "any samples" in this time window if the RPC returned even one
-        // activity_samples row for it. If all samples were filtered out as idle, we still
-        // do NOT fall back to raw duration — that would massively over-count.
-        const hasSamplesInScope = sess.manual !== true && sessionsWithAnySamples.has(sess.id);
 
         if (sessionSamples.length > 0) {
             // Process each sample for automated tracking sessions (Option B - Productive Only)
