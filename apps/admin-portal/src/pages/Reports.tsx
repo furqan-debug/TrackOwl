@@ -126,14 +126,17 @@ export function Reports() {
         };
     }, [tableData]);
 
+    const [membersLoaded, setMembersLoaded] = useState(false);
+
     useEffect(() => {
         fetchTeams();
         fetchMembers();
     }, []);
 
     useEffect(() => {
+        if (!membersLoaded) return;
         fetchReports();
-    }, [range, offset, selectedTeamId, selectedMemberId, members, orgTimezone]);
+    }, [range, offset, selectedTeamId, selectedMemberId, members, orgTimezone, membersLoaded]);
 
     function shiftRange(direction: number) {
         let days = 0;
@@ -165,6 +168,7 @@ export function Reports() {
 
         const { data } = await query;
         if (data) setMembers(data);
+        setMembersLoaded(true);
     }
 
 

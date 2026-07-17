@@ -384,7 +384,7 @@ export const reportService = {
 
     const t2 = performance.now();
     const [samplesResult, { count: ssCount }] = await Promise.all([
-        supabase.rpc('get_raw_activity_samples', {
+        supabase.rpc('get_productive_activity_samples', {
             p_org_id: organizationId,
             p_start_iso: start,
             p_end_iso: end,
@@ -395,7 +395,7 @@ export const reportService = {
     const t3 = performance.now();
 
     const samples = (samplesResult.data as any[]) || [];
-    console.log(`[Reports Timing] Raw Activity Samples RPC took ${(t3 - t2).toFixed(2)}ms, returned ${samples.length} samples`);
+    console.log(`[Reports Timing] Productive Activity Samples RPC took ${(t3 - t2).toFixed(2)}ms, returned ${samples.length} samples`);
 
     const t4 = performance.now();
 
@@ -412,71 +412,11 @@ export const reportService = {
         }
     });
 
-    const sessionToUserId = new Map(filteredSessions.map(sess => [sess.id, sess.user_id]));
-    
-    // O(N) grouping map to find the sample with the highest activity_percent per user/minute
-    const bestSamplesMap = new Map<string, any>();
-    inScopeSamples.forEach(s => {
-        const uid = sessionToUserId.get(s.session_id);
-        if (!uid) return;
-        const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
-        const key = `${uid}_${minute}`;
-        
-        const existing = bestSamplesMap.get(key);
-        if (!existing || (s.activity_percent ?? 0) > (existing.activity_percent ?? 0)) {
-            bestSamplesMap.set(key, s);
-        }
-    });
-
-    const dedupedSamples = Array.from(bestSamplesMap.values());
-
     const dailyMap: Record<string, { activitySum: number; total_samples: number; total_minutes: number }> = {};
     let costs = 0;
     let billed = 0;
-    const productiveSamples: any[] = [];
 
-    const samplesByUser = new Map<string, any[]>();
-    dedupedSamples.forEach(s => {
-        const uid = sessionToUserId.get(s.session_id);
-        if (!uid) return;
-        if (!samplesByUser.has(uid)) samplesByUser.set(uid, []);
-        samplesByUser.get(uid)!.push(s);
-    });
-
-    samplesByUser.forEach((userSamps, uid) => {
-        const member = membersMap.get(uid);
-        const limit = member?.idle_limit ?? 0;
-
-        if (limit <= 1) {
-            productiveSamples.push(...userSamps);
-        } else {
-            const sorted = userSamps.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-            let currentBlock: any[] = [];
-
-            for (let i = 0; i < sorted.length; i++) {
-                const s = sorted[i];
-                const prev = i > 0 ? sorted[i - 1] : null;
-                const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
-                const isContiguous = prev && gapMs <= 125000;
-
-                if (s.idle && isContiguous) {
-                    currentBlock.push(s);
-                } else if (s.idle && !prev) {
-                    currentBlock = [s];
-                } else if (s.idle && !isContiguous) {
-                    if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
-                    currentBlock = [s];
-                } else {
-                    productiveSamples.push(s);
-                    if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
-                    currentBlock = [];
-                }
-            }
-            if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
-        }
-    });
-
-    // Pre-group productive samples by session to quickly find session-specific samples
+    const productiveSamples: any[] = inScopeSamples;
     const samplesBySession = new Map<string, any[]>();
     productiveSamples.forEach(sample => {
         if (!samplesBySession.has(sample.session_id)) {
