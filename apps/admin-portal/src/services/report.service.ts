@@ -477,6 +477,13 @@ export const reportService = {
         samplesBySession.get(sample.session_id)!.push(sample);
     });
 
+    // Track which session IDs have ANY samples in the RPC range (even if all idle).
+    // Sessions with samples (even all-idle) must NEVER fall through to the raw-duration
+    // sampleless fallback — that fallback is only for manual entries and sessions that
+    // genuinely have zero activity_samples rows within this time window.
+    const sessionsWithAnySamples = new Set<string>();
+    inScopeSamples.forEach(s => sessionsWithAnySamples.add(s.session_id));
+
     // Build dateList from the UTC midnight boundaries returned by getDateRange().
     // We extract the date portion from the ISO string directly (which is already
     // expressed in org-timezone-aware UTC) rather than using new Date() which
@@ -547,6 +554,11 @@ export const reportService = {
         const member = membersMap.get(uid);
         const sessionSamples = sess.manual === true ? [] : (samplesBySession.get(sess.id) || []);
 
+        // A session has "any samples" in this time window if the RPC returned even one
+        // activity_samples row for it. If all samples were filtered out as idle, we still
+        // do NOT fall back to raw duration — that would massively over-count.
+        const hasSamplesInScope = sess.manual !== true && sessionsWithAnySamples.has(sess.id);
+
         if (sessionSamples.length > 0) {
             // Process each sample for automated tracking sessions (Option B - Productive Only)
             sessionSamples.forEach(s => {
@@ -575,8 +587,11 @@ export const reportService = {
                     }
                 }
             });
-        } else {
-            // Process manual/sampleless session duration
+        } else if (!hasSamplesInScope) {
+            // Only use raw session duration when there are truly NO activity_samples rows
+            // in the current time window (e.g. manual entries, or sessions not yet
+            // tracked by the agent). Sessions whose samples were all filtered as idle
+            // contribute 0 productive minutes — not their full running time.
             const { endMs } = getEffectiveEnd(sess.started_at, sess.ended_at);
             const clampedStartMs = Math.max(new Date(sess.started_at).getTime(), new Date(start).getTime());
             const clampedEndMs = Math.min(endMs, new Date(end).getTime());
