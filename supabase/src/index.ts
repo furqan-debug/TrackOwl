@@ -735,13 +735,21 @@ app.post('/api/members', requireAuth, async (req, res) => {
         const db = getDb();
 
         // 2. Check if a member row already exists for this email
-        const { data: existingMember } = await db.from('members').select('id, status').eq('email', email).maybeSingle();
+        const { data: existingMember } = await db.from('members').select('id, status, organization_id').eq('email', email).maybeSingle();
 
-        if (existingMember && existingMember.status === 'Active') {
-            return res.status(409).json({
-                error: 'Member already exists',
-                message: `This user is already ACTIVE. They should log in directly or use the "Forgot Password" link if they cannot access their account.`
-            });
+        if (existingMember) {
+            if (existingMember.organization_id && existingMember.organization_id !== orgId) {
+                return res.status(403).json({
+                    error: 'User already in another organization',
+                    message: 'This user is already a member of another organization. Users can only belong to one organization at a time.'
+                });
+            }
+            if (existingMember.status === 'Active') {
+                return res.status(409).json({
+                    error: 'Member already exists',
+                    message: `This user is already ACTIVE in your organization. They should log in directly or use the "Forgot Password" link if they cannot access their account.`
+                });
+            }
         }
 
         // 3. Generate invitation link and send via Resend
@@ -792,24 +800,38 @@ app.post('/api/members', requireAuth, async (req, res) => {
             // but we should probably warn the user.
         }
 
-        // 4. Create the member record in the DB
-        const { data: newMember, error: insertError } = await db.from('members').insert([{
-            id: uuidv4(),
-            email,
-            auth_user_id: authUserId,
-            organization_id: orgId,
-            role,
-            pay_rate,
-            bill_rate,
-            weekly_limit,
-            daily_limit,
-            status: 'Pending'
-        }]).select().single();
+        // 4. Create or update the member record in the DB
+        let memberData;
+        if (existingMember) {
+            const { data: updatedMember, error: updateError } = await db.from('members').update({
+                auth_user_id: authUserId,
+                role,
+                pay_rate,
+                bill_rate,
+                weekly_limit,
+                daily_limit,
+                status: 'Pending'
+            }).eq('id', existingMember.id).select().single();
+            if (updateError) throw updateError;
+            memberData = updatedMember;
+        } else {
+            const { data: newMember, error: insertError } = await db.from('members').insert([{
+                id: uuidv4(),
+                email,
+                auth_user_id: authUserId,
+                organization_id: orgId,
+                role,
+                pay_rate,
+                bill_rate,
+                weekly_limit,
+                daily_limit,
+                status: 'Pending'
+            }]).select().single();
+            if (insertError) throw insertError;
+            memberData = newMember;
+        }
 
-        if (insertError) throw insertError;
-
-
-        res.status(201).json({ member: newMember, invited: true });
+        res.status(201).json({ member: memberData, invited: true });
     } catch (e: any) {
         console.error('Invite member error:', e);
         safeError(e, res);
