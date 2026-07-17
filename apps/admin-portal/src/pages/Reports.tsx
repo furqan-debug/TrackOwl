@@ -169,6 +169,11 @@ export function Reports() {
 
 
 
+    function formatDateInTz(date: string | Date, options: Intl.DateTimeFormatOptions = {}): string {
+        const d = typeof date === 'string' ? new Date(date) : date;
+        return d.toLocaleDateString('en-US', { ...options, timeZone: orgTimezone });
+    }
+
     function getOrgLocalDate(timeZone: string): Date {
         const now = new Date();
         try {
@@ -198,10 +203,29 @@ export function Reports() {
     }
 
     function convertTzDateToUtc(dateStr: string, timeZone: string): Date {
-        const d = new Date(dateStr + 'Z');
-        const local = new Date(d.toLocaleString('en-US', { timeZone }));
-        const diff = d.getTime() - local.getTime();
-        return new Date(d.getTime() + diff);
+        const targetUtc = new Date(dateStr + 'Z');
+        let offsetMs = 0;
+        try {
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone,
+                timeZoneName: 'longOffset'
+            });
+            const parts = formatter.formatToParts(targetUtc);
+            const tzPart = parts.find(p => p.type === 'timeZoneName');
+            if (tzPart) {
+                const offsetStr = tzPart.value.replace('GMT', '').trim();
+                if (offsetStr && offsetStr !== 'Z') {
+                    const sign = offsetStr[0] === '+' ? 1 : -1;
+                    const timeParts = offsetStr.slice(1).split(':');
+                    const hours = parseInt(timeParts[0], 10);
+                    const minutes = timeParts[1] ? parseInt(timeParts[1], 10) : 0;
+                    offsetMs = sign * (hours * 60 + minutes) * 60 * 1000;
+                }
+            }
+        } catch (e) {
+            console.error('Failed to resolve timezone offset:', e);
+        }
+        return new Date(targetUtc.getTime() - offsetMs);
     }
 
     function getDateRange(): { start: string; end: string } {
@@ -341,7 +365,7 @@ export function Reports() {
         
         // Branding Header
         csvContent += '"TrackOwl Timesheet Matrix Report"\r\n';
-        csvContent += `"Generated on: ${new Date().toLocaleDateString('en-US')}","Date Range: ${new Date(getDateRange().start).toLocaleDateString('en-US')} - ${new Date(getDateRange().end).toLocaleDateString('en-US')}"\r\n\r\n`;
+        csvContent += `"Generated on: ${formatDateInTz(new Date())}","Date Range: ${formatDateInTz(getDateRange().start)} - ${formatDateInTz(getDateRange().end)}"\r\n\r\n`;
 
         const headers = ["Member"];
         if (showEmpId) headers.push("Emp ID");
@@ -431,7 +455,7 @@ export function Reports() {
         
         doc.setFontSize(9);
         doc.setTextColor(100, 116, 139); // slate-500
-        doc.text(`Generated on: ${new Date().toLocaleDateString('en-US')}  |  Date Range: ${new Date(getDateRange().start).toLocaleDateString('en-US')} - ${new Date(getDateRange().end).toLocaleDateString('en-US')}`, titleX, 22);
+        doc.text(`Generated on: ${formatDateInTz(new Date())}  |  Date Range: ${formatDateInTz(getDateRange().start)} - ${formatDateInTz(getDateRange().end)}`, titleX, 22);
 
         const headRow = ["Member"];
         if (showEmpId) headRow.push("Emp ID");
@@ -511,9 +535,9 @@ export function Reports() {
                             >
                                 <CalendarIcon className="w-3.5 h-3.5 text-text-muted" />
                                 <span className="text-[11px] font-bold text-text-main ">
-                                    {new Date(getDateRange().start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                    {formatDateInTz(getDateRange().start, { month: 'short', day: 'numeric' })}
                                     <span className="text-text-muted mx-2">—</span>
-                                    {new Date(getDateRange().end).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    {formatDateInTz(getDateRange().end, { month: 'short', day: 'numeric', year: 'numeric' })}
                                 </span>
                             </div>
 
