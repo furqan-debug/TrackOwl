@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import Stripe from "https://esm.sh/stripe@14.23.0?target=deno";
+import Stripe from "npm:stripe@14.23.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +16,11 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     const stripeSecretKey = Deno.env.get("STRIPE_SECRET_KEY") ?? "";
+
+    const stripe = new Stripe(stripeSecretKey, {
+      apiVersion: "2023-10-16",
+      httpClient: Stripe.createFetchHttpClient(),
+    });
 
     let bodyData: any = {};
     try {
@@ -61,7 +66,7 @@ serve(async (req) => {
       throw new Error("Organization profile not found.");
     }
 
-    const isMockMode = !stripeSecretKey || org.stripe_customer_id?.startsWith("cus_mock_") || (org.plan_type === "Premium" && !org.stripe_subscription_id);
+    const isMockMode = !stripeSecretKey || org.stripe_customer_id?.startsWith("cus_mock_") || !org.stripe_subscription_id;
 
     // ────────────────────────────────────────────────────────────────
     // ACTIONS FOR DEV SIMULATION (MOCK SANDBOX) MODE
@@ -130,9 +135,6 @@ serve(async (req) => {
     // ────────────────────────────────────────────────────────────────
     // ACTIONS FOR REAL STRIPE MODE
     // ────────────────────────────────────────────────────────────────
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: "2023-10-16",
-    });
 
     if (!org.stripe_subscription_id) {
       throw new Error("No active Stripe subscription found to change.");
