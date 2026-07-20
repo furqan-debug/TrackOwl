@@ -33,6 +33,11 @@ export function ChangePlan() {
         }
 
         const fetchPreview = async () => {
+            if (!organization?.stripe_subscription_id) {
+                setPreviewLoading(false);
+                return;
+            }
+            
             setPreviewLoading(true);
             try {
                 const { data, error } = await supabase.functions.invoke('preview-plan-change', {
@@ -54,7 +59,7 @@ export function ChangePlan() {
 
         const t = setTimeout(fetchPreview, 400);
         return () => clearTimeout(t);
-    }, [selectedPlan, selectedCycle, organization?.id]);
+    }, [selectedPlan, selectedCycle, organization?.id, organization?.stripe_subscription_id]);
 
     const handleConfirm = async () => {
         setSaving(true);
@@ -85,7 +90,7 @@ export function ChangePlan() {
     const newPricePerSeat = selectedPlan === 'Premium'
         ? (selectedCycle === 'Monthly' ? 6.99 : 4.99)
         : (selectedCycle === 'Monthly' ? 3.99 : 2.99);
-    const billableSeats = Math.max(1, seats - 1);
+    const billableSeats = Math.max(0, seats - 1);
     const renewalAmount = previewData?.nextRenewalAmount
         ?? (billableSeats * newPricePerSeat * (selectedCycle === 'Yearly' ? 12 : 1));
     const amountDueToday = previewData?.amountDueToday ?? 0;
