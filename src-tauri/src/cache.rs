@@ -441,11 +441,15 @@ pub fn sync_from_arc(
                     let _ = mark_synced(conn, &ids);
                 }
             } else if e.contains("23503") || e.contains("foreign key") {
-                eprintln!("[cache] ⚠️ FK violation — session_id not found. Discarding {} stale samples to unblock queue.", samples.len());
-                let ids: Vec<i64> = samples.iter().map(|s| s.id).collect();
+                eprintln!("[cache] ⚠️ FK violation — session_id not found. Discarding ALL stale samples for these sessions to unblock queue.");
                 let mut db_lock = db_arc.lock().unwrap();
                 if let Some(conn) = db_lock.as_mut() {
-                    let _ = mark_synced(conn, &ids);
+                    if let Ok(tx) = conn.transaction() {
+                        for s in &samples {
+                            let _ = tx.execute("UPDATE activity_samples SET synced = 1 WHERE session_id = ?1", rusqlite::params![s.session_id]);
+                        }
+                        let _ = tx.commit();
+                    }
                 }
             } else {
                 eprintln!("[cache] sync failed (will retry): {}", e);

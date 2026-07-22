@@ -595,7 +595,7 @@ function SupportScreen({ user, onBack }: { user: User; onBack: () => void }) {
       if (submitError) throw submitError;
       setSent(true);
     } catch (err: any) {
-      setError(err.message || 'Failed to send support ticket');
+      setError('Unable to send message. Please try again later or contact support directly.');
     } finally {
       setSending(false);
     }
@@ -703,7 +703,7 @@ function SupportScreen({ user, onBack }: { user: User; onBack: () => void }) {
                 </div>
 
                 {error && (
-                  <div className="alert alert-error" style={{ marginBottom: '1rem' }}>
+                  <div className="alert alert-warning" style={{ marginBottom: '1rem' }}>
                     <ShieldAlert size={14} /><span>{error}</span>
                   </div>
                 )}
@@ -1537,9 +1537,24 @@ export default function App() {
 
       console.log('[Login] Session established');
 
+      // Ensure the client's internal headers are fully updated
+      await sb.auth.setSession({ 
+        access_token: authData.session.access_token, 
+        refresh_token: authData.session.refresh_token 
+      });
+
       console.log('[Login] Fetching member profile for user:', authData.user.id);
       let { data: member, error: memberError } = await sb
         .from('members').select('*, organizations(plan_type, settings)').eq('auth_user_id', authData.user.id).single();
+
+      // Retry once to handle supabase-js session propagation race conditions
+      if (memberError || !member) {
+        console.log('[Login] First attempt failed, retrying in 500ms...');
+        await new Promise(r => setTimeout(r, 500));
+        const retryResult = await sb.from('members').select('*, organizations(plan_type, settings)').eq('auth_user_id', authData.user.id).single();
+        member = retryResult.data;
+        memberError = retryResult.error;
+      }
 
       // Fallback: lookup by email if auth_user_id is not yet linked
       if ((memberError || !member) && authData.user.email) {
@@ -1557,7 +1572,7 @@ export default function App() {
 
       if (memberError || !member) {
         console.error('[Login] Profile verification failed:', memberError?.message || 'No member record');
-        return `TrackOwl Error: Member profile not found for ${authData.user.email}. Please contact your administrator. (UID: ${authData.user.id.substring(0, 8)})`;
+        return 'Member profile not found. Please contact your administrator to ensure your account is properly linked.';
       }
 
       if (member.role === 'Client') {
@@ -1703,7 +1718,7 @@ export default function App() {
           setTrackingError('Network error: Unable to reach the server. Please check your internet connection.');
           setIsOnline(false);
         } else {
-          setTrackingError(rawErr || 'Failed to start tracking. Is the backend running?');
+          setTrackingError(rawErr && rawErr.length < 100 && !rawErr.includes('violates') ? rawErr : 'Unable to start tracking. Please try again or contact support.');
         }
         setIsTracking(false);
         setActiveProject(null);
@@ -1735,7 +1750,7 @@ export default function App() {
         setTrackingError('Network error: Unable to reach the server. Please check your internet connection.');
         setIsOnline(false);
       } else {
-        setTrackingError(errMsg);
+        setTrackingError(errMsg && errMsg.length < 100 && !errMsg.includes('violates') ? errMsg : 'Unable to start tracking due to a system error. Please try again or contact support.');
       }
       setIsTracking(false);
       setActiveProject(null);
@@ -1842,7 +1857,7 @@ export default function App() {
       localStorage.setItem(USER_KEY, JSON.stringify(newUser));
       setScreen('projects');
     } catch (err: any) {
-      alert('Error updating profile: ' + err.message);
+      alert('Unable to update profile. Please try again or contact support.');
     }
   }
 
@@ -2142,7 +2157,7 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
                         placeholder="you@company.com" className="field-input" style={{ paddingLeft: '2.25rem' }} />
                     </div>
                   </div>
-                  {forgotError && <div className="alert alert-error"><ShieldAlert size={14} /><span>{forgotError}</span></div>}
+                  {forgotError && <div className="alert alert-warning"><ShieldAlert size={14} /><span>{forgotError}</span></div>}
                   <button type="submit" disabled={forgotLoading || !forgotEmail.trim()} className="btn btn-primary" style={{ width: '100%' }}>
                     {forgotLoading ? 'Sending…' : 'Send Reset Link'}
                     {!forgotLoading && <ArrowRight size={16} />}
@@ -2204,7 +2219,7 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
 
               {error && (
                 <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                  className="alert alert-error" style={{ overflow: 'hidden' }}>
+                  className="alert alert-warning" style={{ overflow: 'hidden' }}>
                   <ShieldAlert size={14} /><span>{error}</span>
                 </motion.div>
               )}
@@ -2372,14 +2387,14 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
         </div>
 
         {trackingError && (
-          <div className="alert alert-error" style={{ marginBottom: '0.75rem' }}>
+          <div className="alert alert-warning" style={{ marginBottom: '0.75rem' }}>
             <ShieldAlert size={14} /><span>{trackingError}</span>
           </div>
         )}
 
         {user.tracking_enabled === false && (
-          <div className="alert alert-error" style={{ marginBottom: '1.5rem', background: 'rgba(239, 68, 68, 0.08)', borderColor: 'rgba(239, 68, 68, 0.2)' }}>
-            <Lock size={14} style={{ color: 'var(--danger)' }} />
+          <div className="alert alert-warning" style={{ marginBottom: '1.5rem', background: 'rgba(252, 211, 77, 0.1)', borderColor: 'rgba(252, 211, 77, 0.3)' }}>
+            <Lock size={14} style={{ color: 'var(--warning-text)' }} />
             <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>Tracking is currently disabled for your account.</span>
           </div>
         )}
