@@ -101,6 +101,24 @@ pub fn init_db() -> rusqlite::Result<Connection> {
             ended_at    TEXT    NOT NULL
         );",
     )?;
+
+    // ── Startup cleanup: discard unsynced samples older than 24 hours ──────────
+    // A sample that hasn't synced after 24h has been retried ~2,880 times and its
+    // session_id no longer exists on the server. Keeping it blocks every newer
+    // sample behind it. Active users' queues are always seconds-to-minutes old,
+    // so this threshold never affects a healthy, online user.
+    let cutoff_24h = chrono::Utc::now()
+        .checked_sub_signed(chrono::Duration::hours(24))
+        .map(|dt| dt.to_rfc3339())
+        .unwrap_or_default();
+    let pruned = conn.execute(
+        "DELETE FROM activity_samples WHERE synced = 0 AND recorded_at < ?1",
+        params![cutoff_24h],
+    ).unwrap_or(0);
+    if pruned > 0 {
+        eprintln!("[cache] 🧹 Pruned {} stale unsynced samples (>24h old) on startup", pruned);
+    }
+
     Ok(conn)
 }
 
@@ -300,11 +318,15 @@ pub fn sync_once(
             }
         }
         Err(e) => {
-            // If the error is a "409 Conflict", it means these rows already exist on the server
-            // due to a previous partial sync or duplicate attempt. We should mark them as synced 
-            // locally so we don't get stuck retrying them.
+            // 409 Conflict: rows already exist on the server from a previous partial sync.
+            // 23503 FK violation: the session_id no longer exists in the sessions table.
+            // Both cases are unrecoverable — discard to unblock the queue.
             if e.contains("409") || e.contains("duplicate key") {
-                println!("[cache] ⚠️ Conflict detected (already synced). Marking as synced locally.");
+                println!("[cache] ⚠️ Conflict (already synced). Marking as synced locally.");
+                let ids: Vec<i64> = samples.iter().map(|s| s.id).collect();
+                let _ = mark_synced(conn, &ids);
+            } else if e.contains("23503") || e.contains("foreign key") {
+                eprintln!("[cache] ⚠️ FK violation — session_id not found in sessions table. Discarding {} stale samples to unblock queue.", samples.len());
                 let ids: Vec<i64> = samples.iter().map(|s| s.id).collect();
                 let _ = mark_synced(conn, &ids);
             } else {
@@ -410,8 +432,16 @@ pub fn sync_from_arc(
             }
         }
         Err(e) => {
+            // 409 Conflict: already on server. 23503 FK: session gone. Both unrecoverable — discard.
             if e.contains("409") || e.contains("duplicate key") {
-                println!("[cache] ⚠️ Conflict detected (already synced). Marking as synced locally.");
+                println!("[cache] ⚠️ Conflict (already synced). Marking as synced locally.");
+                let ids: Vec<i64> = samples.iter().map(|s| s.id).collect();
+                let mut db_lock = db_arc.lock().unwrap();
+                if let Some(conn) = db_lock.as_mut() {
+                    let _ = mark_synced(conn, &ids);
+                }
+            } else if e.contains("23503") || e.contains("foreign key") {
+                eprintln!("[cache] ⚠️ FK violation — session_id not found. Discarding {} stale samples to unblock queue.", samples.len());
                 let ids: Vec<i64> = samples.iter().map(|s| s.id).collect();
                 let mut db_lock = db_arc.lock().unwrap();
                 if let Some(conn) = db_lock.as_mut() {
