@@ -68,7 +68,7 @@ export function UpdaterOverlay() {
       await invoke('install_update');
     } catch (err: any) {
       console.error('[updater] Failed to install update:', err);
-      setError(err.toString());
+      setError('Update failed. Please check your internet connection and try again later.');
       setInstalling(false);
     }
   };
@@ -97,12 +97,12 @@ export function UpdaterOverlay() {
         </div>
 
         {error ? (
-          <div className="w-full p-4 bg-red-950/40 border border-red-500/20 text-red-200 text-sm rounded-xl font-medium">
+          <div className="w-full p-4 bg-amber-950/40 border border-amber-500/20 text-amber-200 text-sm rounded-xl font-medium">
             <p className="font-bold mb-1">Update Failed</p>
-            <p className="text-xs text-red-300/80 mb-4">{error}</p>
+            <p className="text-xs text-amber-300/80 mb-4">{error}</p>
             <button
               onClick={handleUpdate}
-              className="py-2.5 px-6 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
+              className="py-2.5 px-6 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-colors cursor-pointer"
             >
               Retry Update
             </button>
