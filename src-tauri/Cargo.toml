@@ -1,6 +1,6 @@
 [package]
 name = "digireps-tracker"
-version = "1.4.7"
+version = "1.4.8"
 description = "DigiReps Time Tracker — Desktop App"
 authors = ["DigiReps"]
 edition = "2021"
