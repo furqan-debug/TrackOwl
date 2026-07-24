@@ -481,13 +481,12 @@ export const reportService = {
 
     const dateListSet = new Set(dateList);
 
-    // 1. Populate dailyMap from DB aggregates
     dbDailyStats.forEach((row: any) => {
         if (dateListSet.has(row.date)) {
             dailyMap[row.date] = {
                 activitySum: row.activity_sum,
-                total_samples: row.total_minutes,
-                total_minutes: row.total_minutes
+                total_samples: row.sample_count,   // sample count for activity % averaging
+                total_minutes: row.total_minutes    // session-duration-based tracked time
             };
         }
     });
@@ -496,7 +495,8 @@ export const reportService = {
     dbUserDailyStats.forEach((row: any) => {
         const uid = row.user_id;
         const day = row.date;
-        const mins = row.total_minutes;
+        const mins = row.total_minutes;         // session-duration minutes
+        const sampleCount = row.sample_count;   // sample count for activity averaging
         const actSum = row.activity_sum;
 
         if (dateListSet.has(day)) {
@@ -506,7 +506,7 @@ export const reportService = {
                 r.dailyMins[day] = (r.dailyMins[day] || 0) + mins;
                 r.totalMins += mins;
                 r.activitySum += actSum;
-                r.activitySamples += mins;
+                r.activitySamples += sampleCount; // use sample count, not duration
 
                 costs += (mins / 60) * (member.pay_rate || 0);
                 billed += (mins / 60) * (member.bill_rate || 0);
@@ -568,7 +568,7 @@ export const reportService = {
     dbDailyStats.forEach((r: any) => {
         if (dateListSet.has(r.date)) {
             totalActSum += r.activity_sum;
-            totalActSamples += r.total_minutes;
+            totalActSamples += r.sample_count; // use sample count for activity averaging
         }
     });
     const calculatedAvgActivity = totalActSamples > 0 ? Math.round(totalActSum / totalActSamples) : 0;
