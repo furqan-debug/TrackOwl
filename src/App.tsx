@@ -1498,12 +1498,12 @@ export default function App() {
         if (user && activeProject) {
           const otherProjectsToday = projects
             .filter(p => p.id !== activeProject.id)
-            .reduce((s, p) => s + Math.max(0, (p.stats?.todaySeconds || 0) - (p.stats?.keptIdleSeconds || 0)), 0);
+            .reduce((s, p) => s + (p.stats?.todaySeconds || 0), 0);
           const currentToday = otherProjectsToday + sessionElapsedRef.current;
 
           const otherProjectsWeek = projects
             .filter(p => p.id !== activeProject.id)
-            .reduce((s, p) => s + Math.max(0, (p.stats?.weeklySeconds || 0) - (p.stats?.weeklyIdleSeconds || 0)), 0);
+            .reduce((s, p) => s + (p.stats?.weeklySeconds || 0), 0);
           const currentWeek = otherProjectsWeek + sessionElapsedRef.current;
 
           const weeklyLimitSecs = (user.weekly_limit || 40) * 3600;
@@ -1641,12 +1641,10 @@ export default function App() {
   }
 
   async function startTracking(project: Project) {
-    // Initialize timer to productive seconds already tracked today
+    // Initialize timer to total seconds already tracked today
     const todaySecs = project.stats?.todaySeconds || 0;
-    const idleSecs = project.stats?.keptIdleSeconds || 0;
-    const productiveStart = Math.max(0, todaySecs - idleSecs);
-    sessionElapsedRef.current = productiveStart;
-    setElapsedStart(productiveStart);
+    sessionElapsedRef.current = todaySecs;
+    setElapsedStart(todaySecs);
     setLiveIdleSeconds(0); // reset live idle counter for new session
     idleMinutesRef.current = 0; // reset inactivity counter for new session
     setIsPaused(false);
@@ -1674,8 +1672,8 @@ export default function App() {
       }
 
       // Enforcement: Daily & Weekly Limits
-      const totalToday = projects.reduce((s, p) => s + Math.max(0, (p.stats?.todaySeconds || 0) - (p.stats?.keptIdleSeconds || 0)), 0);
-      const totalWeek = projects.reduce((s, p) => s + Math.max(0, (p.stats?.weeklySeconds || 0) - (p.stats?.weeklyIdleSeconds || 0)), 0);
+      const totalToday = projects.reduce((s, p) => s + (p.stats?.todaySeconds || 0), 0);
+      const totalWeek = projects.reduce((s, p) => s + (p.stats?.weeklySeconds || 0), 0);
       const dailyLimitSecs = (user?.daily_limit || 8) * 3600;
       const weeklyLimitSecs = (user?.weekly_limit || 40) * 3600;
 
@@ -2346,9 +2344,9 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   todos: Todo[];
   onTodoDone: (id: string) => void;
 }) {
-  // Productive = total tracked - idle
-  const totalToday = projects.reduce((s, p) => s + Math.max(0, (p.stats?.todaySeconds || 0) - (p.stats?.keptIdleSeconds || 0)), 0);
-  const totalWeek = projects.reduce((s, p) => s + Math.max(0, (p.stats?.weeklySeconds || 0) - (p.stats?.weeklyIdleSeconds || 0)), 0);
+  // Total tracked = all samples × 60s (including idle below limit)
+  const totalToday = projects.reduce((s, p) => s + (p.stats?.todaySeconds || 0), 0);
+  const totalWeek = projects.reduce((s, p) => s + (p.stats?.weeklySeconds || 0), 0);
   const tracked = projects.filter(p => (p.stats?.weeklySeconds || 0) > 0);
   const avgActivity = tracked.length > 0
     ? Math.round(tracked.reduce((s, p) => s + (p.stats?.activityPercent || 0), 0) / tracked.length)
