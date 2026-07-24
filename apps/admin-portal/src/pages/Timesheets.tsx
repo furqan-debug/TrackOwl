@@ -820,7 +820,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                     <thead>
                         <tr className="bg-surface-hover/30">
                             <th className="py-6 px-10 text-[11px] font-bold text-text-muted border-b border-border uppercase tracking-widest w-1/3">Scope & Member</th>
-                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Score</th>
+                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Active</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Idle</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Duration</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-40">Timezone</th>
