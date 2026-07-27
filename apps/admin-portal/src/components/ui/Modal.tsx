@@ -7,7 +7,7 @@ export interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
     title: string;
-    subtitle?: string;
+    subtitle?: ReactNode;
     children: ReactNode;
     footer?: ReactNode;
     maxWidth?: string;
@@ -58,9 +58,13 @@ export function Modal({
                                 {title}
                             </h2>
                             {subtitle && (
-                                <p className="text-[10px] font-bold text-text-muted font-mono">
-                                    {subtitle}
-                                </p>
+                                <div className="mt-1">
+                                    {typeof subtitle === 'string' ? (
+                                        <p className="text-[10px] font-bold text-text-muted font-mono">{subtitle}</p>
+                                    ) : (
+                                        subtitle
+                                    )}
+                                </div>
                             )}
                         </div>
                         <button 
