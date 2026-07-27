@@ -74,6 +74,7 @@ interface AppUsage {
 // Module-level cache to prevent re-fetching when switching sidebar tabs
 let dashboardCache: any = null;
 let dashboardCacheWeek: string | null = null;
+let dashboardCacheUser: string | null = null;
 
 
 interface DashStats {
@@ -156,7 +157,7 @@ export function Dashboard() {
         const startIso = weekStart.toISOString();
         const endIso = weekEnd.toISOString();
 
-        if (!forceRefresh && dashboardCache && dashboardCacheWeek === startIso) {
+        if (!forceRefresh && dashboardCache && dashboardCacheWeek === startIso && dashboardCacheUser === profile?.id) {
             setStats(dashboardCache.stats);
             setUserActivity(dashboardCache.userActivity);
             setOnlineMembers(dashboardCache.onlineMembers);
@@ -194,7 +195,13 @@ export function Dashboard() {
             if (projectIdsFilter) projectsQuery = projectsQuery.in('id', projectIdsFilter);
 
             let sessionsQuery = supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').eq('organization_id', organizationId).gte('started_at', startIso).lte('started_at', endIso);
-            if (memberIdsFilter) sessionsQuery = sessionsQuery.in('user_id', memberIdsFilter);
+            if (memberIdsFilter && projectIdsFilter) {
+                sessionsQuery = sessionsQuery.or(`user_id.in.(${memberIdsFilter.join(',')}),project_id.in.(${projectIdsFilter.join(',')})`);
+            } else if (memberIdsFilter) {
+                sessionsQuery = sessionsQuery.in('user_id', memberIdsFilter);
+            } else if (projectIdsFilter) {
+                sessionsQuery = sessionsQuery.in('project_id', projectIdsFilter);
+            }
             const [
                 { data: members },
                 { data: projects },
@@ -337,15 +344,17 @@ export function Dashboard() {
             setChartData(dailyData);
 
             // Update Cache
-            dashboardCache = {
-                stats: finalStats,
-                userActivity: finalUserActivity,
-                onlineMembers: online,
-                projectActivity: finalProjectActivity,
+            const newCache = { 
+                stats: finalStats, 
+                userActivity: finalUserActivity, 
+                onlineMembers: online, 
+                projectActivity: finalProjectActivity, 
                 appUsage: finalAppUsage,
                 chartData: dailyData
             };
+            dashboardCache = newCache;
             dashboardCacheWeek = startIso;
+            dashboardCacheUser = profile?.id || null;
 
         } catch (error) {
             console.error('Dashboard error:', error);
