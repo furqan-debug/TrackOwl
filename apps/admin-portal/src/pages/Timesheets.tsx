@@ -65,6 +65,7 @@ export function Timesheets() {
     const [activeTimezone, setActiveTimezone] = useState<string>('User Local');
     const [orgTimezone, setOrgTimezone] = useState<string>('UTC');
     const [projects, setProjects] = useState<any[]>([]);
+    const [projectMembersMap, setProjectMembersMap] = useState<Record<string, string[]>>({}); // memberId -> projectId[]
     const [selectedMember, setSelectedMember] = useState<string>('all');
     const [filterProjectId, setFilterProjectId] = useState<string>('all');
 
@@ -160,7 +161,7 @@ export function Timesheets() {
 
     async function fetchProjects() {
         let query = supabase.from('projects')
-            .select('id, name')
+            .select('id, name, project_members(member_id)')
             .eq('organization_id', organizationId)
             .eq('status', 'Active')
             .order('name');
@@ -172,7 +173,18 @@ export function Timesheets() {
         }
         
         const { data } = await query;
-        setProjects(data || []);
+        const projectList = data || [];
+        setProjects(projectList);
+
+        // Build memberId -> projectId[] map for filtering
+        const map: Record<string, string[]> = {};
+        projectList.forEach((p: any) => {
+            (p.project_members || []).forEach((pm: any) => {
+                if (!map[pm.member_id]) map[pm.member_id] = [];
+                map[pm.member_id].push(p.id);
+            });
+        });
+        setProjectMembersMap(map);
     }
 
     async function fetchTimesheets(forceRefresh = false) {
@@ -591,7 +603,7 @@ export function Timesheets() {
                             <FilterSelect
                                 icon={<Users className="w-3.5 h-3.5" />}
                                 value={addTimeData.userId}
-                                onChange={(val) => setAddTimeData({ ...addTimeData, userId: val })}
+                                onChange={(val) => setAddTimeData({ ...addTimeData, userId: val, projectId: '' })}
                                 options={[
                                     { id: '', name: 'Select member...' },
                                     ...members.map(m => ({ id: m.id, name: m.full_name }))
@@ -607,8 +619,10 @@ export function Timesheets() {
                                 value={addTimeData.projectId}
                                 onChange={(val) => setAddTimeData({ ...addTimeData, projectId: val })}
                                 options={[
-                                    { id: '', name: 'Select project...' },
-                                    ...projects.map(p => ({ id: p.id, name: p.name }))
+                                    { id: '', name: addTimeData.userId ? 'Select project...' : 'Select a member first...' },
+                                    ...projects
+                                        .filter(p => !addTimeData.userId || (projectMembersMap[addTimeData.userId] || []).includes(p.id))
+                                        .map(p => ({ id: p.id, name: p.name }))
                                 ]}
                             />
                         </div>
@@ -644,7 +658,7 @@ export function Timesheets() {
                             <FilterSelect
                                 icon={<Users className="w-3.5 h-3.5" />}
                                 value={addTimeData.userId}
-                                onChange={(val) => setAddTimeData({ ...addTimeData, userId: val })}
+                                onChange={(val) => setAddTimeData({ ...addTimeData, userId: val, projectId: '' })}
                                 options={[
                                     { id: '', name: 'Select member...' },
                                     ...members.map(m => ({ id: m.id, name: m.full_name }))
@@ -660,8 +674,10 @@ export function Timesheets() {
                                 value={addTimeData.projectId}
                                 onChange={(val) => setAddTimeData({ ...addTimeData, projectId: val })}
                                 options={[
-                                    { id: '', name: 'Select project...' },
-                                    ...projects.map(p => ({ id: p.id, name: p.name }))
+                                    { id: '', name: addTimeData.userId ? 'Select project...' : 'Select a member first...' },
+                                    ...projects
+                                        .filter(p => !addTimeData.userId || (projectMembersMap[addTimeData.userId] || []).includes(p.id))
+                                        .map(p => ({ id: p.id, name: p.name }))
                                 ]}
                             />
                         </div>

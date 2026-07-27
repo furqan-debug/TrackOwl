@@ -2,25 +2,38 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { 
-    ChevronLeft, Save, 
-    User, Shield, DollarSign, Clock, 
+    Save, User, Shield, DollarSign, Clock, 
     Info, AlertCircle, Calendar,
     Briefcase, Smartphone, Mail,
     MapPin, CreditCard, Phone, Globe2,
-    Check
+    Check, FolderOpen, X, Search, Plus,
+    ChevronLeft, ArrowLeft, Settings2
 } from 'lucide-react';
-import { 
-    Button, 
-    Card, 
-    PageLayout, 
-    LoadingState,
-    StatusBadge,
-    DatePicker
-} from '../components/ui';
+import { LoadingState, DatePicker } from '../components/ui';
 import { SecureImage } from '../components/ui/SecureImage';
 import clsx from 'clsx';
 
 type Role = 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
+
+const TAB_CONFIG = [
+    { id: 'General',      label: 'General',      icon: User,        color: 'text-primary',    bg: 'bg-primary/10' },
+    { id: 'Compensation', label: 'Compensation',  icon: DollarSign,  color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
+    { id: 'Limits',       label: 'Limits',        icon: Clock,       color: 'text-amber-400',  bg: 'bg-amber-400/10' },
+    { id: 'Dates',        label: 'Dates',         icon: Calendar,    color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
+    { id: 'Contact',      label: 'Contact',       icon: Phone,       color: 'text-blue-400',   bg: 'bg-blue-400/10' },
+    { id: 'Additional',   label: 'Additional',    icon: Shield,      color: 'text-rose-400',   bg: 'bg-rose-400/10' },
+    { id: 'Projects',     label: 'Projects',      icon: FolderOpen,  color: 'text-violet-400', bg: 'bg-violet-400/10' },
+] as const;
+
+type TabId = typeof TAB_CONFIG[number]['id'];
+
+const ROLE_COLORS: Record<string, string> = {
+    Owner:   'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+    Admin:   'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+    Manager: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+    User:    'bg-slate-500/15 text-slate-400 border-slate-500/30',
+    Viewer:  'bg-purple-500/15 text-purple-400 border-purple-500/30',
+};
 
 export function MemberFormPage() {
     const { id } = useParams<{ id: string }>();
@@ -28,13 +41,13 @@ export function MemberFormPage() {
     
     const [searchParams] = useSearchParams();
     const requestedTab = searchParams.get('tab');
-    const tabs = ['General', 'Compensation', 'Limits', 'Dates', 'Contact', 'Additional'] as const;
-    const initialTab = tabs.find(t => t.toLowerCase() === requestedTab?.toLowerCase()) || 'General';
+    const initialTab = (TAB_CONFIG.find(t => t.id.toLowerCase() === requestedTab?.toLowerCase())?.id || 'General') as TabId;
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [activeTab, setActiveTab] = useState<typeof tabs[number]>(initialTab);
+    const [activeTab, setActiveTab] = useState<TabId>(initialTab);
 
     // Form State
     const [fullName, setFullName] = useState('');
@@ -48,8 +61,6 @@ export function MemberFormPage() {
     const [employeeType, setEmployeeType] = useState('Full-time');
     const [timezone, setTimezone] = useState(Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC');
     const [email, setEmail] = useState('');
-    
-    // Missing Fields State
     const [osUsername, setOsUsername] = useState('');
     const [birthday, setBirthday] = useState('');
     const [hireDate, setHireDate] = useState('');
@@ -70,8 +81,18 @@ export function MemberFormPage() {
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [location, setLocation] = useState('');
 
+    // Project assignment state
+    const [allProjects, setAllProjects] = useState<{ id: string; name: string }[]>([]);
+    const [assignedProjectIds, setAssignedProjectIds] = useState<Set<string>>(new Set());
+    const [memberOrgId, setMemberOrgId] = useState<string | null>(null);
+    const [projectSearch, setProjectSearch] = useState('');
+    const [showProjectDropdown, setShowProjectDropdown] = useState(false);
+
     useEffect(() => {
-        if (id) loadMember();
+        if (id) {
+            loadMember();
+            loadProjects();
+        }
     }, [id]);
 
     async function loadMember() {
@@ -81,7 +102,6 @@ export function MemberFormPage() {
                 .select('*')
                 .eq('id', id)
                 .single();
-
             if (mError) throw mError;
             if (data) {
                 setFullName(data.full_name || '');
@@ -95,8 +115,6 @@ export function MemberFormPage() {
                 setEmployeeType(data.employee_type || 'Full-time');
                 setTimezone(data.timezone || 'UTC');
                 setEmail(data.email || '');
-                
-                // Load Restored Fields
                 setOsUsername(data.os_username || '');
                 setBirthday(data.birthday || '');
                 setHireDate(data.hire_date || '');
@@ -118,10 +136,29 @@ export function MemberFormPage() {
                 setLocation(data.location || '');
             }
         } catch (err: any) {
-            setError(err.message);
+            setError('Failed to load member profile.');
         } finally {
             setLoading(false);
         }
+    }
+
+    async function loadProjects() {
+        if (!id) return;
+        const { data: member } = await supabase
+            .from('members')
+            .select('organization_id')
+            .eq('id', id)
+            .single();
+        if (!member?.organization_id) return;
+        setMemberOrgId(member.organization_id);
+
+        const [{ data: projects }, { data: assigned }] = await Promise.all([
+            supabase.from('projects').select('id, name').eq('organization_id', member.organization_id).eq('status', 'Active').order('name'),
+            supabase.from('project_members').select('project_id').eq('member_id', id)
+        ]);
+
+        setAllProjects(projects || []);
+        setAssignedProjectIds(new Set((assigned || []).map((r: any) => r.project_id)));
     }
 
     async function handleSave() {
@@ -129,532 +166,411 @@ export function MemberFormPage() {
         setError(null);
         try {
             const patch = {
-                full_name: fullName,
-                role,
+                full_name: fullName, role,
                 pay_rate: parseFloat(payRate) || 0,
                 bill_rate: parseFloat(billRate) || 0,
                 weekly_limit: parseInt(weeklyLimit) || 0,
                 daily_limit: parseInt(dailyLimit) || 0,
-                department,
-                employee_id: employeeId,
-                employee_type: employeeType,
-                timezone,
-                
-                // Save Restored Fields
+                department, employee_id: employeeId, employee_type: employeeType, timezone,
                 os_username: osUsername,
-                birthday: birthday || null,
-                hire_date: hireDate || null,
-                termination_date: terminationDate || null,
-                work_address: workAddress,
-                home_address: homeAddress,
-                personal_email: personalEmail,
-                work_phone: workPhone,
-                personal_phone: personalPhone,
-                ssn: ssn,
-                emergency_contact: emergencyContact,
-                skills_notes: skillsNotes,
-                nickname: nickname,
-                idle_enabled: idleEnabled,
-                idle_limit: parseInt(idleLimit) || 10,
-                keep_idle_mode: keepIdleMode,
-                tracking_enabled: trackingEnabled,
-                location: location,
+                birthday: birthday || null, hire_date: hireDate || null, termination_date: terminationDate || null,
+                work_address: workAddress, home_address: homeAddress, personal_email: personalEmail,
+                work_phone: workPhone, personal_phone: personalPhone, ssn,
+                emergency_contact: emergencyContact, skills_notes: skillsNotes, nickname,
+                idle_enabled: idleEnabled, idle_limit: parseInt(idleLimit) || 10,
+                keep_idle_mode: keepIdleMode, tracking_enabled: trackingEnabled, location,
             };
 
-            const { error: sError } = await supabase
-                .from('members')
-                .update(patch)
-                .eq('id', id);
-
+            const { error: sError } = await supabase.from('members').update(patch).eq('id', id);
             if (sError) throw sError;
-            navigate('/dashboard/people');
+
+            const currentAssigned = await supabase.from('project_members').select('project_id').eq('member_id', id);
+            const currentIds = new Set((currentAssigned.data || []).map((r: any) => r.project_id));
+            const toAdd = [...assignedProjectIds].filter(pid => !currentIds.has(pid));
+            const toRemove = [...currentIds].filter(pid => !assignedProjectIds.has(pid));
+            if (toRemove.length > 0) await supabase.from('project_members').delete().eq('member_id', id).in('project_id', toRemove);
+            if (toAdd.length > 0) await supabase.from('project_members').insert(toAdd.map(pid => ({ member_id: id, project_id: pid, organization_id: memberOrgId })));
+
+            setSaveSuccess(true);
+            setTimeout(() => { setSaveSuccess(false); navigate('/dashboard/people'); }, 800);
         } catch (err: any) {
-            setError(err.message);
+            setError('Could not save changes. Please try again.');
         } finally {
             setSaving(false);
         }
     }
 
-    if (loading) return <div className="h-screen flex items-center justify-center"><LoadingState message="Retrieving member profile..." /></div>;
+    if (loading) return <div className="h-screen flex items-center justify-center"><LoadingState message="Loading member profile..." /></div>;
 
+    const initials = (fullName || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    const assignedProjects = allProjects.filter(p => assignedProjectIds.has(p.id));
+    const unassignedProjects = allProjects.filter(p => !assignedProjectIds.has(p.id) && p.name.toLowerCase().includes(projectSearch.toLowerCase()));
 
     return (
-        <PageLayout
-            title="Edit Member"
-            description="Manage identity, access control, and workspace parameters"
-            backButton={{ onClick: () => navigate('/dashboard/people'), label: 'Back to Members' }}
-            actions={
-                <Button
-                    variant="primary"
-                    onClick={handleSave}
-                    loading={saving}
-                    leftIcon={<Save className="w-5 h-5" />}
-                    className="px-10 shadow-lg shadow-primary/20"
+        <div className="min-h-screen bg-main flex flex-col">
+            {/* Top bar */}
+            <div className="h-16 border-b border-border/60 flex items-center px-6 shrink-0 bg-surface/80 backdrop-blur-sm sticky top-0 z-40">
+                <button
+                    onClick={() => navigate('/dashboard/people')}
+                    className="flex items-center gap-2 text-text-muted hover:text-text-primary transition-colors mr-6 group"
                 >
-                    Save Changes
-                </Button>
-            }
-        >
-            <div className="max-w-4xl mx-auto pb-20">
-                <div className="flex mx-auto bg-surface p-1.5 rounded-2xl border border-border w-fit mb-10 shadow-sm overflow-x-auto custom-scrollbar">
-                    {tabs.map(tab => (
-                        <button
-                            key={tab}
-                            onClick={() => setActiveTab(tab)}
-                            className={clsx(
-                                "px-6 py-2.5 text-[10px] font-bold rounded-xl transition-all whitespace-nowrap",
-                                activeTab === tab ? "bg-surface text-[var(--chart-gold)] shadow-shell-sm" : "text-text-muted hover:text-text-primary"
-                            )}
-                        >
-                            {tab}
-                        </button>
-                    ))}
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                    <span className="text-[12px] font-bold">Back to Members</span>
+                </button>
+                <div className="h-5 w-px bg-border mr-6" />
+                <div className="flex items-center gap-3 flex-1">
+                    <Settings2 className="w-4 h-4 text-text-muted" />
+                    <span className="text-[13px] font-bold text-text-primary">Edit Member</span>
+                    {fullName && <span className="text-[12px] text-text-muted">— {fullName}</span>}
                 </div>
+                <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className={clsx(
+                        "flex items-center gap-2.5 px-6 h-10 rounded-xl text-[12px] font-bold transition-all shadow-lg text-white",
+                        saveSuccess
+                            ? "bg-emerald-500 shadow-emerald-500/30"
+                            : "bg-primary shadow-primary/25 hover:brightness-110 active:scale-95"
+                    )}
+                >
+                    {saving ? (
+                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                    ) : saveSuccess ? (
+                        <Check className="w-4 h-4" />
+                    ) : (
+                        <Save className="w-4 h-4" />
+                    )}
+                    {saving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save Changes'}
+                </button>
+            </div>
 
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {activeTab === 'General' && (
-                        <Card className="p-8 md:p-12 border-border/60 shadow-premium overflow-visible">
-                            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-12 pb-8 border-b border-border/60">
-                                <div className="w-20 h-20 rounded-[28px] bg-primary/5 flex items-center justify-center text-primary text-2xl font-bold border border-primary/10 shadow-inner overflow-hidden">
+            <div className="flex flex-1 overflow-hidden">
+                {/* Sidebar */}
+                <aside className="w-72 shrink-0 border-r border-border/60 flex flex-col bg-surface/40 overflow-y-auto custom-scrollbar">
+                    {/* Member card */}
+                    <div className="p-6 border-b border-border/40">
+                        <div className="flex flex-col items-center text-center gap-4">
+                            <div className="relative">
+                                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary text-2xl font-black border border-primary/20 shadow-lg overflow-hidden">
                                     {avatarUrl ? (
-                                        <SecureImage 
-                                            path={avatarUrl} 
-                                            bucket="avatars" 
-                                            className="w-full h-full object-cover" 
-                                        />
-                                    ) : (
-                                        (fullName || 'U').charAt(0).toUpperCase()
+                                        <SecureImage path={avatarUrl} bucket="avatars" className="w-full h-full object-cover" />
+                                    ) : initials}
+                                </div>
+                                <div className={clsx("absolute -bottom-1.5 -right-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black border tracking-wider", ROLE_COLORS[role] || ROLE_COLORS['User'])}>
+                                    {role.toUpperCase()}
+                                </div>
+                            </div>
+                            <div>
+                                <p className="text-[14px] font-bold text-text-primary">{fullName || 'Unknown'}</p>
+                                <p className="text-[11px] text-text-muted font-mono mt-0.5 break-all">{email}</p>
+                                {department && <p className="text-[11px] text-primary font-bold mt-1">{department}</p>}
+                            </div>
+                            {/* Quick stats */}
+                            <div className="w-full grid grid-cols-2 gap-2 mt-1">
+                                <div className="bg-surface-hover rounded-xl px-3 py-2.5 text-center border border-border/50">
+                                    <p className="text-[16px] font-black text-text-primary">{assignedProjectIds.size}</p>
+                                    <p className="text-[9px] font-bold text-text-muted uppercase tracking-wider">Projects</p>
+                                </div>
+                                <div className="bg-surface-hover rounded-xl px-3 py-2.5 text-center border border-border/50">
+                                    <p className="text-[16px] font-black text-text-primary">{weeklyLimit}h</p>
+                                    <p className="text-[9px] font-bold text-text-muted uppercase tracking-wider">Weekly</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Tab nav */}
+                    <nav className="p-3 flex-1">
+                        <p className="text-[9px] font-black text-text-muted uppercase tracking-[0.15em] px-3 mb-2">Settings</p>
+                        {TAB_CONFIG.map(tab => {
+                            const Icon = tab.icon;
+                            const isActive = activeTab === tab.id;
+                            return (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={clsx(
+                                        "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[12px] font-bold transition-all mb-1",
+                                        isActive
+                                            ? "bg-primary/10 text-primary"
+                                            : "text-text-primary/70 hover:text-text-primary hover:bg-surface-hover"
                                     )}
-                                </div>
-                                <div className="flex-1">
-                                    <h3 className="text-xl font-bold text-text-primary tracking-tight mb-1">{fullName || 'Unknown Member'}</h3>
-                                    <p className="text-[11px] font-bold text-text-muted tracking-[0.2em] font-mono">{email}</p>
-                                </div>
-                                <StatusBadge variant={role === 'Admin' ? 'success' : 'default'}>{role.toUpperCase()}</StatusBadge>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-8">
-                                <FormField
-                                    label="Full Identity"
-                                    value={fullName}
-                                    onChange={setFullName}
-                                    icon={<User className="w-4 h-4" />}
-                                    placeholder="Enter full name..."
-                                />
-                                <FormSelect
-                                    label="Access Protocol (Role)"
-                                    value={role}
-                                    onChange={(v: Role) => setRole(v)}
-                                    disabled={role === 'Owner'}
-                                    icon={<Shield className="w-4 h-4" />}
-                                    options={
-                                        role === 'Owner' 
-                                            ? [{ label: 'Owner', value: 'Owner' }]
-                                            : [
-                                                { label: 'User', value: 'User' },
-                                                { label: 'Viewer', value: 'Viewer' },
-                                                { label: 'Manager', value: 'Manager' },
-                                                { label: 'Admin', value: 'Admin' }
-                                            ]
-                                    }
-                                    description={role === 'Owner' ? "Ownership can only be transferred from Organization Settings." : undefined}
-                                />
-                                <FormField
-                                    label="Geographic Location (City/Country)"
-                                    value={location}
-                                    onChange={setLocation}
-                                    icon={<MapPin className="w-4 h-4" />}
-                                    placeholder="e.g. New York, USA..."
-                                />
-                                <FormField
-                                    label="Department / Sector"
-                                    value={department}
-                                    onChange={setDepartment}
-                                    icon={<Briefcase className="w-4 h-4" />}
-                                    placeholder="e.g. Engineering, Sales..."
-                                />
-                                <FormField
-                                    label="Employment ID"
-                                    value={employeeId}
-                                    onChange={setEmployeeId}
-                                    icon={<Shield className="w-4 h-4" />}
-                                    placeholder="e.g. EMP-101..."
-                                />
-                                <FormSelect
-                                    label="Employment Type"
-                                    value={employeeType}
-                                    onChange={setEmployeeType}
-                                    icon={<Briefcase className="w-4 h-4" />}
-                                    options={[
-                                        { label: 'Full-time', value: 'Full-time' },
-                                        { label: 'Part-time', value: 'Part-time' },
-                                        { label: 'Contract', value: 'Contract' },
-                                        { label: 'Intern', value: 'Intern' }
-                                    ]}
-                                />
-                                <FormSelect
-                                    label="Timezone Context"
-                                    value={timezone}
-                                    onChange={setTimezone}
-                                    icon={<Globe2 className="w-4 h-4" />}
-                                    options={[
-                                        { label: 'Universal Time (UTC)', value: 'UTC' },
-                                        { label: 'US Pacific Time (PT)', value: 'America/Los_Angeles' },
-                                        { label: 'US Mountain Time (MT)', value: 'America/Denver' },
-                                        { label: 'US Central Time (CT)', value: 'America/Chicago' },
-                                        { label: 'US Eastern Time (ET)', value: 'America/New_York' },
-                                        { label: 'Canada (Toronto)', value: 'America/Toronto' },
-                                        { label: 'UK (London)', value: 'Europe/London' },
-                                        { label: 'Europe (Central)', value: 'Europe/Paris' },
-                                        { label: 'Pakistan (PKT)', value: 'Asia/Karachi' },
-                                        { label: 'India (IST)', value: 'Asia/Kolkata' },
-                                        { label: 'Bangladesh (BST)', value: 'Asia/Dhaka' },
-                                        { label: 'Philippines (PHT)', value: 'Asia/Manila' },
-                                        { label: 'Singapore (SGT)', value: 'Asia/Singapore' },
-                                        { label: 'Australia (Sydney)', value: 'Australia/Sydney' }
-                                    ]}
-                                />
-                                <FormField
-                                    label="Nickname / Alias"
-                                    value={nickname}
-                                    onChange={setNickname}
-                                    icon={<User className="w-4 h-4" />}
-                                    placeholder="e.g. Furq..."
-                                />
-                            </div>
-                        </Card>
-                    )}
-
-                    {activeTab === 'Compensation' && (
-                        <Card className="p-10 border-border/60 shadow-shell-sm">
-                            <div className="flex items-center gap-4 mb-10">
-                                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                                    <DollarSign className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-text-primary tracking-tight">Compensation Model</h3>
-                                    <p className="text-[11px] font-bold text-text-muted font-mono">Hourly rates and resource valuation</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                <div className="space-y-6">
-                                    <FormField
-                                        label="Pay Rate ($/hr)"
-                                        value={payRate}
-                                        onChange={setPayRate}
-                                        type="number"
-                                        icon={<DollarSign className="w-4 h-4" />}
-                                        placeholder="0.00"
-                                    />
-                                    <FormField
-                                        label="Bill Rate ($/hr)"
-                                        value={billRate}
-                                        onChange={setBillRate}
-                                        type="number"
-                                        icon={<DollarSign className="w-4 h-4" />}
-                                        placeholder="0.00"
-                                    />
-                                </div>
-                                <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-3xl p-8 flex items-start gap-5">
-                                    <div className="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 shrink-0">
-                                        <Info className="w-5 h-5" />
+                                >
+                                    <div className={clsx("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all", isActive ? `${tab.bg} ${tab.color}` : "bg-surface-hover text-text-muted")}>
+                                        <Icon className="w-3.5 h-3.5" />
                                     </div>
-                                    <p className="text-xs text-text-muted leading-relaxed font-medium">
-                                        The pay rate reflects the cost of the resource to the organization, while the bill rate is what is charged to the client. These values are used for margin analysis and financial forecasting.
-                                    </p>
-                                </div>
-                            </div>
-                        </Card>
-                    )}
+                                    {tab.label}
+                                    {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
+                                </button>
+                            );
+                        })}
+                    </nav>
+                </aside>
 
-                    {activeTab === 'Limits' && (
-                        <div className="space-y-8">
-                            <Card className="p-10 border-border/60 shadow-shell-sm">
-                                <div className="flex items-center gap-4 mb-10">
-                                    <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
-                                        <Clock className="w-6 h-6" />
+                {/* Main content */}
+                <main className="flex-1 overflow-y-auto custom-scrollbar">
+                    <div className="max-w-3xl mx-auto px-8 py-10 pb-20">
+
+                        {/* Error banner */}
+                        {error && (
+                            <div className="mb-6 flex items-center gap-3 px-5 py-4 bg-rose-500/8 border border-rose-500/20 rounded-2xl animate-in slide-in-from-top-2">
+                                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                                <p className="text-[12px] font-bold text-rose-400">{error}</p>
+                                <button onClick={() => setError(null)} className="ml-auto text-rose-400/60 hover:text-rose-400">
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Tab header */}
+                        {(() => {
+                            const tab = TAB_CONFIG.find(t => t.id === activeTab)!;
+                            const Icon = tab.icon;
+                            return (
+                                <div className="flex items-center gap-4 mb-8">
+                                    <div className={clsx("w-12 h-12 rounded-2xl flex items-center justify-center", tab.bg, tab.color)}>
+                                        <Icon className="w-6 h-6" />
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold text-text-primary tracking-tight">Working Boundaries</h3>
-                                        <p className="text-[11px] font-bold text-text-muted font-mono">Time thresholds and activity limits</p>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                    <div className="space-y-6">
-                                        <FormField
-                                            label="Weekly Boundary (Hrs)"
-                                            value={weeklyLimit}
-                                            onChange={setWeeklyLimit}
-                                            type="number"
-                                            icon={<Calendar className="w-4 h-4" />}
-                                            placeholder="40"
-                                        />
-                                        <FormField
-                                            label="Daily Boundary (Hrs)"
-                                            value={dailyLimit}
-                                            onChange={setDailyLimit}
-                                            type="number"
-                                            icon={<Clock className="w-4 h-4" />}
-                                            placeholder="8"
-                                        />
-                                    </div>
-                                    <div className="bg-amber-500/5 border border-amber-500/10 rounded-3xl p-8 flex items-start gap-5">
-                                        <div className="w-10 h-10 rounded-2xl bg-amber-500 flex items-center justify-center text-white shadow-lg shadow-amber-500/20 shrink-0">
-                                            <AlertCircle className="w-5 h-5" />
-                                        </div>
-                                        <p className="text-xs text-text-muted leading-relaxed font-medium">
-                                            System thresholds ensure resources do not exceed their allocated capacity. Managers will be notified if a resource approaches their boundary limits.
+                                        <h2 className="text-[20px] font-black text-text-primary tracking-tight">{tab.label}</h2>
+                                        <p className="text-[11px] text-text-muted font-mono">
+                                            {tab.id === 'General' && 'Identity, role and employment details'}
+                                            {tab.id === 'Compensation' && 'Pay rate, bill rate and financial settings'}
+                                            {tab.id === 'Limits' && 'Working hours, idle detection and tracking'}
+                                            {tab.id === 'Dates' && 'Hire date, birthday and important milestones'}
+                                            {tab.id === 'Contact' && 'Phone, email and address information'}
+                                            {tab.id === 'Additional' && 'Sensitive data and supplemental notes'}
+                                            {tab.id === 'Projects' && 'Manage project associations for this member'}
                                         </p>
                                     </div>
                                 </div>
-                            </Card>
+                            );
+                        })()}
 
-                            <Card className="p-10 border-border/60 shadow-shell-sm">
-                                <div className="flex items-center gap-4 mb-10">
-                                    <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                                        <Smartphone className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-text-primary tracking-tight">Tracking Control</h3>
-                                        <p className="text-[11px] font-bold text-text-muted font-mono">Behavioral monitoring and idle detection</p>
-                                    </div>
+                        {/* ── GENERAL ── */}
+                        {activeTab === 'General' && (
+                            <div className="space-y-6 animate-in fade-in duration-300">
+                                <div className="grid grid-cols-2 gap-5">
+                                    <FormField label="Full Name" value={fullName} onChange={setFullName} icon={<User className="w-4 h-4" />} placeholder="Enter full name..." />
+                                    <FormSelect label="Role" value={role} onChange={(v: Role) => setRole(v)} disabled={role === 'Owner'} icon={<Shield className="w-4 h-4" />}
+                                        options={role === 'Owner'
+                                            ? [{ label: 'Owner', value: 'Owner' }]
+                                            : [{ label: 'User', value: 'User' }, { label: 'Viewer', value: 'Viewer' }, { label: 'Manager', value: 'Manager' }, { label: 'Admin', value: 'Admin' }]
+                                        }
+                                        description={role === 'Owner' ? "Transfer ownership from Organization Settings." : undefined}
+                                    />
+                                    <FormField label="Location (City/Country)" value={location} onChange={setLocation} icon={<MapPin className="w-4 h-4" />} placeholder="e.g. New York, USA" />
+                                    <FormField label="Department" value={department} onChange={setDepartment} icon={<Briefcase className="w-4 h-4" />} placeholder="e.g. Engineering, Sales" />
+                                    <FormField label="Employee ID" value={employeeId} onChange={setEmployeeId} icon={<Shield className="w-4 h-4" />} placeholder="e.g. EMP-101" />
+                                    <FormSelect label="Employment Type" value={employeeType} onChange={setEmployeeType} icon={<Briefcase className="w-4 h-4" />}
+                                        options={[{ label: 'Full-time', value: 'Full-time' }, { label: 'Part-time', value: 'Part-time' }, { label: 'Contract', value: 'Contract' }, { label: 'Intern', value: 'Intern' }]}
+                                    />
+                                    <FormSelect label="Timezone" value={timezone} onChange={setTimezone} icon={<Globe2 className="w-4 h-4" />}
+                                        options={[
+                                            { label: 'UTC', value: 'UTC' },
+                                            { label: 'US Pacific (PT)', value: 'America/Los_Angeles' },
+                                            { label: 'US Mountain (MT)', value: 'America/Denver' },
+                                            { label: 'US Central (CT)', value: 'America/Chicago' },
+                                            { label: 'US Eastern (ET)', value: 'America/New_York' },
+                                            { label: 'Canada (Toronto)', value: 'America/Toronto' },
+                                            { label: 'UK (London)', value: 'Europe/London' },
+                                            { label: 'Europe (Paris)', value: 'Europe/Paris' },
+                                            { label: 'Pakistan (PKT)', value: 'Asia/Karachi' },
+                                            { label: 'India (IST)', value: 'Asia/Kolkata' },
+                                            { label: 'Bangladesh (BST)', value: 'Asia/Dhaka' },
+                                            { label: 'Philippines (PHT)', value: 'Asia/Manila' },
+                                            { label: 'Singapore (SGT)', value: 'Asia/Singapore' },
+                                            { label: 'Australia (Sydney)', value: 'Australia/Sydney' },
+                                        ]}
+                                    />
+                                    <FormField label="Nickname / Alias" value={nickname} onChange={setNickname} icon={<User className="w-4 h-4" />} placeholder="e.g. Furq" />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* ── COMPENSATION ── */}
+                        {activeTab === 'Compensation' && (
+                            <div className="space-y-5 animate-in fade-in duration-300">
+                                <div className="grid grid-cols-2 gap-5">
+                                    <FormField label="Pay Rate ($/hr)" value={payRate} onChange={setPayRate} type="number" icon={<DollarSign className="w-4 h-4" />} placeholder="0.00" />
+                                    <FormField label="Bill Rate ($/hr)" value={billRate} onChange={setBillRate} type="number" icon={<DollarSign className="w-4 h-4" />} placeholder="0.00" />
+                                </div>
+                                <InfoBox color="emerald" icon={<Info className="w-4 h-4" />}>
+                                    Pay rate is the cost to the organization. Bill rate is what is charged to the client. Used for margin analysis and financial forecasting.
+                                </InfoBox>
+                            </div>
+                        )}
+
+                        {/* ── LIMITS ── */}
+                        {activeTab === 'Limits' && (
+                            <div className="space-y-5 animate-in fade-in duration-300">
+                                <div className="grid grid-cols-2 gap-5">
+                                    <FormField label="Weekly Hours Limit" value={weeklyLimit} onChange={setWeeklyLimit} type="number" icon={<Calendar className="w-4 h-4" />} placeholder="40" />
+                                    <FormField label="Daily Hours Limit" value={dailyLimit} onChange={setDailyLimit} type="number" icon={<Clock className="w-4 h-4" />} placeholder="8" />
                                 </div>
 
-                                <div className="space-y-8">
-                                    <div className="flex items-center justify-between p-6 bg-surface-subtle border border-border rounded-2xl">
-                                        <div>
-                                            <label className="text-sm font-bold text-text-primary block">Resource Tracking</label>
-                                            <p className="text-[11px] text-text-muted font-medium mt-1">Enable desktop activity monitoring for this resource</p>
-                                        </div>
-                                        <button
-                                            onClick={() => setTrackingEnabled(!trackingEnabled)}
-                                            className={clsx(
-                                                "relative w-12 h-6 rounded-full transition-all duration-300",
-                                                trackingEnabled ? 'bg-primary' : 'bg-border'
-                                            )}
-                                        >
-                                            <div className={clsx(
-                                                "absolute top-1 w-4 h-4 bg-surface rounded-full transition-all",
-                                                trackingEnabled ? 'left-7' : 'left-1'
-                                            )} />
-                                        </button>
-                                    </div>
+                                <div className="space-y-3">
+                                    <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">Tracking Behavior</p>
+                                    <ToggleRow
+                                        label="Enable Resource Tracking"
+                                        description="Desktop activity monitoring for this member"
+                                        checked={trackingEnabled}
+                                        onChange={setTrackingEnabled}
+                                    />
+                                    <ToggleRow
+                                        label="Enable Idle Detection"
+                                        description="Automatically pause timer on inactivity"
+                                        checked={idleEnabled}
+                                        onChange={setIdleEnabled}
+                                    />
+                                </div>
 
-                                    <div className="flex items-center justify-between p-6 bg-surface-subtle border border-border rounded-2xl">
-                                        <div>
-                                            <label className="text-sm font-bold text-text-primary block">Idle Detection</label>
-                                            <p className="text-[11px] text-text-muted font-medium mt-1">Automatically stop timer when inactivity is detected</p>
-                                        </div>
-                                        <button
-                                            onClick={() => setIdleEnabled(!idleEnabled)}
-                                            className={clsx(
-                                                "relative w-12 h-6 rounded-full transition-all duration-300",
-                                                idleEnabled ? 'bg-primary' : 'bg-border'
-                                            )}
-                                        >
-                                            <div className={clsx(
-                                                "absolute top-1 w-4 h-4 bg-surface rounded-full transition-all",
-                                                idleEnabled ? 'left-7' : 'left-1'
-                                            )} />
-                                        </button>
-                                    </div>
-
-                                    <div className="space-y-4 p-6 bg-surface-subtle border border-border rounded-2xl">
-                                        <div className="flex items-center justify-between">
-                                            <div>
-                                                <label className="text-sm font-bold text-text-primary block">Keep Idle Time (Hubstaff Mode)</label>
-                                                <p className="text-[11px] text-text-muted font-medium mt-1">Determine how inactivity is handled in the tracker</p>
-                                            </div>
-                                            <div className="relative group">
+                                {idleEnabled && (
+                                    <div className="grid grid-cols-2 gap-5 animate-in slide-in-from-top-2 duration-200">
+                                        <FormField label="Idle Threshold (Minutes)" value={idleLimit} onChange={setIdleLimit} type="number" icon={<Clock className="w-4 h-4" />} placeholder="10" />
+                                        <div className="space-y-2">
+                                            <label className="text-[11px] font-bold text-text-muted">Idle Time Handling</label>
+                                            <div className="relative">
                                                 <select
                                                     value={keepIdleMode}
                                                     onChange={e => setKeepIdleMode(e.target.value as any)}
-                                                    className="pl-6 pr-10 py-2.5 bg-surface border border-border rounded-xl text-[11px] font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer shadow-shell-sm"
+                                                    className="w-full h-[52px] pl-5 pr-10 bg-surface border border-border rounded-xl text-[13px] font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer"
                                                 >
-                                                    <option value="prompt">PROMPT (USER DECIDES)</option>
-                                                    <option value="always">ALWAYS KEEP</option>
-                                                    <option value="never">NEVER KEEP</option>
+                                                    <option value="prompt">Prompt user each time</option>
+                                                    <option value="always">Always keep idle time</option>
+                                                    <option value="never">Always discard idle time</option>
                                                 </select>
-                                                <ChevronLeft className="w-3 h-3 text-primary absolute right-4 top-1/2 -translate-y-1/2 -rotate-90 pointer-events-none" />
+                                                <ChevronLeft className="w-4 h-4 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 -rotate-90 pointer-events-none" />
                                             </div>
                                         </div>
-                                        <div className="bg-surface/40 p-3 rounded-lg border border-border/40">
-                                            <p className="text-[10px] text-text-muted font-medium italic">
-                                                {keepIdleMode === 'prompt' && "The user will be asked if they want to keep or discard the idle time when they return."}
-                                                {keepIdleMode === 'always' && "All idle time is automatically recorded as billable working hours."}
-                                                {keepIdleMode === 'never' && "All inactive time is automatically discarded and not recorded."}
-                                            </p>
-                                        </div>
                                     </div>
-
-                                    {idleEnabled && (
-                                        <div className="animate-in slide-in-from-top-4 duration-300">
-                                            <FormField
-                                                label="Idle Threshold (Minutes)"
-                                                value={idleLimit}
-                                                onChange={setIdleLimit}
-                                                type="number"
-                                                icon={<Clock className="w-4 h-4" />}
-                                                placeholder="10"
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                            </Card>
-                        </div>
-                    )}
-
-                    {activeTab === 'Dates' && (
-                        <Card className="p-10 border-border/60 shadow-shell-sm">
-                            <div className="flex items-center gap-4 mb-10">
-                                <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
-                                    <Calendar className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-text-primary tracking-tight">Temporal Milestones</h3>
-                                    <p className="text-[11px] font-bold text-text-muted font-mono">Employment lifecycle and personal dates</p>
-                                </div>
+                                )}
                             </div>
+                        )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-                                <FormField
-                                    label="Hire Date"
-                                    value={hireDate}
-                                    onChange={setHireDate}
-                                    type="date"
-                                    icon={<Calendar className="w-4 h-4" />}
-                                />
-                                <FormField
-                                    label="Termination Date"
-                                    value={terminationDate}
-                                    onChange={setTerminationDate}
-                                    type="date"
-                                    icon={<Calendar className="w-4 h-4" />}
-                                />
-                                <FormField
-                                    label="Date of Birth"
-                                    value={birthday}
-                                    onChange={setBirthday}
-                                    type="date"
-                                    icon={<Calendar className="w-4 h-4" />}
-                                />
-                                <FormField
-                                    label="Workstation OS Username"
-                                    value={osUsername}
-                                    onChange={setOsUsername}
-                                    icon={<User className="w-4 h-4" />}
-                                    placeholder="e.g. furqan_s..."
-                                />
+                        {/* ── DATES ── */}
+                        {activeTab === 'Dates' && (
+                            <div className="grid grid-cols-2 gap-5 animate-in fade-in duration-300">
+                                <FormField label="Hire Date" value={hireDate} onChange={setHireDate} type="date" icon={<Calendar className="w-4 h-4" />} />
+                                <FormField label="Termination Date" value={terminationDate} onChange={setTerminationDate} type="date" icon={<Calendar className="w-4 h-4" />} />
+                                <FormField label="Date of Birth" value={birthday} onChange={setBirthday} type="date" icon={<Calendar className="w-4 h-4" />} />
+                                <FormField label="OS Username" value={osUsername} onChange={setOsUsername} icon={<User className="w-4 h-4" />} placeholder="e.g. furqan_s" />
                             </div>
-                        </Card>
-                    )}
+                        )}
 
-                    {activeTab === 'Contact' && (
-                        <Card className="p-10 border-border/60 shadow-shell-sm">
-                            <div className="flex items-center gap-4 mb-10">
-                                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500">
-                                    <Smartphone className="w-6 h-6" />
+                        {/* ── CONTACT ── */}
+                        {activeTab === 'Contact' && (
+                            <div className="space-y-5 animate-in fade-in duration-300">
+                                <div className="grid grid-cols-2 gap-5">
+                                    <FormField label="Work Phone" value={workPhone} onChange={setWorkPhone} icon={<Smartphone className="w-4 h-4" />} placeholder="+1 (000) 000-0000" />
+                                    <FormField label="Personal Phone" value={personalPhone} onChange={setPersonalPhone} icon={<Phone className="w-4 h-4" />} placeholder="+1 (000) 000-0000" />
+                                    <FormField label="Personal Email" value={personalEmail} onChange={setPersonalEmail} icon={<Mail className="w-4 h-4" />} placeholder="personal@example.com" />
                                 </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-text-primary tracking-tight">Contact Matrix</h3>
-                                    <p className="text-[11px] font-bold text-text-muted font-mono">Communication channels and physical locations</p>
-                                </div>
+                                <FormField label="Work Address" value={workAddress} onChange={setWorkAddress} icon={<MapPin className="w-4 h-4" />} placeholder="Enter work address..." />
+                                <FormField label="Home Address" value={homeAddress} onChange={setHomeAddress} icon={<MapPin className="w-4 h-4" />} placeholder="Enter home address..." />
                             </div>
+                        )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-                                <FormField
-                                    label="Work Phone"
-                                    value={workPhone}
-                                    onChange={setWorkPhone}
-                                    icon={<Smartphone className="w-4 h-4" />}
-                                    placeholder="+1 (000) 000-0000"
-                                />
-                                <FormField
-                                    label="Personal Phone"
-                                    value={personalPhone}
-                                    onChange={setPersonalPhone}
-                                    icon={<Smartphone className="w-4 h-4" />}
-                                    placeholder="+1 (000) 000-0000"
-                                />
-                                <FormField
-                                    label="Personal / Alternative Email"
-                                    value={personalEmail}
-                                    onChange={setPersonalEmail}
-                                    icon={<Mail className="w-4 h-4" />}
-                                    placeholder="personal@example.com"
-                                />
-                                <div className="md:col-span-2 space-y-6">
-                                    <FormField
-                                        label="Professional Work Address"
-                                        value={workAddress}
-                                        onChange={setWorkAddress}
-                                        icon={<MapPin className="w-4 h-4" />}
-                                        placeholder="Enter work location..."
-                                    />
-                                    <FormField
-                                        label="Primary Residential Address"
-                                        value={homeAddress}
-                                        onChange={setHomeAddress}
-                                        icon={<MapPin className="w-4 h-4" />}
-                                        placeholder="Enter home address..."
-                                    />
+                        {/* ── ADDITIONAL ── */}
+                        {activeTab === 'Additional' && (
+                            <div className="space-y-5 animate-in fade-in duration-300">
+                                <div className="grid grid-cols-2 gap-5">
+                                    <FormField label="SSN" value={ssn} onChange={setSsn} type="password" icon={<CreditCard className="w-4 h-4" />} placeholder="XXX-XX-XXXX" />
+                                    <FormField label="Emergency Contact" value={emergencyContact} onChange={setEmergencyContact} icon={<Phone className="w-4 h-4" />} placeholder="Name and number..." />
                                 </div>
-                            </div>
-                        </Card>
-                    )}
-
-                    {activeTab === 'Additional' && (
-                        <Card className="p-10 border-border/60 shadow-shell-sm">
-                            <div className="flex items-center gap-4 mb-10">
-                                <div className="w-12 h-12 rounded-2xl bg-rose-500/10 flex items-center justify-center text-rose-500">
-                                    <Shield className="w-6 h-6" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-text-primary tracking-tight">Legacy & Metadata</h3>
-                                    <p className="text-[11px] font-bold text-text-muted font-mono">Sensitive identification and supplemental data</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
-                                <FormField
-                                    label="Social Security Number (SSN)"
-                                    value={ssn}
-                                    onChange={setSsn}
-                                    type="password"
-                                    icon={<CreditCard className="w-4 h-4" />}
-                                    placeholder="XXX-XX-XXXX"
-                                />
-                                <FormField
-                                    label="Emergency Contact Info"
-                                    value={emergencyContact}
-                                    onChange={setEmergencyContact}
-                                    icon={<Phone className="w-4 h-4" />}
-                                    placeholder="Name and Phone Number..."
-                                />
-                                <div className="md:col-span-2 space-y-2">
-                                    <label className="text-[10px] font-bold text-text-muted ml-1">Professional Skills & Observations</label>
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-bold text-text-muted">Skills &amp; Notes</label>
                                     <textarea
                                         value={skillsNotes}
                                         onChange={e => setSkillsNotes(e.target.value)}
-                                        placeholder="Enter notes, skill sets, or performance observations..."
-                                        className="w-full px-6 py-4 bg-surface-subtle border border-border rounded-xl text-sm font-bold text-text-primary outline-none focus:border-primary transition-all min-h-[150px] resize-none"
+                                        placeholder="Skills, performance notes, observations..."
+                                        className="w-full px-5 py-4 bg-surface border border-border rounded-xl text-[13px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/8 transition-all min-h-[140px] resize-none placeholder:text-slate-400"
                                     />
                                 </div>
                             </div>
-                        </Card>
-                    )}
-                </div>
+                        )}
 
-                {error && (
-                    <div className="mt-8 bg-rose-500/5 border border-rose-500/10 p-6 rounded-3xl flex items-center gap-4 animate-in slide-in-from-top-4">
-                        <AlertCircle className="w-6 h-6 text-rose-500" />
-                        <p className="text-xs font-bold text-rose-500 font-mono">{error}</p>
+                        {/* ── PROJECTS ── */}
+                        {activeTab === 'Projects' && (
+                            <div className="space-y-6 animate-in fade-in duration-300">
+                                {/* Assigned chips */}
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Assigned Projects</label>
+                                        <span className="text-[11px] font-bold text-text-muted">{assignedProjectIds.size} assigned</span>
+                                    </div>
+                                    {assignedProjects.length === 0 ? (
+                                        <div className="flex items-center gap-3 px-5 py-5 rounded-2xl border border-dashed border-border/60 text-text-muted">
+                                            <FolderOpen className="w-4 h-4 opacity-30" />
+                                            <span className="text-[12px] font-bold opacity-40">No projects assigned yet — search below to add one</span>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-wrap gap-2 p-4 bg-surface-hover/50 border border-border/40 rounded-2xl min-h-[60px]">
+                                            {assignedProjects.map(p => (
+                                                <div key={p.id} className="flex items-center gap-2 pl-3.5 pr-2 py-1.5 bg-primary/10 border border-primary/20 text-primary rounded-xl text-[12px] font-bold group">
+                                                    <FolderOpen className="w-3 h-3 shrink-0" />
+                                                    <span>{p.name}</span>
+                                                    <button
+                                                        onClick={() => { const next = new Set(assignedProjectIds); next.delete(p.id); setAssignedProjectIds(next); }}
+                                                        className="w-4 h-4 rounded-full hover:bg-primary/30 flex items-center justify-center transition-all"
+                                                    >
+                                                        <X className="w-2.5 h-2.5" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Search to add */}
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-text-muted uppercase tracking-widest">Add Project</label>
+                                    <div className="relative">
+                                        <div className="flex items-center gap-3 px-4 h-[52px] bg-surface border border-border rounded-xl focus-within:border-primary focus-within:ring-4 focus-within:ring-primary/8 transition-all">
+                                            <Search className="w-4 h-4 text-text-muted shrink-0" />
+                                            <input
+                                                type="text"
+                                                placeholder={allProjects.length === assignedProjects.length ? "All projects assigned" : "Type to search projects..."}
+                                                value={projectSearch}
+                                                disabled={allProjects.length === assignedProjects.length}
+                                                onChange={e => { setProjectSearch(e.target.value); setShowProjectDropdown(true); }}
+                                                onFocus={() => setShowProjectDropdown(true)}
+                                                onBlur={() => setTimeout(() => setShowProjectDropdown(false), 150)}
+                                                className="flex-1 bg-transparent text-[13px] font-bold text-text-primary placeholder:text-text-muted outline-none disabled:opacity-40"
+                                            />
+                                            {projectSearch && <button onClick={() => setProjectSearch('')}><X className="w-3.5 h-3.5 text-text-muted hover:text-text-primary" /></button>}
+                                        </div>
+                                        {showProjectDropdown && unassignedProjects.length > 0 && (
+                                            <div className="absolute top-full left-0 right-0 mt-1.5 bg-surface border border-border rounded-2xl shadow-2xl z-50 overflow-hidden max-h-64 overflow-y-auto custom-scrollbar">
+                                                {unassignedProjects.map(p => (
+                                                    <button
+                                                        key={p.id}
+                                                        onMouseDown={() => { const next = new Set(assignedProjectIds); next.add(p.id); setAssignedProjectIds(next); setProjectSearch(''); setShowProjectDropdown(false); }}
+                                                        className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-surface-hover transition-all text-left group"
+                                                    >
+                                                        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                                            <FolderOpen className="w-3.5 h-3.5 text-primary" />
+                                                        </div>
+                                                        <span className="text-[12px] font-bold text-text-primary flex-1">{p.name}</span>
+                                                        <Plus className="w-3.5 h-3.5 text-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {showProjectDropdown && projectSearch && unassignedProjects.length === 0 && (
+                                            <div className="absolute top-full left-0 right-0 mt-1.5 bg-surface border border-border rounded-2xl shadow-xl z-50 px-4 py-4">
+                                                <p className="text-[12px] font-bold text-text-muted">No matching unassigned projects</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                     </div>
-                )}
+                </main>
             </div>
-        </PageLayout>
+        </div>
     );
 }
 
@@ -664,26 +580,18 @@ function FormField({ label, value, onChange, type = 'text', icon, placeholder }:
             <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em]">{label}</label>
             <div className="relative mt-auto">
                 {type === 'date' ? (
-                    <DatePicker 
-                        value={value}
-                        onChange={onChange}
-                        className="w-full h-[52px]"
-                    />
+                    <DatePicker value={value} onChange={onChange} className="w-full h-[52px]" />
                 ) : (
                     <>
-                        {icon && (
-                            <div className="absolute left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors">
-                                {icon}
-                            </div>
-                        )}
+                        {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors pointer-events-none">{icon}</div>}
                         <input
                             type={type}
                             value={value || ''}
                             onChange={e => onChange(e.target.value)}
                             placeholder={placeholder}
                             className={clsx(
-                                "w-full h-[52px] bg-surface border border-border rounded-xl text-[13px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-slate-400",
-                                icon ? "pl-12 pr-5" : "px-5"
+                                "w-full h-[52px] bg-surface border border-border rounded-xl text-[13px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/8 transition-all placeholder:text-slate-500 dark:placeholder:text-slate-400",
+                                icon ? "pl-11 pr-4" : "px-4"
                             )}
                         />
                     </>
@@ -695,75 +603,78 @@ function FormField({ label, value, onChange, type = 'text', icon, placeholder }:
 
 function FormSelect({ label, value, onChange, options, disabled, icon, description }: any) {
     const [isOpen, setIsOpen] = useState(false);
-    const containerRef = useRef<HTMLDivElement>(null);
-
+    const ref = useRef<HTMLDivElement>(null);
     const activeLabel = options.find((o: any) => o.value === value)?.label || value;
 
     useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false); };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
     }, []);
 
     return (
-        <div ref={containerRef} className="space-y-2 group flex flex-col relative">
-            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em]">
-                {label}
-            </label>
+        <div ref={ref} className="space-y-2 group flex flex-col relative">
+            <label className="text-[11px] font-bold text-text-muted tracking-[0.05em]">{label}</label>
             <div className="relative mt-auto">
-                <div 
+                <div
                     onClick={() => !disabled && setIsOpen(!isOpen)}
                     className={clsx(
-                        "w-full h-[52px] bg-surface border rounded-xl text-[13px] font-bold text-text-primary outline-none transition-all flex items-center justify-between select-none cursor-pointer",
-                        icon ? "pl-12 pr-10" : "px-5 pr-10",
-                        isOpen ? "border-primary ring-4 ring-primary/10" : "border-border",
-                        disabled ? "opacity-50 cursor-not-allowed bg-surface-subtle" : "hover:border-[var(--border-hover)]"
+                        "w-full h-[52px] bg-surface border rounded-xl text-[13px] font-bold text-text-primary outline-none transition-all flex items-center cursor-pointer select-none",
+                        icon ? "pl-11 pr-10" : "px-4 pr-10",
+                        isOpen ? "border-primary ring-4 ring-primary/8" : "border-border hover:border-border/80",
+                        disabled && "opacity-50 cursor-not-allowed"
                     )}
                 >
-                    {icon && (
-                        <div className={clsx(
-                            "absolute left-5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none",
-                            isOpen ? "text-primary" : "text-text-muted"
-                        )}>
-                            {icon}
-                        </div>
-                    )}
+                    {icon && <div className={clsx("absolute left-4 top-1/2 -translate-y-1/2 transition-colors", isOpen ? "text-primary" : "text-text-muted")}>{icon}</div>}
                     <span className="truncate">{activeLabel}</span>
-                    <ChevronLeft className={clsx(
-                        "w-4 h-4 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 transition-transform duration-300 pointer-events-none",
-                        isOpen ? "-rotate-90 text-primary" : "-rotate-90"
-                    )} />
+                    <ChevronLeft className={clsx("w-4 h-4 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 transition-transform duration-200 pointer-events-none", isOpen ? "-rotate-90 text-primary" : "-rotate-90")} />
                 </div>
-
                 {isOpen && (
-                    <div className="absolute top-[calc(100%+6px)] left-0 w-full bg-main border border-border rounded-xl shadow-premium z-[100] flex flex-col p-1.5 animate-in fade-in slide-in-from-top-2 duration-200 max-h-[240px] overflow-y-auto no-scrollbar">
+                    <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-surface border border-border rounded-xl shadow-2xl z-[100] flex flex-col p-1.5 animate-in fade-in slide-in-from-top-1 duration-150 max-h-[220px] overflow-y-auto no-scrollbar">
                         {options.map((opt: any) => (
-                            <div
-                                key={opt.value}
-                                onClick={() => {
-                                    onChange(opt.value);
-                                    setIsOpen(false);
-                                }}
-                                className={clsx(
-                                    "flex items-center justify-between px-4 py-3 rounded-lg cursor-pointer transition-all text-[12px] font-bold mb-0.5 last:mb-0",
-                                    value === opt.value 
-                                        ? "bg-surface-hover text-primary" 
-                                        : "text-text-primary hover:bg-surface"
-                                )}
-                            >
-                                <span>{opt.label}</span>
-                                {value === opt.value && <Check className="w-3.5 h-3.5 text-primary shrink-0" />}
+                            <div key={opt.value} onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                                className={clsx("flex items-center justify-between px-4 py-2.5 rounded-lg cursor-pointer transition-all text-[12px] font-bold",
+                                    value === opt.value ? "bg-primary/10 text-primary" : "text-text-primary hover:bg-surface-hover"
+                                )}>
+                                {opt.label}
+                                {value === opt.value && <Check className="w-3 h-3 text-primary" />}
                             </div>
                         ))}
                     </div>
                 )}
             </div>
-            {description && <p className="text-[10px] text-text-muted italic mt-1">{description}</p>}
+            {description && <p className="text-[10px] text-text-muted italic">{description}</p>}
         </div>
     );
 }
 
+function ToggleRow({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void }) {
+    return (
+        <div className="flex items-center justify-between px-5 py-4 bg-surface border border-border/60 rounded-2xl hover:border-border transition-all">
+            <div>
+                <p className="text-[13px] font-bold text-text-primary">{label}</p>
+                <p className="text-[11px] text-text-muted mt-0.5">{description}</p>
+            </div>
+            <button
+                onClick={() => onChange(!checked)}
+                className={clsx("relative w-11 h-6 rounded-full transition-all duration-300 shrink-0 ml-4", checked ? 'bg-primary' : 'bg-border')}
+            >
+                <div className={clsx("absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300", checked ? 'left-6' : 'left-1')} />
+            </button>
+        </div>
+    );
+}
+
+function InfoBox({ children, color, icon }: { children: React.ReactNode; color: string; icon: React.ReactNode }) {
+    const styles: Record<string, string> = {
+        emerald: 'bg-emerald-500/5 border-emerald-500/15 text-emerald-400',
+        amber:   'bg-amber-500/5 border-amber-500/15 text-amber-400',
+        blue:    'bg-blue-500/5 border-blue-500/15 text-blue-400',
+    };
+    return (
+        <div className={clsx("flex items-start gap-4 p-5 rounded-2xl border", styles[color] || styles.blue)}>
+            <div className="shrink-0 mt-0.5">{icon}</div>
+            <p className="text-[12px] leading-relaxed font-medium text-text-muted">{children}</p>
+        </div>
+    );
+}
