@@ -339,6 +339,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     setOrganization(org);
 
                     if (member.role === 'Manager') {
+                        // 1. Teams they manage or lead
                         const { data: managedTeams } = await supabase.from('teams').select('id').eq('manager_id', member.id);
                         const { data: leadTeams } = await supabase.from('team_members').select('team_id').eq('member_id', member.id).eq('is_lead', true);
                         
@@ -347,17 +348,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                             ...(leadTeams?.map(t => t.team_id) || [])
                         ]);
 
+                        // 2. Direct project assignments
+                        const { data: directProjects } = await supabase.from('project_members').select('project_id').eq('member_id', member.id);
+                        const directProjectIds = directProjects?.map(dp => dp.project_id) || [];
+
+                        // 3. Projects from teams
+                        let teamProjectIds: string[] = [];
+                        let teamMemberIds: string[] = [];
+                        
                         if (teamIds.size > 0) {
-                            const { data: teamMembers } = await supabase.from('team_members').select('member_id').in('team_id', Array.from(teamIds));
-                            const { data: projectTeams } = await supabase.from('project_teams').select('project_id').in('team_id', Array.from(teamIds));
-                            
-                            const memberIds = new Set([member.id, ...(teamMembers?.map(tm => tm.member_id) || [])]);
-                            setManagedMemberIds(Array.from(memberIds));
-                            setManagedProjectIds(projectTeams?.map(pt => pt.project_id) || []);
-                        } else {
-                            setManagedMemberIds([member.id]);
-                            setManagedProjectIds([]);
+                            const [{ data: pTeams }, { data: tMembers }] = await Promise.all([
+                                supabase.from('project_teams').select('project_id').in('team_id', Array.from(teamIds)),
+                                supabase.from('team_members').select('member_id').in('team_id', Array.from(teamIds))
+                            ]);
+                            teamProjectIds = pTeams?.map(pt => pt.project_id) || [];
+                            teamMemberIds = tMembers?.map(tm => tm.member_id) || [];
                         }
+
+                        // Combine project IDs
+                        const allProjectIds = Array.from(new Set([...directProjectIds, ...teamProjectIds]));
+
+                        // 4. Members from those projects
+                        let projectMemberIds: string[] = [];
+                        if (allProjectIds.length > 0) {
+                            const { data: pMembers } = await supabase.from('project_members').select('member_id').in('project_id', allProjectIds);
+                            projectMemberIds = pMembers?.map(pm => pm.member_id) || [];
+                        }
+
+                        // Combine member IDs
+                        const allMemberIds = Array.from(new Set([
+                            member.id,
+                            ...teamMemberIds,
+                            ...projectMemberIds
+                        ]));
+
+                        setManagedMemberIds(allMemberIds);
+                        setManagedProjectIds(allProjectIds);
                     } else if (member.role === 'Client') {
                         const { data: clientData } = await supabase
                             .from('clients')
