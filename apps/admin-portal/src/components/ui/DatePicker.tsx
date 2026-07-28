@@ -71,11 +71,10 @@ export function DatePicker({
     };
 
     const handleDateSelect = (day: number, month: number, year: number) => {
-        const d = new Date(year, month, day);
-        const iso = d.toISOString().split('T')[0];
-        onChange(iso);
-        setIsOpen(false);
-    };
+    const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    onChange(iso);
+    setIsOpen(false);
+};
 
     const isToday = (day: number, month: number, year: number) => {
         const today = new Date();
