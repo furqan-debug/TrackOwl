@@ -2,10 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Users, Search, Filter, Download, UserPlus, Trash2,
-    ChevronDown, MoreHorizontal, Pencil, RotateCcw,
-    Settings, AlertCircle, CheckCircle, MapPin, Globe2
+    MoreHorizontal, Pencil, RotateCcw,
+    Settings, AlertCircle, CheckCircle, MapPin, Globe2,
+    Check, ChevronLeft
 } from 'lucide-react';
 import clsx from 'clsx';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import {
     Card,
@@ -711,23 +713,12 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
                     placeholder="email@company.com"
                 />
 
-                <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-text-muted ">Role Assignment</label>
-                    <div className="relative group">
-                        <select
-                            value={form.addRole}
-                            onChange={e => form.setAddRole(e.target.value)}
-                            className="w-full h-11 px-4 bg-surface-hover border border-border rounded-xl text-[12px] font-bold text-text-main outline-none focus:border-primary transition-all appearance-none cursor-pointer"
-                        >
-                            {rolesAvailable.map(r => (
-                                <option key={r} value={r} className="bg-surface text-text-main">
-                                    {r.toUpperCase()}
-                                </option>
-                            ))}
-                        </select>
-                        <ChevronDown className="w-4 h-4 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-primary transition-colors" />
-                    </div>
-                </div>
+                <FormSelect
+                    label="Role Assignment"
+                    value={form.addRole}
+                    onChange={(v: any) => form.setAddRole(v)}
+                    options={rolesAvailable.map(r => ({ label: r.toUpperCase(), value: r }))}
+                />
 
                 <div className="grid grid-cols-2 gap-4">
                     <FormField label="Pay Rate ($/hr)" value={form.addPayRate} onChange={form.setAddPayRate} type="number" placeholder="0.00" />
@@ -750,21 +741,82 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
     );
 }
 
-function FormField({ label, value, onChange, type = 'text', placeholder, disabled }: any) {
+function FormField({ label, value, onChange, type = 'text', icon, placeholder, disabled }: any) {
     return (
-        <div className="space-y-2">
-            <label className="text-[10px] font-bold text-text-muted ">{label}</label>
-            <input
-                type={type}
-                value={value}
-                onChange={e => onChange(e.target.value)}
-                placeholder={placeholder}
-                disabled={disabled}
-                className={clsx(
-                    "w-full h-11 px-4 bg-surface border border-border rounded-xl text-[12px] font-bold text-text-main outline-none focus:border-primary transition-all shadow-shell-sm placeholder:text-slate-300 tabular-nums",
-                    disabled && "bg-surface-hover cursor-not-allowed opacity-60"
-                )}
-            />
+        <div className="space-y-2 group flex flex-col relative">
+            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em] ml-1">{label}</label>
+            <div className="relative mt-auto">
+                {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors pointer-events-none z-10">{icon}</div>}
+                <input
+                    type={type}
+                    value={value || ''}
+                    onChange={e => onChange(e.target.value)}
+                    placeholder={placeholder}
+                    disabled={disabled}
+                    className={clsx(
+                        "w-full h-[52px] bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-shell-sm placeholder:text-text-muted/40",
+                        icon ? "pl-12 pr-4" : "px-4",
+                        disabled && "opacity-60 cursor-not-allowed bg-surface-hover"
+                    )}
+                />
+                <div className={clsx("absolute inset-0 rounded-2xl ring-1 ring-inset ring-transparent group-focus-within:ring-primary/20 pointer-events-none transition-all", disabled && "hidden")} />
+            </div>
+        </div>
+    );
+}
+
+function FormSelect({ label, value, onChange, options, disabled, icon, description }: any) {
+    const [isOpen, setIsOpen] = useState(false);
+    const ref = useRef<HTMLDivElement>(null);
+    const activeLabel = options.find((o: any) => o.value === value)?.label || value;
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false); };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    return (
+        <div ref={ref} className="space-y-2 group flex flex-col relative">
+            <label className="text-[11px] font-bold text-text-muted tracking-[0.05em] ml-1">{label}</label>
+            <div className="relative mt-auto">
+                <div
+                    onClick={() => !disabled && setIsOpen(!isOpen)}
+                    className={clsx(
+                        "w-full h-[52px] bg-surface-solid border rounded-2xl text-[14px] font-bold text-text-primary outline-none transition-all flex items-center cursor-pointer select-none shadow-shell-sm",
+                        icon ? "pl-12 pr-12" : "px-4 pr-12",
+                        isOpen ? "border-primary ring-4 ring-primary/10" : "border-border hover:border-text-muted/30",
+                        disabled && "opacity-50 cursor-not-allowed bg-surface-hover"
+                    )}
+                >
+                    {icon && <div className={clsx("absolute left-4 top-1/2 -translate-y-1/2 transition-colors", isOpen ? "text-primary" : "text-text-muted")}>{icon}</div>}
+                    <span className="truncate">{activeLabel}</span>
+                    <ChevronLeft className={clsx("w-5 h-5 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 transition-transform duration-300 pointer-events-none", isOpen ? "-rotate-90 text-primary" : "-rotate-90")} />
+                    <div className={clsx("absolute inset-0 rounded-2xl ring-1 ring-inset ring-transparent pointer-events-none transition-all", isOpen && "ring-primary/20")} />
+                </div>
+                <AnimatePresence>
+                    {isOpen && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="absolute top-[calc(100%+8px)] left-0 w-full bg-surface border border-border rounded-2xl shadow-premium z-[100] flex flex-col p-2 max-h-[260px] overflow-y-auto custom-scrollbar"
+                        >
+                            {options.map((opt: any) => (
+                                <div key={opt.value} onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                                    className={clsx("flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all text-[13px] font-bold group/item",
+                                        value === opt.value ? "bg-primary/10 text-primary" : "text-text-primary hover:bg-surface-hover hover:text-primary"
+                                    )}>
+                                    {opt.label}
+                                    {value === opt.value && <Check className="w-4 h-4 text-primary" />}
+                                </div>
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+            {description && <p className="text-[10px] font-semibold text-text-muted italic ml-1">{description}</p>}
         </div>
     );
 }
