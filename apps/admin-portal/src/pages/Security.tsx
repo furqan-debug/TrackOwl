@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
     Shield, ShieldCheck, ShieldOff, Loader2, Lock,
-    ArrowLeft, CheckCircle2, Smartphone, AlertTriangle, Key, Copy, Check,
+    CheckCircle2, Smartphone, AlertTriangle, Key, Copy, Check,
     Eye, EyeOff, KeyRound
 } from 'lucide-react';
 import { PageLayout, Modal } from '../components/ui';
@@ -359,12 +359,12 @@ export function SecurityPage() {
                 {/* ════════════════════════
                     2FA Card
                 ════════════════════════ */}
-                <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-shell-sm">
+                <div className="glass-panel border border-border rounded-[2rem] overflow-hidden shadow-premium">
 
                     {/* Header */}
-                    <div className="flex items-center justify-between px-6 py-5 border-b border-border">
-                        <div className="flex items-center gap-3.5">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border shrink-0 transition-colors
+                    <div className="flex items-center justify-between px-8 py-6 border-b border-border/50 bg-surface-solid/30">
+                        <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border shrink-0 transition-colors shadow-sm
                                 ${isMfaEnabled
                                     ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-400'
                                     : 'bg-surface border-border text-text-muted'
@@ -372,21 +372,21 @@ export function SecurityPage() {
                                 {isMfaEnabled ? <ShieldCheck className="w-5 h-5" /> : <Shield className="w-5 h-5" />}
                             </div>
                             <div>
-                                <p className="text-[14px] font-bold text-text-main leading-tight">Two-Factor Authentication</p>
-                                <p className="text-[12px] text-text-muted mt-0.5">TOTP · RFC 6238 · Authenticator App</p>
+                                <p className="text-[15px] font-bold text-text-main leading-tight">Two-Factor Authentication</p>
+                                <p className="text-[13px] text-text-muted mt-1">TOTP · RFC 6238 · Authenticator App</p>
                             </div>
                         </div>
                         {isMfaEnabled ? (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+                            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full
                                             bg-emerald-500/10 border border-emerald-500/25
-                                            text-emerald-400 text-[10px] font-bold uppercase tracking-widest shrink-0">
+                                            text-emerald-400 text-[11px] font-bold uppercase tracking-widest shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.1)]">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                                 Active
                             </span>
                         ) : (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full
+                            <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full
                                             bg-white/5 border border-white/10
-                                            text-text-muted text-[10px] font-bold uppercase tracking-widest shrink-0">
+                                            text-text-muted text-[11px] font-bold uppercase tracking-widest shrink-0">
                                 <span className="w-1.5 h-1.5 rounded-full bg-white/30" />
                                 Disabled
                             </span>
@@ -394,22 +394,23 @@ export function SecurityPage() {
                     </div>
 
                     {/* Body */}
-                    <div className="px-6 py-5 space-y-4">
-                        <p className="text-[13px] text-text-muted leading-relaxed">
+                    <div className="px-8 py-6 space-y-5 relative">
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.02] to-transparent pointer-events-none" />
+                        <p className="text-[14px] text-text-muted leading-relaxed relative">
                             Adds a time-based one-time code from your phone as a second step during sign-in,
                             so even a stolen password can't unlock your account.
                         </p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-wrap gap-2.5 relative">
                             {[
                                 { icon: Shield, label: 'Phishing resistant' },
                                 { icon: Smartphone, label: 'Works offline' },
                                 { icon: Key, label: 'Industry standard' },
                             ].map(({ icon: Icon, label }) => (
                                 <span key={label}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg
-                                               bg-white/[0.04] border border-white/8
-                                               text-text-muted text-[12px] font-semibold">
-                                    <Icon className="w-3.5 h-3.5 text-primary/60" />
+                                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl
+                                               bg-surface border border-border shadow-sm
+                                               text-text-main text-[12px] font-semibold">
+                                    <Icon className="w-4 h-4 text-primary" />
                                     {label}
                                 </span>
                             ))}
@@ -417,8 +418,8 @@ export function SecurityPage() {
                     </div>
 
                     {/* Footer */}
-                    <div className="px-6 py-4 border-t border-border flex items-center justify-between gap-4 bg-white/[0.015]">
-                        <p className="text-[12px] text-text-muted">
+                    <div className="px-8 py-5 border-t border-border/50 flex items-center justify-between gap-4 bg-surface-solid/50">
+                        <p className="text-[13px] text-text-muted font-medium">
                             {isMfaEnabled
                                 ? '🔒 Your account has an extra layer of protection.'
                                 : 'Your account currently has no secondary authentication.'}
@@ -427,9 +428,9 @@ export function SecurityPage() {
                             <button
                                 onClick={() => setDisableConfirmOpen(true)}
                                 disabled={mfaActionLoading}
-                                className="shrink-0 h-9 px-5 rounded-xl bg-rose-500/10 border border-rose-500/20
+                                className="shrink-0 h-10 px-6 rounded-xl bg-rose-500/10 border border-rose-500/20
                                            text-rose-400 hover:bg-rose-500 hover:text-white hover:border-rose-500
-                                           transition-all text-[12px] font-bold flex items-center gap-2 disabled:opacity-50"
+                                           transition-all text-[13px] font-bold flex items-center gap-2 disabled:opacity-50"
                             >
                                 <ShieldOff className="w-4 h-4" />
                                 Disable 2FA
@@ -438,8 +439,8 @@ export function SecurityPage() {
                             <button
                                 onClick={handleOpenMfaSetup}
                                 disabled={mfaActionLoading}
-                                className="shrink-0 h-9 px-5 rounded-xl bg-primary text-white
-                                           hover:brightness-110 transition-all text-[12px] font-bold
+                                className="shrink-0 h-10 px-6 rounded-xl bg-primary text-white
+                                           hover:brightness-110 active:scale-[0.98] transition-all text-[13px] font-bold
                                            flex items-center gap-2 disabled:opacity-50 shadow-glow-primary"
                             >
                                 {mfaActionLoading
@@ -454,37 +455,39 @@ export function SecurityPage() {
                 {/* ════════════════════════
                     Change Password Card
                 ════════════════════════ */}
-                <div className="bg-surface border border-border rounded-2xl overflow-hidden shadow-shell-sm">
+                <div className="glass-panel border border-border rounded-[2rem] overflow-hidden shadow-premium">
 
                     {/* Header */}
-                    <div className="flex items-center gap-3.5 px-6 py-5 border-b border-border">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center border bg-surface border-border text-text-muted shrink-0">
+                    <div className="flex items-center gap-4 px-8 py-6 border-b border-border/50 bg-surface-solid/30">
+                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center border bg-surface border-border text-text-muted shrink-0 shadow-sm">
                             <KeyRound className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-[14px] font-bold text-text-main leading-tight">Change Password</p>
-                            <p className="text-[12px] text-text-muted mt-0.5">Update your account login credentials</p>
+                            <p className="text-[15px] font-bold text-text-main leading-tight">Change Password</p>
+                            <p className="text-[13px] text-text-muted mt-1">Update your account login credentials</p>
                         </div>
                     </div>
 
                     {/* Form or OAuth Message */}
                     {isOAuthOnly ? (
-                        <div className="px-6 py-10 flex flex-col items-center justify-center text-center space-y-4">
-                            <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-2 shadow-glow-primary">
-                                <svg className="w-8 h-8" viewBox="0 0 24 24" fill="currentColor">
+                        <div className="px-8 py-12 flex flex-col items-center justify-center text-center space-y-5">
+                            <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary mb-2 shadow-glow-primary">
+                                <svg className="w-10 h-10" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
                                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
                                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                                 </svg>
                             </div>
-                            <p className="text-[15px] font-bold text-text-main">Connected with Google</p>
-                            <p className="text-[13px] text-text-muted leading-relaxed max-w-sm">
-                                Your account uses Google for authentication. You do not have a separate password for TrackOwl. Please manage your login credentials through your Google Account.
-                            </p>
+                            <div className="space-y-1">
+                                <p className="text-[16px] font-bold text-text-main">Connected with Google</p>
+                                <p className="text-[14px] text-text-muted leading-relaxed max-w-sm mx-auto">
+                                    Your account uses Google for authentication. You do not have a separate password for TrackOwl. Please manage your login credentials through your Google Account.
+                                </p>
+                            </div>
                         </div>
                     ) : (
-                        <form onSubmit={handleChangePassword} className="px-6 py-6 space-y-4">
+                        <form onSubmit={handleChangePassword} className="px-8 py-8 space-y-6">
 
                             {/* Success */}
                             {pwSuccess && (
@@ -543,10 +546,10 @@ export function SecurityPage() {
                                 <button
                                     type="submit"
                                     disabled={pwLoading || !currentPw || !newPw || !confirmPw}
-                                    className="h-10 px-6 rounded-xl bg-primary text-white text-[12px] font-bold
+                                    className="h-11 px-8 rounded-xl bg-primary text-white text-[13px] font-bold
                                                hover:brightness-110 active:scale-[0.98] transition-all
                                                disabled:opacity-40 disabled:cursor-not-allowed
-                                               flex items-center gap-2 shadow-glow-primary"
+                                               flex items-center gap-2.5 shadow-glow-primary ml-auto"
                                 >
                                     {pwLoading
                                         ? <Loader2 className="w-4 h-4 animate-spin" />
@@ -566,88 +569,99 @@ export function SecurityPage() {
             <Modal
                 isOpen={mfaModalOpen}
                 onClose={() => !mfaActionLoading && setMfaModalOpen(false)}
-                title="Set Up 2FA"
-                maxWidth="max-w-sm"
+                title="Secure Your Account"
+                maxWidth="max-w-md"
             >
                 <form onSubmit={handleVerifyEnrollment}>
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                         {mfaError && (
-                            <div className="flex items-center gap-3 p-3.5 rounded-xl
-                                            bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[13px] font-medium">
-                                <AlertTriangle className="w-4 h-4 shrink-0" />
+                            <div className="flex items-center gap-3 p-4 rounded-xl
+                                            bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[13px] font-medium shadow-sm">
+                                <AlertTriangle className="w-5 h-5 shrink-0" />
                                 {mfaError}
                             </div>
                         )}
 
                         {enrollData ? (
-                            <div className="flex flex-col items-center gap-4">
-                                <p className="text-[13px] text-text-muted text-center leading-relaxed">
-                                    Scan with <strong className="text-text-main font-semibold">Google Authenticator</strong>,
-                                    Authy, or any TOTP app.
-                                </p>
-                                <div className="p-3 bg-white rounded-2xl shadow-md border border-border">
-                                    <img src={enrollData.totp.qr_code} alt="2FA QR Code" className="w-40 h-40 block" />
+                            <div className="flex flex-col items-center gap-6">
+                                <div className="text-center space-y-2">
+                                    <h3 className="text-lg font-bold text-text-main">Set Up 2FA</h3>
+                                    <p className="text-[13px] text-text-muted leading-relaxed max-w-sm">
+                                        Scan this QR code with <strong className="text-text-main font-semibold">Google Authenticator</strong>, Authy, or any TOTP app to generate secure codes.
+                                    </p>
                                 </div>
-                                <div className="w-full rounded-xl border border-border bg-white/[0.03] overflow-hidden">
-                                    <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-                                        <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">
-                                            Manual key
+                                
+                                <div className="relative group">
+                                    <div className="absolute inset-0 bg-primary/20 blur-2xl rounded-full opacity-50 group-hover:opacity-75 transition-opacity" />
+                                    <div className="relative p-4 bg-white rounded-[2rem] shadow-premium border-[6px] border-white/50 backdrop-blur-xl">
+                                        <img src={enrollData.totp.qr_code} alt="2FA QR Code" className="w-44 h-44 block rounded-xl" />
+                                    </div>
+                                </div>
+                                
+                                <div className="w-full rounded-2xl border border-border glass-panel overflow-hidden shadow-shell-sm mt-2">
+                                    <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface-solid/50">
+                                        <span className="text-[10px] font-black text-text-muted uppercase tracking-widest flex items-center gap-2">
+                                            <ShieldCheck className="w-3.5 h-3.5" />
+                                            Manual Setup Key
                                         </span>
                                         <CopyButton text={enrollData.totp.secret} />
                                     </div>
-                                    <code className="block px-3 py-2.5 text-[11px] font-mono text-text-muted
-                                                     tracking-widest break-all text-center select-all">
-                                        {enrollData.totp.secret}
-                                    </code>
+                                    <div className="px-4 py-3 bg-surface/30">
+                                        <code className="block text-[12px] font-mono text-text-main font-medium
+                                                         tracking-[0.2em] break-all text-center select-all cursor-text">
+                                            {enrollData.totp.secret}
+                                        </code>
+                                    </div>
                                 </div>
                             </div>
                         ) : (
-                            <div className="flex flex-col items-center gap-3 py-10">
-                                <Loader2 className="w-7 h-7 text-primary animate-spin" />
+                            <div className="flex flex-col items-center justify-center gap-4 py-16 h-[400px]">
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+                                    <Loader2 className="w-10 h-10 text-primary animate-spin relative" />
+                                </div>
                                 <span className="text-[11px] font-bold tracking-widest text-text-muted uppercase">
-                                    Generating QR code…
+                                    Generating Secure Key…
                                 </span>
                             </div>
                         )}
 
-                        <div className="flex items-center gap-3">
-                            <span className="flex-1 h-px bg-border" />
-                            <span className="text-[10px] font-bold tracking-widest text-text-muted uppercase">
-                                Then enter the code
+                        <div className="relative flex items-center justify-center">
+                            <span className="absolute w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                            <span className="relative bg-surface px-4 text-[10px] font-black tracking-widest text-text-muted uppercase rounded-full border border-border shadow-sm py-1">
+                                Verification
                             </span>
-                            <span className="flex-1 h-px bg-border" />
                         </div>
 
-                        <div className="space-y-2">
-                            <OtpInput value={mfaCode} onChange={setMfaCode} />
-                            <p className="text-[11px] text-text-muted text-center">
-                                Enter the 6-digit code shown in your authenticator app
+                        <div className="space-y-4">
+                            <div className="flex justify-center">
+                                <OtpInput value={mfaCode} onChange={setMfaCode} />
+                            </div>
+                            <p className="text-[12px] text-text-muted text-center max-w-xs mx-auto">
+                                Enter the 6-digit verification code generated by your authenticator app
                             </p>
                         </div>
 
-                        <div className="flex flex-col gap-2 pt-1">
-                            <button
-                                type="submit"
-                                disabled={mfaActionLoading || mfaCode.length !== 6 || !enrollData}
-                                className="h-11 rounded-xl bg-primary text-white font-bold text-[13px]
-                                           shadow-glow-primary hover:brightness-110 active:scale-[0.98]
-                                           transition-all disabled:opacity-40 disabled:cursor-not-allowed
-                                           flex items-center justify-center gap-2"
-                            >
-                                {mfaActionLoading
-                                    ? <Loader2 className="w-4 h-4 animate-spin" />
-                                    : <ShieldCheck className="w-4 h-4" />}
-                                Verify & Enable 2FA
-                            </button>
+                        <div className="flex gap-3 pt-2">
                             <button
                                 type="button"
                                 disabled={mfaActionLoading}
                                 onClick={() => setMfaModalOpen(false)}
-                                className="h-9 rounded-xl text-text-muted font-semibold text-[12px]
-                                           hover:text-text-main transition-colors flex items-center justify-center gap-1.5"
+                                className="flex-1 h-12 rounded-2xl border border-border bg-surface-hover text-text-main font-bold text-[13px] hover:bg-surface-solid active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                             >
-                                <ArrowLeft className="w-3.5 h-3.5" />
                                 Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={mfaActionLoading || mfaCode.length !== 6 || !enrollData}
+                                className="flex-[2] h-12 rounded-2xl bg-primary text-white font-bold text-[13px] shadow-glow-primary hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                            >
+                                {mfaActionLoading ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <ShieldCheck className="w-4 h-4" />
+                                )}
+                                Verify & Enable 2FA
                             </button>
                         </div>
                     </div>
@@ -679,23 +693,23 @@ export function SecurityPage() {
                             {mfaError}
                         </div>
                     )}
-                    <div className="flex flex-col gap-2">
+                    <div className="flex gap-3 pt-2">
                         <button
-                            onClick={handleDisableMfa}
+                            type="button"
+                            onClick={() => setDisableConfirmOpen(false)}
                             disabled={mfaActionLoading}
-                            className="h-11 rounded-xl bg-rose-600 text-white font-bold text-[13px]
-                                       hover:bg-rose-500 active:scale-[0.98] transition-all
-                                       disabled:opacity-40 flex items-center justify-center gap-2"
+                            className="flex-1 h-12 rounded-2xl border border-border bg-surface-hover text-text-main font-bold text-[13px] hover:bg-surface-solid active:scale-[0.98] transition-all flex items-center justify-center"
                         >
-                            {mfaActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldOff className="w-4 h-4" />}
-                            Yes, Disable 2FA
+                            Keep 2FA
                         </button>
                         <button
+                            type="button"
+                            onClick={handleDisableMfa}
                             disabled={mfaActionLoading}
-                            onClick={() => setDisableConfirmOpen(false)}
-                            className="h-9 rounded-xl text-text-muted font-semibold text-[12px] hover:text-text-main transition-colors"
+                            className="flex-[2] h-12 rounded-2xl bg-rose-600/90 text-white font-bold text-[13px] hover:bg-rose-500 active:scale-[0.98] transition-all disabled:opacity-40 flex items-center justify-center gap-2 shadow-[0_4px_20px_-4px_rgba(225,29,72,0.4)] hover:shadow-[0_4px_25px_-2px_rgba(225,29,72,0.5)]"
                         >
-                            Keep 2FA Enabled
+                            {mfaActionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldOff className="w-4 h-4" />}
+                            Disable 2FA
                         </button>
                     </div>
                 </div>
