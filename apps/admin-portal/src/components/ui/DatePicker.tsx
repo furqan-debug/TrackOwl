@@ -189,9 +189,10 @@ export function DatePicker({
                             <button 
                                 onClick={(e) => { 
                                     e.stopPropagation(); 
-                                    const d = new Date();
-                                    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-                                    onChange(today);
+                                    const now = new Date();
+                                    const iso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                                    setViewDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+                                    onChange(iso);
                                     setIsOpen(false);
                                 }}
                                 className="text-[11px] font-black text-accent hover:opacity-80 transition-opacity uppercase tracking-widest"

@@ -104,11 +104,8 @@ export function Dashboard() {
         return str.toLowerCase();
     };
 
-    const [weekStart, setWeekStart] = useState(() => {
+    const [viewDate, setViewDate] = useState(() => {
         const d = new Date();
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-        d.setDate(diff);
         d.setHours(0, 0, 0, 0);
         return d;
     });
@@ -129,33 +126,43 @@ export function Dashboard() {
     const [appUsage, setAppUsage] = useState<AppUsage[]>([]);
     const [chartData, setChartData] = useState<any[]>([]);
 
-    const weekEnd = useMemo(() => {
-        const d = new Date(weekStart);
-        d.setDate(d.getDate() + 6);
+    const viewDateEnd = useMemo(() => {
+        const d = new Date(viewDate);
         d.setHours(23, 59, 59, 999);
         return d;
-    }, [weekStart]);
+    }, [viewDate]);
 
-    const navigateWeek = (direction: 'prev' | 'next') => {
-        const next = new Date(weekStart);
-        next.setDate(weekStart.getDate() + (direction === 'prev' ? -7 : 7));
-        setWeekStart(next);
+    const navigateDate = (direction: 'prev' | 'next') => {
+        const next = new Date(viewDate);
+        next.setDate(viewDate.getDate() + (direction === 'prev' ? -1 : 1));
+        setViewDate(next);
     };
 
     const handleDateChange = (dateStr: string) => {
         if (!dateStr) return;
-        const d = new Date(dateStr);
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-        d.setDate(diff);
+        // Parse as local date to avoid UTC-offset shifting the day
+        const [year, month, day] = dateStr.split('-').map(Number);
+        const d = new Date(year, month - 1, day);
         d.setHours(0, 0, 0, 0);
-        setWeekStart(d);
+        setViewDate(d);
     };
+
+    const goToToday = () => {
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        setViewDate(d);
+    };
+
+    const isTodayView = useMemo(() => {
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+        return viewDate.getTime() === now.getTime();
+    }, [viewDate]);
 
     const fetchDashboardData = useCallback(async (forceRefresh = false, isSilent = false) => {
         if (!organizationId) return;
-        const startIso = weekStart.toISOString();
-        const endIso = weekEnd.toISOString();
+        const startIso = viewDate.toISOString();
+        const endIso = viewDateEnd.toISOString();
 
         if (!forceRefresh && dashboardCache && dashboardCacheWeek === startIso && dashboardCacheUser === profile?.id) {
             setStats(dashboardCache.stats);
@@ -163,6 +170,7 @@ export function Dashboard() {
             setOnlineMembers(dashboardCache.onlineMembers);
             setProjectActivity(dashboardCache.projectActivity);
             setAppUsage(dashboardCache.appUsage);
+            setChartData(dashboardCache.chartData);
             setLoading(false);
             return;
         }
@@ -176,12 +184,12 @@ export function Dashboard() {
             todayStart.setHours(0, 0, 0, 0);
             const todayStartIso = todayStart.toISOString();
 
-            const prevWeekStart = new Date(weekStart);
-            prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+            const prevWeekStart = new Date(viewDate);
+            prevWeekStart.setDate(prevWeekStart.getDate() - 1);
             const prevWeekStartIso = prevWeekStart.toISOString();
 
-            const prevWeekEnd = new Date(weekEnd);
-            prevWeekEnd.setDate(prevWeekEnd.getDate() - 7);
+            const prevWeekEnd = new Date(viewDateEnd);
+            prevWeekEnd.setDate(prevWeekEnd.getDate() - 1);
             const prevWeekEndIso = prevWeekEnd.toISOString();
 
             const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
@@ -230,12 +238,17 @@ export function Dashboard() {
             let latestActiveSamples: any[] = [];
             const activeSessionIds = sessions.filter(s => !s.ended_at || s.ended_at > nowIso).map(s => s.id);
             if (activeSessionIds.length > 0) {
-                const { data: actSamps } = await supabase
-                    .from('activity_samples')
-                    .select('session_id, idle, recorded_at')
-                    .in('session_id', activeSessionIds)
-                    .order('recorded_at', { ascending: false });
-                latestActiveSamples = actSamps || [];
+                const samplePromises = activeSessionIds.map(async (sid) => {
+                    const { data } = await supabase
+                        .from('activity_samples')
+                        .select('session_id, idle, recorded_at')
+                        .eq('session_id', sid)
+                        .order('recorded_at', { ascending: false })
+                        .limit(1);
+                    return data?.[0];
+                });
+                const results = await Promise.all(samplePromises);
+                latestActiveSamples = results.filter(Boolean);
             }
 
             const projectMap = Object.fromEntries(projects.map(p => [p.id, p]));
@@ -277,7 +290,7 @@ export function Dashboard() {
 
             const finalUserActivity = Object.values(userRows)
                 .filter(r => r.totalMinutes > 0 || r.screenshots.length > 0)
-                .sort((a, b) => b.totalMinutes - a.totalMinutes)
+                .sort((a, b) => (b.totalMinutes * b.activityScore) - (a.totalMinutes * a.activityScore))
                 .slice(0, 4);
 
             const finalProjectActivity = Object.entries(aggregated.proj_stats || {})
@@ -311,7 +324,7 @@ export function Dashboard() {
                 let status: 'working' | 'idle' | 'offline' = 'offline';
                 if (activeSession) {
                     const latestSample = latestActiveSamples.find(s => s.session_id === activeSession.id);
-                    status = (latestSample && !latestSample.idle) ? 'working' : 'idle';
+                    status = latestSample ? (latestSample.idle ? 'idle' : 'working') : 'working';
                 }
                 return {
                     id: m.id,
@@ -333,15 +346,17 @@ export function Dashboard() {
             setAppUsage(finalAppUsage);
 
             // Chart Data Transformation
-            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-            const dailyData = days.map(day => {
-                const count = (aggregated.daily_stats || {})[day] || 0;
-                return {
-                    name: day,
-                    hours: Math.round((count / 60) * 100) / 100
-                };
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const currentDayStr = days[viewDate.getDay()];
+            const cData = days.map(d => {
+                let hours = 0;
+                if (d === currentDayStr) {
+                    const mins = totalMins;
+                    hours = +(mins / 60).toFixed(1);
+                }
+                return { name: d, hours };
             });
-            setChartData(dailyData);
+            setChartData(cData);
 
             // Update Cache
             const newCache = { 
@@ -350,7 +365,7 @@ export function Dashboard() {
                 onlineMembers: online, 
                 projectActivity: finalProjectActivity, 
                 appUsage: finalAppUsage,
-                chartData: dailyData
+                chartData: cData
             };
             dashboardCache = newCache;
             dashboardCacheWeek = startIso;
@@ -362,7 +377,7 @@ export function Dashboard() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [weekStart, weekEnd]);
+    }, [viewDate]);
 
     useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
@@ -378,26 +393,34 @@ export function Dashboard() {
                 <div className="flex items-center gap-2 md:gap-4">
                     <div className="flex items-center glass-panel p-1 rounded-2xl shadow-premium border border-border flex-1 md:flex-none">
                         <button
-                            onClick={() => navigateWeek('prev')}
+                            onClick={() => navigateDate('prev')}
                             className="p-2 md:p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
                         <DatePicker
-                            value={`${weekStart.getFullYear()}-${String(weekStart.getMonth() + 1).padStart(2, '0')}-${String(weekStart.getDate()).padStart(2, '0')}`}
-                            displayValue={`${weekStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - ${weekEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`}
+                            value={`${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}-${String(viewDate.getDate()).padStart(2, '0')}`}
+                            displayValue={viewDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                             onChange={(val) => handleDateChange(val)}
                             className="flex-1 min-w-0"
-                            label="Viewing Week"
+                            label="Viewing Date"
                         />
                         <button
-                            onClick={() => navigateWeek('next')}
+                            onClick={() => navigateDate('next')}
                             className="p-2 md:p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl disabled:opacity-30 disabled:hover:bg-transparent"
-                            disabled={weekEnd > new Date()}
+                            disabled={viewDate >= new Date(new Date().setHours(0,0,0,0))}
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>
                     </div>
+                    {!isTodayView && (
+                        <button
+                            onClick={goToToday}
+                            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all duration-200 shrink-0 animate-in fade-in slide-in-from-top-2 duration-300"
+                        >
+                            <span>Today</span>
+                        </button>
+                    )}
                     <button
                         onClick={() => fetchDashboardData(true, true)}
                         className={clsx(
@@ -418,7 +441,7 @@ export function Dashboard() {
                         icon={<TrendingUp className="w-5 h-5" />}
                         label="Team Focus"
                         value={`${stats.avgActivityScore}%`}
-                        sub="Avg activity score this week"
+                        sub="Avg activity score for this date"
                         trend={stats.trendFocus}
                         accent="brand-gradient"
                         className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]"
@@ -427,7 +450,7 @@ export function Dashboard() {
                         icon={<Clock className="w-5 h-5" />}
                         label="Productivity"
                         value={formatDuration(stats.totalProductiveMinutes)}
-                        sub="Total hours tracked this week"
+                        sub="Total hours tracked for this date"
                         trend={stats.trendProductivity}
                         accent="brand-gradient"
                         className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]"
@@ -452,12 +475,12 @@ export function Dashboard() {
 
                 {/* 📈 Analytics Row (Line & Donut Charts) */}
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
-                    {/* Line Chart: Time Tracked Over Time */}
-                    <div className="lg:col-span-8 bg-surface rounded-2xl shadow-premium border border-border flex flex-col min-h-[300px] md:min-h-[420px]">
-                        <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border flex items-center justify-between relative z-20">
+                    {/* Line Chart: Time Tracked */}
+                    <div className="lg:col-span-8 bg-surface rounded-2xl shadow-premium border border-border overflow-hidden flex flex-col min-h-[300px] md:min-h-[420px]">
+                        <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border flex items-center justify-between">
                             <div>
-                                <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Tracked Over Time</h3>
-                                <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Daily productivity trends for this week</p>
+                                <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Tracked</h3>
+                                <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Daily productivity for selected date</p>
                             </div>
                         </div>
                         <div className="flex-1 p-4 md:p-8 pt-2 md:pt-4 relative">
