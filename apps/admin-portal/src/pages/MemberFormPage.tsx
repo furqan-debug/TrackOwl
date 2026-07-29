@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { LoadingState, DatePicker } from '../components/ui';
 import { SecureImage } from '../components/ui/SecureImage';
+import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 type Role = 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
@@ -244,85 +245,131 @@ export function MemberFormPage() {
                 </button>
             </div>
 
-            <div className="flex flex-1 overflow-hidden">
-                {/* Sidebar */}
-                <aside className="w-72 shrink-0 border-r border-border/60 flex flex-col bg-surface/40 overflow-y-auto custom-scrollbar">
-                    {/* Member card */}
-                    <div className="p-6 border-b border-border/40">
-                        <div className="flex flex-col items-center text-center gap-4">
-                            <div className="relative">
-                                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary text-2xl font-black border border-primary/20 shadow-lg overflow-hidden">
-                                    {avatarUrl ? (
-                                        <SecureImage path={avatarUrl} bucket="avatars" className="w-full h-full object-cover" />
-                                    ) : initials}
+            <div className="flex flex-1 overflow-hidden bg-main relative">
+                {/* Subtle background glow */}
+                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/5 blur-[120px] pointer-events-none rounded-full" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[40%] h-[40%] bg-blue-500/5 blur-[100px] pointer-events-none rounded-full" />
+                
+                <div className="max-w-[1400px] w-full mx-auto px-4 md:px-8 py-8 flex flex-col md:flex-row gap-8 relative z-10 overflow-hidden">
+                    {/* Floating Profile Sidebar */}
+                    <aside className="w-full md:w-80 shrink-0 flex flex-col gap-6 overflow-y-auto custom-scrollbar pr-2 pb-20">
+                        {/* Member card */}
+                        <div className="p-6 bg-surface/60 backdrop-blur-md border border-border/60 rounded-3xl shadow-shell-md">
+                            <div className="flex flex-col items-center text-center gap-5">
+                                <div className="relative group cursor-pointer">
+                                    {/* Animated completeness ring */}
+                                    <motion.div 
+                                        className="absolute -inset-2 rounded-[1.4rem] border-2 border-dashed border-primary/30"
+                                        animate={{ rotate: 360 }}
+                                        transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
+                                    />
+                                    <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary text-3xl font-black border border-primary/30 shadow-shell-md overflow-hidden relative z-10 transition-transform group-hover:scale-105">
+                                        {avatarUrl ? (
+                                            <SecureImage path={avatarUrl} bucket="avatars" className="w-full h-full object-cover" />
+                                        ) : initials}
+                                    </div>
+                                    <div className={clsx("absolute -bottom-2 -right-2 px-2.5 py-0.5 rounded-lg text-[10px] font-black border tracking-[0.1em] shadow-shell-sm z-20", ROLE_COLORS[role] || ROLE_COLORS['User'])}>
+                                        {role.toUpperCase()}
+                                    </div>
                                 </div>
-                                <div className={clsx("absolute -bottom-1.5 -right-1.5 px-2 py-0.5 rounded-lg text-[9px] font-black border tracking-wider", ROLE_COLORS[role] || ROLE_COLORS['User'])}>
-                                    {role.toUpperCase()}
+                                <div>
+                                    <p className="text-[16px] font-black text-text-primary tracking-tight">{fullName || 'Unknown'}</p>
+                                    <p className="text-[12px] text-text-muted font-mono mt-1 break-all opacity-80">{email}</p>
+                                    {department && <p className="text-[11px] text-primary font-bold mt-2 uppercase tracking-wider">{department}</p>}
                                 </div>
-                            </div>
-                            <div>
-                                <p className="text-[14px] font-bold text-text-primary">{fullName || 'Unknown'}</p>
-                                <p className="text-[11px] text-text-muted font-mono mt-0.5 break-all">{email}</p>
-                                {department && <p className="text-[11px] text-primary font-bold mt-1">{department}</p>}
-                            </div>
-                            {/* Quick stats */}
-                            <div className="w-full grid grid-cols-2 gap-2 mt-1">
-                                <div className="bg-surface-hover rounded-xl px-3 py-2.5 text-center border border-border/50">
-                                    <p className="text-[16px] font-black text-text-primary">{assignedProjectIds.size}</p>
-                                    <p className="text-[9px] font-bold text-text-muted uppercase tracking-wider">Projects</p>
-                                </div>
-                                <div className="bg-surface-hover rounded-xl px-3 py-2.5 text-center border border-border/50">
-                                    <p className="text-[16px] font-black text-text-primary">{weeklyLimit}h</p>
-                                    <p className="text-[9px] font-bold text-text-muted uppercase tracking-wider">Weekly</p>
+                                {/* Quick stats */}
+                                <div className="w-full grid grid-cols-2 gap-3 mt-2">
+                                    <div className="bg-surface-solid rounded-2xl px-3 py-3 text-center border border-border shadow-shell-sm">
+                                        <p className="text-[18px] font-black text-text-primary">{assignedProjectIds.size}</p>
+                                        <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest mt-0.5">Projects</p>
+                                    </div>
+                                    <div className="bg-surface-solid rounded-2xl px-3 py-3 text-center border border-border shadow-shell-sm">
+                                        <p className="text-[18px] font-black text-text-primary">{weeklyLimit}h</p>
+                                        <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest mt-0.5">Weekly</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Tab nav */}
-                    <nav className="p-3 flex-1">
-                        <p className="text-[9px] font-black text-text-muted uppercase tracking-[0.15em] px-3 mb-2">Settings</p>
-                        {TAB_CONFIG.map(tab => {
-                            const Icon = tab.icon;
-                            const isActive = activeTab === tab.id;
-                            return (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={clsx(
-                                        "w-full flex items-center gap-3 px-3 py-3 rounded-xl text-[12px] font-bold transition-all mb-1",
-                                        isActive
-                                            ? "bg-primary/10 text-primary"
-                                            : "text-text-primary/70 hover:text-text-primary hover:bg-surface-hover"
+                        {/* Tab nav */}
+                        <nav className="flex-1 flex flex-col gap-1.5 bg-surface/60 backdrop-blur-md border border-border/60 rounded-3xl p-3 shadow-shell-sm">
+                            <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.15em] px-4 py-2">Settings Configuration</p>
+                            {TAB_CONFIG.map(tab => {
+                                const Icon = tab.icon;
+                                const isActive = activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={clsx(
+                                            "w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-[13px] font-bold transition-all relative group overflow-hidden",
+                                            isActive
+                                                ? "text-primary"
+                                                : "text-text-primary/70 hover:text-text-primary hover:bg-surface-hover"
+                                        )}
+                                    >
+                                        {isActive && (
+                                            <motion.div 
+                                                layoutId="activeTabBg"
+                                                className="absolute inset-0 bg-primary/10 border border-primary/20 rounded-2xl"
+                                                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                                            />
+                                        )}
+                                        <div className={clsx(
+                                            "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-all relative z-10 shadow-sm",
+                                            isActive ? `${tab.bg} ${tab.color} shadow-primary/20` : "bg-surface-solid border border-border text-text-muted group-hover:border-text-muted/30"
+                                        )}>
+                                            <Icon className="w-4 h-4" />
+                                        </div>
+                                        <span className="relative z-10">{tab.label}</span>
+                                        {isActive && (
+                                            <motion.div 
+                                                layoutId="activeTabIndicator"
+                                                className="absolute right-4 w-2 h-2 rounded-full bg-primary shadow-[0_0_8px_var(--color-primary)] z-10" 
+                                            />
+                                        )}
+                                    </button>
+                                );
+                            })}
+                        </nav>
+                    </aside>
+
+                    {/* Main content */}
+                    <main className="flex-1 flex flex-col h-full overflow-hidden">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar pb-20 pr-2">
+                            <div className="max-w-3xl w-full">
+
+                                {/* Error banner */}
+                                <AnimatePresence>
+                                    {error && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                                            className="mb-6 flex items-center gap-3 px-5 py-4 bg-rose-500/8 border border-rose-500/20 rounded-2xl shadow-sm"
+                                        >
+                                            <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                                            <p className="text-[13px] font-bold text-rose-400">{error}</p>
+                                            <button onClick={() => setError(null)} className="ml-auto text-rose-400/60 hover:text-rose-400 p-1 hover:bg-rose-500/10 rounded-md transition-colors">
+                                                <X className="w-4 h-4" />
+                                            </button>
+                                        </motion.div>
                                     )}
-                                >
-                                    <div className={clsx("w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-all", isActive ? `${tab.bg} ${tab.color}` : "bg-surface-hover text-text-muted")}>
-                                        <Icon className="w-3.5 h-3.5" />
-                                    </div>
-                                    {tab.label}
-                                    {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-primary" />}
-                                </button>
-                            );
-                        })}
-                    </nav>
-                </aside>
+                                </AnimatePresence>
 
-                {/* Main content */}
-                <main className="flex-1 overflow-y-auto custom-scrollbar">
-                    <div className="max-w-3xl mx-auto px-8 py-10 pb-20">
-
-                        {/* Error banner */}
-                        {error && (
-                            <div className="mb-6 flex items-center gap-3 px-5 py-4 bg-rose-500/8 border border-rose-500/20 rounded-2xl animate-in slide-in-from-top-2">
-                                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                                <p className="text-[12px] font-bold text-rose-400">{error}</p>
-                                <button onClick={() => setError(null)} className="ml-auto text-rose-400/60 hover:text-rose-400">
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
-                        )}
-
-                        {/* Tab header */}
+                                <AnimatePresence mode="wait">
+                                    <motion.div
+                                        key={activeTab}
+                                        initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: -15, scale: 0.98 }}
+                                        transition={{ duration: 0.3, ease: "easeOut" }}
+                                        className="bg-surface/80 backdrop-blur-sm border border-border/60 rounded-[32px] p-6 md:p-10 shadow-premium relative"
+                                    >
+                                        {/* Decorative ambient light inside card */}
+                                        <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 blur-[80px] pointer-events-none rounded-full" />
+                                        
+                                        {/* Tab header */}
                         {(() => {
                             const tab = TAB_CONFIG.find(t => t.id === activeTab)!;
                             const Icon = tab.icon;
@@ -344,12 +391,13 @@ export function MemberFormPage() {
                                         </p>
                                     </div>
                                 </div>
-                            );
-                        })()}
+                                            );
+                                        })()}
 
-                        {/* ── GENERAL ── */}
-                        {activeTab === 'General' && (
-                            <div className="space-y-6 animate-in fade-in duration-300">
+                                        <div className="relative z-10">
+                                            {/* ── GENERAL ── */}
+                                            {activeTab === 'General' && (
+                                                <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-5">
                                     <FormField label="Full Name" value={fullName} onChange={setFullName} icon={<User className="w-4 h-4" />} placeholder="Enter full name..." />
                                     <FormSelect label="Role" value={role} onChange={(v: Role) => setRole(v)} disabled={role === 'Owner'} icon={<Shield className="w-4 h-4" />}
@@ -389,8 +437,8 @@ export function MemberFormPage() {
                         )}
 
                         {/* ── COMPENSATION ── */}
-                        {activeTab === 'Compensation' && (
-                            <div className="space-y-5 animate-in fade-in duration-300">
+                                            {activeTab === 'Compensation' && (
+                                                <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-5">
                                     <FormField label="Pay Rate ($/hr)" value={payRate} onChange={setPayRate} type="number" icon={<DollarSign className="w-4 h-4" />} placeholder="0.00" />
                                     <FormField label="Bill Rate ($/hr)" value={billRate} onChange={setBillRate} type="number" icon={<DollarSign className="w-4 h-4" />} placeholder="0.00" />
@@ -398,12 +446,12 @@ export function MemberFormPage() {
                                 <InfoBox color="emerald" icon={<Info className="w-4 h-4" />}>
                                     Pay rate is the cost to the organization. Bill rate is what is charged to the client. Used for margin analysis and financial forecasting.
                                 </InfoBox>
-                            </div>
-                        )}
+                                                </div>
+                                            )}
 
-                        {/* ── LIMITS ── */}
-                        {activeTab === 'Limits' && (
-                            <div className="space-y-5 animate-in fade-in duration-300">
+                                            {/* ── LIMITS ── */}
+                                            {activeTab === 'Limits' && (
+                                                <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-5">
                                     <FormField label="Weekly Hours Limit" value={weeklyLimit} onChange={setWeeklyLimit} type="number" icon={<Calendar className="w-4 h-4" />} placeholder="40" />
                                     <FormField label="Daily Hours Limit" value={dailyLimit} onChange={setDailyLimit} type="number" icon={<Clock className="w-4 h-4" />} placeholder="8" />
@@ -445,22 +493,22 @@ export function MemberFormPage() {
                                         </div>
                                     </div>
                                 )}
-                            </div>
-                        )}
+                                                                            </div>
+                                            )}
 
-                        {/* ── DATES ── */}
-                        {activeTab === 'Dates' && (
-                            <div className="grid grid-cols-2 gap-5 animate-in fade-in duration-300">
+                                            {/* ── DATES ── */}
+                                            {activeTab === 'Dates' && (
+                                                <div className="grid grid-cols-2 gap-6">
                                 <FormField label="Hire Date" value={hireDate} onChange={setHireDate} type="date" icon={<Calendar className="w-4 h-4" />} />
                                 <FormField label="Termination Date" value={terminationDate} onChange={setTerminationDate} type="date" icon={<Calendar className="w-4 h-4" />} />
                                 <FormField label="Date of Birth" value={birthday} onChange={setBirthday} type="date" icon={<Calendar className="w-4 h-4" />} />
                                 <FormField label="OS Username" value={osUsername} onChange={setOsUsername} icon={<User className="w-4 h-4" />} placeholder="e.g. furqan_s" />
-                            </div>
-                        )}
+                                                </div>
+                                            )}
 
-                        {/* ── CONTACT ── */}
-                        {activeTab === 'Contact' && (
-                            <div className="space-y-5 animate-in fade-in duration-300">
+                                            {/* ── CONTACT ── */}
+                                            {activeTab === 'Contact' && (
+                                                <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-5">
                                     <FormField label="Work Phone" value={workPhone} onChange={setWorkPhone} icon={<Smartphone className="w-4 h-4" />} placeholder="+1 (000) 000-0000" />
                                     <FormField label="Personal Phone" value={personalPhone} onChange={setPersonalPhone} icon={<Phone className="w-4 h-4" />} placeholder="+1 (000) 000-0000" />
@@ -468,12 +516,12 @@ export function MemberFormPage() {
                                 </div>
                                 <FormField label="Work Address" value={workAddress} onChange={setWorkAddress} icon={<MapPin className="w-4 h-4" />} placeholder="Enter work address..." />
                                 <FormField label="Home Address" value={homeAddress} onChange={setHomeAddress} icon={<MapPin className="w-4 h-4" />} placeholder="Enter home address..." />
-                            </div>
-                        )}
+                                                </div>
+                                            )}
 
-                        {/* ── ADDITIONAL ── */}
-                        {activeTab === 'Additional' && (
-                            <div className="space-y-5 animate-in fade-in duration-300">
+                                            {/* ── ADDITIONAL ── */}
+                                            {activeTab === 'Additional' && (
+                                                <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-5">
                                     <FormField label="SSN" value={ssn} onChange={setSsn} type="password" icon={<CreditCard className="w-4 h-4" />} placeholder="XXX-XX-XXXX" />
                                     <FormField label="Emergency Contact" value={emergencyContact} onChange={setEmergencyContact} icon={<Phone className="w-4 h-4" />} placeholder="Name and number..." />
@@ -487,12 +535,12 @@ export function MemberFormPage() {
                                         className="w-full px-5 py-4 bg-surface border border-border rounded-xl text-[13px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/8 transition-all min-h-[140px] resize-none placeholder:text-slate-400"
                                     />
                                 </div>
-                            </div>
-                        )}
+                                                </div>
+                                            )}
 
-                        {/* ── PROJECTS ── */}
-                        {activeTab === 'Projects' && (
-                            <div className="space-y-6 animate-in fade-in duration-300">
+                                            {/* ── PROJECTS ── */}
+                                            {activeTab === 'Projects' && (
+                                                <div className="space-y-8">
                                 {/* Assigned chips */}
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
@@ -564,11 +612,15 @@ export function MemberFormPage() {
                                         )}
                                     </div>
                                 </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </motion.div>
+                                </AnimatePresence>
                             </div>
-                        )}
-
-                    </div>
-                </main>
+                        </div>
+                    </main>
+                </div>
             </div>
         </div>
     );
@@ -576,24 +628,25 @@ export function MemberFormPage() {
 
 function FormField({ label, value, onChange, type = 'text', icon, placeholder }: any) {
     return (
-        <div className="space-y-2 group flex flex-col">
-            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em]">{label}</label>
+        <div className="space-y-2 group flex flex-col relative">
+            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em] ml-1">{label}</label>
             <div className="relative mt-auto">
                 {type === 'date' ? (
-                    <DatePicker value={value} onChange={onChange} className="w-full h-[52px]" />
+                    <DatePicker value={value} onChange={onChange} className="w-full h-[56px] shadow-shell-sm" />
                 ) : (
                     <>
-                        {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors pointer-events-none">{icon}</div>}
+                        {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors pointer-events-none z-10">{icon}</div>}
                         <input
                             type={type}
                             value={value || ''}
                             onChange={e => onChange(e.target.value)}
                             placeholder={placeholder}
                             className={clsx(
-                                "w-full h-[52px] bg-surface border border-border rounded-xl text-[13px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/8 transition-all placeholder:text-slate-500 dark:placeholder:text-slate-400",
-                                icon ? "pl-11 pr-4" : "px-4"
+                                "w-full h-[56px] bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-shell-sm placeholder:text-text-muted/40",
+                                icon ? "pl-12 pr-4" : "px-4"
                             )}
                         />
+                        <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-transparent group-focus-within:ring-primary/20 pointer-events-none transition-all" />
                     </>
                 )}
             </div>
@@ -614,67 +667,80 @@ function FormSelect({ label, value, onChange, options, disabled, icon, descripti
 
     return (
         <div ref={ref} className="space-y-2 group flex flex-col relative">
-            <label className="text-[11px] font-bold text-text-muted tracking-[0.05em]">{label}</label>
+            <label className="text-[11px] font-bold text-text-muted tracking-[0.05em] ml-1">{label}</label>
             <div className="relative mt-auto">
                 <div
                     onClick={() => !disabled && setIsOpen(!isOpen)}
                     className={clsx(
-                        "w-full h-[52px] bg-surface border rounded-xl text-[13px] font-bold text-text-primary outline-none transition-all flex items-center cursor-pointer select-none",
-                        icon ? "pl-11 pr-10" : "px-4 pr-10",
-                        isOpen ? "border-primary ring-4 ring-primary/8" : "border-border hover:border-border/80",
+                        "w-full h-[56px] bg-surface-solid border rounded-2xl text-[14px] font-bold text-text-primary outline-none transition-all flex items-center cursor-pointer select-none shadow-shell-sm",
+                        icon ? "pl-12 pr-12" : "px-4 pr-12",
+                        isOpen ? "border-primary ring-4 ring-primary/10" : "border-border hover:border-text-muted/30",
                         disabled && "opacity-50 cursor-not-allowed"
                     )}
                 >
                     {icon && <div className={clsx("absolute left-4 top-1/2 -translate-y-1/2 transition-colors", isOpen ? "text-primary" : "text-text-muted")}>{icon}</div>}
                     <span className="truncate">{activeLabel}</span>
-                    <ChevronLeft className={clsx("w-4 h-4 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 transition-transform duration-200 pointer-events-none", isOpen ? "-rotate-90 text-primary" : "-rotate-90")} />
+                    <ChevronLeft className={clsx("w-5 h-5 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 transition-transform duration-300 pointer-events-none", isOpen ? "-rotate-90 text-primary" : "-rotate-90")} />
+                    <div className={clsx("absolute inset-0 rounded-2xl ring-1 ring-inset ring-transparent pointer-events-none transition-all", isOpen && "ring-primary/20")} />
                 </div>
-                {isOpen && (
-                    <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-surface border border-border rounded-xl shadow-2xl z-[100] flex flex-col p-1.5 animate-in fade-in slide-in-from-top-1 duration-150 max-h-[220px] overflow-y-auto no-scrollbar">
-                        {options.map((opt: any) => (
-                            <div key={opt.value} onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                                className={clsx("flex items-center justify-between px-4 py-2.5 rounded-lg cursor-pointer transition-all text-[12px] font-bold",
-                                    value === opt.value ? "bg-primary/10 text-primary" : "text-text-primary hover:bg-surface-hover"
-                                )}>
-                                {opt.label}
-                                {value === opt.value && <Check className="w-3 h-3 text-primary" />}
-                            </div>
-                        ))}
-                    </div>
-                )}
+                <AnimatePresence>
+                    {isOpen && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                            className="absolute top-[calc(100%+8px)] left-0 w-full bg-surface border border-border rounded-2xl shadow-premium z-[100] flex flex-col p-2 max-h-[260px] overflow-y-auto custom-scrollbar"
+                        >
+                            {options.map((opt: any) => (
+                                <div key={opt.value} onClick={() => { onChange(opt.value); setIsOpen(false); }}
+                                    className={clsx("flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all text-[13px] font-bold group/item",
+                                        value === opt.value ? "bg-primary/10 text-primary" : "text-text-primary hover:bg-surface-hover hover:text-primary"
+                                    )}>
+                                    {opt.label}
+                                    {value === opt.value && <Check className="w-4 h-4 text-primary" />}
+                                </div>
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
-            {description && <p className="text-[10px] text-text-muted italic">{description}</p>}
+            {description && <p className="text-[10px] font-semibold text-text-muted italic ml-1">{description}</p>}
         </div>
     );
 }
 
 function ToggleRow({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void }) {
     return (
-        <div className="flex items-center justify-between px-5 py-4 bg-surface border border-border/60 rounded-2xl hover:border-border transition-all">
+        <div 
+            onClick={() => onChange(!checked)}
+            className="flex items-center justify-between px-6 py-5 bg-surface-solid border border-border/80 rounded-2xl hover:border-text-muted/30 transition-all cursor-pointer shadow-shell-sm group"
+        >
             <div>
-                <p className="text-[13px] font-bold text-text-primary">{label}</p>
-                <p className="text-[11px] text-text-muted mt-0.5">{description}</p>
+                <p className="text-[14px] font-bold text-text-primary transition-colors group-hover:text-primary">{label}</p>
+                <p className="text-[12px] font-medium text-text-muted mt-1">{description}</p>
             </div>
-            <button
-                onClick={() => onChange(!checked)}
-                className={clsx("relative w-11 h-6 rounded-full transition-all duration-300 shrink-0 ml-4", checked ? 'bg-primary' : 'bg-border')}
-            >
-                <div className={clsx("absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300", checked ? 'left-6' : 'left-1')} />
-            </button>
+            <div className={clsx("relative w-12 h-7 rounded-full transition-colors duration-300 shrink-0 ml-4 shadow-inner", checked ? 'bg-primary' : 'bg-surface-hover border border-border')}>
+                <motion.div 
+                    layout
+                    transition={{ type: "spring", stiffness: 700, damping: 30 }}
+                    className={clsx("absolute top-[3px] w-[22px] h-[22px] bg-white rounded-full shadow-md", checked ? 'left-[23px]' : 'left-[3px]')} 
+                />
+            </div>
         </div>
     );
 }
 
 function InfoBox({ children, color, icon }: { children: React.ReactNode; color: string; icon: React.ReactNode }) {
     const styles: Record<string, string> = {
-        emerald: 'bg-emerald-500/5 border-emerald-500/15 text-emerald-400',
-        amber:   'bg-amber-500/5 border-amber-500/15 text-amber-400',
-        blue:    'bg-blue-500/5 border-blue-500/15 text-blue-400',
+        emerald: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
+        amber:   'bg-amber-500/10 border-amber-500/20 text-amber-500',
+        blue:    'bg-blue-500/10 border-blue-500/20 text-blue-500',
     };
     return (
-        <div className={clsx("flex items-start gap-4 p-5 rounded-2xl border", styles[color] || styles.blue)}>
-            <div className="shrink-0 mt-0.5">{icon}</div>
-            <p className="text-[12px] leading-relaxed font-medium text-text-muted">{children}</p>
+        <div className={clsx("flex items-start gap-4 p-5 rounded-2xl border shadow-sm", styles[color] || styles.blue)}>
+            <div className="shrink-0 mt-0.5 bg-white/10 p-2 rounded-xl backdrop-blur-sm shadow-sm">{icon}</div>
+            <p className="text-[13px] leading-relaxed font-semibold">{children}</p>
         </div>
     );
 }
