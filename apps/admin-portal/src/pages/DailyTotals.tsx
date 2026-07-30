@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { reportService } from '../services/report.service';
 import type { DayTotal } from '../services/report.service';
 import { useAuth } from '../context/AuthContext';
+import { orgLocalToUtc } from '../lib/dataUtils';
 import { ChevronLeft, ChevronRight, RefreshCw, Download, Calendar, Shield, Users, Filter } from 'lucide-react';
 import { PageHeader, LoadingState, EmptyState, Card, Button, StatusBadge } from '../components/ui';
 import clsx from 'clsx';
@@ -11,7 +12,7 @@ let dailyTotalsCache: any = null;
 let dailyTotalsCacheKey: string | null = null;
 
 export function DailyTotals() {
-    const { profile } = useAuth();
+    const { profile, displayTimezone } = useAuth();
     const organizationId = profile?.organization_id;
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<DayTotal[]>([]);
@@ -19,19 +20,25 @@ export function DailyTotals() {
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
     const [allMembers, setAllMembers] = useState<{ id: string; full_name: string; timezone?: string; idle_limit?: number | null }[]>([]);
 
-    const weekDates = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date();
-        const day = d.getDay() || 7; // Mon=1 ... Sun=7
-        d.setDate(d.getDate() - day + 1 + i + (weekOffset * 7));
-        return d;
-    });
+    const weekDateStrings = React.useMemo(() => {
+        const todayTzStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+        const [ty, tm, td] = todayTzStr.split('-').map(Number);
+        const anchor = new Date(ty, tm - 1, td);
+        const dayOfWeek = anchor.getDay() || 7;
+
+        return Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(ty, tm - 1, td);
+            d.setDate(td - dayOfWeek + 1 + i + (weekOffset * 7));
+            return d.toLocaleDateString('en-CA');
+        });
+    }, [displayTimezone, weekOffset]);
 
     useEffect(() => {
         fetchDailyTotals();
     }, [weekOffset, selectedMemberId]);
 
     async function fetchDailyTotals(forceRefresh = false) {
-        const cacheKey = `${weekDates[0].toISOString()}_${weekDates[6].toISOString()}_${selectedMemberId}`;
+        const cacheKey = `${weekDateStrings[0]}_${weekDateStrings[6]}_${selectedMemberId}_${displayTimezone}`;
         if (!forceRefresh && dailyTotalsCache && dailyTotalsCacheKey === cacheKey) {
             setData(dailyTotalsCache.data);
             setAllMembers(dailyTotalsCache.members);
@@ -41,10 +48,8 @@ export function DailyTotals() {
 
         setLoading(true);
         try {
-            const start = new Date(weekDates[0]);
-            start.setHours(0, 0, 0, 0);
-            const end = new Date(weekDates[6]);
-            end.setHours(23, 59, 59, 999);
+            const start = new Date(orgLocalToUtc(weekDateStrings[0], 'start', displayTimezone));
+            const end = new Date(orgLocalToUtc(weekDateStrings[6], 'end', displayTimezone));
 
             const { data: result, members } = await reportService.fetchDailyTotals({
                 start,
@@ -66,7 +71,11 @@ export function DailyTotals() {
         }
     }
 
-    const fmtDate = (d: Date) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const fmtDate = (dateStr: string) => {
+        const [y, m, d] = dateStr.split('-').map(Number);
+        const dObj = new Date(y, m - 1, d);
+        return dObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
 
     return (
         <div className="space-y-10 max-w-full mx-auto animate-in fade-in duration-700">
@@ -160,7 +169,7 @@ export function DailyTotals() {
                                 {['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day, i) => (
                                     <th key={day} className="px-4 py-6 text-[10px] font-bold text-text-muted tracking-[0.2em] font-mono border-b border-border text-center">
                                         <span className="block mb-1 text-text-primary tracking-[0.3em] italic">{day}</span>
-                                        <span className="text-[9px] opacity-40 font-bold">{fmtDate(weekDates[i])}</span>
+                                        <span className="text-[9px] opacity-40 font-bold">{fmtDate(weekDateStrings[i])}</span>
                                     </th>
                                 ))}
                                 <th className="px-10 py-6 text-[11px] font-bold text-primary tracking-[0.3em] font-mono border-b border-border text-right min-w-[140px] italic">Weekly Total</th>
