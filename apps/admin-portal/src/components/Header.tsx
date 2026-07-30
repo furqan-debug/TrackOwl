@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { LogOut, Menu, ChevronDown, User as UserIcon, Sun, Moon } from 'lucide-react';
+import { LogOut, Menu, ChevronDown, User as UserIcon, Sun, Moon, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
@@ -18,9 +18,10 @@ export interface HeaderProps {
 export function Header({ onOpenMobileMenu }: HeaderProps) {
     const location = useLocation();
     const navigate = useNavigate();
-    const { profile } = useAuth();
+    const { profile, organization, displayTimezone, setDisplayTimezone } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const [showProfileMenu, setShowProfileMenu] = useState(false);
+    const [showTzMenu, setShowTzMenu] = useState(false);
     const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
 
     const menuRef = useRef<HTMLDivElement>(null);
@@ -29,6 +30,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
 
     const closeAll = useCallback(() => {
         setShowProfileMenu(false);
+        setShowTzMenu(false);
         setActiveDropdown(null);
     }, []);
 
@@ -36,6 +38,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
         function handleClickOutside(event: MouseEvent) {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
                 setShowProfileMenu(false);
+                setShowTzMenu(false);
             }
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
                 setActiveDropdown(null);
@@ -155,6 +158,63 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
 
                 {/* 👤 Right Section: Profile & Actions */}
                 <div className="flex items-center justify-end gap-3" ref={menuRef}>
+
+                    {/* Timezone Switcher */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowTzMenu(!showTzMenu)}
+                            className={clsx(
+                                "flex items-center gap-2 px-3 h-10 rounded-xl transition-all duration-300 border shadow-shell-sm",
+                                showTzMenu
+                                    ? "bg-primary/5 border-primary/30 text-primary"
+                                    : "bg-[var(--bg-surface)] border-[var(--border-color)] text-[var(--text-muted)] hover:text-[var(--text-main)] hover:bg-primary/5"
+                            )}
+                            title="Display Timezone"
+                        >
+                            <Globe className="w-4 h-4" />
+                            <span className="text-[11px] font-bold max-w-[80px] truncate">{displayTimezone}</span>
+                        </button>
+                        {showTzMenu && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 15, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                className="absolute right-0 top-full mt-3 w-64 bg-[var(--bg-surface)] border border-[var(--border-color)] rounded-[24px] shadow-2xl py-1.5 z-[70] origin-top-right overflow-hidden"
+                            >
+                                <div className="px-4 py-3 border-b border-[var(--border-color)] bg-[var(--bg-surface-alt)]">
+                                    <p className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Display Timezone</p>
+                                    <p className="text-[12px] font-medium text-[var(--text-main)] mt-1">This affects all dates and charts in the portal.</p>
+                                </div>
+                                <div className="p-1.5 space-y-0.5 max-h-[300px] overflow-y-auto no-scrollbar">
+                                    <button
+                                        onClick={() => { setDisplayTimezone(organization?.settings?.orgTimezone || 'UTC'); setShowTzMenu(false); }}
+                                        className={clsx(
+                                            "w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all",
+                                            displayTimezone === (organization?.settings?.orgTimezone || 'UTC') ? "bg-primary/10 text-primary" : "hover:bg-primary/5 text-[var(--text-main)]"
+                                        )}
+                                    >
+                                        <div className="flex flex-col items-start">
+                                            <span className="text-[12px] font-bold">Company Time</span>
+                                            <span className="text-[10px] opacity-70">{organization?.settings?.orgTimezone || 'UTC'}</span>
+                                        </div>
+                                        {displayTimezone === (organization?.settings?.orgTimezone || 'UTC') && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                                    </button>
+                                    <button
+                                        onClick={() => { setDisplayTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone); setShowTzMenu(false); }}
+                                        className={clsx(
+                                            "w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all",
+                                            displayTimezone === Intl.DateTimeFormat().resolvedOptions().timeZone && displayTimezone !== (organization?.settings?.orgTimezone || 'UTC') ? "bg-primary/10 text-primary" : "hover:bg-primary/5 text-[var(--text-main)]"
+                                        )}
+                                    >
+                                        <div className="flex flex-col items-start">
+                                            <span className="text-[12px] font-bold">My Local Time</span>
+                                            <span className="text-[10px] opacity-70">{Intl.DateTimeFormat().resolvedOptions().timeZone}</span>
+                                        </div>
+                                        {displayTimezone === Intl.DateTimeFormat().resolvedOptions().timeZone && displayTimezone !== (organization?.settings?.orgTimezone || 'UTC') && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </div>
 
                     {/* Theme Toggle */}
                     <button

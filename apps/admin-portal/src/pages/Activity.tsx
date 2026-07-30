@@ -14,7 +14,7 @@ import clsx from 'clsx';
 import { AppUsageList } from '../components/activity/AppUsageList';
 import { ScreenshotGallery } from '../components/activity/ScreenshotGallery';
 import { TimelineGrid } from '../components/activity/TimelineGrid';
-import { calculateActivityScore } from '../lib/dataUtils';
+import { calculateActivityScore, orgLocalToUtc } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
 
 interface ActivitySample {
@@ -56,13 +56,16 @@ let activityCache: any = null;
 let activityCacheKey: string | null = null;
 
 export function Activity() {
-    const { profile, managedMemberIds } = useAuth();
+    const { profile, managedMemberIds, displayTimezone } = useAuth();
     const organizationId = profile?.organization_id;
     const [samples, setSamples] = useState<ActivitySample[]>([]);
     const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
-    const [selectedDate, setSelectedDate] = useState(formatLocalDate(new Date()));
+    
+    // Default to the current day in the displayTimezone
+    const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' }));
+    
     const [enlargedIndex, setEnlargedIndex] = useState<number | null>(null);
     const [members, setMembers] = useState<MemberInfo[]>([]);
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
@@ -115,13 +118,13 @@ export function Activity() {
         try {
             if (!organizationId) return;
 
-            const start = new Date(`${selectedDate}T00:00:00`).toISOString();
-            const end = new Date(`${selectedDate}T23:59:59.999`).toISOString();
+            const start = orgLocalToUtc(selectedDate, 'start', displayTimezone);
+            const end = orgLocalToUtc(selectedDate, 'end', displayTimezone);
 
             const data = await activityService.fetchActivity(
                 organizationId,
-                start,
-                end,
+                start.toISOString(),
+                end.toISOString(),
                 members,
                 selectedMemberId,
                 currentLimit
@@ -224,13 +227,7 @@ export function Activity() {
     const avgActivity = calculateActivityScore(productiveSamples);
     const productiveMinutes = uniqueSamples.length > 0 ? productiveSamples.length : Math.max(0, Math.round(sessionMinutes));
 
-    const isToday = selectedDate === formatLocalDate(new Date());
-
-    const navigateDate = (dir: 'prev' | 'next') => {
-        const d = new Date(selectedDate);
-        d.setDate(d.getDate() + (dir === 'prev' ? -1 : 1));
-        setSelectedDate(formatLocalDate(d));
-    };
+    const isToday = selectedDate === new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
 
     if (loading) return <div className="h-screen flex items-center justify-center bg-surface"><LoadingState /></div>;
 
@@ -253,7 +250,12 @@ export function Activity() {
 
                     <div className="flex items-center bg-surface border border-border p-0.5 rounded-xl shadow-shell-sm">
                         <button
-                            onClick={() => navigateDate('prev')}
+                            onClick={() => {
+                                const [y, m, d] = selectedDate.split('-').map(Number);
+                                const dateObj = new Date(y, m - 1, d);
+                                dateObj.setDate(dateObj.getDate() - 1);
+                                setSelectedDate(dateObj.toLocaleDateString('en-CA'));
+                            }}
                             className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
                         >
                             <ChevronLeft className="w-4 h-4" />
@@ -265,7 +267,12 @@ export function Activity() {
                             label={isToday ? 'Today' : undefined}
                         />
                         <button
-                            onClick={() => navigateDate('next')}
+                            onClick={() => {
+                                const [y, m, d] = selectedDate.split('-').map(Number);
+                                const dateObj = new Date(y, m - 1, d);
+                                dateObj.setDate(dateObj.getDate() + 1);
+                                setSelectedDate(dateObj.toLocaleDateString('en-CA'));
+                            }}
                             className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg disabled:opacity-20"
                             disabled={isToday}
                         >
@@ -347,7 +354,7 @@ export function Activity() {
                                 </div>
                             </div>
                             <div className="p-8 flex-1">
-                                <TimelineGrid samples={productiveSamples} targetTz={selectedMember?.timezone} />
+                                <TimelineGrid samples={productiveSamples} targetTz={displayTimezone} />
                             </div>
                         </div>
                     </div>

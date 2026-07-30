@@ -16,7 +16,8 @@ import { FeatureLockOverlay } from './access/FeatureLockOverlay';
 import { SecureImage } from './ui/SecureImage';
 import {
     getEffectiveEnd,
-    formatDuration
+    formatDuration,
+    orgLocalToUtc
 } from '../lib/dataUtils';
 import {
     ResponsiveContainer,
@@ -87,7 +88,7 @@ interface DashStats {
     trendProductivity: number;
 }
 export function Dashboard() {
-    const { profile, managedMemberIds, managedProjectIds, isPremium } = useAuth();
+    const { profile, managedMemberIds, managedProjectIds, isPremium, displayTimezone } = useAuth();
     const organizationId = profile?.organization_id;
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -104,10 +105,8 @@ export function Dashboard() {
         return str.toLowerCase();
     };
 
-    const [viewDate, setViewDate] = useState(() => {
-        const d = new Date();
-        d.setHours(0, 0, 0, 0);
-        return d;
+    const [viewDateStr, setViewDateStr] = useState(() => {
+        return new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
     });
 
     const [stats, setStats] = useState<DashStats>({
@@ -126,43 +125,38 @@ export function Dashboard() {
     const [appUsage, setAppUsage] = useState<AppUsage[]>([]);
     const [chartData, setChartData] = useState<any[]>([]);
 
-    const viewDateEnd = useMemo(() => {
-        const d = new Date(viewDate);
-        d.setHours(23, 59, 59, 999);
-        return d;
-    }, [viewDate]);
+
 
     const navigateDate = (direction: 'prev' | 'next') => {
-        const next = new Date(viewDate);
-        next.setDate(viewDate.getDate() + (direction === 'prev' ? -1 : 1));
-        setViewDate(next);
+        const [y, m, d] = viewDateStr.split('-').map(Number);
+        const next = new Date(y, m - 1, d);
+        next.setDate(next.getDate() + (direction === 'prev' ? -1 : 1));
+        setViewDateStr(next.toLocaleDateString('en-CA'));
     };
 
     const handleDateChange = (dateStr: string) => {
         if (!dateStr) return;
-        // Parse as local date to avoid UTC-offset shifting the day
-        const [year, month, day] = dateStr.split('-').map(Number);
-        const d = new Date(year, month - 1, day);
-        d.setHours(0, 0, 0, 0);
-        setViewDate(d);
+        setViewDateStr(dateStr);
     };
 
     const goToToday = () => {
-        const d = new Date();
-        d.setHours(0, 0, 0, 0);
-        setViewDate(d);
+        setViewDateStr(new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' }));
     };
 
     const isTodayView = useMemo(() => {
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-        return viewDate.getTime() === now.getTime();
-    }, [viewDate]);
+        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+        return viewDateStr === todayStr;
+    }, [viewDateStr, displayTimezone]);
 
     const fetchDashboardData = useCallback(async (forceRefresh = false, isSilent = false) => {
         if (!organizationId) return;
-        const startIso = viewDate.toISOString();
-        const endIso = viewDateEnd.toISOString();
+        
+        // Compute exact UTC bounds for the viewDate in displayTimezone
+        const startUtc = orgLocalToUtc(viewDateStr, 'start', displayTimezone || 'UTC');
+        const endUtc = orgLocalToUtc(viewDateStr, 'end', displayTimezone || 'UTC');
+        
+        const startIso = startUtc.toISOString();
+        const endIso = endUtc.toISOString();
 
         if (!forceRefresh && dashboardCache && dashboardCacheWeek === startIso && dashboardCacheUser === profile?.id) {
             setStats(dashboardCache.stats);
@@ -180,17 +174,16 @@ export function Dashboard() {
             else setRefreshing(true);
 
             const nowIso = new Date().toISOString();
-            const todayStart = new Date();
-            todayStart.setHours(0, 0, 0, 0);
-            const todayStartIso = todayStart.toISOString();
-
-            const prevWeekStart = new Date(viewDate);
-            prevWeekStart.setDate(prevWeekStart.getDate() - 1);
-            const prevWeekStartIso = prevWeekStart.toISOString();
-
-            const prevWeekEnd = new Date(viewDateEnd);
-            prevWeekEnd.setDate(prevWeekEnd.getDate() - 1);
-            const prevWeekEndIso = prevWeekEnd.toISOString();
+            
+            const todayStrOrg = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+            const todayStartUtc = orgLocalToUtc(todayStrOrg, 'start', displayTimezone || 'UTC');
+            const todayStartIso = todayStartUtc.toISOString();
+            
+            // Compute previous week's bounds in orgTimezone
+            const prevWeekStartUtc = new Date(startUtc.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const prevWeekEndUtc = new Date(endUtc.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const prevWeekStartIso = prevWeekStartUtc.toISOString();
+            const prevWeekEndIso = prevWeekEndUtc.toISOString();
 
             const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
             const memberIdsFilter = isScoped && managedMemberIds ? (managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000']) : null;
@@ -347,7 +340,9 @@ export function Dashboard() {
 
             // Chart Data Transformation
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const currentDayStr = days[viewDate.getDay()];
+            const [vy, vm, vd] = viewDateStr.split('-').map(Number);
+            const vDate = new Date(vy, vm - 1, vd);
+            const currentDayStr = days[vDate.getDay()];
             const cData = days.map(d => {
                 let hours = 0;
                 if (d === currentDayStr) {
@@ -377,7 +372,7 @@ export function Dashboard() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [viewDate]);
+    }, [viewDateStr, displayTimezone, organizationId, profile?.id, profile?.role, managedMemberIds, managedProjectIds]);
 
     useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
@@ -399,8 +394,8 @@ export function Dashboard() {
                             <ChevronLeft className="w-4 h-4" />
                         </button>
                         <DatePicker
-                            value={`${viewDate.getFullYear()}-${String(viewDate.getMonth() + 1).padStart(2, '0')}-${String(viewDate.getDate()).padStart(2, '0')}`}
-                            displayValue={viewDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            value={viewDateStr}
+                            displayTimezone={displayTimezone}
                             onChange={(val) => handleDateChange(val)}
                             className="flex-1 min-w-0"
                             label="Viewing Date"
@@ -408,7 +403,7 @@ export function Dashboard() {
                         <button
                             onClick={() => navigateDate('next')}
                             className="p-2 md:p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl disabled:opacity-30 disabled:hover:bg-transparent"
-                            disabled={viewDate >= new Date(new Date().setHours(0,0,0,0))}
+                            disabled={isTodayView}
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>

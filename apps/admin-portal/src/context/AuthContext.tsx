@@ -51,6 +51,8 @@ interface AuthContextType {
     /** Re-fetches only the organization row without reloading the full profile */
     refreshOrganization: () => Promise<OrganizationProfile | null>;
     signOut: () => Promise<void>;
+    displayTimezone: string;
+    setDisplayTimezone: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -75,6 +77,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [managedProjectIds, setManagedProjectIds] = useState<string[] | null>(null);
     const [aalLevel, setAalLevel] = useState<'aal1' | 'aal2' | null>(null);
     const [nextAalLevel, setNextAalLevel] = useState<'aal1' | 'aal2' | null>(null);
+    const [displayTimezone, setDisplayTimezone] = useState<string>('UTC');
+
+    useEffect(() => {
+        if (organization?.settings?.orgTimezone) {
+            setDisplayTimezone(organization.settings.orgTimezone);
+        }
+    }, [organization?.settings?.orgTimezone]);
 
     // Derived plan flags — always computed from organization state
     const isPremium = computeIsPremium(organization);
@@ -497,6 +506,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             managedMemberIds,
             managedProjectIds,
             signOut,
+            displayTimezone,
+            setDisplayTimezone
         }}>
             {children}
         </AuthContext.Provider>

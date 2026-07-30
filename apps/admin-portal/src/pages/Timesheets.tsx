@@ -57,12 +57,12 @@ let timesheetsCache: any = null;
 let timesheetsCacheKey: string | null = null;
 
 export function Timesheets() {
-    const { profile, managedMemberIds, managedProjectIds } = useAuth();
+    const { profile, managedMemberIds, managedProjectIds, displayTimezone } = useAuth();
     const organizationId = profile?.organization_id;
     const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'calendar'>('daily');
     const [entries, setEntries] = useState<DailyEntry[]>([]);
     const [members, setMembers] = useState<MemberInfo[]>([]);
-    const [activeTimezone, setActiveTimezone] = useState<string>('User Local');
+    const [activeTimezone, setActiveTimezone] = useState<string>('Org Local');
     const [orgTimezone, setOrgTimezone] = useState<string>('UTC');
     const [projects, setProjects] = useState<any[]>([]);
     const [projectMembersMap, setProjectMembersMap] = useState<Record<string, string[]>>({}); // memberId -> projectId[]
@@ -76,7 +76,10 @@ export function Timesheets() {
     };
 
     const [loading, setLoading] = useState(true);
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState(() => {
+        const tzDateStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+        return new Date(tzDateStr + 'T12:00:00');
+    });
     const [showFilters, setShowFilters] = useState(false);
     const [showAddTime, setShowAddTime] = useState(false);
 

@@ -13,6 +13,7 @@ interface DatePickerProps {
     placeholder?: string;
     className?: string;
     displayValue?: string;
+    displayTimezone?: string;
 }
 
 export function DatePicker({ 
@@ -21,7 +22,8 @@ export function DatePicker({
     label, 
     placeholder = "Select date",
     className,
-    displayValue
+    displayValue,
+    displayTimezone
 }: DatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [viewDate, setViewDate] = useState(() => {
@@ -77,6 +79,11 @@ export function DatePicker({
 };
 
     const isToday = (day: number, month: number, year: number) => {
+        if (displayTimezone) {
+            const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone });
+            const [ty, tm, td] = todayStr.split('-').map(Number);
+            return td === day && (tm - 1) === month && ty === year;
+        }
         const today = new Date();
         return today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
     };
@@ -188,10 +195,16 @@ export function DatePicker({
                             </button>
                             <button 
                                 onClick={(e) => { 
-                                    e.stopPropagation(); 
-                                    const now = new Date();
-                                    const iso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-                                    setViewDate(new Date(now.getFullYear(), now.getMonth(), now.getDate()));
+                                    e.stopPropagation();
+                                    let iso;
+                                    if (displayTimezone) {
+                                        iso = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone });
+                                    } else {
+                                        const now = new Date();
+                                        iso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                                    }
+                                    const [y, m, d] = iso.split('-').map(Number);
+                                    setViewDate(new Date(y, m - 1, d));
                                     onChange(iso);
                                     setIsOpen(false);
                                 }}
