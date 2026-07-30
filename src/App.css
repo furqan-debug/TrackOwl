@@ -506,7 +506,7 @@ input:checked+.slider:before {
 /* Stats summary bar */
 .stats-bar {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1.25fr 1fr 1fr;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
@@ -518,6 +518,14 @@ input:checked+.slider:before {
   padding: 0.75rem 0.5rem;
   text-align: center;
   border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.stats-bar-item.primary {
+  background: rgba(234, 179, 8, 0.05);
 }
 
 .stats-bar-item:last-child {
@@ -531,7 +539,9 @@ input:checked+.slider:before {
   line-height: 1.2;
 }
 
-.stats-bar-value.accent {
+.stats-bar-item.primary .stats-bar-value {
+  font-size: 1.375rem;
+  font-weight: 800;
   color: var(--accent);
 }
 
@@ -542,6 +552,11 @@ input:checked+.slider:before {
   letter-spacing: 0.06em;
   color: var(--text-tertiary);
   margin-top: 0.2rem;
+}
+
+.stats-bar-item.primary .stats-bar-label {
+  color: var(--accent);
+  font-weight: 700;
 }
 
 /* Section header */
