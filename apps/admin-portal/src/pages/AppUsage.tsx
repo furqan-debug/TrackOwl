@@ -26,9 +26,7 @@ const COLORS = ['var(--chart-pie-slot-0)', '#4f46e5', '#4338ca', '#3730a3', '#31
 
 // categorizeApp logic moved to activityService
 
-function formatLocalDate(date: Date): string {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
+
 
 // Module-level cache
 let appUsageCache: any = null;
