@@ -10,6 +10,7 @@ import {
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { PageLayout, StatMetric, LoadingState, EmptyState, FilterSelect, DatePicker } from '../components/ui';
 import clsx from 'clsx';
+import { orgLocalToUtc } from '../lib/dataUtils';
 
 // AppEntry imported from activity.service.ts
 
@@ -34,7 +35,7 @@ let appUsageCache: any = null;
 let appUsageCacheKey: string | null = null;
 
 export function AppUsage() {
-    const { profile, managedMemberIds } = useAuth();
+    const { profile, managedMemberIds, displayTimezone } = useAuth();
     const organizationId = profile?.organization_id;
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -43,8 +44,13 @@ export function AppUsage() {
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
     const [searchTerm, setSearchTerm] = useState('');
 
+    const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' }));
 
-    const [selectedDate, setSelectedDate] = useState(formatLocalDate(new Date()));
+    useEffect(() => {
+        if (displayTimezone) {
+            setSelectedDate(new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone }));
+        }
+    }, [displayTimezone]);
 
     useEffect(() => {
         import('../lib/supabase').then(({ supabase }) => {
@@ -78,8 +84,8 @@ export function AppUsage() {
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
 
-        const start = new Date(`${selectedDate}T00:00:00`).toISOString();
-        const end = new Date(`${selectedDate}T23:59:59.999`).toISOString();
+        const start = orgLocalToUtc(selectedDate, 'start', displayTimezone || 'UTC').toISOString();
+        const end = orgLocalToUtc(selectedDate, 'end', displayTimezone || 'UTC').toISOString();
 
         try {
             if (!organizationId) return;
@@ -102,7 +108,7 @@ export function AppUsage() {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [selectedDate, selectedMemberId, members]);
+    }, [selectedDate, selectedMemberId, members, displayTimezone, organizationId, profile?.id]);
 
     useEffect(() => {
         if (selectedMemberId !== 'all' && members.length === 0) return;
