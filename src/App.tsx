@@ -924,7 +924,7 @@ export default function App() {
 
       const statsMap: Record<string, any> = {};
       currentProjects.forEach(p => {
-        statsMap[p.id] = { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, totalActivity: 0, sampleCount: 0, rawTodaySeconds: 0, keptIdleSeconds: 0 };
+        statsMap[p.id] = { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, totalActivity: 0, sampleCount: 0, rawTodaySeconds: 0, rawWeeklySeconds: 0, keptIdleSeconds: 0 };
       });
 
       const nowMs = Date.now();
@@ -941,6 +941,12 @@ export default function App() {
         if (s.ended_at || s.id === latestActiveSessionId) {
           const startedAt = new Date(s.started_at).getTime();
           const endedAt = s.ended_at ? new Date(s.ended_at).getTime() : nowMs;
+
+          if (endedAt > mhi) {
+            const effectiveStartW = Math.max(startedAt, mhi);
+            const durSecondsW = Math.floor((endedAt - effectiveStartW) / 1000);
+            statsMap[pId].rawWeeklySeconds += durSecondsW;
+          }
 
           if (endedAt > startOfTodayMs) {
             const effectiveStart = Math.max(startedAt, startOfTodayMs);
@@ -1045,11 +1051,12 @@ export default function App() {
           weeklySeconds: statsMap[p.id].weeklySeconds,
           weeklyIdleSeconds: statsMap[p.id].weeklyIdleSeconds,
           rawTodaySeconds: statsMap[p.id].rawTodaySeconds,
+          rawWeeklySeconds: statsMap[p.id].rawWeeklySeconds,
           keptIdleSeconds: statsMap[p.id].keptIdleSeconds,
           activityPercent: statsMap[p.id].sampleCount > 0
             ? Math.round(statsMap[p.id].totalActivity / statsMap[p.id].sampleCount)
             : 0
-        } : { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, activityPercent: 0, rawTodaySeconds: 0, keptIdleSeconds: 0 }
+        } : { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, activityPercent: 0, rawTodaySeconds: 0, rawWeeklySeconds: 0, keptIdleSeconds: 0 }
       }));
       setProjects(updatedProjects);
       setIsOnline(true);
@@ -1707,7 +1714,7 @@ export default function App() {
         return;
       }
 
-      // Enforcement: Daily & Weekly Limits
+      // Enforcement: Daily & Weekly Limits (still based on productive tracked time to match billing limits)
       const totalToday = projects.reduce((s, p) => s + (p.stats?.todaySeconds || 0), 0);
       const totalWeek = projects.reduce((s, p) => s + (p.stats?.weeklySeconds || 0), 0);
       const dailyLimitSecs = (user?.daily_limit || 8) * 3600;
@@ -2380,6 +2387,10 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   todos: Todo[];
   onTodoDone: (id: string) => void;
 }) {
+  // Display raw session duration to match Timesheets page
+  const displayTotalToday = projects.reduce((s, p) => s + (p.stats?.rawTodaySeconds || 0), 0);
+  const displayTotalWeek = projects.reduce((s, p) => s + (p.stats?.rawWeeklySeconds || 0), 0);
+  
   // Total tracked = all samples × 60s (including idle below limit)
   const totalToday = projects.reduce((s, p) => s + (p.stats?.todaySeconds || 0), 0);
   const totalWeek = projects.reduce((s, p) => s + (p.stats?.weeklySeconds || 0), 0);
@@ -2407,11 +2418,11 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
         {/* Stats bar */}
         <div className="stats-bar">
           <div className="stats-bar-item">
-            <div className="stats-bar-value accent">{formatTime(totalToday)}</div>
+            <div className="stats-bar-value accent">{formatTime(displayTotalToday)}</div>
             <div className="stats-bar-label">Today (Company Time)</div>
           </div>
           <div className="stats-bar-item">
-            <div className="stats-bar-value">{formatTime(totalWeek)}</div>
+            <div className="stats-bar-value">{formatTime(displayTotalWeek)}</div>
             <div className="stats-bar-label">This Week</div>
           </div>
           <div className="stats-bar-item">
@@ -2466,7 +2477,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                     {p.stats && (
                       <div style={{ display: 'flex', gap: '0.875rem', marginTop: '0.5rem' }}>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                          <strong style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatTime(p.stats.weeklySeconds)}</strong> this week
+                          <strong style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatTime(p.stats?.rawWeeklySeconds || 0)}</strong> this week
                         </span>
                         <span style={{ fontSize: '0.75rem', color: p.stats.activityPercent < 50 ? 'var(--danger)' : 'var(--text-tertiary)' }}>
                           <strong style={{ fontWeight: 600 }}>{p.stats.activityPercent}%</strong> activity
@@ -2476,7 +2487,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                   </div>
                   {p.stats && (
                     <div className="project-card-stats">
-                      <div className="project-card-time">{formatTime(p.stats.todaySeconds)}</div>
+                      <div className="project-card-time">{formatTime(p.stats?.rawTodaySeconds || 0)}</div>
                       <div className="project-card-time-label">Today (Company Time)</div>
                     </div>
                   )}

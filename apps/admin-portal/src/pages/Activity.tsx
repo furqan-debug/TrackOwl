@@ -175,7 +175,7 @@ export function Activity() {
     // Data Processing
     const uniqueMinMap = new Map<string, ActivitySample>();
     samples.forEach((s: ActivitySample) => {
-        const minKey = s.recorded_at.substring(0, 16);
+        const minKey = `${s.session_id}_${s.recorded_at.substring(0, 16)}`;
         if (!uniqueMinMap.has(minKey)) {
             uniqueMinMap.set(minKey, s);
         } else {
@@ -195,10 +195,16 @@ export function Activity() {
 
     // Use block-based logic for productive time and activity score
     const productiveSamples: ActivitySample[] = [];
-    if (idleLimit <= 1) {
-        productiveSamples.push(...uniqueSamples);
-    } else {
-        const sorted = uniqueSamples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+    const samplesBySession = new Map<string, ActivitySample[]>();
+    uniqueSamples.forEach(s => {
+        if (!samplesBySession.has(s.session_id)) samplesBySession.set(s.session_id, []);
+        samplesBySession.get(s.session_id)!.push(s);
+    });
+
+    const effectiveIdleLimit = idleLimit <= 1 ? 10 : idleLimit;
+
+    samplesBySession.forEach((sessionSamples) => {
+        const sorted = sessionSamples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
         let currentBlock: ActivitySample[] = [];
         for (let i = 0; i < sorted.length; i++) {
             const s = sorted[i];
@@ -211,19 +217,26 @@ export function Activity() {
             } else if (s.idle && !prev) {
                 currentBlock = [s];
             } else if (s.idle && !isContiguous) {
-                if (currentBlock.length < idleLimit) productiveSamples.push(...currentBlock);
+                if (currentBlock.length < effectiveIdleLimit) productiveSamples.push(...currentBlock);
                 currentBlock = [s];
             } else {
                 productiveSamples.push(s);
-                if (currentBlock.length < idleLimit) productiveSamples.push(...currentBlock);
+                if (currentBlock.length < effectiveIdleLimit) productiveSamples.push(...currentBlock);
                 currentBlock = [];
             }
         }
-        if (currentBlock.length < idleLimit) productiveSamples.push(...currentBlock);
-    }
+        if (currentBlock.length < effectiveIdleLimit) productiveSamples.push(...currentBlock);
+    });
 
     const avgActivity = calculateActivityScore(productiveSamples);
-    const productiveMinutes = uniqueSamples.length > 0 ? productiveSamples.length : Math.max(0, Math.round(sessionMinutes));
+    const displayMinutes = Math.max(0, Math.round(sessionMinutes));
+
+    const formatDuration = (mins: number) => {
+        if (mins < 60) return `${mins}m`;
+        const h = Math.floor(mins / 60);
+        const m = Math.round(mins % 60);
+        return m > 0 ? `${h}h ${m}m` : `${h}h`;
+    };
 
     const isToday = selectedDate === new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
 
@@ -311,8 +324,8 @@ export function Activity() {
                     <StatMetric
                         icon={<Clock className="w-4 h-4" />}
                         label="Duration"
-                        value={`${productiveMinutes}m`}
-                        sub="Total active time"
+                        value={formatDuration(displayMinutes)}
+                        sub="Total tracked time"
                         accent="brand-gradient"
                     />
                     <StatMetric

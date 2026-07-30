@@ -248,14 +248,14 @@ export const activityService = {
             return { samples: [], screenshots: [], sessionMinutes: 0, hasMoreScreenshots: false };
         }
 
-        const [{ data: actData }, { data: ssData, count: totalSS }] = await Promise.all([
-            supabase.from('activity_samples')
-                .select('id, session_id, recorded_at, mouse_clicks, key_presses, app_name, window_title, idle, activity_percent')
-                .eq('organization_id', organizationId)
-                .in('session_id', sessionIds)
-                .gte('recorded_at', start)
-                .lte('recorded_at', end)
-                .order('recorded_at', { ascending: true }),
+        const [actData, { data: ssData, count: totalSS }, { data: statsData }] = await Promise.all([
+            fetchAllActivitySamples(
+                supabase as any,
+                start,
+                end,
+                'id, session_id, recorded_at, mouse_clicks, key_presses, app_name, window_title, idle, activity_percent',
+                { organizationId, sessionIds }
+            ),
             supabase.from('screenshots')
                 .select('id, session_id, recorded_at, file_url', { count: 'exact' })
                 .eq('organization_id', organizationId)
@@ -263,16 +263,53 @@ export const activityService = {
                 .gte('recorded_at', start)
                 .lte('recorded_at', end)
                 .order('recorded_at', { ascending: false })
-                .limit(screenshotLimit)
+                .limit(screenshotLimit),
+            supabase.rpc('get_sessions_activity_stats', { p_session_ids: sessionIds })
         ]);
 
         const startMs = new Date(start).getTime();
         const endMs = new Date(end).getTime();
+
+        const parseDbTimestamp = (ts: string | null | undefined) => {
+            if (!ts) return null;
+            const normalized = (ts.endsWith('Z') || ts.includes('+') || /-\d{2}:\d{2}$/.test(ts)) ? ts : ts + 'Z';
+            return new Date(normalized).getTime();
+        };
+
+        const nowMs = new Date().getTime();
         const mins = sessions.reduce((acc, s) => {
-            const sStart = new Date(s.started_at).getTime();
-            const sEnd = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
-            const overlap = Math.max(0, Math.min(sEnd, endMs) - Math.max(sStart, startMs));
-            return acc + overlap / 60000;
+            const startedAtMs = parseDbTimestamp(s.started_at) || new Date(s.started_at).getTime();
+            
+            // Timesheets and Reports ONLY attribute session durations to the day the session STARTED.
+            // If the session started before startMs or after endMs, skip it for the daily total duration.
+            if (startedAtMs < startMs || startedAtMs > endMs) {
+                return acc;
+            }
+
+            const stats = (statsData || []).find((st: any) => st.session_id === s.id);
+            const sampleCount = stats ? parseInt(stats.sample_count) : 0;
+            const lastSampleTime = stats && stats.last_sample_at ? (parseDbTimestamp(stats.last_sample_at) || startedAtMs) : startedAtMs;
+
+            const isTrulyActive = !s.ended_at && (nowMs - startedAtMs < 14 * 60 * 60 * 1000);
+
+            let effectiveEndMs = nowMs;
+            if (s.ended_at) {
+                effectiveEndMs = parseDbTimestamp(s.ended_at) || new Date(s.ended_at).getTime();
+            } else if (isTrulyActive) {
+                effectiveEndMs = nowMs;
+            } else if (sampleCount > 0) {
+                effectiveEndMs = Math.max(lastSampleTime, startedAtMs);
+            } else {
+                effectiveEndMs = nowMs;
+            }
+
+            const overlapStartMs = Math.max(startedAtMs, startMs);
+            const overlapEndMs = Math.min(effectiveEndMs, endMs);
+            
+            let durationMins = (overlapEndMs - overlapStartMs) / 60000;
+            if (durationMins < 0) durationMins = 0;
+            
+            return acc + durationMins;
         }, 0);
 
         return {
