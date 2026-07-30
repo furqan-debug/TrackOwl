@@ -42,137 +42,97 @@ BEGIN
       OR (p_project_ids IS NOT NULL AND s.project_id = ANY(p_project_ids))
     );
 
-  -- 2. General counts for current week
-  SELECT 
-    COUNT(*), 
-    COALESCE(SUM(activity_percent), 0),
-    COUNT(DISTINCT s.project_id),
-    COUNT(DISTINCT s.user_id)
-  INTO 
-    v_total_mins, 
+  -- 2. Massive CTE to unify everything safely without deduplication bugs
+  WITH current_sessions AS (
+    SELECT id as session_id, user_id, project_id, organization_id, manual, started_at, COALESCE(ended_at, now()) as ended_at
+    FROM sessions s
+    WHERE s.organization_id = p_org_id
+      AND (
+        (p_member_ids IS NULL AND p_project_ids IS NULL)
+        OR (p_member_ids IS NOT NULL AND s.user_id = ANY(p_member_ids::uuid[]))
+        OR (p_project_ids IS NOT NULL AND s.project_id = ANY(p_project_ids))
+      )
+  ),
+  unified_current AS (
+    -- Deduped Real Samples
+    SELECT DISTINCT ON (a.session_id, date_trunc('minute', a.recorded_at))
+      a.id, a.session_id, a.activity_percent, a.app_name, a.recorded_at, s.project_id, s.user_id
+    FROM activity_samples a
+    JOIN current_sessions s ON a.session_id = s.session_id
+    WHERE a.organization_id = p_org_id
+      AND a.recorded_at >= p_start_iso 
+      AND a.recorded_at <= p_end_iso
+
+    UNION ALL
+
+    -- Synthetic Manual Samples (Floor rounding, 1-minute steps)
+    SELECT
+      NULL::bigint as id, s.session_id, 0 as activity_percent, 'Manual Time' as app_name, 
+      s.started_at + (i || ' minutes')::interval as recorded_at, s.project_id, s.user_id
+    FROM current_sessions s
+    CROSS JOIN LATERAL generate_series(
+        1, 
+        GREATEST(0, floor(EXTRACT(EPOCH FROM (s.ended_at - s.started_at))/60)::int)
+    ) as i
+    WHERE s.manual = true
+      AND (s.started_at + (i || ' minutes')::interval) >= p_start_iso
+      AND (s.started_at + (i || ' minutes')::interval) <= p_end_iso
+  ),
+  unified_prev AS (
+    SELECT DISTINCT ON (a.session_id, date_trunc('minute', a.recorded_at))
+      a.id, a.session_id, a.activity_percent
+    FROM activity_samples a
+    JOIN current_sessions s ON a.session_id = s.session_id
+    WHERE a.organization_id = p_org_id
+      AND a.recorded_at >= p_prev_start_iso 
+      AND a.recorded_at <= p_prev_end_iso
+
+    UNION ALL
+
+    SELECT
+      NULL::bigint as id, s.session_id, 0 as activity_percent
+    FROM current_sessions s
+    CROSS JOIN LATERAL generate_series(
+        1, 
+        GREATEST(0, floor(EXTRACT(EPOCH FROM (s.ended_at - s.started_at))/60)::int)
+    ) as i
+    WHERE s.manual = true
+      AND (s.started_at + (i || ' minutes')::interval) >= p_prev_start_iso
+      AND (s.started_at + (i || ' minutes')::interval) <= p_prev_end_iso
+  )
+  SELECT
+    (SELECT COUNT(*) FROM unified_current),
+    (SELECT COALESCE(SUM(activity_percent), 0) FROM unified_current),
+    (SELECT COUNT(DISTINCT project_id) FROM unified_current),
+    (SELECT COUNT(DISTINCT user_id) FROM unified_current),
+    (SELECT COUNT(*) FROM unified_prev),
+    (SELECT COALESCE(SUM(activity_percent), 0) FROM unified_prev),
+    (SELECT COALESCE(jsonb_object_agg(COALESCE(app_name, 'Unknown'), cnt), '{}'::jsonb) FROM (
+      SELECT app_name, COUNT(*) as cnt FROM unified_current WHERE app_name IS NOT NULL AND TRIM(app_name) != '' AND LOWER(app_name) != 'program manager' GROUP BY app_name ORDER BY cnt DESC LIMIT 20
+    ) t),
+    (SELECT COALESCE(jsonb_object_agg(user_id::text, json_build_object('mins', mins, 'activity_sum', act_sum, 'cnt', cnt)), '{}'::jsonb) FROM (
+      SELECT user_id, COUNT(*) as mins, COALESCE(SUM(activity_percent), 0) as act_sum, COUNT(*) as cnt FROM unified_current GROUP BY user_id
+    ) t),
+    (SELECT COALESCE(jsonb_object_agg(project_id::text, json_build_object('mins', mins, 'activity_sum', act_sum, 'cnt', cnt)), '{}'::jsonb) FROM (
+      SELECT project_id, COUNT(*) as mins, COALESCE(SUM(activity_percent), 0) as act_sum, COUNT(*) as cnt FROM unified_current WHERE project_id IS NOT NULL GROUP BY project_id
+    ) t),
+    (SELECT COALESCE(jsonb_object_agg(day_name, cnt), '{}'::jsonb) FROM (
+      SELECT TO_CHAR(recorded_at AT TIME ZONE 'UTC', 'Dy') as day_name, COUNT(*) as cnt FROM unified_current GROUP BY TO_CHAR(recorded_at AT TIME ZONE 'UTC', 'Dy')
+    ) t)
+  INTO
+    v_total_mins,
     v_activity_sum,
     v_projects_worked,
-    v_active_members
-  FROM activity_samples a
-  JOIN sessions s ON a.session_id = s.id
-  WHERE a.organization_id = p_org_id
-    AND a.recorded_at >= p_start_iso 
-    AND a.recorded_at <= p_end_iso
-    AND (
-      (p_member_ids IS NULL AND p_project_ids IS NULL)
-      OR (p_member_ids IS NOT NULL AND s.user_id = ANY(p_member_ids::uuid[]))
-      OR (p_project_ids IS NOT NULL AND s.project_id = ANY(p_project_ids))
-    );
-    
+    v_active_members,
+    v_prev_total_mins,
+    v_prev_activity_sum,
+    v_app_usage,
+    v_user_stats,
+    v_proj_stats,
+    v_daily_stats;
+
   v_activity_count := v_total_mins;
-
-  -- 3. General counts for previous week
-  SELECT 
-    COUNT(*), 
-    COALESCE(SUM(activity_percent), 0)
-  INTO 
-    v_prev_total_mins, 
-    v_prev_activity_sum
-  FROM activity_samples a
-  JOIN sessions s ON a.session_id = s.id
-  WHERE a.organization_id = p_org_id
-    AND a.recorded_at >= p_prev_start_iso 
-    AND a.recorded_at <= p_prev_end_iso
-    AND (
-      (p_member_ids IS NULL AND p_project_ids IS NULL)
-      OR (p_member_ids IS NOT NULL AND s.user_id = ANY(p_member_ids::uuid[]))
-      OR (p_project_ids IS NOT NULL AND s.project_id = ANY(p_project_ids))
-    );
-    
   v_prev_activity_count := v_prev_total_mins;
-
-  -- 4. Top Apps usage
-  SELECT jsonb_object_agg(COALESCE(app_name, 'Unknown'), cnt)
-  INTO v_app_usage
-  FROM (
-    SELECT a.app_name, COUNT(*) as cnt
-    FROM activity_samples a
-    JOIN sessions s ON a.session_id = s.id
-    WHERE a.organization_id = p_org_id
-      AND a.recorded_at >= p_start_iso 
-      AND a.recorded_at <= p_end_iso
-      AND (
-        (p_member_ids IS NULL AND p_project_ids IS NULL)
-        OR (p_member_ids IS NOT NULL AND s.user_id = ANY(p_member_ids::uuid[]))
-        OR (p_project_ids IS NOT NULL AND s.project_id = ANY(p_project_ids))
-      )
-      AND a.app_name IS NOT NULL
-      AND TRIM(a.app_name) != ''
-      AND LOWER(a.app_name) != 'program manager'
-    GROUP BY a.app_name
-    ORDER BY cnt DESC
-    LIMIT 20
-  ) t;
-
-  -- 5. User stats (minutes and score)
-  SELECT COALESCE(jsonb_object_agg(user_id::text, json_build_object('mins', mins, 'activity_sum', act_sum, 'cnt', cnt)), '{}'::jsonb)
-  INTO v_user_stats
-  FROM (
-    SELECT 
-      s.user_id, 
-      COUNT(*) as mins, 
-      COALESCE(SUM(a.activity_percent), 0) as act_sum,
-      COUNT(a.id) as cnt
-    FROM activity_samples a
-    JOIN sessions s ON a.session_id = s.id
-    WHERE a.organization_id = p_org_id
-      AND a.recorded_at >= p_start_iso 
-      AND a.recorded_at <= p_end_iso
-      AND (
-        (p_member_ids IS NULL AND p_project_ids IS NULL)
-        OR (p_member_ids IS NOT NULL AND s.user_id = ANY(p_member_ids::uuid[]))
-        OR (p_project_ids IS NOT NULL AND s.project_id = ANY(p_project_ids))
-      )
-    GROUP BY s.user_id
-  ) t;
-
-  -- 6. Project stats
-  SELECT COALESCE(jsonb_object_agg(project_id::text, json_build_object('mins', mins, 'activity_sum', act_sum, 'cnt', cnt)), '{}'::jsonb)
-  INTO v_proj_stats
-  FROM (
-    SELECT 
-      s.project_id, 
-      COUNT(*) as mins, 
-      COALESCE(SUM(a.activity_percent), 0) as act_sum,
-      COUNT(a.id) as cnt
-    FROM activity_samples a
-    JOIN sessions s ON a.session_id = s.id
-    WHERE a.organization_id = p_org_id
-      AND a.recorded_at >= p_start_iso 
-      AND a.recorded_at <= p_end_iso
-      AND s.project_id IS NOT NULL
-      AND (
-        (p_member_ids IS NULL AND p_project_ids IS NULL)
-        OR (p_member_ids IS NOT NULL AND s.user_id = ANY(p_member_ids::uuid[]))
-        OR (p_project_ids IS NOT NULL AND s.project_id = ANY(p_project_ids))
-      )
-    GROUP BY s.project_id
-  ) t;
-
-  -- 7. Daily stats (sample count per weekday)
-  SELECT COALESCE(jsonb_object_agg(day_name, cnt), '{}'::jsonb)
-  INTO v_daily_stats
-  FROM (
-    SELECT 
-      TO_CHAR(a.recorded_at AT TIME ZONE 'UTC', 'Dy') as day_name, 
-      COUNT(*) as cnt
-    FROM activity_samples a
-    JOIN sessions s ON a.session_id = s.id
-    WHERE a.organization_id = p_org_id
-      AND a.recorded_at >= p_start_iso 
-      AND a.recorded_at <= p_end_iso
-      AND (
-        (p_member_ids IS NULL AND p_project_ids IS NULL)
-        OR (p_member_ids IS NOT NULL AND s.user_id = ANY(p_member_ids::uuid[]))
-        OR (p_project_ids IS NOT NULL AND s.project_id = ANY(p_project_ids))
-      )
-    GROUP BY TO_CHAR(a.recorded_at AT TIME ZONE 'UTC', 'Dy')
-  ) t;
 
   -- 8. User screenshots (for recent activity preview)
   SELECT COALESCE(jsonb_agg(to_jsonb(ss)), '[]'::jsonb)

@@ -25,7 +25,7 @@ import {
 } from '../components/ui';
 import clsx from 'clsx';
 import Lenis from 'lenis';
-import { formatDuration } from '../lib/dataUtils';
+import { formatDuration, orgLocalToUtc } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
 
 // Official TrackOwl Brand Palette
@@ -46,26 +46,10 @@ let reportsCache: any = null;
 let reportsCacheKey: string | null = null;
 
 export function Reports() {
-    const { profile, managedMemberIds } = useAuth();
+    const { profile, managedMemberIds, displayTimezone } = useAuth();
     const organizationId = profile?.organization_id;
     const [range, setRange] = useState<Range>('Last 7 Days');
     const [offset, setOffset] = useState(0); // offset in days
-    const [orgTimezone, setOrgTimezone] = useState<string>('UTC');
-
-    useEffect(() => {
-        async function fetchOrgTimezone() {
-            if (!organizationId) return;
-            const { data } = await supabase
-                .from('organizations')
-                .select('settings')
-                .eq('id', organizationId)
-                .single();
-            if (data?.settings?.orgTimezone) {
-                setOrgTimezone(data.settings.orgTimezone);
-            }
-        }
-        fetchOrgTimezone();
-    }, [organizationId]);
     const [showRangeDropdown, setShowRangeDropdown] = useState(false);
     const [customStart, setCustomStart] = useState<Date | null>(null);
     const [customEnd, setCustomEnd] = useState<Date | null>(null);
@@ -136,7 +120,7 @@ export function Reports() {
     useEffect(() => {
         if (!membersLoaded) return;
         fetchReports();
-    }, [range, offset, selectedTeamId, selectedMemberId, members, orgTimezone, membersLoaded]);
+    }, [range, offset, selectedTeamId, selectedMemberId, members, displayTimezone, membersLoaded]);
 
     function shiftRange(direction: number) {
         let days = 0;
@@ -175,67 +159,27 @@ export function Reports() {
 
     function formatDateInTz(date: string | Date, options: Intl.DateTimeFormatOptions = {}): string {
         const d = typeof date === 'string' ? new Date(date) : date;
-        return d.toLocaleDateString('en-US', { ...options, timeZone: orgTimezone });
+        return d.toLocaleDateString('en-US', { ...options, timeZone: displayTimezone || 'UTC' });
     }
 
-    /**
-     * Converts a YYYY-MM-DD string to the UTC instant that represents the
-     * start (00:00:00) or end (23:59:59) of that calendar day in the org timezone.
-     *
-     * Uses binary search on Intl.DateTimeFormat — the only 100% correct approach.
-     *
-     * Search bounds: previous-day UTC midnight → two-days-later UTC midnight.
-     * This covers ALL possible UTC offsets (UTC-12 through UTC+14):
-     *   - UTC+14: midnight of day d = (d-1)T10:00Z → covered by lo = (d-1)T00:00Z
-     *   - UTC-12: end of day d = (d+1)T11:59Z → covered by hi = (d+2)T00:00Z
-     */
-    function orgLocalToUtc(dateStr: string, timeOfDay: 'start' | 'end', tz: string): Date {
-        const [y, mo, d] = dateStr.split('-').map(Number);
 
-        const getOrgDate = (utcMs: number) =>
-            new Date(utcMs).toLocaleDateString('en-CA', { timeZone: tz });
-
-        // Wide bounds that guarantee we bracket the local midnight for any timezone
-        const lo0 = Date.UTC(y, mo - 1, d - 1, 0, 0, 0);      // prev-day midnight UTC
-        const hi0 = Date.UTC(y, mo - 1, d + 2, 0, 0, 0);      // 2-days-later midnight UTC
-
-        if (timeOfDay === 'start') {
-            // Find the earliest UTC ms where org-local date becomes dateStr
-            let lo = lo0, hi = hi0;
-            while (hi - lo > 1000) {
-                const mid = Math.floor((lo + hi) / 2);
-                if (getOrgDate(mid) >= dateStr) hi = mid;
-                else lo = mid;
-            }
-            return new Date(hi);
-        } else {
-            // Find the latest UTC ms where org-local date is still dateStr
-            let lo = lo0, hi = hi0;
-            while (hi - lo > 1000) {
-                const mid = Math.floor((lo + hi) / 2);
-                if (getOrgDate(mid) <= dateStr) lo = mid;
-                else hi = mid;
-            }
-            return new Date(lo);
-        }
-    }
 
     function getDateRange(): { start: string; end: string } {
         if (range === 'Custom' && customStart && customEnd) {
-            const sStr = (customStart instanceof Date ? customStart : new Date(customStart)).toLocaleDateString('en-CA', { timeZone: orgTimezone });
-            const eStr = (customEnd instanceof Date ? customEnd : new Date(customEnd)).toLocaleDateString('en-CA', { timeZone: orgTimezone });
-            const s = orgLocalToUtc(sStr, 'start', orgTimezone);
-            const e = orgLocalToUtc(eStr, 'end', orgTimezone);
+            const sStr = (customStart instanceof Date ? customStart : new Date(customStart)).toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+            const eStr = (customEnd instanceof Date ? customEnd : new Date(customEnd)).toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+            const s = orgLocalToUtc(sStr, 'start', displayTimezone || 'UTC');
+            const e = orgLocalToUtc(eStr, 'end', displayTimezone || 'UTC');
             return { start: s.toISOString(), end: e.toISOString() };
         }
 
         // Get today's date in org timezone as YYYY-MM-DD
-        const todayInOrg = new Date().toLocaleDateString('en-CA', { timeZone: orgTimezone });
+        const todayInOrg = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
         const [ty, tm, td] = todayInOrg.split('-').map(Number);
 
         // Apply navigation offset in calendar days
         const baseDate = new Date(Date.UTC(ty, tm - 1, td + offset, 12, 0, 0));
-        const baseDateStr = baseDate.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+        const baseDateStr = baseDate.toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
 
 
         let startStr = '';
@@ -246,40 +190,40 @@ export function Reports() {
             endStr = baseDateStr;
         } else if (range === 'Yesterday') {
             const d2 = new Date(Date.UTC(ty, tm - 1, td + offset - 1, 12, 0, 0));
-            const s = d2.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            const s = d2.toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
             startStr = s;
             endStr = s;
         } else if (range === 'Last 7 Days') {
             const d2 = new Date(Date.UTC(ty, tm - 1, td + offset - 6, 12, 0, 0));
-            startStr = d2.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            startStr = d2.toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
             endStr = baseDateStr;
         } else if (range === 'Last Week') {
             // Monday of last week to Sunday of last week
             const baseMidnight = new Date(Date.UTC(ty, tm - 1, td + offset, 12, 0, 0));
-            const dayOfWeek = parseInt(baseMidnight.toLocaleDateString('en-US', { timeZone: orgTimezone, weekday: 'short' }) === 'Sun' ? '7' :
-                ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(baseMidnight.toLocaleDateString('en-US', { timeZone: orgTimezone, weekday: 'short' })).toString());
+            const dayOfWeek = parseInt(baseMidnight.toLocaleDateString('en-US', { timeZone: displayTimezone || 'UTC', weekday: 'short' }) === 'Sun' ? '7' :
+                ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(baseMidnight.toLocaleDateString('en-US', { timeZone: displayTimezone || 'UTC', weekday: 'short' })).toString());
             const daysToLastMon = dayOfWeek + 6;
             const monD = new Date(Date.UTC(ty, tm - 1, td + offset - daysToLastMon, 12, 0, 0));
             const sunD = new Date(Date.UTC(ty, tm - 1, td + offset - daysToLastMon + 6, 12, 0, 0));
-            startStr = monD.toLocaleDateString('en-CA', { timeZone: orgTimezone });
-            endStr = sunD.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            startStr = monD.toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+            endStr = sunD.toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
         } else if (range === 'Last 2 Weeks') {
             const d2 = new Date(Date.UTC(ty, tm - 1, td + offset - 13, 12, 0, 0));
-            startStr = d2.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            startStr = d2.toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
             endStr = baseDateStr;
         } else if (range === 'This Month') {
             const d2 = new Date(Date.UTC(ty, tm - 1, 1, 12, 0, 0));
-            startStr = d2.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            startStr = d2.toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
             endStr = baseDateStr;
         } else if (range === 'Last Month') {
             const lastOfLastMonth = new Date(Date.UTC(ty, tm - 1, 0, 12, 0, 0));
             const firstOfLastMonth = new Date(Date.UTC(ty, tm - 2, 1, 12, 0, 0));
-            startStr = firstOfLastMonth.toLocaleDateString('en-CA', { timeZone: orgTimezone });
-            endStr = lastOfLastMonth.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+            startStr = firstOfLastMonth.toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+            endStr = lastOfLastMonth.toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
         }
 
-        const startUtc = orgLocalToUtc(startStr, 'start', orgTimezone);
-        const endUtc = orgLocalToUtc(endStr, 'end', orgTimezone);
+        const startUtc = orgLocalToUtc(startStr, 'start', displayTimezone || 'UTC');
+        const endUtc = orgLocalToUtc(endStr, 'end', displayTimezone || 'UTC');
 
         return { start: startUtc.toISOString(), end: endUtc.toISOString() };
     }
@@ -312,7 +256,7 @@ export function Reports() {
                 selectedTeamId,
                 selectedMemberId,
                 membersForLookup: members,
-                orgTimezone
+                orgTimezone: displayTimezone || 'UTC'
             });
 
             setDailyActivity(data.dailyActivityList);

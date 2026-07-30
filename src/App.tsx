@@ -72,9 +72,11 @@ interface User {
 async function syncTimezone(sb: any, memberId: string, memberTz: string | null | undefined) {
   try {
     const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (memberTz !== localTz && localTz) {
+    if (!memberTz && localTz) {
+      // Write once on first detection to populate Tier B (Activity Timeline) for fresh users.
+      // We do NOT overwrite this on subsequent logins to protect traveling users from historical corruption.
       await sb.from('members').update({ timezone: localTz }).eq('id', memberId);
-      console.log(`Synced timezone from ${memberTz} to ${localTz}`);
+      console.log(`Initialized timezone to ${localTz}`);
       return localTz;
     }
     return memberTz || localTz;
@@ -818,26 +820,58 @@ export default function App() {
     try {
       const sb = await getSupabase();
 
-      const now = new Date();
-      // Start of current week (local Monday)
-      const day = now.getDay();
-      const diff = (day === 0 ? -6 : 1) - day;
-      const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diff);
-      weekStart.setHours(0, 0, 0, 0);
+      // Fetch orgTimezone to exactly match payroll bounds
+      const { data: orgData } = await sb.from('organizations').select('settings').eq('id', user?.organization_id).single();
+      const orgTimezone = orgData?.settings?.orgTimezone || 'UTC';
 
-      // Stable Date Grouping (matches Admin Portal)
-      const fmt = new Intl.DateTimeFormat('en-CA', {
-        timeZone: user?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
-        year: 'numeric', month: '2-digit', day: '2-digit'
-      });
-      const todayStr = fmt.format(now);
+      const now = new Date();
+      const todayInOrg = now.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+      const [y, mo, d] = todayInOrg.split('-').map(Number);
+
+      // Start of Today in orgTimezone (convert to UTC equivalent)
+      // We rely on binary search to find the exact UTC midnight that maps to local 00:00:00 in orgTimezone.
+      const getOrgDate = (utcMs: number) => new Date(utcMs).toLocaleDateString('en-CA', { timeZone: orgTimezone });
+      const lo0 = Date.UTC(y, mo - 1, d - 1, 0, 0, 0);
+      const hi0 = Date.UTC(y, mo - 1, d + 2, 0, 0, 0);
+      
+      let lo = lo0, hi = hi0;
+      while (hi - lo > 1000) {
+          const mid = Math.floor((lo + hi) / 2);
+          if (getOrgDate(mid) >= todayInOrg) hi = mid;
+          else lo = mid;
+      }
+      const startOfTodayMs = hi; // The exact UTC millisecond where 'today' began in orgTimezone
+
+      // Start of current week in orgTimezone (Monday)
+      const baseMidnight = new Date(Date.UTC(y, mo - 1, d, 12, 0, 0));
+      const dayOfWeek = parseInt(baseMidnight.toLocaleDateString('en-US', { timeZone: orgTimezone, weekday: 'short' }) === 'Sun' ? '7' :
+          ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(baseMidnight.toLocaleDateString('en-US', { timeZone: orgTimezone, weekday: 'short' })).toString());
+      const daysToLastMon = dayOfWeek - 1; // days since Monday
+      
+      // Calculate Monday's date string in orgTimezone
+      const monD = new Date(Date.UTC(y, mo - 1, d - daysToLastMon, 12, 0, 0));
+      const monDateStr = monD.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+      const [my, mmo, md] = monDateStr.split('-').map(Number);
+      
+      // Binary search for Monday's midnight in orgTimezone
+      const mlo0 = Date.UTC(my, mmo - 1, md - 1, 0, 0, 0);
+      const mhi0 = Date.UTC(my, mmo - 1, md + 2, 0, 0, 0);
+      let mlo = mlo0, mhi = mhi0;
+      while (mhi - mlo > 1000) {
+          const mid = Math.floor((mlo + mhi) / 2);
+          if (getOrgDate(mid) >= monDateStr) mhi = mid;
+          else mlo = mid;
+      }
+      const weekStartIso = new Date(mhi).toISOString();
+
+      const todayStr = todayInOrg;
 
       // 1. Fetch user's sessions for this week
       const { data: sessionData, error: sessionErr } = await sb
         .from('sessions')
         .select('id, project_id, started_at, ended_at')
         .eq('user_id', userId)
-        .gte('started_at', weekStart.toISOString());
+        .gte('started_at', weekStartIso);
 
       if (sessionErr) throw sessionErr;
 
@@ -866,7 +900,7 @@ export default function App() {
               session_id
             `)
             .in('session_id', sessionIds)
-            .gte('recorded_at', weekStart.toISOString())
+            .gte('recorded_at', weekStartIso)
             .order('recorded_at', { ascending: true })
             .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
@@ -894,10 +928,6 @@ export default function App() {
       });
 
       const nowMs = Date.now();
-      const startOfToday = new Date();
-      startOfToday.setHours(0, 0, 0, 0);
-
-      // Identify the latest active session (if any) to prevent ghost session duplication
       const activeSessions = (sessionData || []).filter((s: any) => !s.ended_at);
       const latestActiveSessionId = activeSessions.length > 0
         ? activeSessions.sort((a: any, b: any) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())[0].id
@@ -912,8 +942,8 @@ export default function App() {
           const startedAt = new Date(s.started_at).getTime();
           const endedAt = s.ended_at ? new Date(s.ended_at).getTime() : nowMs;
 
-          if (endedAt > startOfToday.getTime()) {
-            const effectiveStart = Math.max(startedAt, startOfToday.getTime());
+          if (endedAt > startOfTodayMs) {
+            const effectiveStart = Math.max(startedAt, startOfTodayMs);
             const durSeconds = Math.floor((endedAt - effectiveStart) / 1000);
             statsMap[pId].rawTodaySeconds += durSeconds;
           }
@@ -935,6 +965,12 @@ export default function App() {
 
       // Use the user's idle_limit (default to 10)
       const idleLimit = user?.idle_limit ?? 10;
+
+      // Formatter to bucket samples by orgTimezone day
+      const fmt = new Intl.DateTimeFormat('en-CA', {
+        timeZone: orgTimezone,
+        year: 'numeric', month: '2-digit', day: '2-digit'
+      });
 
       // Group samples by project to calculate threshold-aware stats
       const samplesByProject = new Map<string, any[]>();
@@ -2372,7 +2408,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
         <div className="stats-bar">
           <div className="stats-bar-item">
             <div className="stats-bar-value accent">{formatTime(totalToday)}</div>
-            <div className="stats-bar-label">Today</div>
+            <div className="stats-bar-label">Today (Company Time)</div>
           </div>
           <div className="stats-bar-item">
             <div className="stats-bar-value">{formatTime(totalWeek)}</div>
@@ -2441,7 +2477,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                   {p.stats && (
                     <div className="project-card-stats">
                       <div className="project-card-time">{formatTime(p.stats.todaySeconds)}</div>
-                      <div className="project-card-time-label">Today</div>
+                      <div className="project-card-time-label">Today (Company Time)</div>
                     </div>
                   )}
                   <div className="project-card-footer">
