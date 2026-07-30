@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { reportService } from '../services/report.service';
 import type { DayTotal } from '../services/report.service';
 import { useAuth } from '../context/AuthContext';
@@ -20,7 +20,7 @@ export function DailyTotals() {
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
     const [allMembers, setAllMembers] = useState<{ id: string; full_name: string; timezone?: string; idle_limit?: number | null }[]>([]);
 
-    const weekDateStrings = React.useMemo(() => {
+    const weekDateStrings = useMemo(() => {
         const todayTzStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
         const [ty, tm, td] = todayTzStr.split('-').map(Number);
         const anchor = new Date(ty, tm - 1, td);
@@ -112,7 +112,7 @@ export function DailyTotals() {
                                 <ChevronLeft className="w-4 h-4" strokeWidth={3} />
                             </button>
                             <span className="px-5 text-[10px] font-bold text-text-primary min-w-[160px] text-center font-mono italic">
-                                {fmtDate(weekDates[0])} — {fmtDate(weekDates[6])}
+                                {fmtDate(weekDateStrings[0])} — {fmtDate(weekDateStrings[6])}
                             </span>
                             <button
                                 onClick={() => setWeekOffset(o => o + 1)}
