@@ -4,7 +4,7 @@ import {
   Lock, Mail, ArrowRight, Square,
   ChevronRight, LogOut, CheckCircle2,
   ShieldAlert, Eye, EyeOff, MapPin, MonitorPlay, MousePointerClick,
-  ClipboardList, Calendar, Circle, ChevronDown, ChevronUp,
+  ClipboardList, Calendar, Circle, ChevronDown, ChevronUp, Clock,
   User as UserIcon, Save, RefreshCcw,
    LifeBuoy, MessageSquare, Send, ArrowLeft,
    Bell, ShieldCheck, Smartphone, Trash2
@@ -83,6 +83,33 @@ async function syncTimezone(sb: any, memberId: string, memberTz: string | null |
   } catch (e) {
     console.error('Failed to sync timezone', e);
     return memberTz;
+  }
+}
+
+export function orgLocalToUtc(dateStr: string, timeOfDay: 'start' | 'end', tz: string): Date {
+  const [y, mo, d] = dateStr.split('-').map(Number);
+  const getOrgDate = (utcMs: number) =>
+    new Date(utcMs).toLocaleDateString('en-CA', { timeZone: tz });
+
+  const lo0 = Date.UTC(y, mo - 1, d - 1, 0, 0, 0);
+  const hi0 = Date.UTC(y, mo - 1, d + 2, 0, 0, 0);
+
+  if (timeOfDay === 'start') {
+    let lo = lo0, hi = hi0;
+    while (lo < hi) {
+      const mid = Math.floor((lo + hi) / 2);
+      if (getOrgDate(mid) >= dateStr) hi = mid;
+      else lo = mid + 1;
+    }
+    return new Date(lo);
+  } else {
+    let lo = lo0, hi = hi0;
+    while (lo < hi) {
+      const mid = Math.ceil((lo + hi) / 2);
+      if (getOrgDate(mid) <= dateStr) lo = mid;
+      else hi = mid - 1;
+    }
+    return new Date(lo);
   }
 }
 
@@ -186,24 +213,26 @@ function formatTime(seconds: number): string {
 }
 
 // ── Clock & Local Context ──────────────────────────────────────────────────
-function LocalClock() {
+function tzToCity(tz: string): string {
+  // Extract city from IANA timezone, e.g. "America/Los_Angeles" -> "Los Angeles"
+  // or "Asia/Karachi" -> "Karachi"
+  const parts = tz.split('/');
+  const city = parts[parts.length - 1].replace(/_/g, ' ');
+  return city;
+}
+
+function LocalClock({ orgTimezone }: { orgTimezone?: string }) {
   const [now, setNow] = useState(new Date());
-  const [loc, setLoc] = useState<string | null>(null);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
-
-    const fetchLoc = async () => {
-      const locStr = await trackerAPI.getLocation();
-      if (locStr) setLoc(locStr);
-    };
-
-    fetchLoc();
     return () => clearInterval(timer);
   }, []);
 
-  const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-  const dateStr = now.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+  const tz = orgTimezone || 'UTC';
+  const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true, timeZone: tz });
+  const dateStr = now.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric', timeZone: tz });
+  const cityStr = orgTimezone ? tzToCity(orgTimezone) : '';
 
   return (
     <div className="local-context" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '0.875rem', margin: '0 0.875rem' }}>
@@ -211,12 +240,17 @@ function LocalClock() {
         <span>{timeStr}</span>
         <span style={{ fontSize: '0.6875rem', opacity: 0.6, fontWeight: 400 }}>{dateStr}</span>
       </div>
-      {loc && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.625rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.125rem' }}>
-          <MapPin size={10} />
-          {loc}
-        </div>
-      )}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.625rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.125rem', whiteSpace: 'nowrap' }}>
+        {cityStr && (
+          <>
+            <MapPin size={10} />
+            <span>{cityStr}</span>
+            <span style={{ opacity: 0.5 }}>•</span>
+          </>
+        )}
+        <Clock size={10} style={{ opacity: 0.8 }} />
+        <span>Company Time{cityStr ? ` — ${cityStr}` : ''}</span>
+      </div>
     </div>
   );
 }
@@ -783,6 +817,7 @@ export default function App() {
     return stored ? new Date(stored) : null;
   });
   const [isSyncing, setIsSyncing] = useState(false);
+  const [orgTimezone, setOrgTimezone] = useState<string>('UTC');
 
   const handleManualSync = async () => {
     if (isSyncing) return;
@@ -835,28 +870,19 @@ export default function App() {
       const sb = await getSupabase();
 
       // Fetch orgTimezone to exactly match payroll bounds
-      const { data: orgData } = await sb.from('organizations').select('settings').eq('id', user?.organization_id).single();
+      // Use userId parameter (not the stale closure `user`) to get org_id reliably
+      const { data: memberData } = await sb.from('members').select('organization_id').eq('id', userId).single();
+      const orgId = memberData?.organization_id || user?.organization_id;
+      const { data: orgData } = await sb.from('organizations').select('settings').eq('id', orgId).single();
       const orgTimezone = orgData?.settings?.orgTimezone || 'UTC';
+      setOrgTimezone(orgTimezone);
 
       const now = new Date();
       const todayInOrg = now.toLocaleDateString('en-CA', { timeZone: orgTimezone });
-      const [y, mo, d] = todayInOrg.split('-').map(Number);
-
-      // Start of Today in orgTimezone (convert to UTC equivalent)
-      // We rely on binary search to find the exact UTC midnight that maps to local 00:00:00 in orgTimezone.
-      const getOrgDate = (utcMs: number) => new Date(utcMs).toLocaleDateString('en-CA', { timeZone: orgTimezone });
-      const lo0 = Date.UTC(y, mo - 1, d - 1, 0, 0, 0);
-      const hi0 = Date.UTC(y, mo - 1, d + 2, 0, 0, 0);
-      
-      let lo = lo0, hi = hi0;
-      while (hi - lo > 1000) {
-          const mid = Math.floor((lo + hi) / 2);
-          if (getOrgDate(mid) >= todayInOrg) hi = mid;
-          else lo = mid;
-      }
-      const startOfTodayMs = hi; // The exact UTC millisecond where 'today' began in orgTimezone
+      const startOfTodayMs = orgLocalToUtc(todayInOrg, 'start', orgTimezone).getTime();
 
       // Start of current week in orgTimezone (Monday)
+      const [y, mo, d] = todayInOrg.split('-').map(Number);
       const baseMidnight = new Date(Date.UTC(y, mo - 1, d, 12, 0, 0));
       const dayOfWeek = parseInt(baseMidnight.toLocaleDateString('en-US', { timeZone: orgTimezone, weekday: 'short' }) === 'Sun' ? '7' :
           ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].indexOf(baseMidnight.toLocaleDateString('en-US', { timeZone: orgTimezone, weekday: 'short' })).toString());
@@ -865,18 +891,11 @@ export default function App() {
       // Calculate Monday's date string in orgTimezone
       const monD = new Date(Date.UTC(y, mo - 1, d - daysToLastMon, 12, 0, 0));
       const monDateStr = monD.toLocaleDateString('en-CA', { timeZone: orgTimezone });
-      const [my, mmo, md] = monDateStr.split('-').map(Number);
       
-      // Binary search for Monday's midnight in orgTimezone
-      const mlo0 = Date.UTC(my, mmo - 1, md - 1, 0, 0, 0);
-      const mhi0 = Date.UTC(my, mmo - 1, md + 2, 0, 0, 0);
-      let mlo = mlo0, mhi = mhi0;
-      while (mhi - mlo > 1000) {
-          const mid = Math.floor((mlo + mhi) / 2);
-          if (getOrgDate(mid) >= monDateStr) mhi = mid;
-          else mlo = mid;
-      }
-      const weekStartIso = new Date(mhi).toISOString();
+      // Exact integer binary search for Monday's midnight in orgTimezone
+      const weekStartUtc = orgLocalToUtc(monDateStr, 'start', orgTimezone);
+      const mhi = weekStartUtc.getTime();
+      const weekStartIso = weekStartUtc.toISOString();
 
       const todayStr = todayInOrg;
 
@@ -2070,7 +2089,7 @@ export default function App() {
         )}
         {screen === 'projects' && (
           <motion.div key="projects" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
-            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} trackingError={trackingError} setTrackingError={setTrackingError} todos={todos} onTodoDone={handleTodoDone} activeProjectId={activeProject?.id} isTracking={isTracking} localElapsed={liveElapsed} />
+            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} trackingError={trackingError} setTrackingError={setTrackingError} todos={todos} onTodoDone={handleTodoDone} activeProjectId={activeProject?.id} isTracking={isTracking} localElapsed={liveElapsed} orgTimezone={orgTimezone} />
           </motion.div>
         )}
         {screen === 'consent' && (
@@ -2093,6 +2112,7 @@ export default function App() {
               onTodoDone={handleTodoDone}
               projects={projects}
               localElapsed={liveElapsed}
+              orgTimezone={orgTimezone}
             />
           </motion.div>
         )}
@@ -2298,7 +2318,7 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
 // ─────────────────────────────────────────────────────────────────────────────
 // Topbar
 // ─────────────────────────────────────────────────────────────────────────────
-function Topbar({ user, onLogout, onSettings, todoBadge, disabled }: { user?: User; onLogout?: () => void; onSettings?: () => void; todoBadge?: number; disabled?: boolean }) {
+function Topbar({ user, onLogout, onSettings, todoBadge, disabled, orgTimezone }: { user?: User; onLogout?: () => void; onSettings?: () => void; todoBadge?: number; disabled?: boolean; orgTimezone?: string }) {
   const initials = user?.full_name?.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'U';
   return (
     <header className="app-topbar">
@@ -2307,7 +2327,7 @@ function Topbar({ user, onLogout, onSettings, todoBadge, disabled }: { user?: Us
           <img src="/header-white.svg" style={{ height: 24, width: 'auto', objectFit: 'contain' }} alt="TrackOwl" />
         </div>
       </div>
-      {user && <LocalClock />}
+      {user && <LocalClock orgTimezone={orgTimezone} />}
       {user && onLogout && (
         <div className={`topbar-actions ${disabled ? 'disabled-actions' : ''}`}>
           {todoBadge != null && todoBadge > 0 && (
@@ -2389,7 +2409,7 @@ function MyTasksPanel({ todos, onDone, disabled }: { todos: Todo[]; onDone: (id:
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Projects
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone, activeProjectId, isTracking, localElapsed }: {
+function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone, activeProjectId, isTracking, localElapsed, orgTimezone }: {
   user: User;
   projects: Project[];
   onSelect: (p: Project) => void;
@@ -2402,6 +2422,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   activeProjectId?: string | null;
   isTracking?: boolean;
   localElapsed?: number;
+  orgTimezone?: string;
 }) {
   const getProjectRawToday = (p: Project) => {
     const base = p.stats?.rawTodaySeconds || 0;
@@ -2444,20 +2465,20 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
 
   return (
     <div className="projects-layout">
-      <Topbar user={user} onLogout={onLogout} onSettings={onSettings} todoBadge={todos.length} />
+      <Topbar user={user} onLogout={onLogout} onSettings={onSettings} todoBadge={todos.length} orgTimezone={orgTimezone} />
 
       <div className="projects-scroll">
         {/* Stats bar */}
         <div className="stats-bar">
-          <div className="stats-bar-item">
+          <div className="stats-bar-item primary">
             <div className="stats-bar-value accent">{formatTime(displayTotalToday)}</div>
-            <div className="stats-bar-label">Today (Company Time)</div>
+            <div className="stats-bar-label">Today</div>
           </div>
-          <div className="stats-bar-item">
+          <div className="stats-bar-item secondary">
             <div className="stats-bar-value">{formatTime(displayTotalWeek)}</div>
             <div className="stats-bar-label">This Week</div>
           </div>
-          <div className="stats-bar-item">
+          <div className="stats-bar-item secondary">
             <div className="stats-bar-value">{avgActivity}%</div>
             <div className="stats-bar-label">Avg Activity</div>
           </div>
@@ -2507,11 +2528,11 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                     <div className="project-card-title">{p.name}</div>
                     {p.description && <div className="project-card-desc">{p.description}</div>}
                     {p.stats && (
-                      <div style={{ display: 'flex', gap: '0.875rem', marginTop: '0.5rem' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
+                      <div style={{ display: 'flex', gap: '0.875rem', marginTop: '0.5rem', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
                           <strong style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatTime(getProjectRawWeekly(p))}</strong> this week
                         </span>
-                        <span style={{ fontSize: '0.75rem', color: p.stats.activityPercent < 50 ? 'var(--danger)' : 'var(--text-tertiary)' }}>
+                        <span style={{ fontSize: '0.75rem', color: p.stats.activityPercent < 50 ? 'var(--danger)' : 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
                           <strong style={{ fontWeight: 600 }}>{p.stats.activityPercent}%</strong> activity
                         </span>
                       </div>
@@ -2520,7 +2541,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                   {p.stats && (
                     <div className="project-card-stats">
                       <div className="project-card-time">{formatTime(getProjectRawToday(p))}</div>
-                      <div className="project-card-time-label">Today (Company Time)</div>
+                      <div className="project-card-time-label">Today</div>
                     </div>
                   )}
                   <div className="project-card-footer">
@@ -2609,7 +2630,7 @@ function ConsentItem({ icon, title, desc }: { icon: React.ReactNode; title: stri
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Tracker
 // ─────────────────────────────────────────────────────────────────────────────
-function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, liveIdleSeconds = 0, onStop, onSettings, todos, onTodoDone, projects, localElapsed = 0 }: {
+function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, liveIdleSeconds = 0, onStop, onSettings, todos, onTodoDone, projects, localElapsed = 0, orgTimezone }: {
   user: User;
   project: Project;
   sessionId?: string | null;
@@ -2622,6 +2643,7 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
   onTodoDone: (id: string) => void;
   projects: Project[];
   localElapsed?: number;
+  orgTimezone?: string;
 }) {
   const [showReassign, setShowReassign] = useState(false);
   const fmt = (n: number) => String(n).padStart(2, '0');
@@ -2642,7 +2664,7 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
 
   return (
     <div className="tracker-layout">
-      <Topbar user={user} onLogout={onStop} onSettings={onSettings} todoBadge={todos.length} disabled={true} />
+      <Topbar user={user} onLogout={onStop} onSettings={onSettings} todoBadge={todos.length} disabled={true} orgTimezone={orgTimezone} />
 
       <div className="tracker-body">
         <motion.div className="tracker-widget" initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.35 }}>

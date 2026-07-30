@@ -206,17 +206,6 @@ export const reportService = {
                     stats[uid][dayIdx] += (1 / 60);
                 }
             });
-        } else {
-            const userSess = sessions.filter((s: any) => s.user_id === uid && s.manual !== true);
-            userSess.forEach((s: any) => {
-                const { endMs } = getEffectiveEnd(s.started_at, s.ended_at);
-                const startMs = new Date(s.started_at).getTime();
-                const durationHrs = (endMs - startMs) / (1000 * 60 * 60);
-                
-                const dayIdxRaw = getDayIndexInTz(s.started_at, memberMap[uid].tz);
-                const dayIdx = (dayIdxRaw + 6) % 7; 
-                stats[uid][dayIdx] += durationHrs;
-            });
         }
     });
 
