@@ -97,6 +97,7 @@ interface Project {
     weeklyIdleSeconds?: number;
     activityPercent: number;
     rawTodaySeconds?: number;
+    rawWeeklySeconds?: number;
     keptIdleSeconds?: number;
   };
 }
@@ -744,7 +745,20 @@ export default function App() {
   const [isTracking, setIsTracking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [elapsedStart, setElapsedStart] = useState<number>(0);
+  const [liveElapsed, setLiveElapsed] = useState<number>(0);
   const sessionElapsedRef = useRef<number>(0);
+
+  useEffect(() => {
+    setLiveElapsed(elapsedStart);
+  }, [elapsedStart]);
+
+  useEffect(() => {
+    let int: any;
+    if (isTracking && !isPaused) {
+      int = setInterval(() => setLiveElapsed(e => e + 1), 1000);
+    }
+    return () => clearInterval(int);
+  }, [isTracking, isPaused]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(true);
   const [trackingError, setTrackingError] = useState<string | null>(null);
@@ -1814,6 +1828,7 @@ export default function App() {
     setActiveProject(null);
     sessionElapsedRef.current = 0;
     setElapsedStart(0);
+    setLiveElapsed(0);
     setScreen('projects');
 
     // Notification Alert
@@ -2055,7 +2070,7 @@ export default function App() {
         )}
         {screen === 'projects' && (
           <motion.div key="projects" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
-            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} trackingError={trackingError} setTrackingError={setTrackingError} todos={todos} onTodoDone={handleTodoDone} />
+            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} trackingError={trackingError} setTrackingError={setTrackingError} todos={todos} onTodoDone={handleTodoDone} activeProjectId={activeProject?.id} isTracking={isTracking} localElapsed={liveElapsed} />
           </motion.div>
         )}
         {screen === 'consent' && (
@@ -2071,15 +2086,13 @@ export default function App() {
               sessionId={sessionId}
               idlePaused={idlePaused}
               onResumeFromIdle={() => { setIdlePaused(false); (trackerAPI as any).stopIdleMonitoring(); handleResume(); }}
-              elapsedStart={elapsedStart}
-              isPaused={isPaused}
-              isTracking={isTracking}
               liveIdleSeconds={liveIdleSeconds}
               onStop={handleStop}
               onSettings={() => setScreen('settings')}
               todos={todos}
               onTodoDone={handleTodoDone}
               projects={projects}
+              localElapsed={liveElapsed}
             />
           </motion.div>
         )}
@@ -2376,7 +2389,7 @@ function MyTasksPanel({ todos, onDone, disabled }: { todos: Todo[]; onDone: (id:
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Projects
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone }: {
+function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone, activeProjectId, isTracking, localElapsed }: {
   user: User;
   projects: Project[];
   onSelect: (p: Project) => void;
@@ -2386,10 +2399,29 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   setTrackingError: (err: string | null) => void;
   todos: Todo[];
   onTodoDone: (id: string) => void;
+  activeProjectId?: string | null;
+  isTracking?: boolean;
+  localElapsed?: number;
 }) {
+  const getProjectRawToday = (p: Project) => {
+    const base = p.stats?.rawTodaySeconds || 0;
+    if (isTracking && activeProjectId && p.id === activeProjectId) {
+      return base + (localElapsed || 0);
+    }
+    return base;
+  };
+
+  const getProjectRawWeekly = (p: Project) => {
+    const base = p.stats?.rawWeeklySeconds || 0;
+    if (isTracking && activeProjectId && p.id === activeProjectId) {
+      return base + (localElapsed || 0);
+    }
+    return base;
+  };
+
   // Display raw session duration to match Timesheets page
-  const displayTotalToday = projects.reduce((s, p) => s + (p.stats?.rawTodaySeconds || 0), 0);
-  const displayTotalWeek = projects.reduce((s, p) => s + (p.stats?.rawWeeklySeconds || 0), 0);
+  const displayTotalToday = projects.reduce((s, p) => s + getProjectRawToday(p), 0);
+  const displayTotalWeek = projects.reduce((s, p) => s + getProjectRawWeekly(p), 0);
   
   // Total tracked = all samples × 60s (including idle below limit)
   const totalToday = projects.reduce((s, p) => s + (p.stats?.todaySeconds || 0), 0);
@@ -2477,7 +2509,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                     {p.stats && (
                       <div style={{ display: 'flex', gap: '0.875rem', marginTop: '0.5rem' }}>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)' }}>
-                          <strong style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatTime(p.stats?.rawWeeklySeconds || 0)}</strong> this week
+                          <strong style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatTime(getProjectRawWeekly(p))}</strong> this week
                         </span>
                         <span style={{ fontSize: '0.75rem', color: p.stats.activityPercent < 50 ? 'var(--danger)' : 'var(--text-tertiary)' }}>
                           <strong style={{ fontWeight: 600 }}>{p.stats.activityPercent}%</strong> activity
@@ -2487,7 +2519,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                   </div>
                   {p.stats && (
                     <div className="project-card-stats">
-                      <div className="project-card-time">{formatTime(p.stats?.rawTodaySeconds || 0)}</div>
+                      <div className="project-card-time">{formatTime(getProjectRawToday(p))}</div>
                       <div className="project-card-time-label">Today (Company Time)</div>
                     </div>
                   )}
@@ -2577,40 +2609,21 @@ function ConsentItem({ icon, title, desc }: { icon: React.ReactNode; title: stri
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Tracker
 // ─────────────────────────────────────────────────────────────────────────────
-function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, elapsedStart, isPaused, isTracking, liveIdleSeconds = 0, onStop, onSettings, todos, onTodoDone, projects }: {
+function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, liveIdleSeconds = 0, onStop, onSettings, todos, onTodoDone, projects, localElapsed = 0 }: {
   user: User;
   project: Project;
   sessionId?: string | null;
   idlePaused?: boolean;
   onResumeFromIdle?: () => void;
-  elapsedStart: number;
-  isPaused: boolean;
-  isTracking: boolean;
   liveIdleSeconds?: number;
   onStop: () => void;
   onSettings: () => void;
   todos: Todo[];
   onTodoDone: (id: string) => void;
   projects: Project[];
+  localElapsed?: number;
 }) {
-  const [localElapsed, setLocalElapsed] = useState(elapsedStart);
-
-  useEffect(() => {
-    setLocalElapsed(elapsedStart);
-  }, [elapsedStart]);
-
-  useEffect(() => {
-    let int: any;
-    if (isTracking && !isPaused) {
-      int = setInterval(() => setLocalElapsed(e => e + 1), 1000);
-    }
-    return () => clearInterval(int);
-  }, [isTracking, isPaused]);
-
   const [showReassign, setShowReassign] = useState(false);
-  const hrs = Math.floor(localElapsed / 3600);
-  const mins = Math.floor((localElapsed % 3600) / 60);
-  const secs = localElapsed % 60;
   const fmt = (n: number) => String(n).padStart(2, '0');
 
   const baseKeptIdle = project.stats?.keptIdleSeconds || 0;
@@ -2621,6 +2634,11 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, el
   const totalIdleSeconds = baseKeptIdle + liveIdleSeconds;
   const displayProductive = Math.max(0, localElapsed - liveIdleSeconds);
   const displayIdle = totalIdleSeconds;
+
+  const activeSecs = displayProductive;
+  const hrsActive = Math.floor(activeSecs / 3600);
+  const minsActive = Math.floor((activeSecs % 3600) / 60);
+  const secsActive = activeSecs % 60;
 
   return (
     <div className="tracker-layout">
@@ -2695,8 +2713,13 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, el
             </div>
           </div>
 
-          <div className="timer-display">
-            {fmt(hrs)}:{fmt(mins)}:{fmt(secs)}
+          <div className="timer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '1.25rem 0 2rem 0' }}>
+            <span style={{ fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#666', marginBottom: '0.375rem' }}>
+              Active Time
+            </span>
+            <div className="timer-display">
+              {fmt(hrsActive)}:{fmt(minsActive)}:{fmt(secsActive)}
+            </div>
           </div>
 
           <div className="stats-dashboard">
