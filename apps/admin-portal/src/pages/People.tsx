@@ -630,11 +630,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                                 onClick={() => { if (!isRestricted) { onResendInvite(); setOpen(false); } }}
                             />
                         )}
-                        <DropItem
-                            icon={<Settings className="w-3.5 h-3.5" />}
-                            label="Configuration"
-                            onClick={() => { setOpen(false); onEdit('Limits'); }}
-                        />
+
                         <div className="my-1 border-t border-border" />
                         {m.status === 'Inactive' ? (
                             <DropItem
