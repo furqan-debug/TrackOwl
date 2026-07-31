@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { LoadingState, DatePicker } from '../components/ui';
 import { SecureImage } from '../components/ui/SecureImage';
+import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -39,6 +40,7 @@ const ROLE_COLORS: Record<string, string> = {
 export function MemberFormPage() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { profile: currentUserProfile } = useAuth();
     
     const [searchParams] = useSearchParams();
     const requestedTab = searchParams.get('tab');
@@ -400,12 +402,20 @@ export function MemberFormPage() {
                                                 <div className="space-y-6">
                                 <div className="grid grid-cols-2 gap-5">
                                     <FormField label="Full Name" value={fullName} onChange={setFullName} icon={<User className="w-4 h-4" />} placeholder="Enter full name..." />
-                                    <FormSelect label="Role" value={role} onChange={(v: Role) => setRole(v)} disabled={role === 'Owner'} icon={<Shield className="w-4 h-4" />}
-                                        options={role === 'Owner'
-                                            ? [{ label: 'Owner', value: 'Owner' }]
-                                            : [{ label: 'User', value: 'User' }, { label: 'Viewer', value: 'Viewer' }, { label: 'Manager', value: 'Manager' }, { label: 'Admin', value: 'Admin' }]
-                                        }
-                                        description={role === 'Owner' ? "Transfer ownership from Organization Settings." : undefined}
+                                    <FormSelect label="Role" value={role} onChange={(v: Role) => setRole(v)} disabled={role === 'Owner' || currentUserProfile?.id === id} icon={<Shield className="w-4 h-4" />}
+                                        options={(() => {
+                                            if (role === 'Owner') return [{ label: 'Owner', value: 'Owner' }];
+                                            const opts: {label: string, value: Role}[] = [
+                                                { label: 'User', value: 'User' },
+                                                { label: 'Viewer', value: 'Viewer' },
+                                                { label: 'Manager', value: 'Manager' }
+                                            ];
+                                            if (currentUserProfile?.role === 'Owner' || currentUserProfile?.role === 'Admin') {
+                                                opts.push({ label: 'Admin', value: 'Admin' });
+                                            }
+                                            return opts;
+                                        })()}
+                                        description={role === 'Owner' ? "Transfer ownership from Organization Settings." : currentUserProfile?.id === id ? "You cannot change your own role." : undefined}
                                     />
                                     <FormField label="Location (City/Country)" value={location} onChange={setLocation} icon={<MapPin className="w-4 h-4" />} placeholder="e.g. New York, USA" />
                                     <FormField label="Department" value={department} onChange={setDepartment} icon={<Briefcase className="w-4 h-4" />} placeholder="e.g. Engineering, Sales" />
