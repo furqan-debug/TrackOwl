@@ -1450,12 +1450,16 @@ export default function App() {
     console.log('[idle-autostop] Auto-stop timer started. Limit:', maxIdleMins, 'minutes');
     const idleStart = Date.now();
 
-    const interval = setInterval(() => {
+    let isStopping = false;
+    const interval = setInterval(async () => {
       const idleTimeElapsedMins = (Date.now() - idleStart) / 60000;
       if (idleTimeElapsedMins >= maxIdleMins) {
+        if (isStopping) return; // prevent duplicate concurrent calls
+        isStopping = true;
+        clearInterval(interval); // stop re-firing immediately
         console.log('[idle-autostop] Inactivity limit reached. Automatically stopping session...');
         discardIdleTime(user.idle_limit || 10, false);
-        handleStop();
+        await handleStop();
         trackerAPI.showNotification(
           'Tracking Auto-Stopped',
           `Your tracking session was ended automatically after ${Math.round(idleTimeElapsedMins)} minutes of inactivity.`
@@ -1710,10 +1714,55 @@ export default function App() {
   }
 
   async function startTracking(project: Project) {
-    // Initialize timer to total seconds already tracked today
-    const todaySecs = project.stats?.todaySeconds || 0;
+    // Seed the timer with the true cumulative seconds already tracked today.
+    // We query the sessions table directly here instead of using project.stats.todaySeconds,
+    // because todaySeconds is derived from activity_samples which can be minutes behind
+    // right after a session ends — causing the timer to appear to start from zero.
+    let todaySecs = 0;
+    try {
+      const sb = await getSupabase();
+      const { data: memberData } = await sb.from('members').select('organization_id').eq('id', user!.id).single();
+      const orgId = memberData?.organization_id || user?.organization_id;
+      const { data: orgData } = await sb.from('organizations').select('settings').eq('id', orgId).single();
+      const tz = orgData?.settings?.orgTimezone || 'UTC';
+      const nowDate = new Date();
+      const startOfTodayISO = (() => {
+        const parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+        }).formatToParts(nowDate);
+        const get = (t: string) => parts.find(p => p.type === t)?.value ?? '00';
+        const midnightLocal = new Date(`${get('year')}-${get('month')}-${get('day')}T00:00:00`);
+        const offsetMs = nowDate.getTime() - new Date(nowDate.toLocaleString('en-US', { timeZone: tz })).getTime();
+        return new Date(midnightLocal.getTime() + offsetMs).toISOString();
+      })();
+
+      // Sum all ended sessions for this member+project that started today
+      const { data: sessions } = await sb
+        .from('sessions')
+        .select('started_at, ended_at')
+        .eq('user_id', user!.id)
+        .eq('project_id', project.id)
+        .not('ended_at', 'is', null)
+        .gte('started_at', startOfTodayISO);
+
+      if (sessions) {
+        const nowMs = Date.now();
+        todaySecs = sessions.reduce((sum: number, s: any) => {
+          const start = Math.max(new Date(s.started_at).getTime(), new Date(startOfTodayISO).getTime());
+          const end = s.ended_at ? new Date(s.ended_at).getTime() : nowMs;
+          return sum + Math.max(0, Math.floor((end - start) / 1000));
+        }, 0);
+      }
+    } catch (e) {
+      // Fallback: use last known sample-based stats if the DB query fails
+      console.warn('[startTracking] Could not fetch live session seconds, falling back to cached stats:', e);
+      todaySecs = project.stats?.todaySeconds || 0;
+    }
+
     sessionElapsedRef.current = todaySecs;
     setElapsedStart(todaySecs);
+
     setLiveIdleSeconds(0); // reset live idle counter for new session
     idleMinutesRef.current = 0; // reset inactivity counter for new session
     setIsPaused(false);
@@ -1834,6 +1883,9 @@ export default function App() {
       console.error('[App] stopTracking FAILED:', err);
     }
 
+    // Reset idle overlay state first — this unblocks the UI immediately
+    setIdlePaused(false);
+    setLiveIdleSeconds(0);
     setIsTracking(false);
     setIsPaused(false);
     setSessionId(null);
