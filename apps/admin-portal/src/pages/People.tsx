@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     Users, Search, Filter, Download, UserPlus, Trash2,
     MoreHorizontal, Pencil, RotateCcw,
-    Settings, AlertCircle, CheckCircle, MapPin, Globe2,
+    AlertCircle, CheckCircle, MapPin, Globe2,
     Check, ChevronLeft
 } from 'lucide-react';
 import clsx from 'clsx';
