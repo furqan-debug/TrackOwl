@@ -73,6 +73,8 @@ export function Billing() {
     const [searchParams] = useSearchParams();
     const [showMockPortalNotice, setShowMockPortalNotice] = useState(searchParams.get('mock_portal') === 'true');
     const [memberCount, setMemberCount] = useState(0);
+    const { profile } = useAuth();
+    const isRestricted = profile?.role !== 'Admin' && profile?.role !== 'Owner';
     const [seatsToPurchase, setSeatsToPurchase] = useState(organization?.seats_purchased || 5);
     const [saving, setSaving] = useState(false);
     const [syncingAfterCheckout, setSyncingAfterCheckout] = useState(searchParams.get('success') === 'true');
@@ -338,6 +340,20 @@ export function Billing() {
     };
 
     if (!organization) return <LoadingState />;
+
+    if (isRestricted) {
+        return (
+            <PageLayout title="Billing & Plans" description="Manage your subscription and seats.">
+                <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 mb-2">
+                        <CreditCard className="w-8 h-8" />
+                    </div>
+                    <h2 className="text-xl font-bold text-text-primary">Access Restricted</h2>
+                    <p className="text-text-muted max-w-md">Only organization Admins and Owners can access and modify billing settings.</p>
+                </div>
+            </PageLayout>
+        );
+    }
 
     return (
         <PageLayout

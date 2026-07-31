@@ -44,7 +44,7 @@ type SettingCategory = 'governance' | 'monitoring' | 'telemetry' | 'notification
 
 export function SettingsPage() {
     const { profile } = useAuth();
-    const isViewer = profile?.role === 'Viewer';
+    const isRestricted = profile?.role !== 'Admin' && profile?.role !== 'Owner';
     const [settings, setSettings] = useState<AppSettings>(DEFAULTS);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -81,12 +81,12 @@ export function SettingsPage() {
     }, [profile?.organization_id, fetchSettings]);
 
     function update<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
-        if (isViewer) return;
+        if (isRestricted) return;
         setSettings(prev => ({ ...prev, [key]: value }));
     }
 
     async function handleSave() {
-        if (isViewer || !profile?.organization_id) {
+        if (isRestricted || !profile?.organization_id) {
             setError("Unauthorized or missing organization context.");
             return;
         }
@@ -132,7 +132,7 @@ export function SettingsPage() {
     }
 
     async function handleReset() {
-        if (isViewer) return;
+        if (isRestricted) return;
         if (confirm('Restore workspace policies to global defaults?')) {
             setSettings(DEFAULTS);
             const { error } = await supabase
@@ -162,16 +162,20 @@ export function SettingsPage() {
         { id: 'system', label: 'System', icon: HardDrive },
     ];
 
-    if (loading) {
+    if (isRestricted) {
         return (
-            <PageLayout title="Settings" description="Organization Policies & Protocols">
-                <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
-                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                    <p className="text-text-muted font-medium animate-pulse">Synchronizing Policies...</p>
+            <PageLayout title="Organization Settings" description="Manage workspace governance, tracking policies, and system defaults.">
+                <div className="flex flex-col items-center justify-center h-[50vh] text-center space-y-4">
+                    <div className="w-16 h-16 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 mb-2">
+                        <ShieldCheck className="w-8 h-8" />
+                    </div>
+                    <h2 className="text-xl font-bold text-text-primary">Access Restricted</h2>
+                    <p className="text-text-muted max-w-md">Only organization Admins and Owners can access and modify global workspace settings.</p>
                 </div>
             </PageLayout>
         );
     }
+    
     return (
         <PageLayout
             title="Settings"
@@ -188,7 +192,7 @@ export function SettingsPage() {
                     </button>
                      <button
                         onClick={handleSave}
-                        disabled={saving || isViewer}
+                        disabled={saving || isRestricted}
                         className={clsx(
                             "settings-save-btn flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-premium",
                             saved ? "bg-emerald-500" : "bg-primary hover:scale-[1.02] active:scale-[0.98]"
@@ -387,7 +391,7 @@ export function SettingsPage() {
                                 </div>
                                 <button
                                     onClick={handleReset}
-                                    disabled={isViewer}
+                                    disabled={isRestricted}
                                     className="h-9 px-4 rounded-md bg-rose-600 text-white text-[12px] font-bold hover:bg-rose-700 transition-all disabled:opacity-30"
                                 >
                                     Reset to Defaults
