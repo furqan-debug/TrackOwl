@@ -471,7 +471,7 @@ pub fn start_sample_loop(
                     "is_offline":      sample.is_offline,
                 }]).to_string();
                 let token = auth_token.lock().unwrap().clone();
-                let _ = crate::supabase_post(&cfg, "activity_samples", &body, token.as_deref(), None);
+                let _ = crate::supabase_post(&cfg, "activity_samples", &body, token.as_deref(), Some("resolution=ignore-duplicates"));
             }
             thread::sleep(Duration::from_millis(interval_ms));
         }

@@ -308,7 +308,7 @@ pub fn sync_once(
 
     let body = serde_json::json!(payload).to_string();
 
-    match crate::supabase_post(cfg, "activity_samples", &body, Some(&token), None) {
+    match crate::supabase_post(cfg, "activity_samples", &body, Some(&token), Some("resolution=ignore-duplicates")) {
         Ok(_) => {
             let ids: Vec<i64> = samples.iter().map(|s| s.id).collect();
             if let Err(e) = mark_synced(conn, &ids) {
@@ -419,7 +419,7 @@ pub fn sync_from_arc(
 
     let body = serde_json::json!(payload).to_string();
 
-    match crate::supabase_post(cfg, "activity_samples", &body, Some(&token), None) {
+    match crate::supabase_post(cfg, "activity_samples", &body, Some(&token), Some("resolution=ignore-duplicates")) {
         Ok(_) => {
             let ids: Vec<i64> = samples.iter().map(|s| s.id).collect();
             let mut db_lock = db_arc.lock().unwrap(); // RE-ACQUIRE lock just to mark synced
