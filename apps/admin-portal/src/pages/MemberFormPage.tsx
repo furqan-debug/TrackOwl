@@ -164,7 +164,15 @@ export function MemberFormPage() {
         setAssignedProjectIds(new Set((assigned || []).map((r: any) => r.project_id)));
     }
 
+    const isSelf = currentUserProfile?.id === id;
+    const isRestrictedTarget = 
+        (currentUserProfile?.role === 'Viewer' && !isSelf) ||
+        (currentUserProfile?.role === 'User' && !isSelf) ||
+        (currentUserProfile?.role === 'Manager' && (role === 'Owner' || role === 'Admin')) ||
+        (currentUserProfile?.role === 'Admin' && role === 'Owner');
+
     async function handleSave() {
+        if (isRestrictedTarget) return;
         setSaving(true);
         setError(null);
         try {
@@ -228,7 +236,7 @@ export function MemberFormPage() {
                 </div>
                 <button
                     onClick={handleSave}
-                    disabled={saving}
+                    disabled={saving || isRestrictedTarget}
                     className={clsx(
                         "flex items-center gap-2.5 px-6 h-10 rounded-xl text-[12px] font-bold transition-all shadow-lg text-white",
                         saveSuccess
@@ -243,7 +251,7 @@ export function MemberFormPage() {
                     ) : (
                         <Save className="w-4 h-4" />
                     )}
-                    {saving ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save Changes'}
+                    {saving ? 'Saving...' : saveSuccess ? 'Saved!' : isRestrictedTarget ? 'Restricted' : 'Save Changes'}
                 </button>
             </div>
 
