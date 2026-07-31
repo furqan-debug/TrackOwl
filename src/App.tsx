@@ -241,13 +241,6 @@ function LocalClock({ orgTimezone }: { orgTimezone?: string }) {
         <span style={{ fontSize: '0.6875rem', opacity: 0.6, fontWeight: 400 }}>{dateStr}</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.625rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.125rem', whiteSpace: 'nowrap' }}>
-        {cityStr && (
-          <>
-            <MapPin size={10} />
-            <span>{cityStr}</span>
-            <span style={{ opacity: 0.5 }}>•</span>
-          </>
-        )}
         <Clock size={10} style={{ opacity: 0.8 }} />
         <span>Company Time{cityStr ? ` — ${cityStr}` : ''}</span>
       </div>
