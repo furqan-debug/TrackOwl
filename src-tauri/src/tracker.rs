@@ -433,12 +433,16 @@ pub fn start_sample_loop(
             } else {
                 String::new()
             };
-            let idle = active_secs == 0;
+            let idle = active_secs == 0 || (mouse == 0 && keyboard == 0);
 
             // Hubstaff activity calculation:
-            // Active seconds / Total seconds in window
+            // Active seconds / Total seconds in window (0% if no clicks/keys)
             let interval_secs = (interval_ms / 1000) as f32;
-            let activity_percent = ((active_secs as f32 / interval_secs) * 100.0).min(100.0) as i32;
+            let activity_percent = if mouse == 0 && keyboard == 0 {
+                0
+            } else {
+                ((active_secs as f32 / interval_secs) * 100.0).min(100.0) as i32
+            };
 
             let sample = ActivitySample {
                 session_id: session_id.clone(),

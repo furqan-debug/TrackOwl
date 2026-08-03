@@ -771,13 +771,8 @@ export default function App() {
   const [activeProject, setActiveProject] = useState<Project | null>(null);
   const [isTracking, setIsTracking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const [elapsedStart, setElapsedStart] = useState<number>(0);
   const [liveElapsed, setLiveElapsed] = useState<number>(0);
   const sessionElapsedRef = useRef<number>(0);
-
-  useEffect(() => {
-    setLiveElapsed(elapsedStart);
-  }, [elapsedStart]);
 
   useEffect(() => {
     let int: any;
@@ -786,7 +781,12 @@ export default function App() {
     }
     return () => clearInterval(int);
   }, [isTracking, isPaused]);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId, _setSessionId] = useState<string | null>(null);
+  const sessionIdRef = useRef<string | null>(null);
+  const setSessionId = (id: string | null) => {
+    sessionIdRef.current = id;
+    _setSessionId(id);
+  };
   const [rememberMe, setRememberMe] = useState(true);
   const [trackingError, setTrackingError] = useState<string | null>(null);
 
@@ -798,6 +798,8 @@ export default function App() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const idleMinutesRef = useRef(0);
   const isHandlingIdleRef = useRef(false); // guard against double-fire on listener re-subscription
+  const pendingIdleDiscardRef = useRef<Promise<void> | null>(null); // tracks in-flight idle discard
+  const isFetchingStatsRef = useRef(false); // persistent concurrency guard for stats fetching
   const [idlePaused, setIdlePaused] = useState(false);
   const [liveIdleSeconds, setLiveIdleSeconds] = useState(0); // live idle tracking for current session
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -856,10 +858,9 @@ export default function App() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [isTracking]);
 
-  let isFetchingStats = false;
   async function fetchDashboardStats(userId: string, currentProjects: Project[]) {
-    if (isFetchingStats) return;
-    isFetchingStats = true;
+    if (isFetchingStatsRef.current) return;
+    isFetchingStatsRef.current = true;
     try {
       const sb = await getSupabase();
 
@@ -989,9 +990,20 @@ export default function App() {
       (samples || []).forEach(s => {
         const minute = s.recorded_at ? s.recorded_at.substring(0, 16) : '';
         if (!minute) return;
-        const existing = minuteMap.get(minute);
-        if (!existing || (s.activity_percent ?? 0) > (existing.activity_percent ?? 0)) {
-          minuteMap.set(minute, s);
+        const key = `${s.session_id}_${minute}`;
+        const existing = minuteMap.get(key);
+        if (!existing) {
+          minuteMap.set(key, s);
+        } else {
+          // If either duplicate sample for the minute was marked idle=true, preserve idle=true
+          const isIdle = existing.idle === true || s.idle === true;
+          const activity = isIdle ? 0 : Math.max(existing.activity_percent ?? 0, s.activity_percent ?? 0);
+          minuteMap.set(key, {
+            ...existing,
+            ...s,
+            idle: isIdle,
+            activity_percent: activity,
+          });
         }
       });
       const dedupedSamples = Array.from(minuteMap.values());
@@ -1097,7 +1109,7 @@ export default function App() {
         setIsOnline(false);
       }
     } finally {
-      isFetchingStats = false;
+      isFetchingStatsRef.current = false;
     }
   }
 
@@ -1285,54 +1297,72 @@ export default function App() {
     };
   }, []);
 
-  const discardIdleTime = async (minutes: number, shouldResume: boolean = true) => {
-    if (!user || !sessionId) return;
-    const sb = await getSupabase();
+  const discardIdleTime = (minutes: number, shouldResume: boolean = true, sid?: string): Promise<void> => {
+    const promise = (async () => {
+      const activeSessionId = sid || sessionIdRef.current || sessionId;
+      console.log('[App] discardIdleTime called:', { minutes, shouldResume, activeSessionId, userId: user?.id });
+      if (!user || !activeSessionId) {
+        console.warn('[App] discardIdleTime ABORTED: Missing user or activeSessionId', { user: !!user, activeSessionId });
+        return;
+      }
+      const sb = await getSupabase();
 
-    // 1. Delete idle samples from Supabase AND the local SQLite cache.
-    //    Both must be deleted together — stop_tracking's sync will re-upload
-    //    anything still in the local cache, undoing the Supabase delete.
-    const startTime = new Date(Date.now() - (minutes * 60000)).toISOString();
-    await Promise.all([
-      sb.from('activity_samples')
-        .delete()
-        .eq('session_id', sessionId)
-        .gte('recorded_at', startTime),
-      trackerAPI.discardIdleCache(sessionId, startTime),
-    ]);
+      // 1. Delete idle samples from Supabase (via RPC + direct delete) AND the local SQLite cache.
+      //    Add 15s buffer to account for clock skew/jitter.
+      const startTime = new Date(Date.now() - ((minutes * 60 + 15) * 1000)).toISOString();
+      console.log('[App] Executing idle sample discard from cutoff:', startTime, 'for session:', activeSessionId);
 
-    // 2. Adjust local timer — subtract the discarded idle time from display
-    const discardedSecs = minutes * 60;
-    sessionElapsedRef.current = Math.max(0, sessionElapsedRef.current - discardedSecs);
-    setElapsedStart((prev: number) => Math.max(0, prev - discardedSecs));
-    setLiveElapsed((prev: number) => Math.max(0, prev - discardedSecs));
-    // Reset live idle display to 0 — idle time is fully discarded, not carried forward
-    setLiveIdleSeconds(0);
+      await Promise.all([
+        sb.rpc('rpc_discard_idle_samples', {
+          p_session_id: activeSessionId,
+          p_start_time: startTime,
+        }).then((res: any) => console.log('[App] rpc_discard_idle_samples response:', res))
+          .catch((err: any) => console.error('[App] rpc_discard_idle_samples error:', err)),
+        sb.from('activity_samples')
+          .delete()
+          .eq('session_id', activeSessionId)
+          .gte('recorded_at', startTime),
+        trackerAPI.discardIdleCache(activeSessionId, startTime),
+      ]);
 
-    if (shouldResume) {
-      setIdlePaused(false);
-      handleResume();
-    } else {
-      setIdlePaused(false);
-    }
+      // 2. Adjust local timer — subtract the discarded idle time from display
+      const discardedSecs = minutes * 60;
+      sessionElapsedRef.current = Math.max(0, sessionElapsedRef.current - discardedSecs);
+      setLiveElapsed((prev: number) => Math.max(0, prev - discardedSecs));
+      // Reset live idle display to 0 — idle time is fully discarded, not carried forward
+      setLiveIdleSeconds(0);
+
+      if (shouldResume) {
+        trackerAPI.setAlwaysOnTop?.(false);
+        setIdlePaused(false);
+        (trackerAPI as any).stopIdleMonitoring();
+        handleResume();
+      }
+    })();
+
+    // Store so handleStop can await completion before syncing
+    pendingIdleDiscardRef.current = promise;
+    return promise;
   };
 
   // Mark the last N minutes of samples as idle=true in DB (when idle threshold is reached)
-  const markSamplesAsIdle = async (minutes: number) => {
-    if (!sessionId) return;
+  const markSamplesAsIdle = async (minutes: number, sid?: string) => {
+    const activeSessionId = sid || sessionIdRef.current || sessionId;
+    if (!activeSessionId) return;
     const sb = await getSupabase();
-    const startTime = new Date(Date.now() - (minutes * 60000)).toISOString();
+    const startTime = new Date(Date.now() - ((minutes * 60 + 15) * 1000)).toISOString();
     await sb.from('activity_samples')
       .update({ idle: true, activity_percent: 0 })
-      .eq('session_id', sessionId)
+      .eq('session_id', activeSessionId)
       .gte('recorded_at', startTime);
   };
 
-  const reassignIdleTime = async (minutes: number, newProjectId: string) => {
-    if (!user || !sessionId) return;
+  const reassignIdleTime = async (minutes: number, newProjectId: string, sid?: string) => {
+    const activeSessionId = sid || sessionIdRef.current || sessionId;
+    if (!user || !activeSessionId) return;
     const sb = await getSupabase();
 
-    const startTime = new Date(Date.now() - (minutes * 60000)).toISOString();
+    const startTime = new Date(Date.now() - ((minutes * 60 + 15) * 1000)).toISOString();
 
     // Find or create a session for the target project using the atomic RPC
     const { data: rpcData, error: rpcError } = await sb.rpc('rpc_start_session', {
@@ -1352,14 +1382,15 @@ export default function App() {
     if (targetSessionId) {
       await sb.from('activity_samples')
         .update({ session_id: targetSessionId })
-        .eq('session_id', sessionId)
+        .eq('session_id', activeSessionId)
         .gte('recorded_at', startTime);
     }
 
     // 2. Adjust local state
+    trackerAPI.setAlwaysOnTop?.(false);
     setIdlePaused(false);
-    handleResume();
-    fetchDashboardStats(user.id, projects);
+    await handleResume();
+    if (user) fetchDashboardStats(user.id, projects);
   };
 
   // Attach to window for the child components to call easily
@@ -1378,9 +1409,8 @@ export default function App() {
         // Skip samples that arrive while already paused — don't double count
         if (isPaused) return;
 
-        // Count as idle if Rust idle flag is true OR if activity_percent is 0
-        // (tiny cursor nudges can keep idle=false but still show 0% activity)
-        const isIdleSample = sample.idle === true || (sample.activity_percent ?? 100) === 0;
+        // Count as idle if Rust idle flag is true, activity_percent is 0, or clicks+keys are 0
+        const isIdleSample = sample.idle === true || (sample.activity_percent ?? 100) === 0 || ((sample.mouse_clicks ?? 0) === 0 && (sample.key_presses ?? 0) === 0);
         if (isIdleSample) {
           idleMinutesRef.current += 1;
           const limit = user?.idle_limit || 10;
@@ -1401,7 +1431,13 @@ export default function App() {
             isHandlingIdleRef.current = true;
 
             // Retroactively mark those samples idle=true in DB so dashboard is accurate
-            markSamplesAsIdle(limit);
+            markSamplesAsIdle(limit, sample.session_id);
+
+            // Pop window to front immediately so user is aware of inactivity
+            trackerAPI.focusWindow?.(true);
+            trackerAPI.showNotification(
+              `You have been inactive for ${limit} minutes. Tracking is paused.`
+            );
 
             if (mode === 'always') {
               // Keep tracking but mark samples idle; reset counter for next cycle
@@ -1412,7 +1448,8 @@ export default function App() {
 
             if (mode === 'never') {
               handlePause();
-              discardIdleTime(limit, false).finally(() => {
+              setIdlePaused(true);
+              discardIdleTime(limit, false, sample.session_id).finally(() => {
                 isHandlingIdleRef.current = false;
               });
               idleMinutesRef.current = 0;
@@ -1746,10 +1783,10 @@ export default function App() {
 
   async function startTracking(project: Project) {
     // Seed the timer with the authoritative todaySeconds calculated by fetchDashboardStats
-    const todaySecs = project.stats?.todaySeconds || 0;
+    const currentProj = projects.find(p => p.id === project.id) || project;
+    const todaySecs = currentProj.stats?.todaySeconds ?? project.stats?.todaySeconds ?? 0;
 
     sessionElapsedRef.current = todaySecs;
-    setElapsedStart(todaySecs);
     setLiveElapsed(todaySecs);
 
     setLiveIdleSeconds(0); // reset live idle counter for new session
@@ -1865,7 +1902,34 @@ export default function App() {
   }
 
   async function handleStop() {
-    console.log('[App] handleStop called. SessionId:', sessionId);
+    const activeSessionId = sessionIdRef.current || sessionId;
+    console.log('[App] handleStop called. SessionId:', activeSessionId, 'idleMinutes:', idleMinutesRef.current);
+
+    // If an idle discard is in-flight (user clicked Stop while discard was pending),
+    // wait for it to finish before syncing — otherwise stop_tracking re-uploads the samples.
+    if (pendingIdleDiscardRef.current) {
+      console.log('[App] Awaiting pending idle discard before stop...');
+      try { await pendingIdleDiscardRef.current; } catch (_) {}
+      pendingIdleDiscardRef.current = null;
+    }
+
+    if (user?.keep_idle_mode === 'never' && activeSessionId) {
+      // If mode is 'never', ensure ALL idle=true samples for this session are purged before stopping
+      console.log('[App] Purging all idle samples on session stop for mode "never"...');
+      try {
+        const sb = await getSupabase();
+        await Promise.all([
+          sb.from('activity_samples')
+            .delete()
+            .eq('session_id', activeSessionId)
+            .eq('idle', true),
+          trackerAPI.discardIdleCache(activeSessionId, new Date(0).toISOString()),
+        ]);
+      } catch (err) {
+        console.error('[App] Error purging idle samples on stop:', err);
+      }
+    }
+
     try {
       const res: any = await trackerAPI.stopTracking();
       console.log('[App] stopTracking response:', res);
@@ -1874,6 +1938,7 @@ export default function App() {
     }
 
     // Reset idle overlay state first — this unblocks the UI immediately
+    trackerAPI.setAlwaysOnTop?.(false);
     setIdlePaused(false);
     setLiveIdleSeconds(0);
     setIsTracking(false);
@@ -1881,10 +1946,10 @@ export default function App() {
     setSessionId(null);
     setActiveProject(null);
     sessionElapsedRef.current = 0;
-    setElapsedStart(0);
     setLiveElapsed(0);
     idleMinutesRef.current = 0;
     isHandlingIdleRef.current = false;
+    pendingIdleDiscardRef.current = null;
     setScreen('projects');
 
     // Notification Alert
@@ -2141,7 +2206,12 @@ export default function App() {
               project={activeProject!}
               sessionId={sessionId}
               idlePaused={idlePaused}
-              onResumeFromIdle={() => { setIdlePaused(false); (trackerAPI as any).stopIdleMonitoring(); handleResume(); }}
+              onResumeFromIdle={() => {
+                trackerAPI.setAlwaysOnTop?.(false);
+                setIdlePaused(false);
+                (trackerAPI as any).stopIdleMonitoring();
+                handleResume();
+              }}
               liveIdleSeconds={liveIdleSeconds}
               onStop={handleStop}
               onSettings={() => setScreen('settings')}
@@ -2150,6 +2220,8 @@ export default function App() {
               projects={projects}
               localElapsed={liveElapsed}
               orgTimezone={orgTimezone}
+              isPaused={isPaused}
+              onPauseResume={isPaused ? handleResume : handlePause}
             />
           </motion.div>
         )}
@@ -2686,6 +2758,32 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
   const [showReassign, setShowReassign] = useState(false);
   const fmt = (n: number) => String(n).padStart(2, '0');
 
+  // Auto-focus window, set always-on-top, and handle keyboard shortcuts when idle popup triggers
+  useEffect(() => {
+    if (!idlePaused) return;
+
+    // Pop window to front with Always-On-Top
+    trackerAPI.focusWindow?.(true);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        trackerAPI.setAlwaysOnTop?.(false);
+        onResumeFromIdle?.();
+      } else if (e.key === 'Escape') {
+        if (showReassign) {
+          setShowReassign(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      trackerAPI.setAlwaysOnTop?.(false);
+    };
+  }, [idlePaused, showReassign, onResumeFromIdle]);
+
   const baseKeptIdle = project.stats?.keptIdleSeconds || 0;
 
   // NEW FORMULA: Productive = Total Elapsed - Idle
@@ -2702,66 +2800,183 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
 
   return (
     <div className="tracker-layout">
+      {/* Fullscreen Desktop Inactivity Alert Modal */}
+      <AnimatePresence>
+        {idlePaused && (
+          <motion.div
+            className="idle-fullscreen-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <motion.div
+              className="idle-popup-card"
+              initial={{ scale: 0.88, y: 15, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 10, opacity: 0 }}
+              transition={{ type: 'spring', damping: 24, stiffness: 320 }}
+            >
+              {/* Ambient Top Glow */}
+              <div className="idle-card-glow-mesh" />
+
+              {!showReassign ? (
+                <>
+                  {/* Animated Alarm Radar Icon */}
+                  <div className="idle-radar-beacon">
+                    <div className="idle-beacon-ring" />
+                    <div className="idle-beacon-ring idle-beacon-ring-2" />
+                    <div className="idle-beacon-core">
+                      <ShieldAlert size={28} />
+                    </div>
+                  </div>
+
+                  {/* Inactivity Status Pill */}
+                  <div className="idle-alert-pill">
+                    <span className="idle-beacon-dot" />
+                    <span>INACTIVITY DETECTED</span>
+                  </div>
+
+                  {/* Heading */}
+                  <h2 className="idle-popup-heading">Are You Still Working?</h2>
+
+                  <p className="idle-popup-subheading">
+                    {user?.keep_idle_mode === 'never'
+                      ? `We noticed ${user.idle_limit || 10} minutes of inactivity. Timer was paused & idle time was automatically removed.`
+                      : `We noticed ${user.idle_limit || 10} minutes of inactivity. What should we do with this idle time?`}
+                  </p>
+
+                  {/* Snapshot Info Box */}
+                  <div className="idle-snapshot-box">
+                    <div className="idle-snapshot-col">
+                      <span className="idle-snapshot-label">PRODUCTIVE SAVED</span>
+                      <span className="idle-snapshot-val">{fmt(hrsActive)}:{fmt(minsActive)}:{fmt(secsActive)}</span>
+                    </div>
+                    <div className="idle-snapshot-divider" />
+                    <div className="idle-snapshot-col">
+                      <span className="idle-snapshot-label">AWAY TIME</span>
+                      <span className="idle-snapshot-val-idle">{user?.idle_limit || 10}m</span>
+                    </div>
+                  </div>
+
+                  {/* Active Project Tag */}
+                  <div className="idle-project-tag">
+                    <span className="idle-project-tag-dot" style={{ backgroundColor: project.color || 'var(--accent)' }} />
+                    <span>{project.name}</span>
+                  </div>
+
+                  {/* Action CTAs */}
+                  {user?.keep_idle_mode === 'never' ? (
+                    <div className="idle-cta-container">
+                      <button
+                        className="idle-btn-primary-cta"
+                        onClick={() => {
+                          trackerAPI.setAlwaysOnTop?.(false);
+                          onResumeFromIdle?.();
+                        }}
+                      >
+                        <Play size={18} fill="currentColor" />
+                        <span>I'm Back • Resume Tracking</span>
+                        <span className="idle-shortcut-badge">↵ Enter</span>
+                      </button>
+
+                      <button
+                        className="idle-btn-secondary-cta"
+                        onClick={() => {
+                          trackerAPI.setAlwaysOnTop?.(false);
+                          onStop();
+                        }}
+                      >
+                        <Square size={14} />
+                        <span>Stop Session</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="idle-grid-cta-container">
+                      <button
+                        className="idle-grid-btn idle-btn-keep"
+                        onClick={() => {
+                          trackerAPI.setAlwaysOnTop?.(false);
+                          onResumeFromIdle?.();
+                        }}
+                      >
+                        <CheckCircle2 size={16} />
+                        <span>Keep Time</span>
+                      </button>
+                      <button
+                        className="idle-grid-btn idle-btn-discard"
+                        onClick={() => {
+                          trackerAPI.setAlwaysOnTop?.(false);
+                          (window as any).discardIdleTime?.((user.idle_limit || 10), true);
+                        }}
+                      >
+                        <Trash2 size={16} />
+                        <span>Discard</span>
+                      </button>
+                      <button
+                        className="idle-grid-btn idle-btn-reassign"
+                        onClick={() => setShowReassign(true)}
+                      >
+                        <RefreshCcw size={16} />
+                        <span>Reassign</span>
+                      </button>
+                      <button
+                        className="idle-grid-btn idle-btn-stop-session"
+                        onClick={() => {
+                          trackerAPI.setAlwaysOnTop?.(false);
+                          onStop();
+                        }}
+                      >
+                        <Square size={16} />
+                        <span>Stop</span>
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="idle-reassign-container">
+                  <div className="idle-reassign-top">
+                    <button className="idle-back-circle-btn" onClick={() => setShowReassign(false)}>
+                      <ArrowLeft size={16} />
+                    </button>
+                    <div>
+                      <h3 className="idle-reassign-headline">Reassign Idle Time</h3>
+                      <p className="idle-reassign-tagline">Select a project for the {user.idle_limit || 10}m away duration</p>
+                    </div>
+                  </div>
+
+                  <div className="idle-reassign-scroll">
+                    {projects.map((p: Project) => (
+                      <div
+                        key={p.id}
+                        className="idle-reassign-row"
+                        onClick={() => {
+                          trackerAPI.setAlwaysOnTop?.(false);
+                          (window as any).reassignIdleTime?.((user.idle_limit || 10), p.id);
+                          setShowReassign(false);
+                        }}
+                      >
+                        <div className="idle-reassign-dot" style={{ backgroundColor: p.color || 'var(--accent)' }} />
+                        <span className="idle-reassign-name">{p.name}</span>
+                        <ChevronRight size={14} className="idle-reassign-arrow" />
+                      </div>
+                    ))}
+                  </div>
+
+                  <button className="idle-reassign-cancel" onClick={() => setShowReassign(false)}>
+                    Back to Options
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <Topbar user={user} onLogout={onStop} onSettings={onSettings} todoBadge={todos.length} disabled={true} orgTimezone={orgTimezone} />
 
       <div className="tracker-body">
         <motion.div className="tracker-widget" initial={{ y: 16, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.35 }}>
-          {idlePaused && (
-            <div className="idle-overlay" style={{
-              position: 'absolute', inset: 0, zIndex: 100,
-              background: 'rgba(255, 255, 255, 0.98)', backdropFilter: 'blur(12px)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              padding: '1.25rem', textAlign: 'center', borderRadius: 'inherit'
-            }}>
-              {!showReassign ? (
-                <>
-                  <div style={{ background: 'var(--amber-light)', padding: '0.75rem', borderRadius: '1rem', color: 'var(--amber)', marginBottom: '0.75rem' }}>
-                    <ShieldAlert size={28} />
-                  </div>
-                  <h3 className="heading-3" style={{ margin: '0 0 0.5rem 0', color: 'var(--text-primary)' }}>You've been idle</h3>
-                  <p className="text-muted" style={{ marginBottom: '1.25rem', fontSize: '0.75rem', lineHeight: 1.4 }}>
-                    We detected {user.idle_limit || 10} minutes of inactivity. What should we do with this time?
-                  </p>
-
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', width: '100%', marginBottom: '0.625rem' }}>
-                    <button className="btn btn-primary" onClick={onResumeFromIdle} style={{ fontSize: '0.6875rem', padding: '0.625rem 0.25rem' }}>
-                      Keep Time
-                    </button>
-                    <button className="btn btn-secondary" onClick={() => (window as any).discardIdleTime?.((user.idle_limit || 10))} style={{ fontSize: '0.6875rem', padding: '0.625rem 0.25rem', color: 'var(--danger)' }}>
-                      Discard
-                    </button>
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.625rem', width: '100%' }}>
-                    <button className="btn btn-secondary" onClick={() => setShowReassign(true)} style={{ fontSize: '0.6875rem', padding: '0.625rem 0.25rem' }}>
-                      Reassign
-                    </button>
-                    <button className="btn btn-secondary" onClick={onStop} style={{ fontSize: '0.6875rem', padding: '0.625rem 0.25rem' }}>
-                      Stop Timer
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <h3 className="heading-3" style={{ margin: '0 0 0.75rem 0' }}>Reassign Time</h3>
-                  <div className="project-list" style={{ width: '100%', maxHeight: '160px', overflowY: 'auto', marginBottom: '1rem' }}>
-                    {projects.map((p: Project) => (
-                      <div key={p.id} className="project-card"
-                        onClick={() => {
-                          (window as any).reassignIdleTime?.((user.idle_limit || 10), p.id);
-                          setShowReassign(false);
-                        }}
-                        style={{ padding: '0.5rem', marginBottom: '0.375rem', fontSize: '0.75rem' }}>
-                        {p.name}
-                      </div>
-                    ))}
-                  </div>
-                  <button className="btn btn-secondary" onClick={() => setShowReassign(false)} style={{ width: '100%' }}>
-                    Back
-                  </button>
-                </>
-              )}
-            </div>
-          )}
           <div className="tw-header">
             {isPaused ? (
               <div className="status-pill" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.3)' }}>

@@ -62,9 +62,12 @@ export const trackerAPI = {
   },
 
   /** Show a native desktop notification */
-  showNotification: async (title: string, body: string) => {
+  showNotification: async (title: string, body?: string) => {
     const invoke = getInvoke();
     if (!invoke) return;
+    if (body === undefined) {
+      return invoke('show_notification_cmd', { title: 'TrackOwl', body: title });
+    }
     return invoke('show_notification_cmd', { title, body });
   },
 
@@ -109,6 +112,14 @@ export const trackerAPI = {
     }
   },
 
+  onUserReturnedFromIdle: (cb: () => void) => {
+    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+      return (window as any).__TAURI__.event.listen('user-returned-from-idle', () => {
+        cb();
+      });
+    }
+  },
+
   /** Install the pending auto-update (downloads + restarts app) */
   installUpdate: async () => {
     const invoke = getInvoke();
@@ -121,6 +132,20 @@ export const trackerAPI = {
     const invoke = getInvoke();
     if (!invoke) return false;
     return invoke('get_inactivity_status') as Promise<boolean>;
+  },
+
+  /** Focus window and bring to front (optionally set always on top) */
+  focusWindow: async (alwaysOnTop?: boolean): Promise<void> => {
+    const invoke = getInvoke();
+    if (!invoke) return;
+    return invoke('focus_window', { alwaysOnTop }) as Promise<void>;
+  },
+
+  /** Set window always on top */
+  setAlwaysOnTop: async (alwaysOnTop: boolean): Promise<void> => {
+    const invoke = getInvoke();
+    if (!invoke) return;
+    return invoke('set_always_on_top', { alwaysOnTop }) as Promise<void>;
   },
 
   /** Show native idle dialog and focus app */
