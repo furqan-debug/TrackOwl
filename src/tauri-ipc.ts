@@ -168,4 +168,19 @@ export const trackerAPI = {
     if (!invoke) return;
     return invoke('sync_now');
   },
+
+  /**
+   * Purge idle samples from the local SQLite cache for a session after a given ISO timestamp.
+   * Must be called alongside the Supabase delete in discardIdleTime so that
+   * stop_tracking's cache sync doesn't re-upload idle samples that were discarded.
+   */
+  discardIdleCache: async (sessionId: string, afterIso: string): Promise<void> => {
+    const invoke = getInvoke();
+    if (!invoke) return;
+    try {
+      await invoke('discard_idle_cache', { sessionId, afterIso });
+    } catch (e) {
+      console.warn('[trackerAPI] discardIdleCache failed (non-fatal):', e);
+    }
+  },
 };
