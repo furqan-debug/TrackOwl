@@ -2216,7 +2216,6 @@ export default function App() {
               onSettings={() => setScreen('settings')}
               todos={todos}
               onTodoDone={handleTodoDone}
-              projects={projects}
               localElapsed={liveElapsed}
               orgTimezone={orgTimezone}
               isPaused={isPaused}
@@ -2737,7 +2736,7 @@ function ConsentItem({ icon, title, desc }: { icon: React.ReactNode; title: stri
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Tracker
 // ─────────────────────────────────────────────────────────────────────────────
-function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, liveIdleSeconds = 0, onStop, onSettings, todos, onTodoDone, projects, localElapsed = 0, orgTimezone, isPaused = false, onPauseResume }: {
+function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, liveIdleSeconds = 0, onStop, onSettings, todos, onTodoDone, localElapsed = 0, orgTimezone, isPaused = false, onPauseResume }: {
   user: User;
   project: Project;
   sessionId?: string | null;
@@ -2748,13 +2747,11 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
   onSettings: () => void;
   todos: Todo[];
   onTodoDone: (id: string) => void;
-  projects: Project[];
   localElapsed?: number;
   orgTimezone?: string;
   isPaused?: boolean;
   onPauseResume?: () => void;
 }) {
-  const [showReassign, setShowReassign] = useState(false);
   const fmt = (n: number) => String(n).padStart(2, '0');
 
   // Auto-focus window, set always-on-top, and handle keyboard shortcuts when idle popup triggers
