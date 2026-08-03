@@ -2564,6 +2564,8 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   const isWeeklyLimitReached = totalWeek >= weeklyLimitSecs;
   const isDailyLimitReached = totalToday >= dailyLimitSecs;
 
+  const todayProgressPct = Math.min(100, Math.round((displayTotalToday / (dailyLimitSecs || 1)) * 100));
+
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
     show: { opacity: 1, y: 0 },
@@ -2574,19 +2576,49 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
       <Topbar user={user} onLogout={onLogout} onSettings={onSettings} todoBadge={todos.length} orgTimezone={orgTimezone} />
 
       <div className="projects-scroll">
-        {/* Stats bar */}
-        <div className="stats-bar">
-          <div className="stats-bar-item primary">
-            <div className="stats-bar-value accent">{formatTime(displayTotalToday)}</div>
-            <div className="stats-bar-label">Today</div>
+        {/* Stats Container (Hero + Secondary Strip) */}
+        <div className="stats-container">
+          <div className="stats-hero-card">
+            <div className="stats-hero-header">
+              <span className="stats-hero-pill">Today</span>
+              {isTracking ? (
+                <div className="stats-live-badge">
+                  <span className="live-pulse-dot" />
+                  <span>Live</span>
+                </div>
+              ) : (
+                <span className="stats-hero-target-pill">
+                  {todayProgressPct}% of {user.daily_limit || 8}h goal
+                </span>
+              )}
+            </div>
+
+            <div className="stats-hero-body">
+              <div className="stats-hero-value">{formatTime(displayTotalToday)}</div>
+              {isTracking && (
+                <span className="stats-hero-target-pill">
+                  {todayProgressPct}% of {user.daily_limit || 8}h goal
+                </span>
+              )}
+            </div>
+
+            <div className="stats-progress-track" title={`${todayProgressPct}% of daily limit`}>
+              <div
+                className="stats-progress-fill"
+                style={{ width: `${Math.max(displayTotalToday > 0 ? 3 : 0, todayProgressPct)}%` }}
+              />
+            </div>
           </div>
-          <div className="stats-bar-item secondary">
-            <div className="stats-bar-value">{formatTime(displayTotalWeek)}</div>
-            <div className="stats-bar-label">This Week</div>
-          </div>
-          <div className="stats-bar-item secondary">
-            <div className="stats-bar-value">{avgActivity}%</div>
-            <div className="stats-bar-label">Avg Activity</div>
+
+          <div className="stats-secondary-grid">
+            <div className="stats-secondary-card">
+              <div className="stats-secondary-lbl">This Week</div>
+              <div className="stats-secondary-val">{formatTime(displayTotalWeek)}</div>
+            </div>
+            <div className="stats-secondary-card">
+              <div className="stats-secondary-lbl">Avg Activity</div>
+              <div className="stats-secondary-val">{avgActivity}%</div>
+            </div>
           </div>
         </div>
 
@@ -2605,7 +2637,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
 
         <div className="section-header">
           <span className="section-title">Projects</span>
-          <span className="section-count">{projects.length} available</span>
+          <span className="section-count-badge">{projects.length} available</span>
         </div>
 
         {projects.length === 0 ? (
@@ -2616,47 +2648,110 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
           </div>
         ) : (
           <motion.div className="project-list" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }} initial="hidden" animate="show">
-            {projects.map(p => (
-              <motion.div key={p.id} variants={itemVariants}>
-                <div className="project-card" onClick={() => {
-                  if (user.tracking_enabled === false) return;
-                  if (isWeeklyLimitReached) {
-                    setTrackingError(`Weekly limit (${user.weekly_limit}h) reached. Please contact your manager.`);
-                    return;
-                  }
-                  if (isDailyLimitReached) {
-                    setTrackingError(`Daily limit (${user.daily_limit}h) reached. Please contact your manager.`);
-                    return;
-                  }
-                  onSelect(p);
-                }} style={{ '--project-color': p.color } as any}>
-                  <div className="project-card-body">
-                    <div className="project-card-title">{p.name}</div>
-                    {p.description && <div className="project-card-desc">{p.description}</div>}
+            {projects.map(p => {
+              const projectToday = getProjectToday(p);
+              const projectWeekly = getProjectWeekly(p);
+              const projColor = p.color || '#D4AF37';
+
+              return (
+                <motion.div key={p.id} variants={itemVariants}>
+                  <div
+                    className="project-card"
+                    onClick={() => {
+                      if (user.tracking_enabled === false) return;
+                      if (isWeeklyLimitReached) {
+                        setTrackingError(`Weekly limit (${user.weekly_limit}h) reached. Please contact your manager.`);
+                        return;
+                      }
+                      if (isDailyLimitReached) {
+                        setTrackingError(`Daily limit (${user.daily_limit}h) reached. Please contact your manager.`);
+                        return;
+                      }
+                      onSelect(p);
+                    }}
+                    style={{ '--project-color': projColor } as any}
+                  >
+                    <div className="project-card-accent" />
+
+                    <div className="project-card-body">
+                      <div className="project-card-title">{p.name}</div>
+                      {p.description && <div className="project-card-desc">{p.description}</div>}
+                      {p.stats && (
+                        <div className="project-card-meta">
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
+                            <strong style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatTime(projectWeekly)}</strong> this week
+                          </span>
+                          <span style={{ fontSize: '0.75rem', color: p.stats.activityPercent < 50 ? 'var(--danger)' : 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
+                            <strong style={{ fontWeight: 600 }}>{p.stats.activityPercent}%</strong> activity
+                          </span>
+                        </div>
+                      )}
+                    </div>
+
                     {p.stats && (
-                      <div style={{ display: 'flex', gap: '0.875rem', marginTop: '0.5rem', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
-                          <strong style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatTime(getProjectWeekly(p))}</strong> this week
-                        </span>
-                        <span style={{ fontSize: '0.75rem', color: p.stats.activityPercent < 50 ? 'var(--danger)' : 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
-                          <strong style={{ fontWeight: 600 }}>{p.stats.activityPercent}%</strong> activity
-                        </span>
+                      <div className="project-card-stats">
+                        <div className="project-card-time">{formatTime(projectToday)}</div>
+                        <div className="project-card-time-label">Today</div>
                       </div>
                     )}
-                  </div>
-                  {p.stats && (
-                    <div className="project-card-stats">
-                      <div className="project-card-time">{formatTime(getProjectToday(p))}</div>
-                      <div className="project-card-time-label">Today</div>
+
+                    <div className="project-card-footer">
+                      <ChevronRight size={16} className="project-arrow" />
                     </div>
-                  )}
-                  <div className="project-card-footer">
-                    <ChevronRight size={16} className="project-arrow" />
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              );
+            })}
           </motion.div>
+        )}
+
+        {/* Lightweight Summary Breakdown (Fills vertical balance when project count is small) */}
+        {projects.length > 0 && projects.length < 4 && displayTotalWeek > 0 && (
+          <div className="breakdown-card">
+            <div className="breakdown-header">
+              <span className="breakdown-title">This Week's Breakdown</span>
+              <span className="breakdown-metric">
+                {formatTime(displayTotalWeek)} {user.weekly_limit ? `/ ${user.weekly_limit}h goal` : ''}
+              </span>
+            </div>
+
+            <div className="breakdown-progress-track">
+              {projects
+                .filter(p => getProjectWeekly(p) > 0)
+                .map(p => {
+                  const sec = getProjectWeekly(p);
+                  const pct = Math.max(2, (sec / (displayTotalWeek || 1)) * 100);
+                  return (
+                    <div
+                      key={p.id}
+                      className="breakdown-progress-segment"
+                      style={{
+                        width: `${pct}%`,
+                        backgroundColor: p.color || '#D4AF37',
+                      }}
+                      title={`${p.name}: ${formatTime(sec)}`}
+                    />
+                  );
+                })}
+            </div>
+
+            <div className="breakdown-legend">
+              {projects
+                .filter(p => getProjectWeekly(p) > 0)
+                .map(p => (
+                  <div key={p.id} className="breakdown-legend-item">
+                    <span
+                      className="breakdown-legend-dot"
+                      style={{ backgroundColor: p.color || '#D4AF37' }}
+                    />
+                    <span>{p.name}</span>
+                    <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+                      ({formatTime(getProjectWeekly(p))})
+                    </strong>
+                  </div>
+                ))}
+            </div>
+          </div>
         )}
       </div>
 
