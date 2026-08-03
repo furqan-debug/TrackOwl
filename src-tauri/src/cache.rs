@@ -233,7 +233,7 @@ pub fn purge_samples_after(
     after_iso: &str,
 ) -> rusqlite::Result<usize> {
     let n = conn.execute(
-        "DELETE FROM activity_samples WHERE session_id = ?1 AND recorded_at >= ?2 AND synced = 0",
+        "DELETE FROM activity_samples WHERE session_id = ?1 AND recorded_at >= ?2",
         params![session_id, after_iso],
     )?;
     Ok(n)
