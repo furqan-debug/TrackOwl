@@ -217,10 +217,11 @@ jobs:
         run: node .github/workflows/generate_latest_json.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload latest.json to Release
+      - name: Upload latest.json to Release and Publish
         uses: softprops/action-gh-release@v1
         with:
           files: latest.json
+          draft: false
 
   publish-appstore:
     if: github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'macos'
