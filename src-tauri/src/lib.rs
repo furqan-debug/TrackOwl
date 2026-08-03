@@ -524,6 +524,26 @@ fn resume_tracking(
     TrackingResult { status: "running".to_string(), session_id: Some(sid), error: None }
 }
 
+/// invoke('discard_idle_cache', { sessionId, afterIso })
+/// Deletes unsynced idle samples from the local SQLite cache after `after_iso`.
+/// Must be called alongside the Supabase delete in discardIdleTime so that
+/// stop_tracking's sync doesn't re-upload idle samples that were already discarded.
+#[tauri::command]
+fn discard_idle_cache(
+    state: tauri::State<'_, Mutex<AppState>>,
+    session_id: String,
+    after_iso: String,
+) -> Result<usize, String> {
+    let s = state.lock().unwrap();
+    let db_guard = s.db.lock().unwrap();
+    if let Some(conn) = db_guard.as_ref() {
+        cache::purge_samples_after(conn, &session_id, &after_iso)
+            .map_err(|e| e.to_string())
+    } else {
+        Ok(0) // No local cache — nothing to purge
+    }
+}
+
 /// invoke('show_notification_cmd', { title, body })
 #[tauri::command]
 fn show_notification_cmd(app: tauri::AppHandle, title: String, body: String) -> Result<(), String> {
@@ -772,6 +792,7 @@ pub fn run() {
             stop_tracking,
             pause_tracking,
             resume_tracking,
+            discard_idle_cache,
             show_notification_cmd,
             #[cfg(not(feature = "app-store"))]
             install_update,

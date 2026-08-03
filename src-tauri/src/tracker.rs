@@ -384,8 +384,22 @@ pub fn start_sample_loop(
     thread::spawn(move || {
         let mut last_title: Option<String> = None;
         let mut last_domain: Option<String> = None;
+        // Use 1-second tick polling so pause_tracking takes effect within 1 second
+        let tick_ms: u64 = 1000;
+        let ticks_per_sample = (interval_ms / tick_ms) as u32;
+        let mut ticks_elapsed: u32 = 0;
+
         loop {
+            thread::sleep(Duration::from_millis(tick_ms));
+
+            // Check running on every tick — pause takes effect within 1 second
             if !*running.lock().unwrap() { break; }
+
+            ticks_elapsed += 1;
+            if ticks_elapsed < ticks_per_sample {
+                continue;
+            }
+            ticks_elapsed = 0;
 
             let (mouse, keyboard, active_secs) = (
                 counts.mouse_count.swap(0, Ordering::Relaxed),
@@ -473,7 +487,6 @@ pub fn start_sample_loop(
                 let token = auth_token.lock().unwrap().clone();
                 let _ = crate::supabase_post(&cfg, "activity_samples", &body, token.as_deref(), Some("resolution=ignore-duplicates"));
             }
-            thread::sleep(Duration::from_millis(interval_ms));
         }
     });
 }
