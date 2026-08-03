@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Lock, Mail, ArrowRight, Square,
+  Lock, Mail, ArrowRight, Square, Play,
   ChevronRight, LogOut, CheckCircle2,
   ShieldAlert, Eye, EyeOff, MapPin, MonitorPlay, MousePointerClick,
   ClipboardList, Calendar, Circle, ChevronDown, ChevronUp, Clock,
@@ -1297,7 +1297,9 @@ export default function App() {
 
     // 2. Adjust local timer and live idle counter
     const discardedSecs = minutes * 60;
+    sessionElapsedRef.current = Math.max(0, sessionElapsedRef.current - discardedSecs);
     setElapsedStart((prev: number) => Math.max(0, prev - discardedSecs));
+    setLiveElapsed((prev: number) => Math.max(0, prev - discardedSecs));
     setLiveIdleSeconds((prev: number) => Math.max(0, prev - discardedSecs));
 
     if (shouldResume) {
@@ -1424,6 +1426,20 @@ export default function App() {
       if (unlisten) unlisten();
     };
   }, [isTracking, isPaused, user?.idle_limit, user?.keep_idle_mode]); // Re-subscribe when tracking state or limits/modes change
+
+  useEffect(() => {
+    let unlisten: (() => void) | null = null;
+    const setup = async () => {
+      unlisten = await trackerAPI.onIdleDialogDismissed(() => {
+        if (user?.keep_idle_mode === 'never' && isTracking && isPaused) {
+          (trackerAPI as any).stopIdleMonitoring();
+          handleResume();
+        }
+      });
+    };
+    setup();
+    return () => { unlisten?.(); };
+  }, [user?.keep_idle_mode, isTracking, isPaused]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -1714,54 +1730,12 @@ export default function App() {
   }
 
   async function startTracking(project: Project) {
-    // Seed the timer with the true cumulative seconds already tracked today.
-    // We query the sessions table directly here instead of using project.stats.todaySeconds,
-    // because todaySeconds is derived from activity_samples which can be minutes behind
-    // right after a session ends — causing the timer to appear to start from zero.
-    let todaySecs = 0;
-    try {
-      const sb = await getSupabase();
-      const { data: memberData } = await sb.from('members').select('organization_id').eq('id', user!.id).single();
-      const orgId = memberData?.organization_id || user?.organization_id;
-      const { data: orgData } = await sb.from('organizations').select('settings').eq('id', orgId).single();
-      const tz = orgData?.settings?.orgTimezone || 'UTC';
-      const nowDate = new Date();
-      const startOfTodayISO = (() => {
-        const parts = new Intl.DateTimeFormat('en-US', {
-          timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
-          hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-        }).formatToParts(nowDate);
-        const get = (t: string) => parts.find(p => p.type === t)?.value ?? '00';
-        const midnightLocal = new Date(`${get('year')}-${get('month')}-${get('day')}T00:00:00`);
-        const offsetMs = nowDate.getTime() - new Date(nowDate.toLocaleString('en-US', { timeZone: tz })).getTime();
-        return new Date(midnightLocal.getTime() + offsetMs).toISOString();
-      })();
-
-      // Sum all ended sessions for this member+project that started today
-      const { data: sessions } = await sb
-        .from('sessions')
-        .select('started_at, ended_at')
-        .eq('user_id', user!.id)
-        .eq('project_id', project.id)
-        .not('ended_at', 'is', null)
-        .gte('started_at', startOfTodayISO);
-
-      if (sessions) {
-        const nowMs = Date.now();
-        todaySecs = sessions.reduce((sum: number, s: any) => {
-          const start = Math.max(new Date(s.started_at).getTime(), new Date(startOfTodayISO).getTime());
-          const end = s.ended_at ? new Date(s.ended_at).getTime() : nowMs;
-          return sum + Math.max(0, Math.floor((end - start) / 1000));
-        }, 0);
-      }
-    } catch (e) {
-      // Fallback: use last known sample-based stats if the DB query fails
-      console.warn('[startTracking] Could not fetch live session seconds, falling back to cached stats:', e);
-      todaySecs = project.stats?.todaySeconds || 0;
-    }
+    // Seed the timer with the authoritative todaySeconds calculated by fetchDashboardStats
+    const todaySecs = project.stats?.todaySeconds || 0;
 
     sessionElapsedRef.current = todaySecs;
     setElapsedStart(todaySecs);
+    setLiveElapsed(todaySecs);
 
     setLiveIdleSeconds(0); // reset live idle counter for new session
     idleMinutesRef.current = 0; // reset inactivity counter for new session
@@ -2469,25 +2443,24 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   localElapsed?: number;
   orgTimezone?: string;
 }) {
-  const getProjectRawToday = (p: Project) => {
-    const base = p.stats?.rawTodaySeconds || 0;
+  const getProjectToday = (p: Project) => {
     if (isTracking && activeProjectId && p.id === activeProjectId) {
-      return base + (localElapsed || 0);
+      return localElapsed || 0;
     }
-    return base;
+    return p.stats?.todaySeconds || 0;
   };
 
-  const getProjectRawWeekly = (p: Project) => {
-    const base = p.stats?.rawWeeklySeconds || 0;
+  const getProjectWeekly = (p: Project) => {
+    const baseWeekly = p.stats?.weeklySeconds || 0;
     if (isTracking && activeProjectId && p.id === activeProjectId) {
-      return base + (localElapsed || 0);
+      const otherDaysWeekly = Math.max(0, baseWeekly - (p.stats?.todaySeconds || 0));
+      return otherDaysWeekly + (localElapsed || 0);
     }
-    return base;
+    return baseWeekly;
   };
 
-  // Display raw session duration to match Timesheets page
-  const displayTotalToday = projects.reduce((s, p) => s + getProjectRawToday(p), 0);
-  const displayTotalWeek = projects.reduce((s, p) => s + getProjectRawWeekly(p), 0);
+  const displayTotalToday = projects.reduce((s, p) => s + getProjectToday(p), 0);
+  const displayTotalWeek = projects.reduce((s, p) => s + getProjectWeekly(p), 0);
   
   // Total tracked = all samples × 60s (including idle below limit)
   const totalToday = projects.reduce((s, p) => s + (p.stats?.todaySeconds || 0), 0);
@@ -2575,7 +2548,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                     {p.stats && (
                       <div style={{ display: 'flex', gap: '0.875rem', marginTop: '0.5rem', alignItems: 'center' }}>
                         <span style={{ fontSize: '0.75rem', color: 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
-                          <strong style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatTime(getProjectRawWeekly(p))}</strong> this week
+                          <strong style={{ color: 'var(--text-secondary)', fontWeight: 600 }}>{formatTime(getProjectWeekly(p))}</strong> this week
                         </span>
                         <span style={{ fontSize: '0.75rem', color: p.stats.activityPercent < 50 ? 'var(--danger)' : 'var(--text-tertiary)', whiteSpace: 'nowrap' }}>
                           <strong style={{ fontWeight: 600 }}>{p.stats.activityPercent}%</strong> activity
@@ -2585,7 +2558,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                   </div>
                   {p.stats && (
                     <div className="project-card-stats">
-                      <div className="project-card-time">{formatTime(getProjectRawToday(p))}</div>
+                      <div className="project-card-time">{formatTime(getProjectToday(p))}</div>
                       <div className="project-card-time-label">Today</div>
                     </div>
                   )}
@@ -2675,7 +2648,7 @@ function ConsentItem({ icon, title, desc }: { icon: React.ReactNode; title: stri
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Tracker
 // ─────────────────────────────────────────────────────────────────────────────
-function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, liveIdleSeconds = 0, onStop, onSettings, todos, onTodoDone, projects, localElapsed = 0, orgTimezone }: {
+function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, liveIdleSeconds = 0, onStop, onSettings, todos, onTodoDone, projects, localElapsed = 0, orgTimezone, isPaused = false, onPauseResume }: {
   user: User;
   project: Project;
   sessionId?: string | null;
@@ -2689,6 +2662,8 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
   projects: Project[];
   localElapsed?: number;
   orgTimezone?: string;
+  isPaused?: boolean;
+  onPauseResume?: () => void;
 }) {
   const [showReassign, setShowReassign] = useState(false);
   const fmt = (n: number) => String(n).padStart(2, '0');
@@ -2770,10 +2745,17 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
             </div>
           )}
           <div className="tw-header">
-            <div className="status-pill status-live">
-              <div className="status-dot" />
-              Live
-            </div>
+            {isPaused ? (
+              <div className="status-pill" style={{ background: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
+                <div className="status-dot" style={{ backgroundColor: '#f59e0b' }} />
+                Paused
+              </div>
+            ) : (
+              <div className="status-pill status-live">
+                <div className="status-dot" />
+                Live
+              </div>
+            )}
             <div className="tracker-project-pill">
               <div className="tracker-project-dot" style={{ backgroundColor: project.color || 'var(--accent)' }} />
               <span className="tracker-project-name">{project.name}</span>
@@ -2800,8 +2782,14 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
             </div>
           </div>
 
-          <div className="tracker-controls">
-            <button className="control-btn action-stop" onClick={onStop}>
+          <div className="tracker-controls" style={{ display: 'flex', gap: '0.625rem', width: '100%' }}>
+            {isPaused && (
+              <button className="control-btn" onClick={onPauseResume || onResumeFromIdle} style={{ flex: 1, backgroundColor: 'var(--accent)', color: '#000', fontWeight: 600 }}>
+                <Play size={14} fill="currentColor" />
+                Resume Tracking
+              </button>
+            )}
+            <button className="control-btn action-stop" onClick={onStop} style={{ flex: isPaused ? 1 : undefined }}>
               <Square size={14} fill="currentColor" />
               Stop Session
             </button>

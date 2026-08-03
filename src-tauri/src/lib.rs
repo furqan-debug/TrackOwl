@@ -7,7 +7,7 @@ mod cache;
 #[cfg(not(feature = "app-store"))]
 mod updater;
 
-use tauri::Manager;
+use tauri::{Manager, Emitter};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::sync::{Arc, Mutex};
@@ -584,11 +584,14 @@ fn show_idle_dialog(app: tauri::AppHandle, limit: u32) {
         let _ = window.request_user_attention(Some(tauri::UserAttentionType::Critical));
     }
     
+    let app_handle = app.clone();
     app.dialog()
         .message(format!("You have been inactive for {} minutes. Tracking is paused.\n\nPlease resume from the app when you are back.", limit))
         .title("Inactivity Detected")
         .kind(MessageDialogKind::Warning)
-        .show(|_| {});
+        .show(move |_| {
+            let _ = app_handle.emit("idle-dialog-dismissed", ());
+        });
 }
 
 /// invoke('start_idle_monitoring', { limit })
