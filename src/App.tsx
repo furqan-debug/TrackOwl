@@ -797,6 +797,7 @@ export default function App() {
   }, [isOnline, trackingError]);
   const [todos, setTodos] = useState<Todo[]>([]);
   const idleMinutesRef = useRef(0);
+  const isHandlingIdleRef = useRef(false); // guard against double-fire on listener re-subscription
   const [idlePaused, setIdlePaused] = useState(false);
   const [liveIdleSeconds, setLiveIdleSeconds] = useState(0); // live idle tracking for current session
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -1288,19 +1289,25 @@ export default function App() {
     if (!user || !sessionId) return;
     const sb = await getSupabase();
 
-    // 1. Delete samples from the last X minutes
+    // 1. Delete idle samples from Supabase AND the local SQLite cache.
+    //    Both must be deleted together — stop_tracking's sync will re-upload
+    //    anything still in the local cache, undoing the Supabase delete.
     const startTime = new Date(Date.now() - (minutes * 60000)).toISOString();
-    await sb.from('activity_samples')
-      .delete()
-      .eq('session_id', sessionId)
-      .gte('recorded_at', startTime);
+    await Promise.all([
+      sb.from('activity_samples')
+        .delete()
+        .eq('session_id', sessionId)
+        .gte('recorded_at', startTime),
+      trackerAPI.discardIdleCache(sessionId, startTime),
+    ]);
 
-    // 2. Adjust local timer and live idle counter
+    // 2. Adjust local timer — subtract the discarded idle time from display
     const discardedSecs = minutes * 60;
     sessionElapsedRef.current = Math.max(0, sessionElapsedRef.current - discardedSecs);
     setElapsedStart((prev: number) => Math.max(0, prev - discardedSecs));
     setLiveElapsed((prev: number) => Math.max(0, prev - discardedSecs));
-    setLiveIdleSeconds((prev: number) => Math.max(0, prev - discardedSecs));
+    // Reset live idle display to 0 — idle time is fully discarded, not carried forward
+    setLiveIdleSeconds(0);
 
     if (shouldResume) {
       setIdlePaused(false);
@@ -1366,6 +1373,11 @@ export default function App() {
 
     const setupListener = async () => {
       unlisten = await trackerAPI.onTrackingSample((sample: any) => {
+        // Skip if we're already handling idle (guard against double-fire during listener re-subscription)
+        if (isHandlingIdleRef.current) return;
+        // Skip samples that arrive while already paused — don't double count
+        if (isPaused) return;
+
         // Count as idle if Rust idle flag is true OR if activity_percent is 0
         // (tiny cursor nudges can keep idle=false but still show 0% activity)
         const isIdleSample = sample.idle === true || (sample.activity_percent ?? 100) === 0;
@@ -1376,41 +1388,44 @@ export default function App() {
           // Only show as "Idle" in the UI if we've crossed the threshold
           if (idleMinutesRef.current >= limit) {
             if (idleMinutesRef.current === limit) {
-              // Just hit the threshold: add the accumulated backlog (e.g. 10 mins)
+              // Just hit the threshold: add the accumulated backlog (e.g. limit mins)
               setLiveIdleSeconds(prev => prev + (limit * 60));
             } else {
               // Already past threshold: add this new idle minute
               setLiveIdleSeconds(prev => prev + 60);
             }
 
-            if (!isPaused) {
-              const mode = user?.keep_idle_mode || 'prompt';
+            const mode = user?.keep_idle_mode || 'prompt';
 
-              // Retroactively mark those samples idle=true in DB so dashboard is accurate
-              markSamplesAsIdle(limit);
+            // Set guard BEFORE async operations
+            isHandlingIdleRef.current = true;
 
-              if (mode === 'always') {
-                // In always mode, we keep marking but don't pause/prompt.
-                // We reset the ref periodically or handle it differently?
-                // For now, reset to allow next threshold detection if they become active and idle again.
-                idleMinutesRef.current = 0;
-                return;
-              }
+            // Retroactively mark those samples idle=true in DB so dashboard is accurate
+            markSamplesAsIdle(limit);
 
-              if (mode === 'never') {
-                handlePause();
-                discardIdleTime(limit, false);
-                idleMinutesRef.current = 0;
-                (trackerAPI as any).startIdleMonitoring(limit);
-                return;
-              }
+            if (mode === 'always') {
+              // Keep tracking but mark samples idle; reset counter for next cycle
+              idleMinutesRef.current = 0;
+              isHandlingIdleRef.current = false;
+              return;
+            }
 
-              // Default: 'prompt'
-              setIdlePaused(true);
+            if (mode === 'never') {
               handlePause();
+              discardIdleTime(limit, false).finally(() => {
+                isHandlingIdleRef.current = false;
+              });
               idleMinutesRef.current = 0;
               (trackerAPI as any).startIdleMonitoring(limit);
+              return;
             }
+
+            // Default: 'prompt'
+            setIdlePaused(true);
+            handlePause();
+            idleMinutesRef.current = 0;
+            (trackerAPI as any).startIdleMonitoring(limit);
+            isHandlingIdleRef.current = false;
           }
         } else {
           idleMinutesRef.current = 0;
@@ -1739,6 +1754,7 @@ export default function App() {
 
     setLiveIdleSeconds(0); // reset live idle counter for new session
     idleMinutesRef.current = 0; // reset inactivity counter for new session
+    isHandlingIdleRef.current = false; // reset idle handler guard for new session
     setIsPaused(false);
     setTrackingError(null);
     setIsTracking(true);
@@ -1867,6 +1883,8 @@ export default function App() {
     sessionElapsedRef.current = 0;
     setElapsedStart(0);
     setLiveElapsed(0);
+    idleMinutesRef.current = 0;
+    isHandlingIdleRef.current = false;
     setScreen('projects');
 
     // Notification Alert

@@ -224,6 +224,21 @@ pub fn mark_synced(conn: &mut Connection, ids: &[i64]) -> rusqlite::Result<()> {
     Ok(())
 }
 
+/// Delete unsynced samples for a session after the given cutoff time.
+/// Called by discard_idle_cache to remove idle samples from local SQLite
+/// so stop_tracking's sync doesn't re-upload them to Supabase.
+pub fn purge_samples_after(
+    conn: &Connection,
+    session_id: &str,
+    after_iso: &str,
+) -> rusqlite::Result<usize> {
+    let n = conn.execute(
+        "DELETE FROM activity_samples WHERE session_id = ?1 AND recorded_at >= ?2 AND synced = 0",
+        params![session_id, after_iso],
+    )?;
+    Ok(n)
+}
+
 // ─── 30s Sync Loop ─────────────────────────────────────────────────────────────
 /// Spawns a background thread that syncs unsynced samples to Supabase every 30s.
 pub fn start_sync_loop(
