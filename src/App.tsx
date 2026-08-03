@@ -1417,6 +1417,14 @@ export default function App() {
 
           // Only show as "Idle" in the UI if we've crossed the threshold
           if (idleMinutesRef.current >= limit) {
+            const mode = user?.keep_idle_mode || 'prompt';
+
+            // 'always' = keep idle time silently — no popup, no deduction, no DB marking, no notification, no idle counter
+            if (mode === 'always') {
+              idleMinutesRef.current = 0;
+              return;
+            }
+
             if (idleMinutesRef.current === limit) {
               // Just hit the threshold: add the accumulated backlog (e.g. limit mins)
               setLiveIdleSeconds(prev => prev + (limit * 60));
@@ -1424,8 +1432,6 @@ export default function App() {
               // Already past threshold: add this new idle minute
               setLiveIdleSeconds(prev => prev + 60);
             }
-
-            const mode = user?.keep_idle_mode || 'prompt';
 
             // Set guard BEFORE async operations
             isHandlingIdleRef.current = true;
@@ -1438,13 +1444,6 @@ export default function App() {
             trackerAPI.showNotification(
               `You have been inactive for ${limit} minutes. Tracking is paused.`
             );
-
-            if (mode === 'always') {
-              // Keep tracking but mark samples idle; reset counter for next cycle
-              idleMinutesRef.current = 0;
-              isHandlingIdleRef.current = false;
-              return;
-            }
 
             if (mode === 'never') {
               handlePause();
@@ -2770,10 +2769,6 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
         e.preventDefault();
         trackerAPI.setAlwaysOnTop?.(false);
         onResumeFromIdle?.();
-      } else if (e.key === 'Escape') {
-        if (showReassign) {
-          setShowReassign(false);
-        }
       }
     };
 
@@ -2782,7 +2777,7 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
       window.removeEventListener('keydown', handleKeyDown);
       trackerAPI.setAlwaysOnTop?.(false);
     };
-  }, [idlePaused, showReassign, onResumeFromIdle]);
+  }, [idlePaused, onResumeFromIdle]);
 
   const baseKeptIdle = project.stats?.keptIdleSeconds || 0;
 
@@ -2800,7 +2795,7 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
 
   return (
     <div className="tracker-layout">
-      {/* Fullscreen Desktop Inactivity Alert Modal */}
+      {/* Idle Alert Popup */}
       <AnimatePresence>
         {idlePaused && (
           <motion.div
@@ -2808,166 +2803,75 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: 0.2 }}
           >
             <motion.div
               className="idle-popup-card"
-              initial={{ scale: 0.88, y: 15, opacity: 0 }}
+              initial={{ scale: 0.94, y: 12, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
-              exit={{ scale: 0.9, y: 10, opacity: 0 }}
-              transition={{ type: 'spring', damping: 24, stiffness: 320 }}
+              exit={{ scale: 0.94, y: 8, opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 340 }}
             >
-              {/* Ambient Top Glow */}
-              <div className="idle-card-glow-mesh" />
-
-              {!showReassign ? (
-                <>
-                  {/* Animated Alarm Radar Icon */}
-                  <div className="idle-radar-beacon">
-                    <div className="idle-beacon-ring" />
-                    <div className="idle-beacon-ring idle-beacon-ring-2" />
-                    <div className="idle-beacon-core">
-                      <ShieldAlert size={28} />
-                    </div>
-                  </div>
-
-                  {/* Inactivity Status Pill */}
-                  <div className="idle-alert-pill">
-                    <span className="idle-beacon-dot" />
-                    <span>INACTIVITY DETECTED</span>
-                  </div>
-
-                  {/* Heading */}
-                  <h2 className="idle-popup-heading">Are You Still Working?</h2>
-
-                  <p className="idle-popup-subheading">
-                    {user?.keep_idle_mode === 'never'
-                      ? `We noticed ${user.idle_limit || 10} minutes of inactivity. Timer was paused & idle time was automatically removed.`
-                      : `We noticed ${user.idle_limit || 10} minutes of inactivity. What should we do with this idle time?`}
-                  </p>
-
-                  {/* Snapshot Info Box */}
-                  <div className="idle-snapshot-box">
-                    <div className="idle-snapshot-col">
-                      <span className="idle-snapshot-label">PRODUCTIVE SAVED</span>
-                      <span className="idle-snapshot-val">{fmt(hrsActive)}:{fmt(minsActive)}:{fmt(secsActive)}</span>
-                    </div>
-                    <div className="idle-snapshot-divider" />
-                    <div className="idle-snapshot-col">
-                      <span className="idle-snapshot-label">AWAY TIME</span>
-                      <span className="idle-snapshot-val-idle">{user?.idle_limit || 10}m</span>
-                    </div>
-                  </div>
-
-                  {/* Active Project Tag */}
-                  <div className="idle-project-tag">
-                    <span className="idle-project-tag-dot" style={{ backgroundColor: project.color || 'var(--accent)' }} />
-                    <span>{project.name}</span>
-                  </div>
-
-                  {/* Action CTAs */}
-                  {user?.keep_idle_mode === 'never' ? (
-                    <div className="idle-cta-container">
-                      <button
-                        className="idle-btn-primary-cta"
-                        onClick={() => {
-                          trackerAPI.setAlwaysOnTop?.(false);
-                          onResumeFromIdle?.();
-                        }}
-                      >
-                        <Play size={18} fill="currentColor" />
-                        <span>I'm Back • Resume Tracking</span>
-                        <span className="idle-shortcut-badge">↵ Enter</span>
-                      </button>
-
-                      <button
-                        className="idle-btn-secondary-cta"
-                        onClick={() => {
-                          trackerAPI.setAlwaysOnTop?.(false);
-                          onStop();
-                        }}
-                      >
-                        <Square size={14} />
-                        <span>Stop Session</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="idle-grid-cta-container">
-                      <button
-                        className="idle-grid-btn idle-btn-keep"
-                        onClick={() => {
-                          trackerAPI.setAlwaysOnTop?.(false);
-                          onResumeFromIdle?.();
-                        }}
-                      >
-                        <CheckCircle2 size={16} />
-                        <span>Keep Time</span>
-                      </button>
-                      <button
-                        className="idle-grid-btn idle-btn-discard"
-                        onClick={() => {
-                          trackerAPI.setAlwaysOnTop?.(false);
-                          (window as any).discardIdleTime?.((user.idle_limit || 10), true);
-                        }}
-                      >
-                        <Trash2 size={16} />
-                        <span>Discard</span>
-                      </button>
-                      <button
-                        className="idle-grid-btn idle-btn-reassign"
-                        onClick={() => setShowReassign(true)}
-                      >
-                        <RefreshCcw size={16} />
-                        <span>Reassign</span>
-                      </button>
-                      <button
-                        className="idle-grid-btn idle-btn-stop-session"
-                        onClick={() => {
-                          trackerAPI.setAlwaysOnTop?.(false);
-                          onStop();
-                        }}
-                      >
-                        <Square size={16} />
-                        <span>Stop</span>
-                      </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="idle-reassign-container">
-                  <div className="idle-reassign-top">
-                    <button className="idle-back-circle-btn" onClick={() => setShowReassign(false)}>
-                      <ArrowLeft size={16} />
-                    </button>
-                    <div>
-                      <h3 className="idle-reassign-headline">Reassign Idle Time</h3>
-                      <p className="idle-reassign-tagline">Select a project for the {user.idle_limit || 10}m away duration</p>
-                    </div>
-                  </div>
-
-                  <div className="idle-reassign-scroll">
-                    {projects.map((p: Project) => (
-                      <div
-                        key={p.id}
-                        className="idle-reassign-row"
-                        onClick={() => {
-                          trackerAPI.setAlwaysOnTop?.(false);
-                          (window as any).reassignIdleTime?.((user.idle_limit || 10), p.id);
-                          setShowReassign(false);
-                        }}
-                      >
-                        <div className="idle-reassign-dot" style={{ backgroundColor: p.color || 'var(--accent)' }} />
-                        <span className="idle-reassign-name">{p.name}</span>
-                        <ChevronRight size={14} className="idle-reassign-arrow" />
-                      </div>
-                    ))}
-                  </div>
-
-                  <button className="idle-reassign-cancel" onClick={() => setShowReassign(false)}>
-                    Back to Options
-                  </button>
+              {/* Icon */}
+              <div className="idle-icon-wrap">
+                <div className="idle-icon-ring" />
+                <div className="idle-icon-ring idle-icon-ring-2" />
+                <div className="idle-icon-core">
+                  <ShieldAlert size={22} />
                 </div>
-              )}
+              </div>
+
+              {/* Text */}
+              <h2 className="idle-title">Away Detected</h2>
+              <p className="idle-subtitle">
+                No activity for <strong>{user?.idle_limit || 10} min</strong>
+                {' · '}
+                <span className="idle-project-inline">
+                  <span className="idle-project-inline-dot" style={{ backgroundColor: project.color || 'var(--accent)' }} />
+                  {project.name}
+                </span>
+              </p>
+
+              {/* Time stat */}
+              <div className="idle-stat-row">
+                <div className="idle-stat">
+                  <span className="idle-stat-label">Productive</span>
+                  <span className="idle-stat-val">{fmt(hrsActive)}:{fmt(minsActive)}:{fmt(secsActive)}</span>
+                </div>
+                <div className="idle-stat-sep" />
+                <div className="idle-stat">
+                  <span className="idle-stat-label">Away</span>
+                  <span className="idle-stat-val idle-stat-val-away">{user?.idle_limit || 10}m</span>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="idle-actions">
+                <button
+                  className="idle-action-resume"
+                  onClick={() => {
+                    trackerAPI.setAlwaysOnTop?.(false);
+                    onResumeFromIdle?.();
+                  }}
+                >
+                  <Play size={15} fill="currentColor" />
+                  Resume
+                  <span className="idle-kbd">↵</span>
+                </button>
+
+                {user?.keep_idle_mode !== 'never' && (
+                  <button
+                    className="idle-action-discard"
+                    onClick={() => {
+                      trackerAPI.setAlwaysOnTop?.(false);
+                      (window as any).discardIdleTime?.((user.idle_limit || 10), true);
+                    }}
+                  >
+                    <Trash2 size={14} />
+                    Discard idle
+                  </button>
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}
