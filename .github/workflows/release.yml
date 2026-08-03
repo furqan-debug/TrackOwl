@@ -100,12 +100,12 @@ jobs:
           prerelease: false
           args: ${{ matrix.args }}
 
-      # Extract version number from package.json for manual workflow_dispatch triggers
+      # Extract version number from src-tauri/tauri.conf.json
       - name: Extract Version Number
         if: matrix.platform == 'windows-latest'
         id: version
         run: |
-          $ver = (Get-Content package.json | ConvertFrom-Json).version
+          $ver = (Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json).version
           echo "NUM=$ver" >> $env:GITHUB_OUTPUT
         shell: pwsh
 

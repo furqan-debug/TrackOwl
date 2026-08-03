@@ -21,56 +21,65 @@ pub struct UpdateStatus {
 /// Emits "update-available" event to the frontend if a newer version exists.
 /// Call this once on startup (in a background thread after a short delay).
 pub async fn check_for_updates(app: AppHandle) {
-    // Wait 2s after launch so we don't slow down startup
-    tokio::time::sleep(std::time::Duration::from_secs(2)).await;
+    // Wait 3s after launch so we don't slow down startup
+    tokio::time::sleep(std::time::Duration::from_secs(3)).await;
 
-    let updater: tauri_plugin_updater::Updater = match app.updater() {
-        Ok(u) => u,
-        Err(e) => {
-            eprintln!("[updater] Failed to get updater: {}", e);
-            return;
-        }
-    };
-
-    match updater.check().await {
-        Ok(Some(update)) => {
-            let status = UpdateStatus {
-                available: true,
-                version: Some(update.version.clone()),
-                notes: update.body.clone(),
-            };
-
-            println!(
-                "[updater] ✅ Update available: v{} → v{}",
-                update.current_version,
-                update.version
-            );
-
-            // Emit to React frontend — the UI will show an update banner
-            let _ = app.emit("update-available", &status);
-
-            // Show native notification
-            #[cfg(not(debug_assertions))]
-            {
-                use tauri_plugin_notification::NotificationExt;
-                let _ = app
-                    .notification()
-                    .builder()
-                    .title("DigiReps Tracker — Update Available")
-                    .body(format!(
-                        "Version {} is ready. Open the app to install.",
-                        update.version
-                    ))
-                    .show();
+    loop {
+        let updater: tauri_plugin_updater::Updater = match app.updater() {
+            Ok(u) => u,
+            Err(e) => {
+                eprintln!("[updater] Failed to get updater: {}", e);
+                tokio::time::sleep(std::time::Duration::from_secs(900)).await;
+                continue;
             }
-        }
-        Ok(None) => {
-            println!("[updater] App is up to date.");
-        }
-        Err(e) => {
-            eprintln!("[updater] Update check failed: {}", e);
-        }
-    };
+        };
+
+        match updater.check().await {
+            Ok(Some(update)) => {
+                let status = UpdateStatus {
+                    available: true,
+                    version: Some(update.version.clone()),
+                    notes: update.body.clone(),
+                };
+
+                println!(
+                    "[updater] ✅ Update available: v{} → v{}",
+                    update.current_version,
+                    update.version
+                );
+
+                // Emit to React frontend — the UI will show an update banner / forced overlay
+                let _ = app.emit("update-available", &status);
+
+                // Show native notification
+                #[cfg(not(debug_assertions))]
+                {
+                    use tauri_plugin_notification::NotificationExt;
+                    let _ = app
+                        .notification()
+                        .builder()
+                        .title("TrackOwl — Update Available")
+                        .body(format!(
+                            "Version {} is ready. Open TrackOwl to install.",
+                            update.version
+                        ))
+                        .show();
+                }
+
+                // Stop loop once update is detected
+                break;
+            }
+            Ok(None) => {
+                println!("[updater] App is up to date.");
+            }
+            Err(e) => {
+                eprintln!("[updater] Update check failed: {}", e);
+            }
+        };
+
+        // Check again every 15 minutes
+        tokio::time::sleep(std::time::Duration::from_secs(900)).await;
+    }
 }
 
 /// Download and install the pending update.
