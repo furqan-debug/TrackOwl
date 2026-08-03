@@ -590,6 +590,30 @@ fn get_inactivity_status(state: tauri::State<'_, Mutex<AppState>>) -> bool {
     mouse > 0 || keyboard > 0
 }
 
+/// invoke('focus_window', { alwaysOnTop?: bool })
+#[tauri::command]
+fn focus_window(app: tauri::AppHandle, always_on_top: Option<bool>) {
+    use tauri::Manager;
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.unminimize();
+        let _ = window.show();
+        if let Some(on_top) = always_on_top {
+            let _ = window.set_always_on_top(on_top);
+        }
+        let _ = window.set_focus();
+        let _ = window.request_user_attention(Some(tauri::UserAttentionType::Critical));
+    }
+}
+
+/// invoke('set_always_on_top', { alwaysOnTop: bool })
+#[tauri::command]
+fn set_always_on_top(app: tauri::AppHandle, always_on_top: bool) {
+    use tauri::Manager;
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.set_always_on_top(always_on_top);
+    }
+}
+
 /// invoke('show_idle_dialog')
 #[tauri::command]
 fn show_idle_dialog(app: tauri::AppHandle, limit: u32) {
@@ -754,7 +778,7 @@ pub fn run() {
                     std::thread::sleep(std::time::Duration::from_millis(1000));
                     
                     let state = app_handle_watcher.state::<Mutex<AppState>>();
-                    let (monitoring, limit) = {
+                    let (monitoring, _limit) = {
                         let s = state.lock().unwrap();
                         let monitoring = *s.is_idle_monitoring.lock().unwrap();
                         let limit = *s.last_idle_limit.lock().unwrap();
@@ -774,7 +798,13 @@ pub fn run() {
                                 let s = state.lock().unwrap();
                                 *s.is_idle_monitoring.lock().unwrap() = false;
                             }
-                            show_idle_dialog(app_handle_watcher.clone(), limit);
+                            if let Some(window) = app_handle_watcher.get_webview_window("main") {
+                                let _ = window.unminimize();
+                                let _ = window.show();
+                                let _ = window.set_focus();
+                                let _ = window.request_user_attention(Some(tauri::UserAttentionType::Critical));
+                            }
+                            let _ = app_handle_watcher.emit("user-returned-from-idle", ());
                         }
                     }
                 }
@@ -798,6 +828,8 @@ pub fn run() {
             install_update,
             set_auth_token,
             get_inactivity_status,
+            focus_window,
+            set_always_on_top,
             show_idle_dialog,
             start_idle_monitoring,
             stop_idle_monitoring,
