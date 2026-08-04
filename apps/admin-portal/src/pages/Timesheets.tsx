@@ -32,6 +32,8 @@ interface Session {
     display_timezone?: string;
     is_active?: boolean;
     effective_end?: string;
+    original_started_at?: string;
+    original_ended_at?: string | null;
 }
 
 interface DailyEntry {
@@ -288,75 +290,88 @@ export function Timesheets() {
                 else if (activeTimezone === 'Org Local') tz = orgTimezone;
                 else tz = activeTimezone;
                 
-                const dayKey = getGroupingDateInTz(s.started_at, tz);
+                const parseDbTimestamp = (ts: string | null | undefined) => {
+                    if (!ts) return null;
+                    const normalized = (ts.endsWith('Z') || ts.includes('+') || /-\d{2}:\d{2}$/.test(ts)) ? ts : ts + 'Z';
+                    return new Date(normalized).getTime();
+                };
+
+                const stats = sessionStats.find((st: any) => st.session_id === s.id);
+                const sampleCount = stats ? parseInt(stats.sample_count) : 0;
+                const activitySum = stats ? parseInt(stats.activity_sum) : 0;
+                const offlineMins = stats ? parseInt(stats.offline_count) : 0;
+
+                const startedAtMs = parseDbTimestamp(s.started_at) || new Date(s.started_at).getTime();
+                const lastSampleTime = stats && stats.last_sample_at ? (parseDbTimestamp(stats.last_sample_at) || startedAtMs) : startedAtMs;
+
+                const score = sampleCount > 0 ? Math.round(activitySum / sampleCount) : 0;
+
+                const nowMs = new Date().getTime();
+                const isTrulyActive = !s.ended_at && (nowMs - startedAtMs < 14 * 60 * 60 * 1000);
+
+                let effectiveEndMs = nowMs;
+                if (s.ended_at) {
+                    effectiveEndMs = parseDbTimestamp(s.ended_at) || new Date(s.ended_at).getTime();
+                } else if (isTrulyActive) {
+                    effectiveEndMs = nowMs;
+                } else if (sampleCount > 0) {
+                    effectiveEndMs = Math.max(lastSampleTime, startedAtMs);
+                } else {
+                    effectiveEndMs = nowMs;
+                }
+
+                // Convert to target timezone dates to measure local day bounds overlap
+                const startLocalStr = new Date(startedAtMs).toLocaleString('en-US', { timeZone: tz });
+                const endLocalStr = new Date(effectiveEndMs).toLocaleString('en-US', { timeZone: tz });
+                const startLocal = new Date(startLocalStr);
+                const endLocal = new Date(endLocalStr);
                 
+                const isManual = s.manual === true;
+
                 // DEBUG LOG FOR FIRST SESSION
                 if (s.id === sessions[0]?.id) {
-                    console.log(`DEBUG: started_at=${s.started_at}, tz=${tz}, dayKey=${dayKey}`);
+                    console.log(`DEBUG: startedAtMs=${startedAtMs}, effectiveEndMs=${effectiveEndMs}, tz=${tz}`);
                 }
-                
-                const key = dailyMap[dayKey] ? dayKey : null;
 
-                if (key) {
-                    const stats = sessionStats.find((st: any) => st.session_id === s.id);
-                    const sampleCount = stats ? parseInt(stats.sample_count) : 0;
-                    const activitySum = stats ? parseInt(stats.activity_sum) : 0;
-                    const offlineMins = stats ? parseInt(stats.offline_count) : 0;
-
-                    const parseDbTimestamp = (ts: string | null | undefined) => {
-                        if (!ts) return null;
-                        const normalized = (ts.endsWith('Z') || ts.includes('+') || /-\d{2}:\d{2}$/.test(ts)) ? ts : ts + 'Z';
-                        return new Date(normalized).getTime();
-                    };
-
-                    const startedAtMs = parseDbTimestamp(s.started_at) || new Date(s.started_at).getTime();
-                    const lastSampleTime = stats && stats.last_sample_at ? (parseDbTimestamp(stats.last_sample_at) || startedAtMs) : startedAtMs;
-
-                    const score = sampleCount > 0 ? Math.round(activitySum / sampleCount) : 0;
-
-                    const nowMs = new Date().getTime();
-                    const isTrulyActive = !s.ended_at && (nowMs - startedAtMs < 14 * 60 * 60 * 1000);
-
-                    let effectiveEndMs = nowMs;
-                    if (s.ended_at) {
-                        effectiveEndMs = parseDbTimestamp(s.ended_at) || new Date(s.ended_at).getTime();
-                    } else if (isTrulyActive) {
-                        effectiveEndMs = nowMs;
-                    } else if (sampleCount > 0) {
-                        effectiveEndMs = Math.max(lastSampleTime, startedAtMs);
-                    } else {
-                        effectiveEndMs = nowMs;
-                    }
-
-                    // Convert to target timezone dates to measure local day bounds overlap
-                    const startLocalStr = new Date(startedAtMs).toLocaleString('en-US', { timeZone: tz });
-                    const endLocalStr = new Date(effectiveEndMs).toLocaleString('en-US', { timeZone: tz });
-                    const startLocal = new Date(startLocalStr);
-                    const endLocal = new Date(endLocalStr);
-
+                Object.keys(dailyMap).forEach(key => {
                     const dayStartLocal = new Date(`${key}T00:00:00`);
                     const dayEndLocal = new Date(`${key}T23:59:59.999`);
 
                     const overlapStartMs = Math.max(startLocal.getTime(), dayStartLocal.getTime());
                     const overlapEndMs = Math.min(endLocal.getTime(), dayEndLocal.getTime());
 
-                    let durationMins = (overlapEndMs - overlapStartMs) / 60000;
-                    if (durationMins < 0) durationMins = 0;
+                    // Check if the session overlaps with this calendar day
+                    if (overlapEndMs > overlapStartMs || (isTrulyActive && overlapEndMs >= overlapStartMs && overlapEndMs === dayEndLocal.getTime())) {
+                        
+                        // Calculate absolute UTC timestamps for the segment
+                        const segmentAbsoluteStartMs = startedAtMs + (overlapStartMs - startLocal.getTime());
+                        const segmentAbsoluteEndMs = effectiveEndMs + (overlapEndMs - endLocal.getTime());
+                        
+                        let segmentDurationMins = (segmentAbsoluteEndMs - segmentAbsoluteStartMs) / 60000;
+                        if (segmentDurationMins < 0) segmentDurationMins = 0;
 
-                    const isManual = s.manual === true;
-                    dailyMap[key].sessions.push({
-                        ...s,
-                        activity_percent: isManual ? 0 : score,
-                        idle_percent: isManual ? 0 : (100 - score),
-                        manual_percent: isManual ? 100 : 0,
-                        duration_mins: Math.max(0, durationMins),
-                        offline_mins: offlineMins,
-                        user_name: member?.full_name || 'System User',
-                        display_timezone: tz,
-                        is_active: isTrulyActive,
-                        effective_end: isTrulyActive ? undefined : new Date(effectiveEndMs).toISOString()
-                    });
-                }
+                        const totalDurationMins = Math.max(1, (effectiveEndMs - startedAtMs) / 60000);
+                        const durationRatio = segmentDurationMins / totalDurationMins;
+                        const segmentOfflineMins = Math.round(offlineMins * durationRatio);
+
+                        dailyMap[key].sessions.push({
+                            ...s,
+                            original_started_at: s.started_at,
+                            original_ended_at: s.ended_at,
+                            started_at: new Date(segmentAbsoluteStartMs).toISOString(),
+                            ended_at: isTrulyActive && overlapEndMs === endLocal.getTime() ? null : new Date(segmentAbsoluteEndMs).toISOString(),
+                            activity_percent: isManual ? 0 : score,
+                            idle_percent: isManual ? 0 : (100 - score),
+                            manual_percent: isManual ? 100 : 0,
+                            duration_mins: segmentDurationMins,
+                            offline_mins: segmentOfflineMins,
+                            user_name: member?.full_name || 'System User',
+                            display_timezone: tz,
+                            is_active: isTrulyActive && (overlapEndMs === endLocal.getTime()),
+                            effective_end: isTrulyActive ? undefined : new Date(segmentAbsoluteEndMs).toISOString()
+                        });
+                    }
+                });
             });
 
             const result = Object.values(dailyMap).map(d => {
@@ -444,9 +459,9 @@ export function Timesheets() {
         }
     }
 
-    const openEditModal = (session: Session) => {
-        const start = new Date(session.started_at);
-        const end = session.ended_at ? new Date(session.ended_at) : new Date(session.effective_end || new Date());
+    const openEditModal = (session: any) => {
+        const start = new Date(session.original_started_at || session.started_at);
+        const end = (session.original_ended_at || session.ended_at) ? new Date(session.original_ended_at || session.ended_at) : new Date(session.effective_end || new Date());
         
         const pad = (n: number) => n.toString().padStart(2, '0');
         const localDateStr = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
