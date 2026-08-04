@@ -374,7 +374,12 @@ export const reportService = {
     const orgTz = (options as any).orgTimezone || 'UTC';
 
     const t2 = performance.now();
-    const [samplesResult, { count: ssCount }] = await Promise.all([
+    const sessionIds = filteredSessions.map(s => s.id);
+    const statsQuery = sessionIds.length > 0 
+        ? supabase.rpc('get_sessions_activity_stats', { p_session_ids: sessionIds }) 
+        : Promise.resolve({ data: [] });
+
+    const [samplesResult, { count: ssCount }, { data: statsData }] = await Promise.all([
         supabase.rpc('get_reports_aggregated_data', {
             p_org_id: organizationId,
             p_start_iso: start,
@@ -383,8 +388,10 @@ export const reportService = {
             p_member_ids: scopedUserIds.length > 0 ? scopedUserIds : null
         }),
         ssQuery,
+        statsQuery
     ]);
     const t3 = performance.now();
+    const sessionStats = statsData || [];
 
     const aggregatedData = samplesResult.data as any || { daily_stats: [], user_daily_stats: [], app_stats: [] };
     const dbDailyStats = aggregatedData.daily_stats || [];
@@ -502,7 +509,10 @@ export const reportService = {
         const uid = sess.user_id;
         const member = uid ? membersMap.get(uid) : null;
         
-        const { endMs, isLive } = getEffectiveEnd(sess.started_at, sess.ended_at);
+        const stat = sessionStats.find((st: any) => st.session_id === sess.id);
+        const lastSampleAt = stat?.last_sample_at || null;
+        
+        const { endMs, isLive } = getEffectiveEnd(sess.started_at, sess.ended_at, lastSampleAt);
         const startMs = new Date(sess.started_at).getTime();
 
         const tz = orgTz;
