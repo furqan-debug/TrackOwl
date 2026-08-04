@@ -9,10 +9,7 @@ import {
 } from 'lucide-react';
 import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker } from '../components/ui';
 import clsx from 'clsx';
-import {
-    formatDuration,
-    getGroupingDateInTz
-} from '../lib/dataUtils';
+import { getGroupingDateInTz, formatDuration, STALE_THRESHOLD_MS } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
 
 interface Session {
@@ -307,7 +304,7 @@ export function Timesheets() {
                 const score = sampleCount > 0 ? Math.round(activitySum / sampleCount) : 0;
 
                 const nowMs = new Date().getTime();
-                const isTrulyActive = !s.ended_at && (nowMs - startedAtMs < 14 * 60 * 60 * 1000);
+                const isTrulyActive = !s.ended_at && (nowMs - startedAtMs < STALE_THRESHOLD_MS);
 
                 let effectiveEndMs = nowMs;
                 if (s.ended_at) {
