@@ -4,8 +4,8 @@ import type { ActivitySample, Session, AppSupabaseClient } from '../types';
  * Shared data utilities for standardized session and duration calculations.
  */
 
-export const STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000; // 2 hours
-export const MAX_LIVE_SESSION_MS = 12 * 60 * 60 * 1000; // 12 hours (sanity cap for live sessions)
+export const STALE_THRESHOLD_MS = 14 * 60 * 60 * 1000; // 14 hours
+export const MAX_LIVE_SESSION_MS = 14 * 60 * 60 * 1000; // 14 hours (sanity cap for live sessions)
 
 export interface TimeInterval {
     startMs: number;
