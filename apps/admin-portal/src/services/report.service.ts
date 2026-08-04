@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { getDayIndexInTz, getEffectiveEnd, getGroupingDateInTz } from '../lib/dataUtils';
+import { getDayIndexInTz, getEffectiveEnd } from '../lib/dataUtils';
 
 export interface OwedRow {
     member_id: string;
@@ -475,16 +475,15 @@ export const reportService = {
             dailyMap[row.date] = {
                 activitySum: row.activity_sum,
                 total_samples: row.sample_count,   // sample count for activity % averaging
-                total_minutes: row.total_minutes    // session-duration-based tracked time
+                total_minutes: 0 // Will calculate via JS split
             };
         }
     });
 
-    // 2. Populate memberRows and calculate costs from DB aggregates
+    // 2. Populate memberRows (activity samples only)
     dbUserDailyStats.forEach((row: any) => {
         const uid = row.user_id;
         const day = row.date;
-        const mins = row.total_minutes;         // session-duration minutes
         const sampleCount = row.sample_count;   // sample count for activity averaging
         const actSum = row.activity_sum;
 
@@ -492,34 +491,47 @@ export const reportService = {
             const member = membersMap.get(uid);
             if (member && memberRows[member.id]) {
                 const r = memberRows[member.id];
-                r.dailyMins[day] = (r.dailyMins[day] || 0) + mins;
-                r.totalMins += mins;
                 r.activitySum += actSum;
                 r.activitySamples += sampleCount; // use sample count, not duration
-
-                costs += (mins / 60) * (member.pay_rate || 0);
-                billed += (mins / 60) * (member.bill_rate || 0);
             }
         }
     });
 
-    // 3. Process Manual Sessions
+    // 3. Process ALL Sessions for accurate midnight-split duration
     filteredSessions.forEach(sess => {
-        if (sess.manual === true) {
-            const uid = sess.user_id;
-            const member = uid ? membersMap.get(uid) : null;
-            
-            const { endMs } = getEffectiveEnd(sess.started_at, sess.ended_at);
-            const clampedStartMs = Math.max(new Date(sess.started_at).getTime(), new Date(start).getTime());
-            const clampedEndMs = Math.min(endMs, new Date(end).getTime());
-            const sessionMins = Math.max(0, Math.round((clampedEndMs - clampedStartMs) / 60000));
+        const uid = sess.user_id;
+        const member = uid ? membersMap.get(uid) : null;
+        
+        const { endMs, isLive } = getEffectiveEnd(sess.started_at, sess.ended_at);
+        const startMs = new Date(sess.started_at).getTime();
 
-            if (sessionMins > 0) {
-                const day = getGroupingDateInTz(new Date(clampedStartMs).toISOString(), orgTz);
-                if (dateListSet.has(day)) {
-                    if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
+        const tz = orgTz;
 
-                    dailyMap[day].total_minutes += sessionMins;
+        const startLocalStr = new Date(startMs).toLocaleString('en-US', { timeZone: tz });
+        const endLocalStr = new Date(endMs).toLocaleString('en-US', { timeZone: tz });
+        const startLocal = new Date(startLocalStr);
+        const endLocal = new Date(endLocalStr);
+
+        dateList.forEach(key => {
+            const dayStartLocal = new Date(`${key}T00:00:00`);
+            const dayEndLocal = new Date(`${key}T23:59:59.999`);
+
+            const overlapStartMs = Math.max(startLocal.getTime(), dayStartLocal.getTime());
+            const overlapEndMs = Math.min(endLocal.getTime(), dayEndLocal.getTime());
+
+            if (overlapEndMs > overlapStartMs || (isLive && overlapEndMs >= overlapStartMs && overlapEndMs === dayEndLocal.getTime())) {
+                const segmentAbsoluteStartMs = startMs + (overlapStartMs - startLocal.getTime());
+                const segmentAbsoluteEndMs = endMs + (overlapEndMs - endLocal.getTime());
+                
+                let segmentDurationMins = (segmentAbsoluteEndMs - segmentAbsoluteStartMs) / 60000;
+                if (segmentDurationMins < 0) segmentDurationMins = 0;
+                
+                const sessionMins = Math.max(0, Math.round(segmentDurationMins));
+
+                if (sessionMins > 0) {
+                    if (!dailyMap[key]) dailyMap[key] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
+                    
+                    dailyMap[key].total_minutes += sessionMins;
 
                     if (member) {
                         costs += (sessionMins / 60) * (member.pay_rate || 0);
@@ -528,12 +540,12 @@ export const reportService = {
 
                     if (member && memberRows[member.id]) {
                         const row = memberRows[member.id];
-                        row.dailyMins[day] = (row.dailyMins[day] || 0) + sessionMins;
+                        row.dailyMins[key] = (row.dailyMins[key] || 0) + sessionMins;
                         row.totalMins += sessionMins;
                     }
                 }
             }
-        }
+        });
     });
 
     const dailyActivityList = dateList.map(date => {
