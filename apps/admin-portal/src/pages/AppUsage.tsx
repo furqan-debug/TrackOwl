@@ -5,7 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import {
     AppWindow, Monitor, Users, Search,
     Clock, RefreshCw, Filter,
-    PieChart as PieChartIcon
+    PieChart as PieChartIcon,
+    ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { PageLayout, StatMetric, LoadingState, EmptyState, FilterSelect, DatePicker } from '../components/ui';
@@ -41,6 +42,9 @@ export function AppUsage() {
     const [members, setMembers] = useState<MemberInfo[]>([]);
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 15;
 
     const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' }));
 
@@ -133,7 +137,20 @@ export function AppUsage() {
         return top;
     }, [apps]);
 
-    const filteredApps = apps.filter(a => a.app.toLowerCase().includes(searchTerm.toLowerCase()));
+    const filteredApps = apps.filter(a => {
+        const term = searchTerm.toLowerCase();
+        return (a.raw_app && a.raw_app.toLowerCase().includes(term)) ||
+               (a.domain && a.domain.toLowerCase().includes(term)) ||
+               (a.window_title && a.window_title.toLowerCase().includes(term));
+    });
+
+    const totalPages = Math.ceil(filteredApps.length / ITEMS_PER_PAGE);
+    const paginatedApps = filteredApps.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+    // Reset page when search term changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     if (loading) return <div className="h-screen flex items-center justify-center bg-surface"><LoadingState /></div>;
 
@@ -256,27 +273,47 @@ export function AppUsage() {
                         <table className="w-full text-left order-collapse">
                             <thead>
                                 <tr className="bg-surface-hover/50 border-b border-border">
-                                    <th className="px-10 py-4 text-[11px] font-black text-text-muted w-1/3">App / Website</th>
+                                    <th className="px-10 py-4 text-[11px] font-black text-text-muted w-[20%]">App Name</th>
+                                    <th className="px-10 py-4 text-[11px] font-black text-text-muted w-[20%] hidden lg:table-cell">Domain</th>
+                                    <th className="px-10 py-4 text-[11px] font-black text-text-muted w-[25%] hidden xl:table-cell">Window Title</th>
                                     <th className="px-10 py-4 text-[11px] font-black text-text-muted hidden sm:table-cell">Category</th>
                                     <th className="px-10 py-4 text-[11px] font-black text-text-muted text-right">Time Used</th>
                                     <th className="px-10 py-4 text-[11px] font-black text-text-muted text-right">Usage %</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
-                                {filteredApps.map((app, i) => (
-                                    <tr key={i} className="hover:bg-surface-hover transition-colors group">
+                                {paginatedApps.map((app, i) => {
+                                    const isExpanded = expandedRows.has(i);
+                                    const toggleExpand = () => {
+                                        const next = new Set(expandedRows);
+                                        if (next.has(i)) next.delete(i);
+                                        else next.add(i);
+                                        setExpandedRows(next);
+                                    };
+
+                                    return (
+                                        <tr key={i} onClick={toggleExpand} className="hover:bg-surface-hover transition-colors group cursor-pointer">
                                         <td className="px-10 py-5">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-10 h-10 rounded-xl bg-surface-hover border border-border flex items-center justify-center shadow-shell-sm group-hover:bg-primary group-hover:text-white transition-all text-text-muted overflow-hidden">
                                                     <AppWindow className="w-5 h-5 shrink-0" />
                                                 </div>
                                                 <div className="flex flex-col min-w-0">
-                                                    <span className="text-sm font-black text-text-main leading-none truncate max-w-[240px] tracking-tight group-hover:text-primary transition-colors">
-                                                        {app.app}
+                                                    <span className={clsx("text-sm font-black text-text-main leading-tight tracking-tight group-hover:text-primary transition-colors", !isExpanded && "truncate max-w-[200px]")} title={app.raw_app}>
+                                                        {app.raw_app || 'Unknown'}
                                                     </span>
-                                                    <span className="text-[10px] text-text-muted font-bold mt-1.5">Application</span>
                                                 </div>
                                             </div>
+                                        </td>
+                                        <td className="px-10 py-5 hidden lg:table-cell">
+                                            <span className={clsx("text-sm font-medium text-text-muted", !isExpanded ? "truncate block max-w-[200px]" : "break-all")} title={app.domain}>
+                                                {app.domain || '-'}
+                                            </span>
+                                        </td>
+                                        <td className="px-10 py-5 hidden xl:table-cell">
+                                            <span className={clsx("text-sm font-medium text-text-muted", !isExpanded ? "truncate block max-w-[300px]" : "break-words")} title={app.window_title}>
+                                                {app.window_title || '-'}
+                                            </span>
                                         </td>
                                         <td className="px-10 py-5 hidden sm:table-cell">
                                             <span className="px-2 py-1 bg-surface-hover border border-border rounded text-[9px] font-black text-text-muted group-hover:border-primary/20 group-hover:text-primary transition-colors tracking-[0.1em]">
@@ -295,10 +332,37 @@ export function AppUsage() {
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between px-8 py-4 border-t border-border bg-surface-hover/30 shrink-0">
+                            <span className="text-xs font-bold text-text-muted">
+                                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1} to {Math.min(currentPage * ITEMS_PER_PAGE, filteredApps.length)} of {filteredApps.length}
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="p-1.5 rounded-lg border border-border bg-surface text-text-muted hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-shell-sm"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                <span className="text-xs font-black text-text-main tabular-nums min-w-[3rem] text-center">
+                                    {currentPage} / {totalPages}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="p-1.5 rounded-lg border border-border bg-surface text-text-muted hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-shell-sm"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
             </div>
