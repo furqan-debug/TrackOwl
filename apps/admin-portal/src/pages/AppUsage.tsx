@@ -281,7 +281,7 @@ export function AppUsage() {
                                     <th className="px-10 py-4 text-[11px] font-black text-text-muted text-right">Usage %</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-50">
+                            <tbody className="divide-y divide-border">
                                 {paginatedApps.map((app, i) => {
                                     const isExpanded = expandedRows.has(i);
                                     const toggleExpand = () => {
