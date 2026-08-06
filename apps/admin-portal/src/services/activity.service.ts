@@ -3,6 +3,9 @@ import { fetchAllActivitySamples } from '../lib/dataUtils';
 
 export interface AppEntry {
     app: string;
+    raw_app: string;
+    domain: string;
+    window_title: string;
     count: number;
     percent: number;
     category: string;
@@ -54,91 +57,34 @@ export const activityService = {
         members: any[],
         selectedMemberId: string
     ): Promise<AppEntry[]> {
-        const selectedMember = members.find(m => m.id === selectedMemberId);
-        const scopedUserIds = selectedMemberId.toLowerCase() !== 'all'
-            ? Array.from(new Set([selectedMember?.id, selectedMember?.auth_user_id].filter(Boolean) as string[]))
-            : Array.from(new Set(members.flatMap(m => [m.id, m.auth_user_id].filter(Boolean) as string[])));
+        const minifiedMembers = members.map(m => ({ id: m.id, auth_user_id: m.auth_user_id, idle_limit: m.idle_limit }));
 
-        if (scopedUserIds.length === 0) {
+        const { data, error } = await supabase.functions.invoke('get-app-usage', {
+            body: { organizationId, start, end, members: minifiedMembers, selectedMemberId }
+        });
+
+        if (error || !data) {
+            console.error("Error invoking get-app-usage function:", error);
             return [];
         }
 
-        let sessionsQuery = supabase.from('sessions').select('id, user_id').eq('organization_id', organizationId).lt('started_at', end).or(`ended_at.is.null,ended_at.gt.${start}`);
-        if (scopedUserIds.length > 0) sessionsQuery = sessionsQuery.in('user_id', scopedUserIds);
-
-        const { data: userSessions } = await sessionsQuery;
-        const sessionIds = userSessions?.map(s => s.id) || [];
-
-        if (sessionIds.length === 0) {
-            return [];
-        }
-
-        const samples = await fetchAllActivitySamples(supabase, start, end, 'session_id, app_name, recorded_at, idle', {
-            organizationId: organizationId,
-            sessionIds: sessionIds.length > 0 ? sessionIds : undefined
-        });
-
-        if (!samples) return [];
-
-        const membersMap = new Map(members.map(m => [m.id, m]));
-        const samplesByUser = new Map<string, any[]>();
-        samples.forEach((s: any) => {
-            const uid = userSessions?.find(sess => sess.id === s.session_id)?.user_id;
-            if (!uid) return;
-            if (!samplesByUser.has(uid)) samplesByUser.set(uid, []);
-            samplesByUser.get(uid)!.push(s);
-        });
-
-        const appCounts: Record<string, number> = {};
         let total = 0;
-
-        const productiveSamples: any[] = [];
-        samplesByUser.forEach((userSamps, uid) => {
-            const limit = membersMap.get(uid)?.idle_limit ?? 0;
-            if (limit <= 1) {
-                productiveSamples.push(...userSamps);
-            } else {
-                const sorted = userSamps.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-                let currentBlock: any[] = [];
-                for (let i = 0; i < sorted.length; i++) {
-                    const s = sorted[i];
-                    const prev = i > 0 ? sorted[i - 1] : null;
-                    const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
-                    const isContiguous = prev && gapMs <= 125000;
-
-                    if (s.idle && isContiguous) {
-                        currentBlock.push(s);
-                    } else if (s.idle && !prev) {
-                        currentBlock = [s];
-                    } else if (s.idle && !isContiguous) {
-                        if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
-                        currentBlock = [s];
-                    } else {
-                        productiveSamples.push(s);
-                        if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
-                        currentBlock = [];
-                    }
-                }
-                if (currentBlock.length < limit) productiveSamples.push(...currentBlock);
-            }
+        const mapped = data.map((r: any) => {
+            total += r.count;
+            return {
+                ...r,
+                category: categorizeApp(r.raw_app)
+            };
         });
 
-        productiveSamples.forEach(s => {
-            const name = s.app_name?.trim();
-            if (!name || name.toLowerCase() === 'program manager') return;
-            appCounts[name] = (appCounts[name] || 0) + 1;
-            total++;
-        });
-
-        return Object.entries(appCounts).map(([app, count]) => ({
-            app,
-            count,
-            percent: total > 0 ? (count / total) * 100 : 0,
-            category: categorizeApp(app)
-        })).sort((a, b) => b.count - a.count);
+        return mapped.map((r: any) => ({
+            ...r,
+            percent: total > 0 ? (r.count / total) * 100 : 0
+        })).sort((a: any, b: any) => b.count - a.count);
     },
 
     async fetchDomains(
+        organizationId: string,
         start: string,
         end: string,
         members: any[],
@@ -177,18 +123,32 @@ export const activityService = {
             supabase as any,
             start,
             end,
-            'domain, recorded_at',
-            { sessionIds }
+            'session_id, domain, window_title, recorded_at',
+            { organizationId }
         );
 
-        const data = (rawSamples || []).filter((r: any) => (r.domain || '').trim() !== '');
+        const sessionIdsSet = new Set(sessionIds);
+        const data = (rawSamples || []).filter((r: any) => {
+            if (!sessionIdsSet.has(r.session_id)) return false;
+            return (r.domain || '').trim() !== '' || (r.window_title || '').trim() !== '';
+        });
+
+        const minuteMap = new Map<string, any>();
+        data.forEach((s: any) => {
+            const minute = `${s.session_id}_${new Date(s.recorded_at).toISOString().substring(0, 16)}`;
+            minuteMap.set(minute, s);
+        });
+        const uniqueData = Array.from(minuteMap.values());
 
         const domainMap: Record<string, number> = {};
         const hourMap: Record<number, number> = {};
 
-        data.forEach((row: any) => {
-            if (!row.domain) return;
-            domainMap[row.domain] = (domainMap[row.domain] || 0) + 1;
+        uniqueData.forEach((row: any) => {
+            const domainVal = (row.domain || '').trim();
+            const displayUrl = domainVal !== '' ? domainVal : (row.window_title || '').trim();
+            if (!displayUrl) return;
+
+            domainMap[displayUrl] = (domainMap[displayUrl] || 0) + 1;
             const h = new Date(row.recorded_at).getHours();
             hourMap[h] = (hourMap[h] || 0) + 1;
         });
@@ -248,13 +208,13 @@ export const activityService = {
             return { samples: [], screenshots: [], sessionMinutes: 0, hasMoreScreenshots: false };
         }
 
-        const [actData, { data: ssData, count: totalSS }, { data: statsData }] = await Promise.all([
+        const [rawActData, { data: ssData, count: totalSS }, { data: statsData }] = await Promise.all([
             fetchAllActivitySamples(
                 supabase as any,
                 start,
                 end,
                 'id, session_id, recorded_at, mouse_clicks, key_presses, app_name, window_title, idle, activity_percent',
-                { organizationId, sessionIds }
+                { organizationId }
             ),
             supabase.from('screenshots')
                 .select('id, session_id, recorded_at, file_url', { count: 'exact' })
@@ -312,8 +272,11 @@ export const activityService = {
             return acc + durationMins;
         }, 0);
 
+        const sessionIdsSet = new Set(sessionIds);
+        const filteredSamples = (rawActData || []).filter((s: any) => sessionIdsSet.has(s.session_id));
+
         return {
-            samples: actData || [],
+            samples: filteredSamples,
             screenshots: ssData || [],
             sessionMinutes: mins,
             hasMoreScreenshots: (totalSS || 0) > screenshotLimit

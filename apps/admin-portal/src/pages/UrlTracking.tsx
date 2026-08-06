@@ -74,7 +74,14 @@ export function UrlTracking() {
         const end = now.toISOString();
         
         try {
-            const { domains: sorted, hourlyData: hData } = await activityService.fetchDomains(start, end, members, selectedMemberId);
+            if (!organizationId) return;
+            const { domains: sorted, hourlyData: hData } = await activityService.fetchDomains(
+                organizationId,
+                start, 
+                end, 
+                members, 
+                selectedMemberId
+            );
             setDomains(sorted);
             setHourlyData(hData);
         } catch (error) {
