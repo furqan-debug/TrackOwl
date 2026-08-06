@@ -23,6 +23,9 @@ pub struct AppState {
     pub user_id: Option<String>,
     pub org_id: Option<String>,
     pub tracking_running: Arc<Mutex<bool>>,
+    /// Controls the always-on sync loop — independent of tracking sessions.
+    /// Set true when the user logs in (set_auth_token), false only on app exit.
+    pub sync_running: Arc<Mutex<bool>>,
     pub counts: Arc<tracker::TrackerCounts>,
     pub db: Arc<Mutex<Option<rusqlite::Connection>>>,
     pub is_idle_monitoring: Arc<Mutex<bool>>,
@@ -46,6 +49,7 @@ impl Default for AppState {
             user_id: None,
             org_id: None,
             tracking_running: Arc::new(Mutex::new(false)),
+            sync_running: Arc::new(Mutex::new(false)),
             counts: Arc::new(tracker::TrackerCounts::default()),
             db: Arc::new(Mutex::new(db)),
             is_idle_monitoring: Arc::new(Mutex::new(false)),
@@ -159,7 +163,7 @@ pub fn supabase_patch(
 
 /// Robust stop and sync logic used on exit or manual stop.
 fn stop_and_sync_internal(state_handle: &Mutex<AppState>) {
-    let (cfg, token, session_id, running, db_arc, auth_token_arc) = {
+    let (cfg, token, session_id, running, sync_running, db_arc, auth_token_arc) = {
         let mut s = state_handle.lock().unwrap();
         let token = s.auth_token.lock().unwrap().clone();
         let cfg = SupabaseConfig { 
@@ -167,10 +171,12 @@ fn stop_and_sync_internal(state_handle: &Mutex<AppState>) {
             anon_key: s.supabase_anon_key.clone() 
         };
         let sid = s.active_session_id.take();
-        (cfg, token, sid, Arc::clone(&s.tracking_running), Arc::clone(&s.db), Arc::clone(&s.auth_token))
+        (cfg, token, sid, Arc::clone(&s.tracking_running), Arc::clone(&s.sync_running), Arc::clone(&s.db), Arc::clone(&s.auth_token))
     };
     
     *running.lock().unwrap() = false;
+    // Stop the always-on sync loop on app exit (not on stop_tracking)
+    *sync_running.lock().unwrap() = false;
     if let Some(sid) = session_id {
         println!("[lib] 🛑 Stopping session via RPC: {}", sid);
         let body = serde_json::json!({ "p_session_id": sid }).to_string();
@@ -376,8 +382,8 @@ fn start_tracking(
                         plan_type.clone(),
                     );
 
-                    // 30s offline sync loop
-                    cache::start_sync_loop(cfg.clone(), Arc::clone(&auth_arc), Arc::clone(&running));
+                    // The always-on sync loop is started in set_auth_token.
+                    // No need to start a new one here — it is already running.
 
                     TrackingResult { status: "running".to_string(), session_id: Some(session_id), error: None }
                 }
@@ -519,7 +525,8 @@ fn resume_tracking(
         Arc::clone(&auth_arc), org_id, user_id.unwrap_or_default(),
         plan_type.clone(),
     );
-    cache::start_sync_loop(cfg.clone(), Arc::clone(&auth_arc), Arc::clone(&running));
+    // The always-on sync loop is started in set_auth_token.
+    // No need to start a new one here — it is already running.
 
     TrackingResult { status: "running".to_string(), session_id: Some(sid), error: None }
 }
@@ -559,6 +566,8 @@ async fn install_update(app: tauri::AppHandle) -> Result<(), String> {
 }
 
 /// invoke('set_auth_token', { token, supabaseUrl, supabaseAnonKey })
+/// Also starts the always-on background sync loop (if not already running)
+/// and fires an immediate sync to flush any SQLite data from the previous session.
 #[tauri::command]
 fn set_auth_token(
     state: tauri::State<'_, Mutex<AppState>>,
@@ -566,18 +575,52 @@ fn set_auth_token(
     supabase_url: Option<String>,
     supabase_anon_key: Option<String>,
 ) -> Result<(), String> {
-    let mut s = state.lock().unwrap();
-    *s.auth_token.lock().unwrap() = Some(token);
-    if let Some(url) = supabase_url {
-        if !url.is_empty() {
-            s.supabase_url = url;
+    let (cfg, auth_arc, sync_running_arc, db_arc) = {
+        let mut s = state.lock().unwrap();
+        *s.auth_token.lock().unwrap() = Some(token);
+        if let Some(url) = supabase_url {
+            if !url.is_empty() {
+                s.supabase_url = url.clone();
+            }
         }
-    }
-    if let Some(key) = supabase_anon_key {
-        if !key.is_empty() {
-            s.supabase_anon_key = key;
+        if let Some(key) = supabase_anon_key {
+            if !key.is_empty() {
+                s.supabase_anon_key = key.clone();
+            }
         }
+        let cfg = SupabaseConfig {
+            url: s.supabase_url.clone(),
+            anon_key: s.supabase_anon_key.clone(),
+        };
+        (
+            cfg,
+            Arc::clone(&s.auth_token),
+            Arc::clone(&s.sync_running),
+            Arc::clone(&s.db),
+        )
+    };
+
+    // Start the always-on sync loop the first time a valid token is provided.
+    // This loop runs for the entire app lifetime (stopped only on exit),
+    // so offline-cached samples are flushed as soon as internet is restored —
+    // even if the user has already pressed Stop.
+    let already_syncing = *sync_running_arc.lock().unwrap();
+    if !already_syncing {
+        *sync_running_arc.lock().unwrap() = true;
+        println!("[lib] 🔄 Starting always-on sync loop (app lifetime).");
+        cache::start_sync_loop(cfg.clone(), Arc::clone(&auth_arc), Arc::clone(&sync_running_arc));
     }
+
+    // Immediate startup sync: push any SQLite data left from the previous app session
+    // (e.g. the user was offline when they last pressed Stop and the app was then closed).
+    let cfg2 = cfg.clone();
+    let auth2 = Arc::clone(&auth_arc);
+    let db2 = Arc::clone(&db_arc);
+    thread::spawn(move || {
+        println!("[lib] 🔄 Startup sync: flushing any leftover offline samples...");
+        cache::sync_from_arc(&db2, &cfg2, &auth2);
+    });
+
     Ok(())
 }
 
