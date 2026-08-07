@@ -800,6 +800,9 @@ export default function App() {
   const isHandlingIdleRef = useRef(false); // guard against double-fire on listener re-subscription
   const pendingIdleDiscardRef = useRef<Promise<void> | null>(null); // tracks in-flight idle discard
   const isFetchingStatsRef = useRef(false); // persistent concurrency guard for stats fetching
+  // After a limit-triggered stop, holds the minimum todaySeconds to display so the DB lag
+  // cannot push the display below the snapped limit value. Expires after 30s.
+  const limitFloorRef = useRef<{ projectId: string; minTodaySecs: number; expiresAt: number } | null>(null);
   const [idlePaused, setIdlePaused] = useState(false);
   const [liveIdleSeconds, setLiveIdleSeconds] = useState(0); // live idle tracking for current session
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -1083,20 +1086,33 @@ export default function App() {
         });
       });
 
-      const updatedProjects = currentProjects.map(p => ({
-        ...p,
-        stats: statsMap[p.id] ? {
-          todaySeconds: statsMap[p.id].todaySeconds,
-          weeklySeconds: statsMap[p.id].weeklySeconds,
-          weeklyIdleSeconds: statsMap[p.id].weeklyIdleSeconds,
-          rawTodaySeconds: statsMap[p.id].rawTodaySeconds,
-          rawWeeklySeconds: statsMap[p.id].rawWeeklySeconds,
-          keptIdleSeconds: statsMap[p.id].keptIdleSeconds,
-          activityPercent: statsMap[p.id].sampleCount > 0
-            ? Math.round(statsMap[p.id].totalActivity / statsMap[p.id].sampleCount)
-            : 0
-        } : { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, activityPercent: 0, rawTodaySeconds: 0, rawWeeklySeconds: 0, keptIdleSeconds: 0 }
-      }));
+      // Apply limit floor: after a limit-triggered stop, DB may lag 1-2 min.
+      // Floor todaySeconds to the snapped value so the UI never drops below it.
+      const floor = limitFloorRef.current;
+      const floorActive = floor !== null && Date.now() < floor.expiresAt;
+      if (floor !== null && !floorActive) limitFloorRef.current = null; // expire
+
+      const updatedProjects = currentProjects.map(p => {
+        const stat = statsMap[p.id];
+        if (!stat) return { ...p, stats: { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, activityPercent: 0, rawTodaySeconds: 0, rawWeeklySeconds: 0, keptIdleSeconds: 0 } };
+        const todaySeconds = (floorActive && floor!.projectId === p.id)
+          ? Math.max(stat.todaySeconds, floor!.minTodaySecs)
+          : stat.todaySeconds;
+        return {
+          ...p,
+          stats: {
+            todaySeconds,
+            weeklySeconds: stat.weeklySeconds,
+            weeklyIdleSeconds: stat.weeklyIdleSeconds,
+            rawTodaySeconds: stat.rawTodaySeconds,
+            rawWeeklySeconds: stat.rawWeeklySeconds,
+            keptIdleSeconds: stat.keptIdleSeconds,
+            activityPercent: stat.sampleCount > 0
+              ? Math.round(stat.totalActivity / stat.sampleCount)
+              : 0
+          }
+        };
+      });
       setProjects(updatedProjects);
       setIsOnline(true);
 
@@ -1656,13 +1672,23 @@ export default function App() {
 
           if (currentToday >= dailyLimitSecs || currentWeek >= weeklyLimitSecs) {
             // Snap the display to the exact limit value before stopping
-            // so the UI shows "2h 0m" rather than "1h 58m" after the DB refresh
-            const hitLimit = currentToday >= dailyLimitSecs ? dailyLimitSecs : weeklyLimitSecs;
-            const otherToday = currentToday >= dailyLimitSecs ? otherProjectsToday : otherProjectsWeek;
-            const snappedElapsed = hitLimit - otherToday;
+            const snappedElapsed = currentToday >= dailyLimitSecs
+              ? dailyLimitSecs - otherProjectsToday
+              : weeklyLimitSecs - otherProjectsWeek;
             sessionElapsedRef.current = snappedElapsed;
             setLiveElapsed(snappedElapsed);
             if (timerRef.current) clearInterval(timerRef.current); // stop ticking immediately
+
+            // Floor the DB refresh for this project so it can't show less than the limit.
+            // Expires after 30s (well past the 3s-delayed fetchDashboardStats call).
+            if (activeProject) {
+              limitFloorRef.current = {
+                projectId: activeProject.id,
+                minTodaySecs: snappedElapsed,
+                expiresAt: Date.now() + 30_000
+              };
+            }
+
             trackerAPI.showNotification('Tracking Limit Reached', 'Your session has been automatically stopped because you reached your daily or weekly time limit.');
             handleStop();
             setTrackingError('Session stopped due to reaching tracking limit.');
