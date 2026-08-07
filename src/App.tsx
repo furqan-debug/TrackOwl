@@ -1655,6 +1655,14 @@ export default function App() {
           const dailyLimitSecs = (user.daily_limit || 8) * 3600;
 
           if (currentToday >= dailyLimitSecs || currentWeek >= weeklyLimitSecs) {
+            // Snap the display to the exact limit value before stopping
+            // so the UI shows "2h 0m" rather than "1h 58m" after the DB refresh
+            const hitLimit = currentToday >= dailyLimitSecs ? dailyLimitSecs : weeklyLimitSecs;
+            const otherToday = currentToday >= dailyLimitSecs ? otherProjectsToday : otherProjectsWeek;
+            const snappedElapsed = hitLimit - otherToday;
+            sessionElapsedRef.current = snappedElapsed;
+            setLiveElapsed(snappedElapsed);
+            if (timerRef.current) clearInterval(timerRef.current); // stop ticking immediately
             trackerAPI.showNotification('Tracking Limit Reached', 'Your session has been automatically stopped because you reached your daily or weekly time limit.');
             handleStop();
             setTrackingError('Session stopped due to reaching tracking limit.');
@@ -1961,8 +1969,10 @@ export default function App() {
       trackerAPI.showNotification('Tracking Stopped', 'Your session has ended.');
     }
 
-    // Refresh from DB immediately after stop — this gives accurate numbers
-    if (user) fetchDashboardStats(user.id, projects);
+    // Refresh from DB after a short delay to give the backend time to flush
+    // the last activity samples before we re-read. Without this delay,
+    // the re-read can return stale data (e.g. 1h 58m instead of 2h 0m).
+    if (user) setTimeout(() => fetchDashboardStats(user.id, projects), 3000);
   }
 
   async function handlePause() {
