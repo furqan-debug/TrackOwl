@@ -1636,6 +1636,8 @@ export default function App() {
         
         // Limit check inside interval to avoid React re-renders
         if (user && activeProject) {
+          // sessionElapsedRef is pre-seeded with activeProject.todaySeconds at session start,
+          // so we only need to add OTHER projects' totals to avoid double-counting.
           const otherProjectsToday = projects
             .filter(p => p.id !== activeProject.id)
             .reduce((s, p) => s + (p.stats?.todaySeconds || 0), 0);
@@ -1644,7 +1646,10 @@ export default function App() {
           const otherProjectsWeek = projects
             .filter(p => p.id !== activeProject.id)
             .reduce((s, p) => s + (p.stats?.weeklySeconds || 0), 0);
-          const currentWeek = otherProjectsWeek + sessionElapsedRef.current;
+          // For weekly: sessionElapsedRef is seeded with todaySeconds (not weeklySeconds),
+          // so we need to add the active project's weekly total minus today to get full week.
+          const activeProjectWeeklyPrior = (activeProject.stats?.weeklySeconds || 0) - (activeProject.stats?.todaySeconds || 0);
+          const currentWeek = otherProjectsWeek + activeProjectWeeklyPrior + sessionElapsedRef.current;
 
           const weeklyLimitSecs = (user.weekly_limit || 40) * 3600;
           const dailyLimitSecs = (user.daily_limit || 8) * 3600;
