@@ -304,7 +304,7 @@ export function Timesheets() {
                 const score = sampleCount > 0 ? Math.round(activitySum / sampleCount) : 0;
 
                 const nowMs = new Date().getTime();
-                const isTrulyActive = !s.ended_at && (nowMs - startedAtMs < STALE_THRESHOLD_MS);
+                const isTrulyActive = !s.ended_at && (nowMs - lastSampleTime < STALE_THRESHOLD_MS);
 
                 let effectiveEndMs = nowMs;
                 if (s.ended_at) {

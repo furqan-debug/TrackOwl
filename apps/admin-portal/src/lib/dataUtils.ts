@@ -4,8 +4,8 @@ import type { ActivitySample, Session, AppSupabaseClient } from '../types';
  * Shared data utilities for standardized session and duration calculations.
  */
 
-export const STALE_THRESHOLD_MS = 14 * 60 * 60 * 1000; // 14 hours
-export const MAX_LIVE_SESSION_MS = 14 * 60 * 60 * 1000; // 14 hours (sanity cap for live sessions)
+export const STALE_THRESHOLD_MS = 5 * 60 * 60 * 1000; // 5 hours
+export const MAX_LIVE_SESSION_MS = 5 * 60 * 60 * 1000; // 5 hours (sanity cap for live sessions)
 
 export interface TimeInterval {
     startMs: number;
@@ -81,10 +81,11 @@ export function getEffectiveEnd(startedAt: string, endedAt: string | null, lastS
     }
 
     const now = Date.now();
-    const elapsed = now - startMs;
+    const lastActivityTime = lastSampleAt ? new Date(lastSampleAt).getTime() : startMs;
+    const elapsedSinceLastActivity = now - lastActivityTime;
 
-    // 2. If session is recent (< threshold), treat it as live.
-    if (elapsed < STALE_THRESHOLD_MS) {
+    // 2. If we've received a sample recently (< threshold), treat it as live.
+    if (elapsedSinceLastActivity < STALE_THRESHOLD_MS) {
         return {
             endMs: now,
             isLive: true,
@@ -92,7 +93,7 @@ export function getEffectiveEnd(startedAt: string, endedAt: string | null, lastS
         };
     }
 
-    // 3. If session is older but we have a recent activity sample, use that as the end point.
+    // 3. If session is stale but we have a last activity sample, use that as the end point.
     if (lastSampleAt) {
         const lastSampleMs = new Date(lastSampleAt).getTime();
         // Only use the sample if it's after the start point
