@@ -54,6 +54,7 @@ export function Reports() {
     const [customStart, setCustomStart] = useState<Date | null>(null);
     const [customEnd, setCustomEnd] = useState<Date | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [dailyActivity, setDailyActivity] = useState<{ date: string; activity: number; minutes: number }[]>([]);
     const [appBreakdown, setAppBreakdown] = useState<{ name: string; value: number }[]>([]);
@@ -246,7 +247,8 @@ export function Reports() {
             return;
         }
 
-        setLoading(true);
+            setLoading(true);
+        if (forceRefresh) setRefreshing(true);
 
         try {
             const data = await reportService.fetchReports({
@@ -287,6 +289,7 @@ export function Reports() {
             console.error("fetchReports error:", err);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
     }
 
@@ -523,15 +526,15 @@ export function Reports() {
                         className="h-10"
                     />
 
-                    <button
+                        <button
                         onClick={() => fetchReports(true)}
                         className={clsx(
                             "p-2.5 bg-surface border border-border rounded-xl text-text-muted hover:text-primary hover:bg-surface-hover transition-all shadow-shell-sm h-10",
-                            loading && "animate-spin text-primary"
+                            refreshing && "text-primary"
                         )}
                         title="Refresh Data"
                     >
-                        <RefreshCw className="w-4 h-4" />
+                        <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
                     </button>
                 </div>
             }
