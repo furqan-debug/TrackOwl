@@ -145,7 +145,7 @@ export function Financials() {
                                     <YAxis type="category" dataKey="full_name" tick={{ fontSize: 9, fontWeight: 700, fill: '#64748b' }} width={80} />
                                     <Tooltip
                                         cursor={{ fill: '#f8fafc' }}
-                                        formatter={(v?: number) => [`$${v ?? 0}`, 'Cost']}
+                                        formatter={(v?: any) => [`$${v ?? 0}`, 'Cost']}
                                         contentStyle={{ borderRadius: 12, border: '1px solid #e2e8f0', fontSize: 10, fontWeight: 700 }}
                                     />
                                     <Bar dataKey="totalCost" radius={[0, 4, 4, 0]}>
