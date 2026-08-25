@@ -51,15 +51,17 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
                 {trend !== undefined && (
                     <div className={clsx(
                         "text-[12px] font-bold px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-shell-sm border border-transparent",
-                        trend >= 0
+                                                trend > 0
                             ? "bg-success/10 text-success border-success/20"
-                            : "bg-error/10 text-error border-error/20"
+                            : trend < 0
+                            ? "bg-error/10 text-error border-error/20"
+                            : "bg-surface-hover text-text-muted border-border"
                     )}>
                         <div className={clsx(
                             "w-1 h-1 rounded-full",
-                            trend >= 0 ? "bg-success animate-pulse" : "bg-error"
+                          trend > 0 ? "bg-success animate-pulse" : trend < 0 ? "bg-error" : "bg-text-muted"
                         )} />
-                        {trend >= 0 ? "+" : ""}{trend}%
+                        {trend > 0 ? "+" : ""}{trend}%
                     </div>
                 )}
             </div>
