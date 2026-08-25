@@ -491,7 +491,9 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
     const isRestricted = isViewer || (currentUserRole === 'Manager' && (m.role === 'Owner' || m.role === 'Admin')) || (currentUserRole === 'Admin' && m.role === 'Owner');
     const [open, setOpen] = useState(false);
     const dropRef = useRef<HTMLTableDataCellElement>(null);
-    const initials = m.full_name.split(' ').map((w: any) => w[0]).join('').slice(0, 2).toUpperCase();
+
+    const displayName = m.full_name?.trim() || "Unknown Member";
+    const initials = m.full_name?.trim()? m.full_name.trim().split(/\s+/).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase():'';
 
     useEffect(() => {
         function h(e: MouseEvent) { if (dropRef.current && !dropRef.current.contains(e.target as Node)) setOpen(false); }
@@ -529,7 +531,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     </div>
                     <div className="min-w-0">
                         <span onClick={(e) => { e.stopPropagation(); onEdit(); }} className="text-[15px] font-bold text-text-main hover:text-primary cursor-pointer block transition-colors truncate">
-                            {m.full_name}
+                            {displayName}
                         </span>
                         <span className="text-[12px] font-medium text-text-muted block truncate">
                             {m.email}
@@ -615,7 +617,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     <div className="absolute right-8 top-16 bg-surface border border-border shadow-xl rounded-2xl z-50 py-2 w-56 animate-in fade-in zoom-in-95 duration-200">
                         <div className="px-5 py-3 border-b border-border mb-1">
                             <p className="text-[9px] font-bold text-text-muted mb-0.5">Quick Actions</p>
-                            <p className="text-[12px] font-bold text-text-main truncate">{m.full_name}</p>
+                            <p className="text-[12px] font-bold text-text-main truncate">{displayName}</p>
                         </div>
                         <DropItem
                             icon={<Pencil className="w-3.5 h-3.5" />}
