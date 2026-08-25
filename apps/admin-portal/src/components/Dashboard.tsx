@@ -180,8 +180,8 @@ export function Dashboard() {
             const todayStartIso = todayStartUtc.toISOString();
             
             // Compute previous week's bounds in orgTimezone
-            const prevWeekStartUtc = new Date(startUtc.getTime() - 7 * 24 * 60 * 60 * 1000);
-            const prevWeekEndUtc = new Date(endUtc.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const prevWeekStartUtc = new Date(startUtc.getTime() - 1 * 24 * 60 * 60 * 1000);
+            const prevWeekEndUtc = new Date(endUtc.getTime() - 1 * 24 * 60 * 60 * 1000);
             const prevWeekStartIso = prevWeekStartUtc.toISOString();
             const prevWeekEndIso = prevWeekEndUtc.toISOString();
 
@@ -255,8 +255,7 @@ export function Dashboard() {
             const prevTotalMins = aggregated.prev_total_mins || 0;
             const prevAvgScore = (aggregated.prev_activity_count || 0) > 0 ? Math.round(aggregated.prev_activity_sum / aggregated.prev_activity_count) : 0;
             const trendFocus = prevAvgScore > 0 ? currAvgScore - prevAvgScore : (currAvgScore > 0 ? currAvgScore : 0);
-            const trendProductivity = prevTotalMins > 0 ? Math.round(((totalMins - prevTotalMins) / prevTotalMins) * 100) : (totalMins > 0 ? 100 : 0);
-
+                                 const trendProductivity = prevTotalMins > 0 ? Math.round(((totalMins - prevTotalMins) / prevTotalMins) * 100) : (totalMins > 0 ? 100 : 0);
             // Populate user stats
             members.forEach(m => {
                 const uStats = (aggregated.user_stats || {})[m.id] || { mins: 0, activity_sum: 0, cnt: 0 };
