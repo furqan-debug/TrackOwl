@@ -150,11 +150,11 @@ export function Dashboard() {
 
     const fetchDashboardData = useCallback(async (forceRefresh = false, isSilent = false) => {
         if (!organizationId) return;
-        
+
         // Compute exact UTC bounds for the viewDate in displayTimezone
         const startUtc = orgLocalToUtc(viewDateStr, 'start', displayTimezone || 'UTC');
         const endUtc = orgLocalToUtc(viewDateStr, 'end', displayTimezone || 'UTC');
-        
+
         const startIso = startUtc.toISOString();
         const endIso = endUtc.toISOString();
 
@@ -174,11 +174,11 @@ export function Dashboard() {
             else setRefreshing(true);
 
             const nowIso = new Date().toISOString();
-            
+
             const todayStrOrg = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
             const todayStartUtc = orgLocalToUtc(todayStrOrg, 'start', displayTimezone || 'UTC');
             const todayStartIso = todayStartUtc.toISOString();
-            
+
             // Compute previous week's bounds in orgTimezone
             const prevWeekStartUtc = new Date(startUtc.getTime() - 1 * 24 * 60 * 60 * 1000);
             const prevWeekEndUtc = new Date(endUtc.getTime() - 1 * 24 * 60 * 60 * 1000);
@@ -353,11 +353,11 @@ export function Dashboard() {
             setChartData(cData);
 
             // Update Cache
-            const newCache = { 
-                stats: finalStats, 
-                userActivity: finalUserActivity, 
-                onlineMembers: online, 
-                projectActivity: finalProjectActivity, 
+            const newCache = {
+                stats: finalStats,
+                userActivity: finalUserActivity,
+                onlineMembers: online,
+                projectActivity: finalProjectActivity,
                 appUsage: finalAppUsage,
                 chartData: cData
             };
@@ -563,7 +563,21 @@ export function Dashboard() {
                                                         ][index % 5]} />
                                                     ))}
                                                 </Pie>
-                                                <Tooltip />
+                                                <Tooltip
+                                                    contentStyle={{
+                                                        backgroundColor: '#ffffff',
+                                                        border: '1px solid #e5e7eb',
+                                                        borderRadius: '0px',
+                                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                                                        color: '#000000',
+                                                    }}
+                                                    labelStyle={{
+                                                        color: '#000000',
+                                                    }}
+                                                    itemStyle={{
+                                                        color: '#000000',
+                                                    }}
+                                                />
                                             </PieChart>
                                         </ResponsiveContainer>
                                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -802,35 +816,35 @@ export function Dashboard() {
                         </div>
                         <div className="flex-1 overflow-y-auto p-5 md:p-10">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
-                            {projectActivity.length === 0 ? (
-                                <div className="col-span-2 py-10 opacity-50"><EmptyState icon={<Camera />} title="Awaiting distribution data" /></div>
-                            ) : (
-                                projectActivity.map((proj) => (
-                                    <div key={proj.id} className="space-y-4 group/bar">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[12px] font-bold text-text-main tracking-tight group-hover:text-primary transition-colors">{proj.name}</span>
-                                            <span className="text-[10px] font-bold text-success ">{proj.activityScore}% Focus</span>
-                                        </div>
-                                        <div className="h-2 bg-main/80 border border-border rounded-full overflow-hidden shadow-inner">
-                                            <motion.div
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${Math.min(100, (proj.minutes / (stats.totalProductiveMinutes || 1)) * 100)}%` }}
-                                                transition={{ duration: 1, ease: "easeOut" }}
-                                                className="h-full rounded-full relative group-hover:brightness-110 transition-all"
-                                                style={{ background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--gold-vibrant) 100%)' }}
-                                            >
-                                                <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent mix-blend-overlay" />
-                                            </motion.div>
-                                        </div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-[11px] font-bold text-text-muted tracking-tight">{formatDuration(proj.minutes)} tracked</span>
-                                            <div className="px-2 py-1 rounded-lg bg-success/10 text-[10px] font-bold text-success border border-success/20">
-                                                {Math.round((proj.minutes / (stats.totalProductiveMinutes || 1)) * 100)}%
+                                {projectActivity.length === 0 ? (
+                                    <div className="col-span-2 py-10 opacity-50"><EmptyState icon={<Camera />} title="Awaiting distribution data" /></div>
+                                ) : (
+                                    projectActivity.map((proj) => (
+                                        <div key={proj.id} className="space-y-4 group/bar">
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-[12px] font-bold text-text-main tracking-tight group-hover:text-primary transition-colors">{proj.name}</span>
+                                                <span className="text-[10px] font-bold text-success ">{proj.activityScore}% Focus</span>
+                                            </div>
+                                            <div className="h-2 bg-main/80 border border-border rounded-full overflow-hidden shadow-inner">
+                                                <motion.div
+                                                    initial={{ width: 0 }}
+                                                    animate={{ width: `${Math.min(100, (proj.minutes / (stats.totalProductiveMinutes || 1)) * 100)}%` }}
+                                                    transition={{ duration: 1, ease: "easeOut" }}
+                                                    className="h-full rounded-full relative group-hover:brightness-110 transition-all"
+                                                    style={{ background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--gold-vibrant) 100%)' }}
+                                                >
+                                                    <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent mix-blend-overlay" />
+                                                </motion.div>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-[11px] font-bold text-text-muted tracking-tight">{formatDuration(proj.minutes)} tracked</span>
+                                                <div className="px-2 py-1 rounded-lg bg-success/10 text-[10px] font-bold text-success border border-success/20">
+                                                    {Math.round((proj.minutes / (stats.totalProductiveMinutes || 1)) * 100)}%
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))
-                            )}
+                                    ))
+                                )}
                             </div>
                         </div>
                     </div>
