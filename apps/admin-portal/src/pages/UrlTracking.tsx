@@ -169,7 +169,7 @@ export function UrlTracking() {
                                     <XAxis dataKey="hour" tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontWeight: 'bold' }} interval={2} axisLine={false} tickLine={false} />
                                     <YAxis tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontWeight: 'bold' }} axisLine={false} tickLine={false} />
                                     <Tooltip
-                                        formatter={(v?: number) => [`${v ?? 0} visits`, 'Count']}
+                                        formatter={(v?: any) => [`${v ?? 0} visits`, 'Count']}
                                         contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', textTransform: '' }}
                                     />
                                     <Bar dataKey="count" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
@@ -188,7 +188,7 @@ export function UrlTracking() {
                                     <Pie data={pieData} cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={2} dataKey="value" stroke="none">
                                         {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                                     </Pie>
-                                    <Tooltip formatter={(v?: number) => [`${v ?? 0}`, 'Visits']} contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', textTransform: '' }} />
+                                    <Tooltip formatter={(v?: any) => [`${v ?? 0}`, 'Visits']} contentStyle={{ backgroundColor: 'var(--color-surface-solid)', borderRadius: '12px', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px -1px rgb(0 0 0 / 0.1)', textTransform: '' }} />
                                     <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 10, fontWeight: 'bold', textTransform: '', color: 'var(--color-text-muted)' }} />
                                 </PieChart>
                             </ResponsiveContainer>
