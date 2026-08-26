@@ -686,7 +686,7 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
             onClose={onClose}
             title="Invite Member"
             subtitle="Send an invitation to join the team."
-            maxWidth="max-w-md"
+            maxWidth="max-w-2xl"
             footer={
                 <div className="flex gap-3 justify-end w-full">
                     <button onClick={onClose} className="px-6 h-11 border border-border text-text-muted rounded-xl text-[10px] font-bold hover:bg-surface-hover transition-all">
@@ -702,7 +702,7 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
                 </div>
             }
         >
-            <div className="space-y-6 pt-4">
+            <div className="grid grid-cols-2 gap-4 pt-2">
                 <FormField
                     label="Email Address"
                     value={form.addEmail}
@@ -718,20 +718,20 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
                     options={rolesAvailable.map(r => ({ label: r.toUpperCase(), value: r }))}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                     <FormField label="Pay Rate ($/hr)" value={form.addPayRate} onChange={form.setAddPayRate} type="number" placeholder="0.00" />
                     <FormField label="Bill Rate ($/hr)" value={form.addBillRate} onChange={form.setAddBillRate} type="number" placeholder="0.00" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                     <FormField label="Weekly Limit" value={form.addWeekly} onChange={form.setAddWeekly} type="number" placeholder="40" />
                     <FormField label="Daily Limit" value={form.addDaily} onChange={form.setAddDaily} type="number" placeholder="8" />
                 </div>
 
                 {form.addError && (
-                    <div className="bg-rose-50 border border-rose-100 text-rose-500 text-[10px] font-bold p-4 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
-                        <AlertCircle className="w-4 h-4 shrink-0" />
-                        {form.addError}
+                    <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 text-[10px] font-bold p-2.5 rounded-xl flex items-start gap-2 animate-in fade-in slide-in-from-top-2">
+                        <AlertCircle className="w-4 h-4 shrink-0 text-yellow-600" />
+                        <span>{form.addError}</span>
                     </div>
                 )}
             </div>
@@ -741,7 +741,7 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
 
 function FormField({ label, value, onChange, type = 'text', icon, placeholder, disabled }: any) {
     return (
-        <div className="space-y-2 group flex flex-col relative">
+        <div className="space-y-1 group flex flex-col relative">
             <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em] ml-1">{label}</label>
             <div className="relative mt-auto">
                 {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors pointer-events-none z-10">{icon}</div>}
@@ -752,7 +752,7 @@ function FormField({ label, value, onChange, type = 'text', icon, placeholder, d
                     placeholder={placeholder}
                     disabled={disabled}
                     className={clsx(
-                        "w-full h-[52px] bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-shell-sm placeholder:text-text-muted/40",
+                        "w-full h-11 bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-shell-sm placeholder:text-text-muted/40",
                         icon ? "pl-12 pr-4" : "px-4",
                         disabled && "opacity-60 cursor-not-allowed bg-surface-hover"
                     )}
