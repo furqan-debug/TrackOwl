@@ -133,7 +133,8 @@ ${message}`
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 pt-24 sm:pt-20 bg-black/60 backdrop-blur-sm">
+
             <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] text-left">
                 {/* Header */}
                 <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-[#001338] text-white">
