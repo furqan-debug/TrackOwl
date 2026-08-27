@@ -2,7 +2,8 @@ import fs from 'fs';
 
 async function run() {
   const repo = process.env.GITHUB_REPOSITORY;
-  const tag = process.env.GITHUB_REF_NAME;
+  const config = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
+  const tag = (process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME) ? process.env.GITHUB_REF_NAME : `v${config.version}`;
   const token = process.env.GITHUB_TOKEN;
 
   console.log(`Generating latest.json for ${repo} at tag ${tag}`);
