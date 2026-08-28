@@ -174,9 +174,7 @@ export function Dashboard() {
             else setRefreshing(true);
 
             // Auto-terminate any ghost sessions in database based on Termination Grace Period
-            await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId }).catch(err => {
-                console.warn('Auto-terminate check warning:', err);
-            });
+            await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });
 
             const nowIso = new Date().toISOString();
 
