@@ -799,6 +799,11 @@ export default function App() {
   const idleMinutesRef = useRef(0);
   const isHandlingIdleRef = useRef(false); // guard against double-fire on listener re-subscription
   const pendingIdleDiscardRef = useRef<Promise<void> | null>(null); // tracks in-flight idle discard
+  // Tracks continuous zero-activity minutes for the org-level absolute auto-terminate cutoff.
+  // This counter is independent of keep_idle_mode — it increments on EVERY 0% sample regardless
+  // of whether the user is set to "Always Keep" idle. Resets to 0 on any active sample.
+  const absoluteIdleRef = useRef(0);
+  const isAutoTerminatingRef = useRef(false); // guard against duplicate auto-terminate calls
   const isFetchingStatsRef = useRef(false); // persistent concurrency guard for stats fetching
   // After a limit-triggered stop, holds the minimum todaySeconds to display so the DB lag
   // cannot push the display below the snapped limit value. Expires after 30s.
@@ -1521,37 +1526,80 @@ export default function App() {
     return () => { if (interval) clearInterval(interval); };
   }, [user?.id, screen, projects]);
 
-  // Automatically terminate session if the user remains idle for too long (Inactivity Auto-Stop)
+  // ─── Org-Level Absolute Auto-Terminate Session (bypasses keep_idle_mode) ──────
+  // This effect listens to every tracking sample and maintains an independent
+  // continuous-zero-activity counter (absoluteIdleRef). Unlike the personal idle popup
+  // logic, this fires even for members set to "Always Keep Idle" mode.
+  // It resets on every active sample and triggers a forced session stop when the org
+  // limit is reached. Works offline — no server call needed to detect inactivity.
   useEffect(() => {
-    if (!isTracking || !idlePaused || !user) return;
+    if (!isTracking || !user) return;
 
     const autoStopEnabled = user.organization_settings?.autoStopOnIdle ?? false;
-    const maxIdleMins = user.organization_settings?.idleAutoStopMinutes ?? 60;
+    const autoStopLimitMins = user.organization_settings?.idleAutoStopMinutes ?? 60;
 
-    if (!autoStopEnabled) return;
+    if (!autoStopEnabled) {
+      // If org disabled it, ensure counter is clean
+      absoluteIdleRef.current = 0;
+      isAutoTerminatingRef.current = false;
+      return;
+    }
 
-    console.log('[idle-autostop] Auto-stop timer started. Limit:', maxIdleMins, 'minutes');
-    const idleStart = Date.now();
+    // Reset the counter each time tracking starts (effect re-runs when isTracking changes)
+    absoluteIdleRef.current = 0;
+    isAutoTerminatingRef.current = false;
 
-    let isStopping = false;
-    const interval = setInterval(async () => {
-      const idleTimeElapsedMins = (Date.now() - idleStart) / 60000;
-      if (idleTimeElapsedMins >= maxIdleMins) {
-        if (isStopping) return; // prevent duplicate concurrent calls
-        isStopping = true;
-        clearInterval(interval); // stop re-firing immediately
-        console.log('[idle-autostop] Inactivity limit reached. Automatically stopping session...');
-        discardIdleTime(user.idle_limit || 10, false);
-        await handleStop();
-        trackerAPI.showNotification(
-          'Tracking Auto-Stopped',
-          `Your tracking session was ended automatically after ${Math.round(idleTimeElapsedMins)} minutes of inactivity.`
-        );
-      }
-    }, 10000);
+    let unlisten: (() => void) | null = null;
 
-    return () => clearInterval(interval);
-  }, [isTracking, idlePaused, user, user?.organization_settings?.autoStopOnIdle, user?.organization_settings?.idleAutoStopMinutes]);
+    const setupAbsoluteIdleListener = async () => {
+      unlisten = await trackerAPI.onTrackingSample(async (sample: any) => {
+        // Guard: don't trigger twice
+        if (isAutoTerminatingRef.current) return;
+
+        const hasActivity = (sample.mouse_clicks ?? 0) > 0 || (sample.key_presses ?? 0) > 0;
+
+        if (hasActivity) {
+          // User was active — reset the absolute idle counter
+          if (absoluteIdleRef.current > 0) {
+            console.log(`[abs-autostop] Activity detected — resetting absolute idle counter (was ${absoluteIdleRef.current} min)`);
+          }
+          absoluteIdleRef.current = 0;
+        } else {
+          // Zero activity this minute — increment absolute idle counter
+          absoluteIdleRef.current += 1;
+          console.log(`[abs-autostop] Continuous inactivity: ${absoluteIdleRef.current}/${autoStopLimitMins} min`);
+
+          if (absoluteIdleRef.current >= autoStopLimitMins) {
+            // Org limit reached — force-stop the session regardless of keep_idle_mode
+            isAutoTerminatingRef.current = true;
+            const minsElapsed = absoluteIdleRef.current;
+            absoluteIdleRef.current = 0;
+
+            console.log(`[abs-autostop] Org limit reached (${minsElapsed} min). Force-stopping session...`);
+
+            // Discard the trailing idle block before stopping so payroll is not inflated.
+            // We pass the accumulated idle minutes so the correct number of samples get purged.
+            discardIdleTime(minsElapsed, false, sample.session_id);
+
+            await handleStop();
+
+            trackerAPI.showNotification(
+              'Session Auto-Stopped',
+              `Your tracking session was ended automatically after ${minsElapsed} minutes of continuous inactivity.`
+            );
+          }
+        }
+      });
+    };
+
+    setupAbsoluteIdleListener();
+
+    return () => {
+      if (unlisten) unlisten();
+      // Do NOT reset absoluteIdleRef here — it must persist across re-renders
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTracking, user?.id, user?.organization_settings?.autoStopOnIdle, user?.organization_settings?.idleAutoStopMinutes]);
 
   // Standalone effect to sync location once per session
   useEffect(() => {
@@ -1988,6 +2036,8 @@ export default function App() {
     idleMinutesRef.current = 0;
     isHandlingIdleRef.current = false;
     pendingIdleDiscardRef.current = null;
+    absoluteIdleRef.current = 0;
+    isAutoTerminatingRef.current = false;
     setScreen('projects');
 
     // Notification Alert
