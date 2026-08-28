@@ -173,6 +173,11 @@ export function Dashboard() {
             if (!isSilent) setLoading(true);
             else setRefreshing(true);
 
+            // Auto-terminate any ghost sessions in database based on Termination Grace Period
+            await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId }).catch(err => {
+                console.warn('Auto-terminate check warning:', err);
+            });
+
             const nowIso = new Date().toISOString();
 
             const todayStrOrg = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
