@@ -271,25 +271,25 @@ export function SupportWidget() {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-96 max-h-[600px] h-[80vh] bg-white rounded-2xl shadow-2xl flex flex-col z-50 border border-gray-100 overflow-hidden font-sans">
+    <div className="fixed bottom-6 right-6 w-96 max-h-[600px] h-[80vh] bg-surface rounded-2xl shadow-2xl flex flex-col z-50 border border-border overflow-hidden font-sans">
       {/* Header */}
-      <div className="bg-white px-4 py-4 border-b border-gray-100 flex items-center justify-between shadow-sm z-10">
+      <div className="bg-surface px-4 py-4 border-b border-border flex items-center justify-between shadow-sm z-10">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <MessageCircle className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="font-semibold text-gray-900 text-sm">TrackOwl Support</h3>
-            <p className="text-xs text-gray-500">We're here to help</p>
+            <h3 className="font-semibold text-text-main text-sm">TrackOwl Support</h3>
+            <p className="text-xs text-text-muted">We're here to help</p>
           </div>
         </div>
-        <button onClick={toggleWidget} className="text-gray-400 hover:text-gray-600 p-1 rounded-md hover:bg-gray-100">
+        <button onClick={toggleWidget} className="text-text-muted hover:text-text-main p-1 rounded-md hover:bg-surface-hover">
           <X className="w-5 h-5" />
         </button>
       </div>
 
       {/* Body */}
-      <div className="flex-1 overflow-y-auto bg-gray-50 p-4 space-y-4 pb-20">
+      <div className="flex-1 overflow-y-auto bg-background p-4 space-y-4 pb-20">
         {allMessages.map((msg: any, i: number) => (
           <div key={i} className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
             {msg.sender === 'admin' && (
@@ -297,15 +297,15 @@ export function SupportWidget() {
                 <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
                    <User className="w-3 h-3 text-blue-600" />
                 </div>
-                <span className="text-xs text-gray-500 font-medium">Support Agent</span>
+                <span className="text-xs text-text-muted font-medium">Support Agent</span>
               </div>
             )}
             <div className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm ${
-              msg.sender === 'user' 
-                ? 'bg-blue-600 text-white rounded-tr-sm' 
+              msg.sender === 'user'
+                ? 'bg-blue-600 text-white rounded-tr-sm'
                 : msg.sender === 'admin'
-                  ? 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm shadow-sm ml-8'
-                  : 'bg-white border border-gray-200 text-gray-800 rounded-tl-sm shadow-sm'
+                  ? 'bg-surface border border-border text-text-main rounded-tl-sm shadow-sm ml-8'
+                  : 'bg-surface border border-border text-text-main rounded-tl-sm shadow-sm'
             }`}>
               {msg.text}
             </div>
@@ -315,16 +315,16 @@ export function SupportWidget() {
       </div>
 
       {/* Input Area */}
-      <div className="p-3 bg-white border-t border-gray-100">
+      <div className="p-3 bg-surface border-t border-border">
           <form onSubmit={handleSendMessage} className="relative flex items-center">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Write a message..."
-              className="w-full pl-4 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+              className="w-full pl-4 pr-12 py-3 bg-background text-text-main placeholder:text-text-muted border border-border rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
             />
-            <button 
+            <button
               type="submit"
               disabled={!input.trim()}
               className="absolute right-2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
@@ -333,7 +333,7 @@ export function SupportWidget() {
             </button>
           </form>
           <div className="text-center mt-2">
-             <span className="text-[10px] text-gray-400">Powered by TrackOwl Support</span>
+             <span className="text-[10px] text-text-muted">Powered by TrackOwl Support</span>
           </div>
         </div>
     </div>
