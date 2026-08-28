@@ -80,9 +80,9 @@ export const reportService = {
 
     // Auto-terminate any ghost sessions in database based on Termination Grace Period
     if (organizationId) {
-        await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId }).catch(err => {
-            console.warn('Auto-terminate check warning:', err);
-        });
+        try {
+            await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });
+        } catch (_) {}
     }
 
     const { data: members } = await supabase.from('members')
@@ -355,9 +355,9 @@ export const reportService = {
 
     // Auto-terminate any ghost sessions in database based on Termination Grace Period
     if (organizationId) {
-        await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId }).catch(err => {
-            console.warn('Auto-terminate check warning:', err);
-        });
+        try {
+            await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });
+        } catch (_) {}
     }
 
     let sessionsQuery = supabase

@@ -201,9 +201,7 @@ export function Timesheets() {
         try {
             // Auto-terminate any ghost sessions in database based on Termination Grace Period
             if (organizationId) {
-                await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId }).catch(err => {
-                    console.warn('Auto-terminate check warning:', err);
-                });
+                await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });
             }
 
             const fetchStart = new Date(range.start.getTime() - 24 * 60 * 60 * 1000);
