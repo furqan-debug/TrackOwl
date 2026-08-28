@@ -102,12 +102,9 @@ jobs:
 
       # Extract version number from src-tauri/tauri.conf.json
       - name: Extract Version Number
-        if: matrix.platform == 'windows-latest'
         id: version
         run: |
-          $ver = (Get-Content src-tauri/tauri.conf.json | ConvertFrom-Json).version
-          echo "NUM=$ver" >> $env:GITHUB_OUTPUT
-        shell: pwsh
+          node -e "const v = require('./src-tauri/tauri.conf.json').version; console.log('NUM=' + v); require('fs').appendFileSync(process.env.GITHUB_OUTPUT, 'NUM=' + v + '\n')"
 
       - name: Sign Windows Installers with SSL.com eSigner
         if: matrix.platform == 'windows-latest'
@@ -200,10 +197,23 @@ jobs:
         if: matrix.platform == 'windows-latest'
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.version.outputs.NUM) }}
           files: |
             src-tauri/target/release/bundle/nsis/TrackOwl_${{ steps.version.outputs.NUM }}_x64-setup.exe
             src-tauri/target/release/bundle/nsis/TrackOwl_${{ steps.version.outputs.NUM }}_x64-setup.exe.sig
             src-tauri/target/release/bundle/msi/TrackOwl_${{ steps.version.outputs.NUM }}_x64_en-US.msi
+
+      # Upload macOS Installers (.dmg and updater bundles)
+      - name: Upload macOS Installers to Release
+        if: matrix.platform == 'macos-latest'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.version.outputs.NUM) }}
+          files: |
+            src-tauri/target/*/release/bundle/dmg/*.dmg
+            src-tauri/target/release/bundle/dmg/*.dmg
+            src-tauri/target/*/release/bundle/macos/*.tar.gz*
+            src-tauri/target/release/bundle/macos/*.tar.gz*
 
   publish-latest-json:
     needs: publish
@@ -213,6 +223,10 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+      - name: Extract Version Number
+        id: version
+        run: |
+          node -e "const v = require('./src-tauri/tauri.conf.json').version; console.log('NUM=' + v); require('fs').appendFileSync(process.env.GITHUB_OUTPUT, 'NUM=' + v + '\n')"
       - name: Generate latest.json
         run: node .github/workflows/generate_latest_json.js
         env:
@@ -220,6 +234,7 @@ jobs:
       - name: Upload latest.json to Release and Publish
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.version.outputs.NUM) }}
           files: latest.json
           draft: false
 
