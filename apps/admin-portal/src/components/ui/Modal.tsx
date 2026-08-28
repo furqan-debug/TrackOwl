@@ -57,6 +57,7 @@ export function Modal({
                     `
                     bg-surface
                     rounded-2xl sm:rounded-[32px]
+                    h-[680px]
                     w-[calc(100vw-24px)]
                     sm:w-[calc(100vw-48px)]
                     max-h-[calc(100dvh-24px)]
