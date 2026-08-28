@@ -155,8 +155,8 @@ export function Activity() {
     }, [selectedMemberId, selectedDate]);
 
     // Re-fetch data whenever any dependency changes
-    useEffect(() => {
-        if (selectedMemberId !== 'all' && members.length === 0) return;
+        useEffect(() => {
+        if (members.length === 0) return;
         fetchData(false);
     }, [fetchData, members]);
 
