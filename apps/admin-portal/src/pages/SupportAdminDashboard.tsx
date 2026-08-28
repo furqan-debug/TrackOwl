@@ -369,7 +369,7 @@ export function SupportAdminDashboard() {
                     onChange={(e) => setReplyText(e.target.value)}
                     disabled={(selectedTicket.status || '').toLowerCase() === 'resolved'}
                     placeholder={(selectedTicket.status || '').toLowerCase() === 'resolved' ? "This ticket is resolved. Change status to Open to send a message." : "Type your reply to the customer..."}
-                    className="w-full border border-gray-300 rounded-xl p-3 pr-16 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none h-24 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                    className="w-full bg-white text-gray-900 border border-gray-300 rounded-xl p-3 pr-16 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none h-24 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
                   ></textarea>
                   <button 
                     type="submit"
