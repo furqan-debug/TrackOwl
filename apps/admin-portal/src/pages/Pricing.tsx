@@ -322,7 +322,7 @@ export function Pricing() {
             maxWidth="6xl"
         >
             {/* Pricing Toggle */}
-            <div className="flex justify-center items-center gap-6 mb-16">
+            <div className="flex flex-wrap justify-center items-center gap-3 sm:gap-5 lg:gap-6 mb-10 lg:mb-16">
                 <div className="flex items-center gap-3">
                     <span className={clsx("text-sm font-bold tracking-tight transition-colors", !isMonthly ? "text-text-main" : "text-text-muted")}>Yearly</span>
                     {!isMonthly && (
@@ -346,7 +346,8 @@ export function Pricing() {
                 <span className={clsx("text-sm font-bold tracking-tight transition-colors", isMonthly ? "text-text-main" : "text-text-muted")}>Monthly</span>
             </div>
 
-            <div className="grid gap-8 md:grid-cols-2 max-w-4xl mx-auto pb-20">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto pb-16 lg:pb-20">
+
                 {plans.map((plan, i) => {
                     const isCurrentPlan = organization?.subscription_status !== 'None' &&
                         organization?.plan_type === plan.planType && (
@@ -362,7 +363,7 @@ export function Pricing() {
                         >
                             <Card 
                                 className={clsx(
-                                    "relative flex flex-col h-full rounded-[40px] p-10 md:p-12 transition-all duration-500 border",
+                                    "relative flex flex-col h-full rounded-[28px] sm:rounded-[32px] lg:rounded-[40px] p-6 sm:p-8 lg:p-10 xl:p-12 transition-all duration-500 border",
                                     plan.popular ? "border-primary/30 shadow-shell-lg" : "border-border shadow-shell-sm",
                                     isCurrentPlan && "ring-2 ring-primary/30"
                                 )}
@@ -401,11 +402,12 @@ export function Pricing() {
 
                                 <ul className="space-y-5 mb-12 flex-1">
                                     {plan.features.map((f, idx) => (
-                                        <li key={idx} className="flex items-center gap-4 text-[13px] font-bold text-text-main">
-                                            <div className="w-8 h-8 rounded-xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10">
+                                        <li key={idx} className="flex items-start gap-3 sm:gap-4 text-[13px] font-bold text-text-main">
+                                            <div className="w-8 h-8 min-w-8 rounded-xl bg-primary/5 flex items-center justify-center text-primary border border-primary/10">
+
                                                 {f.icon}
                                             </div>
-                                            {f.text}
+                                            <span className="leading-relaxed">{f.text}</span>
                                         </li>
                                     ))}
                                 </ul>
