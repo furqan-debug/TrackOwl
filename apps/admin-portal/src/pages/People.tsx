@@ -285,15 +285,15 @@ export function People() {
             actions={
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => { 
-                            if (!isViewer) { 
+                        onClick={() => {
+                            if (!isViewer) {
                                 if (organization?.subscription_status === 'None') {
                                     navigate('/dashboard/pricing');
                                 } else {
-                                    resetAddForm(); 
-                                    setShowAddModal(true); 
+                                    resetAddForm();
+                                    setShowAddModal(true);
                                 }
-                            } 
+                            }
                         }}
                         disabled={isViewer}
                         className="flex items-center gap-2 px-5 h-10 bg-primary text-white rounded-xl text-[12px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -309,7 +309,7 @@ export function People() {
                 </div>
             }
         >
-            <div className="flex bg-main/50 p-1 rounded-xl border border-border/50 w-fit mb-8 h-10">
+            <div className="flex bg-main/50 p-1 pb-[2px] rounded-xl border border-border/50 w-fit mb-8 h-11">
                 <button
                     onClick={() => setActiveTab('Members')}
                     className={clsx(
@@ -370,13 +370,17 @@ export function People() {
             </div>
 
             {showFilters && (
-                <div className="mb-6 p-4 bg-surface border border-border rounded-xl flex items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="flex items-center gap-2">
-                        <label className="text-[10px] font-bold text-text-muted">Role:</label>
-                        <select 
-                            value={roleFilter} 
+                <div className="mb-6 p-4 bg-surface border border-border rounded-xl flex flex-col sm:flex-row sm:items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+
+                    <div className="flex items-center gap-2 min-w-0">
+                        <label className="text-[10px] font-bold text-text-muted shrink-0">
+                            Role:
+                        </label>
+
+                        <select
+                            value={roleFilter}
                             onChange={e => setRoleFilter(e.target.value)}
-                            className="h-8 px-3 bg-surface-hover border border-border rounded-lg text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all"
+                            className="h-8 min-w-0 flex-1 sm:flex-none px-3 bg-surface-hover border border-border rounded-lg text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all"
                         >
                             <option value="All">All Roles</option>
                             <option value="Owner">Owner</option>
@@ -386,28 +390,37 @@ export function People() {
                             <option value="Viewer">Viewer</option>
                         </select>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <label className="text-[10px] font-bold text-text-muted">Status:</label>
-                        <select 
-                            value={statusFilter} 
+
+                    <div className="flex items-center gap-2 min-w-0">
+                        <label className="text-[10px] font-bold text-text-muted shrink-0">
+                            Status:
+                        </label>
+
+                        <select
+                            value={statusFilter}
                             onChange={e => setStatusFilter(e.target.value)}
-                            className="h-8 px-3 bg-surface-hover border border-border rounded-lg text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all"
+                            className="h-8 min-w-0 flex-1 sm:flex-none px-3 bg-surface-hover border border-border rounded-lg text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all"
                         >
                             <option value="All">All Statuses</option>
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                         </select>
                     </div>
+
                     {(roleFilter !== 'All' || statusFilter !== 'All') && (
-                        <button 
-                            onClick={() => { setRoleFilter('All'); setStatusFilter('All'); }}
-                            className="ml-2 text-[10px] font-bold text-primary hover:opacity-80 transition-opacity"
+                        <button
+                            onClick={() => {
+                                setRoleFilter('All');
+                                setStatusFilter('All');
+                            }}
+                            className="sm:ml-2 self-start sm:self-auto text-[10px] font-bold text-primary hover:opacity-80 transition-opacity"
                         >
                             Clear Filters
                         </button>
                     )}
                 </div>
             )}
+
 
             <Card noPadding className="border border-border rounded-[24px] overflow-hidden shadow-shell-sm">
                 <div className="overflow-x-auto custom-scrollbar">
@@ -493,7 +506,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
     const dropRef = useRef<HTMLTableDataCellElement>(null);
 
     const displayName = m.full_name?.trim() || "Unknown Member";
-    const initials = m.full_name?.trim()? m.full_name.trim().split(/\s+/).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase():'';
+    const initials = m.full_name?.trim() ? m.full_name.trim().split(/\s+/).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() : '';
 
     useEffect(() => {
         function h(e: MouseEvent) { if (dropRef.current && !dropRef.current.contains(e.target as Node)) setOpen(false); }
@@ -501,12 +514,12 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
     }, []);
 
     return (
-        <tr 
+        <tr
             onClick={() => onEdit()}
             className={clsx(
-            "group/row transition-all cursor-pointer",
-            isSelected ? "bg-primary/5" : "hover:bg-surface-hover/50"
-        )}>
+                "group/row transition-all cursor-pointer",
+                isSelected ? "bg-primary/5" : "hover:bg-surface-hover/50"
+            )}>
             <td className="pl-8 py-5">
                 <input
                     type="checkbox"
@@ -794,7 +807,7 @@ function FormSelect({ label, value, onChange, options, disabled, icon, descripti
                 </div>
                 <AnimatePresence>
                     {isOpen && (
-                        <motion.div 
+                        <motion.div
                             initial={{ opacity: 0, y: -10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
