@@ -57,9 +57,8 @@ export function Modal({
                     `
                     bg-surface
                     rounded-2xl sm:rounded-[32px]
-                    w-full
-                    max-w-[calc(100vw-24px)]
-                    sm:max-w-[calc(100vw-48px)]
+                    w-[calc(100vw-24px)]
+                    sm:w-[calc(100vw-48px)]
                     max-h-[calc(100dvh-24px)]
                     sm:max-h-[calc(100dvh-48px)]
                     min-w-0
@@ -76,6 +75,7 @@ export function Modal({
                         : "overflow-hidden",
                     maxWidth
                 )}
+
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Modal Header */}
@@ -90,7 +90,7 @@ export function Modal({
                         min-w-0
                         `,
                         allowOverflow &&
-                            "rounded-t-2xl sm:rounded-t-[32px]"
+                        "rounded-t-2xl sm:rounded-t-[32px]"
                     )}
                 >
                     <div className="flex items-start justify-between gap-3 min-w-0">
@@ -176,7 +176,7 @@ export function Modal({
                             sm:gap-4
                             `,
                             allowOverflow &&
-                                "rounded-b-2xl sm:rounded-b-[32px]"
+                            "rounded-b-2xl sm:rounded-b-[32px]"
                         )}
                     >
                         {footer}
