@@ -78,6 +78,13 @@ export const reportService = {
   }): Promise<{ data: DayTotal[]; members: any[] }> {
     const { start, end, organizationId, selectedMemberId } = options;
 
+    // Auto-terminate any ghost sessions in database based on Termination Grace Period
+    if (organizationId) {
+        await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId }).catch(err => {
+            console.warn('Auto-terminate check warning:', err);
+        });
+    }
+
     const { data: members } = await supabase.from('members')
         .select('id, full_name, timezone, idle_limit')
         .eq('organization_id', organizationId)
@@ -344,6 +351,13 @@ export const reportService = {
             totalSessions: 0, calculatedTotalMins: 0, calculatedAvgActivity: 0,
             totalCosts: 0, totalBilled: 0, tableData: { dates: [], rows: [] }
         };
+    }
+
+    // Auto-terminate any ghost sessions in database based on Termination Grace Period
+    if (organizationId) {
+        await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId }).catch(err => {
+            console.warn('Auto-terminate check warning:', err);
+        });
     }
 
     let sessionsQuery = supabase
