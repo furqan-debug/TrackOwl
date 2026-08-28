@@ -25,6 +25,8 @@ export function ProfilePage() {
     const [error, setError] = useState<string | null>(null);
     const [avatarLoading, setAvatarLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const isFullNameValid = fullName.trim().length > 0;
+
     
 
     // 📍 Auto-detect location via IP (Enforced & Exact)
@@ -48,6 +50,11 @@ export function ProfilePage() {
 
     async function handleSave() {
         if (!profile) return;
+
+        const trimmedName = fullName.trim();
+
+        if (!trimmedName) return;
+
         setLoading(true);
         setError(null);
         setSuccess(false);
@@ -56,7 +63,7 @@ export function ProfilePage() {
             const { error } = await supabase
                 .from('members')
                 .update({
-                    full_name: fullName,
+                    full_name: trimmedName,
                     phone: phone,
                     location: location,
                     updated_at: new Date().toISOString()
@@ -244,6 +251,12 @@ export function ProfilePage() {
                                             className="w-full bg-surface border border-border rounded-xl pl-11 pr-4 h-11 text-[12px] font-bold text-text-main focus:outline-none focus:border-primary transition-all shadow-shell-sm"
                                         />
                                     </div>
+
+                                    {!isFullNameValid && (
+                                        <p className="text-[10px] font-bold text-rose-500 ml-1 mt-1">
+                                            Full name is required
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
@@ -283,12 +296,14 @@ export function ProfilePage() {
                             <div className="flex justify-end pt-4 border-t border-border">
                                 <button
                                     onClick={handleSave}
-                                    disabled={loading}
+                                    disabled={loading || !isFullNameValid}
                                     className={clsx(
                                         "h-10 px-8 rounded-xl text-[12px] font-bold transition-all shadow-shell-sm flex items-center gap-2",
-                                        success 
-                                            ? "bg-emerald-500 text-white" 
-                                            : "bg-primary text-white hover:brightness-110"
+                                        !isFullNameValid
+                                            ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                                            : success
+                                                ? "bg-emerald-500 text-white" 
+                                                : "bg-primary text-white hover:brightness-110"
                                     )}
                                 >
                                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 
