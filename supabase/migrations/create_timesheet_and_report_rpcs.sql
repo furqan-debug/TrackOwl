@@ -73,6 +73,7 @@ CREATE OR REPLACE FUNCTION public.get_raw_activity_samples(
 )
 RETURNS TABLE(
   session_id       uuid,
+  user_id          uuid,
   recorded_at      timestamptz,
   activity_percent integer,
   idle             boolean,
@@ -85,13 +86,14 @@ BEGIN
   RETURN QUERY
   SELECT
     a.session_id,
+    s.user_id,
     a.recorded_at,
     a.activity_percent::integer,
     a.idle,
     a.app_name
   FROM activity_samples a
   JOIN sessions s ON a.session_id = s.id
-  WHERE a.organization_id = p_org_id
+  WHERE (a.organization_id = p_org_id OR s.organization_id = p_org_id)
     AND a.recorded_at >= p_start_iso
     AND a.recorded_at <= p_end_iso
     AND (p_member_ids IS NULL OR s.user_id = ANY(p_member_ids::uuid[]))

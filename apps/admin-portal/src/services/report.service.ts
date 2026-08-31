@@ -110,6 +110,7 @@ export const reportService = {
             .eq('organization_id', organizationId)
             .lt('started_at', end.toISOString())
             .or(`ended_at.is.null,ended_at.gt.${start.toISOString()}`)
+            .order('id', { ascending: true })
             .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
         if (selectedMemberId.toLowerCase() !== 'all') {
@@ -139,9 +140,10 @@ export const reportService = {
         return { data: [], members: members || [] };
     }
 
-    const memberMap: Record<string, {name: string, tz: string | null}> = {};
+    const memberMap: Record<string, any> = {};
     members.forEach((m: any) => {
-        memberMap[m.id] = { name: m.full_name, tz: m.timezone };
+        memberMap[m.id] = m;
+        if (m.auth_user_id) memberMap[m.auth_user_id] = m;
     });
 
     const sessionToUserId = new Map();
@@ -152,18 +154,20 @@ export const reportService = {
     const sortedSamples = [...(samples || [])].sort((a: any, b: any) => (b.activity_percent ?? 0) - (a.activity_percent ?? 0));
 
     sortedSamples.forEach((s: any) => {
-        const uid = sessionToUserId.get(s.session_id);
-        if (!uid || !memberMap[uid]) return;
+        const uid = s.user_id || sessionToUserId.get(s.session_id);
+        const member = uid ? memberMap[uid] : null;
+        if (!member) return;
+        const canonicalId = member.id;
         const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
-        const key = `${uid}_${minute}`;
+        const key = `${canonicalId}_${minute}`;
         if (seen.has(key)) return;
         seen.add(key);
-        dedupedSamples.push(s);
+        dedupedSamples.push({ ...s, canonical_user_id: canonicalId });
     });
 
     const userSamples = new Map<string, any[]>();
     dedupedSamples.forEach(s => {
-        const uid = sessionToUserId.get(s.session_id);
+        const uid = s.canonical_user_id;
         if (!uid) return;
         if (!userSamples.has(uid)) userSamples.set(uid, []);
         userSamples.get(uid)!.push(s);
@@ -176,14 +180,15 @@ export const reportService = {
     sessions.forEach((s: any) => {
         if (s.manual === true) {
             const uid = s.user_id;
-            if (!uid || !memberMap[uid]) return;
+            const member = uid ? memberMap[uid] : null;
+            if (!member) return;
             const { endMs } = getEffectiveEnd(s.started_at, s.ended_at);
             const startMs = new Date(s.started_at).getTime();
             const durationHrs = (endMs - startMs) / (1000 * 60 * 60);
 
-            const dayIdxRaw = getDayIndexInTz(s.started_at, memberMap[uid].tz);
+            const dayIdxRaw = getDayIndexInTz(s.started_at, member.timezone);
             const dayIdx = (dayIdxRaw + 6) % 7;
-            stats[uid][dayIdx] += durationHrs;
+            stats[member.id][dayIdx] += durationHrs;
         }
     });
 
@@ -191,28 +196,18 @@ export const reportService = {
 
     userSamples.forEach((samples, uid) => {
         const limit = memberDetailMap.get(uid)?.idle_limit ?? 10;
+        const member = memberMap[uid];
         const sorted = samples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-
-        // Server-side auto-terminate cap: if the org has auto-terminate enabled and the session
-        // has a trailing block of zero-activity >= the org limit, trim those samples off the end
-        // so they are excluded from productive time calculation.
-        let cappedSorted = sorted;
-        if (orgAutoStopEnabled && orgAutoStopMins > 0) {
-            const { cappedEndMs } = applyAutoTerminateCap(sorted as any, orgAutoStopMins);
-            if (cappedEndMs !== null) {
-                cappedSorted = sorted.filter(s => new Date(s.recorded_at).getTime() < cappedEndMs);
-            }
-        }
         
         const sampleByMinute = new Map();
-        cappedSorted.forEach((s: any) => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
+        sorted.forEach((s: any) => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
 
         let currentBlock: any[] = [];
         const productiveMinutes = new Set<string>();
 
-        for (let i = 0; i < cappedSorted.length; i++) {
-            const s = cappedSorted[i];
-            const prev = i > 0 ? cappedSorted[i-1] : null;
+        for (let i = 0; i < sorted.length; i++) {
+            const s = sorted[i];
+            const prev = i > 0 ? sorted[i-1] : null;
             const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
             const isContiguous = prev && gapMs <= 125000;
 
@@ -240,10 +235,10 @@ export const reportService = {
         if (productiveMinutes.size > 0) {
             productiveMinutes.forEach(minuteStr => {
                 const s = sampleByMinute.get(minuteStr);
-                if (s) {
-                    const dayIdxRaw = getDayIndexInTz(s.recorded_at, memberMap[uid].tz);
+                if (s && member) {
+                    const dayIdxRaw = getDayIndexInTz(s.recorded_at, member.timezone);
                     const dayIdx = (dayIdxRaw + 6) % 7; 
-                    stats[uid][dayIdx] += (1 / 60);
+                    stats[member.id][dayIdx] += (1 / 60);
                 }
             });
         }
@@ -394,6 +389,7 @@ export const reportService = {
             .lt('started_at', end)
             .or(`ended_at.is.null,ended_at.gt.${start}`)
             .in('user_id', scopedUserIds)
+            .order('id', { ascending: true })
             .range(sessPage * SESS_PAGE, (sessPage + 1) * SESS_PAGE - 1);
 
         if (organizationId) {
@@ -482,12 +478,7 @@ export const reportService = {
     let billed = 0;
 
     // Build dateList from the UTC midnight boundaries returned by getDateRange().
-    // We extract the date portion from the ISO string directly (which is already
-    // expressed in org-timezone-aware UTC) rather than using new Date() which
-    // would re-interpret the timestamp in the browser's local timezone and can
-    // shift the date forward or backward by a day on non-UTC devices.
     function utcDatePart(isoStr: string): string {
-        // isoStr is like "2026-07-16T07:00:00.000Z" — take the UTC date
         const d = new Date(isoStr);
         const yyyy = d.getUTCFullYear();
         const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
@@ -495,9 +486,6 @@ export const reportService = {
         return `${yyyy}-${mm}-${dd}`;
     }
 
-    // The org-local calendar dates that the org-tz boundaries span.
-    // Because start is midnight and end is 23:59:59 in org-tz, converting those
-    // UTC values back to org-local dates gives exactly the intended calendar days.
     function utcToOrgLocalDatePart(isoStr: string, tz: string): string {
         const d = new Date(isoStr);
         try {
@@ -511,11 +499,9 @@ export const reportService = {
     const endLocalDate = utcToOrgLocalDatePart(end, orgTz);
 
     const dateList: string[] = [];
-    // Walk YYYY-MM-DD strings without touching Date hours (avoids DST/tz issues)
     let walkDate = startLocalDate;
     while (walkDate <= endLocalDate) {
         dateList.push(walkDate);
-        // Advance by one calendar day using UTC noon to avoid DST edge cases
         const [y, m, d2] = walkDate.split('-').map(Number);
         const next = new Date(Date.UTC(y, m - 1, d2 + 1, 12, 0, 0));
         const ny = next.getUTCFullYear();
@@ -547,8 +533,8 @@ export const reportService = {
         if (dateListSet.has(row.date)) {
             dailyMap[row.date] = {
                 activitySum: row.activity_sum,
-                total_samples: row.sample_count,   // sample count for activity % averaging
-                total_minutes: 0 // Will calculate via JS split
+                total_samples: row.sample_count,
+                total_minutes: 0
             };
         }
     });
@@ -557,7 +543,7 @@ export const reportService = {
     dbUserDailyStats.forEach((row: any) => {
         const uid = row.user_id;
         const day = row.date;
-        const sampleCount = row.sample_count;   // sample count for activity averaging
+        const sampleCount = row.sample_count;
         const actSum = row.activity_sum;
 
         if (dateListSet.has(day)) {
@@ -565,13 +551,12 @@ export const reportService = {
             if (member && memberRows[member.id]) {
                 const r = memberRows[member.id];
                 r.activitySum += actSum;
-                r.activitySamples += sampleCount; // use sample count, not duration
+                r.activitySamples += sampleCount;
             }
         }
     });
 
     // 3. Process ALL Sessions for accurate midnight-split duration
-    // 3. Deduplicate raw samples and group by user
     const sessionToUserId = new Map();
     filteredSessions.forEach((s: any) => sessionToUserId.set(s.id, s.user_id));
 
@@ -580,18 +565,20 @@ export const reportService = {
     const sortedSamples = [...rawSamples].sort((a: any, b: any) => (b.activity_percent ?? 0) - (a.activity_percent ?? 0));
 
     sortedSamples.forEach((s: any) => {
-        const uid = sessionToUserId.get(s.session_id);
-        if (!uid || !membersMap.has(uid)) return;
+        const uid = s.user_id || sessionToUserId.get(s.session_id);
+        const member = uid ? membersMap.get(uid) : null;
+        if (!member) return;
+        const canonicalId = member.id;
         const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
-        const key = `${uid}_${minute}`;
+        const key = `${canonicalId}_${minute}`;
         if (seen.has(key)) return;
         seen.add(key);
-        dedupedSamples.push(s);
+        dedupedSamples.push({ ...s, canonical_user_id: canonicalId });
     });
 
     const userSamples = new Map<string, any[]>();
     dedupedSamples.forEach(s => {
-        const uid = sessionToUserId.get(s.session_id);
+        const uid = s.canonical_user_id;
         if (!uid) return;
         if (!userSamples.has(uid)) userSamples.set(uid, []);
         userSamples.get(uid)!.push(s);
@@ -610,27 +597,16 @@ export const reportService = {
         
         const limit = memberDetailMap.get(uid)?.idle_limit ?? 10;
         const sorted = samples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-
-        // Server-side auto-terminate cap (same logic as fetchDailyTotals)
-        const orgAutoStop: boolean = (options as any).orgAutoStopOnIdle ?? false;
-        const orgAutoStopMinsTs: number = (options as any).orgAutoStopMinutes ?? 60;
-        let cappedSorted = sorted;
-        if (orgAutoStop && orgAutoStopMinsTs > 0) {
-            const { cappedEndMs } = applyAutoTerminateCap(sorted as any, orgAutoStopMinsTs);
-            if (cappedEndMs !== null) {
-                cappedSorted = sorted.filter((s: any) => new Date(s.recorded_at).getTime() < cappedEndMs);
-            }
-        }
         
         const sampleByMinute = new Map();
-        cappedSorted.forEach((s: any) => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
+        sorted.forEach((s: any) => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
 
         let currentBlock: any[] = [];
         const productiveMinutes = new Set<string>();
 
-        for (let i = 0; i < cappedSorted.length; i++) {
-            const s = cappedSorted[i];
-            const prev = i > 0 ? cappedSorted[i-1] : null;
+        for (let i = 0; i < sorted.length; i++) {
+            const s = sorted[i];
+            const prev = i > 0 ? sorted[i-1] : null;
             const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
             const isContiguous = prev && gapMs <= 125000;
 
