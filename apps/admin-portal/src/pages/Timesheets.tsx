@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import {
     ChevronLeft, ChevronRight,
@@ -58,6 +59,8 @@ let timesheetsCacheKey: string | null = null;
 export function Timesheets() {
     const { profile, managedMemberIds, managedProjectIds, displayTimezone } = useAuth();
     const organizationId = profile?.organization_id;
+    const navigate = useNavigate();
+
     const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'calendar'>('daily');
     const [entries, setEntries] = useState<DailyEntry[]>([]);
     const [members, setMembers] = useState<MemberInfo[]>([]);
@@ -112,6 +115,21 @@ export function Timesheets() {
         }
         return { start, end };
     }, [selectedDate, viewMode]);
+
+    // Timesheet se Report page par jump karne ke liye
+    const openReportForMember = (userId: string) => {
+        // Timesheet ka user_id ho sakta hai auth_user_id ho; usay members.id se match karo
+        const member = members.find(m => m.id === userId || m.auth_user_id === userId);
+        const memberId = member?.id || userId;
+
+        // Current view ke hisaab se start aur end date
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const toStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const startStr = toStr(range.start);
+        const endStr = toStr(range.end);
+
+        navigate(`/dashboard/reports?member=${memberId}&start=${startStr}&end=${endStr}`);
+    };
 
     useEffect(() => {
         if (organizationId) {
@@ -652,21 +670,22 @@ export function Timesheets() {
                                 toProperCase={toProperCase}
                                 onEditSession={openEditModal}
                                 onDeleteSession={openDeleteModal}
+                                onRowClick={openReportForMember}
                             />
                         )}
 
                         {viewMode === 'weekly' && (
                             <WeeklyView
                                 entries={entries}
-                                onNavigate={(d) => {
-                                    setSelectedDate(new Date(d + 'T12:00:00'));
-                                    setViewMode('daily');
-                                }}
+                                onDayClick={(d: string) => navigate(`/dashboard/reports?start=${d}&end=${d}`)}
                             />
                         )}
 
                         {viewMode === 'calendar' && (
-                            <CalendarView entries={entries} />
+                            <CalendarView
+                                entries={entries}
+                                onDayClick={(d: string) => navigate(`/dashboard/reports?start=${d}&end=${d}`)}
+                            />
                         )}
                     </div>
                 )}
@@ -815,12 +834,13 @@ export function Timesheets() {
     );
 }
 
-function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDeleteSession }: {
+function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDeleteSession, onRowClick }: {
     entries: DailyEntry[],
     selectedMember: string,
     toProperCase: (s: string) => string,
     onEditSession: (s: any) => void,
-    onDeleteSession: (s: any) => void
+    onDeleteSession: (s: any) => void,
+    onRowClick: (userId: string) => void
 }) {
     const day = entries[0];
 
@@ -943,7 +963,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {displayRows.map((s, idx) => (
-                            <tr key={idx} className="group hover:bg-surface-hover/50 transition-all">
+                            <tr key={idx} onClick={() => onRowClick(s.user_id)} className="group hover:bg-surface-hover/50 transition-all cursor-pointer">
                                 <td className="py-8 px-10">
                                     <div className="flex flex-col gap-1.5">
                                         <span className="text-[16px] font-bold text-text-main tracking-tight">{s.project_name}</span>
@@ -989,14 +1009,14 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                 <td className="py-8 px-4 text-center">
                                     {!s.isAggregated && (
                                         <div className="relative group/actions inline-block text-left">
-                                            <button className="p-2 hover:bg-surface-hover rounded-md text-text-muted hover:text-text-main transition-colors">
+                                            <button onClick={(e) => e.stopPropagation()} className="p-2 hover:bg-surface-hover rounded-md text-text-muted hover:text-text-main transition-colors">
                                                 <MoreVertical className="w-5 h-5" />
                                             </button>
                                             <div className="absolute right-0 top-full mt-1 w-36 bg-surface border border-border rounded-lg shadow-shell-md opacity-0 invisible group-hover/actions:opacity-100 group-hover/actions:visible transition-all z-50 overflow-hidden">
-                                                <button onClick={() => onEditSession(s)} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2">
+                                                <button onClick={(e) => { e.stopPropagation(); onEditSession(s); }} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2">
                                                     <Edit2 className="w-4 h-4 text-text-muted" /> Edit Time
                                                 </button>
-                                                <button onClick={() => onDeleteSession(s)} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 flex items-center gap-2 border-t border-border/50">
+                                                <button onClick={(e) => { e.stopPropagation(); onDeleteSession(s); }} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 flex items-center gap-2 border-t border-border/50">
                                                     <Trash2 className="w-4 h-4" /> Delete Time
                                                 </button>
                                             </div>
@@ -1012,11 +1032,11 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
     );
 }
 
-function WeeklyView({ entries, onNavigate }: { entries: DailyEntry[], onNavigate: (d: string) => void }) {
+function WeeklyView({ entries, onDayClick }: { entries: DailyEntry[], onDayClick: (d: string) => void }) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-6">
             {entries.map((day, i) => (
-                <div key={i} className="bg-surface border border-border rounded-md p-6 flex flex-col items-center gap-4 hover:border-primary/30 hover:shadow-lg hover:shadow-slate-200/40 transition-all cursor-pointer group" onClick={() => onNavigate(day.date)}>
+                <div key={i} className="bg-surface border border-border rounded-md p-6 flex flex-col items-center gap-4 hover:border-primary/30 hover:shadow-lg hover:shadow-slate-200/40 transition-all cursor-pointer group" onClick={() => onDayClick(day.date)}>
                     <span className="text-[10px] font-bold text-text-muted ">{DAYS_SHORT[new Date(day.date + 'T12:00:00').getDay()]}</span>
                     <span className="text-2xl font-bold text-text-main group-hover:text-primary transition-colors tabular-nums">{new Date(day.date + 'T12:00:00').getDate()}</span>
                     <div className="flex flex-col items-center gap-1">
@@ -1031,7 +1051,7 @@ function WeeklyView({ entries, onNavigate }: { entries: DailyEntry[], onNavigate
     );
 }
 
-function CalendarView({ entries }: { entries: DailyEntry[] }) {
+function CalendarView({ entries, onDayClick }: { entries: DailyEntry[], onDayClick: (d: string) => void }) {
     return (
         <div className="w-full min-w-0">
             {/* Mobile: horizontal scroll
@@ -1057,6 +1077,7 @@ function CalendarView({ entries }: { entries: DailyEntry[] }) {
                         {entries.map((day, i) => (
                             <div
                                 key={i}
+                                onClick={() => onDayClick(day.date)}
                                 className="
                                     bg-surface
                                     min-h-[150px]
@@ -1071,6 +1092,7 @@ function CalendarView({ entries }: { entries: DailyEntry[] }) {
                                     hover:bg-surface-hover
                                     transition-all
                                     group
+                                    cursor-pointer
                                 "
                             >
                                 {/* Date */}
@@ -1116,5 +1138,3 @@ function CalendarView({ entries }: { entries: DailyEntry[] }) {
         </div>
     );
 }
-
-
