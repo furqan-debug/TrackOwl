@@ -27,6 +27,7 @@ import clsx from 'clsx';
 import Lenis from 'lenis';
 import { formatDuration, orgLocalToUtc } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 
 // Official TrackOwl Brand Palette
 const BRAND_PRIMARY = 'var(--color-chart-main)';
@@ -48,6 +49,7 @@ let reportsCacheKey: string | null = null;
 export function Reports() {
     const { profile, managedMemberIds, displayTimezone } = useAuth();
     const organizationId = profile?.organization_id;
+    const [searchParams] = useSearchParams();
     const [range, setRange] = useState<Range>('Last 7 Days');
     const [offset, setOffset] = useState(0); // offset in days
     const [showRangeDropdown, setShowRangeDropdown] = useState(false);
@@ -111,12 +113,30 @@ export function Reports() {
         };
     }, [tableData]);
 
-    const [membersLoaded, setMembersLoaded] = useState(false);
+        const [membersLoaded, setMembersLoaded] = useState(false);
 
     useEffect(() => {
         fetchTeams();
         fetchMembers();
     }, []);
+
+    // Jab Timesheet se member+date URL mein aaye, to unhe apply karo
+    useEffect(() => {
+        if (!membersLoaded) return;
+        const urlMember = searchParams.get('member');
+        const urlStart = searchParams.get('start');
+        const urlEnd = searchParams.get('end');
+
+        if (urlStart && urlEnd) {
+            setCustomStart(new Date(urlStart + 'T12:00:00'));
+            setCustomEnd(new Date(urlEnd + 'T12:00:00'));
+            setRange('Custom');
+        }
+        if (urlMember) {
+            setSelectedMemberId(urlMember);
+            setSelectedTeamId('All');
+        }
+    }, [membersLoaded, searchParams]);
 
     useEffect(() => {
         if (!membersLoaded) return;
