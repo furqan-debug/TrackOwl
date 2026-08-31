@@ -420,7 +420,7 @@ export const reportService = {
         ? supabase.rpc('get_sessions_activity_stats', { p_session_ids: sessionIds }) 
         : Promise.resolve({ data: [] });
 
-    const [samplesResult, { count: ssCount }, { data: statsData }, { data: rawSamplesData }] = await Promise.all([
+    const [samplesResult, { count: ssCount }, { data: statsData }] = await Promise.all([
         supabase.rpc('get_reports_aggregated_data', {
             p_org_id: organizationId,
             p_start_iso: start,
@@ -429,17 +429,10 @@ export const reportService = {
             p_member_ids: scopedUserIds.length > 0 ? scopedUserIds : null
         }),
         ssQuery,
-        statsQuery,
-        supabase.rpc('get_raw_activity_samples', {
-            p_org_id: organizationId,
-            p_start_iso: start,
-            p_end_iso: end,
-            p_member_ids: scopedUserIds.length > 0 ? scopedUserIds : null
-        })
+        statsQuery
     ]);
     const t3 = performance.now();
     const sessionStats = statsData || [];
-    const rawSamples = rawSamplesData || [];
 
     const aggregatedData = samplesResult.data as any || { daily_stats: [], user_daily_stats: [], app_stats: [] };
     const dbDailyStats = aggregatedData.daily_stats || [];
@@ -515,145 +508,52 @@ export const reportService = {
 
     const dateListSet = new Set(dateList);
 
+    // 1. Populate dailyMap from database aggregated daily stats
     dbDailyStats.forEach((row: any) => {
         if (dateListSet.has(row.date)) {
             dailyMap[row.date] = {
-                activitySum: row.activity_sum,
-                total_samples: row.sample_count,
-                total_minutes: 0
+                activitySum: row.activity_sum || 0,
+                total_samples: row.sample_count || 0,
+                total_minutes: row.total_minutes || 0
             };
         }
     });
 
-    // 2. Populate memberRows (activity samples only)
+    // 2. Populate memberRows and financial totals from database aggregated user daily stats
     dbUserDailyStats.forEach((row: any) => {
         const uid = row.user_id;
         const day = row.date;
-        const sampleCount = row.sample_count;
-        const actSum = row.activity_sum;
+        const sampleCount = row.sample_count || 0;
+        const actSum = row.activity_sum || 0;
+        const mins = row.total_minutes || 0;
 
         if (dateListSet.has(day)) {
             const member = membersMap.get(uid);
-            if (member && memberRows[member.id]) {
-                const r = memberRows[member.id];
-                r.activitySum += actSum;
-                r.activitySamples += sampleCount;
+            const canonicalId = member ? member.id : uid;
+
+            if (!memberRows[canonicalId]) {
+                memberRows[canonicalId] = {
+                    memberId: canonicalId,
+                    fullName: member ? (member.full_name || member.email || 'Unknown') : ('Member (' + canonicalId.slice(0, 6) + ')'),
+                    email: member?.email || '',
+                    employeeId: member?.employee_id || '',
+                    dailyMins: {},
+                    totalMins: 0,
+                    activitySum: 0,
+                    activitySamples: 0
+                };
             }
-        }
-    });
 
-    // 3. Process ALL Sessions for accurate midnight-split duration
-    const sessionToUserId = new Map();
-    filteredSessions.forEach((s: any) => sessionToUserId.set(s.id, s.user_id));
+            const r = memberRows[canonicalId];
+            r.activitySum += actSum;
+            r.activitySamples += sampleCount;
+            r.dailyMins[day] = (r.dailyMins[day] || 0) + mins;
+            r.totalMins += mins;
 
-    const seen = new Set<string>();
-    const dedupedSamples: any[] = [];
-    const sortedSamples = [...rawSamples].sort((a: any, b: any) => (b.activity_percent ?? 0) - (a.activity_percent ?? 0));
-
-    sortedSamples.forEach((s: any) => {
-        const uid = s.user_id || sessionToUserId.get(s.session_id);
-        if (!uid) return;
-        const member = membersMap.get(uid);
-        const canonicalId = member ? member.id : uid;
-        const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
-        const key = `${canonicalId}_${minute}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        dedupedSamples.push({ ...s, canonical_user_id: canonicalId });
-    });
-
-    const userSamples = new Map<string, any[]>();
-    dedupedSamples.forEach(s => {
-        const uid = s.canonical_user_id;
-        if (!uid) return;
-        if (!userSamples.has(uid)) userSamples.set(uid, []);
-        userSamples.get(uid)!.push(s);
-    });
-
-    const memberDetailMap = new Map(membersForLookup.map((m: any) => [m.id, m]));
-    const getGroupingDateInTz = (isoStr: string, tz: string) => {
-        try { return new Date(isoStr).toLocaleDateString('en-CA', { timeZone: tz }); }
-        catch { return isoStr.substring(0, 10); }
-    };
-
-    // 4. Process Non-Manual Sessions for Productive Time using contiguous idle blocks
-    userSamples.forEach((samples, uid) => {
-        const member = membersMap.get(uid);
-        const limit = member?.idle_limit ?? memberDetailMap.get(uid)?.idle_limit ?? 10;
-        const sorted = samples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-        
-        const sampleByMinute = new Map();
-        sorted.forEach((s: any) => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
-
-        let currentBlock: any[] = [];
-        const productiveMinutes = new Set<string>();
-
-        for (let i = 0; i < sorted.length; i++) {
-            const s = sorted[i];
-            const prev = i > 0 ? sorted[i-1] : null;
-            const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
-            const isContiguous = prev && gapMs <= 125000;
-
-            if (s.idle && isContiguous) {
-                currentBlock.push(s);
-            } else if (s.idle && !prev) {
-                currentBlock = [s];
-            } else if (s.idle && !isContiguous) {
-                if (currentBlock.length < limit) {
-                    currentBlock.forEach(b => productiveMinutes.add(b.recorded_at.substring(0, 16)));
-                }
-                currentBlock = [s];
-            } else {
-                productiveMinutes.add(s.recorded_at.substring(0, 16));
-                if (currentBlock.length < limit) {
-                    currentBlock.forEach(b => productiveMinutes.add(b.recorded_at.substring(0, 16)));
-                }
-                currentBlock = [];
+            if (member) {
+                costs += (mins / 60) * (member.pay_rate || 0);
+                billed += (mins / 60) * (member.bill_rate || 0);
             }
-        }
-        if (currentBlock.length < limit) {
-            currentBlock.forEach(b => productiveMinutes.add(b.recorded_at.substring(0, 16)));
-        }
-
-        if (productiveMinutes.size > 0) {
-            productiveMinutes.forEach(minuteStr => {
-                const s = sampleByMinute.get(minuteStr);
-                if (s) {
-                    const day = getGroupingDateInTz(s.recorded_at, orgTz);
-                    if (dateListSet.has(day)) {
-                        if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
-                        
-                        dailyMap[day].total_minutes += 1;
-
-                        if (member) {
-                            costs += (1 / 60) * (member.pay_rate || 0);
-                            billed += (1 / 60) * (member.bill_rate || 0);
-
-                            if (memberRows[member.id]) {
-                                const row = memberRows[member.id];
-                                row.dailyMins[day] = (row.dailyMins[day] || 0) + 1;
-                                row.totalMins += 1;
-                            }
-                        } else {
-                            if (!memberRows[uid]) {
-                                memberRows[uid] = {
-                                    memberId: uid,
-                                    fullName: 'Member (' + uid.slice(0, 6) + ')',
-                                    email: '',
-                                    employeeId: '',
-                                    dailyMins: {},
-                                    totalMins: 0,
-                                    activitySum: 0,
-                                    activitySamples: 0
-                                };
-                            }
-                            const row = memberRows[uid];
-                            row.dailyMins[day] = (row.dailyMins[day] || 0) + 1;
-                            row.totalMins += 1;
-                        }
-                    }
-                }
-            });
         }
     });
 
