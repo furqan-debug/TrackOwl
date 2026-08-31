@@ -368,8 +368,9 @@ export const reportService = {
     }
 
 
-    const scopedUserIds = filteredSessionUserIds.length > 0 ? filteredSessionUserIds : allMemberSessionUserIds;
-    if (scopedUserIds.length === 0) {
+    const isFiltered = (selectedMemberId !== 'All' || selectedTeamId !== 'All');
+    const scopedUserIds = isFiltered ? filteredSessionUserIds : [];
+    if (isFiltered && scopedUserIds.length === 0) {
         return {
             dailyActivityList: [], appBreakdownList: [], screenshotCount: 0,
             totalSessions: 0, calculatedTotalMins: 0, calculatedAvgActivity: 0,
@@ -388,12 +389,15 @@ export const reportService = {
             .select('id, user_id, started_at, ended_at, manual')
             .lt('started_at', end)
             .or(`ended_at.is.null,ended_at.gt.${start}`)
-            .in('user_id', scopedUserIds)
             .order('id', { ascending: true })
             .range(sessPage * SESS_PAGE, (sessPage + 1) * SESS_PAGE - 1);
 
         if (organizationId) {
             sessionsQuery = sessionsQuery.eq('organization_id', organizationId);
+        }
+
+        if (scopedUserIds.length > 0) {
+            sessionsQuery = sessionsQuery.in('user_id', scopedUserIds);
         }
 
         const { data: sessBatch } = await sessionsQuery;
@@ -405,15 +409,13 @@ export const reportService = {
     const t1 = performance.now();
     console.log(`[Reports Timing] Sessions Query took ${(t1 - t0).toFixed(2)}ms, found ${allSessionData.length} sessions`);
     const filteredSessions = allSessionData;
-    if ((selectedMemberId !== 'All' || selectedTeamId !== 'All') && filteredSessions.length === 0) {
+    if (isFiltered && filteredSessions.length === 0) {
         return {
             dailyActivityList: [], appBreakdownList: [], screenshotCount: 0,
             totalSessions: 0, calculatedTotalMins: 0, calculatedAvgActivity: 0,
             totalCosts: 0, totalBilled: 0, tableData: { dates: [], rows: [] }
         };
     }
-
-    // activeSessionIds is no longer needed
 
     let ssQuery = supabase
         .from('screenshots')
@@ -566,9 +568,9 @@ export const reportService = {
 
     sortedSamples.forEach((s: any) => {
         const uid = s.user_id || sessionToUserId.get(s.session_id);
-        const member = uid ? membersMap.get(uid) : null;
-        if (!member) return;
-        const canonicalId = member.id;
+        if (!uid) return;
+        const member = membersMap.get(uid);
+        const canonicalId = member ? member.id : uid;
         const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
         const key = `${canonicalId}_${minute}`;
         if (seen.has(key)) return;
@@ -593,9 +595,7 @@ export const reportService = {
     // 4. Process Non-Manual Sessions for Productive Time using contiguous idle blocks
     userSamples.forEach((samples, uid) => {
         const member = membersMap.get(uid);
-        if (!member) return;
-        
-        const limit = memberDetailMap.get(uid)?.idle_limit ?? 10;
+        const limit = member?.idle_limit ?? memberDetailMap.get(uid)?.idle_limit ?? 10;
         const sorted = samples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
         
         const sampleByMinute = new Map();
@@ -641,11 +641,29 @@ export const reportService = {
                         
                         dailyMap[day].total_minutes += 1;
 
-                        costs += (1 / 60) * (member.pay_rate || 0);
-                        billed += (1 / 60) * (member.bill_rate || 0);
+                        if (member) {
+                            costs += (1 / 60) * (member.pay_rate || 0);
+                            billed += (1 / 60) * (member.bill_rate || 0);
 
-                        if (memberRows[member.id]) {
-                            const row = memberRows[member.id];
+                            if (memberRows[member.id]) {
+                                const row = memberRows[member.id];
+                                row.dailyMins[day] = (row.dailyMins[day] || 0) + 1;
+                                row.totalMins += 1;
+                            }
+                        } else {
+                            if (!memberRows[uid]) {
+                                memberRows[uid] = {
+                                    memberId: uid,
+                                    fullName: 'Member (' + uid.slice(0, 6) + ')',
+                                    email: '',
+                                    employeeId: '',
+                                    dailyMins: {},
+                                    totalMins: 0,
+                                    activitySum: 0,
+                                    activitySamples: 0
+                                };
+                            }
+                            const row = memberRows[uid];
                             row.dailyMins[day] = (row.dailyMins[day] || 0) + 1;
                             row.totalMins += 1;
                         }
