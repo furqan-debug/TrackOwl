@@ -100,17 +100,29 @@ export const reportService = {
     const orgAutoStopEnabled: boolean = orgSettings?.autoStopOnIdle ?? false;
     const orgAutoStopMins: number = orgSettings?.idleAutoStopMinutes ?? 60;
 
-    let sessQuery = supabase.from('sessions')
-        .select('id, user_id, started_at, ended_at, manual')
-        .eq('organization_id', organizationId)
-        .lt('started_at', end.toISOString())
-        .or(`ended_at.is.null,ended_at.gt.${start.toISOString()}`);
-    
-    if (selectedMemberId.toLowerCase() !== 'all') {
-        sessQuery = sessQuery.eq('user_id', selectedMemberId);
+    // Paginate sessions to avoid Supabase's 1000-row PostgREST cap
+    const allSessions: any[] = [];
+    const PAGE_SIZE = 1000;
+    let page = 0;
+    while (true) {
+        let sessQuery = supabase.from('sessions')
+            .select('id, user_id, started_at, ended_at, manual')
+            .eq('organization_id', organizationId)
+            .lt('started_at', end.toISOString())
+            .or(`ended_at.is.null,ended_at.gt.${start.toISOString()}`)
+            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+        if (selectedMemberId.toLowerCase() !== 'all') {
+            sessQuery = sessQuery.eq('user_id', selectedMemberId);
+        }
+
+        const { data: batch } = await sessQuery;
+        if (!batch || batch.length === 0) break;
+        allSessions.push(...batch);
+        if (batch.length < PAGE_SIZE) break;
+        page++;
     }
-    
-    const { data: sessions } = await sessQuery;
+    const sessions = allSessions;
 
     const { data: samplesData, error: samplesErr } = await supabase.rpc('get_raw_activity_samples', {
         p_org_id: organizationId,
@@ -360,15 +372,6 @@ export const reportService = {
         } catch (_) {}
     }
 
-    let sessionsQuery = supabase
-        .from('sessions')
-        .select('id, user_id, started_at, ended_at, manual')
-        .lt('started_at', end)
-        .or(`ended_at.is.null,ended_at.gt.${start}`);
-        
-    if (organizationId) {
-        sessionsQuery = sessionsQuery.eq('organization_id', organizationId);
-    }
 
     const scopedUserIds = filteredSessionUserIds.length > 0 ? filteredSessionUserIds : allMemberSessionUserIds;
     if (scopedUserIds.length === 0) {
@@ -378,13 +381,34 @@ export const reportService = {
             totalCosts: 0, totalBilled: 0, tableData: { dates: [], rows: [] }
         };
     }
-    sessionsQuery = sessionsQuery.in('user_id', scopedUserIds);
 
+    // Paginate sessions to avoid Supabase's 1000-row PostgREST cap
     const t0 = performance.now();
-    const { data: sessionData } = await sessionsQuery;
+    const SESS_PAGE = 1000;
+    let sessPage = 0;
+    const allSessionData: any[] = [];
+    while (true) {
+        let sessionsQuery = supabase
+            .from('sessions')
+            .select('id, user_id, started_at, ended_at, manual')
+            .lt('started_at', end)
+            .or(`ended_at.is.null,ended_at.gt.${start}`)
+            .in('user_id', scopedUserIds)
+            .range(sessPage * SESS_PAGE, (sessPage + 1) * SESS_PAGE - 1);
+
+        if (organizationId) {
+            sessionsQuery = sessionsQuery.eq('organization_id', organizationId);
+        }
+
+        const { data: sessBatch } = await sessionsQuery;
+        if (!sessBatch || sessBatch.length === 0) break;
+        allSessionData.push(...sessBatch);
+        if (sessBatch.length < SESS_PAGE) break;
+        sessPage++;
+    }
     const t1 = performance.now();
-    console.log(`[Reports Timing] Sessions Query took ${(t1 - t0).toFixed(2)}ms, found ${(sessionData || []).length} sessions`);
-    const filteredSessions = sessionData || [];
+    console.log(`[Reports Timing] Sessions Query took ${(t1 - t0).toFixed(2)}ms, found ${allSessionData.length} sessions`);
+    const filteredSessions = allSessionData;
     if ((selectedMemberId !== 'All' || selectedTeamId !== 'All') && filteredSessions.length === 0) {
         return {
             dailyActivityList: [], appBreakdownList: [], screenshotCount: 0,
