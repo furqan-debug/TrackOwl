@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { getDayIndexInTz, getEffectiveEnd, applyAutoTerminateCap } from '../lib/dataUtils';
+import { getDayIndexInTz, getEffectiveEnd } from '../lib/dataUtils';
 
 export interface OwedRow {
     member_id: string;
@@ -89,16 +89,6 @@ export const reportService = {
         .select('id, full_name, timezone, idle_limit')
         .eq('organization_id', organizationId)
         .order('full_name', { ascending: true });
-
-    // Fetch org-level auto-terminate settings for server-side session capping
-    const { data: orgData } = await supabase
-        .from('organizations')
-        .select('settings')
-        .eq('id', organizationId)
-        .maybeSingle();
-    const orgSettings = orgData?.settings ?? {};
-    const orgAutoStopEnabled: boolean = orgSettings?.autoStopOnIdle ?? false;
-    const orgAutoStopMins: number = orgSettings?.idleAutoStopMinutes ?? 60;
 
     // Paginate sessions to avoid Supabase's 1000-row PostgREST cap
     const allSessions: any[] = [];
@@ -321,12 +311,6 @@ export const reportService = {
     tableData: any;
   }> {
     const { start, end, organizationId, selectedTeamId, selectedMemberId, membersForLookup } = options;
-
-    const allMemberSessionUserIds = Array.from(
-        new Set(
-            membersForLookup.flatMap((m: any) => [m.id, m.auth_user_id].filter(Boolean) as string[])
-        )
-    );
 
     let filteredSessionUserIds: string[] = [];
 
