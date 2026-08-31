@@ -61,8 +61,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 3. RPC to stream raw activity samples — uses RETURNS TABLE (not jsonb_agg) to avoid
---    loading the entire result set into a single in-memory JSONB blob, which caused
---    HTTP 500 errors when selecting ranges longer than ~2 weeks for large orgs.
+--    loading the entire result set into a single in-memory JSONB blob.
 DROP FUNCTION IF EXISTS public.get_raw_activity_samples(uuid, timestamptz, timestamptz, text[]);
 DROP FUNCTION IF EXISTS public.get_raw_activity_samples(uuid, timestamptz, timestamptz, uuid[]);
 
@@ -73,11 +72,11 @@ CREATE OR REPLACE FUNCTION public.get_raw_activity_samples(
   p_member_ids text[] DEFAULT NULL
 )
 RETURNS TABLE(
-  session_id   uuid,
-  recorded_at  timestamptz,
-  activity_percent numeric,
-  idle         boolean,
-  app_name     text
+  session_id       uuid,
+  recorded_at      timestamptz,
+  activity_percent integer,
+  idle             boolean,
+  app_name         text
 )
 SECURITY DEFINER
 STABLE
@@ -87,7 +86,7 @@ BEGIN
   SELECT
     a.session_id,
     a.recorded_at,
-    a.activity_percent,
+    a.activity_percent::integer,
     a.idle,
     a.app_name
   FROM activity_samples a
