@@ -571,9 +571,10 @@ export function Landing() {
                         </button>
                         <button
                             onClick={() => navigate('/signup')}
-                            className="px-5 sm:px-6 py-2 sm:py-2.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-sm sm:text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] cursor-pointer transition-all hover:scale-105 active:scale-95"
+                            className="group relative overflow-hidden px-5 sm:px-6 py-2 sm:py-2.5 bg-[#facc15] text-[#001338] text-sm sm:text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] cursor-pointer transition-all hover:scale-105 active:scale-95"
                         >
-                            Start free trial
+                            <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                            <span className="relative z-10">Start free trial</span>
                         </button>
                     </div>
                 </nav>
@@ -639,10 +640,11 @@ export function Landing() {
                             >
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="w-full sm:w-auto px-8 py-3.5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 group"
+                                    className="group relative overflow-hidden w-full sm:w-auto px-8 py-3.5 bg-[#facc15] text-[#001338] text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
                                 >
-                                    Start free trial
-                                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                                    <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                                    <span className="relative z-10">Start free trial</span>
+                                    <ArrowRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </button>
                                 <button
                                     onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
@@ -978,8 +980,9 @@ export function Landing() {
                                 </div>
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="w-full py-4 rounded-lg bg-green-500 hover:bg-green-600 text-white text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
-                                    Get started
+                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-green-500 text-white text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
+                                    <span className="absolute inset-0 z-0 bg-green-600 translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                                    <span className="relative z-10">Get started</span>
                                 </button>
                             </div>
 
@@ -998,8 +1001,9 @@ export function Landing() {
                                 </div>
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="w-full py-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
-                                    Start free trial
+                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-blue-600 text-white text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
+                                    <span className="absolute inset-0 z-0 bg-blue-700 translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                                    <span className="relative z-10">Start free trial</span>
                                 </button>
                             </div>
 
@@ -1014,8 +1018,9 @@ export function Landing() {
                                 </div>
                                 <button
                                     onClick={() => { setContactType('sales'); setIsContactOpen(true); }}
-                                    className="w-full py-4 rounded-lg bg-[#facc15] hover:bg-[#eab308] text-[#001b4d] text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
-                                    Talk to sales
+                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-[#facc15] text-[#001b4d] text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
+                                    <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                                    <span className="relative z-10">Talk to sales</span>
                                 </button>
                             </div>
                         </div>
@@ -1169,8 +1174,9 @@ export function Landing() {
                     <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
                         <button
                             onClick={() => navigate('/signup')}
-                            className="w-full sm:w-auto px-12 py-5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-lg font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] cursor-pointer transition-all hover:scale-105 active:scale-95">
-                            Start free trial
+                            className="group relative overflow-hidden w-full sm:w-auto px-12 py-5 bg-[#facc15] text-[#001338] text-lg font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] cursor-pointer transition-all hover:scale-105 active:scale-95">
+                            <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                            <span className="relative z-10">Start free trial</span>
                         </button>
                         <button
                             onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
@@ -1209,4 +1215,3 @@ export function Landing() {
         </div>
     );
 }
-
