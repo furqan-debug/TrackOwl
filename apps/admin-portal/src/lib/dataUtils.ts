@@ -4,8 +4,8 @@ import type { ActivitySample, Session, AppSupabaseClient } from '../types';
  * Shared data utilities for standardized session and duration calculations.
  */
 
-export const STALE_THRESHOLD_MS = 5 * 60 * 60 * 1000; // 5 hours
-export const MAX_LIVE_SESSION_MS = 5 * 60 * 60 * 1000; // 5 hours (sanity cap for live sessions)
+export const STALE_THRESHOLD_MS = 3 * 60 * 1000; // 3 minutes (samples arrive every 60s; >3m = disconnected/stale)
+export const MAX_LIVE_SESSION_MS = 24 * 60 * 60 * 1000; // 24 hours sanity cap
 
 export interface TimeInterval {
     startMs: number;
@@ -456,6 +456,68 @@ export function calculateProductiveMinutes(samples: ActivitySample[], idleLimit:
     const stats = calculateStatsFromSamples(samples, idleLimit);
     return stats.productiveMinutes;
 }
+
+/**
+ * Server-side Auto-Terminate Cap.
+ *
+ * Scans the trailing end of a session's activity samples and detects whether
+ * there is a continuous block of zero-activity minutes (mouse_clicks === 0 AND
+ * key_presses === 0) that equals or exceeds `autoStopMinutes`.
+ *
+ * If such a trailing dead block is found, returns the timestamp of the last
+ * genuinely active sample as `cappedEndMs` — effectively trimming the abandoned
+ * idle tail from the session duration, matching what the desktop app would have
+ * done if the user hadn't closed their laptop / crashed / lost internet.
+ *
+ * Returns `null` for cappedEndMs if no cap is needed (session ended normally
+ * or the trailing idle block is shorter than the limit).
+ *
+ * Usage: wrap around getEffectiveEnd() in report calculations.
+ */
+export function applyAutoTerminateCap(
+    samples: ActivitySample[],
+    autoStopMinutes: number
+): { cappedEndMs: number | null; trailingIdleMinutes: number } {
+    if (!samples || samples.length === 0 || autoStopMinutes <= 0) {
+        return { cappedEndMs: null, trailingIdleMinutes: 0 };
+    }
+
+    // Sort ascending by recorded_at
+    const sorted = [...samples].sort(
+        (a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime()
+    );
+
+    // Walk backwards from the end to count the trailing zero-activity streak
+    // A sample is considered "dead" if it has no mouse clicks AND no key presses.
+    let trailingIdleCount = 0;
+    let lastActiveIndex = -1;
+
+    for (let i = sorted.length - 1; i >= 0; i--) {
+        const s = sorted[i] as any;
+        const hasActivity = (s.mouse_clicks ?? 0) > 0 || (s.key_presses ?? 0) > 0 || s.idle === false;
+        if (hasActivity) {
+            lastActiveIndex = i;
+            break;
+        }
+        trailingIdleCount++;
+    }
+
+    // If the trailing dead block is shorter than the org limit, no cap needed
+    if (trailingIdleCount < autoStopMinutes) {
+        return { cappedEndMs: null, trailingIdleMinutes: trailingIdleCount };
+    }
+
+    // Cap needed: use the last genuinely active sample as the effective end time,
+    // adding one minute buffer (one sample window = 60s).
+    if (lastActiveIndex >= 0) {
+        const cappedEndMs = new Date(sorted[lastActiveIndex].recorded_at).getTime() + 60_000;
+        return { cappedEndMs, trailingIdleMinutes: trailingIdleCount };
+    }
+
+    // All samples were idle — cap to the session start (zero duration)
+    return { cappedEndMs: null, trailingIdleMinutes: trailingIdleCount };
+}
+
 
 /**
  * Fetches sessions while bypassing the standard 1000-row API limit.
