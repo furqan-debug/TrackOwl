@@ -65,11 +65,10 @@ jobs:
           ${{ secrets.APPLE_API_KEY_CONTENT }}
           EOF
 
-      # Build via tauri-action without publishing to GitHub releases
-      - name: Build Tauri App
-        uses: tauri-apps/tauri-action@v0
+      # Build the Tauri app directly — no release creation
+      - name: Build Tauri App (macOS)
+        if: matrix.platform == 'macos-latest'
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
@@ -79,19 +78,21 @@ jobs:
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_PATH: ${{ runner.temp }}/private_keys/AuthKey_${{ secrets.APPLE_API_KEY }}.p8
-        with:
-          tagName: test-build
-          releaseName: 'Test Build'
-          releaseDraft: true
-          prerelease: true
-          args: ${{ matrix.args }}
+        run: npx tauri build ${{ matrix.args }}
+
+      - name: Build Tauri App (Windows)
+        if: matrix.platform == 'windows-latest'
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: npx tauri build
 
       - name: Extract Version Number
         id: version
         run: |
           node -e "const v = require('./src-tauri/tauri.conf.json').version; console.log('NUM=' + v); require('fs').appendFileSync(process.env.GITHUB_OUTPUT, 'NUM=' + v + '\n')"
 
-      # Code-sign Windows binaries
+      # Code-sign Windows binaries with SSL.com eSigner
       - name: Sign Windows Installers with SSL.com eSigner
         if: matrix.platform == 'windows-latest'
         shell: pwsh
@@ -128,7 +129,7 @@ jobs:
             }
           }
 
-      # Upload Windows installer as a GitHub Actions Artifact for testing
+      # Upload Windows installer as a GitHub Actions Artifact (no release created)
       - name: Upload Windows Test Artifacts
         if: matrix.platform == 'windows-latest'
         uses: actions/upload-artifact@v4
@@ -139,7 +140,7 @@ jobs:
             src-tauri/target/release/bundle/msi/*.msi
           retention-days: 14
 
-      # Upload macOS installer (.dmg) as a GitHub Actions Artifact for testing
+      # Upload macOS .dmg as a GitHub Actions Artifact (no release created)
       - name: Upload macOS Test Artifacts
         if: matrix.platform == 'macos-latest'
         uses: actions/upload-artifact@v4
