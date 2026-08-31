@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import { getDayIndexInTz, getEffectiveEnd } from '../lib/dataUtils';
+import { getDayIndexInTz, getEffectiveEnd, applyAutoTerminateCap } from '../lib/dataUtils';
 
 export interface OwedRow {
     member_id: string;
@@ -78,10 +78,27 @@ export const reportService = {
   }): Promise<{ data: DayTotal[]; members: any[] }> {
     const { start, end, organizationId, selectedMemberId } = options;
 
+    // Auto-terminate any ghost sessions in database based on Termination Grace Period
+    if (organizationId) {
+        try {
+            await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });
+        } catch (_) {}
+    }
+
     const { data: members } = await supabase.from('members')
         .select('id, full_name, timezone, idle_limit')
         .eq('organization_id', organizationId)
         .order('full_name', { ascending: true });
+
+    // Fetch org-level auto-terminate settings for server-side session capping
+    const { data: orgData } = await supabase
+        .from('organizations')
+        .select('settings')
+        .eq('id', organizationId)
+        .maybeSingle();
+    const orgSettings = orgData?.settings ?? {};
+    const orgAutoStopEnabled: boolean = orgSettings?.autoStopOnIdle ?? false;
+    const orgAutoStopMins: number = orgSettings?.idleAutoStopMinutes ?? 60;
 
     let sessQuery = supabase.from('sessions')
         .select('id, user_id, started_at, ended_at, manual')
@@ -163,16 +180,27 @@ export const reportService = {
     userSamples.forEach((samples, uid) => {
         const limit = memberDetailMap.get(uid)?.idle_limit ?? 10;
         const sorted = samples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+
+        // Server-side auto-terminate cap: if the org has auto-terminate enabled and the session
+        // has a trailing block of zero-activity >= the org limit, trim those samples off the end
+        // so they are excluded from productive time calculation.
+        let cappedSorted = sorted;
+        if (orgAutoStopEnabled && orgAutoStopMins > 0) {
+            const { cappedEndMs } = applyAutoTerminateCap(sorted as any, orgAutoStopMins);
+            if (cappedEndMs !== null) {
+                cappedSorted = sorted.filter(s => new Date(s.recorded_at).getTime() < cappedEndMs);
+            }
+        }
         
         const sampleByMinute = new Map();
-        sorted.forEach(s => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
+        cappedSorted.forEach((s: any) => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
 
         let currentBlock: any[] = [];
         const productiveMinutes = new Set<string>();
 
-        for (let i = 0; i < sorted.length; i++) {
-            const s = sorted[i];
-            const prev = i > 0 ? sorted[i-1] : null;
+        for (let i = 0; i < cappedSorted.length; i++) {
+            const s = cappedSorted[i];
+            const prev = i > 0 ? cappedSorted[i-1] : null;
             const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
             const isContiguous = prev && gapMs <= 125000;
 
@@ -323,6 +351,13 @@ export const reportService = {
             totalSessions: 0, calculatedTotalMins: 0, calculatedAvgActivity: 0,
             totalCosts: 0, totalBilled: 0, tableData: { dates: [], rows: [] }
         };
+    }
+
+    // Auto-terminate any ghost sessions in database based on Termination Grace Period
+    if (organizationId) {
+        try {
+            await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });
+        } catch (_) {}
     }
 
     let sessionsQuery = supabase
@@ -551,16 +586,27 @@ export const reportService = {
         
         const limit = memberDetailMap.get(uid)?.idle_limit ?? 10;
         const sorted = samples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+
+        // Server-side auto-terminate cap (same logic as fetchDailyTotals)
+        const orgAutoStop: boolean = (options as any).orgAutoStopOnIdle ?? false;
+        const orgAutoStopMinsTs: number = (options as any).orgAutoStopMinutes ?? 60;
+        let cappedSorted = sorted;
+        if (orgAutoStop && orgAutoStopMinsTs > 0) {
+            const { cappedEndMs } = applyAutoTerminateCap(sorted as any, orgAutoStopMinsTs);
+            if (cappedEndMs !== null) {
+                cappedSorted = sorted.filter((s: any) => new Date(s.recorded_at).getTime() < cappedEndMs);
+            }
+        }
         
         const sampleByMinute = new Map();
-        sorted.forEach(s => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
+        cappedSorted.forEach((s: any) => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
 
         let currentBlock: any[] = [];
         const productiveMinutes = new Set<string>();
 
-        for (let i = 0; i < sorted.length; i++) {
-            const s = sorted[i];
-            const prev = i > 0 ? sorted[i-1] : null;
+        for (let i = 0; i < cappedSorted.length; i++) {
+            const s = cappedSorted[i];
+            const prev = i > 0 ? cappedSorted[i-1] : null;
             const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
             const isContiguous = prev && gapMs <= 125000;
 
