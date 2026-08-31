@@ -61,21 +61,6 @@ export function Timesheets() {
     const organizationId = profile?.organization_id;
     const navigate = useNavigate();
 
-    // Timesheet se Report page par jump karne ke liye
-    const openReportForMember = (userId: string) => {
-        // Timesheet ka user_id ho sakta hai auth_user_id ho; usay members.id se match karo
-        const member = members.find(m => m.id === userId || m.auth_user_id === userId);
-        const memberId = member?.id || userId;
-
-        // Current view ke hisaab se start aur end date
-        const pad = (n: number) => String(n).padStart(2, '0');
-        const toStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-        const startStr = toStr(range.start);
-        const endStr = toStr(range.end);
-
-        navigate(`/dashboard/reports?member=${memberId}&start=${startStr}&end=${endStr}`);
-    };
-
     const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'calendar'>('daily');
     const [entries, setEntries] = useState<DailyEntry[]>([]);
     const [members, setMembers] = useState<MemberInfo[]>([]);
@@ -130,6 +115,21 @@ export function Timesheets() {
         }
         return { start, end };
     }, [selectedDate, viewMode]);
+
+    // Timesheet se Report page par jump karne ke liye
+    const openReportForMember = (userId: string) => {
+        // Timesheet ka user_id ho sakta hai auth_user_id ho; usay members.id se match karo
+        const member = members.find(m => m.id === userId || m.auth_user_id === userId);
+        const memberId = member?.id || userId;
+
+        // Current view ke hisaab se start aur end date
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const toStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const startStr = toStr(range.start);
+        const endStr = toStr(range.end);
+
+        navigate(`/dashboard/reports?member=${memberId}&start=${startStr}&end=${endStr}`);
+    };
 
     useEffect(() => {
         if (organizationId) {
@@ -1013,10 +1013,10 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                                 <MoreVertical className="w-5 h-5" />
                                             </button>
                                             <div className="absolute right-0 top-full mt-1 w-36 bg-surface border border-border rounded-lg shadow-shell-md opacity-0 invisible group-hover/actions:opacity-100 group-hover/actions:visible transition-all z-50 overflow-hidden">
-                                                <button onClick={() => onEditSession(s)} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2">
+                                                <button onClick={(e) => { e.stopPropagation(); onEditSession(s); }} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2">
                                                     <Edit2 className="w-4 h-4 text-text-muted" /> Edit Time
                                                 </button>
-                                                <button onClick={() => onDeleteSession(s)} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 flex items-center gap-2 border-t border-border/50">
+                                                <button onClick={(e) => { e.stopPropagation(); onDeleteSession(s); }} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 flex items-center gap-2 border-t border-border/50">
                                                     <Trash2 className="w-4 h-4" /> Delete Time
                                                 </button>
                                             </div>
@@ -1058,6 +1058,7 @@ function CalendarView({ entries, onDayClick }: { entries: DailyEntry[], onDayCli
                 Desktop: normal full-width calendar */}
             <div className="w-full overflow-x-auto custom-scrollbar ">
                 <div className="bg-surface border border-border rounded-md shadow-shell-sm overflow-hidden min-w-[840px] min-[1200px]:min-w-0">
+
 
                     {/* Calendar header */}
                     <div className="grid grid-cols-7 border-b border-border">
