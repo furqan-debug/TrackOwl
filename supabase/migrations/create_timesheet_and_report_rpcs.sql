@@ -60,8 +60,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 3. RPC to bypass PostgREST max_rows limit and fetch raw activity samples in a single call
+-- 3. RPC to stream raw activity samples — uses RETURNS TABLE (not jsonb_agg) to avoid
+--    loading the entire result set into a single in-memory JSONB blob.
 DROP FUNCTION IF EXISTS public.get_raw_activity_samples(uuid, timestamptz, timestamptz, text[]);
+DROP FUNCTION IF EXISTS public.get_raw_activity_samples(uuid, timestamptz, timestamptz, uuid[]);
 
 CREATE OR REPLACE FUNCTION public.get_raw_activity_samples(
   p_org_id uuid,
@@ -69,31 +71,33 @@ CREATE OR REPLACE FUNCTION public.get_raw_activity_samples(
   p_end_iso timestamptz,
   p_member_ids text[] DEFAULT NULL
 )
-RETURNS jsonb
+RETURNS TABLE(
+  session_id       uuid,
+  user_id          uuid,
+  recorded_at      timestamptz,
+  activity_percent integer,
+  idle             boolean,
+  app_name         text
+)
 SECURITY DEFINER
 STABLE
 AS $$
-DECLARE
-  v_result jsonb;
 BEGIN
-  SELECT jsonb_agg(row_to_json(t))
-  INTO v_result
-  FROM (
-    SELECT 
-      a.session_id,
-      a.recorded_at,
-      a.activity_percent,
-      a.idle,
-      a.app_name
-    FROM activity_samples a
-    JOIN sessions s ON a.session_id = s.id
-    WHERE a.organization_id = p_org_id
-      AND a.recorded_at >= p_start_iso
-      AND a.recorded_at <= p_end_iso
-      AND (p_member_ids IS NULL OR s.user_id = ANY(p_member_ids::uuid[]))
-    ORDER BY a.recorded_at ASC
-  ) t;
-  
-  RETURN COALESCE(v_result, '[]'::jsonb);
+  RETURN QUERY
+  SELECT
+    a.session_id,
+    s.user_id,
+    a.recorded_at,
+    a.activity_percent::integer,
+    a.idle,
+    a.app_name
+  FROM activity_samples a
+  JOIN sessions s ON a.session_id = s.id
+  WHERE (a.organization_id = p_org_id OR s.organization_id = p_org_id)
+    AND a.recorded_at >= p_start_iso
+    AND a.recorded_at <= p_end_iso
+    AND (p_member_ids IS NULL OR s.user_id = ANY(p_member_ids::uuid[]))
+  ORDER BY a.recorded_at ASC;
 END;
 $$ LANGUAGE plpgsql;
+

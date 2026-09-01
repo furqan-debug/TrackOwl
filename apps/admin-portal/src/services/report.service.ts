@@ -78,22 +78,42 @@ export const reportService = {
   }): Promise<{ data: DayTotal[]; members: any[] }> {
     const { start, end, organizationId, selectedMemberId } = options;
 
+    // Auto-terminate any ghost sessions in database based on Termination Grace Period
+    if (organizationId) {
+        try {
+            await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });
+        } catch (_) {}
+    }
+
     const { data: members } = await supabase.from('members')
         .select('id, full_name, timezone, idle_limit')
         .eq('organization_id', organizationId)
         .order('full_name', { ascending: true });
 
-    let sessQuery = supabase.from('sessions')
-        .select('id, user_id, started_at, ended_at, manual')
-        .eq('organization_id', organizationId)
-        .lt('started_at', end.toISOString())
-        .or(`ended_at.is.null,ended_at.gt.${start.toISOString()}`);
-    
-    if (selectedMemberId.toLowerCase() !== 'all') {
-        sessQuery = sessQuery.eq('user_id', selectedMemberId);
+    // Paginate sessions to avoid Supabase's 1000-row PostgREST cap
+    const allSessions: any[] = [];
+    const PAGE_SIZE = 1000;
+    let page = 0;
+    while (true) {
+        let sessQuery = supabase.from('sessions')
+            .select('id, user_id, started_at, ended_at, manual')
+            .eq('organization_id', organizationId)
+            .lt('started_at', end.toISOString())
+            .or(`ended_at.is.null,ended_at.gt.${start.toISOString()}`)
+            .order('id', { ascending: true })
+            .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+        if (selectedMemberId.toLowerCase() !== 'all') {
+            sessQuery = sessQuery.eq('user_id', selectedMemberId);
+        }
+
+        const { data: batch } = await sessQuery;
+        if (!batch || batch.length === 0) break;
+        allSessions.push(...batch);
+        if (batch.length < PAGE_SIZE) break;
+        page++;
     }
-    
-    const { data: sessions } = await sessQuery;
+    const sessions = allSessions;
 
     const { data: samplesData, error: samplesErr } = await supabase.rpc('get_raw_activity_samples', {
         p_org_id: organizationId,
@@ -110,9 +130,10 @@ export const reportService = {
         return { data: [], members: members || [] };
     }
 
-    const memberMap: Record<string, {name: string, tz: string | null}> = {};
+    const memberMap: Record<string, any> = {};
     members.forEach((m: any) => {
-        memberMap[m.id] = { name: m.full_name, tz: m.timezone };
+        memberMap[m.id] = m;
+        if (m.auth_user_id) memberMap[m.auth_user_id] = m;
     });
 
     const sessionToUserId = new Map();
@@ -123,18 +144,20 @@ export const reportService = {
     const sortedSamples = [...(samples || [])].sort((a: any, b: any) => (b.activity_percent ?? 0) - (a.activity_percent ?? 0));
 
     sortedSamples.forEach((s: any) => {
-        const uid = sessionToUserId.get(s.session_id);
-        if (!uid || !memberMap[uid]) return;
+        const uid = s.user_id || sessionToUserId.get(s.session_id);
+        const member = uid ? memberMap[uid] : null;
+        if (!member) return;
+        const canonicalId = member.id;
         const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
-        const key = `${uid}_${minute}`;
+        const key = `${canonicalId}_${minute}`;
         if (seen.has(key)) return;
         seen.add(key);
-        dedupedSamples.push(s);
+        dedupedSamples.push({ ...s, canonical_user_id: canonicalId });
     });
 
     const userSamples = new Map<string, any[]>();
     dedupedSamples.forEach(s => {
-        const uid = sessionToUserId.get(s.session_id);
+        const uid = s.canonical_user_id;
         if (!uid) return;
         if (!userSamples.has(uid)) userSamples.set(uid, []);
         userSamples.get(uid)!.push(s);
@@ -147,14 +170,15 @@ export const reportService = {
     sessions.forEach((s: any) => {
         if (s.manual === true) {
             const uid = s.user_id;
-            if (!uid || !memberMap[uid]) return;
+            const member = uid ? memberMap[uid] : null;
+            if (!member) return;
             const { endMs } = getEffectiveEnd(s.started_at, s.ended_at);
             const startMs = new Date(s.started_at).getTime();
             const durationHrs = (endMs - startMs) / (1000 * 60 * 60);
 
-            const dayIdxRaw = getDayIndexInTz(s.started_at, memberMap[uid].tz);
+            const dayIdxRaw = getDayIndexInTz(s.started_at, member.timezone);
             const dayIdx = (dayIdxRaw + 6) % 7;
-            stats[uid][dayIdx] += durationHrs;
+            stats[member.id][dayIdx] += durationHrs;
         }
     });
 
@@ -162,10 +186,11 @@ export const reportService = {
 
     userSamples.forEach((samples, uid) => {
         const limit = memberDetailMap.get(uid)?.idle_limit ?? 10;
+        const member = memberMap[uid];
         const sorted = samples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-        
+
         const sampleByMinute = new Map();
-        sorted.forEach(s => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
+        sorted.forEach((s: any) => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
 
         let currentBlock: any[] = [];
         const productiveMinutes = new Set<string>();
@@ -200,10 +225,10 @@ export const reportService = {
         if (productiveMinutes.size > 0) {
             productiveMinutes.forEach(minuteStr => {
                 const s = sampleByMinute.get(minuteStr);
-                if (s) {
-                    const dayIdxRaw = getDayIndexInTz(s.recorded_at, memberMap[uid].tz);
-                    const dayIdx = (dayIdxRaw + 6) % 7; 
-                    stats[uid][dayIdx] += (1 / 60);
+                if (s && member) {
+                    const dayIdxRaw = getDayIndexInTz(s.recorded_at, member.timezone);
+                    const dayIdx = (dayIdxRaw + 6) % 7;
+                    stats[member.id][dayIdx] += (1 / 60);
                 }
             });
         }
@@ -287,12 +312,6 @@ export const reportService = {
   }> {
     const { start, end, organizationId, selectedTeamId, selectedMemberId, membersForLookup } = options;
 
-    const allMemberSessionUserIds = Array.from(
-        new Set(
-            membersForLookup.flatMap((m: any) => [m.id, m.auth_user_id].filter(Boolean) as string[])
-        )
-    );
-
     let filteredSessionUserIds: string[] = [];
 
     if (selectedMemberId !== 'All') {
@@ -325,40 +344,61 @@ export const reportService = {
         };
     }
 
-    let sessionsQuery = supabase
-        .from('sessions')
-        .select('id, user_id, started_at, ended_at, manual')
-        .lt('started_at', end)
-        .or(`ended_at.is.null,ended_at.gt.${start}`);
-        
+    // Auto-terminate any ghost sessions in database based on Termination Grace Period
     if (organizationId) {
-        sessionsQuery = sessionsQuery.eq('organization_id', organizationId);
+        try {
+            await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });
+        } catch (_) {}
     }
 
-    const scopedUserIds = filteredSessionUserIds.length > 0 ? filteredSessionUserIds : allMemberSessionUserIds;
-    if (scopedUserIds.length === 0) {
+    const isFiltered = (selectedMemberId !== 'All' || selectedTeamId !== 'All');
+    const scopedUserIds = isFiltered ? filteredSessionUserIds : [];
+    if (isFiltered && scopedUserIds.length === 0) {
         return {
             dailyActivityList: [], appBreakdownList: [], screenshotCount: 0,
             totalSessions: 0, calculatedTotalMins: 0, calculatedAvgActivity: 0,
             totalCosts: 0, totalBilled: 0, tableData: { dates: [], rows: [] }
         };
     }
-    sessionsQuery = sessionsQuery.in('user_id', scopedUserIds);
 
+    // Paginate sessions to avoid Supabase's 1000-row PostgREST cap
     const t0 = performance.now();
-    const { data: sessionData } = await sessionsQuery;
+    const SESS_PAGE = 1000;
+    let sessPage = 0;
+    const allSessionData: any[] = [];
+    while (true) {
+        let sessionsQuery = supabase
+            .from('sessions')
+            .select('id, user_id, started_at, ended_at, manual')
+            .lt('started_at', end)
+            .or(`ended_at.is.null,ended_at.gt.${start}`)
+            .order('id', { ascending: true })
+            .range(sessPage * SESS_PAGE, (sessPage + 1) * SESS_PAGE - 1);
+
+        if (organizationId) {
+            sessionsQuery = sessionsQuery.eq('organization_id', organizationId);
+        }
+
+        if (scopedUserIds.length > 0) {
+            sessionsQuery = sessionsQuery.in('user_id', scopedUserIds);
+        }
+
+        const { data: sessBatch } = await sessionsQuery;
+        if (!sessBatch || sessBatch.length === 0) break;
+        allSessionData.push(...sessBatch);
+        if (sessBatch.length < SESS_PAGE) break;
+        sessPage++;
+    }
     const t1 = performance.now();
-    console.log(`[Reports Timing] Sessions Query took ${(t1 - t0).toFixed(2)}ms, found ${(sessionData || []).length} sessions`);
-    const filteredSessions = sessionData || [];
-    if ((selectedMemberId !== 'All' || selectedTeamId !== 'All') && filteredSessions.length === 0) {
+    console.log(`[Reports Timing] Sessions Query took ${(t1 - t0).toFixed(2)}ms, found ${allSessionData.length} sessions`);
+    const filteredSessions = allSessionData;
+    if (isFiltered && filteredSessions.length === 0) {
         return {
             dailyActivityList: [], appBreakdownList: [], screenshotCount: 0,
             totalSessions: 0, calculatedTotalMins: 0, calculatedAvgActivity: 0,
             totalCosts: 0, totalBilled: 0, tableData: { dates: [], rows: [] }
         };
     }
-
-    // activeSessionIds is no longer needed
 
     let ssQuery = supabase
         .from('screenshots')
@@ -375,11 +415,11 @@ export const reportService = {
 
     const t2 = performance.now();
     const sessionIds = filteredSessions.map(s => s.id);
-    const statsQuery = sessionIds.length > 0 
-        ? supabase.rpc('get_sessions_activity_stats', { p_session_ids: sessionIds }) 
+    const statsQuery = sessionIds.length > 0
+        ? supabase.rpc('get_sessions_activity_stats', { p_session_ids: sessionIds })
         : Promise.resolve({ data: [] });
 
-    const [samplesResult, { count: ssCount }, { data: statsData }, { data: rawSamplesData }] = await Promise.all([
+    const [samplesResult, { count: ssCount }, { data: statsData }] = await Promise.all([
         supabase.rpc('get_reports_aggregated_data', {
             p_org_id: organizationId,
             p_start_iso: start,
@@ -388,17 +428,10 @@ export const reportService = {
             p_member_ids: scopedUserIds.length > 0 ? scopedUserIds : null
         }),
         ssQuery,
-        statsQuery,
-        supabase.rpc('get_raw_activity_samples', {
-            p_org_id: organizationId,
-            p_start_iso: start,
-            p_end_iso: end,
-            p_member_ids: scopedUserIds.length > 0 ? scopedUserIds : null
-        })
+        statsQuery
     ]);
     const t3 = performance.now();
     const sessionStats = statsData || [];
-    const rawSamples = rawSamplesData || [];
 
     const aggregatedData = samplesResult.data as any || { daily_stats: [], user_daily_stats: [], app_stats: [] };
     const dbDailyStats = aggregatedData.daily_stats || [];
@@ -484,140 +517,66 @@ export const reportService = {
 
     const dateListSet = new Set(dateList);
 
+    // 1. Populate dailyMap from database aggregated daily stats
     dbDailyStats.forEach((row: any) => {
         if (dateListSet.has(row.date)) {
             dailyMap[row.date] = {
-                activitySum: row.activity_sum,
-                total_samples: row.sample_count,   // sample count for activity % averaging
-                total_minutes: 0 // Will calculate via JS split
+                activitySum: row.activity_sum || 0,
+                total_samples: row.sample_count || 0,
+                total_minutes: row.total_minutes || 0
             };
         }
     });
 
-    // 2. Populate memberRows (activity samples only)
+    // 2. Populate memberRows and financial totals from database aggregated user daily stats
     dbUserDailyStats.forEach((row: any) => {
         const uid = row.user_id;
         const day = row.date;
-        const sampleCount = row.sample_count;   // sample count for activity averaging
-        const actSum = row.activity_sum;
+        const sampleCount = row.sample_count || 0;
+        const actSum = row.activity_sum || 0;
+        const mins = row.total_minutes || 0;
 
         if (dateListSet.has(day)) {
             const member = membersMap.get(uid);
-            if (member && memberRows[member.id]) {
-                const r = memberRows[member.id];
-                r.activitySum += actSum;
-                r.activitySamples += sampleCount; // use sample count, not duration
+            const canonicalId = member ? member.id : uid;
+
+            if (!memberRows[canonicalId]) {
+                memberRows[canonicalId] = {
+                    memberId: canonicalId,
+                    fullName: member ? (member.full_name || member.email || 'Unknown') : ('Member (' + canonicalId.slice(0, 6) + ')'),
+                    email: member?.email || '',
+                    employeeId: member?.employee_id || '',
+                    dailyMins: {},
+                    totalMins: 0,
+                    activitySum: 0,
+                    activitySamples: 0
+                };
+            }
+
+            const r = memberRows[canonicalId];
+            r.activitySum += actSum;
+            r.activitySamples += sampleCount;
+            r.dailyMins[day] = (r.dailyMins[day] || 0) + mins;
+            r.totalMins += mins;
+
+            if (member) {
+                costs += (mins / 60) * (member.pay_rate || 0);
+                billed += (mins / 60) * (member.bill_rate || 0);
             }
         }
     });
 
-    // 3. Process ALL Sessions for accurate midnight-split duration
-    // 3. Deduplicate raw samples and group by user
-    const sessionToUserId = new Map();
-    filteredSessions.forEach((s: any) => sessionToUserId.set(s.id, s.user_id));
-
-    const seen = new Set<string>();
-    const dedupedSamples: any[] = [];
-    const sortedSamples = [...rawSamples].sort((a: any, b: any) => (b.activity_percent ?? 0) - (a.activity_percent ?? 0));
-
-    sortedSamples.forEach((s: any) => {
-        const uid = sessionToUserId.get(s.session_id);
-        if (!uid || !membersMap.has(uid)) return;
-        const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
-        const key = `${uid}_${minute}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        dedupedSamples.push(s);
-    });
-
-    const userSamples = new Map<string, any[]>();
-    dedupedSamples.forEach(s => {
-        const uid = sessionToUserId.get(s.session_id);
-        if (!uid) return;
-        if (!userSamples.has(uid)) userSamples.set(uid, []);
-        userSamples.get(uid)!.push(s);
-    });
-
-    const memberDetailMap = new Map(membersForLookup.map((m: any) => [m.id, m]));
-    const getGroupingDateInTz = (isoStr: string, tz: string) => {
-        try { return new Date(isoStr).toLocaleDateString('en-CA', { timeZone: tz }); }
-        catch { return isoStr.substring(0, 10); }
-    };
-
-    // 4. Process Non-Manual Sessions for Productive Time using contiguous idle blocks
-    userSamples.forEach((samples, uid) => {
-        const member = membersMap.get(uid);
-        if (!member) return;
-        
-        const limit = memberDetailMap.get(uid)?.idle_limit ?? 10;
-        const sorted = samples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-        
-        const sampleByMinute = new Map();
-        sorted.forEach(s => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
-
-        let currentBlock: any[] = [];
-        const productiveMinutes = new Set<string>();
-
-        for (let i = 0; i < sorted.length; i++) {
-            const s = sorted[i];
-            const prev = i > 0 ? sorted[i-1] : null;
-            const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
-            const isContiguous = prev && gapMs <= 125000;
-
-            if (s.idle && isContiguous) {
-                currentBlock.push(s);
-            } else if (s.idle && !prev) {
-                currentBlock = [s];
-            } else if (s.idle && !isContiguous) {
-                if (currentBlock.length < limit) {
-                    currentBlock.forEach(b => productiveMinutes.add(b.recorded_at.substring(0, 16)));
-                }
-                currentBlock = [s];
-            } else {
-                productiveMinutes.add(s.recorded_at.substring(0, 16));
-                if (currentBlock.length < limit) {
-                    currentBlock.forEach(b => productiveMinutes.add(b.recorded_at.substring(0, 16)));
-                }
-                currentBlock = [];
-            }
-        }
-        if (currentBlock.length < limit) {
-            currentBlock.forEach(b => productiveMinutes.add(b.recorded_at.substring(0, 16)));
-        }
-
-        if (productiveMinutes.size > 0) {
-            productiveMinutes.forEach(minuteStr => {
-                const s = sampleByMinute.get(minuteStr);
-                if (s) {
-                    const day = getGroupingDateInTz(s.recorded_at, orgTz);
-                    if (dateListSet.has(day)) {
-                        if (!dailyMap[day]) dailyMap[day] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
-                        
-                        dailyMap[day].total_minutes += 1;
-
-                        costs += (1 / 60) * (member.pay_rate || 0);
-                        billed += (1 / 60) * (member.bill_rate || 0);
-
-                        if (memberRows[member.id]) {
-                            const row = memberRows[member.id];
-                            row.dailyMins[day] = (row.dailyMins[day] || 0) + 1;
-                            row.totalMins += 1;
-                        }
-                    }
-                }
-            });
-        }
-    });
-
-    // 5. Process Manual Sessions using elapsed mathematical time
+    // 3. Process Manual Sessions using elapsed mathematical time
+    // (these have no activity_samples, so they're not covered by the RPC's
+    // sample-based aggregation above and must be added separately)
     filteredSessions.forEach(sess => {
         if (!sess.manual) return;
         const uid = sess.user_id;
         const member = uid ? membersMap.get(uid) : null;
-        
+
         const stat = sessionStats.find((st: any) => st.session_id === sess.id);
         const lastSampleAt = stat?.last_sample_at || null;
-        
+
         const { endMs, isLive } = getEffectiveEnd(sess.started_at, sess.ended_at, lastSampleAt);
         const startMs = new Date(sess.started_at).getTime();
 
@@ -638,15 +597,15 @@ export const reportService = {
             if (overlapEndMs > overlapStartMs || (isLive && overlapEndMs >= overlapStartMs && overlapEndMs === dayEndLocal.getTime())) {
                 const segmentAbsoluteStartMs = startMs + (overlapStartMs - startLocal.getTime());
                 const segmentAbsoluteEndMs = endMs + (overlapEndMs - endLocal.getTime());
-                
+
                 let segmentDurationMins = (segmentAbsoluteEndMs - segmentAbsoluteStartMs) / 60000;
                 if (segmentDurationMins < 0) segmentDurationMins = 0;
-                
+
                 const sessionMins = Math.max(0, Math.round(segmentDurationMins));
 
                 if (sessionMins > 0) {
                     if (!dailyMap[key]) dailyMap[key] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
-                    
+
                     dailyMap[key].total_minutes += sessionMins;
 
                     if (member) {
@@ -679,7 +638,7 @@ export const reportService = {
     })).slice(0, 8);
 
     const calculatedTotalMins = Math.round(Object.values(dailyMap).reduce((sum, v) => sum + v.total_minutes, 0));
-    
+
     let totalActSum = 0;
     let totalActSamples = 0;
     dbDailyStats.forEach((r: any) => {
@@ -700,7 +659,7 @@ export const reportService = {
             totalMins: row.totalMins,
             activityScore: row.activitySamples > 0 ? Math.round(row.activitySum / row.activitySamples) : 0
         }))
-        .filter(row => row.totalMins > 0) 
+        .filter(row => row.totalMins > 0)
         .sort((a, b) => b.totalMins - a.totalMins);
 
     const t5 = performance.now();
