@@ -754,7 +754,7 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
 
 function FormField({ label, value, onChange, type = 'text', icon, placeholder, disabled }: any) {
     return (
-        <div className="space-y-2 group flex flex-col relative">
+        <div className="space-y-1 group flex flex-col relative">
             <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em] ml-1">{label}</label>
             <div className="relative mt-auto">
                 {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors pointer-events-none z-10">{icon}</div>}
@@ -765,7 +765,7 @@ function FormField({ label, value, onChange, type = 'text', icon, placeholder, d
                     placeholder={placeholder}
                     disabled={disabled}
                     className={clsx(
-                        "w-full h-[52px] bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-shell-sm placeholder:text-text-muted/40",
+                        "w-full h-11 bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-shell-sm placeholder:text-text-muted/40",
                         icon ? "pl-12 pr-4" : "px-4",
                         disabled && "opacity-60 cursor-not-allowed bg-surface-hover"
                     )}

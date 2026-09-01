@@ -1,9 +1,17 @@
 import { useEffect, useState, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
-    Search, Trash2, LayoutGrid, List,
-    UsersRound, Plus, Pencil, Check,
-    Briefcase, Info, ChevronDown
+    Search,
+    Trash2,
+    LayoutGrid,
+    List,
+    UsersRound,
+    Plus,
+    Pencil,
+    Check,
+    Briefcase,
+    Info,
+    ChevronDown
 } from 'lucide-react';
 import clsx from 'clsx';
 import { supabase } from '../lib/supabase';
@@ -71,12 +79,19 @@ export function Teams() {
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+            if (
+                dropdownRef.current &&
+                !dropdownRef.current.contains(event.target as Node)
+            ) {
                 setManagerDropdownOpen(false);
             }
         }
+
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, []);
 
     useEffect(() => {
@@ -429,7 +444,6 @@ export function Teams() {
                 onClose={() => setShowModal(false)}
                 title={editingTeam ? 'Edit Team' : 'Create New Team'}
                 maxWidth="max-w-2xl"
-                allowOverflow={true}
                 subtitle={
                     <div className="flex items-center gap-3 mt-2 min-w-0">
                         <div className="flex gap-1.5 shrink-0">
@@ -437,12 +451,17 @@ export function Teams() {
                                 <div
                                     key={s}
                                     className={clsx(
-                                        "h-1.5 rounded-full transition-all duration-500",
-                                        wizardStep === s ? "bg-primary w-6" : wizardStep > s ? "bg-primary/40 w-4" : "bg-border w-4"
+                                        'h-1.5 rounded-full transition-all duration-500',
+                                        wizardStep === s
+                                            ? 'bg-primary w-6'
+                                            : wizardStep > s
+                                                ? 'bg-primary/40 w-4'
+                                                : 'bg-border w-4'
                                     )}
                                 />
                             ))}
                         </div>
+
                         <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider whitespace-nowrap">
                             Step {wizardStep} of 3
                         </span>
@@ -461,10 +480,13 @@ export function Teams() {
                         >
                             {wizardStep === 1 ? 'Cancel' : 'Back'}
                         </Button>
+
                         <div className="flex items-center gap-2 sm:gap-4">
                             {wizardStep < 3 ? (
                                 <Button
-                                    onClick={() => setWizardStep(wizardStep + 1)}
+                                    onClick={() =>
+                                        setWizardStep(wizardStep + 1)
+                                    }
                                     disabled={wizardStep === 1 && !name}
                                     className="px-5 sm:px-8 shadow-shell-sm"
                                 >
@@ -477,7 +499,9 @@ export function Teams() {
                                     disabled={isViewer}
                                     className="px-5 sm:px-8 shadow-shell-sm"
                                 >
-                                    {editingTeam ? 'Save Changes' : 'Create Team'}
+                                    {editingTeam
+                                        ? 'Save Changes'
+                                        : 'Create Team'}
                                 </Button>
                             )}
                         </div>
@@ -507,53 +531,129 @@ export function Teams() {
                                 placeholder="e.g. Engineering"
                                 autoFocus
                             />
-                            <div className="space-y-2 relative" ref={dropdownRef}>
-                                <label className="block text-xs font-semibold text-text-muted ml-1">Designated Manager</label>
+
+                            <div
+                                className="space-y-2 relative"
+                                ref={dropdownRef}
+                            >
+                                <label className="block text-xs font-semibold text-text-muted ml-1">
+                                    Designated Manager
+                                </label>
+
                                 <div
-                                    onClick={() => setManagerDropdownOpen(!managerDropdownOpen)}
+                                    onClick={() =>
+                                        setManagerDropdownOpen(
+                                            !managerDropdownOpen
+                                        )
+                                    }
                                     className={clsx(
-                                        "w-full flex items-center justify-between bg-surface-solid border rounded-xl px-4 py-3 cursor-pointer transition-all shadow-shell-sm min-w-0",
-                                        managerDropdownOpen ? "border-primary ring-2 ring-primary/20" : "border-border hover:border-text-muted/30"
+                                        'w-full flex items-center justify-between bg-surface-solid border rounded-xl px-4 py-3 cursor-pointer transition-all shadow-shell-sm min-w-0',
+                                        managerDropdownOpen
+                                            ? 'border-primary ring-2 ring-primary/20'
+                                            : 'border-border hover:border-text-muted/30'
                                     )}
                                 >
                                     {managerId ? (
                                         <div className="flex items-center gap-3 min-w-0">
                                             <div className="w-7 h-7 rounded-lg bg-primary text-white flex items-center justify-center text-[11px] font-bold shadow-shell-sm shrink-0">
-                                                {members.find(m => m.id === managerId)?.full_name?.[0]?.toUpperCase()}
+                                                {members
+                                                    .find(
+                                                        (m) =>
+                                                            m.id === managerId
+                                                    )
+                                                    ?.full_name?.[0]
+                                                    ?.toUpperCase()}
                                             </div>
+
                                             <div className="flex flex-col min-w-0">
-                                                <span className="text-[13px] font-bold text-text-primary leading-none mb-0.5 truncate">{members.find(m => m.id === managerId)?.full_name}</span>
-                                                <span className="text-[10px] font-bold text-text-muted truncate">{members.find(m => m.id === managerId)?.email}</span>
+                                                <span className="text-[13px] font-bold text-text-primary leading-none mb-0.5 truncate">
+                                                    {
+                                                        members.find(
+                                                            (m) =>
+                                                                m.id ===
+                                                                managerId
+                                                        )?.full_name
+                                                    }
+                                                </span>
+
+                                                <span className="text-[10px] font-bold text-text-muted truncate">
+                                                    {
+                                                        members.find(
+                                                            (m) =>
+                                                                m.id ===
+                                                                managerId
+                                                        )?.email
+                                                    }
+                                                </span>
                                             </div>
                                         </div>
                                     ) : (
-                                        <span className="text-[13px] font-medium text-text-muted truncate">Select a manager...</span>
+                                        <span className="text-[13px] font-medium text-text-muted truncate">
+                                            Select a manager...
+                                        </span>
                                     )}
-                                    <ChevronDown className={clsx("w-4 h-4 text-text-muted transition-transform duration-300 shrink-0 ml-2", managerDropdownOpen && "rotate-180")} />
+
+                                    <ChevronDown
+                                        className={clsx(
+                                            'w-4 h-4 text-text-muted transition-transform duration-300 shrink-0 ml-2',
+                                            managerDropdownOpen &&
+                                                'rotate-180'
+                                        )}
+                                    />
                                 </div>
 
                                 {managerDropdownOpen && (
                                     <div className="absolute top-[100%] left-0 w-full mt-2 bg-surface border border-border rounded-2xl shadow-2xl z-[100] max-h-[260px] overflow-y-auto custom-scrollbar p-2 animate-in fade-in zoom-in-95 duration-200">
-                                        {members.map(m => (
+                                        {members.map((m) => (
                                             <button
                                                 key={m.id}
-                                                onClick={() => { setManagerId(m.id); setManagerDropdownOpen(false); }}
+                                                onClick={() => {
+                                                    setManagerId(m.id);
+                                                    setManagerDropdownOpen(
+                                                        false
+                                                    );
+                                                }}
                                                 className={clsx(
-                                                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left group min-w-0",
-                                                    managerId === m.id ? "bg-primary/10" : "hover:bg-surface-hover"
+                                                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left group min-w-0',
+                                                    managerId === m.id
+                                                        ? 'bg-primary/10'
+                                                        : 'hover:bg-surface-hover'
                                                 )}
                                             >
-                                                <div className={clsx(
-                                                    "w-9 h-9 rounded-[10px] flex items-center justify-center text-[12px] font-bold transition-all shadow-sm shrink-0",
-                                                    managerId === m.id ? "bg-primary text-white shadow-primary/30" : "bg-surface-solid border border-border text-text-muted group-hover:bg-primary/5 group-hover:text-primary group-hover:border-primary/20"
-                                                )}>
+                                                <div
+                                                    className={clsx(
+                                                        'w-9 h-9 rounded-[10px] flex items-center justify-center text-[12px] font-bold transition-all shadow-sm shrink-0',
+                                                        managerId === m.id
+                                                            ? 'bg-primary text-white shadow-primary/30'
+                                                            : 'bg-surface-solid border border-border text-text-muted group-hover:bg-primary/5 group-hover:text-primary group-hover:border-primary/20'
+                                                    )}
+                                                >
                                                     {m.full_name[0].toUpperCase()}
                                                 </div>
+
                                                 <div className="flex flex-col flex-1 min-w-0">
-                                                    <span className={clsx("text-[13px] font-bold leading-none mb-1 truncate transition-colors", managerId === m.id ? "text-primary" : "text-text-primary group-hover:text-primary")}>{m.full_name}</span>
-                                                    <span className="text-[10px] font-bold text-text-muted truncate opacity-80">{m.email}</span>
+                                                    <span
+                                                        className={clsx(
+                                                            'text-[13px] font-bold leading-none mb-1 truncate transition-colors',
+                                                            managerId === m.id
+                                                                ? 'text-primary'
+                                                                : 'text-text-primary group-hover:text-primary'
+                                                        )}
+                                                    >
+                                                        {m.full_name}
+                                                    </span>
+
+                                                    <span className="text-[10px] font-bold text-text-muted truncate opacity-80">
+                                                        {m.email}
+                                                    </span>
                                                 </div>
-                                                {managerId === m.id && <Check className="w-4 h-4 text-primary shrink-0" strokeWidth={3} />}
+
+                                                {managerId === m.id && (
+                                                    <Check
+                                                        className="w-4 h-4 text-primary shrink-0"
+                                                        strokeWidth={3}
+                                                    />
+                                                )}
                                             </button>
                                         ))}
                                     </div>
