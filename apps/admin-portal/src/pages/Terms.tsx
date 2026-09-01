@@ -230,8 +230,9 @@ export function Terms() {
                     <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
                         <button
                             onClick={() => navigate('/signup')}
-                            className="w-full sm:w-auto px-12 py-5 bg-[#facc15] hover:bg-[#eab308] text-[#001338] text-lg font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] transition-all hover:scale-105 active:scale-95 cursor-pointer">
-                            Start free trial
+                            className="group relative overflow-hidden w-full sm:w-auto px-12 py-5 bg-[#facc15] text-[#001338] text-lg font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] transition-all hover:scale-105 active:scale-95 cursor-pointer">
+                            <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                            <span className="relative z-10">Start free trial</span>
                         </button>
                         <button
                             onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
