@@ -327,17 +327,17 @@ export function Timesheets() {
                 const isManual = s.manual === true;
 
                 const nowMs = new Date().getTime();
-                const isTrulyActive = !isManual && (nowMs - lastSampleTime < STALE_THRESHOLD_MS);
+                const isTrulyActive = !isManual && !s.ended_at && (nowMs - lastSampleTime < STALE_THRESHOLD_MS);
 
                 let effectiveEndMs = nowMs;
-                if (isTrulyActive) {
-                    effectiveEndMs = nowMs;
-                } else if (s.ended_at) {
+                if (s.ended_at) {
                     effectiveEndMs = parseDbTimestamp(s.ended_at) || new Date(s.ended_at).getTime();
+                } else if (isTrulyActive) {
+                    effectiveEndMs = nowMs;
                 } else if (sampleCount > 0) {
                     effectiveEndMs = Math.max(lastSampleTime, startedAtMs);
                 } else {
-                    effectiveEndMs = nowMs;
+                    effectiveEndMs = Math.min(nowMs, startedAtMs + (10 * 60000));
                 }
 
                 // Convert to target timezone dates to measure local day bounds overlap
