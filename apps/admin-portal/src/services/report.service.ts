@@ -188,7 +188,7 @@ export const reportService = {
         const limit = memberDetailMap.get(uid)?.idle_limit ?? 10;
         const member = memberMap[uid];
         const sorted = samples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-
+        
         const sampleByMinute = new Map();
         sorted.forEach((s: any) => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
 
@@ -227,7 +227,7 @@ export const reportService = {
                 const s = sampleByMinute.get(minuteStr);
                 if (s && member) {
                     const dayIdxRaw = getDayIndexInTz(s.recorded_at, member.timezone);
-                    const dayIdx = (dayIdxRaw + 6) % 7;
+                    const dayIdx = (dayIdxRaw + 6) % 7; 
                     stats[member.id][dayIdx] += (1 / 60);
                 }
             });
@@ -351,6 +351,7 @@ export const reportService = {
         } catch (_) {}
     }
 
+
     const isFiltered = (selectedMemberId !== 'All' || selectedTeamId !== 'All');
     const scopedUserIds = isFiltered ? filteredSessionUserIds : [];
     if (isFiltered && scopedUserIds.length === 0) {
@@ -415,8 +416,8 @@ export const reportService = {
 
     const t2 = performance.now();
     const sessionIds = filteredSessions.map(s => s.id);
-    const statsQuery = sessionIds.length > 0
-        ? supabase.rpc('get_sessions_activity_stats', { p_session_ids: sessionIds })
+    const statsQuery = sessionIds.length > 0 
+        ? supabase.rpc('get_sessions_activity_stats', { p_session_ids: sessionIds }) 
         : Promise.resolve({ data: [] });
 
     const [samplesResult, { count: ssCount }, { data: statsData }] = await Promise.all([
@@ -456,12 +457,7 @@ export const reportService = {
     let billed = 0;
 
     // Build dateList from the UTC midnight boundaries returned by getDateRange().
-    // We extract the date portion from the ISO string directly (which is already
-    // expressed in org-timezone-aware UTC) rather than using new Date() which
-    // would re-interpret the timestamp in the browser's local timezone and can
-    // shift the date forward or backward by a day on non-UTC devices.
     function utcDatePart(isoStr: string): string {
-        // isoStr is like "2026-07-16T07:00:00.000Z" — take the UTC date
         const d = new Date(isoStr);
         const yyyy = d.getUTCFullYear();
         const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
@@ -469,9 +465,6 @@ export const reportService = {
         return `${yyyy}-${mm}-${dd}`;
     }
 
-    // The org-local calendar dates that the org-tz boundaries span.
-    // Because start is midnight and end is 23:59:59 in org-tz, converting those
-    // UTC values back to org-local dates gives exactly the intended calendar days.
     function utcToOrgLocalDatePart(isoStr: string, tz: string): string {
         const d = new Date(isoStr);
         try {
@@ -485,11 +478,9 @@ export const reportService = {
     const endLocalDate = utcToOrgLocalDatePart(end, orgTz);
 
     const dateList: string[] = [];
-    // Walk YYYY-MM-DD strings without touching Date hours (avoids DST/tz issues)
     let walkDate = startLocalDate;
     while (walkDate <= endLocalDate) {
         dateList.push(walkDate);
-        // Advance by one calendar day using UTC noon to avoid DST edge cases
         const [y, m, d2] = walkDate.split('-').map(Number);
         const next = new Date(Date.UTC(y, m - 1, d2 + 1, 12, 0, 0));
         const ny = next.getUTCFullYear();
@@ -566,17 +557,15 @@ export const reportService = {
         }
     });
 
-    // 3. Process Manual Sessions using elapsed mathematical time
-    // (these have no activity_samples, so they're not covered by the RPC's
-    // sample-based aggregation above and must be added separately)
+    // 5. Process Manual Sessions using elapsed mathematical time
     filteredSessions.forEach(sess => {
         if (!sess.manual) return;
         const uid = sess.user_id;
         const member = uid ? membersMap.get(uid) : null;
-
+        
         const stat = sessionStats.find((st: any) => st.session_id === sess.id);
         const lastSampleAt = stat?.last_sample_at || null;
-
+        
         const { endMs, isLive } = getEffectiveEnd(sess.started_at, sess.ended_at, lastSampleAt);
         const startMs = new Date(sess.started_at).getTime();
 
@@ -597,15 +586,15 @@ export const reportService = {
             if (overlapEndMs > overlapStartMs || (isLive && overlapEndMs >= overlapStartMs && overlapEndMs === dayEndLocal.getTime())) {
                 const segmentAbsoluteStartMs = startMs + (overlapStartMs - startLocal.getTime());
                 const segmentAbsoluteEndMs = endMs + (overlapEndMs - endLocal.getTime());
-
+                
                 let segmentDurationMins = (segmentAbsoluteEndMs - segmentAbsoluteStartMs) / 60000;
                 if (segmentDurationMins < 0) segmentDurationMins = 0;
-
+                
                 const sessionMins = Math.max(0, Math.round(segmentDurationMins));
 
                 if (sessionMins > 0) {
                     if (!dailyMap[key]) dailyMap[key] = { activitySum: 0, total_samples: 0, total_minutes: 0 };
-
+                    
                     dailyMap[key].total_minutes += sessionMins;
 
                     if (member) {
@@ -638,7 +627,7 @@ export const reportService = {
     })).slice(0, 8);
 
     const calculatedTotalMins = Math.round(Object.values(dailyMap).reduce((sum, v) => sum + v.total_minutes, 0));
-
+    
     let totalActSum = 0;
     let totalActSamples = 0;
     dbDailyStats.forEach((r: any) => {
@@ -659,7 +648,7 @@ export const reportService = {
             totalMins: row.totalMins,
             activityScore: row.activitySamples > 0 ? Math.round(row.activitySum / row.activitySamples) : 0
         }))
-        .filter(row => row.totalMins > 0)
+        .filter(row => row.totalMins > 0) 
         .sort((a, b) => b.totalMins - a.totalMins);
 
     const t5 = performance.now();

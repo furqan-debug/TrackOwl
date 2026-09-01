@@ -116,13 +116,13 @@ export function Timesheets() {
         return { start, end };
     }, [selectedDate, viewMode]);
 
-    // Jump from a timesheet row to the Reports page, scoped to that member and date range.
+    // Timesheet se Report page par jump karne ke liye
     const openReportForMember = (userId: string) => {
-        // The timesheet row's user_id may be either members.id or members.auth_user_id; match either.
+        // Timesheet ka user_id ho sakta hai auth_user_id ho; usay members.id se match karo
         const member = members.find(m => m.id === userId || m.auth_user_id === userId);
         const memberId = member?.id || userId;
 
-        // Use the currently selected view's date range.
+        // Current view ke hisaab se start aur end date
         const pad = (n: number) => String(n).padStart(2, '0');
         const toStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
         const startStr = toStr(range.start);

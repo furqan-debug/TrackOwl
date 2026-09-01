@@ -2,12 +2,29 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import {
-    Save, User, Shield, DollarSign, Clock,
-    Info, AlertCircle, Calendar,
-    Briefcase, Smartphone, Mail,
-    MapPin, CreditCard, Phone, Globe2,
-    Check, FolderOpen, X, Search, Plus,
-    ChevronLeft, ArrowLeft, Settings2
+    Save,
+    User,
+    Shield,
+    DollarSign,
+    Clock,
+    Info,
+    AlertCircle,
+    Calendar,
+    Briefcase,
+    Smartphone,
+    Mail,
+    MapPin,
+    CreditCard,
+    Phone,
+    Globe2,
+    Check,
+    FolderOpen,
+    X,
+    Search,
+    Plus,
+    ChevronLeft,
+    ArrowLeft,
+    Settings2,
 } from 'lucide-react';
 import { LoadingState, DatePicker } from '../components/ui';
 import { SecureImage } from '../components/ui/SecureImage';
@@ -18,23 +35,65 @@ import clsx from 'clsx';
 type Role = 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
 
 const TAB_CONFIG = [
-    { id: 'General',      label: 'General',      icon: User,        color: 'text-primary',    bg: 'bg-primary/10' },
-    { id: 'Compensation', label: 'Compensation',  icon: DollarSign,  color: 'text-emerald-400', bg: 'bg-emerald-400/10' },
-    { id: 'Limits',       label: 'Limits',        icon: Clock,       color: 'text-amber-400',  bg: 'bg-amber-400/10' },
-    { id: 'Dates',        label: 'Dates',         icon: Calendar,    color: 'text-indigo-400', bg: 'bg-indigo-400/10' },
-    { id: 'Contact',      label: 'Contact',       icon: Phone,       color: 'text-blue-400',   bg: 'bg-blue-400/10' },
-    { id: 'Additional',   label: 'Additional',    icon: Shield,      color: 'text-rose-400',   bg: 'bg-rose-400/10' },
-    { id: 'Projects',     label: 'Projects',      icon: FolderOpen,  color: 'text-violet-400', bg: 'bg-violet-400/10' },
+    {
+        id: 'General',
+        label: 'General',
+        icon: User,
+        color: 'text-primary',
+        bg: 'bg-primary/10',
+    },
+    {
+        id: 'Compensation',
+        label: 'Compensation',
+        icon: DollarSign,
+        color: 'text-emerald-400',
+        bg: 'bg-emerald-400/10',
+    },
+    {
+        id: 'Limits',
+        label: 'Limits',
+        icon: Clock,
+        color: 'text-amber-400',
+        bg: 'bg-amber-400/10',
+    },
+    {
+        id: 'Dates',
+        label: 'Dates',
+        icon: Calendar,
+        color: 'text-indigo-400',
+        bg: 'bg-indigo-400/10',
+    },
+    {
+        id: 'Contact',
+        label: 'Contact',
+        icon: Phone,
+        color: 'text-blue-400',
+        bg: 'bg-blue-400/10',
+    },
+    {
+        id: 'Additional',
+        label: 'Additional',
+        icon: Shield,
+        color: 'text-rose-400',
+        bg: 'bg-rose-400/10',
+    },
+    {
+        id: 'Projects',
+        label: 'Projects',
+        icon: FolderOpen,
+        color: 'text-violet-400',
+        bg: 'bg-violet-400/10',
+    },
 ] as const;
 
 type TabId = typeof TAB_CONFIG[number]['id'];
 
 const ROLE_COLORS: Record<string, string> = {
-    Owner:   'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-    Admin:   'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
+    Owner: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+    Admin: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
     Manager: 'bg-blue-500/15 text-blue-400 border-blue-500/30',
-    User:    'bg-slate-500/15 text-slate-400 border-slate-500/30',
-    Viewer:  'bg-purple-500/15 text-purple-400 border-purple-500/30',
+    User: 'bg-slate-500/15 text-slate-400 border-slate-500/30',
+    Viewer: 'bg-purple-500/15 text-purple-400 border-purple-500/30',
 };
 
 export function MemberFormPage() {
@@ -45,7 +104,12 @@ export function MemberFormPage() {
     const [searchParams] = useSearchParams();
 
     const requestedTab = searchParams.get('tab');
-    const initialTab = (TAB_CONFIG.find(t => t.id.toLowerCase() === requestedTab?.toLowerCase())?.id || 'General') as TabId;
+
+    const initialTab = (
+        TAB_CONFIG.find(
+            (t) => t.id.toLowerCase() === requestedTab?.toLowerCase()
+        )?.id || 'General'
+    ) as TabId;
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -91,8 +155,12 @@ export function MemberFormPage() {
     const [location, setLocation] = useState('');
 
     // Project assignment state
-    const [allProjects, setAllProjects] = useState<{ id: string; name: string }[]>([]);
-    const [assignedProjectIds, setAssignedProjectIds] = useState<Set<string>>(new Set());
+    const [allProjects, setAllProjects] = useState<
+        { id: string; name: string }[]
+    >([]);
+    const [assignedProjectIds, setAssignedProjectIds] = useState<Set<string>>(
+        new Set()
+    );
     const [memberOrgId, setMemberOrgId] = useState<string | null>(null);
     const [projectSearch, setProjectSearch] = useState('');
     const [showProjectDropdown, setShowProjectDropdown] = useState(false);
@@ -111,6 +179,7 @@ export function MemberFormPage() {
                 .select('*')
                 .eq('id', id)
                 .single();
+
             if (mError) throw mError;
 
             if (data) {
@@ -160,23 +229,39 @@ export function MemberFormPage() {
             .select('organization_id')
             .eq('id', id)
             .single();
+
         if (!member?.organization_id) return;
+
         setMemberOrgId(member.organization_id);
 
         const [{ data: projects }, { data: assigned }] = await Promise.all([
-            supabase.from('projects').select('id, name').eq('organization_id', member.organization_id).eq('status', 'Active').order('name'),
-            supabase.from('project_members').select('project_id').eq('member_id', id)
+            supabase
+                .from('projects')
+                .select('id, name')
+                .eq('organization_id', member.organization_id)
+                .eq('status', 'Active')
+                .order('name'),
+
+            supabase
+                .from('project_members')
+                .select('project_id')
+                .eq('member_id', id),
         ]);
 
         setAllProjects(projects || []);
-        setAssignedProjectIds(new Set((assigned || []).map((r: any) => r.project_id)));
+
+        setAssignedProjectIds(
+            new Set((assigned || []).map((r: any) => r.project_id))
+        );
     }
 
     const isSelf = currentUserProfile?.id === id;
+
     const isRestrictedTarget =
         (currentUserProfile?.role === 'Viewer' && !isSelf) ||
         (currentUserProfile?.role === 'User' && !isSelf) ||
-        (currentUserProfile?.role === 'Manager' && (role === 'Owner' || role === 'Admin')) ||
+        (currentUserProfile?.role === 'Manager' &&
+            (role === 'Owner' || role === 'Admin')) ||
         (currentUserProfile?.role === 'Admin' && role === 'Owner');
 
     async function handleSave() {
@@ -198,28 +283,78 @@ export function MemberFormPage() {
                 bill_rate: parseFloat(billRate) || 0,
                 weekly_limit: parseInt(weeklyLimit) || 0,
                 daily_limit: parseInt(dailyLimit) || 0,
-                department, employee_id: employeeId, employee_type: employeeType, timezone,
+                department,
+                employee_id: employeeId,
+                employee_type: employeeType,
+                timezone,
                 os_username: osUsername,
-                birthday: birthday || null, hire_date: hireDate || null, termination_date: terminationDate || null,
-                work_address: workAddress, home_address: homeAddress, personal_email: personalEmail,
-                work_phone: workPhone, personal_phone: personalPhone, ssn,
-                emergency_contact: emergencyContact, skills_notes: skillsNotes, nickname,
-                idle_enabled: idleEnabled, idle_limit: parseInt(idleLimit) || 10,
-                keep_idle_mode: keepIdleMode, tracking_enabled: trackingEnabled, location,
+                birthday: birthday || null,
+                hire_date: hireDate || null,
+                termination_date: terminationDate || null,
+                work_address: workAddress,
+                home_address: homeAddress,
+                personal_email: personalEmail,
+                work_phone: workPhone,
+                personal_phone: personalPhone,
+                ssn,
+                emergency_contact: emergencyContact,
+                skills_notes: skillsNotes,
+                nickname,
+                idle_enabled: idleEnabled,
+                idle_limit: parseInt(idleLimit) || 10,
+                keep_idle_mode: keepIdleMode,
+                tracking_enabled: trackingEnabled,
+                location,
             };
 
-            const { error: sError } = await supabase.from('members').update(patch).eq('id', id);
+            const { error: sError } = await supabase
+                .from('members')
+                .update(patch)
+                .eq('id', id);
+
             if (sError) throw sError;
 
-            const currentAssigned = await supabase.from('project_members').select('project_id').eq('member_id', id);
-            const currentIds = new Set((currentAssigned.data || []).map((r: any) => r.project_id));
-            const toAdd = [...assignedProjectIds].filter(pid => !currentIds.has(pid));
-            const toRemove = [...currentIds].filter(pid => !assignedProjectIds.has(pid));
-            if (toRemove.length > 0) await supabase.from('project_members').delete().eq('member_id', id).in('project_id', toRemove);
-            if (toAdd.length > 0) await supabase.from('project_members').insert(toAdd.map(pid => ({ member_id: id, project_id: pid, organization_id: memberOrgId })));
+            const currentAssigned = await supabase
+                .from('project_members')
+                .select('project_id')
+                .eq('member_id', id);
+
+            const currentIds = new Set(
+                (currentAssigned.data || []).map((r: any) => r.project_id)
+            );
+
+            const toAdd = [...assignedProjectIds].filter(
+                (pid) => !currentIds.has(pid)
+            );
+
+            const toRemove = [...currentIds].filter(
+                (pid) => !assignedProjectIds.has(pid)
+            );
+
+            if (toRemove.length > 0) {
+                await supabase
+                    .from('project_members')
+                    .delete()
+                    .eq('member_id', id)
+                    .in('project_id', toRemove);
+            }
+
+            if (toAdd.length > 0) {
+                await supabase.from('project_members').insert(
+                    toAdd.map((pid) => ({
+                        member_id: id,
+                        project_id: pid,
+                        organization_id: memberOrgId,
+                    }))
+                );
+            }
 
             setSaveSuccess(true);
-            setTimeout(() => { setSaveSuccess(false); navigate('/dashboard/people'); }, 800);
+
+            setTimeout(() => {
+                setSaveSuccess(false);
+                navigate('/dashboard/people');
+            }, 800);
         } catch (err: any) {
             setError('Could not save changes. Please try again.');
         } finally {
@@ -227,11 +362,30 @@ export function MemberFormPage() {
         }
     }
 
-    if (loading) return <div className="h-screen flex items-center justify-center"><LoadingState message="Loading member profile..." /></div>;
+    if (loading) {
+        return (
+            <div className="h-screen flex items-center justify-center">
+                <LoadingState message="Loading member profile..." />
+            </div>
+        );
+    }
 
-    const initials = (fullName || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    const assignedProjects = allProjects.filter(p => assignedProjectIds.has(p.id));
-    const unassignedProjects = allProjects.filter(p => !assignedProjectIds.has(p.id) && p.name.toLowerCase().includes(projectSearch.toLowerCase()));
+    const initials = (fullName || 'U')
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+
+    const assignedProjects = allProjects.filter((p) =>
+        assignedProjectIds.has(p.id)
+    );
+
+    const unassignedProjects = allProjects.filter(
+        (p) =>
+            !assignedProjectIds.has(p.id) &&
+            p.name.toLowerCase().includes(projectSearch.toLowerCase())
+    );
 
     return (
         <div className="min-h-screen bg-main flex flex-col">
@@ -1444,21 +1598,33 @@ function FormField({
 }: any) {
     return (
         <div className="space-y-2 group flex flex-col relative min-w-0">
-            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em] ml-1">{label}</label>
+            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em] ml-1">
+                {label}
+            </label>
+
             <div className="relative mt-auto min-w-0">
                 {type === 'date' ? (
-                    <DatePicker value={value} onChange={onChange} className="w-full h-[56px] shadow-shell-sm" />
+                    <DatePicker
+                        value={value}
+                        onChange={onChange}
+                        className="w-full h-[56px] shadow-shell-sm"
+                    />
                 ) : (
                     <>
-                        {icon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors pointer-events-none z-10">{icon}</div>}
+                        {icon && (
+                            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted group-focus-within:text-primary transition-colors pointer-events-none z-10">
+                                {icon}
+                            </div>
+                        )}
+
                         <input
                             type={type}
                             value={value || ''}
                             onChange={(e) => onChange(e.target.value)}
                             placeholder={placeholder}
                             className={clsx(
-                                "w-full h-[56px] bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-shell-sm placeholder:text-text-muted/40 min-w-0",
-                                icon ? "pl-12 pr-4" : "px-4"
+                                'w-full h-[56px] bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-shell-sm placeholder:text-text-muted/40 min-w-0',
+                                icon ? 'pl-12 pr-4' : 'px-4'
                             )}
                         />
 
@@ -1480,58 +1646,147 @@ function FormField({
    FORM SELECT
 ============================================================ */
 
-function FormSelect({ label, value, onChange, options, disabled, icon, description }: any) {
+function FormSelect({
+    label,
+    value,
+    onChange,
+    options,
+    disabled,
+    icon,
+    description,
+}: any) {
     const [isOpen, setIsOpen] = useState(false);
+
     const ref = useRef<HTMLDivElement>(null);
-    const activeLabel = options.find((o: any) => o.value === value)?.label || value;
+
+    const activeLabel =
+        options.find((o: any) => o.value === value)?.label || value;
 
     useEffect(() => {
-        const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setIsOpen(false); };
+        const handler = (e: MouseEvent) => {
+            if (
+                ref.current &&
+                !ref.current.contains(e.target as Node)
+            ) {
+                setIsOpen(false);
+            }
+        };
+
         document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
+
+        return () =>
+            document.removeEventListener('mousedown', handler);
     }, []);
 
     return (
-        <div ref={ref} className="space-y-2 group flex flex-col relative min-w-0">
-            <label className="text-[11px] font-bold text-text-muted tracking-[0.05em] ml-1">{label}</label>
+        <div
+            ref={ref}
+            className="space-y-2 group flex flex-col relative min-w-0"
+        >
+            <label className="text-[11px] font-bold text-text-muted tracking-[0.05em] ml-1">
+                {label}
+            </label>
+
             <div className="relative mt-auto">
                 <div
-                    onClick={() => !disabled && setIsOpen(!isOpen)}
+                    onClick={() =>
+                        !disabled && setIsOpen(!isOpen)
+                    }
                     className={clsx(
-                        "w-full h-[56px] bg-surface-solid border rounded-2xl text-[14px] font-bold text-text-primary outline-none transition-all flex items-center cursor-pointer select-none shadow-shell-sm",
-                        icon ? "pl-12 pr-12" : "px-4 pr-12",
-                        isOpen ? "border-primary ring-4 ring-primary/10" : "border-border hover:border-text-muted/30",
-                        disabled && "opacity-50 cursor-not-allowed"
+                        'w-full h-[56px] bg-surface-solid border rounded-2xl text-[14px] font-bold text-text-primary outline-none transition-all flex items-center cursor-pointer select-none shadow-shell-sm',
+                        icon ? 'pl-12 pr-12' : 'px-4 pr-12',
+                        isOpen
+                            ? 'border-primary ring-4 ring-primary/10'
+                            : 'border-border hover:border-text-muted/30',
+                        disabled &&
+                        'opacity-50 cursor-not-allowed'
                     )}
                 >
-                    {icon && <div className={clsx("absolute left-4 top-1/2 -translate-y-1/2 transition-colors", isOpen ? "text-primary" : "text-text-muted")}>{icon}</div>}
-                    <span className="truncate">{activeLabel}</span>
-                    <ChevronLeft className={clsx("w-5 h-5 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 transition-transform duration-300 pointer-events-none", isOpen ? "-rotate-90 text-primary" : "-rotate-90")} />
-                    <div className={clsx("absolute inset-0 rounded-2xl ring-1 ring-inset ring-transparent pointer-events-none transition-all", isOpen && "ring-primary/20")} />
+                    {icon && (
+                        <div
+                            className={clsx(
+                                'absolute left-4 top-1/2 -translate-y-1/2 transition-colors',
+                                isOpen
+                                    ? 'text-primary'
+                                    : 'text-text-muted'
+                            )}
+                        >
+                            {icon}
+                        </div>
+                    )}
+
+                    <span className="truncate">
+                        {activeLabel}
+                    </span>
+
+                    <ChevronLeft
+                        className={clsx(
+                            'w-5 h-5 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 transition-transform duration-300 pointer-events-none',
+                            '-rotate-90',
+                            isOpen && 'text-primary'
+                        )}
+                    />
+
+                    <div
+                        className={clsx(
+                            'absolute inset-0 rounded-2xl ring-1 ring-inset ring-transparent pointer-events-none transition-all',
+                            isOpen && 'ring-primary/20'
+                        )}
+                    />
                 </div>
+
                 <AnimatePresence>
                     {isOpen && (
                         <motion.div
-                            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                            initial={{
+                                opacity: 0,
+                                y: -10,
+                                scale: 0.95,
+                            }}
+                            animate={{
+                                opacity: 1,
+                                y: 0,
+                                scale: 1,
+                            }}
+                            exit={{
+                                opacity: 0,
+                                y: -10,
+                                scale: 0.95,
+                            }}
                             transition={{ duration: 0.2 }}
                             className="absolute top-[calc(100%+8px)] left-0 w-full bg-surface border border-border rounded-2xl shadow-premium z-[100] flex flex-col p-2 max-h-[260px] overflow-y-auto custom-scrollbar"
                         >
                             {options.map((opt: any) => (
-                                <div key={opt.value} onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                                    className={clsx("flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all text-[13px] font-bold group/item",
-                                        value === opt.value ? "bg-primary/10 text-primary" : "text-text-primary hover:bg-surface-hover hover:text-primary"
-                                    )}>
+                                <div
+                                    key={opt.value}
+                                    onClick={() => {
+                                        onChange(opt.value);
+                                        setIsOpen(false);
+                                    }}
+                                    className={clsx(
+                                        'flex items-center justify-between px-4 py-3 rounded-xl cursor-pointer transition-all text-[13px] font-bold group/item',
+                                        value === opt.value
+                                            ? 'bg-primary/10 text-primary'
+                                            : 'text-text-primary hover:bg-surface-hover hover:text-primary'
+                                    )}
+                                >
                                     {opt.label}
-                                    {value === opt.value && <Check className="w-4 h-4 text-primary" />}
+
+                                    {value === opt.value && (
+                                        <Check className="w-4 h-4 text-primary" />
+                                    )}
                                 </div>
                             ))}
                         </motion.div>
                     )}
                 </AnimatePresence>
             </div>
-            {description && <p className="text-[10px] font-semibold text-text-muted italic ml-1">{description}</p>}
+
+            {description && (
+                <p className="text-[10px] font-semibold text-text-muted italic ml-1">
+                    {description}
+                </p>
+            )}
         </div>
     );
 }
@@ -1540,21 +1795,51 @@ function FormSelect({ label, value, onChange, options, disabled, icon, descripti
    TOGGLE ROW
 ============================================================ */
 
-function ToggleRow({ label, description, checked, onChange }: { label: string; description: string; checked: boolean; onChange: (v: boolean) => void }) {
+function ToggleRow({
+    label,
+    description,
+    checked,
+    onChange,
+}: {
+    label: string;
+    description: string;
+    checked: boolean;
+    onChange: (v: boolean) => void;
+}) {
     return (
         <div
             onClick={() => onChange(!checked)}
             className="flex items-center justify-between gap-4 px-4 sm:px-6 py-4 sm:py-5 bg-surface-solid border border-border/80 rounded-2xl hover:border-text-muted/30 transition-all cursor-pointer shadow-shell-sm group min-w-0"
         >
             <div className="min-w-0 flex-1">
-                <p className="text-[13px] sm:text-[14px] font-bold text-text-primary transition-colors group-hover:text-primary">{label}</p>
-                <p className="text-[11px] sm:text-[12px] font-medium text-text-muted mt-1 break-words">{description}</p>
+                <p className="text-[13px] sm:text-[14px] font-bold text-text-primary transition-colors group-hover:text-primary">
+                    {label}
+                </p>
+
+                <p className="text-[11px] sm:text-[12px] font-medium text-text-muted mt-1 break-words">
+                    {description}
+                </p>
             </div>
-            <div className={clsx("relative w-12 h-7 rounded-full transition-colors duration-300 shrink-0 shadow-inner", checked ? 'bg-primary' : 'bg-surface-hover border border-border')}>
+
+            <div
+                className={clsx(
+                    'relative w-12 h-7 rounded-full transition-colors duration-300 shrink-0 shadow-inner',
+                    checked
+                        ? 'bg-primary'
+                        : 'bg-surface-hover border border-border'
+                )}
+            >
                 <motion.div
                     layout
-                    transition={{ type: "spring", stiffness: 700, damping: 30 }}
-                    className={clsx("absolute top-[3px] w-[22px] h-[22px] bg-white rounded-full shadow-md", checked ? 'left-[23px]' : 'left-[3px]')}
+                    transition={{
+                        type: 'spring',
+                        stiffness: 700,
+                        damping: 30,
+                    }}
+                    className={clsx(
+                        'absolute top-[3px] w-[22px] h-[22px] bg-white rounded-full shadow-md',
+                        checked ? 'left-[23px]' : 'left-[3px]'
+                    )}
                 />
             </div>
         </div>
@@ -1565,16 +1850,38 @@ function ToggleRow({ label, description, checked, onChange }: { label: string; d
    INFO BOX
 ============================================================ */
 
-function InfoBox({ children, color, icon }: { children: React.ReactNode; color: string; icon: React.ReactNode }) {
+function InfoBox({
+    children,
+    color,
+    icon,
+}: {
+    children: React.ReactNode;
+    color: string;
+    icon: React.ReactNode;
+}) {
     const styles: Record<string, string> = {
-        emerald: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
-        amber:   'bg-amber-500/10 border-amber-500/20 text-amber-500',
-        blue:    'bg-blue-500/10 border-blue-500/20 text-blue-500',
+        emerald:
+            'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
+        amber:
+            'bg-amber-500/10 border-amber-500/20 text-amber-500',
+        blue:
+            'bg-blue-500/10 border-blue-500/20 text-blue-500',
     };
+
     return (
-        <div className={clsx("flex items-start gap-4 p-5 rounded-2xl border shadow-sm", styles[color] || styles.blue)}>
-            <div className="shrink-0 mt-0.5 bg-white/10 p-2 rounded-xl backdrop-blur-sm shadow-sm">{icon}</div>
-            <p className="text-[13px] leading-relaxed font-semibold">{children}</p>
+        <div
+            className={clsx(
+                'flex items-start gap-4 p-5 rounded-2xl border shadow-sm',
+                styles[color] || styles.blue
+            )}
+        >
+            <div className="shrink-0 mt-0.5 bg-white/10 p-2 rounded-xl backdrop-blur-sm shadow-sm">
+                {icon}
+            </div>
+
+            <p className="text-[13px] leading-relaxed font-semibold">
+                {children}
+            </p>
         </div>
     );
 }
