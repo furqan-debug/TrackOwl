@@ -59,22 +59,8 @@ let timesheetsCacheKey: string | null = null;
 export function Timesheets() {
     const { profile, managedMemberIds, managedProjectIds, displayTimezone } = useAuth();
     const organizationId = profile?.organization_id;
-        const navigate = useNavigate();
+    const navigate = useNavigate();
 
-    // Timesheet se Report page par jump karne ke liye
-    const openReportForMember = (userId: string) => {
-        // Timesheet ka user_id ho sakta hai auth_user_id ho; usay members.id se match karo
-        const member = members.find(m => m.id === userId || m.auth_user_id === userId);
-        const memberId = member?.id || userId;
-
-        // Current view ke hisaab se start aur end date
-        const pad = (n: number) => String(n).padStart(2, '0');
-        const toStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-        const startStr = toStr(range.start);
-        const endStr = toStr(range.end);
-
-        navigate(`/dashboard/reports?member=${memberId}&start=${startStr}&end=${endStr}`);
-    };
     const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'calendar'>('daily');
     const [entries, setEntries] = useState<DailyEntry[]>([]);
     const [members, setMembers] = useState<MemberInfo[]>([]);
@@ -130,6 +116,21 @@ export function Timesheets() {
         return { start, end };
     }, [selectedDate, viewMode]);
 
+    // Jump from a timesheet row to the Reports page, scoped to that member and date range.
+    const openReportForMember = (userId: string) => {
+        // The timesheet row's user_id may be either members.id or members.auth_user_id; match either.
+        const member = members.find(m => m.id === userId || m.auth_user_id === userId);
+        const memberId = member?.id || userId;
+
+        // Use the currently selected view's date range.
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const toStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        const startStr = toStr(range.start);
+        const endStr = toStr(range.end);
+
+        navigate(`/dashboard/reports?member=${memberId}&start=${startStr}&end=${endStr}`);
+    };
+
     useEffect(() => {
         if (organizationId) {
             fetchMembers();
@@ -167,13 +168,13 @@ export function Timesheets() {
             .select('id, auth_user_id, full_name, timezone, idle_limit')
             .eq('organization_id', organizationId)
             .order('full_name');
-            
+
         const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
         if (isScoped && managedMemberIds) {
             const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
             query = query.in('id', memberIdsFilter);
         }
-        
+
         const { data } = await query;
         setMembers(data as MemberInfo[] || []);
     }
@@ -184,13 +185,13 @@ export function Timesheets() {
             .eq('organization_id', organizationId)
             .eq('status', 'Active')
             .order('name');
-            
+
         const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
         if (isScoped && managedProjectIds) {
             const projectIdsFilter = managedProjectIds.length > 0 ? managedProjectIds : ['00000000-0000-0000-0000-000000000000'];
             query = query.in('id', projectIdsFilter);
         }
-        
+
         const { data } = await query;
         const projectList = data || [];
         setProjects(projectList);
@@ -216,6 +217,11 @@ export function Timesheets() {
 
         setLoading(true);
         try {
+            // Auto-terminate any ghost sessions in database based on Termination Grace Period
+            if (organizationId) {
+                await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });
+            }
+
             const fetchStart = new Date(range.start.getTime() - 24 * 60 * 60 * 1000);
             const fetchEnd = new Date(range.end.getTime() + 24 * 60 * 60 * 1000);
 
@@ -242,7 +248,7 @@ export function Timesheets() {
                     query = query.in('user_id', ['none']);
                 }
             }
-            
+
             if (filterProjectId !== 'all' && filterProjectId !== '') {
                 query = query.eq('project_id', filterProjectId);
             } else if ((profile?.role === 'Manager' || profile?.role === 'Client') && managedProjectIds) {
@@ -303,7 +309,7 @@ export function Timesheets() {
                 else if (activeTimezone === 'Admin Local') tz = undefined;
                 else if (activeTimezone === 'Org Local') tz = orgTimezone;
                 else tz = activeTimezone;
-                
+
                 const parseDbTimestamp = (ts: string | null | undefined) => {
                     if (!ts) return null;
                     const normalized = (ts.endsWith('Z') || ts.includes('+') || /-\d{2}:\d{2}$/.test(ts)) ? ts : ts + 'Z';
@@ -339,7 +345,7 @@ export function Timesheets() {
                 const endLocalStr = new Date(effectiveEndMs).toLocaleString('en-US', { timeZone: tz });
                 const startLocal = new Date(startLocalStr);
                 const endLocal = new Date(endLocalStr);
-                
+
                 const isManual = s.manual === true;
 
                 // DEBUG LOG FOR FIRST SESSION
@@ -356,11 +362,11 @@ export function Timesheets() {
 
                     // Check if the session overlaps with this calendar day
                     if (overlapEndMs > overlapStartMs || (isTrulyActive && overlapEndMs >= overlapStartMs && overlapEndMs === dayEndLocal.getTime())) {
-                        
+
                         // Calculate absolute UTC timestamps for the segment
                         const segmentAbsoluteStartMs = startedAtMs + (overlapStartMs - startLocal.getTime());
                         const segmentAbsoluteEndMs = effectiveEndMs + (overlapEndMs - endLocal.getTime());
-                        
+
                         let segmentDurationMins = (segmentAbsoluteEndMs - segmentAbsoluteStartMs) / 60000;
                         if (segmentDurationMins < 0) segmentDurationMins = 0;
 
@@ -476,7 +482,7 @@ export function Timesheets() {
     const openEditModal = (session: any) => {
         const start = new Date(session.original_started_at || session.started_at);
         const end = (session.original_ended_at || session.ended_at) ? new Date(session.original_ended_at || session.ended_at) : new Date(session.effective_end || new Date());
-        
+
         const pad = (n: number) => n.toString().padStart(2, '0');
         const localDateStr = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
 
@@ -512,30 +518,46 @@ export function Timesheets() {
                 </div>
             </header>
 
-            <div className="px-8 py-4 flex flex-wrap items-center justify-between gap-4 border-b border-slate-50 sticky top-0 bg-surface/80 backdrop-blur-md z-30">
-                <div className="flex items-center gap-6">
-                    <div className="flex items-center bg-surface border border-border rounded-md p-1 shadow-shell-sm h-12">
-                        <button onClick={() => navigateDate(-1)} className="p-3 hover:bg-surface-hover rounded-md transition-all text-text-muted hover:text-primary">
+            <div className="px-3 py-3 min-[900px]:px-8 min-[900px]:py-4 flex flex-col min-[900px]:flex-row min-[900px]:flex-wrap items-stretch min-[900px]:items-center justify-between gap-3 min-[900px]:gap-4 border-b border-slate-50 sticky top-0 bg-surface/95 backdrop-blur-md z-30 w-full min-w-0">
+
+                {/* Date + timezone */}
+                <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-6 w-full min-[900px]:w-auto min-w-0">
+
+                    {/* Date navigation */}
+                    <div className="flex items-center bg-surface border border-border rounded-md p-1 shadow-shell-sm h-12 w-full min-[900px]:w-auto min-w-0">
+
+                        <button
+                            onClick={() => navigateDate(-1)}
+                            className="p-3 shrink-0 hover:bg-surface-hover rounded-md transition-all text-text-muted hover:text-primary"
+                        >
                             <ChevronLeft className="w-5 h-5" />
                         </button>
-                        <DatePicker
-                            value={getGroupingDateInTz(selectedDate, undefined)}
-                            onChange={(val) => {
-                                if (val) {
-                                    setSelectedDate(new Date(val + 'T12:00:00'));
-                                }
-                            }}
-                            className="min-w-[200px]"
-                        />
 
-                        <button onClick={() => navigateDate(1)} className="p-3 hover:bg-surface-hover rounded-md transition-all text-text-muted hover:text-primary">
+                        <div className="flex-1 min-w-0">
+                            <DatePicker
+                                value={getGroupingDateInTz(selectedDate, undefined)}
+                                onChange={(val) => {
+                                    if (val) {
+                                        setSelectedDate(new Date(val + 'T12:00:00'));
+                                    }
+                                }}
+                                className="w-full min-w-0"
+                            />
+                        </div>
+
+                        <button
+                            onClick={() => navigateDate(1)}
+                            className="p-3 shrink-0 hover:bg-surface-hover rounded-md transition-all text-text-muted hover:text-primary"
+                        >
                             <ChevronRight className="w-5 h-5" />
                         </button>
+
                     </div>
 
-                    <div className="h-12 min-w-[240px]">
+                    {/* Timezone */}
+                    <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0">
                         <FilterSelect
-                            icon={<Clock className="w-4 h-4" />}
+                            icon={<Clock className="w-4 h-4 shrink-0" />}
                             value={activeTimezone}
                             onChange={setActiveTimezone}
                             options={[
@@ -543,70 +565,132 @@ export function Timesheets() {
                                 { id: 'Org Local', name: 'Organization Timezone' },
                                 { id: 'User Local', name: 'User Local (Auto)' },
                                 { id: 'UTC', name: 'UTC (Universal)' },
-                                ...Array.from(new Set(members.map(m => m.timezone).filter(tz => tz && tz !== 'UTC'))).sort().map(tz => ({ id: tz as string, name: tz as string }))
+                                ...Array.from(
+                                    new Set(
+                                        members
+                                            .map(m => m.timezone)
+                                            .filter(tz => tz && tz !== 'UTC')
+                                    )
+                                )
+                                    .sort()
+                                    .map(tz => ({
+                                        id: tz as string,
+                                        name: tz as string
+                                    }))
                             ]}
                         />
                     </div>
                 </div>
 
-                <div className="flex bg-main/50 p-1.5 rounded-md border border-border/50 h-12 shrink-0">
+
+                {/* View switcher */}
+                <div className="flex bg-main/50 p-1 rounded-md border border-border/50 h-12 w-full min-[900px]:w-auto min-w-0">
+
                     {(['daily', 'weekly', 'calendar'] as const).map(mode => (
                         <button
                             key={mode}
                             onClick={() => setViewMode(mode)}
                             className={clsx(
-                                "px-8 rounded-md text-[12px] font-bold transition-all h-full",
-                                viewMode === mode ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm" : "text-text-muted hover:text-slate-600"
+                                "flex-1 min-[900px]:flex-none px-2 min-[900px]:px-8 rounded-md text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
+                                viewMode === mode
+                                    ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
+                                    : "text-text-muted hover:text-slate-600"
                             )}
                         >
                             {mode.charAt(0).toUpperCase() + mode.slice(1)}
                         </button>
                     ))}
+
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="h-12 min-w-[220px]">
+
+                {/* Member + actions */}
+                <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
+
+                    {/* Member */}
+                    <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[220px] min-w-0">
                         <FilterSelect
-                            icon={<Users className="w-4 h-4" />}
+                            icon={<Users className="w-4 h-4 shrink-0" />}
                             value={selectedMember}
                             onChange={setSelectedMember}
                             options={[
                                 { id: 'all', name: 'All Members' },
-                                ...members.map((m: MemberInfo) => ({ id: m.id, name: m.full_name }))
+                                ...members.map((m: MemberInfo) => ({
+                                    id: m.id,
+                                    name: m.full_name
+                                }))
                             ]}
                         />
                     </div>
 
-                    <button onClick={() => setShowFilters(true)} className="flex items-center gap-3 px-6 h-12 bg-surface border border-border text-text-muted rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all">
-                        <Filter className="w-4 h-4" /> Filter
-                    </button>
+                    {/* Buttons */}
+                    <div className="grid grid-cols-2 gap-3 w-full min-[900px]:w-auto min-[900px]:flex">
 
-                    <button onClick={() => {
-                        setAddTimeData({
-                            projectId: '',
-                            userId: '',
-                            date: new Date().toISOString().split('T')[0],
-                            startTime: '09:00',
-                            endTime: '17:00'
-                        });
-                        setShowAddTime(true);
-                    }} className="flex items-center gap-3 px-8 h-12 bg-primary text-white rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">
-                        <Plus className="w-5 h-5" /> Add time
-                    </button>
+                        <button
+                            onClick={() => setShowFilters(true)}
+                            className="flex items-center justify-center gap-2 px-4 min-[900px]:px-6 h-12 bg-surface border border-border text-text-muted rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all whitespace-nowrap min-w-0"
+                        >
+                            <Filter className="w-4 h-4 shrink-0" />
+                            <span>Filter</span>
+                        </button>
+
+                        <button
+                            onClick={() => {
+                                setAddTimeData({
+                                    projectId: '',
+                                    userId: '',
+                                    date: new Date().toISOString().split('T')[0],
+                                    startTime: '09:00',
+                                    endTime: '17:00'
+                                });
+                                setShowAddTime(true);
+                            }}
+                            className="flex items-center justify-center gap-2 px-4 min-[900px]:px-8 h-12 bg-primary text-white rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all whitespace-nowrap min-w-0"
+                        >
+                            <Plus className="w-5 h-5 shrink-0" />
+                            <span>Add time</span>
+                        </button>
+
+                    </div>
                 </div>
+
             </div>
 
+            <main className="flex-1 min-h-0 overflow-y-auto px-4 py-5 min-[900px]:px-10 min-[900px]:py-10 custom-scrollbar min-w-0">
+                {loading ? (
+                    <div className="flex items-center justify-center min-h-[420px]">
+                        <LoadingState />
+                    </div>
+                ) : (
+                    <div className="w-full max-w-[1600px] mx-auto min-w-0 animate-in fade-in slide-in-from-bottom-1 duration-400">
+                        {viewMode === 'daily' && (
+                            <DailyView
+                                entries={entries}
+                                selectedMember={selectedMember}
+                                toProperCase={toProperCase}
+                                onEditSession={openEditModal}
+                                onDeleteSession={openDeleteModal}
+                                onRowClick={openReportForMember}
+                            />
+                        )}
 
+                        {viewMode === 'weekly' && (
+                            <WeeklyView
+                                entries={entries}
+                                onDayClick={(d: string) => navigate(`/dashboard/reports?start=${d}&end=${d}`)}
+                            />
+                        )}
 
-            <main className="flex-1 overflow-y-auto px-8 py-8 custom-scrollbar">
-                {loading ? <div className="flex items-center justify-center h-64"><LoadingState /></div> : (
-                    <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-1 duration-400">
-                         {viewMode === 'daily' && <DailyView entries={entries} selectedMember={selectedMember} toProperCase={toProperCase} onEditSession={openEditModal} onDeleteSession={openDeleteModal} onRowClick={openReportForMember} />}
-                                               {viewMode === 'weekly' && <WeeklyView entries={entries} onDayClick={(d: string) => navigate(`/dashboard/reports?start=${d}&end=${d}`)} />}
-                                                {viewMode === 'calendar' && <CalendarView entries={entries} onDayClick={(d: string) => navigate(`/dashboard/reports?start=${d}&end=${d}`)} />}
+                        {viewMode === 'calendar' && (
+                            <CalendarView
+                                entries={entries}
+                                onDayClick={(d: string) => navigate(`/dashboard/reports?start=${d}&end=${d}`)}
+                            />
+                        )}
                     </div>
                 )}
             </main>
+
 
             <Modal isOpen={showFilters} onClose={() => setShowFilters(false)} title="Filters" allowOverflow={true}>
                 <div className="space-y-6 py-4">
@@ -879,7 +963,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                         {displayRows.map((s, idx) => (
-                                                       <tr key={idx} onClick={() => onRowClick(s.user_id)} className="group hover:bg-surface-hover/50 transition-all cursor-pointer">
+                            <tr key={idx} onClick={() => onRowClick(s.user_id)} className="group hover:bg-surface-hover/50 transition-all cursor-pointer">
                                 <td className="py-8 px-10">
                                     <div className="flex flex-col gap-1.5">
                                         <span className="text-[16px] font-bold text-text-main tracking-tight">{s.project_name}</span>
@@ -925,14 +1009,14 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                 <td className="py-8 px-4 text-center">
                                     {!s.isAggregated && (
                                         <div className="relative group/actions inline-block text-left">
-                                         <button onClick={(e) => e.stopPropagation()} className="p-2 hover:bg-surface-hover rounded-md text-text-muted hover:text-text-main transition-colors">
+                                            <button onClick={(e) => e.stopPropagation()} className="p-2 hover:bg-surface-hover rounded-md text-text-muted hover:text-text-main transition-colors">
                                                 <MoreVertical className="w-5 h-5" />
                                             </button>
                                             <div className="absolute right-0 top-full mt-1 w-36 bg-surface border border-border rounded-lg shadow-shell-md opacity-0 invisible group-hover/actions:opacity-100 group-hover/actions:visible transition-all z-50 overflow-hidden">
-                                                <button onClick={() => onEditSession(s)} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2">
+                                                <button onClick={(e) => { e.stopPropagation(); onEditSession(s); }} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2">
                                                     <Edit2 className="w-4 h-4 text-text-muted" /> Edit Time
                                                 </button>
-                                                <button onClick={() => onDeleteSession(s)} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 flex items-center gap-2 border-t border-border/50">
+                                                <button onClick={(e) => { e.stopPropagation(); onDeleteSession(s); }} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 flex items-center gap-2 border-t border-border/50">
                                                     <Trash2 className="w-4 h-4" /> Delete Time
                                                 </button>
                                             </div>
@@ -948,7 +1032,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
     );
 }
 
- function WeeklyView({ entries, onDayClick }: { entries: DailyEntry[], onDayClick: (d: string) => void }) {
+function WeeklyView({ entries, onDayClick }: { entries: DailyEntry[], onDayClick: (d: string) => void }) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-6">
             {entries.map((day, i) => (
@@ -969,26 +1053,87 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
 
 function CalendarView({ entries, onDayClick }: { entries: DailyEntry[], onDayClick: (d: string) => void }) {
     return (
-        <div className="bg-surface border border-border rounded-md overflow-hidden shadow-shell-sm">
-            <div className="grid grid-cols-7 border-b border-border">
-                {DAYS_SHORT.map(d => (
-                    <div key={d} className="bg-surface-hover/50 p-4 text-[10px] font-bold text-text-muted text-center">{d}</div>
-                ))}
-            </div>
-            <div className="grid grid-cols-7 gap-px bg-main">
-                {entries.map((day, i) => (
-                    <div key={i} onClick={() => onDayClick(day.date)} className="bg-surface min-h-[140px] p-4 flex flex-col gap-3 hover:bg-surface-hover transition-all group cursor-pointer">
-                        <span className="text-[11px] font-bold text-text-muted group-hover:text-slate-900 transition-colors">{new Date(day.date + 'T12:00:00').getDate()}</span>
-                        {day.totalMinutes > 0 && (
-                            <div className="bg-primary/5 border border-primary/10 text-[var(--chart-gold)] rounded-md p-3 flex flex-col gap-1.5 shadow-shell-sm">
-                                <span className="text-[12px] font-bold tabular-nums">{formatDuration(day.totalMinutes)}</span>
-                                <div className="w-full h-1 bg-primary/10 rounded-full overflow-hidden">
-                                    <div className="h-full" style={{ width: `${day.activityPercent}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--gold-vibrant) 100%)' }} />
-                                </div>
+        <div className="w-full min-w-0">
+            {/* Mobile: horizontal scroll
+                Desktop: normal full-width calendar */}
+            <div className="w-full overflow-x-auto custom-scrollbar ">
+                <div className="bg-surface border border-border rounded-md shadow-shell-sm overflow-hidden min-w-[840px] min-[1200px]:min-w-0">
+
+
+                    {/* Calendar header */}
+                    <div className="grid grid-cols-7 border-b border-border">
+                        {DAYS_SHORT.map((day) => (
+                            <div
+                                key={day}
+                                className="bg-surface-hover/50 px-3 py-4 text-[10px] sm:text-[11px] font-bold text-text-muted text-center"
+                            >
+                                {day}
                             </div>
-                        )}
+                        ))}
                     </div>
-                ))}
+
+                    {/* Calendar days */}
+                    <div className="grid grid-cols-7 gap-px bg-main">
+                        {entries.map((day, i) => (
+                            <div
+                                key={i}
+                                onClick={() => onDayClick(day.date)}
+                                className="
+                                    bg-surface
+                                    min-h-[150px]
+                                    sm:min-h-[170px]
+                                    px-2
+                                    py-3
+                                    sm:px-4
+                                    sm:py-5
+                                    flex
+                                    flex-col
+                                    gap-3
+                                    hover:bg-surface-hover
+                                    transition-all
+                                    group
+                                    cursor-pointer
+                                "
+                            >
+                                {/* Date */}
+                                <span className="text-[12px] sm:text-[13px] font-bold text-text-muted group-hover:text-slate-900 transition-colors">
+                                    {new Date(day.date + 'T12:00:00').getDate()}
+                                </span>
+
+                                {/* Time summary */}
+                                {day.totalMinutes > 0 && (
+                                    <div className="bg-primary/5 border border-primary/10 text-[var(--chart-gold)] rounded-md px-2.5 py-3 flex flex-col gap-2.5 shadow-shell-sm">
+
+                                        <span className="text-[12px] sm:text-[13px] font-bold tabular-nums whitespace-nowrap">
+                                            {formatDuration(day.totalMinutes)}
+                                        </span>
+
+                                        <div className="w-full h-1.5 bg-primary/10 rounded-full overflow-hidden">
+                                            <div
+                                                className="h-full"
+                                                style={{
+                                                    width: `${day.activityPercent}%`,
+                                                    background:
+                                                        'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--gold-vibrant) 100%)'
+                                                }}
+                                            />
+                                        </div>
+
+                                        <span className="text-[10px] sm:text-[11px] font-bold text-text-muted whitespace-nowrap">
+                                            {day.activityPercent}% active
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
+                </div>
+            </div>
+
+            {/* Small mobile hint */}
+            <div className="sm:hidden text-center mt-3 text-[10px] font-semibold text-text-muted">
+                Swipe left or right to view the calendar
             </div>
         </div>
     );

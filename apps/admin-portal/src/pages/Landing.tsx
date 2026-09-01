@@ -80,7 +80,7 @@ export function ContactModal({ isOpen, onClose, initialRequestType }: ContactMod
         try {
             const rawKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY;
             const cleanKey = (rawKey || '').trim();
-            
+
             if (!cleanKey || cleanKey === "YOUR_KEY_HERE" || cleanKey === "") {
                 throw new Error("Web3Forms Access Key is not configured. Please add the VITE_WEB3FORMS_ACCESS_KEY environment variable in your Vercel settings to enable email notifications.");
             }
@@ -89,7 +89,7 @@ export function ContactModal({ isOpen, onClose, initialRequestType }: ContactMod
             if (!uuidRegex.test(cleanKey)) {
                 throw new Error("The VITE_WEB3FORMS_ACCESS_KEY you entered in Vercel is not in the correct format. It must be a 36-character UUID (e.g., 12345678-abcd-1234-abcd-123456789abc). Please make sure you copied the Access Key sent to your email (furqan@digireps.co) and not a form name or other ID.");
             }
-            
+
             const response = await fetch("https://api.web3forms.com/submit", {
                 method: "POST",
                 headers: {
@@ -133,7 +133,8 @@ ${message}`
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 pt-24 sm:pt-20 bg-black/60 backdrop-blur-sm">
+
             <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh] text-left">
                 {/* Header */}
                 <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-[#001338] text-white">
@@ -141,7 +142,7 @@ ${message}`
                         <h3 className="text-xl font-bold">Contact TrackOwl</h3>
                         <p className="text-xs text-slate-300">We'll get back to you shortly</p>
                     </div>
-                    <button 
+                    <button
                         onClick={onClose}
                         className="p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
                     >
@@ -204,11 +205,10 @@ ${message}`
                                                         setRequestType(opt.value as any);
                                                         setRequestTypeOpen(false);
                                                     }}
-                                                    className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${
-                                                        requestType === opt.value
+                                                    className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${requestType === opt.value
                                                             ? 'bg-blue-600 text-white font-bold'
                                                             : 'text-slate-700 hover:bg-slate-50'
-                                                    }`}
+                                                        }`}
                                                 >
                                                     {opt.label}
                                                 </div>
@@ -222,8 +222,8 @@ ${message}`
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Full Name</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     required
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
@@ -233,8 +233,8 @@ ${message}`
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Business Email</label>
-                                <input 
-                                    type="email" 
+                                <input
+                                    type="email"
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
@@ -247,8 +247,8 @@ ${message}`
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Company Name</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     required
                                     value={company}
                                     onChange={(e) => setCompany(e.target.value)}
@@ -258,45 +258,44 @@ ${message}`
                             </div>
                             <div>
                                 <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Team Size</label>
-                            <div className="relative">
-                                <button
-                                    type="button"
-                                    onClick={() => setTeamSizeOpen(!teamSizeOpen)}
-                                    className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 bg-white focus:border-blue-600 outline-none flex items-center justify-between cursor-pointer"
-                                >
-                                    <span>{teamSizeOptions.find(o => o.value === teamSize)?.label || 'Select team size'}</span>
-                                    <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${teamSizeOpen ? 'rotate-180' : ''}`} />
-                                </button>
-                                {teamSizeOpen && (
-                                    <>
-                                        <div className="fixed inset-0 z-40" onClick={() => setTeamSizeOpen(false)} />
-                                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1.5 overflow-hidden">
-                                            {teamSizeOptions.map((opt) => (
-                                                <div
-                                                    key={opt.value}
-                                                    onClick={() => {
-                                                        setTeamSize(opt.value);
-                                                        setTeamSizeOpen(false);
-                                                    }}
-                                                    className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${
-                                                        teamSize === opt.value
-                                                            ? 'bg-blue-600 text-white font-bold'
-                                                            : 'text-slate-700 hover:bg-slate-50'
-                                                    }`}
-                                                >
-                                                    {opt.label}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                                <div className="relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => setTeamSizeOpen(!teamSizeOpen)}
+                                        className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-800 bg-white focus:border-blue-600 outline-none flex items-center justify-between cursor-pointer"
+                                    >
+                                        <span>{teamSizeOptions.find(o => o.value === teamSize)?.label || 'Select team size'}</span>
+                                        <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform ${teamSizeOpen ? 'rotate-180' : ''}`} />
+                                    </button>
+                                    {teamSizeOpen && (
+                                        <>
+                                            <div className="fixed inset-0 z-40" onClick={() => setTeamSizeOpen(false)} />
+                                            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 py-1.5 overflow-hidden">
+                                                {teamSizeOptions.map((opt) => (
+                                                    <div
+                                                        key={opt.value}
+                                                        onClick={() => {
+                                                            setTeamSize(opt.value);
+                                                            setTeamSizeOpen(false);
+                                                        }}
+                                                        className={`px-4 py-2.5 text-sm cursor-pointer transition-colors ${teamSize === opt.value
+                                                                ? 'bg-blue-600 text-white font-bold'
+                                                                : 'text-slate-700 hover:bg-slate-50'
+                                                            }`}
+                                                    >
+                                                        {opt.label}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
                         <div>
                             <label className="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Your Message</label>
-                            <textarea 
+                            <textarea
                                 required
                                 rows={3}
                                 value={message}
@@ -331,7 +330,7 @@ export function Landing() {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
-    const [recommendedOS, setRecommendedOS] = useState<'windows' | 'mac-silicon' | 'mac-intel' | 'linux' | null>(null);
+    const [recommendedOS, setRecommendedOS] = useState<'windows' | 'mac-silicon' | 'mac-intel' | null>(null);
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [isContactOpen, setIsContactOpen] = useState(false);
     const [contactType, setContactType] = useState<'sales' | 'demo' | 'general'>('sales');
@@ -342,8 +341,6 @@ export function Landing() {
                 const ua = navigator.userAgent.toLowerCase();
                 if (ua.includes('win')) {
                     setRecommendedOS('windows');
-                } else if (ua.includes('linux') && !ua.includes('android')) {
-                    setRecommendedOS('linux');
                 } else if (ua.includes('mac')) {
                     if ('userAgentData' in navigator && typeof (navigator as any).userAgentData.getHighEntropyValues === 'function') {
                         const values = await (navigator as any).userAgentData.getHighEntropyValues(['architecture']);
@@ -354,8 +351,8 @@ export function Landing() {
                             setRecommendedOS('mac-intel');
                             return;
                         }
-                    } 
-                    
+                    }
+
                     // Fallback for Safari/Firefox using WebGL Texture Compression support
                     // Apple Silicon GPUs (M1/M2/M3) share iOS architecture and support ASTC/ETC/PVRTC.
                     // Intel/AMD desktop GPUs on Macs do NOT support these mobile compression formats.
@@ -365,10 +362,10 @@ export function Landing() {
                         if (gl) {
                             const extensions = (gl as WebGLRenderingContext).getSupportedExtensions();
                             if (extensions) {
-                                const isAppleSilicon = extensions.includes('WEBGL_compressed_texture_astc') || 
-                                                       extensions.includes('WEBGL_compressed_texture_etc') || 
-                                                       extensions.includes('WEBKIT_WEBGL_compressed_texture_pvrtc');
-                                
+                                const isAppleSilicon = extensions.includes('WEBGL_compressed_texture_astc') ||
+                                    extensions.includes('WEBGL_compressed_texture_etc') ||
+                                    extensions.includes('WEBKIT_WEBGL_compressed_texture_pvrtc');
+
                                 if (isAppleSilicon) {
                                     setRecommendedOS('mac-silicon');
                                     return;
@@ -644,7 +641,7 @@ export function Landing() {
                                 <button
                                     onClick={() => navigate('/signup')}
                                     className="group relative overflow-hidden w-full sm:w-auto px-8 py-3.5 bg-[#facc15] text-[#001338] text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
-                                 >
+                                >
                                     <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
                                     <span className="relative z-10">Start free trial</span>
                                     <ArrowRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -723,7 +720,7 @@ export function Landing() {
                             <p className="text-lg font-medium text-slate-500">Everything you need to track, monitor, and optimize your team performance.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                             {features.map((f, i) => {
                                 const Icon = f.icon;
                                 return (
@@ -819,7 +816,7 @@ export function Landing() {
                                             </div>
                                             <h3 className="text-xl font-bold text-slate-900">{s.title}</h3>
                                         </div>
-                                         <p className="text-base font-medium text-slate-500 leading-relaxed mb-6 text-justify">{s.desc}</p>
+                                        <p className="text-base font-medium text-slate-500 leading-relaxed mb-6 text-justify">{s.desc}</p>
 
                                         {/* Little illustrations inside the card */}
                                         <div className="mt-auto w-full h-24 bg-white rounded-xl border border-slate-100 flex items-center justify-center p-3">
@@ -897,7 +894,7 @@ export function Landing() {
                         <div className="text-center mb-12">
                             <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d]">What teams are saying</h2>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {testimonials.map((t, i) => (
                                 <div key={i} className="p-8 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm flex flex-col justify-between relative">
                                     <div className="absolute top-6 left-6 text-blue-100 text-6xl font-serif leading-none">"</div>
@@ -1104,7 +1101,7 @@ export function Landing() {
                     <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl opacity-30 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
                     <div className="absolute bottom-0 left-0 w-96 h-96 bg-black/10 rounded-full blur-3xl opacity-20 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
-                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8 relative z-10">
+                    <div className="mx-auto w-full max-w-[1400px] px-6 lg:px-8 relative z-10">
                         <div className="text-center mb-12">
                             <h2 className="text-4xl font-black text-[#001B4D] mb-6">Download the TrackOwl™ desktop app</h2>
                             <p className="text-xl text-[#001B4D]/80 font-medium max-w-2xl mx-auto">
@@ -1112,9 +1109,10 @@ export function Landing() {
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-6xl mx-auto">
                             {/* Windows */}
-                            <div className="bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
+                            <div className="w-full bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
+
                                 <div className="w-16 h-16 bg-[#F5E6CA] rounded-2xl flex items-center justify-center text-[#B8860B] mb-6">
                                     <Monitor className="w-8 h-8" />
                                 </div>
@@ -1136,7 +1134,8 @@ export function Landing() {
                             </div>
 
                             {/* Mac */}
-                            <div className="bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
+                            <div className="w-full bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
+
                                 <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-800 mb-6">
                                     <Monitor className="w-8 h-8" />
                                 </div>
@@ -1156,20 +1155,6 @@ export function Landing() {
                                         {recommendedOS === 'mac-intel' && <span className="absolute -top-3 -right-2 bg-amber-400 text-amber-900 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full shadow-md">⭐ Recommended</span>}
                                     </a>
                                 </div>
-                            </div>
-
-                            {/* Linux */}
-                            <div className="bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
-                                <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-600 mb-6">
-                                    <Monitor className="w-8 h-8" />
-                                </div>
-                                <h3 className="text-2xl font-bold text-slate-900 mb-2">Linux</h3>
-                                <p className="text-slate-500 font-medium mb-8">Ubuntu, Debian, Fedora (.deb / .rpm)</p>
-                                <button
-                                    disabled
-                                    className="w-full py-4 px-6 bg-orange-100 text-orange-500 text-lg font-bold rounded-lg flex items-center justify-center gap-2 mt-auto cursor-not-allowed border border-orange-200">
-                                    Coming Soon
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -1206,10 +1191,10 @@ export function Landing() {
             {/* FOOTER */}
             <Footer />
 
-            <ContactModal 
-                isOpen={isContactOpen} 
-                onClose={() => setIsContactOpen(false)} 
-                initialRequestType={contactType} 
+            <ContactModal
+                isOpen={isContactOpen}
+                onClose={() => setIsContactOpen(false)}
+                initialRequestType={contactType}
             />
 
             {/* Scroll to Top Button */}
@@ -1230,4 +1215,3 @@ export function Landing() {
         </div>
     );
 }
-
