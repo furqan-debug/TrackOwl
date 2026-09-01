@@ -323,17 +323,17 @@ export function Timesheets() {
 
                 const startedAtMs = parseDbTimestamp(s.started_at) || new Date(s.started_at).getTime();
                 const lastSampleTime = stats && stats.last_sample_at ? (parseDbTimestamp(stats.last_sample_at) || startedAtMs) : startedAtMs;
-
                 const score = sampleCount > 0 ? Math.round(activitySum / sampleCount) : 0;
+                const isManual = s.manual === true;
 
                 const nowMs = new Date().getTime();
-                const isTrulyActive = !s.ended_at && (nowMs - lastSampleTime < STALE_THRESHOLD_MS);
+                const isTrulyActive = !isManual && (nowMs - lastSampleTime < STALE_THRESHOLD_MS);
 
                 let effectiveEndMs = nowMs;
-                if (s.ended_at) {
-                    effectiveEndMs = parseDbTimestamp(s.ended_at) || new Date(s.ended_at).getTime();
-                } else if (isTrulyActive) {
+                if (isTrulyActive) {
                     effectiveEndMs = nowMs;
+                } else if (s.ended_at) {
+                    effectiveEndMs = parseDbTimestamp(s.ended_at) || new Date(s.ended_at).getTime();
                 } else if (sampleCount > 0) {
                     effectiveEndMs = Math.max(lastSampleTime, startedAtMs);
                 } else {
@@ -345,8 +345,6 @@ export function Timesheets() {
                 const endLocalStr = new Date(effectiveEndMs).toLocaleString('en-US', { timeZone: tz });
                 const startLocal = new Date(startLocalStr);
                 const endLocal = new Date(endLocalStr);
-
-                const isManual = s.manual === true;
 
                 // DEBUG LOG FOR FIRST SESSION
                 if (s.id === sessions[0]?.id) {
@@ -886,9 +884,6 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
 
             if (s.is_active) {
                 row.is_active = true;
-                if (s.effective_end && (!row.max_end || new Date(s.effective_end) > new Date(row.max_end))) {
-                    row.max_end = s.effective_end;
-                }
             } else if (s.ended_at && (!row.max_end || new Date(s.ended_at) > new Date(row.max_end))) {
                 row.max_end = s.ended_at;
             }
@@ -913,6 +908,18 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
         const endTime = s.isAggregated ? s.max_end : (s.effective_end || s.ended_at);
 
         const start = new Date(startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase();
+
+        if (s.is_active) {
+            return (
+                <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
+                    <span>{start} – ...</span>
+                    <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                </span>
+            );
+        }
 
         const end = endTime ?
             new Date(endTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase() :
