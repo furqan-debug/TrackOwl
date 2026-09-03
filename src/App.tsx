@@ -66,6 +66,8 @@ interface User {
   organization_settings?: {
     autoStopOnIdle?: boolean;
     idleAutoStopMinutes?: number;
+    /** IANA zone defining the payroll day boundary, e.g. 'America/Los_Angeles'. */
+    orgTimezone?: string;
   };
 }
 
@@ -123,8 +125,6 @@ interface Project {
     weeklySeconds: number;
     weeklyIdleSeconds?: number;
     activityPercent: number;
-    rawTodaySeconds?: number;
-    rawWeeklySeconds?: number;
     keptIdleSeconds?: number;
   };
 }
@@ -822,6 +822,13 @@ export default function App() {
   });
   const [isSyncing, setIsSyncing] = useState(false);
   const [orgTimezone, setOrgTimezone] = useState<string>('UTC');
+  // Last successfully resolved org timezone. Held in a ref (not state) so
+  // fetchDashboardStats can read it without a stale-closure problem, and kept
+  // null until genuinely known so "unresolved" is distinguishable from "UTC".
+  const orgTimezoneRef = useRef<string | null>(null);
+  // Org-local date string ('YYYY-MM-DD') that the on-screen totals belong to,
+  // used to detect the payroll day rolling over while the app stays open.
+  const orgDayRef = useRef<string | null>(null);
 
   const handleManualSync = async () => {
     if (isSyncing) return;
@@ -872,17 +879,40 @@ export default function App() {
     try {
       const sb = await getSupabase();
 
-      // Fetch orgTimezone to exactly match payroll bounds
-      // Use userId parameter (not the stale closure `user`) to get org_id reliably
-      const { data: memberData } = await sb.from('members').select('organization_id').eq('id', userId).single();
-      const orgId = memberData?.organization_id || user?.organization_id;
-      const { data: orgData } = await sb.from('organizations').select('settings').eq('id', orgId).single();
-      const orgTimezone = orgData?.settings?.orgTimezone || 'UTC';
+      // Resolve the org timezone — it defines the payroll day boundary.
+      // This must NEVER silently fall back to a guess: bucketing the day in the
+      // wrong timezone attributes yesterday evening's tracked time to today, and
+      // because the resolved value is baked into todaySeconds (a stored number,
+      // not a render-time lookup) a single bad read stays wrong for the whole
+      // session. One query now returns both the org id and its settings, using
+      // the same embedded join the login/restore paths already rely on.
+      // Uses the userId parameter, not the stale closure `user`.
+      const { data: memberData, error: memberErr } = await sb
+        .from('members')
+        .select('organization_id, organizations(settings)')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (memberErr) console.error('[stats] member/org lookup failed:', memberErr);
+
+      const orgTimezone =
+        memberData?.organizations?.settings?.orgTimezone
+        || orgTimezoneRef.current
+        || user?.organization_settings?.orgTimezone;
+
+      // With no known boundary we cannot compute "today" at all. Leave the totals
+      // already on screen untouched and retry on the next refresh — a stale number
+      // is recoverable, a confidently wrong payroll number is not.
+      if (!orgTimezone) {
+        console.error('[stats] org timezone unresolved — skipping stats computation');
+        return;
+      }
+
+      orgTimezoneRef.current = orgTimezone;
       setOrgTimezone(orgTimezone);
 
       const now = new Date();
       const todayInOrg = now.toLocaleDateString('en-CA', { timeZone: orgTimezone });
-      const startOfTodayMs = orgLocalToUtc(todayInOrg, 'start', orgTimezone).getTime();
 
       // Start of current week in orgTimezone (Monday)
       const [y, mo, d] = todayInOrg.split('-').map(Number);
@@ -897,7 +927,6 @@ export default function App() {
       
       // Exact integer binary search for Monday's midnight in orgTimezone
       const weekStartUtc = orgLocalToUtc(monDateStr, 'start', orgTimezone);
-      const mhi = weekStartUtc.getTime();
       const weekStartIso = weekStartUtc.toISOString();
 
       const todayStr = todayInOrg;
@@ -960,39 +989,8 @@ export default function App() {
 
       const statsMap: Record<string, any> = {};
       currentProjects.forEach(p => {
-        statsMap[p.id] = { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, totalActivity: 0, sampleCount: 0, rawTodaySeconds: 0, rawWeeklySeconds: 0, keptIdleSeconds: 0 };
+        statsMap[p.id] = { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, totalActivity: 0, sampleCount: 0, keptIdleSeconds: 0 };
       });
-
-      const nowMs = Date.now();
-      const activeSessions = (sessionData || []).filter((s: any) => !s.ended_at);
-      const latestActiveSessionId = activeSessions.length > 0
-        ? activeSessions.sort((a: any, b: any) => new Date(b.started_at).getTime() - new Date(a.started_at).getTime())[0].id
-        : null;
-
-      sessionData?.forEach((s: any) => {
-        const pId = s.project_id;
-        if (!statsMap[pId]) return;
-
-        // Only count the session if it's either ended OR it's the very latest active session
-        if (s.ended_at || s.id === latestActiveSessionId) {
-          const startedAt = new Date(s.started_at).getTime();
-          const endedAt = s.ended_at ? new Date(s.ended_at).getTime() : nowMs;
-
-          if (endedAt > mhi) {
-            const effectiveStartW = Math.max(startedAt, mhi);
-            const durSecondsW = Math.floor((endedAt - effectiveStartW) / 1000);
-            statsMap[pId].rawWeeklySeconds += durSecondsW;
-          }
-
-          if (endedAt > startOfTodayMs) {
-            const effectiveStart = Math.max(startedAt, startOfTodayMs);
-            const durSeconds = Math.floor((endedAt - effectiveStart) / 1000);
-            statsMap[pId].rawTodaySeconds += durSeconds;
-          }
-        }
-      });
-
-
 
       const minuteMap = new Map<string, any>();
       (samples || []).forEach(s => {
@@ -1099,7 +1097,7 @@ export default function App() {
 
       const updatedProjects = currentProjects.map(p => {
         const stat = statsMap[p.id];
-        if (!stat) return { ...p, stats: { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, activityPercent: 0, rawTodaySeconds: 0, rawWeeklySeconds: 0, keptIdleSeconds: 0 } };
+        if (!stat) return { ...p, stats: { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, activityPercent: 0, keptIdleSeconds: 0 } };
         const todaySeconds = (floorActive && floor!.projectId === p.id)
           ? Math.max(stat.todaySeconds, floor!.minTodaySecs)
           : stat.todaySeconds;
@@ -1109,8 +1107,6 @@ export default function App() {
             todaySeconds,
             weeklySeconds: stat.weeklySeconds,
             weeklyIdleSeconds: stat.weeklyIdleSeconds,
-            rawTodaySeconds: stat.rawTodaySeconds,
-            rawWeeklySeconds: stat.rawWeeklySeconds,
             keptIdleSeconds: stat.keptIdleSeconds,
             activityPercent: stat.sampleCount > 0
               ? Math.round(stat.totalActivity / stat.sampleCount)
@@ -1191,6 +1187,13 @@ export default function App() {
           organization_settings: member.organizations?.settings || {}
         };
         console.log('USER LOADED (Session)');
+        // Seed the payroll day boundary from settings already fetched with the
+        // member row, so the first stats computation never has to guess it.
+        const restoredTz = member.organizations?.settings?.orgTimezone;
+        if (restoredTz) {
+          orgTimezoneRef.current = restoredTz;
+          setOrgTimezone(restoredTz);
+        }
         setUser(userObj);
         const { data: projs } = await sb.from('projects')
           .select('*, project_members!inner(member_id)')
@@ -1515,8 +1518,11 @@ export default function App() {
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
-    // Auto-refresh on projects screen — but only when visible and every 5m instead of 1m
-    if (user && screen === 'projects') {
+    // Auto-refresh — but only when visible and every 5m instead of 1m.
+    // Also runs on the tracker screen: previously this was gated to 'projects'
+    // only, so while a user was tracking nothing ever recomputed their totals
+    // and a stale or mis-bucketed figure persisted for the whole session.
+    if (user && (screen === 'projects' || screen === 'tracker')) {
       interval = setInterval(() => {
         if (document.visibilityState === 'visible') {
           fetchDashboardStats(user.id, projects);
@@ -1525,6 +1531,49 @@ export default function App() {
     }
     return () => { if (interval) clearInterval(interval); };
   }, [user?.id, screen, projects]);
+
+  // ─── Payroll day rollover ────────────────────────────────────────────────────
+  // The live counter (sessionElapsedRef) is seeded once at session start and only
+  // reset on stop, and todaySeconds is only recomputed when stats are refetched.
+  // Neither was tied to the org day, so a session running across org midnight
+  // carried yesterday's total forward into today. Watch the org-local date and
+  // reconcile both when it flips.
+  useEffect(() => {
+    if (!user) return;
+
+    const checkRollover = () => {
+      const tz = orgTimezoneRef.current;
+      if (!tz) return; // boundary unknown — do not guess
+
+      const today = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+
+      if (orgDayRef.current === null) {
+        orgDayRef.current = today;
+        return;
+      }
+      if (orgDayRef.current === today) return;
+
+      orgDayRef.current = today;
+
+      // Clamp the live counter to the time elapsed since the new org midnight.
+      // Math.min keeps this safe for a session that started after midnight (its
+      // elapsed value is already correct and must not be inflated).
+      const midnightMs = orgLocalToUtc(today, 'start', tz).getTime();
+      const secsSinceMidnight = Math.max(0, Math.floor((Date.now() - midnightMs) / 1000));
+      sessionElapsedRef.current = Math.min(sessionElapsedRef.current, secsSinceMidnight);
+      setLiveElapsed(prev => Math.min(prev, secsSinceMidnight));
+
+      // A stale day floor would re-inflate the freshly reset total.
+      limitFloorRef.current = null;
+
+      fetchDashboardStats(user.id, projects);
+    };
+
+    checkRollover();
+    const interval = setInterval(checkRollover, 30_000);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, projects]);
 
   // ─── Org-Level Absolute Auto-Terminate Session (bypasses keep_idle_mode) ──────
   // This effect listens to every tracking sample and maintains an independent
@@ -1829,6 +1878,14 @@ export default function App() {
         plan_type: member.organizations?.plan_type || 'Basic',
         organization_settings: member.organizations?.settings || {}
       };
+      // Seed the payroll day boundary from settings already fetched with the
+      // member row, so the first stats computation never has to guess it.
+      const loginTz = member.organizations?.settings?.orgTimezone;
+      if (loginTz) {
+        orgTimezoneRef.current = loginTz;
+        setOrgTimezone(loginTz);
+      }
+
       const { data: projectsData } = await sb.from('projects')
         .select('*, project_members!inner(member_id)')
         .eq('project_members.member_id', userObj.id);
