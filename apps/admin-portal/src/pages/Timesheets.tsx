@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import {
@@ -57,7 +57,7 @@ let timesheetsCache: any = null;
 let timesheetsCacheKey: string | null = null;
 
 export function Timesheets() {
-    const { profile, managedMemberIds, managedProjectIds, displayTimezone } = useAuth();
+    const { profile, managedMemberIds, managedProjectIds, displayTimezone, timezoneReady } = useAuth();
     const organizationId = profile?.organization_id;
     const navigate = useNavigate();
 
@@ -66,6 +66,10 @@ export function Timesheets() {
     const [members, setMembers] = useState<MemberInfo[]>([]);
     const [activeTimezone, setActiveTimezone] = useState<string>('Org Local');
     const [orgTimezone, setOrgTimezone] = useState<string>('UTC');
+    // orgTimezone starts as a placeholder and is filled in by fetchOrgSettings().
+    // The default activeTimezone is 'Org Local', so querying before this resolves
+    // buckets every session into UTC days instead of the org's.
+    const [orgSettingsLoaded, setOrgSettingsLoaded] = useState(false);
     const [projects, setProjects] = useState<any[]>([]);
     const [projectMembersMap, setProjectMembersMap] = useState<Record<string, string[]>>({}); // memberId -> projectId[]
     const [selectedMember, setSelectedMember] = useState<string>('all');
@@ -82,6 +86,26 @@ export function Timesheets() {
         const tzDateStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
         return new Date(tzDateStr + 'T12:00:00');
     });
+
+    // The initializer above runs once at mount, while displayTimezone is still the
+    // provisional 'UTC', and is never recomputed — so the page can open on the
+    // wrong calendar day. Re-derive it once the real timezone is known. The ref
+    // limits this to initialization: afterwards the date picker and arrows own
+    // selectedDate and a later timezone switch must not move the user off it.
+    const didInitDateRef = useRef(false);
+    const [dateInitialized, setDateInitialized] = useState(false);
+    useEffect(() => {
+        if (didInitDateRef.current || !timezoneReady) return;
+        didInitDateRef.current = true;
+        const tzDateStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+        const corrected = new Date(tzDateStr + 'T12:00:00');
+        setSelectedDate(prev => (prev.getTime() === corrected.getTime() ? prev : corrected));
+        setDateInitialized(true);
+    }, [timezoneReady, displayTimezone]);
+
+    // Monotonic id for timesheet fetches — only the newest may write entries or
+    // the cache, so a slow earlier response cannot overwrite newer data.
+    const fetchSeqRef = useRef(0);
     const [showFilters, setShowFilters] = useState(false);
     const [showAddTime, setShowAddTime] = useState(false);
 
@@ -153,14 +177,22 @@ export function Timesheets() {
         // array (which would cause members.find() to return undefined and send
         // an unfiltered query, returning everyone's data instead of the selected member).
         if (!organizationId) return;
+        // Wait for the org timezone and the corrected date before querying.
+        // Without this the first query ran with the 'UTC' placeholder, and since
+        // orgTimezone was not a dependency the effect never re-ran once the real
+        // zone arrived — so UTC-bucketed rows persisted for the whole visit.
+        if (!orgSettingsLoaded || !dateInitialized) return;
         if (selectedMember !== 'all' && members.length === 0) return;
         fetchTimesheets();
-    }, [range, selectedMember, filterProjectId, activeTimezone, members, projects, organizationId]);
+    }, [range, selectedMember, filterProjectId, activeTimezone, orgTimezone, orgSettingsLoaded, dateInitialized, members, projects, organizationId]);
 
     async function fetchOrgSettings() {
         if (!organizationId) return;
         const { data } = await supabase.from('organizations').select('settings').eq('id', organizationId).single();
         if (data?.settings?.orgTimezone) setOrgTimezone(data.settings.orgTimezone);
+        // Mark resolved either way — if the org has no orgTimezone configured, the
+        // 'UTC' placeholder is the final answer and the query must not stay blocked.
+        setOrgSettingsLoaded(true);
     }
 
     async function fetchMembers() {
@@ -208,7 +240,12 @@ export function Timesheets() {
     }
 
     async function fetchTimesheets(forceRefresh = false) {
-        const cacheKey = `${range.start.toISOString()}_${range.end.toISOString()}_${selectedMember}_${filterProjectId}_${activeTimezone}_${viewMode}`;
+        // orgTimezone is part of the key: with activeTimezone 'Org Local' the same
+        // filters produce different day buckets under a different zone, so without
+        // it a UTC-bucketed result could be served back after the zone resolved.
+        const cacheKey = `${range.start.toISOString()}_${range.end.toISOString()}_${selectedMember}_${filterProjectId}_${activeTimezone}_${orgTimezone}_${viewMode}`;
+        const mySeq = ++fetchSeqRef.current;
+
         if (!forceRefresh && timesheetsCache && timesheetsCacheKey === cacheKey) {
             setEntries(timesheetsCache.entries);
             setLoading(false);
@@ -404,6 +441,9 @@ export function Timesheets() {
                 };
             });
 
+            // A newer fetch superseded this one — discard rather than overwrite.
+            if (mySeq !== fetchSeqRef.current) return;
+
             setEntries(result);
 
             // Update cache
@@ -411,9 +451,10 @@ export function Timesheets() {
             timesheetsCacheKey = cacheKey;
         } catch (error) {
             console.error('Error fetching timesheets:', error);
-            setEntries([]);
+            if (mySeq === fetchSeqRef.current) setEntries([]);
         } finally {
-            setLoading(false);
+            // Only the newest request may clear the spinner.
+            if (mySeq === fetchSeqRef.current) setLoading(false);
         }
     }
 
