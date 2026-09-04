@@ -19,6 +19,7 @@ tauri-build = { version = "2", features = [] }
 app-store = []
 
 [dependencies]
+glib = "0.20"
 tauri = { version = "2", features = ["tray-icon", "image-ico", "image-png"] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
