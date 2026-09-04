@@ -53,6 +53,13 @@ interface AuthContextType {
     signOut: () => Promise<void>;
     displayTimezone: string;
     setDisplayTimezone: React.Dispatch<React.SetStateAction<string>>;
+    /**
+     * False until the organization's timezone has been applied (or auth has
+     * settled without one). `displayTimezone` defaults to 'UTC' before that, so
+     * consumers deriving day boundaries must wait for this rather than treating
+     * the provisional 'UTC' as a real choice — a user may genuinely select UTC.
+     */
+    timezoneReady: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -78,12 +85,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [aalLevel, setAalLevel] = useState<'aal1' | 'aal2' | null>(null);
     const [nextAalLevel, setNextAalLevel] = useState<'aal1' | 'aal2' | null>(null);
     const [displayTimezone, setDisplayTimezone] = useState<string>('UTC');
+    const [timezoneReady, setTimezoneReady] = useState(false);
 
     useEffect(() => {
         if (organization?.settings?.orgTimezone) {
             setDisplayTimezone(organization.settings.orgTimezone);
+            setTimezoneReady(true);
         }
     }, [organization?.settings?.orgTimezone]);
+
+    // Fallback: an org may have no orgTimezone configured, in which case the
+    // effect above never fires. Once auth has settled, whatever we hold is
+    // final — without this, consumers gated on timezoneReady would wait forever.
+    useEffect(() => {
+        if (!loading) setTimezoneReady(true);
+    }, [loading]);
 
     // Derived plan flags — always computed from organization state
     const isPremium = computeIsPremium(organization);
@@ -507,7 +523,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             managedProjectIds,
             signOut,
             displayTimezone,
-            setDisplayTimezone
+            setDisplayTimezone,
+            timezoneReady
         }}>
             {children}
         </AuthContext.Provider>

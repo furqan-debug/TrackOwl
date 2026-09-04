@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import {
@@ -88,7 +88,7 @@ interface DashStats {
     trendProductivity: number;
 }
 export function Dashboard() {
-    const { profile, managedMemberIds, managedProjectIds, isPremium, displayTimezone } = useAuth();
+    const { profile, managedMemberIds, managedProjectIds, isPremium, displayTimezone, timezoneReady } = useAuth();
     const organizationId = profile?.organization_id;
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -108,6 +108,32 @@ export function Dashboard() {
     const [viewDateStr, setViewDateStr] = useState(() => {
         return new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
     });
+
+    // Monotonic id for dashboard fetches. Several values feed the fetch callback
+    // (date, timezone, org, profile, managed ids), so a change mid-flight starts
+    // a new request while the old one is still running. Only the newest may
+    // write state or the cache — otherwise a slow earlier response silently
+    // overwrites newer data.
+    const requestSeqRef = useRef(0);
+
+    // The initializer above runs once at mount, while displayTimezone is still
+    // the provisional 'UTC', and is never recomputed. Between 00:00-07:00 UTC
+    // that UTC date is already tomorrow while the org is still on today, so the
+    // dashboard would query the wrong day. Re-derive it once the real timezone
+    // is known. The ref keeps this to initialization only — after that the date
+    // picker, arrows and goToToday own viewDateStr, so a later timezone switch
+    // never pulls the user off a date they deliberately selected.
+    const didInitDateRef = useRef(false);
+    const [dateInitialized, setDateInitialized] = useState(false);
+    useEffect(() => {
+        if (didInitDateRef.current || !timezoneReady) return;
+        didInitDateRef.current = true;
+        const todayInTz = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+        setViewDateStr(prev => (prev === todayInTz ? prev : todayInTz));
+        // Batched with the date above, so the first fetch always sees the
+        // corrected date — exactly one query per page load.
+        setDateInitialized(true);
+    }, [timezoneReady, displayTimezone]);
 
     const [stats, setStats] = useState<DashStats>({
         totalProductiveMinutes: 0,
@@ -149,7 +175,14 @@ export function Dashboard() {
     }, [viewDateStr, displayTimezone]);
 
     const fetchDashboardData = useCallback(async (forceRefresh = false, isSilent = false) => {
-        if (!organizationId) return;
+        // Wait for the real timezone. Firing before it resolves issued a second,
+        // redundant query against UTC-day bounds — 7 hours offset from the org
+        // day — and whichever of the two responses landed last won, so the
+        // headline totals jumped between refreshes.
+        if (!organizationId || !timezoneReady || !dateInitialized) return;
+
+        // Supersede any in-flight request: only the newest may write state.
+        const mySeq = ++requestSeqRef.current;
 
         // Compute exact UTC bounds for the viewDate in displayTimezone
         const startUtc = orgLocalToUtc(viewDateStr, 'start', displayTimezone || 'UTC');
@@ -333,6 +366,11 @@ export function Dashboard() {
                 };
             }).sort((a, b) => (a.status === 'offline' ? 1 : 0) - (b.status === 'offline' ? 1 : 0));
 
+            // A newer fetch started while this one was in flight — its results are
+            // authoritative, so drop everything computed here rather than letting
+            // a stale window overwrite it.
+            if (mySeq !== requestSeqRef.current) return;
+
             // Update State
             setStats(finalStats);
             setUserActivity(finalUserActivity);
@@ -371,10 +409,14 @@ export function Dashboard() {
         } catch (error) {
             console.error('Dashboard error:', error);
         } finally {
-            setLoading(false);
-            setRefreshing(false);
+            // Only the newest request may clear the spinners; otherwise a
+            // superseded response reports "done" while a newer fetch is running.
+            if (mySeq === requestSeqRef.current) {
+                setLoading(false);
+                setRefreshing(false);
+            }
         }
-    }, [viewDateStr, displayTimezone, organizationId, profile?.id, profile?.role, managedMemberIds, managedProjectIds]);
+    }, [viewDateStr, displayTimezone, timezoneReady, dateInitialized, organizationId, profile?.id, profile?.role, managedMemberIds, managedProjectIds]);
 
     useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
