@@ -12,6 +12,7 @@ import {
 import { trackerAPI } from './tauri-ipc';
 import { UpdaterOverlay } from './components/UpdaterOverlay';
 
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import './App.css';
 
 const SUPABASE_URL = (import.meta.env.VITE_SUPABASE_URL || 'https://lgmggbnaoyoapxqsfgzv.supabase.co') as string;
@@ -21,14 +22,10 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.warn('⚠️ Supabase URL or Anon Key is missing from environment variables.');
 }
 
+const supabaseInstance: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let _supabase: any = null;
 async function getSupabase() {
-  if (!_supabase) {
-    const { createClient } = await import('@supabase/supabase-js');
-    _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
-  return _supabase;
+  return supabaseInstance;
 }
 
 type Screen = 'login' | 'projects' | 'consent' | 'tracker' | 'settings' | 'support';
@@ -1337,10 +1334,10 @@ export default function App() {
       console.log('[App] Executing idle sample discard from cutoff:', startTime, 'for session:', activeSessionId);
 
       await Promise.all([
-        sb.rpc('rpc_discard_idle_samples', {
+        Promise.resolve(sb.rpc('rpc_discard_idle_samples', {
           p_session_id: activeSessionId,
           p_start_time: startTime,
-        }).then((res: any) => console.log('[App] rpc_discard_idle_samples response:', res))
+        })).then((res: any) => console.log('[App] rpc_discard_idle_samples response:', res))
           .catch((err: any) => console.error('[App] rpc_discard_idle_samples error:', err)),
         sb.from('activity_samples')
           .delete()
@@ -1656,15 +1653,35 @@ export default function App() {
     const syncLocation = async () => {
       try {
         const sb = await getSupabase();
-        const r = await fetch('https://ipapi.co/json/');
-        const d = await r.json();
-        if (d.city && d.country_name) {
-          const locString = `${d.city}, ${d.country_name}`;
+        let locString = '';
+
+        try {
+          const r = await fetch('https://ipwho.is/');
+          if (r.ok) {
+            const d = await r.json();
+            if (d.success && d.city && d.country) {
+              locString = `${d.city}, ${d.country}`;
+            }
+          }
+        } catch (_) {
+          // Fallback provider if ipwho.is is unreachable
+          try {
+            const r2 = await fetch('https://ipapi.co/json/');
+            if (r2.ok) {
+              const d2 = await r2.json();
+              if (d2.city && d2.country_name) {
+                locString = `${d2.city}, ${d2.country_name}`;
+              }
+            }
+          } catch (_) {}
+        }
+
+        if (locString) {
           await sb.from('members').update({ location: locString }).eq('id', user.id);
           console.log('[App] Location synced:', locString);
         }
       } catch (e) {
-        console.error('[App] Location sync failed:', e);
+        console.warn('[App] Location sync skipped:', e);
       }
     };
     syncLocation();
@@ -2416,11 +2433,7 @@ function LoginScreen({ onLogin, rememberMe, setRememberMe }: {
     setForgotError(null);
     setForgotLoading(true);
     try {
-      const { createClient } = await import('@supabase/supabase-js');
-      const sb = createClient(
-        SUPABASE_URL,
-        SUPABASE_ANON_KEY
-      );
+      const sb = await getSupabase();
       const adminPortalUrl = import.meta.env.VITE_ADMIN_PORTAL_URL || 'http://localhost:5174';
       const { error } = await sb.auth.resetPasswordForEmail(forgotEmail.trim(), {
         redirectTo: `${adminPortalUrl}/update-password`,
