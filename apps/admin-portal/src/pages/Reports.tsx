@@ -569,7 +569,7 @@ export function Reports() {
                         className={clsx(
                             "p-2.5 bg-surface border border-border rounded-xl text-text-muted transition-all shadow-shell-sm h-10",
                             refreshing
-                                ? "is-refreshing cursor-wait"
+                                ? "is-refreshing cursor-pointer"
                                 : "hover:text-primary hover:bg-surface-hover"
                         )}
                         title={refreshing ? "Refreshing…" : "Refresh Data"}
