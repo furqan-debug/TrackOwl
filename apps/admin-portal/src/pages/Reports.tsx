@@ -567,12 +567,11 @@ export function Reports() {
                         aria-busy={refreshing}
                         aria-label={refreshing ? "Refreshing report data" : "Refresh report data"}
                         className={clsx(
-                            "p-2.5 bg-surface border border-border rounded-xl text-text-muted transition-all shadow-shell-sm h-10",
+                            "p-2.5 bg-surface border border-border rounded-xl text-text-muted transition-all shadow-shell-sm h-10 cursor-default",
                             refreshing
-                                ? "is-refreshing cursor-pointer"
+                                ? "is-refreshing"
                                 : "hover:text-primary hover:bg-surface-hover"
                         )}
-                        title={refreshing ? "Refreshing…" : "Refresh Data"}
                     >
                         <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
                     </button>
