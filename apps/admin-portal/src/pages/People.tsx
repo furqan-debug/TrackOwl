@@ -34,6 +34,7 @@ interface DbMember {
     bill_rate: number | null;
     weekly_limit: number;
     daily_limit: number;
+    working_days: number;
     idle_limit: number | null;
     idle_enabled: boolean;
     tracking_enabled: boolean;
@@ -89,6 +90,41 @@ export function People() {
     const [addBillRate, setAddBillRate] = useState('');
     const [addWeekly, setAddWeekly] = useState('40');
     const [addDaily, setAddDaily] = useState('8');
+    const [addWorkingDays, setAddWorkingDays] = useState('5');
+
+    // Same identity the member form enforces: weekly = workingDays * daily.
+    // Editing one figure moves the dependent one so an invite never creates a
+    // member whose three limits disagree.
+    const clampDays = (v: string) => {
+        const n = Math.round(parseFloat(v));
+        return !isFinite(n) ? 5 : Math.min(7, Math.max(1, n));
+    };
+    const fmtHours = (n: number) => String(Math.round(n * 100) / 100);
+
+    const onAddDailyChange = (v: string) => {
+        setAddDaily(v);
+        const daily = parseFloat(v);
+        if (!isFinite(daily) || daily < 0) return;
+        setAddWeekly(fmtHours(daily * clampDays(addWorkingDays)));
+    };
+
+    const onAddWeeklyChange = (v: string) => {
+        setAddWeekly(v);
+        const weekly = parseFloat(v);
+        if (!isFinite(weekly) || weekly < 0) return;
+        setAddDaily(fmtHours(weekly / clampDays(addWorkingDays)));
+    };
+
+    const onAddWorkingDaysChange = (v: string) => {
+        if (v.trim() === '') { setAddWorkingDays(''); return; }
+        const parsed = parseFloat(v);
+        if (!isFinite(parsed)) return;
+        const days = clampDays(String(parsed));
+        setAddWorkingDays(String(days));
+        const daily = parseFloat(addDaily);
+        if (!isFinite(daily) || daily < 0) return;
+        setAddWeekly(fmtHours(daily * days));
+    };
     const [adding, setAdding] = useState(false);
     const [addError, setAddError] = useState<string | null>(null);
 
@@ -144,8 +180,9 @@ export function People() {
                     role: addRole,
                     pay_rate: addPayRate ? parseFloat(addPayRate) : 0,
                     bill_rate: addBillRate ? parseFloat(addBillRate) : 0,
-                    weekly_limit: parseInt(addWeekly) || 40,
-                    daily_limit: parseInt(addDaily) || 8,
+                    weekly_limit: parseFloat(addWeekly) || 40,
+                    daily_limit: parseFloat(addDaily) || 8,
+                    working_days: clampDays(addWorkingDays),
                     admin_portal_url: window.location.origin
                 })
             });
@@ -493,7 +530,7 @@ export function People() {
                 </div>
             </div>
 
-            {showAddModal && <InviteModal onClose={() => setShowAddModal(false)} onInvite={handleAddMember} form={{ addEmail, setAddEmail, addRole, setAddRole, addPayRate, setAddPayRate, addBillRate, setAddBillRate, addWeekly, setAddWeekly, addDaily, setAddDaily, adding, addError }} isViewer={isViewer} currentUserRole={profile?.role} />}
+            {showAddModal && <InviteModal onClose={() => setShowAddModal(false)} onInvite={handleAddMember} form={{ addEmail, setAddEmail, addRole, setAddRole, addPayRate, setAddPayRate, addBillRate, setAddBillRate, addWeekly, addDaily, addWorkingDays, onAddWeeklyChange, onAddDailyChange, onAddWorkingDaysChange, adding, addError }} isViewer={isViewer} currentUserRole={profile?.role} />}
             {inviteSentTo && <InviteSentPopup email={inviteSentTo} onClose={() => setInviteSentTo(null)} />}
         </PageLayout>
     );
@@ -594,6 +631,10 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     <div className="flex items-center justify-center gap-2">
                         <span className="opacity-60 text-[9px] w-12 text-right">DAY:</span>
                         <span className="text-text-main tabular-nums">{m.daily_limit}h</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2">
+                        <span className="opacity-60 text-[9px] w-12 text-right">DAYS/WK:</span>
+                        <span className="text-text-main tabular-nums">{m.working_days ?? 5}</span>
                     </div>
                 </div>
             </td>
@@ -737,9 +778,10 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
                     <FormField label="Bill Rate ($/hr)" value={form.addBillRate} onChange={form.setAddBillRate} type="number" placeholder="0.00" />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                    <FormField label="Weekly Limit" value={form.addWeekly} onChange={form.setAddWeekly} type="number" placeholder="40" />
-                    <FormField label="Daily Limit" value={form.addDaily} onChange={form.setAddDaily} type="number" placeholder="8" />
+                <div className="grid grid-cols-3 gap-3">
+                    <FormField label="Working Days" value={form.addWorkingDays} onChange={form.onAddWorkingDaysChange} type="number" placeholder="5" />
+                    <FormField label="Daily Limit" value={form.addDaily} onChange={form.onAddDailyChange} type="number" placeholder="8" />
+                    <FormField label="Weekly Limit" value={form.addWeekly} onChange={form.onAddWeeklyChange} type="number" placeholder="40" />
                 </div>
 
                 {form.addError && (
