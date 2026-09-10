@@ -898,6 +898,33 @@ export default function App() {
   // After a limit-triggered stop, holds the minimum todaySeconds to display so the DB lag
   // cannot push the display below the snapped limit value. Expires after 30s.
   const limitFloorRef = useRef<{ projectId: string; minTodaySecs: number; expiresAt: number } | null>(null);
+  const [limitReachedModal, setLimitReachedModal] = useState<{
+    type: 'daily' | 'weekly';
+    limitHours: number;
+    projectName?: string;
+  } | null>(null);
+
+  // Auto-focus window, set always-on-top, and handle keyboard shortcuts when limit modal triggers
+  useEffect(() => {
+    if (!limitReachedModal) return;
+
+    trackerAPI.focusWindow?.(true);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+        e.preventDefault();
+        trackerAPI.setAlwaysOnTop?.(false);
+        setLimitReachedModal(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      trackerAPI.setAlwaysOnTop?.(false);
+    };
+  }, [limitReachedModal]);
+
   const [idlePaused, setIdlePaused] = useState(false);
   const [liveIdleSeconds, setLiveIdleSeconds] = useState(0); // live idle tracking for current session
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -2047,6 +2074,7 @@ export default function App() {
 
           if (isDailyReached || isWeeklyReached) {
             const isDaily = isDailyReached;
+            const limitHours = isDaily ? (dailyLimitHours || 0) : (weeklyLimitHours || 0);
             // Snap the display to the exact limit value before stopping
             const snappedElapsed = isDaily
               ? Math.max(0, (dailyLimitSecs!) - otherProjectsToday)
@@ -2069,7 +2097,13 @@ export default function App() {
               ? `Daily limit (${dailyLimitHours}h) reached. Session stopped.`
               : `Weekly limit (${weeklyLimitHours}h) reached. Session stopped.`;
 
+            trackerAPI.focusWindow?.(true);
             trackerAPI.showNotification('Tracking Limit Reached', limitMsg);
+            setLimitReachedModal({
+              type: isDaily ? 'daily' : 'weekly',
+              limitHours,
+              projectName: activeProject?.name
+            });
             handleStop();
             setTrackingError(limitMsg);
           }
@@ -2236,10 +2270,22 @@ export default function App() {
 
     if (dailyLimitSecs !== null && totalToday >= dailyLimitSecs) {
       setTrackingError(`Daily limit (${dailyLimitHours}h) reached. Please contact your manager.`);
+      trackerAPI.focusWindow?.(true);
+      setLimitReachedModal({
+        type: 'daily',
+        limitHours: dailyLimitHours || 0,
+        projectName: project.name
+      });
       return;
     }
     if (weeklyLimitSecs !== null && totalWeek >= weeklyLimitSecs) {
       setTrackingError(`Weekly limit (${weeklyLimitHours}h) reached. Please contact your manager.`);
+      trackerAPI.focusWindow?.(true);
+      setLimitReachedModal({
+        type: 'weekly',
+        limitHours: weeklyLimitHours || 0,
+        projectName: project.name
+      });
       return;
     }
 
@@ -2698,6 +2744,94 @@ export default function App() {
         </div>
       )}
 
+      {/* ── Limit Reached Alert Popup Modal ────────────────────────────────────── */}
+      <AnimatePresence>
+        {limitReachedModal && (
+          <motion.div
+            className="idle-fullscreen-overlay"
+            style={{ zIndex: 999999 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <motion.div
+              className="idle-popup-card"
+              initial={{ scale: 0.94, y: 12, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.94, y: 8, opacity: 0 }}
+              transition={{ type: 'spring', damping: 28, stiffness: 340 }}
+            >
+              {/* Icon Beacon */}
+              <div className="idle-icon-wrap" style={{ marginBottom: '1.25rem' }}>
+                <div className="idle-icon-ring" style={{ borderColor: 'rgba(239, 68, 68, 0.45)' }} />
+                <div className="idle-icon-ring idle-icon-ring-2" style={{ borderColor: 'rgba(239, 68, 68, 0.25)' }} />
+                <div
+                  className="idle-icon-core"
+                  style={{
+                    background: 'linear-gradient(145deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.08) 100%)',
+                    borderColor: 'rgba(239, 68, 68, 0.35)',
+                    color: '#ef4444'
+                  }}
+                >
+                  <Clock size={22} />
+                </div>
+              </div>
+
+              {/* Title & Subtitle */}
+              <h2 className="idle-title" style={{ color: '#fff', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
+                {limitReachedModal.type === 'daily' ? 'Daily Limit Reached' : 'Weekly Limit Reached'}
+              </h2>
+              <p className="idle-subtitle" style={{ color: '#94a3b8', fontSize: '0.8125rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
+                You have reached your allocated{' '}
+                <strong style={{ color: '#f1f5f9' }}>{limitReachedModal.limitHours}h</strong>{' '}
+                {limitReachedModal.type === 'daily' ? 'daily' : 'weekly'} working limit. Tracking has been stopped and your tracked time has been securely saved.
+              </p>
+
+              {/* Stat row */}
+              <div className="idle-stat-row" style={{ marginBottom: '1.25rem' }}>
+                <div className="idle-stat">
+                  <span className="idle-stat-label">Allocated Limit</span>
+                  <span className="idle-stat-val" style={{ color: '#f1f5f9' }}>{limitReachedModal.limitHours}h 00m</span>
+                </div>
+                <div className="idle-stat-sep" />
+                <div className="idle-stat">
+                  <span className="idle-stat-label">Session Status</span>
+                  <span className="idle-stat-val" style={{ color: '#ef4444' }}>Completed</span>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <button
+                className="idle-action-resume"
+                style={{
+                  width: '100%',
+                  background: 'var(--accent)',
+                  color: '#000',
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  padding: '0.75rem 1.25rem',
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  cursor: 'pointer',
+                  border: 'none'
+                }}
+                onClick={() => {
+                  trackerAPI.setAlwaysOnTop?.(false);
+                  setLimitReachedModal(null);
+                }}
+              >
+                Got it
+                <span className="idle-kbd" style={{ background: 'rgba(0, 0, 0, 0.15)', color: '#000' }}>↵</span>
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         {screen === 'login' && (
           <motion.div key="login" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, minHeight: 0 }}>
@@ -2706,7 +2840,25 @@ export default function App() {
         )}
         {screen === 'projects' && (
           <motion.div key="projects" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
-            <ProjectsScreen user={user!} projects={projects} onSelect={handleSelectProject} onLogout={handleLogout} onSettings={() => setScreen('settings')} trackingError={trackingError} setTrackingError={setTrackingError} todos={todos} onTodoDone={handleTodoDone} activeProjectId={activeProject?.id} isTracking={isTracking} localElapsed={liveElapsed} orgTimezone={orgTimezone} />
+            <ProjectsScreen
+              user={user!}
+              projects={projects}
+              onSelect={handleSelectProject}
+              onLogout={handleLogout}
+              onSettings={() => setScreen('settings')}
+              trackingError={trackingError}
+              setTrackingError={setTrackingError}
+              todos={todos}
+              onTodoDone={handleTodoDone}
+              activeProjectId={activeProject?.id}
+              isTracking={isTracking}
+              localElapsed={liveElapsed}
+              orgTimezone={orgTimezone}
+              onLimitReached={(type, limitHours, projectName) => {
+                trackerAPI.focusWindow?.(true);
+                setLimitReachedModal({ type, limitHours, projectName });
+              }}
+            />
           </motion.div>
         )}
         {screen === 'consent' && (
@@ -3023,7 +3175,7 @@ function MyTasksPanel({ todos, onDone, disabled }: { todos: Todo[]; onDone: (id:
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Projects
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone, activeProjectId, isTracking, localElapsed, orgTimezone }: {
+function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone, activeProjectId, isTracking, localElapsed, orgTimezone, onLimitReached }: {
   user: User;
   projects: Project[];
   onSelect: (p: Project) => void;
@@ -3037,6 +3189,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   isTracking?: boolean;
   localElapsed?: number;
   orgTimezone?: string;
+  onLimitReached?: (type: 'daily' | 'weekly', limitHours: number, projectName?: string) => void;
 }) {
   const getProjectToday = (p: Project) => {
     if (isTracking && activeProjectId && p.id === activeProjectId) {
@@ -3183,10 +3336,12 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                       if (user.tracking_enabled === false) return;
                       if (isWeeklyLimitReached) {
                         setTrackingError(`Weekly limit (${weeklyLimitHours}h) reached. Please contact your manager.`);
+                        onLimitReached?.('weekly', weeklyLimitHours || 0, p.name);
                         return;
                       }
                       if (isDailyLimitReached) {
                         setTrackingError(`Daily limit (${dailyLimitHours}h) reached. Please contact your manager.`);
+                        onLimitReached?.('daily', dailyLimitHours || 0, p.name);
                         return;
                       }
                       onSelect(p);
