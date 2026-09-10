@@ -272,14 +272,31 @@ export function MemberFormPage() {
         setWeeklyLimit(hoursToHM(Math.min(MAX_WEEKLY_HOURS, daily * days)));
     };
 
-    // Ticking a day is only allowed while there is room left in the count;
-    // unticking is always allowed, which is how you swap Friday for Saturday.
+    // The picker and the Working Days field drive each other:
+    //   tick or untick a day  ->  Working Days becomes the number ticked
+    //   type a smaller number ->  the selection is trimmed to fit
+    //
+    // Ticking is no longer blocked at the typed number, because it cannot be:
+    // the moment a tick sets Working Days to the count, a cap equal to that
+    // count would freeze the picker at whatever was ticked first. The days are
+    // the source of truth; the number reports them.
     const toggleWorkDay = (dayId: number) => {
-        setWorkDays(prev => {
-            if (prev.includes(dayId)) return prev.filter(d => d !== dayId);
-            if (prev.length >= clampWorkingDays(workingDays)) return prev;
-            return [...prev, dayId].sort((a, b) => a - b);
-        });
+        const selected = workDays.includes(dayId);
+
+        // A member works at least one day, and working_days has a CHECK
+        // constraint of 1-7 — so the last remaining day cannot be removed.
+        if (selected && workDays.length === 1) return;
+
+        const next = selected
+            ? workDays.filter(d => d !== dayId)
+            : [...workDays, dayId].sort((a, b) => a - b);
+
+        setWorkDays(next);
+        setWorkingDays(String(next.length));
+
+        const daily = hmToHours(dailyLimit);
+        if (!isFinite(daily)) return;
+        setWeeklyLimit(hoursToHM(Math.min(MAX_WEEKLY_HOURS, daily * next.length)));
     };
     const [department, setDepartment] = useState('');
     const [employeeId, setEmployeeId] = useState('');
@@ -1305,8 +1322,13 @@ export function MemberFormPage() {
                                                                     </span>
                                                                     <span className="text-text-muted">
                                                                         {' \u00b7 '}
-                                                                        {workDays.length} of{' '}
-                                                                        {clampWorkingDays(workingDays)} selected
+                                                                        {workDays.length}{' '}
+                                                                        {workDays.length === 1 ? 'day' : 'days'}
+                                                                        {workDays.length <
+                                                                            clampWorkingDays(workingDays) &&
+                                                                            ' of ' +
+                                                                                clampWorkingDays(workingDays) +
+                                                                                ' allowed'}
                                                                     </span>
                                                                 </>
                                                             )}
@@ -1316,26 +1338,29 @@ export function MemberFormPage() {
                                                     <div className="flex flex-wrap gap-2">
                                                         {WEEK.map(day => {
                                                             const selected = workDays.includes(day.id);
-                                                            // Full, and this one is not already in — nothing to
-                                                            // do but untick something else first.
-                                                            const full =
-                                                                !selected &&
-                                                                workDays.length >= clampWorkingDays(workingDays);
+                                                            // The only day left cannot be unticked — a member
+                                                            // works at least one day of the week.
+                                                            const locked =
+                                                                selected && workDays.length === 1;
                                                             return (
                                                                 <button
                                                                     key={day.id}
                                                                     type="button"
                                                                     onClick={() => toggleWorkDay(day.id)}
-                                                                    disabled={full}
+                                                                    disabled={locked}
                                                                     aria-pressed={selected}
-                                                                    title={day.full}
+                                                                    title={
+                                                                        locked
+                                                                            ? day.full +
+                                                                              ' \u2014 at least one working day is required'
+                                                                            : day.full
+                                                                    }
                                                                     className={clsx(
                                                                         'px-4 h-11 rounded-xl text-[12px] font-bold border transition-all shadow-shell-sm',
                                                                         selected
                                                                             ? 'bg-primary/15 border-primary text-primary'
-                                                                            : full
-                                                                              ? 'bg-surface-solid border-border text-text-muted/30 cursor-not-allowed'
-                                                                              : 'bg-surface-solid border-border text-text-muted hover:border-primary/50 hover:text-text-main'
+                                                                            : 'bg-surface-solid border-border text-text-muted hover:border-primary/50 hover:text-text-main',
+                                                                        locked && 'cursor-not-allowed'
                                                                     )}
                                                                 >
                                                                     {day.short}
