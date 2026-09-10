@@ -457,6 +457,9 @@ fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>
 
     *running.lock().unwrap() = false;
 
+    // Wait briefly (300ms) for the sample loop thread to exit its sleep tick and flush the partial block
+    std::thread::sleep(std::time::Duration::from_millis(300));
+
     // ── Mandatory STOP screenshot ─────────────────────────────────────────────
     if screenshots_enabled && (plan_type == "Premium" || plan_type == "Trial") && session_id.is_some() && user_id.is_some() {
         let sid = session_id.clone().unwrap();
@@ -480,8 +483,9 @@ fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>
         });
     }
 
-    // Final sync from cache to Supabase
+    // Final sync of both activity samples AND block records from cache to Supabase
     cache::sync_from_arc(&db_arc, &cfg, &auth_arc);
+    crate::block_accumulator::sync_blocks_from_arc(&db_arc, &cfg, &auth_arc);
 
     if let Some(sid) = session_id {
         let token = auth_arc.lock().unwrap().clone();
@@ -752,6 +756,7 @@ fn sync_now(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, String> 
         anon_key: s.supabase_anon_key.clone(),
     };
     cache::sync_from_arc(&s.db, &cfg, &s.auth_token);
+    crate::block_accumulator::sync_blocks_from_arc(&s.db, &cfg, &s.auth_token);
     Ok("Sync triggered".to_string())
 }
 

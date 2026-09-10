@@ -412,8 +412,8 @@ pub fn start_sample_loop_inner(
     thread::spawn(move || {
         let mut last_title: Option<String> = None;
         let mut last_domain: Option<String> = None;
-        // Use 1-second tick polling so pause_tracking takes effect within 1 second
-        let tick_ms: u64 = 1000;
+        // Use 200ms tick polling so pause/stop takes effect almost immediately
+        let tick_ms: u64 = 200;
         let ticks_per_sample = (interval_ms / tick_ms) as u32;
         let mut ticks_elapsed: u32 = 0;
 
