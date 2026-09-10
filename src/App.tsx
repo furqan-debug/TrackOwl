@@ -2390,23 +2390,6 @@ export default function App() {
       pendingIdleDiscardRef.current = null;
     }
 
-    if (user?.keep_idle_mode === 'never' && activeSessionId) {
-      // If mode is 'never', ensure ALL idle=true samples for this session are purged before stopping
-      console.log('[App] Purging all idle samples on session stop for mode "never"...');
-      try {
-        const sb = await getSupabase();
-        await Promise.all([
-          sb.from('activity_samples')
-            .delete()
-            .eq('session_id', activeSessionId)
-            .eq('idle', true),
-          trackerAPI.discardIdleCache(activeSessionId, new Date(0).toISOString()),
-        ]);
-      } catch (err) {
-        console.error('[App] Error purging idle samples on stop:', err);
-      }
-    }
-
     try {
       const res: any = await trackerAPI.stopTracking();
       console.log('[App] stopTracking response:', res);
@@ -2443,9 +2426,8 @@ export default function App() {
     }
 
     // Refresh from DB after a short delay to give the backend time to flush
-    // the last activity samples before we re-read. Without this delay,
-    // the re-read can return stale data (e.g. 1h 58m instead of 2h 0m).
-    if (user) setTimeout(() => fetchDashboardStats(user.id, projects), 3000);
+    // the last activity samples and block records before we re-read.
+    if (user) setTimeout(() => fetchDashboardStats(user.id, projectsRef.current || projects), 1500);
   }
 
   async function handlePause() {
