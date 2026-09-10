@@ -42,5 +42,21 @@ COMMENT ON COLUMN members.daily_limit IS
 COMMENT ON COLUMN members.weekly_limit IS
   'Hours per week before tracking stops. Fractional, because it is commonly derived as working_days * daily_limit.';
 
+-- There are 24 hours in a day and 168 in a week; a limit beyond either is not
+-- a strict cap, it is a typo. Verified no existing row exceeds them.
+ALTER TABLE members
+  DROP CONSTRAINT IF EXISTS members_daily_limit_range;
+
+ALTER TABLE members
+  ADD CONSTRAINT members_daily_limit_range
+  CHECK (daily_limit >= 0 AND daily_limit <= 24);
+
+ALTER TABLE members
+  DROP CONSTRAINT IF EXISTS members_weekly_limit_range;
+
+ALTER TABLE members
+  ADD CONSTRAINT members_weekly_limit_range
+  CHECK (weekly_limit >= 0 AND weekly_limit <= 168);
+
 -- PostgREST caches the schema; without this the new column 404s until restart.
 NOTIFY pgrst, 'reload schema';
