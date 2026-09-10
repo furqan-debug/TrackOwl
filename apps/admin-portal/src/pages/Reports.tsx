@@ -40,6 +40,10 @@ const CHART_COLORS = [
 ];
 
 const RANGES = ['Today', 'Yesterday', 'Last 7 Days', 'Last Week', 'Last 2 Weeks', 'This Month', 'Last Month', 'Custom'] as const;
+
+// Shortest time the refresh button stays in its loading state, so a fast fetch
+// still shows the user that the click registered.
+const MIN_REFRESH_FEEDBACK_MS = 650;
 type Range = typeof RANGES[number];
 
 // Module-level cache to prevent re-fetching when switching tabs
@@ -269,6 +273,7 @@ export function Reports() {
 
             setLoading(true);
         if (forceRefresh) setRefreshing(true);
+        const refreshStartedAt = Date.now();
 
         try {
             const data = await reportService.fetchReports({
@@ -309,6 +314,16 @@ export function Reports() {
             console.error("fetchReports error:", err);
         } finally {
             setLoading(false);
+            // A fetch that returns in 80ms flashes the spinner for a frame or two,
+            // which reads as the button doing nothing at all. Hold the indicator
+            // long enough to register as feedback — the data itself is already on
+            // screen by then, only the button is still saying "working".
+            if (forceRefresh) {
+                const held = Date.now() - refreshStartedAt;
+                if (held < MIN_REFRESH_FEEDBACK_MS) {
+                    await new Promise(resolve => setTimeout(resolve, MIN_REFRESH_FEEDBACK_MS - held));
+                }
+            }
             setRefreshing(false);
         }
     }
@@ -548,11 +563,15 @@ export function Reports() {
 
                         <button
                         onClick={() => fetchReports(true)}
+                        disabled={refreshing}
+                        aria-busy={refreshing}
+                        aria-label={refreshing ? "Refreshing report data" : "Refresh report data"}
                         className={clsx(
-                            "p-2.5 bg-surface border border-border rounded-xl text-text-muted hover:text-primary hover:bg-surface-hover transition-all shadow-shell-sm h-10",
-                            refreshing && "text-primary"
+                            "p-2.5 bg-surface border border-border rounded-xl text-text-muted transition-all shadow-shell-sm h-10 cursor-default",
+                            refreshing
+                                ? "is-refreshing"
+                                : "hover:text-primary hover:bg-surface-hover"
                         )}
-                        title="Refresh Data"
                     >
                         <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
                     </button>

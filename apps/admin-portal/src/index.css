@@ -413,6 +413,29 @@
   @apply bg-base-white/10 hover:bg-base-white/20;
 }
 
+/* Refresh button — reloading state.
+   The icon alone is 16px of muted grey turning gold; on a dark ground that
+   reads as nothing, especially when the fetch returns in under a second. The
+   ring pulses outward from the button so the state is legible at a glance. */
+@keyframes refresh-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent); }
+  70%  { box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 0%, transparent); }
+}
+
+.is-refreshing {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  animation: refresh-pulse 1.4s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .is-refreshing {
+    animation: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+}
+
 /* Marquee Animation */
 @keyframes marquee {
   from {
