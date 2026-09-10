@@ -1201,8 +1201,8 @@ export default function App() {
         });
       }
 
-      // Apply limit floor: after a limit-triggered stop, DB may lag 1-2 min.
-      // Floor todaySeconds to the snapped value so the UI never drops below it.
+      // Apply limit floor: after a limit-triggered stop, DB rounding or lag must never drop below the reached limit.
+      // Check in-memory floor as well as persisted floor for today.
       const floor = limitFloorRef.current;
       const floorActive = floor !== null && Date.now() < floor.expiresAt;
       if (floor !== null && !floorActive) limitFloorRef.current = null; // expire
@@ -1210,14 +1210,26 @@ export default function App() {
       const updatedProjects = currentProjects.map(p => {
         const stat = statsMap[p.id];
         if (!stat) return { ...p, stats: { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, activityPercent: 0, keptIdleSeconds: 0 } };
-        const todaySeconds = (floorActive && floor!.projectId === p.id)
-          ? Math.max(stat.todaySeconds, floor!.minTodaySecs)
+
+        let storedFloor = 0;
+        try {
+          const val = localStorage.getItem(`trackowl_limit_floor_${todayStr}_${p.id}`);
+          if (val) storedFloor = Number(val) || 0;
+        } catch (_) {}
+
+        const activeFloorSecs = (floorActive && floor!.projectId === p.id)
+          ? Math.max(floor!.minTodaySecs, storedFloor)
+          : storedFloor;
+
+        const todaySeconds = activeFloorSecs > 0
+          ? Math.max(stat.todaySeconds, activeFloorSecs)
           : stat.todaySeconds;
+
         return {
           ...p,
           stats: {
             todaySeconds,
-            weeklySeconds: stat.weeklySeconds,
+            weeklySeconds: Math.max(stat.weeklySeconds, todaySeconds),
             weeklyIdleSeconds: stat.weeklyIdleSeconds,
             keptIdleSeconds: stat.keptIdleSeconds,
             activityPercent: stat.sampleCount > 0
@@ -2083,14 +2095,18 @@ export default function App() {
             setLiveElapsed(snappedElapsed);
             if (timerRef.current) clearInterval(timerRef.current); // stop ticking immediately
 
-            // Floor the DB refresh for this project so it can't show less than the limit.
-            // Expires after 30s (well past the 3s-delayed fetchDashboardStats call).
+            // Floor the DB refresh for this project so it can't show less than the reached limit.
             if (activeProject) {
               limitFloorRef.current = {
                 projectId: activeProject.id,
                 minTodaySecs: snappedElapsed,
-                expiresAt: Date.now() + 30_000
+                expiresAt: Date.now() + 24 * 3600 * 1000
               };
+              try {
+                const tz = orgTimezoneRef.current || 'UTC';
+                const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+                localStorage.setItem(`trackowl_limit_floor_${todayKey}_${activeProject.id}`, String(snappedElapsed));
+              } catch (_) {}
             }
 
             const limitMsg = isDaily

@@ -561,7 +561,58 @@ pub fn start_sample_loop_inner(
             }
         }
 
-        // ── Loop exited — flush any partial block (< 10 samples) ─────────────
+        // ── Loop exited — check if there are trailing ticks / counts in the current minute ─
+        if ticks_elapsed > 0 {
+            let (mouse, keyboard, active_secs) = (
+                counts.mouse_count.swap(0, Ordering::Relaxed),
+                counts.keyboard_count.swap(0, Ordering::Relaxed),
+                counts.active_seconds.swap(0, Ordering::Relaxed),
+            );
+            let idle = active_secs == 0 && mouse == 0 && keyboard == 0;
+            let elapsed_secs = (ticks_elapsed as u64 * tick_ms / 1000).max(1) as f32;
+            let activity_percent = ((active_secs as f32 / elapsed_secs) * 100.0).min(100.0) as i32;
+
+            #[cfg(not(feature = "app-store"))]
+            let (app_name, window_title) = if plan_type == "Premium" || plan_type == "Trial" {
+                get_active_window()
+            } else {
+                (String::new(), String::new())
+            };
+            #[cfg(feature = "app-store")]
+            let (app_name, window_title) = (String::new(), String::new());
+
+            let domain = if plan_type == "Premium" || plan_type == "Trial" {
+                get_browser_domain(&app_name, &window_title)
+            } else {
+                String::new()
+            };
+
+            let final_sample = ActivitySample {
+                session_id: session_id.clone(),
+                recorded_at: chrono::Utc::now().to_rfc3339(),
+                mouse_clicks: mouse,
+                key_presses: keyboard,
+                app_name,
+                window_title,
+                domain,
+                idle,
+                activity_percent,
+                active_seconds: active_secs,
+                is_offline: false,
+            };
+
+            // Write final sample to cache / database
+            {
+                let db_guard = db.lock().unwrap();
+                if let Some(conn) = db_guard.as_ref() {
+                    let _ = crate::cache::cache_sample(conn, &final_sample);
+                }
+            }
+
+            let _ = accumulator.push(final_sample);
+        }
+
+        // ── Flush any partial block (< 10 samples) ───────────────────────────
         if let Some(partial) = accumulator.flush_partial() {
             println!("[tracker] 📦 Partial block on stop: {} active_secs={} activity={}%",
                 partial.business_date, partial.active_seconds, partial.activity_percent);
