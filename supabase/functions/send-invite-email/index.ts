@@ -31,7 +31,7 @@ serve(async (req) => {
       throw new Error(`Invalid JSON: ${bodyText}`);
     }
 
-    const { email, role, pay_rate, bill_rate, weekly_limit, daily_limit, admin_portal_url } = body;
+    const { email, role, pay_rate, bill_rate, weekly_limit, daily_limit, working_days, admin_portal_url } = body;
     if (!email) throw new Error("Email is required");
 
     // Get admin user from token
@@ -72,7 +72,7 @@ serve(async (req) => {
     // Check if member already exists and what their status is
     const { data: existingMember } = await supabaseClient
       .from('members')
-      .select('status, full_name, role, pay_rate, bill_rate, weekly_limit, daily_limit')
+      .select('status, full_name, role, pay_rate, bill_rate, weekly_limit, daily_limit, working_days')
       .eq('email', email.toLowerCase())
       .maybeSingle();
 
@@ -126,6 +126,7 @@ serve(async (req) => {
         bill_rate: bill_rate !== undefined ? bill_rate : (existingMember?.bill_rate || 0),
         weekly_limit: weekly_limit !== undefined ? weekly_limit : (existingMember?.weekly_limit || 40),
         daily_limit: daily_limit !== undefined ? daily_limit : (existingMember?.daily_limit || 8),
+        working_days: working_days !== undefined ? working_days : (existingMember?.working_days || 5),
         status: newStatus
       }, { onConflict: 'email' })
       .select()
