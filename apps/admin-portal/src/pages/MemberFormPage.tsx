@@ -39,17 +39,55 @@ type Role = 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
 // The three limits are one set, tied by:  weekly = workingDays * daily
 // The admin edits any of the three and the dependent one is recalculated, so
 // the numbers on screen always describe the same schedule.
+//
+// Hours are written H.MM, where the digits after the point are MINUTES, not a
+// decimal fraction — 8.30 is eight and a half hours, and 8.59 is the largest
+// value below nine. The database stores decimal hours (8.5), because that is
+// what the desktop client multiplies into seconds; the conversion happens at
+// the edges, in hmToHours / hoursToHM.
 
 const MIN_WORKING_DAYS = 1;
 const MAX_WORKING_DAYS = 7;
 const DEFAULT_WORKING_DAYS = 5;
+const MAX_DAILY_HOURS = 24;
+const MAX_WEEKLY_HOURS = 168;
 
-/** 6.666… -> "6.67", 8 -> "8". Keeps whole hours from displaying as "8.00". */
-function formatHours(value: number | string | null | undefined): string {
-    if (value === null || value === undefined || value === '') return '';
-    const n = typeof value === 'number' ? value : parseFloat(value);
-    if (!isFinite(n)) return '';
-    return String(Math.round(n * 100) / 100);
+/** "8.30" -> 8.5. Empty or malformed input gives NaN, never a silent zero. */
+function hmToHours(text: string | number | null | undefined): number {
+    if (text === null || text === undefined) return NaN;
+    const raw = String(text).trim();
+    if (raw === '') return NaN;
+    const [hPart, mPart = ''] = raw.split('.');
+    const hours = hPart === '' ? 0 : parseInt(hPart, 10);
+    const mins = mPart === '' ? 0 : parseInt(mPart, 10);
+    if (!isFinite(hours) || !isFinite(mins)) return NaN;
+    return hours + Math.min(59, mins) / 60;
+}
+
+/** 8.5 -> "8.30". Minutes are always two digits so the format reads as time. */
+function hoursToHM(hours: number | string | null | undefined): string {
+    const n = typeof hours === 'number' ? hours : parseFloat(String(hours ?? ''));
+    if (!isFinite(n) || n < 0) return '';
+    const total = Math.round(n * 60);
+    return String(Math.floor(total / 60)) + '.' + String(total % 60).padStart(2, '0');
+}
+
+/**
+ * Gate for each keystroke in an hour field. Returns the text to keep, or null
+ * to reject the keystroke outright — which is how the caps are enforced: an
+ * over-limit value cannot be typed in the first place, so there is no moment
+ * where the field shows a number the form would refuse to save.
+ */
+function sanitizeHM(text: string, maxHours: number): string | null {
+    if (text === '') return '';
+    if (!/^\d*\.?\d{0,2}$/.test(text)) return null;
+    const [hPart, mPart = ''] = text.split('.');
+    const hours = hPart === '' ? 0 : parseInt(hPart, 10);
+    if (hours > maxHours) return null;
+    if (mPart !== '' && parseInt(mPart, 10) > 59) return null;
+    // 24.01 is over the cap just as surely as 25 is.
+    if (hours === maxHours && mPart !== '' && parseInt(mPart, 10) > 0) return null;
+    return text;
 }
 
 /** Days are whole, and there is no eighth day. Matches the DB CHECK constraint. */
@@ -161,17 +199,23 @@ export function MemberFormPage() {
     //     an admin holds fixed; changing the length of the week should change
     //     what the week totals, not silently reprice the day.
     const handleDailyLimitChange = (value: string) => {
-        setDailyLimit(value);
-        const daily = parseFloat(value);
-        if (!isFinite(daily) || daily < 0) return;
-        setWeeklyLimit(formatHours(daily * clampWorkingDays(workingDays)));
+        const next = sanitizeHM(value, MAX_DAILY_HOURS);
+        if (next === null) return;
+        setDailyLimit(next);
+        const daily = hmToHours(next);
+        if (!isFinite(daily)) return;
+        const weekly = daily * clampWorkingDays(workingDays);
+        setWeeklyLimit(hoursToHM(Math.min(MAX_WEEKLY_HOURS, weekly)));
     };
 
     const handleWeeklyLimitChange = (value: string) => {
-        setWeeklyLimit(value);
-        const weekly = parseFloat(value);
-        if (!isFinite(weekly) || weekly < 0) return;
-        setDailyLimit(formatHours(weekly / clampWorkingDays(workingDays)));
+        const next = sanitizeHM(value, MAX_WEEKLY_HOURS);
+        if (next === null) return;
+        setWeeklyLimit(next);
+        const weekly = hmToHours(next);
+        if (!isFinite(weekly)) return;
+        const daily = weekly / clampWorkingDays(workingDays);
+        setDailyLimit(hoursToHM(Math.min(MAX_DAILY_HOURS, daily)));
     };
 
     const handleWorkingDaysChange = (value: string) => {
@@ -186,9 +230,9 @@ export function MemberFormPage() {
         // any second digit is invalid regardless of what follows it.
         const days = clampWorkingDays(parsed);
         setWorkingDays(String(days));
-        const daily = parseFloat(dailyLimit);
-        if (!isFinite(daily) || daily < 0) return;
-        setWeeklyLimit(formatHours(daily * days));
+        const daily = hmToHours(dailyLimit);
+        if (!isFinite(daily)) return;
+        setWeeklyLimit(hoursToHM(Math.min(MAX_WEEKLY_HOURS, daily * days)));
     };
     const [department, setDepartment] = useState('');
     const [employeeId, setEmployeeId] = useState('');
@@ -253,8 +297,8 @@ export function MemberFormPage() {
                 setRole(data.role || 'User');
                 setPayRate(data.pay_rate?.toString() || '');
                 setBillRate(data.bill_rate?.toString() || '');
-                setWeeklyLimit(formatHours(data.weekly_limit) || '40');
-                setDailyLimit(formatHours(data.daily_limit) || '8');
+                setWeeklyLimit(hoursToHM(data.weekly_limit) || '40.00');
+                setDailyLimit(hoursToHM(data.daily_limit) || '8.00');
                 setWorkingDays(data.working_days?.toString() || '5');
                 setDepartment(data.department || '');
                 setEmployeeId(data.employee_id || '');
@@ -349,8 +393,8 @@ export function MemberFormPage() {
                 role,
                 pay_rate: parseFloat(payRate) || 0,
                 bill_rate: parseFloat(billRate) || 0,
-                weekly_limit: parseFloat(weeklyLimit) || 0,
-                daily_limit: parseFloat(dailyLimit) || 0,
+                weekly_limit: Math.round(hmToHours(weeklyLimit) * 100) / 100 || 0,
+                daily_limit: Math.round(hmToHours(dailyLimit) * 100) / 100 || 0,
                 working_days: clampWorkingDays(workingDays),
                 department,
                 employee_id: employeeId,
@@ -1168,13 +1212,11 @@ export function MemberFormPage() {
                                                         onChange={
                                                             handleDailyLimitChange
                                                         }
-                                                        type="number"
-                                                        min={0}
-                                                        step="any"
+                                                        inputMode="decimal"
                                                         icon={
                                                             <Clock className="w-4 h-4" />
                                                         }
-                                                        placeholder="8"
+                                                        placeholder="8.00"
                                                     />
 
                                                     <FormField
@@ -1183,26 +1225,13 @@ export function MemberFormPage() {
                                                         onChange={
                                                             handleWeeklyLimitChange
                                                         }
-                                                        type="number"
-                                                        min={0}
-                                                        step="any"
+                                                        inputMode="decimal"
                                                         icon={
                                                             <Calendar className="w-4 h-4" />
                                                         }
-                                                        placeholder="40"
+                                                        placeholder="40.00"
                                                     />
                                                 </div>
-
-                                                <InfoBox
-                                                    color="emerald"
-                                                    icon={<Info className="w-4 h-4" />}
-                                                >
-                                                    These three are one setting:
-                                                    weekly hours = working days
-                                                    times daily hours. Edit any
-                                                    one and the dependent figure
-                                                    updates to match.
-                                                </InfoBox>
 
                                                 <div className="space-y-3">
                                                     <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">
@@ -1710,6 +1739,7 @@ function FormField({
     min,
     max,
     step,
+    inputMode,
 }: any) {
     return (
         <div className="space-y-2 group flex flex-col relative min-w-0">
@@ -1740,6 +1770,7 @@ function FormField({
                             min={min}
                             max={max}
                             step={step}
+                            inputMode={inputMode}
                             className={clsx(
                                 'w-full h-[56px] bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-shell-sm placeholder:text-text-muted/40 min-w-0',
                                 icon ? 'pl-12 pr-4' : 'px-4'

@@ -88,31 +88,66 @@ export function People() {
     const [addRole, setAddRole] = useState<Role>('User');
     const [addPayRate, setAddPayRate] = useState('');
     const [addBillRate, setAddBillRate] = useState('');
-    const [addWeekly, setAddWeekly] = useState('40');
-    const [addDaily, setAddDaily] = useState('8');
+    const [addWeekly, setAddWeekly] = useState('40.00');
+    const [addDaily, setAddDaily] = useState('8.00');
     const [addWorkingDays, setAddWorkingDays] = useState('5');
 
     // Same identity the member form enforces: weekly = workingDays * daily.
     // Editing one figure moves the dependent one so an invite never creates a
     // member whose three limits disagree.
+    // Hours are written H.MM — the digits after the point are minutes, capped
+    // at 59. Storage is decimal hours, converted at the edges.
+    const MAX_DAILY = 24;
+    const MAX_WEEKLY = 168;
+
     const clampDays = (v: string) => {
         const n = Math.round(parseFloat(v));
         return !isFinite(n) ? 5 : Math.min(7, Math.max(1, n));
     };
-    const fmtHours = (n: number) => String(Math.round(n * 100) / 100);
+
+    const hmToHours = (text: string): number => {
+        const raw = String(text ?? '').trim();
+        if (raw === '') return NaN;
+        const [hPart, mPart = ''] = raw.split('.');
+        const hours = hPart === '' ? 0 : parseInt(hPart, 10);
+        const mins = mPart === '' ? 0 : parseInt(mPart, 10);
+        if (!isFinite(hours) || !isFinite(mins)) return NaN;
+        return hours + Math.min(59, mins) / 60;
+    };
+
+    const hoursToHM = (n: number): string => {
+        if (!isFinite(n) || n < 0) return '';
+        const total = Math.round(n * 60);
+        return String(Math.floor(total / 60)) + '.' + String(total % 60).padStart(2, '0');
+    };
+
+    const sanitizeHM = (text: string, maxHours: number): string | null => {
+        if (text === '') return '';
+        if (!/^\d*\.?\d{0,2}$/.test(text)) return null;
+        const [hPart, mPart = ''] = text.split('.');
+        const hours = hPart === '' ? 0 : parseInt(hPart, 10);
+        if (hours > maxHours) return null;
+        if (mPart !== '' && parseInt(mPart, 10) > 59) return null;
+        if (hours === maxHours && mPart !== '' && parseInt(mPart, 10) > 0) return null;
+        return text;
+    };
 
     const onAddDailyChange = (v: string) => {
-        setAddDaily(v);
-        const daily = parseFloat(v);
-        if (!isFinite(daily) || daily < 0) return;
-        setAddWeekly(fmtHours(daily * clampDays(addWorkingDays)));
+        const next = sanitizeHM(v, MAX_DAILY);
+        if (next === null) return;
+        setAddDaily(next);
+        const daily = hmToHours(next);
+        if (!isFinite(daily)) return;
+        setAddWeekly(hoursToHM(Math.min(MAX_WEEKLY, daily * clampDays(addWorkingDays))));
     };
 
     const onAddWeeklyChange = (v: string) => {
-        setAddWeekly(v);
-        const weekly = parseFloat(v);
-        if (!isFinite(weekly) || weekly < 0) return;
-        setAddDaily(fmtHours(weekly / clampDays(addWorkingDays)));
+        const next = sanitizeHM(v, MAX_WEEKLY);
+        if (next === null) return;
+        setAddWeekly(next);
+        const weekly = hmToHours(next);
+        if (!isFinite(weekly)) return;
+        setAddDaily(hoursToHM(Math.min(MAX_DAILY, weekly / clampDays(addWorkingDays))));
     };
 
     const onAddWorkingDaysChange = (v: string) => {
@@ -121,9 +156,9 @@ export function People() {
         if (!isFinite(parsed)) return;
         const days = clampDays(String(parsed));
         setAddWorkingDays(String(days));
-        const daily = parseFloat(addDaily);
-        if (!isFinite(daily) || daily < 0) return;
-        setAddWeekly(fmtHours(daily * days));
+        const daily = hmToHours(addDaily);
+        if (!isFinite(daily)) return;
+        setAddWeekly(hoursToHM(Math.min(MAX_WEEKLY, daily * days)));
     };
     const [adding, setAdding] = useState(false);
     const [addError, setAddError] = useState<string | null>(null);
@@ -180,8 +215,8 @@ export function People() {
                     role: addRole,
                     pay_rate: addPayRate ? parseFloat(addPayRate) : 0,
                     bill_rate: addBillRate ? parseFloat(addBillRate) : 0,
-                    weekly_limit: parseFloat(addWeekly) || 40,
-                    daily_limit: parseFloat(addDaily) || 8,
+                    weekly_limit: Math.round(hmToHours(addWeekly) * 100) / 100 || 40,
+                    daily_limit: Math.round(hmToHours(addDaily) * 100) / 100 || 8,
                     working_days: clampDays(addWorkingDays),
                     admin_portal_url: window.location.origin
                 })
@@ -780,8 +815,8 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
 
                 <div className="grid grid-cols-3 gap-3">
                     <FormField label="Working Days" value={form.addWorkingDays} onChange={form.onAddWorkingDaysChange} type="number" placeholder="5" />
-                    <FormField label="Daily Limit" value={form.addDaily} onChange={form.onAddDailyChange} type="number" placeholder="8" />
-                    <FormField label="Weekly Limit" value={form.addWeekly} onChange={form.onAddWeeklyChange} type="number" placeholder="40" />
+                    <FormField label="Daily Limit" value={form.addDaily} onChange={form.onAddDailyChange} placeholder="8.00" />
+                    <FormField label="Weekly Limit" value={form.addWeekly} onChange={form.onAddWeeklyChange} placeholder="40.00" />
                 </div>
 
                 {form.addError && (
