@@ -10,6 +10,7 @@ import {
     Info,
     AlertCircle,
     Calendar,
+    CalendarDays,
     Briefcase,
     Smartphone,
     Mail,
@@ -33,6 +34,69 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
 type Role = 'Owner' | 'Admin' | 'Manager' | 'User' | 'Viewer';
+
+// ── Hour limits ────────────────────────────────────────────────────────────
+// The three limits are one set, tied by:  weekly = workingDays * daily
+// The admin edits any of the three and the dependent one is recalculated, so
+// the numbers on screen always describe the same schedule.
+//
+// Hours are written H.MM, where the digits after the point are MINUTES, not a
+// decimal fraction — 8.30 is eight and a half hours, and 8.59 is the largest
+// value below nine. The database stores decimal hours (8.5), because that is
+// what the desktop client multiplies into seconds; the conversion happens at
+// the edges, in hmToHours / hoursToHM.
+
+const MIN_WORKING_DAYS = 1;
+const MAX_WORKING_DAYS = 7;
+const DEFAULT_WORKING_DAYS = 5;
+const MAX_DAILY_HOURS = 24;
+const MAX_WEEKLY_HOURS = 168;
+
+/** "8.30" -> 8.5. Empty or malformed input gives NaN, never a silent zero. */
+function hmToHours(text: string | number | null | undefined): number {
+    if (text === null || text === undefined) return NaN;
+    const raw = String(text).trim();
+    if (raw === '') return NaN;
+    const [hPart, mPart = ''] = raw.split('.');
+    const hours = hPart === '' ? 0 : parseInt(hPart, 10);
+    const mins = mPart === '' ? 0 : parseInt(mPart, 10);
+    if (!isFinite(hours) || !isFinite(mins)) return NaN;
+    return hours + Math.min(59, mins) / 60;
+}
+
+/** 8.5 -> "8.30". Minutes are always two digits so the format reads as time. */
+function hoursToHM(hours: number | string | null | undefined): string {
+    const n = typeof hours === 'number' ? hours : parseFloat(String(hours ?? ''));
+    if (!isFinite(n) || n < 0) return '';
+    const total = Math.round(n * 60);
+    return String(Math.floor(total / 60)) + '.' + String(total % 60).padStart(2, '0');
+}
+
+/**
+ * Gate for each keystroke in an hour field. Returns the text to keep, or null
+ * to reject the keystroke outright — which is how the caps are enforced: an
+ * over-limit value cannot be typed in the first place, so there is no moment
+ * where the field shows a number the form would refuse to save.
+ */
+function sanitizeHM(text: string, maxHours: number): string | null {
+    if (text === '') return '';
+    if (!/^\d*\.?\d{0,2}$/.test(text)) return null;
+    const [hPart, mPart = ''] = text.split('.');
+    const hours = hPart === '' ? 0 : parseInt(hPart, 10);
+    if (hours > maxHours) return null;
+    if (mPart !== '' && parseInt(mPart, 10) > 59) return null;
+    // 24.01 is over the cap just as surely as 25 is.
+    if (hours === maxHours && mPart !== '' && parseInt(mPart, 10) > 0) return null;
+    return text;
+}
+
+/** Days are whole, and there is no eighth day. Matches the DB CHECK constraint. */
+function clampWorkingDays(value: number | string): number {
+    const n = Math.round(typeof value === 'number' ? value : parseFloat(value));
+    if (!isFinite(n)) return DEFAULT_WORKING_DAYS;
+    return Math.min(MAX_WORKING_DAYS, Math.max(MIN_WORKING_DAYS, n));
+}
+
 
 const TAB_CONFIG = [
     {
@@ -125,6 +189,51 @@ export function MemberFormPage() {
     const [billRate, setBillRate] = useState('');
     const [weeklyLimit, setWeeklyLimit] = useState('40');
     const [dailyLimit, setDailyLimit] = useState('8');
+    const [workingDays, setWorkingDays] = useState('5');
+
+    // Editing one limit recalculates the dependent one, so the three always
+    // describe the same schedule. Which one moves depends on what was edited:
+    //   daily changed  -> weekly follows  (weekly = days * daily)
+    //   weekly changed -> daily follows   (daily  = weekly / days)
+    //   days changed   -> weekly follows, because hours-per-day is the figure
+    //     an admin holds fixed; changing the length of the week should change
+    //     what the week totals, not silently reprice the day.
+    const handleDailyLimitChange = (value: string) => {
+        const next = sanitizeHM(value, MAX_DAILY_HOURS);
+        if (next === null) return;
+        setDailyLimit(next);
+        const daily = hmToHours(next);
+        if (!isFinite(daily)) return;
+        const weekly = daily * clampWorkingDays(workingDays);
+        setWeeklyLimit(hoursToHM(Math.min(MAX_WEEKLY_HOURS, weekly)));
+    };
+
+    const handleWeeklyLimitChange = (value: string) => {
+        const next = sanitizeHM(value, MAX_WEEKLY_HOURS);
+        if (next === null) return;
+        setWeeklyLimit(next);
+        const weekly = hmToHours(next);
+        if (!isFinite(weekly)) return;
+        const daily = weekly / clampWorkingDays(workingDays);
+        setDailyLimit(hoursToHM(Math.min(MAX_DAILY_HOURS, daily)));
+    };
+
+    const handleWorkingDaysChange = (value: string) => {
+        // Allow the field to be emptied while typing.
+        if (value.trim() === '') {
+            setWorkingDays('');
+            return;
+        }
+        const parsed = parseFloat(value);
+        if (!isFinite(parsed)) return;
+        // Clamped on every keystroke rather than on blur: the range is 1-7, so
+        // any second digit is invalid regardless of what follows it.
+        const days = clampWorkingDays(parsed);
+        setWorkingDays(String(days));
+        const daily = hmToHours(dailyLimit);
+        if (!isFinite(daily)) return;
+        setWeeklyLimit(hoursToHM(Math.min(MAX_WEEKLY_HOURS, daily * days)));
+    };
     const [department, setDepartment] = useState('');
     const [employeeId, setEmployeeId] = useState('');
     const [employeeType, setEmployeeType] = useState('Full-time');
@@ -188,8 +297,9 @@ export function MemberFormPage() {
                 setRole(data.role || 'User');
                 setPayRate(data.pay_rate?.toString() || '');
                 setBillRate(data.bill_rate?.toString() || '');
-                setWeeklyLimit(data.weekly_limit?.toString() || '40');
-                setDailyLimit(data.daily_limit?.toString() || '8');
+                setWeeklyLimit(hoursToHM(data.weekly_limit) || '40.00');
+                setDailyLimit(hoursToHM(data.daily_limit) || '8.00');
+                setWorkingDays(data.working_days?.toString() || '5');
                 setDepartment(data.department || '');
                 setEmployeeId(data.employee_id || '');
                 setEmployeeType(data.employee_type || 'Full-time');
@@ -283,8 +393,9 @@ export function MemberFormPage() {
                 role,
                 pay_rate: parseFloat(payRate) || 0,
                 bill_rate: parseFloat(billRate) || 0,
-                weekly_limit: parseInt(weeklyLimit) || 0,
-                daily_limit: parseInt(dailyLimit) || 0,
+                weekly_limit: Math.round(hmToHours(weeklyLimit) * 100) / 100 || 0,
+                daily_limit: Math.round(hmToHours(dailyLimit) * 100) / 100 || 0,
+                working_days: clampWorkingDays(workingDays),
                 department,
                 employee_id: employeeId,
                 employee_type: employeeType,
@@ -1078,31 +1189,47 @@ export function MemberFormPage() {
                                         ====================================================== */}
                                         {activeTab === 'Limits' && (
                                             <div className="space-y-6">
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
                                                     <FormField
-                                                        label="Weekly Hours Limit"
-                                                        value={weeklyLimit}
+                                                        label="Working Days"
+                                                        value={workingDays}
                                                         onChange={
-                                                            setWeeklyLimit
+                                                            handleWorkingDaysChange
                                                         }
                                                         type="number"
+                                                        min={MIN_WORKING_DAYS}
+                                                        max={MAX_WORKING_DAYS}
+                                                        step={1}
                                                         icon={
-                                                            <Calendar className="w-4 h-4" />
+                                                            <CalendarDays className="w-4 h-4" />
                                                         }
-                                                        placeholder="40"
+                                                        placeholder="5"
                                                     />
 
                                                     <FormField
                                                         label="Daily Hours Limit"
                                                         value={dailyLimit}
                                                         onChange={
-                                                            setDailyLimit
+                                                            handleDailyLimitChange
                                                         }
-                                                        type="number"
+                                                        inputMode="decimal"
                                                         icon={
                                                             <Clock className="w-4 h-4" />
                                                         }
-                                                        placeholder="8"
+                                                        placeholder="8.00"
+                                                    />
+
+                                                    <FormField
+                                                        label="Weekly Hours Limit"
+                                                        value={weeklyLimit}
+                                                        onChange={
+                                                            handleWeeklyLimitChange
+                                                        }
+                                                        inputMode="decimal"
+                                                        icon={
+                                                            <Calendar className="w-4 h-4" />
+                                                        }
+                                                        placeholder="40.00"
                                                     />
                                                 </div>
 
@@ -1609,6 +1736,10 @@ function FormField({
     icon,
     placeholder,
     error,
+    min,
+    max,
+    step,
+    inputMode,
 }: any) {
     return (
         <div className="space-y-2 group flex flex-col relative min-w-0">
@@ -1636,6 +1767,10 @@ function FormField({
                             value={value || ''}
                             onChange={(e) => onChange(e.target.value)}
                             placeholder={placeholder}
+                            min={min}
+                            max={max}
+                            step={step}
+                            inputMode={inputMode}
                             className={clsx(
                                 'w-full h-[56px] bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-shell-sm placeholder:text-text-muted/40 min-w-0',
                                 icon ? 'pl-12 pr-4' : 'px-4'
