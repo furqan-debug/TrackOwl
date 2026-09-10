@@ -32,6 +32,7 @@ pub struct AppState {
     pub is_idle_monitoring: Arc<Mutex<bool>>,
     pub last_idle_limit: Arc<Mutex<u32>>,
     pub plan_type: Arc<Mutex<String>>,
+    pub screenshots_enabled: Arc<Mutex<bool>>,
 }
 
 impl Default for AppState {
@@ -56,6 +57,7 @@ impl Default for AppState {
             is_idle_monitoring: Arc::new(Mutex::new(false)),
             last_idle_limit: Arc::new(Mutex::new(10)),
             plan_type: Arc::new(Mutex::new("Basic".to_string())),
+            screenshots_enabled: Arc::new(Mutex::new(true)),
         }
     }
 }
@@ -323,12 +325,12 @@ fn start_tracking(
         }
     };
 
-    // Fetch member-level idle policy (keep_idle_mode: "always" | "prompt" | "never")
-    let idle_policy = if let Some(ref oid) = org_id {
+    // Fetch member-level settings (keep_idle_mode, screenshots_enabled)
+    let (idle_policy, screenshots_enabled) = if let Some(ref oid) = org_id {
         match crate::supabase_get(
             &cfg,
             "members",
-            &format!("or=(id.eq.{},auth_user_id.eq.{})&organization_id=eq.{}&select=keep_idle_mode&limit=1", user_id, user_id, oid),
+            &format!("or=(id.eq.{},auth_user_id.eq.{})&organization_id=eq.{}&select=keep_idle_mode,screenshots_enabled&limit=1", user_id, user_id, oid),
             Some(&token),
         ) {
             Ok(body) => {
@@ -338,13 +340,17 @@ fn start_tracking(
                     .and_then(|v| v.as_str())
                     .unwrap_or("prompt")
                     .to_string();
-                println!("[lib] 🔍 Member idle policy: {}", policy);
-                policy
+                let ss_enabled = rows.get(0)
+                    .and_then(|r| r.get("screenshots_enabled"))
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(true);
+                println!("[lib] 🔍 Member idle policy: {}, screenshots_enabled: {}", policy, ss_enabled);
+                (policy, ss_enabled)
             }
-            Err(_) => idle_policy,
+            Err(_) => (idle_policy, true),
         }
     } else {
-        idle_policy
+        (idle_policy, true)
     };
 
     // Guard: org_id must be present — sessions.organization_id is NOT NULL
@@ -384,6 +390,7 @@ fn start_tracking(
                         s.user_id = Some(user_id.clone());
                         s.org_id = org_id.clone();
                         *s.plan_type.lock().unwrap() = plan_type.clone();
+                        *s.screenshots_enabled.lock().unwrap() = screenshots_enabled;
                         *s.tracking_running.lock().unwrap() = true;
                     }
 
@@ -404,11 +411,15 @@ fn start_tracking(
                         org_timezone.clone(),
                         idle_policy.clone(),
                     );
-                    tracker::start_screenshot_loop(
-                        app.clone(), session_id.clone(), cfg.clone(), Arc::clone(&running), 
-                        Arc::clone(&auth_arc), org_id, user_id.clone(),
-                        plan_type.clone(),
-                    );
+                    if screenshots_enabled {
+                        tracker::start_screenshot_loop(
+                            app.clone(), session_id.clone(), cfg.clone(), Arc::clone(&running), 
+                            Arc::clone(&auth_arc), org_id, user_id.clone(),
+                            plan_type.clone(),
+                        );
+                    } else {
+                        println!("[lib] 📷 Screenshots disabled for this member (screenshots_enabled=false). Skipping screenshot loop.");
+                    }
 
                     // The always-on sync loop is started in set_auth_token.
                     // No need to start a new one here — it is already running.
@@ -428,7 +439,7 @@ fn start_tracking(
 /// invoke('stop_tracking')
 #[tauri::command]
 fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>) -> TrackingResult {
-    let (cfg, auth_arc, session_id, running, db_arc, user_id, org_id, plan_type) = {
+    let (cfg, auth_arc, session_id, running, db_arc, user_id, org_id, plan_type, screenshots_enabled) = {
         let mut s = state.lock().unwrap();
         let res = (
             SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() },
@@ -439,6 +450,7 @@ fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>
             s.user_id.clone(),
             s.org_id.clone(),
             s.plan_type.lock().unwrap().clone(),
+            *s.screenshots_enabled.lock().unwrap(),
         );
         res
     };
@@ -446,7 +458,7 @@ fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>
     *running.lock().unwrap() = false;
 
     // ── Mandatory STOP screenshot ─────────────────────────────────────────────
-    if (plan_type == "Premium" || plan_type == "Trial") && session_id.is_some() && user_id.is_some() {
+    if screenshots_enabled && (plan_type == "Premium" || plan_type == "Trial") && session_id.is_some() && user_id.is_some() {
         let sid = session_id.clone().unwrap();
         let uid = user_id.clone().unwrap();
         let app2      = app.clone();
@@ -509,7 +521,7 @@ fn resume_tracking(
     app: tauri::AppHandle,
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> TrackingResult {
-    let (cfg, session_id, counts, running, auth_arc, db_arc, user_id, org_id, plan_type): (SupabaseConfig, Option<String>, Arc<tracker::TrackerCounts>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>, Option<String>, Option<String>, String) = {
+    let (cfg, session_id, counts, running, auth_arc, db_arc, user_id, org_id, plan_type, screenshots_enabled) = {
         let s = state.lock().unwrap();
         // Guard against duplicate loops
         if *s.tracking_running.lock().unwrap() {
@@ -529,6 +541,7 @@ fn resume_tracking(
             s.user_id.clone(),
             s.org_id.clone(),
             s.plan_type.lock().unwrap().clone(),
+            *s.screenshots_enabled.lock().unwrap(),
         );
         res
     };
@@ -548,11 +561,13 @@ fn resume_tracking(
         cfg.clone(), Arc::clone(&running), 60_000, Arc::clone(&db_arc), Arc::clone(&auth_arc),
         plan_type.clone(),
     );
-    tracker::start_screenshot_loop(
-        app.clone(), sid.clone(), cfg.clone(), Arc::clone(&running), 
-        Arc::clone(&auth_arc), org_id, user_id.unwrap_or_default(),
-        plan_type.clone(),
-    );
+    if screenshots_enabled {
+        tracker::start_screenshot_loop(
+            app.clone(), sid.clone(), cfg.clone(), Arc::clone(&running), 
+            Arc::clone(&auth_arc), org_id, user_id.unwrap_or_default(),
+            plan_type.clone(),
+        );
+    }
     // The always-on sync loop is started in set_auth_token.
     // No need to start a new one here — it is already running.
 
