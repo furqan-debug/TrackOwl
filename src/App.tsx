@@ -829,6 +829,14 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeProject, setActiveProject] = useState<Project | null>(null);
+  const activeProjectRef = useRef<Project | null>(null);
+  const projectsRef = useRef<Project[]>([]);
+  useEffect(() => {
+    activeProjectRef.current = activeProject;
+  }, [activeProject]);
+  useEffect(() => {
+    projectsRef.current = projects;
+  }, [projects]);
   const [isTracking, setIsTracking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [liveElapsed, setLiveElapsed] = useState<number>(0);
@@ -1605,11 +1613,12 @@ export default function App() {
     (trackerAPI as any).stopIdleMonitoring();
 
     if (user) {
-      await fetchDashboardStats(user.id, projects);
+      await fetchDashboardStats(user.id, projectsRef.current || projects);
     }
 
-    if (shouldResume && activeProject) {
-      startTracking(activeProject);
+    const currentProj = activeProjectRef.current || activeProject;
+    if (shouldResume && currentProj) {
+      startTracking(currentProj);
     }
   };
 
@@ -1737,17 +1746,23 @@ export default function App() {
   }, [isTracking, isPaused, user?.idle_limit, user?.keep_idle_mode]); // Re-subscribe when tracking state or limits/modes change
 
   useEffect(() => {
-    let unlisten: (() => void) | null = null;
+    let unlisten1: (() => void) | null = null;
+    let unlisten2: (() => void) | null = null;
     const setup = async () => {
-      unlisten = await trackerAPI.onIdleDialogDismissed(() => {
+      const handleReturn = async () => {
         if (user?.keep_idle_mode === 'never' && isTracking && isPaused) {
           (trackerAPI as any).stopIdleMonitoring();
-          handleResume();
+          await handleResume();
         }
-      });
+      };
+      unlisten1 = await trackerAPI.onUserReturnedFromIdle(handleReturn);
+      unlisten2 = await trackerAPI.onIdleDialogDismissed(handleReturn);
     };
     setup();
-    return () => { unlisten?.(); };
+    return () => {
+      unlisten1?.();
+      unlisten2?.();
+    };
   }, [user?.keep_idle_mode, isTracking, isPaused]);
 
   useEffect(() => {
@@ -2229,8 +2244,9 @@ export default function App() {
     }
 
     // Seed the timer with the authoritative todaySeconds calculated by fetchDashboardStats
-    const currentProj = projects.find(p => p.id === project.id) || project;
-    const todaySecs = currentProj.stats?.todaySeconds ?? project.stats?.todaySeconds ?? 0;
+    const currentProj = (projectsRef.current || projects).find(p => p.id === project.id) || project;
+    const dbTodaySecs = currentProj.stats?.todaySeconds ?? project.stats?.todaySeconds ?? 0;
+    const todaySecs = Math.max(sessionElapsedRef.current, dbTodaySecs);
 
     sessionElapsedRef.current = todaySecs;
     setLiveElapsed(todaySecs);
@@ -2446,19 +2462,28 @@ export default function App() {
     // Start block tracking fresh. Without this the block that was open when we
     // paused stays "current" and empty, so the first sample after resuming would
     // close it as blank and immediately re-trigger the away popup.
-    //
-    // The session anchor is deliberately NOT reset here. A manual pause/resume
-    // does not start a new session, and the server derives blocks from
-    // sessions.started_at, so re-anchoring on resume would put the client on a
-    // different block grid than the server. Idle-triggered resume goes through
-    // startTracking instead, which opens a real new session and re-anchors.
     currentBlockIdRef.current = null;
     blockHadActivityRef.current = false;
     blankBlockCountRef.current = 0;
     lastActiveBlockEndRef.current = null;
+
+    const wasIdleClosed = idleClosedSessionRef.current || !sessionIdRef.current;
     idleClosedSessionRef.current = false;
     setIsPaused(false);
-    await trackerAPI.resumeTracking();
+
+    const project = activeProjectRef.current || activeProject;
+
+    if (wasIdleClosed && project) {
+      console.log('[App] Resuming from idle-closed session — starting a fresh session');
+      await startTracking(project);
+      return;
+    }
+
+    const res: any = await trackerAPI.resumeTracking();
+    if (res?.status === 'error' && (res?.error?.includes('No active session') || res?.error?.includes('error')) && project) {
+      console.log('[App] resumeTracking failed with no active session in Rust — starting fresh session:', res?.error);
+      await startTracking(project);
+    }
   }
 
   async function handleLogout() {
