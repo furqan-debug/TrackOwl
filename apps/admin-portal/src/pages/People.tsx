@@ -37,6 +37,7 @@ interface DbMember {
     idle_limit: number | null;
     idle_enabled: boolean;
     tracking_enabled: boolean;
+    screenshots_enabled?: boolean;
     os_username: string | null;
     employee_id: string | null;
     birthday: string | null;

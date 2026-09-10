@@ -32,6 +32,7 @@ export interface Member {
     full_name: string;
     role: string;
     status: string;
+    screenshots_enabled?: boolean;
     created_at?: string;
     avatar_url?: string;
     hourly_rate?: number;

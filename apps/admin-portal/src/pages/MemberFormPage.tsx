@@ -151,6 +151,7 @@ export function MemberFormPage() {
         'prompt' | 'always' | 'never'
     >('prompt');
     const [trackingEnabled, setTrackingEnabled] = useState(true);
+    const [screenshotsEnabled, setScreenshotsEnabled] = useState(true);
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
     const [location, setLocation] = useState('');
 
@@ -211,6 +212,7 @@ export function MemberFormPage() {
                 setIdleLimit(data.idle_limit?.toString() || '10');
                 setKeepIdleMode(data.keep_idle_mode || 'prompt');
                 setTrackingEnabled(data.tracking_enabled ?? true);
+                setScreenshotsEnabled(data.screenshots_enabled ?? true);
                 setAvatarUrl(data.avatar_url || null);
                 setLocation(data.location || '');
             }
@@ -304,6 +306,7 @@ export function MemberFormPage() {
                 idle_limit: parseInt(idleLimit) || 10,
                 keep_idle_mode: keepIdleMode,
                 tracking_enabled: trackingEnabled,
+                screenshots_enabled: screenshotsEnabled,
                 location,
             };
 
@@ -1116,6 +1119,17 @@ export function MemberFormPage() {
                                                         }
                                                         onChange={
                                                             setTrackingEnabled
+                                                        }
+                                                    />
+
+                                                    <ToggleRow
+                                                        label="Enable Automated Screenshots"
+                                                        description="Periodically capture desktop screenshots during work sessions"
+                                                        checked={
+                                                            screenshotsEnabled
+                                                        }
+                                                        onChange={
+                                                            setScreenshotsEnabled
                                                         }
                                                     />
 
