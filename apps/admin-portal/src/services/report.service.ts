@@ -511,9 +511,12 @@ export const reportService = {
     // 1. Populate dailyMap from database aggregated daily stats
     dbDailyStats.forEach((row: any) => {
         if (dateListSet.has(row.date)) {
+            const sampleCount = row.sample_count || 0;
+            const actSum = row.activity_sum || 0;
+            const weightedActSum = (sampleCount > 1 && actSum <= 100) ? (actSum * sampleCount) : actSum;
             dailyMap[row.date] = {
-                activitySum: row.activity_sum || 0,
-                total_samples: row.sample_count || 0,
+                activitySum: weightedActSum,
+                total_samples: sampleCount,
                 total_minutes: row.total_minutes || 0
             };
         }
@@ -525,6 +528,7 @@ export const reportService = {
         const day = row.date;
         const sampleCount = row.sample_count || 0;
         const actSum = row.activity_sum || 0;
+        const weightedActSum = (sampleCount > 1 && actSum <= 100) ? (actSum * sampleCount) : actSum;
         const mins = row.total_minutes || 0;
 
         if (dateListSet.has(day)) {
@@ -545,7 +549,7 @@ export const reportService = {
             }
 
             const r = memberRows[canonicalId];
-            r.activitySum += actSum;
+            r.activitySum += weightedActSum;
             r.activitySamples += sampleCount;
             r.dailyMins[day] = (r.dailyMins[day] || 0) + mins;
             r.totalMins += mins;
@@ -632,8 +636,11 @@ export const reportService = {
     let totalActSamples = 0;
     dbDailyStats.forEach((r: any) => {
         if (dateListSet.has(r.date)) {
-            totalActSum += r.activity_sum;
-            totalActSamples += r.sample_count; // use sample count for activity averaging
+            const sampleCount = r.sample_count || 0;
+            const actSum = r.activity_sum || 0;
+            const weightedActSum = (sampleCount > 1 && actSum <= 100) ? (actSum * sampleCount) : actSum;
+            totalActSum += weightedActSum;
+            totalActSamples += sampleCount; // use sample count for activity averaging
         }
     });
     const calculatedAvgActivity = totalActSamples > 0 ? Math.round(totalActSum / totalActSamples) : 0;
