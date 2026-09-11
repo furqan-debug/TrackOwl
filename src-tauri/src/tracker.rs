@@ -382,6 +382,7 @@ pub fn start_sample_loop(
     session_id: String,
     cfg: crate::SupabaseConfig,
     running: Arc<Mutex<bool>>,
+    tracker_done: Arc<Mutex<bool>>,
     interval_ms: u64,
     db: Arc<Mutex<Option<rusqlite::Connection>>>,
     auth_token: Arc<Mutex<Option<String>>>,
@@ -390,7 +391,7 @@ pub fn start_sample_loop(
     // Public wrapper keeps the existing call signature for lib.rs compatibility.
     // Defaults to UTC timezone / "never" discard — overridden by start_sample_loop_inner
     // when lib.rs has fetched the org timezone and idle policy.
-    start_sample_loop_inner(app, counts, session_id, cfg, running, interval_ms,
+    start_sample_loop_inner(app, counts, session_id, cfg, running, tracker_done, interval_ms,
         db, auth_token, plan_type, "UTC".to_string(), "never".to_string())
 }
 
@@ -402,6 +403,7 @@ pub fn start_sample_loop_inner(
     session_id: String,
     cfg: crate::SupabaseConfig,
     running: Arc<Mutex<bool>>,
+    tracker_done: Arc<Mutex<bool>>,
     interval_ms: u64,
     db: Arc<Mutex<Option<rusqlite::Connection>>>,
     auth_token: Arc<Mutex<Option<String>>>,
@@ -448,11 +450,13 @@ pub fn start_sample_loop_inner(
                 eprintln!("[tracker] ⚠️ System sleep/hibernation detected (sleep gap: {}ms). Auto-terminating interrupted session.", sleep_actual_elapsed);
                 
                 // Flush accumulator before exiting to preserve active work prior to sleep
-                if let Some(partial) = accumulator.flush_partial() {
+                let sleep_stop_time = chrono::Utc::now();
+                if let Some(partial) = accumulator.flush_partial_at(sleep_stop_time) {
                     flush_block_record(&partial, &db, &cfg, &auth_token);
                 }
 
                 *running.lock().unwrap() = false;
+                *tracker_done.lock().unwrap() = true;
                 let _ = app.emit("tracking-interrupted-sleep", ());
                 break;
             }
@@ -613,11 +617,17 @@ pub fn start_sample_loop_inner(
         }
 
         // ── Flush any partial block (< 10 samples) ───────────────────────────
-        if let Some(partial) = accumulator.flush_partial() {
+        // Use the real stop wall-clock as block_end so the block reflects exact stop time
+        let stop_wall_clock = chrono::Utc::now();
+        if let Some(partial) = accumulator.flush_partial_at(stop_wall_clock) {
             println!("[tracker] 📦 Partial block on stop: {} active_secs={} activity={}%",
                 partial.business_date, partial.active_seconds, partial.activity_percent);
             flush_block_record(&partial, &db, &cfg, &auth_token);
         }
+
+        // Signal to stop_tracking that the partial block has been flushed to SQLite.
+        // stop_tracking polls this flag before calling sync_blocks and rpc_stop_session_v2.
+        *tracker_done.lock().unwrap() = true;
     });
 }
 
