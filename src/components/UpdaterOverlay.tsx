@@ -9,10 +9,13 @@ import { Loader2 } from 'lucide-react';
 // UI is ever rendered.
 const IS_APP_STORE = import.meta.env.VITE_APP_STORE === 'true';
 
+import { isWindowsOS } from '../tauri-ipc';
+
 interface UpdateStatus {
   available: boolean;
   version: string | null;
   notes: string | null;
+  platform?: string;
 }
 
 export function UpdaterOverlay() {
@@ -20,6 +23,7 @@ export function UpdaterOverlay() {
   const [installing, setInstalling] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     // App Store build: do nothing — updater not compiled in.
@@ -52,10 +56,11 @@ export function UpdaterOverlay() {
     };
   }, []);
 
-  // Auto-trigger update when detected
+  // Auto-trigger update when detected ONLY on Windows
   useEffect(() => {
     if (IS_APP_STORE) return;
-    if (updateInfo && !installing && !error) {
+    const isWin = updateInfo?.platform ? updateInfo.platform === 'windows' : isWindowsOS();
+    if (isWin && updateInfo && !installing && !error) {
       handleUpdate();
     }
   }, [updateInfo]);
@@ -73,9 +78,81 @@ export function UpdaterOverlay() {
     }
   };
 
-  // App Store build or no update pending — render nothing.
-  if (IS_APP_STORE || !updateInfo) return null;
+  const isWin = updateInfo?.platform ? updateInfo.platform === 'windows' : isWindowsOS();
 
+  // App Store build or no update pending or dismissed (non-Windows) — render nothing.
+  if (IS_APP_STORE || !updateInfo || (!isWin && dismissed)) return null;
+
+  // On macOS: non-forced floating card with dismiss
+  if (!isWin) {
+    return (
+      <div style={{
+        position: 'fixed', top: '16px', right: '16px', zIndex: 99999,
+        maxWidth: '360px', width: 'calc(100% - 32px)',
+        background: '#001338', border: '1px solid rgba(250, 204, 21, 0.35)',
+        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)',
+        borderRadius: '16px', padding: '16px', color: '#fff'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <img src="/header-white.svg" style={{ height: '24px', objectFit: 'contain' }} alt="TrackOwl" />
+            <span style={{ fontWeight: '700', fontSize: '14px', color: '#fff' }}>Update Available</span>
+          </div>
+          {!installing && (
+            <button
+              onClick={() => setDismissed(true)}
+              style={{
+                background: 'transparent', border: 'none', color: '#94a3b8',
+                fontSize: '18px', cursor: 'pointer', padding: '0 4px', lineHeight: 1
+              }}
+              title="Dismiss"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        <p style={{ fontSize: '12px', color: '#cbd5e1', margin: '8px 0 14px 0', lineHeight: 1.4 }}>
+          Version {updateInfo.version || 'New'} is ready to install with performance and feature improvements.
+        </p>
+        {installing ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', fontWeight: '600' }}>
+              <span>{progress === 100 ? 'Installing...' : 'Downloading assets...'}</span>
+              <span style={{ color: '#facc15' }}>{progress}%</span>
+            </div>
+            <div style={{ width: '100%', background: 'rgba(255,255,255,0.1)', height: '6px', borderRadius: '9999px', overflow: 'hidden' }}>
+              <div style={{ width: `${progress}%`, height: '100%', background: '#facc15', transition: 'width 0.2s ease' }} />
+            </div>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <button
+              onClick={() => setDismissed(true)}
+              style={{
+                padding: '7px 14px', borderRadius: '8px',
+                border: '1px solid rgba(255,255,255,0.15)', background: 'transparent',
+                color: '#cbd5e1', fontSize: '12px', fontWeight: '600', cursor: 'pointer'
+              }}
+            >
+              Later
+            </button>
+            <button
+              onClick={handleUpdate}
+              style={{
+                padding: '7px 16px', borderRadius: '8px', border: 'none',
+                background: 'linear-gradient(135deg, #facc15 0%, #eab308 100%)',
+                color: '#001338', fontSize: '12px', fontWeight: '700', cursor: 'pointer'
+              }}
+            >
+              Update Now
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Windows: Forced fullscreen non-dismissible modal
   return (
     <div className="fixed inset-0 z-[9999] bg-[#001338] flex flex-col items-center justify-center p-6 text-center select-none">
       <div className="max-w-md w-full flex flex-col items-center gap-8">
