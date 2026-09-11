@@ -44,6 +44,7 @@ interface User {
   role: string;
   weekly_limit?: number;
   daily_limit?: number;
+  work_days?: number[];
   idle_limit?: number;
   idle_enabled?: boolean;
   keep_idle_mode?: 'prompt' | 'always' | 'never';
@@ -266,6 +267,45 @@ function tzToCity(tz: string): string {
   return city;
 }
 
+// ── Working days ───────────────────────────────────────────────────────────
+// members.work_days holds ISO weekday numbers, 1 = Monday through 7 = Sunday.
+// The day is always decided in the ORGANIZATION's timezone, not the device's,
+// so a distributed team shares one answer to "is today a working day" — the
+// same rule that already attributes tracked time to org days.
+
+const WEEKDAY_SHORT = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEKDAY_FULL = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+/** ISO weekday (1-7) for `at` as seen in `tz`. Falls back to UTC on a bad zone. */
+function isoWeekdayIn(tz: string | undefined, at: Date = new Date()): number {
+  let short: string;
+  try {
+    short = at.toLocaleDateString('en-US', { timeZone: tz || 'UTC', weekday: 'short' });
+  } catch {
+    short = at.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short' });
+  }
+  const idx = WEEKDAY_SHORT.indexOf(short);
+  return idx > 0 ? idx : 1;
+}
+
+/**
+ * Whether tracking is allowed right now.
+ *
+ * A missing or empty schedule means "not configured", and an unconfigured
+ * member must not be locked out — so it allows tracking. Only an explicit
+ * list of days can block anything.
+ */
+function isWorkDayNow(workDays: number[] | undefined | null, tz: string | undefined, at: Date = new Date()): boolean {
+  if (!Array.isArray(workDays) || workDays.length === 0) return true;
+  return workDays.includes(isoWeekdayIn(tz, at));
+}
+
+/** [1,2,3] -> "Mon, Tue, Wed" */
+function workDaysLabel(workDays: number[] | undefined | null): string {
+  if (!Array.isArray(workDays) || workDays.length === 0) return '';
+  return [...workDays].sort((a, b) => a - b).map(d => WEEKDAY_SHORT[d] || '').filter(Boolean).join(', ');
+}
+
 function LocalClock({ orgTimezone }: { orgTimezone?: string }) {
   const [now, setNow] = useState(new Date());
 
@@ -375,14 +415,18 @@ function AppFooter({ lastSyncTime, isSyncing, onSync, isOnline }: {
 // ─────────────────────────────────────────────────────────────────────────────
 function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
   user: User;
-  onSave: (updated: Partial<User>) => Promise<void>;
+  onSave: (updated: Partial<User>) => Promise<boolean>;
   onBack: () => void;
   onLogout: () => void;
   onDeleteAccount: () => Promise<void>;
 }) {
   const [fullName, setFullName] = useState(user.full_name);
   const [phone, setPhone] = useState(user.phone || '');
-  const [avatarUrl, setAvatarUrl] = useState(user.avatar_url || '');
+  // A picked picture is held here, unsent, until Save Changes. Nothing reaches
+  // storage or the database before that — picking and then leaving the screen
+  // must leave no trace.
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
+  const [pendingAvatarPreview, setPendingAvatarPreview] = useState<string | null>(null);
   const [notifyTracking, setNotifyTracking] = useState(user.custom_fields?.notification_settings?.tracking_alerts ?? true);
   const [notifyScreenshots, setNotifyScreenshots] = useState(user.custom_fields?.notification_settings?.screenshot_alerts ?? true);
   const [notifyReminders, setNotifyReminders] = useState(user.custom_fields?.notification_settings?.tracking_reminders ?? true);
@@ -424,30 +468,26 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
     });
   }, [user.organization_id]);
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    // Allow the same file to be picked again after a cancel.
+    e.target.value = '';
     if (!file) return;
 
-    setUploading(true);
-    try {
-      const sb = await getSupabase();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${user.organization_id}/${user.id}/${fileName}`;
-
-      const { error: uploadError } = await sb.storage
-        .from('avatars')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      setAvatarUrl(filePath);
-    } catch (err: any) {
-      console.error('Upload failed:', err.message);
-    } finally {
-      setUploading(false);
-    }
+    setPendingAvatarPreview(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+    setPendingAvatarFile(file);
   }
+
+  // The preview is a blob URL owned by this component; release it when the
+  // screen goes away so the picked image is not held in memory.
+  useEffect(() => {
+    return () => {
+      if (pendingAvatarPreview) URL.revokeObjectURL(pendingAvatarPreview);
+    };
+  }, [pendingAvatarPreview]);
 
   async function save() {
     setIsSaving(true);
@@ -460,17 +500,71 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
         tracking_reminders: notifyReminders
       }
     };
-    await onSave({
+    const patch: Partial<User> = {
       full_name: fullName,
       phone,
       work_phone: phone,
       personal_phone: phone,
-      avatar_url: avatarUrl,
       custom_fields: {
         ...updatedCustomFields,
         close_behavior: 'quit'
       }
-    });
+    };
+
+    // avatar_url is sent ONLY when a new picture was picked. Sending it every
+    // time is what used to overwrite a portal-uploaded avatar with whatever
+    // this screen happened to load at login — and blank it entirely for anyone
+    // who had none.
+    const previousAvatar = user.avatar_url || null;
+    let uploadedPath: string | null = null;
+
+    if (pendingAvatarFile) {
+      setUploading(true);
+      try {
+        const sb = await getSupabase();
+        const fileExt = pendingAvatarFile.name.split('.').pop();
+        const filePath = `${user.organization_id}/${user.id}/${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await sb.storage
+          .from('avatars')
+          .upload(filePath, pendingAvatarFile);
+        if (uploadError) throw uploadError;
+        uploadedPath = filePath;
+        patch.avatar_url = filePath;
+      } catch (err: any) {
+        console.error('Avatar upload failed:', err?.message);
+        alert('Could not upload your picture. Your other changes were not saved either.');
+        setUploading(false);
+        setIsSaving(false);
+        return;
+      } finally {
+        setUploading(false);
+      }
+    }
+
+    const saved = await onSave(patch);
+
+    if (saved && uploadedPath) {
+      setPendingAvatarFile(null);
+      // Replace means replace: drop the file this one supersedes, but only
+      // after the new path is safely recorded. Cleanup failure is logged and
+      // otherwise ignored — a leftover file is not worth failing a save over.
+      if (previousAvatar && previousAvatar !== uploadedPath) {
+        try {
+          const sb = await getSupabase();
+          await sb.storage.from('avatars').remove([previousAvatar]);
+        } catch (err: any) {
+          console.warn('Could not remove the previous avatar:', err?.message);
+        }
+      }
+    } else if (!saved && uploadedPath) {
+      // The row was not updated, so nothing points at this file. Take it back
+      // out rather than leaving it orphaned.
+      try {
+        const sb = await getSupabase();
+        await sb.storage.from('avatars').remove([uploadedPath]);
+      } catch (_) { /* nothing referenced it anyway */ }
+    }
+
     trackerAPI.setCloseBehavior(closeBehavior);
     setIsSaving(false);
   }
@@ -492,8 +586,10 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
         <div className="settings-card profile-card">
           <div className="avatar-section">
             <div className="avatar-preview-container">
-              {avatarUrl ? (
-                <SignedImage path={avatarUrl} bucket="avatars" className="avatar-preview-large" />
+              {pendingAvatarPreview ? (
+                <img src={pendingAvatarPreview} className="avatar-preview-large" alt="Selected profile picture" />
+              ) : user.avatar_url ? (
+                <SignedImage path={user.avatar_url} bucket="avatars" className="avatar-preview-large" />
               ) : (
                 <div className="avatar-placeholder-large">
                   <UserIcon size={32} />
@@ -899,9 +995,13 @@ export default function App() {
   // cannot push the display below the snapped limit value. Expires after 30s.
   const limitFloorRef = useRef<{ projectId: string; minTodaySecs: number; expiresAt: number } | null>(null);
   const [limitReachedModal, setLimitReachedModal] = useState<{
-    type: 'daily' | 'weekly';
-    limitHours: number;
+    type: 'daily' | 'weekly' | 'non_work_day';
+    limitHours?: number;
     projectName?: string;
+    /** non_work_day only: the day it actually is, in org time. */
+    dayName?: string;
+    /** non_work_day only: the days the member is scheduled for. */
+    scheduleLabel?: string;
   } | null>(null);
 
   // Auto-focus window, set always-on-top, and handle keyboard shortcuts when limit modal triggers
@@ -1297,6 +1397,7 @@ export default function App() {
           role: member.role,
           weekly_limit: member.weekly_limit,
           daily_limit: member.daily_limit,
+          work_days: member.work_days,
           idle_limit: member.idle_limit,
           idle_enabled: member.idle_enabled,
           keep_idle_mode: member.keep_idle_mode,
@@ -2060,6 +2161,26 @@ export default function App() {
         
         // Limit check inside interval to avoid React re-renders
         if (user && activeProject) {
+          // Midnight rollover: a session started on a working day must not run
+          // on into one the member is not scheduled for. Checked on the same
+          // tick as the hour limits so there is one stop path, not two.
+          if (!isWorkDayNow(user.work_days, orgTimezoneRef.current || orgTimezone)) {
+            const todayName = WEEKDAY_FULL[isoWeekdayIn(orgTimezoneRef.current || orgTimezone)];
+            const msg = `${todayName} is not a scheduled working day. Session stopped.`;
+            if (timerRef.current) clearInterval(timerRef.current);
+            trackerAPI.focusWindow?.(true);
+            trackerAPI.showNotification('Outside Working Days', msg);
+            setLimitReachedModal({
+              type: 'non_work_day',
+              dayName: todayName,
+              scheduleLabel: workDaysLabel(user.work_days),
+              projectName: activeProject?.name
+            });
+            handleStop();
+            setTrackingError(msg);
+            return;
+          }
+
           const dailyLimitHours = user.daily_limit;
           const weeklyLimitHours = user.weekly_limit;
 
@@ -2198,6 +2319,7 @@ export default function App() {
         role: member.role,
         weekly_limit: member.weekly_limit,
         daily_limit: member.daily_limit,
+        work_days: member.work_days,
         idle_limit: member.idle_limit,
         idle_enabled: member.idle_enabled,
         keep_idle_mode: member.keep_idle_mode,
@@ -2271,6 +2393,24 @@ export default function App() {
     if (user?.tracking_enabled === false) {
       console.log('TRACKING BLOCKED: tracking_enabled is false');
       setTrackingError('Tracking has been disabled for your account by an administrator.');
+      return;
+    }
+
+    // Enforcement: the member's scheduled working days, in ORG time.
+    // Checked before the hour limits because it is the more fundamental
+    // question — an unscheduled day has no allowance to spend in the first
+    // place.
+    const orgTz = orgTimezoneRef.current || orgTimezone;
+    if (!isWorkDayNow(user?.work_days, orgTz)) {
+      const todayName = WEEKDAY_FULL[isoWeekdayIn(orgTz)];
+      setTrackingError(`${todayName} is not one of your scheduled working days.`);
+      trackerAPI.focusWindow?.(true);
+      setLimitReachedModal({
+        type: 'non_work_day',
+        dayName: todayName,
+        scheduleLabel: workDaysLabel(user?.work_days),
+        projectName: project.name
+      });
       return;
     }
 
@@ -2581,19 +2721,27 @@ export default function App() {
     await sb.from('todos').update({ status: 'Done' }).eq('id', todoId);
   }, []);
 
-  async function handleUpdateProfile(updated: Partial<User>) {
-    if (!user) return;
+  async function handleUpdateProfile(updated: Partial<User>): Promise<boolean> {
+    if (!user) return false;
     try {
       const sb = await getSupabase();
-      const { error } = await sb.from('members').update(updated).eq('id', user.id);
+      // count: an UPDATE blocked by RLS matches zero rows and returns NO error,
+      // so without this a rejected write looks exactly like a successful one.
+      const { error, count } = await sb
+        .from('members')
+        .update(updated, { count: 'exact' })
+        .eq('id', user.id);
       if (error) throw error;
+      if (count === 0) throw new Error('Profile update was not permitted.');
 
       const newUser = { ...user, ...updated };
       setUser(newUser);
       localStorage.setItem(USER_KEY, JSON.stringify(newUser));
       setScreen('projects');
+      return true;
     } catch (err: any) {
       alert('Unable to update profile. Please try again or contact support.');
+      return false;
     }
   }
 
@@ -2778,24 +2926,51 @@ export default function App() {
 
               {/* Title & Subtitle */}
               <h2 className="idle-title" style={{ color: '#fff', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
-                {limitReachedModal.type === 'daily' ? 'Daily Limit Reached' : 'Weekly Limit Reached'}
+                {limitReachedModal.type === 'non_work_day'
+                  ? 'Not a Working Day'
+                  : limitReachedModal.type === 'daily'
+                    ? 'Daily Limit Reached'
+                    : 'Weekly Limit Reached'}
               </h2>
               <p className="idle-subtitle" style={{ color: '#94a3b8', fontSize: '0.8125rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
-                You have reached your allocated{' '}
-                <strong style={{ color: '#f1f5f9' }}>{limitReachedModal.limitHours}h</strong>{' '}
-                {limitReachedModal.type === 'daily' ? 'daily' : 'weekly'} working limit. Tracking has been stopped and your tracked time has been securely saved.
+                {limitReachedModal.type === 'non_work_day' ? (
+                  <>
+                    <strong style={{ color: '#f1f5f9' }}>{limitReachedModal.dayName}</strong>{' '}
+                    is not one of your scheduled working days, so tracking is unavailable.
+                    Any time already tracked has been securely saved. Contact your manager
+                    if your schedule needs changing.
+                  </>
+                ) : (
+                  <>
+                    You have reached your allocated{' '}
+                    <strong style={{ color: '#f1f5f9' }}>{limitReachedModal.limitHours}h</strong>{' '}
+                    {limitReachedModal.type === 'daily' ? 'daily' : 'weekly'} working limit. Tracking has been stopped and your tracked time has been securely saved.
+                  </>
+                )}
               </p>
 
               {/* Stat row */}
               <div className="idle-stat-row" style={{ marginBottom: '1.25rem' }}>
                 <div className="idle-stat">
-                  <span className="idle-stat-label">Allocated Limit</span>
-                  <span className="idle-stat-val" style={{ color: '#f1f5f9' }}>{limitReachedModal.limitHours}h 00m</span>
+                  <span className="idle-stat-label">
+                    {limitReachedModal.type === 'non_work_day' ? 'Your Working Days' : 'Allocated Limit'}
+                  </span>
+                  <span className="idle-stat-val" style={{ color: '#f1f5f9' }}>
+                    {limitReachedModal.type === 'non_work_day'
+                      ? (limitReachedModal.scheduleLabel || 'Not set')
+                      : `${limitReachedModal.limitHours}h 00m`}
+                  </span>
                 </div>
                 <div className="idle-stat-sep" />
                 <div className="idle-stat">
-                  <span className="idle-stat-label">Session Status</span>
-                  <span className="idle-stat-val" style={{ color: '#ef4444' }}>Completed</span>
+                  <span className="idle-stat-label">
+                    {limitReachedModal.type === 'non_work_day' ? 'Today' : 'Session Status'}
+                  </span>
+                  <span className="idle-stat-val" style={{ color: '#ef4444' }}>
+                    {limitReachedModal.type === 'non_work_day'
+                      ? (limitReachedModal.dayName || '')
+                      : 'Completed'}
+                  </span>
                 </div>
               </div>
 
@@ -2852,6 +3027,9 @@ export default function App() {
               isTracking={isTracking}
               localElapsed={liveElapsed}
               orgTimezone={orgTimezone}
+              onNonWorkDay={(dayName, scheduleLabel, projectName) => {
+                setLimitReachedModal({ type: 'non_work_day', dayName, scheduleLabel, projectName });
+              }}
               onLimitReached={(type, limitHours, projectName) => {
                 trackerAPI.focusWindow?.(true);
                 setLimitReachedModal({ type, limitHours, projectName });
@@ -3173,7 +3351,7 @@ function MyTasksPanel({ todos, onDone, disabled }: { todos: Todo[]; onDone: (id:
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Projects
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone, activeProjectId, isTracking, localElapsed, orgTimezone, onLimitReached }: {
+function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone, activeProjectId, isTracking, localElapsed, orgTimezone, onLimitReached, onNonWorkDay }: {
   user: User;
   projects: Project[];
   onSelect: (p: Project) => void;
@@ -3188,6 +3366,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   localElapsed?: number;
   orgTimezone?: string;
   onLimitReached?: (type: 'daily' | 'weekly', limitHours: number, projectName?: string) => void;
+  onNonWorkDay?: (dayName: string, scheduleLabel: string, projectName?: string) => void;
 }) {
   const getProjectToday = (p: Project) => {
     if (isTracking && activeProjectId && p.id === activeProjectId) {
@@ -3224,6 +3403,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
 
   const isWeeklyLimitReached = weeklyLimitSecs !== null && totalWeek >= weeklyLimitSecs;
   const isDailyLimitReached = dailyLimitSecs !== null && totalToday >= dailyLimitSecs;
+  const isNonWorkDay = !isWorkDayNow(user.work_days, orgTimezone);
 
   const todayProgressPct = dailyLimitSecs
     ? Math.min(100, Math.round((displayTotalToday / dailyLimitSecs) * 100))
@@ -3332,6 +3512,12 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                     className="project-card"
                     onClick={() => {
                       if (user.tracking_enabled === false) return;
+                      if (isNonWorkDay) {
+                        const todayName = WEEKDAY_FULL[isoWeekdayIn(orgTimezone)];
+                        setTrackingError(`${todayName} is not one of your scheduled working days.`);
+                        onNonWorkDay?.(todayName, workDaysLabel(user.work_days), p.name);
+                        return;
+                      }
                       if (isWeeklyLimitReached) {
                         setTrackingError(`Weekly limit (${weeklyLimitHours}h) reached. Please contact your manager.`);
                         onLimitReached?.('weekly', weeklyLimitHours || 0, p.name);
