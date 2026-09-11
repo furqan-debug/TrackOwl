@@ -3,10 +3,10 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
     ChevronLeft, ChevronRight,
-    Palmtree, AlertCircle, Info, RefreshCw,
+    Palmtree, AlertCircle, Info,
     Plus, Trash2, StickyNote, X, Repeat
 } from 'lucide-react';
-import { PageLayout, LoadingState, Modal, Input, Button, DatePicker } from '../components/ui';
+import { PageLayout, LoadingState, Modal, Input, Button, DatePicker, RefreshButton } from '../components/ui';
 import clsx from 'clsx';
 
 interface TimeOffRequest {
@@ -71,6 +71,10 @@ function nextOccurrence(h: Holiday, fromStr: string): string {
     return thisYear >= fromStr ? thisYear : `${fromYear + 1}-${h.date.slice(5)}`;
 }
 
+// Shortest time the refresh button stays in its loading state, so a fast
+// fetch still shows the user that the click registered.
+const MIN_REFRESH_FEEDBACK_MS = 650;
+
 export function Calendar() {
     const { profile, displayTimezone } = useAuth();
     const orgTz = displayTimezone || 'UTC';
@@ -103,6 +107,7 @@ export function Calendar() {
         if (!orgId) return;
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
+        const refreshStartedAt = Date.now();
 
         try {
             const year = currentDate.getFullYear();
@@ -149,6 +154,15 @@ export function Calendar() {
             console.error(err);
         } finally {
             setLoading(false);
+            // A month of holidays and notes comes back in well under a second,
+            // so without a floor the indicator shows for a frame or two and the
+            // button looks like it did nothing.
+            if (isSilent) {
+                const held = Date.now() - refreshStartedAt;
+                if (held < MIN_REFRESH_FEEDBACK_MS) {
+                    await new Promise(resolve => setTimeout(resolve, MIN_REFRESH_FEEDBACK_MS - held));
+                }
+            }
             setRefreshing(false);
         }
     }
@@ -273,15 +287,11 @@ export function Calendar() {
                         </Button>
                     )}
 
-                    <button
+                    <RefreshButton
                         onClick={() => fetchData(true)}
-                        className={clsx(
-                            "w-10 h-10 flex items-center justify-center glass-panel rounded-md transition-all shadow-shell-sm",
-                            refreshing ? "text-primary animate-spin" : "text-text-muted hover:text-slate-900"
-                        )}
-                    >
-                        <RefreshCw className="w-4 h-4" />
-                    </button>
+                        refreshing={refreshing}
+                        label="Refresh calendar"
+                    />
                 </div>
             }
         >
