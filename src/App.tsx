@@ -717,20 +717,26 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
           </div>
 
           <div className="settings-footer">
-            <button onClick={save} disabled={isSaving || uploading} className="btn btn-primary btn-save">
-              <Save size={18} />
-              <span>{isSaving ? 'Saving Changes...' : 'Save Changes'}</span>
-            </button>
-            <button onClick={() => { onBack(); onLogout(); }} className="btn-logout-settings">
-              <LogOut size={16} />
-              <span>Log Out</span>
-            </button>
+            {/* Save and Log Out share a row: both are everyday actions and
+                neither needs the full width of the panel. */}
+            <div className="settings-footer-row">
+              <button onClick={save} disabled={isSaving || uploading} className="btn btn-primary btn-save">
+                <Save size={16} />
+                <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+              </button>
+              <button onClick={() => { onBack(); onLogout(); }} className="btn-logout-settings">
+                <LogOut size={15} />
+                <span>Log Out</span>
+              </button>
+            </div>
+
+            {/* Deleting an account is irreversible, so it sits on its own line
+                rather than a click away from Save. */}
             <button
               onClick={() => { setShowDeleteConfirm(true); setDeleteError(null); }}
               className="btn-delete-account"
-              style={{ marginTop: '0.5rem', background: 'transparent', border: '1px solid var(--error, #ef4444)', color: 'var(--error, #ef4444)', borderRadius: 8, padding: '0.5rem 1rem', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}
             >
-              <Trash2 size={14} />
+              <Trash2 size={15} />
               <span>Delete My Account</span>
             </button>
           </div>

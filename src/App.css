@@ -1633,14 +1633,25 @@ input:checked+.slider:before {
   gap: 1rem;
 }
 
-.btn-save {
-  width: 100%;
-  justify-content: center;
+/* Save on the left, Log Out on the right, equal halves so neither reads as
+   the more important of the two. */
+.settings-footer-row {
+  display: flex;
   gap: 0.75rem;
-  padding: 1rem !important;
-  font-size: 1rem !important;
-  font-weight: 700 !important;
-  border-radius: var(--r-xl) !important;
+}
+
+.settings-footer-row > * {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.btn-save {
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  border-radius: var(--r-lg) !important;
 }
 
 .btn-logout-settings {
@@ -1651,8 +1662,8 @@ input:checked+.slider:before {
   background: transparent;
   border: 1px solid var(--border);
   color: var(--danger);
-  padding: 0.875rem;
-  border-radius: var(--r-xl);
+  padding: 0.75rem 1rem;
+  border-radius: var(--r-lg);
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
@@ -1663,6 +1674,42 @@ input:checked+.slider:before {
   background: var(--danger-bg);
   border-color: var(--danger);
   color: var(--danger-text);
+}
+
+/* Destructive and irreversible, so it carries a real red rather than the
+   neutral outline the other two use — enough to read as a warning without
+   shouting over the rest of the panel. */
+.btn-delete-account {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: var(--r-lg);
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-delete-account:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #b91c1c;
+}
+
+/* The panel sits on a dark ground in dark mode, where #dc2626 goes muddy. */
+@media (prefers-color-scheme: dark) {
+  .btn-delete-account {
+    color: #f87171;
+  }
+  .btn-delete-account:hover {
+    color: #fca5a5;
+  }
 }
 
 /* Forms & Inputs */
