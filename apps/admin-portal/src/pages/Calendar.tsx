@@ -293,7 +293,8 @@ export function Calendar() {
                         aria-busy={refreshing}
                         aria-label={refreshing ? "Refreshing calendar" : "Refresh calendar"}
                         className={clsx(
-                            "w-10 h-10 flex items-center justify-center glass-panel rounded-md transition-all shadow-shell-sm cursor-default text-text-muted",
+                            // Size and shape match the Team Overview button.
+                            "w-10 h-10 md:w-12 md:h-12 flex items-center justify-center border border-border rounded-2xl transition-all duration-300 shrink-0 cursor-default text-text-muted",
                             refreshing && "is-refreshing"
                         )}
                     >
