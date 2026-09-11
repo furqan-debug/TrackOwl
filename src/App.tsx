@@ -415,14 +415,18 @@ function AppFooter({ lastSyncTime, isSyncing, onSync, isOnline }: {
 // ─────────────────────────────────────────────────────────────────────────────
 function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
   user: User;
-  onSave: (updated: Partial<User>) => Promise<void>;
+  onSave: (updated: Partial<User>) => Promise<boolean>;
   onBack: () => void;
   onLogout: () => void;
   onDeleteAccount: () => Promise<void>;
 }) {
   const [fullName, setFullName] = useState(user.full_name);
   const [phone, setPhone] = useState(user.phone || '');
-  const [avatarUrl, setAvatarUrl] = useState(user.avatar_url || '');
+  // A picked picture is held here, unsent, until Save Changes. Nothing reaches
+  // storage or the database before that — picking and then leaving the screen
+  // must leave no trace.
+  const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
+  const [pendingAvatarPreview, setPendingAvatarPreview] = useState<string | null>(null);
   const [notifyTracking, setNotifyTracking] = useState(user.custom_fields?.notification_settings?.tracking_alerts ?? true);
   const [notifyScreenshots, setNotifyScreenshots] = useState(user.custom_fields?.notification_settings?.screenshot_alerts ?? true);
   const [notifyReminders, setNotifyReminders] = useState(user.custom_fields?.notification_settings?.tracking_reminders ?? true);
@@ -464,30 +468,26 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
     });
   }, [user.organization_id]);
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    // Allow the same file to be picked again after a cancel.
+    e.target.value = '';
     if (!file) return;
 
-    setUploading(true);
-    try {
-      const sb = await getSupabase();
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const filePath = `${user.organization_id}/${user.id}/${fileName}`;
-
-      const { error: uploadError } = await sb.storage
-        .from('avatars')
-        .upload(filePath, file);
-
-      if (uploadError) throw uploadError;
-
-      setAvatarUrl(filePath);
-    } catch (err: any) {
-      console.error('Upload failed:', err.message);
-    } finally {
-      setUploading(false);
-    }
+    setPendingAvatarPreview(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(file);
+    });
+    setPendingAvatarFile(file);
   }
+
+  // The preview is a blob URL owned by this component; release it when the
+  // screen goes away so the picked image is not held in memory.
+  useEffect(() => {
+    return () => {
+      if (pendingAvatarPreview) URL.revokeObjectURL(pendingAvatarPreview);
+    };
+  }, [pendingAvatarPreview]);
 
   async function save() {
     setIsSaving(true);
@@ -500,17 +500,71 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
         tracking_reminders: notifyReminders
       }
     };
-    await onSave({
+    const patch: Partial<User> = {
       full_name: fullName,
       phone,
       work_phone: phone,
       personal_phone: phone,
-      avatar_url: avatarUrl,
       custom_fields: {
         ...updatedCustomFields,
         close_behavior: 'quit'
       }
-    });
+    };
+
+    // avatar_url is sent ONLY when a new picture was picked. Sending it every
+    // time is what used to overwrite a portal-uploaded avatar with whatever
+    // this screen happened to load at login — and blank it entirely for anyone
+    // who had none.
+    const previousAvatar = user.avatar_url || null;
+    let uploadedPath: string | null = null;
+
+    if (pendingAvatarFile) {
+      setUploading(true);
+      try {
+        const sb = await getSupabase();
+        const fileExt = pendingAvatarFile.name.split('.').pop();
+        const filePath = `${user.organization_id}/${user.id}/${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await sb.storage
+          .from('avatars')
+          .upload(filePath, pendingAvatarFile);
+        if (uploadError) throw uploadError;
+        uploadedPath = filePath;
+        patch.avatar_url = filePath;
+      } catch (err: any) {
+        console.error('Avatar upload failed:', err?.message);
+        alert('Could not upload your picture. Your other changes were not saved either.');
+        setUploading(false);
+        setIsSaving(false);
+        return;
+      } finally {
+        setUploading(false);
+      }
+    }
+
+    const saved = await onSave(patch);
+
+    if (saved && uploadedPath) {
+      setPendingAvatarFile(null);
+      // Replace means replace: drop the file this one supersedes, but only
+      // after the new path is safely recorded. Cleanup failure is logged and
+      // otherwise ignored — a leftover file is not worth failing a save over.
+      if (previousAvatar && previousAvatar !== uploadedPath) {
+        try {
+          const sb = await getSupabase();
+          await sb.storage.from('avatars').remove([previousAvatar]);
+        } catch (err: any) {
+          console.warn('Could not remove the previous avatar:', err?.message);
+        }
+      }
+    } else if (!saved && uploadedPath) {
+      // The row was not updated, so nothing points at this file. Take it back
+      // out rather than leaving it orphaned.
+      try {
+        const sb = await getSupabase();
+        await sb.storage.from('avatars').remove([uploadedPath]);
+      } catch (_) { /* nothing referenced it anyway */ }
+    }
+
     trackerAPI.setCloseBehavior(closeBehavior);
     setIsSaving(false);
   }
@@ -532,8 +586,10 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
         <div className="settings-card profile-card">
           <div className="avatar-section">
             <div className="avatar-preview-container">
-              {avatarUrl ? (
-                <SignedImage path={avatarUrl} bucket="avatars" className="avatar-preview-large" />
+              {pendingAvatarPreview ? (
+                <img src={pendingAvatarPreview} className="avatar-preview-large" alt="Selected profile picture" />
+              ) : user.avatar_url ? (
+                <SignedImage path={user.avatar_url} bucket="avatars" className="avatar-preview-large" />
               ) : (
                 <div className="avatar-placeholder-large">
                   <UserIcon size={32} />
@@ -2665,19 +2721,27 @@ export default function App() {
     await sb.from('todos').update({ status: 'Done' }).eq('id', todoId);
   }, []);
 
-  async function handleUpdateProfile(updated: Partial<User>) {
-    if (!user) return;
+  async function handleUpdateProfile(updated: Partial<User>): Promise<boolean> {
+    if (!user) return false;
     try {
       const sb = await getSupabase();
-      const { error } = await sb.from('members').update(updated).eq('id', user.id);
+      // count: an UPDATE blocked by RLS matches zero rows and returns NO error,
+      // so without this a rejected write looks exactly like a successful one.
+      const { error, count } = await sb
+        .from('members')
+        .update(updated, { count: 'exact' })
+        .eq('id', user.id);
       if (error) throw error;
+      if (count === 0) throw new Error('Profile update was not permitted.');
 
       const newUser = { ...user, ...updated };
       setUser(newUser);
       localStorage.setItem(USER_KEY, JSON.stringify(newUser));
       setScreen('projects');
+      return true;
     } catch (err: any) {
       alert('Unable to update profile. Please try again or contact support.');
+      return false;
     }
   }
 

@@ -24,6 +24,11 @@ export function ProfilePage() {
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [avatarLoading, setAvatarLoading] = useState(false);
+    // A picked picture is held here, unsent, until Save Changes. Nothing reaches
+    // storage or the database before that, so picking one and navigating away
+    // leaves no trace behind.
+    const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
+    const [pendingAvatarPreview, setPendingAvatarPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const isFullNameValid = fullName.trim().length > 0;
 
@@ -59,61 +64,100 @@ export function ProfilePage() {
         setError(null);
         setSuccess(false);
 
+        const previousAvatar = profile.avatar_url || null;
+        let uploadedPath: string | null = null;
+
         try {
-            const { error } = await supabase
+            // The picture is uploaded here, as part of Save — not when it was
+            // picked. avatar_url is only included when one was actually chosen,
+            // so an ordinary save never touches an existing picture.
+            const patch: Record<string, any> = {
+                full_name: trimmedName,
+                phone: phone,
+                location: location,
+                updated_at: new Date().toISOString()
+            };
+
+            if (pendingAvatarFile) {
+                setAvatarLoading(true);
+                const fileExt = pendingAvatarFile.name.split('.').pop();
+                const filePath = `${profile.organization_id}/${profile.id}/${Date.now()}.${fileExt}`;
+                const { error: uploadError } = await supabase.storage
+                    .from('avatars')
+                    .upload(filePath, pendingAvatarFile);
+                if (uploadError) throw uploadError;
+                uploadedPath = filePath;
+                patch.avatar_url = filePath;
+            }
+
+            // count: an UPDATE blocked by RLS matches zero rows and returns NO
+            // error, so without this a rejected write looks like a success.
+            const { error, count } = await supabase
                 .from('members')
-                .update({
-                    full_name: trimmedName,
-                    phone: phone,
-                    location: location,
-                    updated_at: new Date().toISOString()
-                })
+                .update(patch, { count: 'exact' })
                 .eq('id', profile.id);
 
             if (error) throw error;
+            if (count === 0) throw new Error('Profile update was not permitted.');
+
+            if (uploadedPath) {
+                setPendingAvatarFile(null);
+                setPendingAvatarPreview(prev => {
+                    if (prev) URL.revokeObjectURL(prev);
+                    return null;
+                });
+                // Replace means replace: remove the file this one supersedes,
+                // but only now that the new path is safely recorded. A failed
+                // cleanup is logged, never surfaced — a leftover file is not
+                // worth failing a save over.
+                if (previousAvatar && previousAvatar !== uploadedPath) {
+                    try {
+                        await supabase.storage.from('avatars').remove([previousAvatar]);
+                    } catch (cleanupErr: any) {
+                        console.warn('Could not remove the previous avatar:', cleanupErr?.message);
+                    }
+                }
+            }
             
             await refreshProfile();
             setSuccess(true);
             setTimeout(() => setSuccess(false), 3000);
         } catch (err: any) {
             setError(err.message);
+            // Nothing points at the file we just uploaded, so take it back out
+            // rather than leaving it orphaned in the bucket.
+            if (uploadedPath) {
+                try {
+                    await supabase.storage.from('avatars').remove([uploadedPath]);
+                } catch (_) { /* nothing referenced it anyway */ }
+            }
         } finally {
+            setAvatarLoading(false);
             setLoading(false);
         }
     }
 
-    async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
+        // Allow the same file to be chosen again after a cancel.
+        e.target.value = '';
         if (!file || !profile) return;
 
-        setAvatarLoading(true);
         setError(null);
-
-        try {
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}.${fileExt}`;
-            const filePath = `${profile.organization_id}/${profile.id}/${fileName}`;
-
-            const { error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(filePath, file);
-
-            if (uploadError) throw uploadError;
-
-            const { error: updateError } = await supabase
-                .from('members')
-                .update({ avatar_url: filePath })
-                .eq('id', profile.id);
-
-            if (updateError) throw updateError;
-            
-            await refreshProfile();
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setAvatarLoading(false);
-        }
+        setPendingAvatarPreview(prev => {
+            if (prev) URL.revokeObjectURL(prev);
+            return URL.createObjectURL(file);
+        });
+        setPendingAvatarFile(file);
     }
+
+    // The preview is a blob URL owned by this page; release it on unmount so the
+    // picked image is not held in memory.
+    useEffect(() => {
+        return () => {
+            if (pendingAvatarPreview) URL.revokeObjectURL(pendingAvatarPreview);
+        };
+    }, [pendingAvatarPreview]);
 
     return (
         <PageLayout
@@ -145,7 +189,13 @@ export function ProfilePage() {
                             <div className="relative mb-6 z-10">
                                 <div className="w-32 h-32 rounded-[2rem] bg-surface-hover p-1.5 overflow-hidden group/avatar border border-border transition-all duration-500">
                                     <div className="w-full h-full rounded-[1.5rem] bg-surface overflow-hidden relative">
-                                        {profile?.avatar_url ? (
+                                        {pendingAvatarPreview ? (
+                                            <img
+                                                src={pendingAvatarPreview}
+                                                alt="Selected profile picture"
+                                                className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110"
+                                            />
+                                        ) : profile?.avatar_url ? (
                                             <SecureImage 
                                                 path={profile.avatar_url} 
                                                 bucket="avatars"
