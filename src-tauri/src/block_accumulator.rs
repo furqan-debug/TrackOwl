@@ -71,12 +71,27 @@ impl BlockAccumulator {
         }
     }
 
-    /// Force-flush a partial block at session stop (may be < 10 samples)
+    /// Force-flush a partial block at session stop (may be < 10 samples).
+    /// Uses last_sample + 60s as block_end.
     pub fn flush_partial(&mut self) -> Option<BlockRecord> {
         if self.samples.is_empty() {
             return None;
         }
         Some(self.flush())
+    }
+
+    /// Force-flush a partial block with an explicit block_end timestamp.
+    /// Use this at stop-time so the block captures the exact stop wall-clock.
+    pub fn flush_partial_at(&mut self, stop_time: chrono::DateTime<chrono::Utc>) -> Option<BlockRecord> {
+        if self.samples.is_empty() {
+            return None;
+        }
+        let mut block = self.flush();
+        // Override block_end with the actual stop timestamp
+        block.block_end = stop_time.to_rfc3339();
+        // Recompute business_date based on the real stop time
+        block.business_date = compute_business_date(&stop_time, &self.org_timezone);
+        Some(block)
     }
 
     fn flush(&mut self) -> BlockRecord {
