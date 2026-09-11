@@ -122,6 +122,30 @@ function normalizeWorkDays(days: unknown): number[] {
     return [...seen].sort((a, b) => a - b);
 }
 
+/**
+ * Why the schedule is not savable yet, or null when it is.
+ *
+ * Ticking a day keeps Working Days in step automatically, so the two only drift
+ * when the count is TYPED — set it to 5 with one day ticked and the member has
+ * a five-day week with four days unaccounted for. Saving that would record a
+ * schedule nobody chose, so it is refused.
+ */
+function workDaysMismatch(workDays: number[], workingDays: number | string): string | null {
+    const required = clampWorkingDays(workingDays);
+    const chosen = workDays.length;
+    if (chosen === required) return null;
+
+    const chosenText = `${chosen} ${chosen === 1 ? 'day is' : 'days are'} selected`;
+    if (chosen < required) {
+        const missing = required - chosen;
+        return `Working Days is set to ${required}, but only ${chosenText}. `
+            + `Pick ${missing} more ${missing === 1 ? 'day' : 'days'}, or change Working Days to ${chosen}.`;
+    }
+    return `Working Days is set to ${required}, but ${chosenText}. `
+        + `Remove ${chosen - required} or change Working Days to ${chosen}.`;
+}
+
+/** [1,2,3] -> "Mon, Tue, Wed" */
 function workDayLabel(days: number[]): string {
     return days
         .map(d => WEEK.find(w => w.id === d)?.short)
@@ -452,6 +476,16 @@ export function MemberFormPage() {
 
         if (!fullName.trim()) {
             setFullNameError('Full Name is required.');
+            return;
+        }
+
+        // The days a member works must add up to the number of days they work.
+        const scheduleProblem = workDaysMismatch(workDays, workingDays);
+        if (scheduleProblem) {
+            setError(scheduleProblem);
+            // Send them to the tab holding the fields they need to change,
+            // otherwise the banner names a control they cannot see.
+            setActiveTab('Limits');
             return;
         }
 
@@ -1334,6 +1368,13 @@ export function MemberFormPage() {
                                                             )}
                                                         </p>
                                                     </div>
+
+                                                    {workDaysMismatch(workDays, workingDays) && (
+                                                        <p className="flex items-start gap-2 text-[11px] font-bold text-amber-500">
+                                                            <AlertCircle className="w-3.5 h-3.5 shrink-0 mt-px" />
+                                                            {workDaysMismatch(workDays, workingDays)}
+                                                        </p>
+                                                    )}
 
                                                     <div className="flex flex-wrap gap-2">
                                                         {WEEK.map(day => {
