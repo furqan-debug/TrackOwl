@@ -24,6 +24,9 @@ pub struct AppState {
     pub user_id: Option<String>,
     pub org_id: Option<String>,
     pub tracking_running: Arc<Mutex<bool>>,
+    /// Signals that the tracker thread has finished its post-stop partial flush.
+    /// stop_tracking waits for this before syncing blocks / calling rpc_stop_session_v2.
+    pub tracker_done: Arc<Mutex<bool>>,
     /// Controls the always-on sync loop — independent of tracking sessions.
     /// Set true when the user logs in (set_auth_token), false only on app exit.
     pub sync_running: Arc<Mutex<bool>>,
@@ -51,6 +54,7 @@ impl Default for AppState {
             user_id: None,
             org_id: None,
             tracking_running: Arc::new(Mutex::new(false)),
+            tracker_done: Arc::new(Mutex::new(true)), // true = no tracker running
             sync_running: Arc::new(Mutex::new(false)),
             counts: Arc::new(tracker::TrackerCounts::default()),
             db: Arc::new(Mutex::new(db)),
@@ -287,13 +291,14 @@ fn start_tracking(
         }
     }
     
-    let (cfg, counts, running, auth_arc, db_arc): (SupabaseConfig, Arc<tracker::TrackerCounts>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>) = {
+    let (cfg, counts, running, tracker_done, auth_arc, db_arc): (SupabaseConfig, Arc<tracker::TrackerCounts>, Arc<Mutex<bool>>, Arc<Mutex<bool>>, Arc<Mutex<Option<String>>>, Arc<Mutex<Option<rusqlite::Connection>>>) = {
         let s = state.lock().unwrap();
         *s.auth_token.lock().unwrap() = Some(token.clone());
         let res = (
             SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() },
             Arc::clone(&s.counts),
             Arc::clone(&s.tracking_running),
+            Arc::clone(&s.tracker_done),
             Arc::clone(&s.auth_token),
             Arc::clone(&s.db),
         );
@@ -392,6 +397,8 @@ fn start_tracking(
                         *s.plan_type.lock().unwrap() = plan_type.clone();
                         *s.screenshots_enabled.lock().unwrap() = screenshots_enabled;
                         *s.tracking_running.lock().unwrap() = true;
+                        // Mark tracker as not-done so stop_tracking will wait for partial flush
+                        *s.tracker_done.lock().unwrap() = false;
                     }
 
                     // Reset counters atomics
@@ -405,7 +412,7 @@ fn start_tracking(
                     // Start native trackers
                     tracker::start_sample_loop_inner(
                         app.clone(), Arc::clone(&counts), session_id.clone(),
-                        cfg.clone(), Arc::clone(&running), 60_000,
+                        cfg.clone(), Arc::clone(&running), Arc::clone(&tracker_done), 60_000,
                         Arc::clone(&db_arc), Arc::clone(&auth_arc),
                         plan_type.clone(),
                         org_timezone.clone(),
@@ -439,13 +446,14 @@ fn start_tracking(
 /// invoke('stop_tracking')
 #[tauri::command]
 fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>) -> TrackingResult {
-    let (cfg, auth_arc, session_id, running, db_arc, user_id, org_id, plan_type, screenshots_enabled) = {
+    let (cfg, auth_arc, session_id, running, tracker_done, db_arc, user_id, org_id, plan_type, screenshots_enabled) = {
         let mut s = state.lock().unwrap();
         let res = (
             SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() },
             Arc::clone(&s.auth_token),
             s.active_session_id.take(),
             Arc::clone(&s.tracking_running),
+            Arc::clone(&s.tracker_done),
             Arc::clone(&s.db),
             s.user_id.clone(),
             s.org_id.clone(),
@@ -455,10 +463,29 @@ fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>
         res
     };
 
+    // Capture the exact stop time BEFORE signaling the tracker thread to stop.
+    // This is the authoritative ended_at — the wall-clock moment the user clicked Stop.
+    let stop_time = chrono::Utc::now().to_rfc3339();
+
     *running.lock().unwrap() = false;
 
-    // Wait briefly (300ms) for the sample loop thread to exit its sleep tick and flush the partial block
-    std::thread::sleep(std::time::Duration::from_millis(300));
+    // Wait for the tracker thread to finish its post-stop partial block flush.
+    // The tracker thread sets tracker_done = true after flush_block_record() returns.
+    // Poll for up to 3 seconds (30 × 100ms); fall back after timeout.
+    {
+        let mut waited_ms = 0u64;
+        loop {
+            let done = *tracker_done.lock().unwrap();
+            if done { break; }
+            if waited_ms >= 3000 {
+                println!("[lib] ⚠️ Timed out waiting for tracker thread flush ({}ms). Proceeding with sync.", waited_ms);
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            waited_ms += 100;
+        }
+        println!("[lib] ✅ Tracker thread finished partial flush after {}ms", waited_ms);
+    }
 
     // ── Mandatory STOP screenshot ─────────────────────────────────────────────
     if screenshots_enabled && (plan_type == "Premium" || plan_type == "Trial") && session_id.is_some() && user_id.is_some() {
@@ -489,7 +516,7 @@ fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>
 
     if let Some(sid) = session_id {
         let token = auth_arc.lock().unwrap().clone();
-        let stop_time = chrono::Utc::now().to_rfc3339();
+        // Use the stop_time captured at the moment the user clicked Stop
         let body = serde_json::json!({
             "p_session_id": sid,
             "p_ended_at": stop_time
@@ -525,7 +552,7 @@ fn resume_tracking(
     app: tauri::AppHandle,
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> TrackingResult {
-    let (cfg, session_id, counts, running, auth_arc, db_arc, user_id, org_id, plan_type, screenshots_enabled) = {
+    let (cfg, session_id, counts, running, tracker_done, auth_arc, db_arc, user_id, org_id, plan_type, screenshots_enabled) = {
         let s = state.lock().unwrap();
         // Guard against duplicate loops
         if *s.tracking_running.lock().unwrap() {
@@ -540,6 +567,7 @@ fn resume_tracking(
             s.active_session_id.clone(),
             Arc::clone(&s.counts),
             Arc::clone(&s.tracking_running),
+            Arc::clone(&s.tracker_done),
             Arc::clone(&s.auth_token),
             Arc::clone(&s.db),
             s.user_id.clone(),
@@ -559,10 +587,12 @@ fn resume_tracking(
     };
 
     *running.lock().unwrap() = true;
+    // Reset done-flag so stop_tracking will wait for the resumed tracker's partial flush
+    *tracker_done.lock().unwrap() = false;
 
     tracker::start_sample_loop(
         app.clone(), Arc::clone(&counts), sid.clone(),
-        cfg.clone(), Arc::clone(&running), 60_000, Arc::clone(&db_arc), Arc::clone(&auth_arc),
+        cfg.clone(), Arc::clone(&running), Arc::clone(&tracker_done), 60_000, Arc::clone(&db_arc), Arc::clone(&auth_arc),
         plan_type.clone(),
     );
     if screenshots_enabled {
