@@ -1181,7 +1181,7 @@ export default function App() {
       // 1. Fetch user's sessions for this week (needed by both block_records and fallback paths)
       const { data: sessionData, error: sessionErr } = await sb
         .from('sessions')
-        .select('id, project_id, started_at, ended_at')
+        .select('id, project_id, started_at, ended_at, manual')
         .eq('user_id', userId)
         .gte('started_at', weekStartIso);
 
@@ -1328,6 +1328,25 @@ export default function App() {
             statsMap[pid].sampleCount++;
           });
         });
+      }
+
+      // ── Manual sessions: add elapsed duration directly ───────────────────────
+      // Manual time entries (created from admin portal) have no block_records.
+      // We compute their duration from started_at / ended_at and add to statsMap.
+      const dateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: orgTimezone, year: 'numeric', month: '2-digit', day: '2-digit' });
+      for (const s of (sessionData || [])) {
+        if (s.manual !== true) continue;
+        const pid = s.project_id;
+        if (!pid || !statsMap[pid]) continue;
+        const startMs = new Date(s.started_at).getTime();
+        const endMs = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
+        const durationSecs = Math.max(0, Math.round((endMs - startMs) / 1000));
+        statsMap[pid].weeklySeconds += durationSecs;
+        // Credit to today if the session's start date (in org timezone) is today
+        const sessionDate = dateFormatter.format(new Date(s.started_at));
+        if (sessionDate === todayStr) {
+          statsMap[pid].todaySeconds += durationSecs;
+        }
       }
 
       // Apply limit floor: after a limit-triggered stop, DB rounding or lag must never drop below the reached limit.
