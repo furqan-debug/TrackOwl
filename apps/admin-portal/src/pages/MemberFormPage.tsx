@@ -97,6 +97,38 @@ function clampWorkingDays(value: number | string): number {
     return Math.min(MAX_WORKING_DAYS, Math.max(MIN_WORKING_DAYS, n));
 }
 
+// ── Which days of the week ─────────────────────────────────────────────────
+// ISO weekday numbers, 1 = Monday through 7 = Sunday, matching the stored
+// column and EXTRACT(ISODOW FROM ts).
+
+const WEEK: { id: number; short: string; full: string }[] = [
+    { id: 1, short: 'Mon', full: 'Monday' },
+    { id: 2, short: 'Tue', full: 'Tuesday' },
+    { id: 3, short: 'Wed', full: 'Wednesday' },
+    { id: 4, short: 'Thu', full: 'Thursday' },
+    { id: 5, short: 'Fri', full: 'Friday' },
+    { id: 6, short: 'Sat', full: 'Saturday' },
+    { id: 7, short: 'Sun', full: 'Sunday' },
+];
+
+/** Week order, no duplicates, nothing outside 1-7. */
+function normalizeWorkDays(days: unknown): number[] {
+    if (!Array.isArray(days)) return [];
+    const seen = new Set<number>();
+    for (const d of days) {
+        const n = Math.round(Number(d));
+        if (isFinite(n) && n >= 1 && n <= 7) seen.add(n);
+    }
+    return [...seen].sort((a, b) => a - b);
+}
+
+function workDayLabel(days: number[]): string {
+    return days
+        .map(d => WEEK.find(w => w.id === d)?.short)
+        .filter(Boolean)
+        .join(', ');
+}
+
 
 const TAB_CONFIG = [
     {
@@ -190,6 +222,7 @@ export function MemberFormPage() {
     const [weeklyLimit, setWeeklyLimit] = useState('40');
     const [dailyLimit, setDailyLimit] = useState('8');
     const [workingDays, setWorkingDays] = useState('5');
+    const [workDays, setWorkDays] = useState<number[]>([1, 2, 3, 4, 5]);
 
     // Editing one limit recalculates the dependent one, so the three always
     // describe the same schedule. Which one moves depends on what was edited:
@@ -230,9 +263,40 @@ export function MemberFormPage() {
         // any second digit is invalid regardless of what follows it.
         const days = clampWorkingDays(parsed);
         setWorkingDays(String(days));
+        // Lowering the count cannot leave more days ticked than are allowed.
+        // The earliest days in the week are kept, since that is the shape of an
+        // ordinary schedule — dropping Friday from Mon-Fri, not Monday.
+        setWorkDays(prev => (prev.length > days ? prev.slice(0, days) : prev));
         const daily = hmToHours(dailyLimit);
         if (!isFinite(daily)) return;
         setWeeklyLimit(hoursToHM(Math.min(MAX_WEEKLY_HOURS, daily * days)));
+    };
+
+    // The picker and the Working Days field drive each other:
+    //   tick or untick a day  ->  Working Days becomes the number ticked
+    //   type a smaller number ->  the selection is trimmed to fit
+    //
+    // Ticking is no longer blocked at the typed number, because it cannot be:
+    // the moment a tick sets Working Days to the count, a cap equal to that
+    // count would freeze the picker at whatever was ticked first. The days are
+    // the source of truth; the number reports them.
+    const toggleWorkDay = (dayId: number) => {
+        const selected = workDays.includes(dayId);
+
+        // A member works at least one day, and working_days has a CHECK
+        // constraint of 1-7 — so the last remaining day cannot be removed.
+        if (selected && workDays.length === 1) return;
+
+        const next = selected
+            ? workDays.filter(d => d !== dayId)
+            : [...workDays, dayId].sort((a, b) => a - b);
+
+        setWorkDays(next);
+        setWorkingDays(String(next.length));
+
+        const daily = hmToHours(dailyLimit);
+        if (!isFinite(daily)) return;
+        setWeeklyLimit(hoursToHM(Math.min(MAX_WEEKLY_HOURS, daily * next.length)));
     };
     const [department, setDepartment] = useState('');
     const [employeeId, setEmployeeId] = useState('');
@@ -300,6 +364,13 @@ export function MemberFormPage() {
                 setWeeklyLimit(hoursToHM(data.weekly_limit) || '40.00');
                 setDailyLimit(hoursToHM(data.daily_limit) || '8.00');
                 setWorkingDays(data.working_days?.toString() || '5');
+                const loadedCap = clampWorkingDays(data.working_days ?? DEFAULT_WORKING_DAYS);
+                setWorkDays(
+                    (data.work_days && data.work_days.length > 0
+                        ? normalizeWorkDays(data.work_days)
+                        : [1, 2, 3, 4, 5]
+                    ).slice(0, loadedCap)
+                );
                 setDepartment(data.department || '');
                 setEmployeeId(data.employee_id || '');
                 setEmployeeType(data.employee_type || 'Full-time');
@@ -396,6 +467,7 @@ export function MemberFormPage() {
                 weekly_limit: Math.round(hmToHours(weeklyLimit) * 100) / 100 || 0,
                 daily_limit: Math.round(hmToHours(dailyLimit) * 100) / 100 || 0,
                 working_days: clampWorkingDays(workingDays),
+                work_days: normalizeWorkDays(workDays).slice(0, clampWorkingDays(workingDays)),
                 department,
                 employee_id: employeeId,
                 employee_type: employeeType,
@@ -1231,6 +1303,71 @@ export function MemberFormPage() {
                                                         }
                                                         placeholder="40.00"
                                                     />
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                                                        <p className="text-[10px] font-black text-text-muted uppercase tracking-widest">
+                                                            Working Day Selection
+                                                        </p>
+                                                        <p className="text-[11px] font-bold">
+                                                            {workDays.length === 0 ? (
+                                                                <span className="text-text-muted/70">
+                                                                    No days selected
+                                                                </span>
+                                                            ) : (
+                                                                <>
+                                                                    <span className="text-primary">
+                                                                        {workDayLabel(workDays)}
+                                                                    </span>
+                                                                    <span className="text-text-muted">
+                                                                        {' \u00b7 '}
+                                                                        {workDays.length}{' '}
+                                                                        {workDays.length === 1 ? 'day' : 'days'}
+                                                                        {workDays.length <
+                                                                            clampWorkingDays(workingDays) &&
+                                                                            ' of ' +
+                                                                                clampWorkingDays(workingDays) +
+                                                                                ' allowed'}
+                                                                    </span>
+                                                                </>
+                                                            )}
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {WEEK.map(day => {
+                                                            const selected = workDays.includes(day.id);
+                                                            // The only day left cannot be unticked — a member
+                                                            // works at least one day of the week.
+                                                            const locked =
+                                                                selected && workDays.length === 1;
+                                                            return (
+                                                                <button
+                                                                    key={day.id}
+                                                                    type="button"
+                                                                    onClick={() => toggleWorkDay(day.id)}
+                                                                    disabled={locked}
+                                                                    aria-pressed={selected}
+                                                                    title={
+                                                                        locked
+                                                                            ? day.full +
+                                                                              ' \u2014 at least one working day is required'
+                                                                            : day.full
+                                                                    }
+                                                                    className={clsx(
+                                                                        'px-4 h-11 rounded-xl text-[12px] font-bold border transition-all shadow-shell-sm',
+                                                                        selected
+                                                                            ? 'bg-primary/15 border-primary text-primary'
+                                                                            : 'bg-surface-solid border-border text-text-muted hover:border-primary/50 hover:text-text-main',
+                                                                        locked && 'cursor-not-allowed'
+                                                                    )}
+                                                                >
+                                                                    {day.short}
+                                                                </button>
+                                                            );
+                                                        })}
+                                                    </div>
                                                 </div>
 
                                                 <div className="space-y-3">

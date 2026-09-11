@@ -115,6 +115,14 @@ serve(async (req) => {
     // Upsert member record - PRESERVE ACTIVE STATUS
     const newStatus = existingMember?.status === 'Active' ? 'Active' : 'Pending';
 
+    // work_days must never name more days than working_days, or the row fails
+    // the members_work_days_within_working_days constraint. Mon-first is the
+    // ordinary shape of a week; the admin rearranges it on the member form.
+    const invitedWorkingDays = working_days !== undefined
+      ? working_days
+      : (existingMember?.working_days || 5);
+    const invitedWorkDays = [1, 2, 3, 4, 5, 6, 7].slice(0, invitedWorkingDays);
+
     const { data: newMember, error: createError } = await supabaseClient
       .from('members')
       .upsert({
@@ -126,7 +134,8 @@ serve(async (req) => {
         bill_rate: bill_rate !== undefined ? bill_rate : (existingMember?.bill_rate || 0),
         weekly_limit: weekly_limit !== undefined ? weekly_limit : (existingMember?.weekly_limit || 40),
         daily_limit: daily_limit !== undefined ? daily_limit : (existingMember?.daily_limit || 8),
-        working_days: working_days !== undefined ? working_days : (existingMember?.working_days || 5),
+        working_days: invitedWorkingDays,
+        work_days: invitedWorkDays,
         status: newStatus
       }, { onConflict: 'email' })
       .select()
