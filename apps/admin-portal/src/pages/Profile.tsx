@@ -111,10 +111,16 @@ export function ProfilePage() {
                 // cleanup is logged, never surfaced — a leftover file is not
                 // worth failing a save over.
                 if (previousAvatar && previousAvatar !== uploadedPath) {
-                    try {
-                        await supabase.storage.from('avatars').remove([previousAvatar]);
-                    } catch (cleanupErr: any) {
-                        console.warn('Could not remove the previous avatar:', cleanupErr?.message);
+                    // remove() RESOLVES with an error rather than throwing, so a
+                    // try/catch around it sees nothing and a blocked delete
+                    // passes silently. Read the returned error instead.
+                    const { error: removeErr } = await supabase.storage
+                        .from('avatars')
+                        .remove([previousAvatar]);
+                    if (removeErr) {
+                        // Not surfaced: the new picture is saved and correct, and
+                        // a leftover file is not worth failing the save over.
+                        console.warn('Could not remove the previous avatar:', removeErr.message, previousAvatar);
                     }
                 }
             }
@@ -127,9 +133,12 @@ export function ProfilePage() {
             // Nothing points at the file we just uploaded, so take it back out
             // rather than leaving it orphaned in the bucket.
             if (uploadedPath) {
-                try {
-                    await supabase.storage.from('avatars').remove([uploadedPath]);
-                } catch (_) { /* nothing referenced it anyway */ }
+                const { error: rollbackErr } = await supabase.storage
+                    .from('avatars')
+                    .remove([uploadedPath]);
+                if (rollbackErr) {
+                    console.warn('Could not remove the unsaved upload:', rollbackErr.message, uploadedPath);
+                }
             }
         } finally {
             setAvatarLoading(false);
