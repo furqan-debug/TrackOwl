@@ -3,10 +3,10 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
     ChevronLeft, ChevronRight,
-    Palmtree, AlertCircle, Info, RefreshCw,
+    Palmtree, AlertCircle, Info,
     Plus, Trash2, StickyNote, X, Repeat
 } from 'lucide-react';
-import { PageLayout, LoadingState, Modal, Input, Button, DatePicker } from '../components/ui';
+import { PageLayout, LoadingState, Modal, Input, Button, DatePicker, RefreshButton } from '../components/ui';
 import clsx from 'clsx';
 
 interface TimeOffRequest {
@@ -287,21 +287,11 @@ export function Calendar() {
                         </Button>
                     )}
 
-                    <button
+                    <RefreshButton
                         onClick={() => fetchData(true)}
-                        disabled={refreshing}
-                        aria-busy={refreshing}
-                        aria-label={refreshing ? "Refreshing calendar" : "Refresh calendar"}
-                        className={clsx(
-                            // Size and shape match the Team Overview button.
-                            "w-10 h-10 md:w-12 md:h-12 flex items-center justify-center border border-border rounded-2xl transition-all duration-300 shrink-0 cursor-default text-text-muted",
-                            refreshing && "is-refreshing"
-                        )}
-                    >
-                        {/* Spin the ICON, not the button. Spinning the button
-                            rotated its panel background and shadow with it. */}
-                        <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
-                    </button>
+                        refreshing={refreshing}
+                        label="Refresh calendar"
+                    />
                 </div>
             }
         >

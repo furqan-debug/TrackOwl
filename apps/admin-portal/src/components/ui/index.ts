@@ -5,6 +5,7 @@ export { Card } from './Card';
 export { KpiCard } from './KpiCard';
 export { EmptyState } from './EmptyState';
 export { LoadingState } from './LoadingState';
+export { RefreshButton } from './RefreshButton';
 export { FilterSelect } from './FilterSelect';
 export { PageHeader } from './PageHeader';
 export { StatusBadge } from './StatusBadge';

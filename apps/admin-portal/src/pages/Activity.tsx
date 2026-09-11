@@ -8,7 +8,7 @@ import {
     ChevronLeft, ChevronRight,
     Search, Camera
 } from 'lucide-react';
-import { PageLayout, StatMetric, FilterSelect, LoadingState, ScreenshotModal, DatePicker } from '../components/ui';
+import { PageLayout, StatMetric, FilterSelect, LoadingState, ScreenshotModal, DatePicker, RefreshButton } from '../components/ui';
 import clsx from 'clsx';
 
 import { AppUsageList } from '../components/activity/AppUsageList';
@@ -291,15 +291,11 @@ export function Activity() {
                         </button>
                     </div>
 
-                    <button
+                    <RefreshButton
                         onClick={() => fetchData(false, true)}
-                        className={clsx(
-                            "w-10 h-10 flex items-center justify-center border border-border rounded-xl transition-all",
-                            refreshing ? "text-primary bg-primary/5" : "text-text-muted hover:text-text-main hover:bg-surface-hover"
-                        )}
-                    >
-                        <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
-                    </button>
+                        refreshing={refreshing}
+                        label="Refresh screenshots"
+                    />
                 </div>
             }
         >

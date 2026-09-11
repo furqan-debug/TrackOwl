@@ -4,14 +4,14 @@ import { supabase } from '../lib/supabase';
 import {
     Clock, Users, FolderOpen,
     Camera, TrendingUp, BarChart3,
-    Monitor, Globe, RefreshCw,
+    Monitor, Globe,
     ChevronLeft, ChevronRight,
     MoreHorizontal,
     ArrowUpRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
-import { PageLayout, EmptyState, LoadingState, StatMetric, ScreenshotModal, DatePicker } from './ui';
+import { PageLayout, EmptyState, LoadingState, StatMetric, ScreenshotModal, DatePicker, RefreshButton } from './ui';
 import { FeatureLockOverlay } from './access/FeatureLockOverlay';
 import { SecureImage } from './ui/SecureImage';
 import {
@@ -497,17 +497,11 @@ export function Dashboard() {
                             <span>Today</span>
                         </button>
                     )}
-                    <button
+                    <RefreshButton
                         onClick={() => fetchDashboardData(true, true)}
-                        className={clsx(
-                            "w-10 h-10 md:w-12 md:h-12 flex items-center justify-center border border-border rounded-2xl transition-all duration-300 shrink-0",
-                            // Same colours as the Screenshots and Org Settings
-                            // buttons: theme tokens, so they hold in both themes.
-                            refreshing ? "text-primary bg-primary/5" : "text-text-muted hover:text-text-main hover:bg-surface-hover"
-                        )}
-                    >
-                        <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
-                    </button>
+                        refreshing={refreshing}
+                        label="Refresh dashboard"
+                    />
                 </div>
             }
         >
