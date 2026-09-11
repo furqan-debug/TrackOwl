@@ -17,7 +17,15 @@ export function SecureImage({ path, bucket = 'screenshots', className, ...props 
 
     useEffect(() => {
         const fetchSignedUrl = async () => {
-            if (!path) return;
+            // No path means there is nothing to sign. Returning without clearing
+            // `loading` left the component spinning forever instead of falling
+            // through to the placeholder.
+            if (!path) {
+                setUrl(null);
+                setError(true);
+                setLoading(false);
+                return;
+            }
             
             // 1. If it's already a full URL AND NOT a Supabase storage URL, use it directly
             if (path.startsWith('http') && !path.includes('.supabase.co/storage/v1/object/')) {
