@@ -558,6 +558,21 @@ fn resume_tracking(
         },
     };
 
+    // Clear the input counters before the loop restarts.
+    //
+    // The listener spawned at start_tracking never stops - it keeps counting
+    // through a pause, while no sample loop is running to drain it. Without
+    // this, everything the user did while paused was banked and dumped into
+    // the first sample after resuming, so that minute always read as active
+    // whether or not they had touched the machine since.
+    //
+    // Deliberately here and not in pause_tracking: the sample loop flushes its
+    // partial block on the way out, and clearing the counters underneath it
+    // would discard input belonging to the minute being written.
+    counts.mouse_count.store(0, std::sync::atomic::Ordering::Relaxed);
+    counts.keyboard_count.store(0, std::sync::atomic::Ordering::Relaxed);
+    counts.active_seconds.store(0, std::sync::atomic::Ordering::Relaxed);
+
     *running.lock().unwrap() = true;
 
     tracker::start_sample_loop(
