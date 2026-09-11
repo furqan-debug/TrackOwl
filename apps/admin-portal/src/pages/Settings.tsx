@@ -4,9 +4,14 @@ import {
     ShieldCheck, Mail, HardDrive, Loader2, RefreshCw, ChevronDown, Check
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { PageLayout } from '../components/ui';
+import { PageLayout, LoadingState } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import clsx from 'clsx';
+
+// Reading one row of settings returns in well under a second, so without a
+// floor the loader appears for a frame or two and the page looks like it never
+// reloaded. Long enough to read, short enough not to be in the way.
+const MIN_SYNC_MS = 700;
 
 interface AppSettings {
     screenshotIntervalMin: number;
@@ -51,6 +56,7 @@ export function SettingsPage() {
     const fetchSettings = useCallback(async () => {
         if (!profile?.organization_id) return;
         setLoading(true);
+        const startedAt = Date.now();
         try {
             const { data, error } = await supabase
                 .from('organizations')
@@ -66,6 +72,10 @@ export function SettingsPage() {
             console.error('Failed to load settings:', err);
             setError("Failed to load organization policies.");
         } finally {
+            const elapsed = Date.now() - startedAt;
+            if (elapsed < MIN_SYNC_MS) {
+                await new Promise(resolve => setTimeout(resolve, MIN_SYNC_MS - elapsed));
+            }
             setLoading(false);
         }
     }, [profile?.organization_id]);
@@ -138,12 +148,9 @@ export function SettingsPage() {
 
     if (loading) {
         return (
-            <PageLayout title="Settings" description="Accessing organization shard..." maxWidth="full">
-                <div className="h-[40vh] flex flex-col items-center justify-center gap-4">
-                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                    <p className="text-[11px] font-bold tracking-widest text-text-muted uppercase">Syncing Shard</p>
-                </div>
-            </PageLayout>
+            <div className="h-screen flex items-center justify-center bg-surface">
+                <LoadingState />
+            </div>
         );
     }
 
@@ -177,11 +184,11 @@ export function SettingsPage() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={fetchSettings}
-                        disabled={saving}
+                        disabled={saving || loading}
                         className="p-2.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 text-text-muted transition-all duration-200"
                         title="Refresh Policies"
                     >
-                        <RefreshCw className={clsx("w-5 h-5", saving && "animate-spin")} />
+                        <RefreshCw className={clsx("w-5 h-5", loading && "animate-spin")} />
                     </button>
                      <button
                         onClick={handleSave}
