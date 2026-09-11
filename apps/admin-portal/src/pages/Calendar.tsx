@@ -71,6 +71,10 @@ function nextOccurrence(h: Holiday, fromStr: string): string {
     return thisYear >= fromStr ? thisYear : `${fromYear + 1}-${h.date.slice(5)}`;
 }
 
+// Shortest time the refresh button stays in its loading state, so a fast
+// fetch still shows the user that the click registered.
+const MIN_REFRESH_FEEDBACK_MS = 650;
+
 export function Calendar() {
     const { profile, displayTimezone } = useAuth();
     const orgTz = displayTimezone || 'UTC';
@@ -103,6 +107,7 @@ export function Calendar() {
         if (!orgId) return;
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
+        const refreshStartedAt = Date.now();
 
         try {
             const year = currentDate.getFullYear();
@@ -149,6 +154,15 @@ export function Calendar() {
             console.error(err);
         } finally {
             setLoading(false);
+            // A month of holidays and notes comes back in well under a second,
+            // so without a floor the indicator shows for a frame or two and the
+            // button looks like it did nothing.
+            if (isSilent) {
+                const held = Date.now() - refreshStartedAt;
+                if (held < MIN_REFRESH_FEEDBACK_MS) {
+                    await new Promise(resolve => setTimeout(resolve, MIN_REFRESH_FEEDBACK_MS - held));
+                }
+            }
             setRefreshing(false);
         }
     }
@@ -275,12 +289,17 @@ export function Calendar() {
 
                     <button
                         onClick={() => fetchData(true)}
+                        disabled={refreshing}
+                        aria-busy={refreshing}
+                        aria-label={refreshing ? "Refreshing calendar" : "Refresh calendar"}
                         className={clsx(
-                            "w-10 h-10 flex items-center justify-center glass-panel rounded-md transition-all shadow-shell-sm",
-                            refreshing ? "text-primary animate-spin" : "text-text-muted hover:text-slate-900"
+                            "w-10 h-10 flex items-center justify-center glass-panel rounded-md transition-all shadow-shell-sm cursor-default text-text-muted",
+                            refreshing && "is-refreshing"
                         )}
                     >
-                        <RefreshCw className="w-4 h-4" />
+                        {/* Spin the ICON, not the button. Spinning the button
+                            rotated its panel background and shadow with it. */}
+                        <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
                     </button>
                 </div>
             }
