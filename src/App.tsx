@@ -549,11 +549,21 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
       // after the new path is safely recorded. Cleanup failure is logged and
       // otherwise ignored — a leftover file is not worth failing a save over.
       if (previousAvatar && previousAvatar !== uploadedPath) {
+        // remove() RESOLVES with an error rather than throwing, so a try/catch
+        // around it sees nothing and a blocked delete passes silently. Read the
+        // returned error instead.
         try {
           const sb = await getSupabase();
-          await sb.storage.from('avatars').remove([previousAvatar]);
+          const { error: removeErr } = await sb.storage
+            .from('avatars')
+            .remove([previousAvatar]);
+          if (removeErr) {
+            // Not surfaced: the new picture is saved and correct, and a
+            // leftover file is not worth failing the save over.
+            console.warn('Could not remove the previous avatar:', removeErr.message, previousAvatar);
+          }
         } catch (err: any) {
-          console.warn('Could not remove the previous avatar:', err?.message);
+          console.warn('Could not reach storage to remove the previous avatar:', err?.message);
         }
       }
     } else if (!saved && uploadedPath) {
@@ -561,8 +571,15 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
       // out rather than leaving it orphaned.
       try {
         const sb = await getSupabase();
-        await sb.storage.from('avatars').remove([uploadedPath]);
-      } catch (_) { /* nothing referenced it anyway */ }
+        const { error: rollbackErr } = await sb.storage
+          .from('avatars')
+          .remove([uploadedPath]);
+        if (rollbackErr) {
+          console.warn('Could not remove the unsaved upload:', rollbackErr.message, uploadedPath);
+        }
+      } catch (err: any) {
+        console.warn('Could not reach storage to remove the unsaved upload:', err?.message);
+      }
     }
 
     trackerAPI.setCloseBehavior(closeBehavior);
@@ -700,20 +717,26 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
           </div>
 
           <div className="settings-footer">
-            <button onClick={save} disabled={isSaving || uploading} className="btn btn-primary btn-save">
-              <Save size={18} />
-              <span>{isSaving ? 'Saving Changes...' : 'Save Changes'}</span>
-            </button>
-            <button onClick={() => { onBack(); onLogout(); }} className="btn-logout-settings">
-              <LogOut size={16} />
-              <span>Log Out</span>
-            </button>
+            {/* Save and Log Out share a row: both are everyday actions and
+                neither needs the full width of the panel. */}
+            <div className="settings-footer-row">
+              <button onClick={save} disabled={isSaving || uploading} className="btn btn-primary btn-save">
+                <Save size={16} />
+                <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+              </button>
+              <button onClick={() => { onBack(); onLogout(); }} className="btn-logout-settings">
+                <LogOut size={15} />
+                <span>Log Out</span>
+              </button>
+            </div>
+
+            {/* Deleting an account is irreversible, so it sits on its own line
+                rather than a click away from Save. */}
             <button
               onClick={() => { setShowDeleteConfirm(true); setDeleteError(null); }}
               className="btn-delete-account"
-              style={{ marginTop: '0.5rem', background: 'transparent', border: '1px solid var(--error, #ef4444)', color: 'var(--error, #ef4444)', borderRadius: 8, padding: '0.5rem 1rem', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', justifyContent: 'center' }}
             >
-              <Trash2 size={14} />
+              <Trash2 size={15} />
               <span>Delete My Account</span>
             </button>
           </div>
@@ -723,31 +746,37 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
       {/* Delete Account Confirmation Modal */}
       {showDeleteConfirm && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: 'var(--card-bg)', borderRadius: 16, padding: '1.75rem', maxWidth: 360, width: '100%', boxShadow: '0 20px 60px rgba(0,0,0,0.4)', border: '1px solid var(--border-light)' }}>
-            <div style={{ textAlign: 'center', marginBottom: '1.25rem' }}>
-              <div style={{ background: 'rgba(239,68,68,0.1)', borderRadius: '50%', width: 52, height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
-                <Trash2 size={22} style={{ color: '#ef4444' }} />
+          <div style={{ background: '#ffffff', borderRadius: 18, padding: '2rem 1.75rem 1.75rem', maxWidth: 360, width: '100%', boxShadow: '0 24px 64px rgba(15,23,42,0.28)', border: '1px solid #e2e8f0' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+              {/* Two rings around the icon so the warning reads before the
+                  words do, without the flat pink circle it had before. */}
+              <div style={{ width: 68, height: 68, margin: '0 auto 1.125rem', borderRadius: '50%', background: 'rgba(239,68,68,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(239,68,68,0.13)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Trash2 size={24} strokeWidth={2} style={{ color: '#dc2626' }} />
+                </div>
               </div>
-              <h3 style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>Delete Account?</h3>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-                This will permanently delete your account and all associated tracked time, screenshots, and activity data. <strong>This cannot be undone.</strong>
+              <h3 style={{ fontWeight: 700, fontSize: '1.125rem', letterSpacing: '-0.01em', color: '#0f172a', margin: '0 0 0.5rem' }}>Delete Account?</h3>
+              <p style={{ fontSize: '0.8125rem', color: '#64748b', lineHeight: 1.6, margin: 0 }}>
+                This will permanently delete your account and all associated tracked time, screenshots, and activity data.
+                <br />
+                <strong style={{ color: '#dc2626' }}>This cannot be undone.</strong>
               </p>
             </div>
             {deleteError && (
-              <p style={{ color: '#ef4444', fontSize: '0.75rem', textAlign: 'center', marginBottom: '0.75rem' }}>{deleteError}</p>
+              <p style={{ color: '#b91c1c', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 8, padding: '0.5rem 0.625rem', fontSize: '0.75rem', lineHeight: 1.45, textAlign: 'center', marginBottom: '0.875rem' }}>{deleteError}</p>
             )}
             <div style={{ display: 'flex', gap: '0.75rem' }}>
               <button
                 onClick={() => setShowDeleteConfirm(false)}
                 disabled={deleteLoading}
-                style={{ flex: 1, padding: '0.625rem', borderRadius: 8, border: '1px solid var(--border-light)', background: 'transparent', color: 'var(--text-primary)', fontWeight: 600, fontSize: '0.875rem', cursor: 'pointer' }}
+                style={{ flex: 1, padding: '0.6875rem', borderRadius: 10, border: '1px solid #86efac', background: '#dcfce7', color: '#15803d', fontWeight: 700, fontSize: '0.875rem', cursor: deleteLoading ? 'not-allowed' : 'pointer', opacity: deleteLoading ? 0.6 : 1, transition: 'all 0.15s ease' }}
               >
                 Cancel
               </button>
               <button
                 onClick={handleDeleteAccount}
                 disabled={deleteLoading}
-                style={{ flex: 1, padding: '0.625rem', borderRadius: 8, border: 'none', background: '#ef4444', color: '#fff', fontWeight: 700, fontSize: '0.875rem', cursor: deleteLoading ? 'not-allowed' : 'pointer', opacity: deleteLoading ? 0.7 : 1 }}
+                style={{ flex: 1, padding: '0.6875rem', borderRadius: 10, border: 'none', background: '#ef4444', color: '#fff', fontWeight: 700, fontSize: '0.875rem', cursor: deleteLoading ? 'not-allowed' : 'pointer', opacity: deleteLoading ? 0.7 : 1, transition: 'all 0.15s ease' }}
               >
                 {deleteLoading ? 'Deleting...' : 'Yes, Delete'}
               </button>
@@ -2689,16 +2718,26 @@ export default function App() {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) throw new Error('No active session. Please log in again.');
 
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-    const response = await fetch(`${apiBase}/api/auth/delete-account`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json'
-      }
+    // Was a POST to an Express server on localhost:3001. That server is gone -
+    // the app talks to Supabase directly now - so this failed with
+    // ERR_CONNECTION_REFUSED for every user who pressed the button. The work
+    // happens in the delete-account Edge Function, which needs the service role
+    // to remove the auth user and so cannot run in the client.
+    const { data, error: fnError } = await sb.functions.invoke('delete-account', {
+      headers: { Authorization: `Bearer ${session.access_token}` }
     });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Failed to delete account');
+
+    if (fnError) {
+      // A non-2xx reply carries the reason in the body; surface that rather
+      // than the generic "Edge Function returned a non-2xx status code".
+      let message = fnError.message || 'Failed to delete account';
+      try {
+        const body = await (fnError as any)?.context?.json?.();
+        if (body?.error) message = body.error;
+      } catch { /* keep the generic message */ }
+      throw new Error(message);
+    }
+    if (data?.error) throw new Error(data.error);
 
     // Clear all local state and log out
     await handleStop();
