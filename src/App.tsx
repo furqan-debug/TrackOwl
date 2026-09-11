@@ -549,11 +549,21 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
       // after the new path is safely recorded. Cleanup failure is logged and
       // otherwise ignored — a leftover file is not worth failing a save over.
       if (previousAvatar && previousAvatar !== uploadedPath) {
+        // remove() RESOLVES with an error rather than throwing, so a try/catch
+        // around it sees nothing and a blocked delete passes silently. Read the
+        // returned error instead.
         try {
           const sb = await getSupabase();
-          await sb.storage.from('avatars').remove([previousAvatar]);
+          const { error: removeErr } = await sb.storage
+            .from('avatars')
+            .remove([previousAvatar]);
+          if (removeErr) {
+            // Not surfaced: the new picture is saved and correct, and a
+            // leftover file is not worth failing the save over.
+            console.warn('Could not remove the previous avatar:', removeErr.message, previousAvatar);
+          }
         } catch (err: any) {
-          console.warn('Could not remove the previous avatar:', err?.message);
+          console.warn('Could not reach storage to remove the previous avatar:', err?.message);
         }
       }
     } else if (!saved && uploadedPath) {
@@ -561,8 +571,15 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
       // out rather than leaving it orphaned.
       try {
         const sb = await getSupabase();
-        await sb.storage.from('avatars').remove([uploadedPath]);
-      } catch (_) { /* nothing referenced it anyway */ }
+        const { error: rollbackErr } = await sb.storage
+          .from('avatars')
+          .remove([uploadedPath]);
+        if (rollbackErr) {
+          console.warn('Could not remove the unsaved upload:', rollbackErr.message, uploadedPath);
+        }
+      } catch (err: any) {
+        console.warn('Could not reach storage to remove the unsaved upload:', err?.message);
+      }
     }
 
     trackerAPI.setCloseBehavior(closeBehavior);
