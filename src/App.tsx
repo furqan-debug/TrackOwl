@@ -44,6 +44,7 @@ interface User {
   role: string;
   weekly_limit?: number;
   daily_limit?: number;
+  work_days?: number[];
   idle_limit?: number;
   idle_enabled?: boolean;
   keep_idle_mode?: 'prompt' | 'always' | 'never';
@@ -264,6 +265,45 @@ function tzToCity(tz: string): string {
   const parts = tz.split('/');
   const city = parts[parts.length - 1].replace(/_/g, ' ');
   return city;
+}
+
+// ── Working days ───────────────────────────────────────────────────────────
+// members.work_days holds ISO weekday numbers, 1 = Monday through 7 = Sunday.
+// The day is always decided in the ORGANIZATION's timezone, not the device's,
+// so a distributed team shares one answer to "is today a working day" — the
+// same rule that already attributes tracked time to org days.
+
+const WEEKDAY_SHORT = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEKDAY_FULL = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+/** ISO weekday (1-7) for `at` as seen in `tz`. Falls back to UTC on a bad zone. */
+function isoWeekdayIn(tz: string | undefined, at: Date = new Date()): number {
+  let short: string;
+  try {
+    short = at.toLocaleDateString('en-US', { timeZone: tz || 'UTC', weekday: 'short' });
+  } catch {
+    short = at.toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short' });
+  }
+  const idx = WEEKDAY_SHORT.indexOf(short);
+  return idx > 0 ? idx : 1;
+}
+
+/**
+ * Whether tracking is allowed right now.
+ *
+ * A missing or empty schedule means "not configured", and an unconfigured
+ * member must not be locked out — so it allows tracking. Only an explicit
+ * list of days can block anything.
+ */
+function isWorkDayNow(workDays: number[] | undefined | null, tz: string | undefined, at: Date = new Date()): boolean {
+  if (!Array.isArray(workDays) || workDays.length === 0) return true;
+  return workDays.includes(isoWeekdayIn(tz, at));
+}
+
+/** [1,2,3] -> "Mon, Tue, Wed" */
+function workDaysLabel(workDays: number[] | undefined | null): string {
+  if (!Array.isArray(workDays) || workDays.length === 0) return '';
+  return [...workDays].sort((a, b) => a - b).map(d => WEEKDAY_SHORT[d] || '').filter(Boolean).join(', ');
 }
 
 function LocalClock({ orgTimezone }: { orgTimezone?: string }) {
@@ -899,9 +939,13 @@ export default function App() {
   // cannot push the display below the snapped limit value. Expires after 30s.
   const limitFloorRef = useRef<{ projectId: string; minTodaySecs: number; expiresAt: number } | null>(null);
   const [limitReachedModal, setLimitReachedModal] = useState<{
-    type: 'daily' | 'weekly';
-    limitHours: number;
+    type: 'daily' | 'weekly' | 'non_work_day';
+    limitHours?: number;
     projectName?: string;
+    /** non_work_day only: the day it actually is, in org time. */
+    dayName?: string;
+    /** non_work_day only: the days the member is scheduled for. */
+    scheduleLabel?: string;
   } | null>(null);
 
   // Auto-focus window, set always-on-top, and handle keyboard shortcuts when limit modal triggers
@@ -1297,6 +1341,7 @@ export default function App() {
           role: member.role,
           weekly_limit: member.weekly_limit,
           daily_limit: member.daily_limit,
+          work_days: member.work_days,
           idle_limit: member.idle_limit,
           idle_enabled: member.idle_enabled,
           keep_idle_mode: member.keep_idle_mode,
@@ -2060,6 +2105,26 @@ export default function App() {
         
         // Limit check inside interval to avoid React re-renders
         if (user && activeProject) {
+          // Midnight rollover: a session started on a working day must not run
+          // on into one the member is not scheduled for. Checked on the same
+          // tick as the hour limits so there is one stop path, not two.
+          if (!isWorkDayNow(user.work_days, orgTimezoneRef.current || orgTimezone)) {
+            const todayName = WEEKDAY_FULL[isoWeekdayIn(orgTimezoneRef.current || orgTimezone)];
+            const msg = `${todayName} is not a scheduled working day. Session stopped.`;
+            if (timerRef.current) clearInterval(timerRef.current);
+            trackerAPI.focusWindow?.(true);
+            trackerAPI.showNotification('Outside Working Days', msg);
+            setLimitReachedModal({
+              type: 'non_work_day',
+              dayName: todayName,
+              scheduleLabel: workDaysLabel(user.work_days),
+              projectName: activeProject?.name
+            });
+            handleStop();
+            setTrackingError(msg);
+            return;
+          }
+
           const dailyLimitHours = user.daily_limit;
           const weeklyLimitHours = user.weekly_limit;
 
@@ -2198,6 +2263,7 @@ export default function App() {
         role: member.role,
         weekly_limit: member.weekly_limit,
         daily_limit: member.daily_limit,
+        work_days: member.work_days,
         idle_limit: member.idle_limit,
         idle_enabled: member.idle_enabled,
         keep_idle_mode: member.keep_idle_mode,
@@ -2271,6 +2337,24 @@ export default function App() {
     if (user?.tracking_enabled === false) {
       console.log('TRACKING BLOCKED: tracking_enabled is false');
       setTrackingError('Tracking has been disabled for your account by an administrator.');
+      return;
+    }
+
+    // Enforcement: the member's scheduled working days, in ORG time.
+    // Checked before the hour limits because it is the more fundamental
+    // question — an unscheduled day has no allowance to spend in the first
+    // place.
+    const orgTz = orgTimezoneRef.current || orgTimezone;
+    if (!isWorkDayNow(user?.work_days, orgTz)) {
+      const todayName = WEEKDAY_FULL[isoWeekdayIn(orgTz)];
+      setTrackingError(`${todayName} is not one of your scheduled working days.`);
+      trackerAPI.focusWindow?.(true);
+      setLimitReachedModal({
+        type: 'non_work_day',
+        dayName: todayName,
+        scheduleLabel: workDaysLabel(user?.work_days),
+        projectName: project.name
+      });
       return;
     }
 
@@ -2778,24 +2862,51 @@ export default function App() {
 
               {/* Title & Subtitle */}
               <h2 className="idle-title" style={{ color: '#fff', fontSize: '1.2rem', marginBottom: '0.5rem' }}>
-                {limitReachedModal.type === 'daily' ? 'Daily Limit Reached' : 'Weekly Limit Reached'}
+                {limitReachedModal.type === 'non_work_day'
+                  ? 'Not a Working Day'
+                  : limitReachedModal.type === 'daily'
+                    ? 'Daily Limit Reached'
+                    : 'Weekly Limit Reached'}
               </h2>
               <p className="idle-subtitle" style={{ color: '#94a3b8', fontSize: '0.8125rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
-                You have reached your allocated{' '}
-                <strong style={{ color: '#f1f5f9' }}>{limitReachedModal.limitHours}h</strong>{' '}
-                {limitReachedModal.type === 'daily' ? 'daily' : 'weekly'} working limit. Tracking has been stopped and your tracked time has been securely saved.
+                {limitReachedModal.type === 'non_work_day' ? (
+                  <>
+                    <strong style={{ color: '#f1f5f9' }}>{limitReachedModal.dayName}</strong>{' '}
+                    is not one of your scheduled working days, so tracking is unavailable.
+                    Any time already tracked has been securely saved. Contact your manager
+                    if your schedule needs changing.
+                  </>
+                ) : (
+                  <>
+                    You have reached your allocated{' '}
+                    <strong style={{ color: '#f1f5f9' }}>{limitReachedModal.limitHours}h</strong>{' '}
+                    {limitReachedModal.type === 'daily' ? 'daily' : 'weekly'} working limit. Tracking has been stopped and your tracked time has been securely saved.
+                  </>
+                )}
               </p>
 
               {/* Stat row */}
               <div className="idle-stat-row" style={{ marginBottom: '1.25rem' }}>
                 <div className="idle-stat">
-                  <span className="idle-stat-label">Allocated Limit</span>
-                  <span className="idle-stat-val" style={{ color: '#f1f5f9' }}>{limitReachedModal.limitHours}h 00m</span>
+                  <span className="idle-stat-label">
+                    {limitReachedModal.type === 'non_work_day' ? 'Your Working Days' : 'Allocated Limit'}
+                  </span>
+                  <span className="idle-stat-val" style={{ color: '#f1f5f9' }}>
+                    {limitReachedModal.type === 'non_work_day'
+                      ? (limitReachedModal.scheduleLabel || 'Not set')
+                      : `${limitReachedModal.limitHours}h 00m`}
+                  </span>
                 </div>
                 <div className="idle-stat-sep" />
                 <div className="idle-stat">
-                  <span className="idle-stat-label">Session Status</span>
-                  <span className="idle-stat-val" style={{ color: '#ef4444' }}>Completed</span>
+                  <span className="idle-stat-label">
+                    {limitReachedModal.type === 'non_work_day' ? 'Today' : 'Session Status'}
+                  </span>
+                  <span className="idle-stat-val" style={{ color: '#ef4444' }}>
+                    {limitReachedModal.type === 'non_work_day'
+                      ? (limitReachedModal.dayName || '')
+                      : 'Completed'}
+                  </span>
                 </div>
               </div>
 
@@ -2852,6 +2963,9 @@ export default function App() {
               isTracking={isTracking}
               localElapsed={liveElapsed}
               orgTimezone={orgTimezone}
+              onNonWorkDay={(dayName, scheduleLabel, projectName) => {
+                setLimitReachedModal({ type: 'non_work_day', dayName, scheduleLabel, projectName });
+              }}
               onLimitReached={(type, limitHours, projectName) => {
                 trackerAPI.focusWindow?.(true);
                 setLimitReachedModal({ type, limitHours, projectName });
@@ -3173,7 +3287,7 @@ function MyTasksPanel({ todos, onDone, disabled }: { todos: Todo[]; onDone: (id:
 // ─────────────────────────────────────────────────────────────────────────────
 // Screen: Projects
 // ─────────────────────────────────────────────────────────────────────────────
-function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone, activeProjectId, isTracking, localElapsed, orgTimezone, onLimitReached }: {
+function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, trackingError, setTrackingError, todos, onTodoDone, activeProjectId, isTracking, localElapsed, orgTimezone, onLimitReached, onNonWorkDay }: {
   user: User;
   projects: Project[];
   onSelect: (p: Project) => void;
@@ -3188,6 +3302,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   localElapsed?: number;
   orgTimezone?: string;
   onLimitReached?: (type: 'daily' | 'weekly', limitHours: number, projectName?: string) => void;
+  onNonWorkDay?: (dayName: string, scheduleLabel: string, projectName?: string) => void;
 }) {
   const getProjectToday = (p: Project) => {
     if (isTracking && activeProjectId && p.id === activeProjectId) {
@@ -3224,6 +3339,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
 
   const isWeeklyLimitReached = weeklyLimitSecs !== null && totalWeek >= weeklyLimitSecs;
   const isDailyLimitReached = dailyLimitSecs !== null && totalToday >= dailyLimitSecs;
+  const isNonWorkDay = !isWorkDayNow(user.work_days, orgTimezone);
 
   const todayProgressPct = dailyLimitSecs
     ? Math.min(100, Math.round((displayTotalToday / dailyLimitSecs) * 100))
@@ -3332,6 +3448,12 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                     className="project-card"
                     onClick={() => {
                       if (user.tracking_enabled === false) return;
+                      if (isNonWorkDay) {
+                        const todayName = WEEKDAY_FULL[isoWeekdayIn(orgTimezone)];
+                        setTrackingError(`${todayName} is not one of your scheduled working days.`);
+                        onNonWorkDay?.(todayName, workDaysLabel(user.work_days), p.name);
+                        return;
+                      }
                       if (isWeeklyLimitReached) {
                         setTrackingError(`Weekly limit (${weeklyLimitHours}h) reached. Please contact your manager.`);
                         onLimitReached?.('weekly', weeklyLimitHours || 0, p.name);
