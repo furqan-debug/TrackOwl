@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
     Save, CheckCircle, Database, Activity,
-    ShieldCheck, Mail, HardDrive, Loader2, RefreshCw, ChevronDown, Check
+    ShieldCheck, Mail, HardDrive, Loader2, ChevronDown, Check
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { PageLayout, LoadingState } from '../components/ui';
+import { PageLayout, LoadingState, RefreshButton } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import clsx from 'clsx';
 
@@ -182,14 +182,11 @@ export function SettingsPage() {
             description="Organization Policies & Protocols"
             actions={
                 <div className="flex items-center gap-3">
-                    <button
+                    <RefreshButton
                         onClick={fetchSettings}
-                        disabled={saving || loading}
-                        className="p-2.5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 text-text-muted transition-all duration-200"
-                        title="Refresh Policies"
-                    >
-                        <RefreshCw className={clsx("w-5 h-5", loading && "animate-spin")} />
-                    </button>
+                        refreshing={loading}
+                        label="Refresh policies"
+                    />
                      <button
                         onClick={handleSave}
                         disabled={saving || isRestricted}
