@@ -15,7 +15,6 @@ import { PageLayout, EmptyState, LoadingState, StatMetric, ScreenshotModal, Date
 import { FeatureLockOverlay } from './access/FeatureLockOverlay';
 import { SecureImage } from './ui/SecureImage';
 import {
-    getEffectiveEnd,
     formatDuration,
     orgLocalToUtc
 } from '../lib/dataUtils';
@@ -209,12 +208,6 @@ export function Dashboard() {
             // Auto-terminate any ghost sessions in database based on Termination Grace Period
             await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });
 
-            const nowIso = new Date().toISOString();
-
-            const todayStrOrg = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
-            const todayStartUtc = orgLocalToUtc(todayStrOrg, 'start', displayTimezone || 'UTC');
-            const todayStartIso = todayStartUtc.toISOString();
-
             // Compute previous week's bounds in orgTimezone
             const prevWeekStartUtc = new Date(startUtc.getTime() - 1 * 24 * 60 * 60 * 1000);
             const prevWeekEndUtc = new Date(endUtc.getTime() - 1 * 24 * 60 * 60 * 1000);
@@ -239,14 +232,21 @@ export function Dashboard() {
             } else if (projectIdsFilter) {
                 sessionsQuery = sessionsQuery.in('project_id', projectIdsFilter);
             }
+
+            let liveSessionsQuery = supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').eq('organization_id', organizationId).is('ended_at', null);
+            if (memberIdsFilter) liveSessionsQuery = liveSessionsQuery.in('user_id', memberIdsFilter);
+            if (projectIdsFilter) liveSessionsQuery = liveSessionsQuery.in('project_id', projectIdsFilter);
+
             const [
                 { data: members },
                 { data: projects },
-                { data: sessions }
+                { data: sessions },
+                { data: liveSessions }
             ] = await Promise.all([
                 membersQuery,
                 projectsQuery,
-                sessionsQuery
+                sessionsQuery,
+                liveSessionsQuery
             ]);
             if (!members || !projects || !sessions) return;
 
@@ -263,21 +263,23 @@ export function Dashboard() {
 
             if (rpcErr) throw rpcErr;
 
-            // Fetch latest active sample check for online status
-            let latestActiveSamples: any[] = [];
-            const activeSessionIds = sessions.filter(s => !s.ended_at || s.ended_at > nowIso).map(s => s.id);
+            // Fetch latest active samples for real-time online/working/idle status check
+            const activeSessionIds = (liveSessions || []).map(s => s.id);
+            const latestActiveSamplesMap = new Map<string, any[]>();
             if (activeSessionIds.length > 0) {
                 const samplePromises = activeSessionIds.map(async (sid) => {
                     const { data } = await supabase
                         .from('activity_samples')
-                        .select('session_id, idle, recorded_at')
+                        .select('session_id, idle, recorded_at, mouse_clicks, key_presses, activity_percent')
                         .eq('session_id', sid)
                         .order('recorded_at', { ascending: false })
-                        .limit(1);
-                    return data?.[0];
+                        .limit(5);
+                    return { sid, samples: data || [] };
                 });
                 const results = await Promise.all(samplePromises);
-                latestActiveSamples = results.filter(Boolean);
+                results.forEach(r => {
+                    if (r.samples) latestActiveSamplesMap.set(r.sid, r.samples);
+                });
             }
 
             const projectMap = Object.fromEntries(projects.map(p => [p.id, p]));
@@ -291,7 +293,7 @@ export function Dashboard() {
             const prevTotalMins = aggregated.prev_total_mins || 0;
             const prevAvgScore = (aggregated.prev_activity_count || 0) > 0 ? Math.round(aggregated.prev_activity_sum / aggregated.prev_activity_count) : 0;
             const trendFocus = prevAvgScore > 0 ? currAvgScore - prevAvgScore : (currAvgScore > 0 ? currAvgScore : 0);
-                                 const trendProductivity = prevTotalMins > 0 ? Math.round(((totalMins - prevTotalMins) / prevTotalMins) * 100) : (totalMins > 0 ? 100 : 0);
+            const trendProductivity = prevTotalMins > 0 ? Math.round(((totalMins - prevTotalMins) / prevTotalMins) * 100) : (totalMins > 0 ? 100 : 0);
             // Populate user stats
             members.forEach(m => {
                 const uStats = (aggregated.user_stats || {})[m.id] || { mins: 0, activity_sum: 0, cnt: 0 };
@@ -341,30 +343,49 @@ export function Dashboard() {
                 .sort((a, b) => b.minutes - a.minutes)
                 .slice(0, 5);
 
+            const statusRank: Record<string, number> = { working: 0, idle: 1, offline: 2 };
             const online: OnlineMember[] = members.map(m => {
-                const activeSession = sessions.find(s => s.user_id === m.id && (!s.ended_at || s.ended_at > nowIso));
-                const todaySessions = sessions.filter(s => s.user_id === m.id && s.started_at >= todayStartIso);
-                let dailyMins = 0;
-                todaySessions.forEach(s => {
-                    const { endMs } = getEffectiveEnd(s.started_at, s.ended_at);
-                    dailyMins += (endMs - new Date(s.started_at).getTime()) / 60000;
-                });
+                const uStats = (aggregated.user_stats || {})[m.id] || { mins: 0, activity_sum: 0, cnt: 0 };
+                const activeSession = (liveSessions || []).find(s => s.user_id === m.id);
                 let status: 'working' | 'idle' | 'offline' = 'offline';
+                let activeProjectName = 'None';
+
                 if (activeSession) {
-                    const latestSample = latestActiveSamples.find(s => s.session_id === activeSession.id);
-                    status = latestSample ? (latestSample.idle ? 'idle' : 'working') : 'working';
+                    activeProjectName = projectMap[activeSession.project_id]?.name || 'Unknown Project';
+                    const samples = latestActiveSamplesMap.get(activeSession.id) || [];
+
+                    if (samples.length === 0) {
+                        const msSinceStart = Date.now() - new Date(activeSession.started_at).getTime();
+                        status = msSinceStart < 5 * 60 * 1000 ? 'working' : 'offline';
+                    } else {
+                        const latestSample = samples[0];
+                        const msSinceLastSample = Date.now() - new Date(latestSample.recorded_at).getTime();
+
+                        if (msSinceLastSample > 5 * 60 * 1000) {
+                            status = 'offline';
+                        } else {
+                            const hasRecentActivity = samples.some(s =>
+                                !s.idle ||
+                                (s.mouse_clicks ?? 0) > 0 ||
+                                (s.key_presses ?? 0) > 0 ||
+                                (s.activity_percent ?? 0) > 0
+                            );
+                            status = hasRecentActivity ? 'working' : 'idle';
+                        }
+                    }
                 }
+
                 return {
                     id: m.id,
                     fullName: m.full_name,
                     email: m.email,
                     avatarUrl: m.avatar_url,
-                    projectName: activeSession ? (projectMap[activeSession.project_id]?.name || 'Unknown Project') : 'None',
-                    timeWorkedToday: dailyMins,
+                    projectName: activeProjectName,
+                    timeWorkedToday: uStats.mins,
                     status,
                     lastActive: activeSession ? activeSession.started_at : m.id
                 };
-            }).sort((a, b) => (a.status === 'offline' ? 1 : 0) - (b.status === 'offline' ? 1 : 0));
+            }).sort((a, b) => (statusRank[a.status] ?? 3) - (statusRank[b.status] ?? 3));
 
             // A newer fetch started while this one was in flight — its results are
             // authoritative, so drop everything computed here rather than letting
