@@ -1,4 +1,4 @@
-﻿-- ==============================================================
+-- ==============================================================
 -- Unified RPCs reading from block_records (Phase 1, Part 2)
 -- Replaces activity_samples-based aggregation with block_records.
 -- Falls back to activity_samples for sessions that predate the migration.
@@ -29,7 +29,7 @@ BEGIN
     SELECT
       business_date::text AS date,
       COALESCE(ROUND(SUM(EXTRACT(EPOCH FROM (block_end - block_start))) FILTER (WHERE credited = true) / 60), 0)::bigint AS total_minutes,
-      COALESCE(AVG(activity_percent) FILTER (WHERE credited = true), 0)::numeric AS activity_sum,
+      COALESCE(SUM(activity_percent) FILTER (WHERE credited = true), 0)::numeric AS activity_sum,
       COUNT(*) FILTER (WHERE credited = true) AS sample_count
     FROM public.block_records
     WHERE organization_id = p_org_id
@@ -47,7 +47,7 @@ BEGIN
       user_id,
       business_date::text AS date,
       COALESCE(ROUND(SUM(EXTRACT(EPOCH FROM (block_end - block_start))) FILTER (WHERE credited = true) / 60), 0)::bigint AS total_minutes,
-      COALESCE(AVG(activity_percent) FILTER (WHERE credited = true), 0)::numeric AS activity_sum,
+      COALESCE(SUM(activity_percent) FILTER (WHERE credited = true), 0)::numeric AS activity_sum,
       COUNT(*) FILTER (WHERE credited = true) AS sample_count
     FROM public.block_records
     WHERE organization_id = p_org_id

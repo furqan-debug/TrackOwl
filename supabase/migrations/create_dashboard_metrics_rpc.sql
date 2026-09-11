@@ -1,4 +1,4 @@
-﻿-- ==============================================================
+-- ==============================================================
 -- Updated get_dashboard_metrics to read from block_records
 -- ==============================================================
 
@@ -328,7 +328,13 @@ BEGIN
       ss.user_id,
       ss.file_url as path,
       ss.recorded_at as "recordedAt",
-      0 as "activityPercent"
+      COALESCE((
+        SELECT ast.activity_percent 
+        FROM activity_samples ast 
+        WHERE ast.session_id = ss.session_id 
+        ORDER BY ABS(EXTRACT(EPOCH FROM ast.recorded_at - ss.recorded_at)) ASC 
+        LIMIT 1
+      ), 0) as "activityPercent"
     FROM screenshots ss
     JOIN sessions s ON ss.session_id = s.id
     WHERE ss.organization_id = p_org_id
