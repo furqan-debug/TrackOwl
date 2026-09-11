@@ -297,12 +297,20 @@ export function Dashboard() {
             // Populate user stats
             members.forEach(m => {
                 const uStats = (aggregated.user_stats || {})[m.id] || { mins: 0, activity_sum: 0, cnt: 0 };
-                const uScreens = (aggregated.screenshots || []).filter((s: any) => s.user_id === m.id);
+                const userFocus = uStats.cnt > 0 ? Math.round(uStats.activity_sum / uStats.cnt) : 0;
+                const uScreens = (aggregated.screenshots || [])
+                    .filter((s: any) => s.user_id === m.id)
+                    .map((s: any) => ({
+                        ...s,
+                        activityPercent: (s.activityPercent !== undefined && s.activityPercent > 0)
+                            ? s.activityPercent
+                            : (userFocus > 0 ? userFocus : 0)
+                    }));
                 userRows[m.id] = {
                     userId: m.id,
                     fullName: m.full_name,
                     avatarUrl: m.avatar_url,
-                    activityScore: uStats.cnt > 0 ? Math.round(uStats.activity_sum / uStats.cnt) : 0,
+                    activityScore: userFocus,
                     totalMinutes: uStats.mins,
                     screenshots: uScreens
                 };
@@ -320,7 +328,15 @@ export function Dashboard() {
 
             const finalUserActivity = Object.values(userRows)
                 .filter(r => r.totalMinutes > 0 || r.screenshots.length > 0)
-                .sort((a, b) => (b.totalMinutes * b.activityScore) - (a.totalMinutes * a.activityScore))
+                .sort((a, b) => {
+                    if (b.totalMinutes !== a.totalMinutes) {
+                        return b.totalMinutes - a.totalMinutes;
+                    }
+                    if (b.activityScore !== a.activityScore) {
+                        return b.activityScore - a.activityScore;
+                    }
+                    return b.screenshots.length - a.screenshots.length;
+                })
                 .slice(0, 4);
 
             const finalProjectActivity = Object.entries(aggregated.proj_stats || {})
