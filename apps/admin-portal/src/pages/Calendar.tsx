@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -102,9 +102,16 @@ export function Calendar() {
         if (profile?.organization_id) fetchData();
     }, [currentDate, profile?.organization_id]);
 
+    // Requests can overlap now that the month arrows stay on screen during a
+    // load: clicking through several months quickly used to be throttled by the
+    // page blanking itself. Without this, whichever response arrived LAST would
+    // paint, which is not necessarily the month last asked for.
+    const requestSeqRef = useRef(0);
+
     async function fetchData(isSilent = false) {
         const orgId = profile?.organization_id;
         if (!orgId) return;
+        const mySeq = ++requestSeqRef.current;
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
         const refreshStartedAt = Date.now();
@@ -148,12 +155,17 @@ export function Calendar() {
                 .filter(r => orgMemberIds.has(r.member_id))
                 .map(r => ({ ...r, member_name: memberMap[r.member_id] || 'Unknown Member' })));
 
+            // Superseded while this was in flight — a newer month is authoritative.
+            if (mySeq !== requestSeqRef.current) return;
+
             if (holidaysData) setHolidays(holidaysData);
             setNotes((notesData || []).map(n => ({ ...n, author_name: (n.created_by && memberMap[n.created_by]) || 'Unknown' })));
         } catch (err) {
             console.error(err);
         } finally {
-            setLoading(false);
+            // Only the newest request may clear the spinners; a superseded one
+            // finishing first would report "done" while the real fetch runs on.
+            if (mySeq === requestSeqRef.current) setLoading(false);
             // A month of holidays and notes comes back in well under a second,
             // so without a floor the indicator shows for a frame or two and the
             // button looks like it did nothing.
@@ -163,7 +175,7 @@ export function Calendar() {
                     await new Promise(resolve => setTimeout(resolve, MIN_REFRESH_FEEDBACK_MS - held));
                 }
             }
-            setRefreshing(false);
+            if (mySeq === requestSeqRef.current) setRefreshing(false);
         }
     }
 
@@ -249,8 +261,6 @@ export function Calendar() {
         if (!error) setNotes(prev => prev.filter(n => n.id !== id));
     }
 
-    if (loading) return <div className="h-screen flex items-center justify-center bg-[var(--bg-main)]"><LoadingState message="Syncing operational schedule..." /></div>;
-
     const notesForModalDate = notesModalDate ? notes.filter(n => n.date === notesModalDate) : [];
 
     return (
@@ -295,6 +305,11 @@ export function Calendar() {
                 </div>
             }
         >
+            {loading ? (
+                <div className="min-h-[60vh] flex items-center justify-center">
+                    <LoadingState message="Syncing operational schedule..." />
+                </div>
+            ) : (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pb-20">
 
                 {/* 📅 Compact Grid Shell (9/12) */}
@@ -477,6 +492,7 @@ export function Calendar() {
                     </div>
                 </div>
             </div>
+            )}
 
             {/* ── Add Holiday Modal ────────────────────────────────────────── */}
             <Modal
