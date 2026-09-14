@@ -52,10 +52,14 @@ export function SettingsPage() {
     const [saved, setSaved] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeCategory, setActiveCategory] = useState<SettingCategory>('governance');
+    // Separate from `loading` so the button only pulses for a press, not for
+    // the initial page load.
+    const [refreshing, setRefreshing] = useState(false);
 
-    const fetchSettings = useCallback(async () => {
+    const fetchSettings = useCallback(async (isManual = false) => {
         if (!profile?.organization_id) return;
         setLoading(true);
+        if (isManual) setRefreshing(true);
         const startedAt = Date.now();
         try {
             const { data, error } = await supabase
@@ -77,6 +81,7 @@ export function SettingsPage() {
                 await new Promise(resolve => setTimeout(resolve, MIN_SYNC_MS - elapsed));
             }
             setLoading(false);
+            setRefreshing(false);
         }
     }, [profile?.organization_id]);
 
@@ -146,14 +151,6 @@ export function SettingsPage() {
         }
     }
 
-    if (loading) {
-        return (
-            <div className="h-screen flex items-center justify-center bg-surface">
-                <LoadingState />
-            </div>
-        );
-    }
-
     const categories: { id: SettingCategory; label: string; icon: any }[] = [
         { id: 'governance', label: 'Governance', icon: ShieldCheck },
         { id: 'monitoring', label: 'Monitoring', icon: Activity },
@@ -183,13 +180,18 @@ export function SettingsPage() {
             actions={
                 <div className="flex items-center gap-3">
                     <RefreshButton
-                        onClick={fetchSettings}
-                        refreshing={loading}
+                        onClick={() => fetchSettings(true)}
+                        refreshing={refreshing}
                         label="Refresh policies"
                     />
+                    {/* `loading` matters now that the header survives a reload:
+                        `settings` still holds DEFAULTS until the fetch lands, so a
+                        click during it would write those over the real organization
+                        policies. Previously the whole page was replaced, which hid
+                        this button by accident. */}
                      <button
                         onClick={handleSave}
-                        disabled={saving || isRestricted}
+                        disabled={saving || isRestricted || loading}
                         className={clsx(
                             "settings-save-btn flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-premium",
                             saved ? "bg-emerald-500" : "bg-primary hover:scale-[1.02] active:scale-[0.98]"
@@ -207,6 +209,14 @@ export function SettingsPage() {
                 </div>
             }
         >
+            {/* The loader lives inside the layout, not in place of it: the header
+                keeps its title, Save Changes and the refresh button, so the button
+                that started the reload is still on screen to show it running. */}
+            {loading ? (
+                <div className="min-h-[60vh] flex items-center justify-center">
+                    <LoadingState />
+                </div>
+            ) : (
             <div className="flex flex-col lg:flex-row gap-16 pb-32">
                 {/* 🧭 Sidebar Nav */}
                 <div className="w-full lg:w-64 flex flex-col gap-1">
@@ -382,6 +392,7 @@ export function SettingsPage() {
                     )}
                 </div>
             </div>
+            )}
         </PageLayout>
     );
 }

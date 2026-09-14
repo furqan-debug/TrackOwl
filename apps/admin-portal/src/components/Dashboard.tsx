@@ -202,8 +202,12 @@ export function Dashboard() {
         }
 
         try {
-            if (!isSilent) setLoading(true);
-            else setRefreshing(true);
+            // A manual refresh shows BOTH: the button pulses AND the content
+            // area shows the loader. Setting only `refreshing` left the previous
+            // date's figures on screen for the whole fetch, presented as though
+            // they were the new ones.
+            setLoading(true);
+            if (isSilent) setRefreshing(true);
 
             // Auto-terminate any ghost sessions in database based on Termination Grace Period
             await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });
@@ -457,8 +461,6 @@ export function Dashboard() {
 
     useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
-    if (loading) return <div className="h-screen flex items-center justify-center bg-surface"><LoadingState /></div>;
-
     return (
         <PageLayout
             maxWidth="full"
@@ -501,10 +503,22 @@ export function Dashboard() {
                         onClick={() => fetchDashboardData(true, true)}
                         refreshing={refreshing}
                         label="Refresh dashboard"
+                        // This page's date control is 48px at md, unlike the
+                        // 40px filter pills every other page uses.
+                        className="refresh-btn--lg"
                     />
                 </div>
             }
         >
+            {/* The loader sits inside the layout rather than replacing it, so the
+                title, the date picker and the refresh button all stay put - and
+                the button that started the reload is still on screen to show it
+                running. */}
+            {loading ? (
+                <div className="min-h-[60vh] flex items-center justify-center">
+                    <LoadingState />
+                </div>
+            ) : (
             <div className="flex flex-col gap-12 pb-32">
 
                 {/* 📊 KPI Architecture */}
@@ -979,6 +993,7 @@ export function Dashboard() {
                     </div>
                 </div>
             </div>
+            )}
 
             {enlargedScreenshot && (
                 <ScreenshotModal
