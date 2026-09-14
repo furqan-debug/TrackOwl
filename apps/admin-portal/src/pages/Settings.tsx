@@ -146,14 +146,6 @@ export function SettingsPage() {
         }
     }
 
-    if (loading) {
-        return (
-            <div className="h-screen flex items-center justify-center bg-surface">
-                <LoadingState />
-            </div>
-        );
-    }
-
     const categories: { id: SettingCategory; label: string; icon: any }[] = [
         { id: 'governance', label: 'Governance', icon: ShieldCheck },
         { id: 'monitoring', label: 'Monitoring', icon: Activity },
@@ -187,9 +179,14 @@ export function SettingsPage() {
                         refreshing={loading}
                         label="Refresh policies"
                     />
+                    {/* `loading` matters now that the header survives a reload:
+                        `settings` still holds DEFAULTS until the fetch lands, so a
+                        click during it would write those over the real organization
+                        policies. Previously the whole page was replaced, which hid
+                        this button by accident. */}
                      <button
                         onClick={handleSave}
-                        disabled={saving || isRestricted}
+                        disabled={saving || isRestricted || loading}
                         className={clsx(
                             "settings-save-btn flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold transition-all duration-300 shadow-premium",
                             saved ? "bg-emerald-500" : "bg-primary hover:scale-[1.02] active:scale-[0.98]"
@@ -207,6 +204,14 @@ export function SettingsPage() {
                 </div>
             }
         >
+            {/* The loader lives inside the layout, not in place of it: the header
+                keeps its title, Save Changes and the refresh button, so the button
+                that started the reload is still on screen to show it running. */}
+            {loading ? (
+                <div className="min-h-[60vh] flex items-center justify-center">
+                    <LoadingState />
+                </div>
+            ) : (
             <div className="flex flex-col lg:flex-row gap-16 pb-32">
                 {/* 🧭 Sidebar Nav */}
                 <div className="w-full lg:w-64 flex flex-col gap-1">
@@ -382,6 +387,7 @@ export function SettingsPage() {
                     )}
                 </div>
             </div>
+            )}
         </PageLayout>
     );
 }
