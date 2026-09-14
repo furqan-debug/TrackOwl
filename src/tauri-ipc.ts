@@ -21,6 +21,17 @@ export function isTauri(): boolean {
   return getInvoke() !== null;
 }
 
+export function isWindowsOS(): boolean {
+  if (typeof navigator === 'undefined') return false;
+  const uad = (navigator as any).userAgentData;
+  if (uad?.platform) {
+    return /^win/i.test(uad.platform);
+  }
+  const platform = navigator.platform || '';
+  const ua = navigator.userAgent || '';
+  return /win/i.test(platform) || /windows/i.test(ua);
+}
+
 export const trackerAPI = {
   /** Start a new tracking session — returns { status, session_id?, error? } */
   startTracking: async (projectId: string, userId: string, token?: string) => {
@@ -96,7 +107,7 @@ export const trackerAPI = {
     }
   },
 
-  onUpdateAvailable: (cb: (info: { available: boolean, version: string | null, notes: string | null }) => void) => {
+  onUpdateAvailable: (cb: (info: { available: boolean, version: string | null, notes: string | null, platform?: string }) => void) => {
     if (typeof window !== 'undefined' && (window as any).__TAURI__) {
       return (window as any).__TAURI__.event.listen('update-available', (ev: any) => {
         cb(ev.payload);

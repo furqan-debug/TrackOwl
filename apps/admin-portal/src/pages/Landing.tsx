@@ -1121,7 +1121,7 @@ export function Landing() {
                                 <div className="w-full flex flex-col gap-3 mt-auto">
                                     <div className="relative w-full">
                                         <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.57/TrackOwl_2.0.57_x64-setup.exe"
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.58/TrackOwl_2.0.58_x64-setup.exe"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-[#B8860B] text-white text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
                                             <span className="absolute inset-0 z-0 bg-[#9E7209] -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0" />
                                             <span className="relative z-10 flex items-center justify-center gap-2">
@@ -1132,7 +1132,7 @@ export function Landing() {
                                     </div>
                                     <div className="relative w-full">
                                         <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.57/TrackOwl_2.0.57_x64_en-US.msi"
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.58/TrackOwl_2.0.58_x64_en-US.msi"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-[#F5E6CA] text-[#B8860B] border border-[#EADCBF] text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
                                             <span className="absolute inset-0 z-0 bg-[#EADCBF] -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0" />
                                             <span className="relative z-10 flex items-center justify-center gap-2">
@@ -1154,7 +1154,7 @@ export function Landing() {
                                 <div className="w-full flex flex-col gap-3 mt-auto">
                                     <div className="relative w-full">
                                         <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.57/TrackOwl_2.0.57_aarch64.dmg"
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.58/TrackOwl_2.0.58_aarch64.dmg"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-slate-800 text-white text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
                                             <span className="absolute inset-0 z-0 bg-slate-950 -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0" />
                                             <span className="relative z-10 flex items-center justify-center gap-2">
@@ -1165,7 +1165,7 @@ export function Landing() {
                                     </div>
                                     <div className="relative w-full">
                                         <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.57/TrackOwl_2.0.57_x64.dmg"
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.58/TrackOwl_2.0.58_x64.dmg"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-slate-50 text-slate-800 border border-slate-200 text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
                                             <span className="absolute inset-0 z-0 bg-slate-200 -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0" />
                                             <span className="relative z-10 flex items-center justify-center gap-2">

@@ -9,8 +9,7 @@ import {
    LifeBuoy, MessageSquare, Send, ArrowLeft,
    Bell, ShieldCheck, Smartphone, Trash2
 } from 'lucide-react';
-import { trackerAPI } from './tauri-ipc';
-import { UpdaterOverlay } from './components/UpdaterOverlay';
+import { trackerAPI, isWindowsOS } from './tauri-ipc';
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import './App.css';
@@ -1061,6 +1060,8 @@ export default function App() {
   const [updateVersion, setUpdateVersion] = useState<string | null>(null);
   const [updateInstalling, setUpdateInstalling] = useState(false);
   const [updateProgress, setUpdateProgress] = useState(0);
+  const [updateDismissed, setUpdateDismissed] = useState(false);
+  const [isForcedUpdate, setIsForcedUpdate] = useState(false);
   const memberSubscriptionRef = useRef<any>(null);
   const [lastSyncTime, setLastSyncTime] = useState<Date | null>(() => {
     const stored = localStorage.getItem('lastSyncTime');
@@ -1181,7 +1182,7 @@ export default function App() {
       // 1. Fetch user's sessions for this week (needed by both block_records and fallback paths)
       const { data: sessionData, error: sessionErr } = await sb
         .from('sessions')
-        .select('id, project_id, started_at, ended_at')
+        .select('id, project_id, started_at, ended_at, manual')
         .eq('user_id', userId)
         .gte('started_at', weekStartIso);
 
@@ -1330,6 +1331,25 @@ export default function App() {
         });
       }
 
+      // ── Manual sessions: add elapsed duration directly ───────────────────────
+      // Manual time entries (created from admin portal) have no block_records.
+      // We compute their duration from started_at / ended_at and add to statsMap.
+      const dateFormatter = new Intl.DateTimeFormat('en-CA', { timeZone: orgTimezone, year: 'numeric', month: '2-digit', day: '2-digit' });
+      for (const s of (sessionData || [])) {
+        if (s.manual !== true) continue;
+        const pid = s.project_id;
+        if (!pid || !statsMap[pid]) continue;
+        const startMs = new Date(s.started_at).getTime();
+        const endMs = s.ended_at ? new Date(s.ended_at).getTime() : Date.now();
+        const durationSecs = Math.max(0, Math.round((endMs - startMs) / 1000));
+        statsMap[pid].weeklySeconds += durationSecs;
+        // Credit to today if the session's start date (in org timezone) is today
+        const sessionDate = dateFormatter.format(new Date(s.started_at));
+        if (sessionDate === todayStr) {
+          statsMap[pid].todaySeconds += durationSecs;
+        }
+      }
+
       // Apply limit floor: after a limit-triggered stop, DB rounding or lag must never drop below the reached limit.
       // Check in-memory floor as well as persisted floor for today.
       const floor = limitFloorRef.current;
@@ -1384,16 +1404,6 @@ export default function App() {
   }
 
   useEffect(() => {
-    const tauri = (window as any).__TAURI__;
-    if (tauri?.event) {
-      tauri.event.listen('update-available', (ev: any) => {
-        setUpdateVersion(ev.payload?.version || 'new version');
-      });
-      tauri.event.listen('update-progress', (ev: any) => {
-        if (ev.payload === 100) setUpdateInstalling(false);
-      });
-    }
-
     const saved = loadSession();
     if (!saved) return;
 
@@ -2812,12 +2822,21 @@ export default function App() {
     // Listen for update available
     const unlistenAvailable = trackerAPI.onUpdateAvailable((info: any) => {
       if (info.available && info.version) {
+        const isWin = info.platform ? info.platform === 'windows' : isWindowsOS();
         setUpdateVersion(info.version);
-        setUpdateInstalling(true);
-        trackerAPI.installUpdate().catch((e) => {
-          console.error('Auto update failed:', e);
+        setIsForcedUpdate(isWin);
+
+        if (isWin) {
+          // Forced update ONLY on Windows: immediately lock and install
+          setUpdateInstalling(true);
+          trackerAPI.installUpdate().catch((e) => {
+            console.error('Auto update failed:', e);
+            setUpdateInstalling(false);
+          });
+        } else {
+          // macOS / other: NOT forced. User can choose to update or dismiss.
           setUpdateInstalling(false);
-        });
+        }
       }
     });
 
@@ -2856,8 +2875,8 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* Auto-update banner */}
-      {updateVersion && (
+      {/* ── Auto-update: Forced Fullscreen on Windows, Dismissible Banner on macOS ── */}
+      {isForcedUpdate && updateVersion && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 99999,
           background: '#001338', display: 'flex', flexDirection: 'column',
@@ -2926,6 +2945,81 @@ export default function App() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Non-forced Update Prompt (macOS) — Optional & Dismissible */}
+      {!isForcedUpdate && updateVersion && !updateDismissed && (
+        <div style={{
+          position: 'fixed', top: '16px', right: '16px', zIndex: 99999,
+          maxWidth: '360px', width: 'calc(100% - 32px)',
+          background: '#001338', border: '1px solid rgba(250, 204, 21, 0.35)',
+          boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)',
+          borderRadius: '16px', padding: '16px', color: '#fff'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <img src="/header-white.svg" style={{ height: '24px', objectFit: 'contain' }} alt="TrackOwl" />
+              <span style={{ fontWeight: '700', fontSize: '14px', color: '#fff' }}>Update Available</span>
+            </div>
+            {!updateInstalling && (
+              <button
+                onClick={() => setUpdateDismissed(true)}
+                style={{
+                  background: 'transparent', border: 'none', color: '#94a3b8',
+                  fontSize: '18px', cursor: 'pointer', padding: '0 4px', lineHeight: 1
+                }}
+                title="Dismiss"
+              >
+                ×
+              </button>
+            )}
+          </div>
+          <p style={{ fontSize: '12px', color: '#cbd5e1', margin: '8px 0 14px 0', lineHeight: 1.4 }}>
+            Version {updateVersion} is ready to install with performance and feature improvements.
+          </p>
+          {updateInstalling ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#94a3b8', fontWeight: '600' }}>
+                <span>{updateProgress === 100 ? 'Installing...' : 'Downloading assets...'}</span>
+                <span style={{ color: '#facc15' }}>{updateProgress}%</span>
+              </div>
+              <div style={{ width: '100%', background: 'rgba(255,255,255,0.1)', height: '6px', borderRadius: '9999px', overflow: 'hidden' }}>
+                <div style={{ width: `${updateProgress}%`, height: '100%', background: '#facc15', transition: 'width 0.2s ease' }} />
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setUpdateDismissed(true)}
+                style={{
+                  padding: '7px 14px', borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.15)', background: 'transparent',
+                  color: '#cbd5e1', fontSize: '12px', fontWeight: '600', cursor: 'pointer'
+                }}
+              >
+                Later
+              </button>
+              <button
+                onClick={async () => {
+                  setUpdateInstalling(true);
+                  try {
+                    await trackerAPI.installUpdate();
+                  } catch (e) {
+                    console.error('Update failed:', e);
+                    setUpdateInstalling(false);
+                  }
+                }}
+                style={{
+                  padding: '7px 16px', borderRadius: '8px', border: 'none',
+                  background: 'linear-gradient(135deg, #facc15 0%, #eab308 100%)',
+                  color: '#001338', fontSize: '12px', fontWeight: '700', cursor: 'pointer'
+                }}
+              >
+                Update Now
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -3935,8 +4029,6 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
       </div>
 
       <MyTasksPanel todos={todos} onDone={onTodoDone} />
-
-      <UpdaterOverlay />
     </div>
   );
 }

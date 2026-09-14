@@ -15,6 +15,7 @@ pub struct UpdateStatus {
     pub available: bool,
     pub version: Option<String>,
     pub notes: Option<String>,
+    pub platform: String,
 }
 
 /// Check for updates via the endpoint configured in tauri.conf.json.
@@ -40,6 +41,7 @@ pub async fn check_for_updates(app: AppHandle) {
                     available: true,
                     version: Some(update.version.clone()),
                     notes: update.body.clone(),
+                    platform: std::env::consts::OS.to_string(),
                 };
 
                 println!(

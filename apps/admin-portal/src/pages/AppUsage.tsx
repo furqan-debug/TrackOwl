@@ -1,15 +1,15 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { activityService } from '../services/activity.service';
 import type { AppEntry } from '../services/activity.service';
 import { useAuth } from '../context/AuthContext';
 import {
     AppWindow, Monitor, Users, Search,
-    Clock, RefreshCw, Filter,
+    Clock, Filter,
     PieChart as PieChartIcon,
     ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { PageLayout, StatMetric, LoadingState, EmptyState, FilterSelect, DatePicker } from '../components/ui';
+import { PageLayout, StatMetric, LoadingState, EmptyState, FilterSelect, DatePicker, RefreshButton } from '../components/ui';
 import clsx from 'clsx';
 import { orgLocalToUtc } from '../lib/dataUtils';
 
@@ -38,6 +38,10 @@ export function AppUsage() {
     const organizationId = profile?.organization_id;
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    // The member filter and date picker stay usable during a load now, so
+    // requests can overlap; without this whichever response landed last would
+    // paint, not necessarily the one last asked for.
+    const requestSeqRef = useRef(0);
     const [apps, setApps] = useState<AppEntry[]>([]);
     const [members, setMembers] = useState<MemberInfo[]>([]);
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
@@ -76,6 +80,7 @@ export function AppUsage() {
     }, [organizationId, profile?.role, managedMemberIds]);
 
     const fetchData = useCallback(async (isSilent = false, forceRefresh = false) => {
+        const mySeq = ++requestSeqRef.current;
         const cacheKey = `${profile?.id}_${selectedDate}_${selectedMemberId}`;
         if (!forceRefresh && appUsageCache && appUsageCacheKey === cacheKey) {
             setApps(appUsageCache.apps);
@@ -99,6 +104,10 @@ export function AppUsage() {
                 selectedMemberId
             );
 
+            // Superseded while in flight. Dropping it also keeps the wrong
+            // rows out of the cache, where they would look right next visit.
+            if (mySeq !== requestSeqRef.current) return;
+
             setApps(appArray);
 
             // Update cache
@@ -107,8 +116,11 @@ export function AppUsage() {
         } catch (err) {
             console.error(err);
         } finally {
-            setLoading(false);
-            setRefreshing(false);
+            // Only the newest request may clear the spinners.
+            if (mySeq === requestSeqRef.current) {
+                setLoading(false);
+                setRefreshing(false);
+            }
         }
     }, [selectedDate, selectedMemberId, members, displayTimezone, organizationId, profile?.id]);
 
@@ -152,8 +164,6 @@ export function AppUsage() {
         setCurrentPage(1);
     }, [searchTerm]);
 
-    if (loading) return <div className="h-screen flex items-center justify-center bg-surface"><LoadingState /></div>;
-
     return (
         <PageLayout
             maxWidth="full"
@@ -179,19 +189,21 @@ export function AppUsage() {
                         className="h-10 min-w-[180px]"
                     />
 
-                    <button
+                    <RefreshButton
                         onClick={() => fetchData(false, true)}
-                        className={clsx(
-                            "p-2.5 bg-surface border border-border rounded-lg text-text-muted hover:text-primary hover:bg-surface-hover transition-all shadow-shell-sm h-10",
-                            loading && "animate-spin text-primary"
-                        )}
-                        title="Refresh Data"
-                    >
-                        <RefreshCw className="w-4 h-4" />
-                    </button>
+                        refreshing={refreshing || loading}
+                        label="Refresh app usage"
+                    />
                 </div>
             }
         >
+            {/* Inside the layout, not in place of it: the title, member filter,
+                date picker and refresh button all stay put. */}
+            {loading ? (
+                <div className="min-h-[60vh] flex items-center justify-center">
+                    <LoadingState />
+                </div>
+            ) : (
             <div className="flex flex-col gap-6 pb-20">
 
                 {/* 📊 KPI & Pulse */}
@@ -263,9 +275,12 @@ export function AppUsage() {
                                     className="bg-surface border border-border rounded-lg pl-9 pr-4 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all w-64"
                                 />
                             </div>
-                            <button onClick={() => fetchData(true)} className={clsx("p-2 bg-surface border border-border rounded-lg hover:bg-surface-hover transition-all text-text-muted shadow-shell-sm", refreshing && "animate-spin text-primary")}>
-                                <RefreshCw className="w-4 h-4" />
-                            </button>
+                            <RefreshButton
+                                onClick={() => fetchData(true)}
+                                refreshing={refreshing}
+                                size="sm"
+                                label="Refresh app list"
+                            />
                         </div>
                     </div>
 
@@ -366,6 +381,7 @@ export function AppUsage() {
                 </div>
 
             </div>
+            )}
         </PageLayout>
     );
 }
