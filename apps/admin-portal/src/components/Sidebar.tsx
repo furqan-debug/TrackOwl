@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import { SecureImage } from '../components/ui/SecureImage';
 import logoDark from '../assets/branding/4.svg';
+import { initialOf } from '../lib/initials';
 
 const SIDEBAR_WIDTH_EXPANDED = 240;
 const SIDEBAR_WIDTH_COLLAPSED = 68;
@@ -311,7 +312,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         onError={() => setAvatarError(true)}
                                     />
                                 ) : (
-                                    profile?.full_name?.charAt(0) || '?'
+                                    initialOf(profile?.full_name, profile?.email)
                                 )}
                             </div>
                             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#4FC08D] border-2 border-[#001B4D] rounded-full shadow-sm" />

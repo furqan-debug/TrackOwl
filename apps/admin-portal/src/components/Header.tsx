@@ -10,6 +10,7 @@ import { SecureImage } from './ui/SecureImage';
 import { useTheme } from '../hooks/useTheme';
 import logoLight from '../assets/branding/3.svg';
 import logoDark from '../assets/branding/4.svg';
+import { initialOf } from '../lib/initials';
 
 export interface HeaderProps {
     onOpenMobileMenu?: () => void;
@@ -261,7 +262,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                     {profile?.avatar_url ? (
                                         <SecureImage path={profile.avatar_url} bucket="avatars" alt="" className="w-full h-full object-cover" />
                                     ) : (
-                                        profile?.full_name?.charAt(0) || '?'
+                                        initialOf(profile?.full_name, profile?.email)
                                     )}
                                 </div>
                             </div>
@@ -276,7 +277,7 @@ export function Header({ onOpenMobileMenu }: HeaderProps) {
                                 <div className="px-5 py-5 border-b border-[var(--border-color)] bg-primary/5">
                                     <div className="flex items-center gap-3 mb-3">
                                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-[14px] font-bold border border-primary/5">
-                                            {profile?.full_name?.charAt(0) || 'U'}
+                                            {initialOf(profile?.full_name, profile?.email)}
                                         </div>
                                         <div className="flex flex-col overflow-hidden">
                                             <p className="text-[13px] font-bold text-[var(--text-main)] tracking-tight truncate">{profile?.full_name || 'Legacy Operator'}</p>
