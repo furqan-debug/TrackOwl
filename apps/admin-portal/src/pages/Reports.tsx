@@ -46,6 +46,20 @@ const RANGES = ['Today', 'Yesterday', 'Last 7 Days', 'Last Week', 'Last 2 Weeks'
 const MIN_REFRESH_FEEDBACK_MS = 650;
 type Range = typeof RANGES[number];
 
+/**
+ * A YYYY-MM-DD from the query string, or null if it is absent or malformed.
+ *
+ * Midday avoids the date shifting a day either way across timezones. Returning
+ * null on nonsense matters more now that these seed the initial state: an
+ * Invalid Date is truthy, so it would reach getDateRange and be formatted as
+ * the literal string "Invalid Date".
+ */
+function parseUrlDate(value: string | null): Date | null {
+    if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+    const d = new Date(value + 'T12:00:00');
+    return isNaN(d.getTime()) ? null : d;
+}
+
 // Module-level cache to prevent re-fetching when switching tabs
 let reportsCache: any = null;
 let reportsCacheKey: string | null = null;
@@ -54,11 +68,29 @@ export function Reports() {
     const { profile, managedMemberIds, displayTimezone } = useAuth();
     const organizationId = profile?.organization_id;
     const [searchParams] = useSearchParams();
-    const [range, setRange] = useState<Range>('Last 7 Days');
+
+    // Read once, before the first render, so the very first fetch already
+    // carries the right filter.
+    //
+    // These used to start at their defaults and be corrected by an effect. Both
+    // that effect and the fetch effect were gated on membersLoaded, so when it
+    // flipped they ran in the SAME commit: the first only QUEUED its state
+    // update, and the fetch ran in that same pass still reading 'All'. One
+    // request went out for the whole team and a second for the member, and
+    // whichever landed last won the page.
+    const initialUrlParams = useRef({
+        member: searchParams.get('member'),
+        start: parseUrlDate(searchParams.get('start')),
+        end: parseUrlDate(searchParams.get('end'))
+    }).current;
+
+    const [range, setRange] = useState<Range>(
+        initialUrlParams.start && initialUrlParams.end ? 'Custom' : 'Last 7 Days'
+    );
     const [offset, setOffset] = useState(0); // offset in days
     const [showRangeDropdown, setShowRangeDropdown] = useState(false);
-    const [customStart, setCustomStart] = useState<Date | null>(null);
-    const [customEnd, setCustomEnd] = useState<Date | null>(null);
+    const [customStart, setCustomStart] = useState<Date | null>(initialUrlParams.start);
+    const [customEnd, setCustomEnd] = useState<Date | null>(initialUrlParams.end);
     const scrollRef = useRef<HTMLDivElement>(null);
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -75,7 +107,7 @@ export function Reports() {
     const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
     const [selectedTeamId, setSelectedTeamId] = useState<string>('All');
     const [members, setMembers] = useState<{ id: string; auth_user_id?: string | null; email: string; full_name: string; pay_rate?: number; bill_rate?: number; timezone?: string; employee_id?: string }[]>([]);
-    const [selectedMemberId, setSelectedMemberId] = useState<string>('All');
+    const [selectedMemberId, setSelectedMemberId] = useState<string>(initialUrlParams.member ?? 'All');
     const [showColumnDropdown, setShowColumnDropdown] = useState(false);
     const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
     const [showEmpId, setShowEmpId] = useState(false);
@@ -124,23 +156,33 @@ export function Reports() {
         fetchMembers();
     }, []);
 
-    // Jab Timesheet se member+date URL mein aaye, to unhe apply karo
+    // Apply a LATER change to the query string — arriving from Timesheets while
+    // already on this page, or using the browser's back button. The first set of
+    // params is already in the initial state above, so re-applying it here would
+    // only fight whatever the user has since chosen in the dropdowns.
+    const appliedUrlRef = useRef(searchParams.toString());
+
     useEffect(() => {
-        if (!membersLoaded) return;
+        const current = searchParams.toString();
+        if (current === appliedUrlRef.current) return;
+        appliedUrlRef.current = current;
+
         const urlMember = searchParams.get('member');
         const urlStart = searchParams.get('start');
         const urlEnd = searchParams.get('end');
 
-        if (urlStart && urlEnd) {
-            setCustomStart(new Date(urlStart + 'T12:00:00'));
-            setCustomEnd(new Date(urlEnd + 'T12:00:00'));
+        const parsedStart = parseUrlDate(urlStart);
+        const parsedEnd = parseUrlDate(urlEnd);
+        if (parsedStart && parsedEnd) {
+            setCustomStart(parsedStart);
+            setCustomEnd(parsedEnd);
             setRange('Custom');
         }
         if (urlMember) {
             setSelectedMemberId(urlMember);
             setSelectedTeamId('All');
         }
-    }, [membersLoaded, searchParams]);
+    }, [searchParams]);
 
     useEffect(() => {
         if (!membersLoaded) return;
@@ -253,11 +295,20 @@ export function Reports() {
         return { start: startUtc.toISOString(), end: endUtc.toISOString() };
     }
 
+    // Requests can overlap — changing member twice quickly, or a filter change
+    // landing while an earlier fetch is still in flight. Without this, whichever
+    // response arrived LAST won the page regardless of which was asked for last.
+    const requestSeqRef = useRef(0);
+
     async function fetchReports(forceRefresh = false) {
+        const seq = ++requestSeqRef.current;
+        const isCurrent = () => seq === requestSeqRef.current;
+
         const { start, end } = getDateRange();
         const cacheKey = `${profile?.id}_${start}_${end}_${selectedTeamId}_${selectedMemberId}_${members.length}`;
 
         if (!forceRefresh && reportsCache && reportsCacheKey === cacheKey) {
+            if (!isCurrent()) return;
             setDailyActivity(reportsCache.dailyActivity);
             setAppBreakdown(reportsCache.appBreakdown);
             setScreenshotCount(reportsCache.screenshotCount);
@@ -286,6 +337,11 @@ export function Reports() {
                 orgTimezone: displayTimezone || 'UTC'
             });
 
+            // Superseded while this was in flight: drop it. Painting now would
+            // show the wrong member, and writing the cache would store the wrong
+            // rows under a key that looks right on the next visit.
+            if (!isCurrent()) return;
+
             setDailyActivity(data.dailyActivityList);
             setAppBreakdown(data.appBreakdownList);
             setScreenshotCount(data.screenshotCount);
@@ -313,7 +369,12 @@ export function Reports() {
         } catch (err) {
             console.error("fetchReports error:", err);
         } finally {
-            setLoading(false);
+            // Only the newest request may clear the spinner. A superseded one
+            // finishing first would otherwise declare the page loaded while the
+            // request that actually matters is still in flight.
+            if (isCurrent()) {
+                setLoading(false);
+            }
             // A fetch that returns in 80ms flashes the spinner for a frame or two,
             // which reads as the button doing nothing at all. Hold the indicator
             // long enough to register as feedback — the data itself is already on
@@ -324,7 +385,9 @@ export function Reports() {
                     await new Promise(resolve => setTimeout(resolve, MIN_REFRESH_FEEDBACK_MS - held));
                 }
             }
-            setRefreshing(false);
+            if (isCurrent()) {
+                setRefreshing(false);
+            }
         }
     }
 
