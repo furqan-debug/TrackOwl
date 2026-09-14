@@ -503,6 +503,9 @@ export function Dashboard() {
                         onClick={() => fetchDashboardData(true, true)}
                         refreshing={refreshing}
                         label="Refresh dashboard"
+                        // This page's date control is 48px at md, unlike the
+                        // 40px filter pills every other page uses.
+                        className="refresh-btn--lg"
                     />
                 </div>
             }
