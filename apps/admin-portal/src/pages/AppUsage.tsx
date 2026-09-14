@@ -266,22 +266,17 @@ export function AppUsage() {
                             </div>
                             <h3 className="text-base font-black text-text-main tracking-[0.05em]">App List</h3>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <div className="relative">
-                                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-                                <input
-                                    type="text"
-                                    placeholder="Filter apps..."
-                                    value={searchTerm}
-                                    onChange={e => setSearchTerm(e.target.value)}
-                                    className="bg-surface border border-border rounded-lg pl-9 pr-4 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all w-64"
-                                />
-                            </div>
-                            <RefreshButton
-                                onClick={() => fetchData(true)}
-                                refreshing={refreshing}
-                                size="sm"
-                                label="Refresh app list"
+                        {/* The header already carries a refresh button for this
+                            page; a second one beside the filter was doing the same
+                            job twice. The search takes back the width it freed. */}
+                        <div className="relative w-80">
+                            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                            <input
+                                type="text"
+                                placeholder="Filter apps..."
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                                className="w-full bg-surface border border-border rounded-lg pl-9 pr-4 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                             />
                         </div>
                     </div>
