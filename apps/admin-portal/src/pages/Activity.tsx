@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { activityService } from '../services/activity.service';
 import {
     Mouse, Keyboard, Activity as ActivityIcon,
@@ -60,6 +60,7 @@ export function Activity() {
     const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
     const [loading, setLoading] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const requestSeqRef = useRef(0);
     
     // Default to the current day in the displayTimezone
     const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' }));
@@ -98,6 +99,7 @@ export function Activity() {
     }, [organizationId]);
 
     const fetchData = useCallback(async (isSilent = false, forceRefresh = false, overrideLimit?: number) => {
+        const mySeq = ++requestSeqRef.current;
         const currentLimit = overrideLimit ?? screenshotLimit;
         const cacheKey = `${profile?.id}_${selectedDate}_${selectedMemberId}_${currentLimit}`;
 
@@ -128,6 +130,11 @@ export function Activity() {
                 currentLimit
             );
 
+            // Superseded while this was in flight: a newer date or member is
+            // authoritative. Dropping it also keeps the wrong rows out of the
+            // cache, where they would look right on the next visit.
+            if (mySeq !== requestSeqRef.current) return;
+
             setSamples(data.samples);
             setScreenshots(data.screenshots);
             setSessionMinutes(data.sessionMinutes);
@@ -144,8 +151,12 @@ export function Activity() {
         } catch (error) {
             console.error('Activity fetch error:', error);
         } finally {
-            setLoading(false);
-            setRefreshing(false);
+            // Only the newest request may clear the spinners; a superseded one
+            // finishing first would report "done" while the real fetch runs on.
+            if (mySeq === requestSeqRef.current) {
+                setLoading(false);
+                setRefreshing(false);
+            }
         }
     }, [selectedDate, selectedMemberId, members, screenshotLimit]);
 
@@ -240,8 +251,6 @@ export function Activity() {
 
     const isToday = selectedDate === new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
 
-    if (loading) return <div className="h-screen flex items-center justify-center bg-surface"><LoadingState /></div>;
-
     return (
         <PageLayout
             maxWidth="full"
@@ -293,12 +302,21 @@ export function Activity() {
 
                     <RefreshButton
                         onClick={() => fetchData(false, true)}
-                        refreshing={refreshing}
+                        refreshing={refreshing || loading}
                         label="Refresh screenshots"
                     />
                 </div>
             }
         >
+            {/* The loader sits inside the layout rather than replacing it, so the
+                title, the member filter, the date picker and the refresh button
+                all stay put - and the button that started the reload is still on
+                screen to show it running. */}
+            {loading ? (
+                <div className="min-h-[60vh] flex items-center justify-center">
+                    <LoadingState />
+                </div>
+            ) : (
             <div className="flex flex-col gap-8 pb-20">
 
                 {/* 📊 Metrics Row */}
@@ -452,6 +470,7 @@ export function Activity() {
 
                 </div>
             </div>
+            )}
 
             {enlargedIndex !== null && (
                 <ScreenshotModal
