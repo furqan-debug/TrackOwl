@@ -7,6 +7,8 @@ interface RefreshButtonProps {
     refreshing?: boolean;
     /** What is being refreshed, for screen readers: "Refresh calendar". */
     label?: string;
+    /** 'sm' for inline toolbars sitting beside compact inputs. */
+    size?: 'md' | 'sm';
     className?: string;
 }
 
@@ -20,7 +22,7 @@ interface RefreshButtonProps {
  * No hover colour change and no tooltip, by request: only the pulse says
  * something is happening.
  */
-export function RefreshButton({ onClick, refreshing = false, label = 'Refresh', className }: RefreshButtonProps) {
+export function RefreshButton({ onClick, refreshing = false, label = 'Refresh', size = 'md', className }: RefreshButtonProps) {
     return (
         <button
             type="button"
@@ -28,7 +30,7 @@ export function RefreshButton({ onClick, refreshing = false, label = 'Refresh', 
             disabled={refreshing}
             aria-busy={refreshing}
             aria-label={refreshing ? `${label} in progress` : label}
-            className={clsx('refresh-btn', refreshing && 'is-refreshing', className)}
+            className={clsx('refresh-btn', size === 'sm' && 'refresh-btn--sm', refreshing && 'is-refreshing', className)}
         >
             {/* The ICON spins, not the button — spinning the button rotates its
                 background and border with it. */}

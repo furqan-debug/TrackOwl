@@ -25,6 +25,21 @@ bin/
 .env.*
 !.env.example
 
+# Certificates, Keys & Credentials
+*.pem
+*.key
+*.p12
+*.cer
+*.crt
+*.certSigningRequest
+*.provisionprofile
+*.mobileprovision
+*base64*.txt
+signing.key
+decoded_signing.key
+temp_signing.key
+
+
 # Large files & Archives
 *.zip
 *.tar.gz

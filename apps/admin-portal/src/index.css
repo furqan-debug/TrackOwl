@@ -446,6 +446,21 @@
   }
 }
 
+/* Inline toolbars sit next to compact inputs, where the full-size button looms.
+   Fixed height at every breakpoint — it is beside a control that does not grow. */
+.refresh-btn--sm {
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+}
+
+@media (min-width: 768px) {
+  .refresh-btn--sm {
+    width: 34px;
+    height: 34px;
+  }
+}
+
 @keyframes refresh-pulse {
   0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent); }
   70%  { box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 0%, transparent); }
