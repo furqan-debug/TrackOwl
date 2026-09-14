@@ -439,8 +439,16 @@
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
+/* 40px matches the h-10 filter pills it sits beside on Reports, Activity, App
+   Usage and Org Settings. Team Overview's date control is taller, so that page
+   opts into the larger size rather than every other page inheriting it. */
+.refresh-btn--lg {
+  width: 40px;
+  height: 40px;
+}
+
 @media (min-width: 768px) {
-  .refresh-btn {
+  .refresh-btn--lg {
     width: 48px;
     height: 48px;
   }
