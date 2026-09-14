@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../context/FavoritesContext';
 import clsx from 'clsx';
 import logoDark from '../assets/branding/4.svg';
+import { initialOf } from '../lib/initials';
 
 interface MobileNavProps {
     onClose: () => void;
@@ -157,7 +158,7 @@ export function MobileNav({ onClose }: MobileNavProps) {
                 <div className="px-4 py-4 border-t border-white/[0.07] bg-white/[0.02]">
                     <div className="flex items-center gap-3 mb-4">
                         <div className="w-9 h-9 rounded-xl bg-accent flex items-center justify-center text-[#001B4D] text-[13px] font-bold shadow-lg shadow-accent/20 shrink-0">
-                            {profile?.full_name?.charAt(0) || '?'}
+                            {initialOf(profile?.full_name, profile?.email)}
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-bold text-white truncate leading-tight">{profile?.full_name}</p>
