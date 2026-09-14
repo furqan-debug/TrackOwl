@@ -114,6 +114,11 @@ export function Activity() {
 
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
+        // forceRefresh means the button was pressed, so it also drives the
+        // button's own state. Keyed off `loading` instead, the pulse fired on
+        // the initial load and on every filter change - claiming a press that
+        // never happened.
+        if (forceRefresh) setRefreshing(true);
 
         try {
             if (!organizationId) return;
@@ -302,7 +307,7 @@ export function Activity() {
 
                     <RefreshButton
                         onClick={() => fetchData(false, true)}
-                        refreshing={refreshing || loading}
+                        refreshing={refreshing}
                         label="Refresh screenshots"
                     />
                 </div>

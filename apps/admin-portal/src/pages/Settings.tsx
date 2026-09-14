@@ -52,10 +52,14 @@ export function SettingsPage() {
     const [saved, setSaved] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [activeCategory, setActiveCategory] = useState<SettingCategory>('governance');
+    // Separate from `loading` so the button only pulses for a press, not for
+    // the initial page load.
+    const [refreshing, setRefreshing] = useState(false);
 
-    const fetchSettings = useCallback(async () => {
+    const fetchSettings = useCallback(async (isManual = false) => {
         if (!profile?.organization_id) return;
         setLoading(true);
+        if (isManual) setRefreshing(true);
         const startedAt = Date.now();
         try {
             const { data, error } = await supabase
@@ -77,6 +81,7 @@ export function SettingsPage() {
                 await new Promise(resolve => setTimeout(resolve, MIN_SYNC_MS - elapsed));
             }
             setLoading(false);
+            setRefreshing(false);
         }
     }, [profile?.organization_id]);
 
@@ -175,8 +180,8 @@ export function SettingsPage() {
             actions={
                 <div className="flex items-center gap-3">
                     <RefreshButton
-                        onClick={fetchSettings}
-                        refreshing={loading}
+                        onClick={() => fetchSettings(true)}
+                        refreshing={refreshing}
                         label="Refresh policies"
                     />
                     {/* `loading` matters now that the header survives a reload:

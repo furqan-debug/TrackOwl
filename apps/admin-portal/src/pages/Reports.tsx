@@ -625,7 +625,7 @@ export function Reports() {
 
                     <RefreshButton
                         onClick={() => fetchReports(true)}
-                        refreshing={refreshing || loading}
+                        refreshing={refreshing}
                         label="Refresh report data"
                     />
                 </div>
