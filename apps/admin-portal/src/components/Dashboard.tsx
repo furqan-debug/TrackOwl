@@ -457,8 +457,6 @@ export function Dashboard() {
 
     useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
-    if (loading) return <div className="h-screen flex items-center justify-center bg-surface"><LoadingState /></div>;
-
     return (
         <PageLayout
             maxWidth="full"
@@ -505,6 +503,15 @@ export function Dashboard() {
                 </div>
             }
         >
+            {/* The loader sits inside the layout rather than replacing it, so the
+                title, the date picker and the refresh button all stay put - and
+                the button that started the reload is still on screen to show it
+                running. */}
+            {loading ? (
+                <div className="min-h-[60vh] flex items-center justify-center">
+                    <LoadingState />
+                </div>
+            ) : (
             <div className="flex flex-col gap-12 pb-32">
 
                 {/* 📊 KPI Architecture */}
@@ -979,6 +986,7 @@ export function Dashboard() {
                     </div>
                 </div>
             </div>
+            )}
 
             {enlargedScreenshot && (
                 <ScreenshotModal
