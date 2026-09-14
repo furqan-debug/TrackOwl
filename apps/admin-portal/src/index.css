@@ -12,6 +12,15 @@
   /* Layout Colors */
   --color-active-link: var(--color-primary);
 
+  /* The brand gold. `--accent` already existed as a plain variable, but it was
+     never registered here, so every bg-accent / text-accent / border-accent in
+     the app generated no CSS at all - the sidebar avatar among them, which left
+     navy text on a navy panel. Mapping it here repairs all of them at once, and
+     follows the light/dark value automatically. */
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+
   /* Semantic Tokens for Utility Mapping */
   --color-main: var(--bg-main);
   --color-surface: var(--bg-surface);
