@@ -90,6 +90,8 @@ export function AppUsage() {
 
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
+        // forceRefresh means the header button was pressed.
+        if (forceRefresh) setRefreshing(true);
 
         const start = orgLocalToUtc(selectedDate, 'start', displayTimezone || 'UTC').toISOString();
         const end = orgLocalToUtc(selectedDate, 'end', displayTimezone || 'UTC').toISOString();
@@ -191,7 +193,7 @@ export function AppUsage() {
 
                     <RefreshButton
                         onClick={() => fetchData(false, true)}
-                        refreshing={refreshing || loading}
+                        refreshing={refreshing}
                         label="Refresh app usage"
                     />
                 </div>
