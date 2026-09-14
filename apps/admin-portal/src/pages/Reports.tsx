@@ -11,7 +11,6 @@ import {
     ArrowUpRight,
     ChevronLeft,
     ChevronRight,
-    RefreshCw,
     Calendar as CalendarIcon,
     Download
 } from 'lucide-react';
@@ -21,7 +20,7 @@ import {
 } from 'recharts';
 import {
     PageLayout, StatMetric, FilterSelect,
-    LoadingState, EmptyState
+    LoadingState, EmptyState, RefreshButton
 } from '../components/ui';
 import clsx from 'clsx';
 import Lenis from 'lenis';
@@ -624,23 +623,19 @@ export function Reports() {
                         className="h-10"
                     />
 
-                        <button
+                    <RefreshButton
                         onClick={() => fetchReports(true)}
-                        disabled={refreshing}
-                        aria-busy={refreshing}
-                        aria-label={refreshing ? "Refreshing report data" : "Refresh report data"}
-                        className={clsx(
-                            "p-2.5 bg-surface border border-border rounded-xl text-text-muted transition-all shadow-shell-sm h-10 cursor-default",
-                            refreshing
-                                ? "is-refreshing"
-                                : "hover:text-primary hover:bg-surface-hover"
-                        )}
-                    >
-                        <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
-                    </button>
+                        refreshing={refreshing || loading}
+                        label="Refresh report data"
+                    />
                 </div>
             }
         >
+            {loading ? (
+                <div className="min-h-[60vh] flex items-center justify-center">
+                    <LoadingState />
+                </div>
+            ) : (
             <div className="flex flex-col gap-8 pb-20">
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8 lg:gap-10">
@@ -652,11 +647,7 @@ export function Reports() {
                     <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Expenses" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                 </div>
 
-                {loading ? (
-                    <div className="h-[400px] flex items-center justify-center bg-surface rounded-[24px] border border-border">
-                        <LoadingState message="Loading..." />
-                    </div>
-                ) : dailyActivity.length === 0 ? (
+                {dailyActivity.length === 0 ? (
                     <div className="h-[400px] flex items-center justify-center bg-surface rounded-[24px] border border-border italic">
                         <EmptyState title="No data found" description="Try adjusting filters." />
                     </div>
@@ -991,6 +982,7 @@ export function Reports() {
                     </>
                 )}
             </div>
+            )}
         </PageLayout>
     );
 }
