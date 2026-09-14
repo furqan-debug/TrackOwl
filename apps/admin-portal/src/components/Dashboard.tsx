@@ -202,8 +202,12 @@ export function Dashboard() {
         }
 
         try {
-            if (!isSilent) setLoading(true);
-            else setRefreshing(true);
+            // A manual refresh shows BOTH: the button pulses AND the content
+            // area shows the loader. Setting only `refreshing` left the previous
+            // date's figures on screen for the whole fetch, presented as though
+            // they were the new ones.
+            setLoading(true);
+            if (isSilent) setRefreshing(true);
 
             // Auto-terminate any ghost sessions in database based on Termination Grace Period
             await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });

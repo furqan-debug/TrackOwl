@@ -112,8 +112,11 @@ export function Calendar() {
         const orgId = profile?.organization_id;
         if (!orgId) return;
         const mySeq = ++requestSeqRef.current;
-        if (!isSilent) setLoading(true);
-        else setRefreshing(true);
+        // A manual refresh shows BOTH: the button pulses AND the content area
+        // shows the loader. Setting only `refreshing` left the previous month on
+        // screen for the whole fetch.
+        setLoading(true);
+        if (isSilent) setRefreshing(true);
         const refreshStartedAt = Date.now();
 
         try {
