@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useLayoutEffect } from 'react';
 import { 
     ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
     ChevronDown 
@@ -16,7 +16,10 @@ interface DatePickerProps {
     displayTimezone?: string;
 }
 
-export function DatePicker({ 
+/** Width of the calendar panel; the overflow check below depends on it. */
+const PANEL_WIDTH = 320;
+
+export function DatePicker({
     value, 
     onChange, 
     label, 
@@ -26,6 +29,39 @@ export function DatePicker({
     displayTimezone
 }: DatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
+
+    // The panel is a fixed 320px anchored to the trigger's LEFT edge, so any
+    // trigger sitting within 320px of the window edge pushed it off screen —
+    // which is every page whose date control lives in the top-right corner.
+    // Measure on open and flip to right-anchored when there is not room.
+    const triggerRef = useRef<HTMLDivElement>(null);
+    const [align, setAlign] = useState<'centre' | 'left' | 'right'>('centre');
+
+    useLayoutEffect(() => {
+        if (!isOpen) return;
+
+        const decide = () => {
+            const rect = triggerRef.current?.getBoundingClientRect();
+            if (!rect) return;
+            // Centred on the trigger is the default: the panel is wider than
+            // most triggers, and centring spreads that overhang evenly instead
+            // of dumping all of it on one side.
+            //
+            // Only when centring would run past a window edge does it fall back
+            // to hugging that edge — which is the narrow-window case, not the
+            // ordinary one.
+            const centre = rect.left + rect.width / 2;
+            const overflowsRight = centre + PANEL_WIDTH / 2 > window.innerWidth - 16;
+            const overflowsLeft = centre - PANEL_WIDTH / 2 < 16;
+
+            setAlign(overflowsRight ? 'right' : overflowsLeft ? 'left' : 'centre');
+        };
+
+        decide();
+        window.addEventListener('resize', decide);
+        return () => window.removeEventListener('resize', decide);
+    }, [isOpen]);
+
     const [viewDate, setViewDate] = useState(() => {
         if (value) {
             const [year, month, day] = value.split('-').map(Number);
@@ -104,6 +140,7 @@ export function DatePicker({
         <div className={clsx("relative", className)}>
             {/* Input Trigger */}
             <div 
+                ref={triggerRef}
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
                     "flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-all rounded-xl select-none border",
@@ -129,7 +166,12 @@ export function DatePicker({
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 w-[320px] bg-surface border border-border rounded-2xl shadow-premium z-[110] p-5 overflow-hidden"
+                        className={clsx(
+                            "absolute top-[calc(100%+8px)] w-[320px] bg-surface border border-border rounded-2xl shadow-premium z-[110] p-5 overflow-hidden",
+                            align === 'centre' && "left-1/2 -translate-x-1/2",
+                            align === 'left' && "left-0",
+                            align === 'right' && "right-0"
+                        )}
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between mb-6">
