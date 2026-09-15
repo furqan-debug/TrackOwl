@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useLayoutEffect } from 'react';
 import { 
     ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
     ChevronDown 
@@ -16,7 +16,18 @@ interface DatePickerProps {
     displayTimezone?: string;
 }
 
-export function DatePicker({ 
+/**
+ * The calendar takes its width from the control it hangs off, so it lines up
+ * with it instead of overhanging on both sides — the Screenshots date pill is
+ * ~254px against a panel hard-coded to 320px, and no amount of re-centring
+ * hides a panel wider than its trigger.
+ *
+ * The floor stops a short trigger squashing the day grid: seven columns plus
+ * the panel's own padding need roughly this much to stay square and legible.
+ */
+const MIN_PANEL_WIDTH = 288;
+
+export function DatePicker({
     value, 
     onChange, 
     label, 
@@ -26,6 +37,39 @@ export function DatePicker({
     displayTimezone
 }: DatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
+
+    // Measured from the trigger on open: the panel takes its width, and only
+    // shifts off centre when that would carry it past a window edge. The old
+    // fixed 320px anchored to the trigger's LEFT edge pushed the panel off
+    // screen on every page whose date control sits in the top-right corner.
+    const triggerRef = useRef<HTMLDivElement>(null);
+    const [align, setAlign] = useState<'centre' | 'left' | 'right'>('centre');
+    const [panelWidth, setPanelWidth] = useState(MIN_PANEL_WIDTH);
+
+    useLayoutEffect(() => {
+        if (!isOpen) return;
+
+        const decide = () => {
+            const rect = triggerRef.current?.getBoundingClientRect();
+            if (!rect) return;
+            // Match the trigger, never go below the floor.
+            const width = Math.max(rect.width, MIN_PANEL_WIDTH);
+            setPanelWidth(width);
+
+            // Only a trigger narrower than the floor can still overhang, and
+            // then by a few pixels, so the edge checks stay as a safety net.
+            const centre = rect.left + rect.width / 2;
+            const overflowsRight = centre + width / 2 > window.innerWidth - 16;
+            const overflowsLeft = centre - width / 2 < 16;
+
+            setAlign(overflowsRight ? 'right' : overflowsLeft ? 'left' : 'centre');
+        };
+
+        decide();
+        window.addEventListener('resize', decide);
+        return () => window.removeEventListener('resize', decide);
+    }, [isOpen]);
+
     const [viewDate, setViewDate] = useState(() => {
         if (value) {
             const [year, month, day] = value.split('-').map(Number);
@@ -57,8 +101,14 @@ export function DatePicker({
             currentDays.push({ day: i, month, year, current: true });
         }
 
+        // Pad to whole weeks, not to a fixed six rows. 42 cells always produced
+        // six, so a month that fits in five — September 2026 starts on a Tuesday
+        // and ends on the 30th — got a trailing row made up entirely of the next
+        // month, adding height that showed nothing belonging to the month on
+        // screen.
         const nextDays = [];
-        const remaining = 42 - (prevDays.length + currentDays.length);
+        const filled = prevDays.length + currentDays.length;
+        const remaining = Math.ceil(filled / 7) * 7 - filled;
         for (let i = 1; i <= remaining; i++) {
             nextDays.push({ day: i, month: month + 1, year, current: false });
         }
@@ -104,6 +154,7 @@ export function DatePicker({
         <div className={clsx("relative", className)}>
             {/* Input Trigger */}
             <div 
+                ref={triggerRef}
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
                     "flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-all rounded-xl select-none border",
@@ -129,7 +180,13 @@ export function DatePicker({
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute top-[calc(100%+8px)] left-1/2 -translate-x-1/2 sm:left-0 sm:translate-x-0 w-[320px] bg-surface border border-border rounded-2xl shadow-premium z-[110] p-5 overflow-hidden"
+                        style={{ width: panelWidth }}
+                        className={clsx(
+                            "absolute top-[calc(100%+8px)] bg-surface border border-border rounded-2xl shadow-premium z-[110] p-5 overflow-hidden",
+                            align === 'centre' && "left-1/2 -translate-x-1/2",
+                            align === 'left' && "left-0",
+                            align === 'right' && "right-0"
+                        )}
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between mb-6">
@@ -185,8 +242,10 @@ export function DatePicker({
                             ))}
                         </div>
 
-                        {/* Footer Actions */}
-                        <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
+                        {/* Footer Actions — mt-6 pt-4 left 40px of dead space between
+                            the last week and these two buttons, which read as an empty
+                            row of the calendar. Just enough now to separate them. */}
+                        <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
                             <button 
                                 onClick={(e) => { e.stopPropagation(); onChange(''); setIsOpen(false); }}
                                 className="text-[11px] font-black text-error hover:opacity-80 transition-opacity uppercase tracking-widest"
