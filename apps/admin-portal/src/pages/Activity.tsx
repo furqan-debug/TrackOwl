@@ -281,7 +281,7 @@ export function Activity() {
                         />
                     </div>
 
-                    <div className="flex items-center bg-surface border border-border p-0.5 rounded-xl shadow-shell-sm">
+                    <div className="flex items-center h-10 bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
                         <button
                             onClick={() => {
                                 const [y, m, d] = selectedDate.split('-').map(Number);
@@ -293,11 +293,15 @@ export function Activity() {
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
+                        {/* No label: it was conditional on the date being today,
+                            so the pill grew a second line on some dates and not
+                            others, and the whole row changed height as you paged
+                            through them. Single line now, matching the member
+                            filter beside it and the Timesheets control. */}
                         <DatePicker 
                             value={selectedDate}
                             onChange={(val) => setSelectedDate(val)}
                             className="min-w-[180px]"
-                            label={isToday ? 'Today' : undefined}
                         />
                         <button
                             onClick={() => {
