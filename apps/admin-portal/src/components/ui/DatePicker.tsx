@@ -93,8 +93,14 @@ export function DatePicker({
             currentDays.push({ day: i, month, year, current: true });
         }
 
+        // Pad to whole weeks, not to a fixed six rows. 42 cells always produced
+        // six, so a month that fits in five — September 2026 starts on a Tuesday
+        // and ends on the 30th — got a trailing row made up entirely of the next
+        // month, adding height that showed nothing belonging to the month on
+        // screen.
         const nextDays = [];
-        const remaining = 42 - (prevDays.length + currentDays.length);
+        const filled = prevDays.length + currentDays.length;
+        const remaining = Math.ceil(filled / 7) * 7 - filled;
         for (let i = 1; i <= remaining; i++) {
             nextDays.push({ day: i, month: month + 1, year, current: false });
         }
@@ -227,8 +233,10 @@ export function DatePicker({
                             ))}
                         </div>
 
-                        {/* Footer Actions */}
-                        <div className="mt-6 pt-4 border-t border-border flex items-center justify-between">
+                        {/* Footer Actions — mt-6 pt-4 left 40px of dead space between
+                            the last week and these two buttons, which read as an empty
+                            row of the calendar. Just enough now to separate them. */}
+                        <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
                             <button 
                                 onClick={(e) => { e.stopPropagation(); onChange(''); setIsOpen(false); }}
                                 className="text-[11px] font-black text-error hover:opacity-80 transition-opacity uppercase tracking-widest"
