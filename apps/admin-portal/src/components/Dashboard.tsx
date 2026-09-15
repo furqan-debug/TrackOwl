@@ -477,26 +477,29 @@ export function Dashboard() {
             description="Building the future of global work. Strategic leadership for the modern enterprise."
             actions={
                 <div className="flex items-center gap-2 md:gap-4">
-                    <div className="flex items-center glass-panel p-1 rounded-2xl shadow-premium border border-border flex-1 md:flex-none">
+                    {/* Same geometry as the Timesheets date control: h-12,
+                        rounded-md, p-1, with p-3 chevrons around a label-less
+                        picker. The "Viewing Date" label was what made this one
+                        taller - a two-line pill next to a one-line one. */}
+                    <div className="flex items-center h-12 glass-panel p-1 rounded-md shadow-premium border border-border flex-1 md:flex-none">
                         <button
                             onClick={() => navigateDate('prev')}
-                            className="p-2 md:p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl"
+                            className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-md"
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="w-5 h-5" />
                         </button>
                         <DatePicker
                             value={viewDateStr}
                             displayTimezone={displayTimezone}
                             onChange={(val) => handleDateChange(val)}
                             className="flex-1 min-w-0"
-                            label="Viewing Date"
                         />
                         <button
                             onClick={() => navigateDate('next')}
-                            className="p-2 md:p-3 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-xl disabled:opacity-30 disabled:hover:bg-transparent"
+                            className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-md disabled:opacity-30 disabled:hover:bg-transparent"
                             disabled={isTodayView}
                         >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
                     {!isTodayView && (
