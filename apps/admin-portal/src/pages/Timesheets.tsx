@@ -993,11 +993,14 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                 </div>
             </div>
 
-            <div className="relative h-2.5 bg-black/[0.03] dark:bg-white/[0.05] rounded-full my-12 overflow-hidden ring-1 ring-black/[0.03] dark:ring-white/[0.03]">
+            {/* 3% black is invisible on the light ground (#F8FAFC). The track and
+                its quarter-day ticks are drawn from the border token instead, so
+                each theme gets a value chosen for its own background. */}
+            <div className="relative h-2.5 bg-surface-hover dark:bg-white/[0.05] rounded-full my-12 overflow-hidden ring-1 ring-border">
                 <div className="absolute inset-0 z-0 pointer-events-none">
-                    <span className="absolute w-px h-full bg-black/[0.05] dark:bg-white/[0.05] left-1/4" />
-                    <span className="absolute w-px h-full bg-black/[0.05] dark:bg-white/[0.05] left-1/2" />
-                    <span className="absolute w-px h-full bg-black/[0.05] dark:bg-white/[0.05] left-3/4" />
+                    <span className="absolute w-px h-full bg-border left-1/4" />
+                    <span className="absolute w-px h-full bg-border left-1/2" />
+                    <span className="absolute w-px h-full bg-border left-3/4" />
                 </div>
                 {day.sessions.map((s, i) => {
                     const d = new Date(s.started_at);

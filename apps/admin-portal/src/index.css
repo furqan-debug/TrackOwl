@@ -1,4 +1,11 @@
 @import "tailwindcss";
+
+/* Tailwind v4 ignores tailwind.config.js unless it is pulled in with @config,
+   so the `darkMode: 'class'` sitting in that file has no effect and every
+   `dark:` utility was following the OPERATING SYSTEM instead of the app's own
+   theme toggle. Whenever the two disagreed those utilities were simply
+   backwards. This points them at the .dark class the app actually sets. */
+@custom-variant dark (&:where(.dark, .dark *));
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 @theme {
