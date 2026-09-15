@@ -197,7 +197,15 @@ export function Dashboard() {
             setProjectActivity(dashboardCache.projectActivity);
             setAppUsage(dashboardCache.appUsage);
             setChartData(dashboardCache.chartData);
-            setLoading(false);
+            // Clear BOTH spinners. Leaving `refreshing` alone here is how the
+            // button got stuck pulsing with nothing running: a superseded request
+            // cannot clear it (the sequence guard stops it), and the newer one
+            // that supersedes it returns from this cache path without clearing
+            // it either.
+            if (mySeq === requestSeqRef.current) {
+                setLoading(false);
+                setRefreshing(false);
+            }
             return;
         }
 

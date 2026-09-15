@@ -108,7 +108,15 @@ export function Activity() {
             setScreenshots(activityCache.screenshots);
             setSessionMinutes(activityCache.sessionMinutes);
             setHasMoreScreenshots(activityCache.hasMoreScreenshots);
-            setLoading(false);
+            // Clear BOTH spinners. Leaving `refreshing` alone here is how the
+            // button got stuck pulsing with nothing running: a superseded request
+            // cannot clear it (the sequence guard stops it), and the newer one
+            // that supersedes it returns from this cache path without clearing
+            // it either.
+            if (mySeq === requestSeqRef.current) {
+                setLoading(false);
+                setRefreshing(false);
+            }
             return;
         }
 
