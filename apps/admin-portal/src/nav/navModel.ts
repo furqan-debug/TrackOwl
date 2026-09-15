@@ -101,6 +101,23 @@ export function matchActive(pathname: string, itemPath: string): boolean {
 }
 
 /**
+ * Which of a set of sibling paths is the active one, or null if none match.
+ *
+ * matchActive() prefix-matches so a parent stays lit on its own sub-routes.
+ * That breaks down when two SIBLINGS overlap: '/dashboard/activity' is a
+ * prefix of '/dashboard/activity/apps', so opening Apps & URLs lit Screenshots
+ * as well. The most specific match wins.
+ */
+export function activeSibling(pathname: string, paths: string[]): string | null {
+    let best: string | null = null;
+    for (const path of paths) {
+        if (!matchActive(pathname, path)) continue;
+        if (best === null || path.length > best.length) best = path;
+    }
+    return best;
+}
+
+/**
  * Returns the display label for a given path by looking up in nav structure.
  * Used for Header page title and favorites; falls back to a formatted path segment.
  */

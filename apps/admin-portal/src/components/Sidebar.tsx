@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { ChevronDown, ChevronLeft, Star, Zap, LogOut, Lock, Sun, Moon } from 'lucide-react';
-import { navStructure, matchActive, type BadgeType, type Role } from '../nav/navModel';
+import { navStructure, matchActive, activeSibling, type BadgeType, type Role } from '../nav/navModel';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
@@ -192,6 +192,11 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         className={clsx(
                                             'group flex items-center rounded-xl text-[14px] font-bold transition-all',
                                             effectiveCollapsed ? 'justify-center p-3 w-full' : 'justify-between px-3.5 py-3 w-full',
+                                            // Collapsed, the group is the only thing standing in for
+                                            // the open page, so it takes the full active pill. Expanded,
+                                            // the child itself carries that — the group only needs its
+                                            // ICON marked, so the label stays neutral and the eye lands
+                                            // on the page you are actually on.
                                             isChildActive && !isExpanded ? 'bg-[var(--bg-menu-active)] text-accent shadow-lg' :
                                                 isExpanded ? 'text-white bg-white/[0.05]' : 'text-[var(--sidebar-text)] hover:text-white hover:bg-white/5'
                                         )}
@@ -199,8 +204,8 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                     >
                                         <div className={clsx("flex items-center gap-3", effectiveCollapsed && "justify-center")}>
                                             <group.icon className={clsx("w-[20px] h-[20px] shrink-0 transition-colors",
-                                                isChildActive && !isExpanded ? "text-accent" :
-                                                    isChildActive || isExpanded ? "text-white" : "text-[var(--sidebar-text)] group-hover:text-white")}
+                                                isChildActive ? "text-accent" :
+                                                    isExpanded ? "text-white" : "text-[var(--sidebar-text)] group-hover:text-accent")}
                                                 strokeWidth={2.5} aria-hidden />
                                             {!effectiveCollapsed && (
                                                 <div className="flex items-center gap-2">
@@ -253,8 +258,16 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
 
                                 {hasChildren && isExpanded && (
                                     <div className="mt-1 pb-2 space-y-1 relative ml-[26px] border-l border-white/10 pl-4 animate-in slide-in-from-top-1 duration-200">
-                                        {group.children!.map((child) => {
-                                            const isActive = matchActive(location.pathname, child.path);
+                                        {(() => {
+                                            // Only the most specific sibling is active: both children
+                                            // matched while on Apps & URLs, because Screenshots sits at
+                                            // the parent path and prefix-matches it.
+                                            const activeChildPath = activeSibling(
+                                                location.pathname,
+                                                group.children!.map(c => c.path)
+                                            );
+                                            return group.children!.map((child) => {
+                                            const isActive = child.path === activeChildPath;
                                             return (
                                                 <Link
                                                     key={child.name}
@@ -284,7 +297,8 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                                     </div>
                                                 </Link>
                                             );
-                                        })}
+                                            });
+                                        })()}
                                     </div>
                                 )}
                             </div>
