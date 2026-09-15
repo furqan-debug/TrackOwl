@@ -564,15 +564,15 @@ export function Timesheets() {
     };
 
     return (
-        <div className="flex flex-col min-h-screen bg-surface font-sans text-text-main">
-            <header className="px-8 py-6 flex items-center justify-between border-b border-border shrink-0">
+        <div className="flex flex-col min-h-screen bg-main font-sans text-text-main">
+            <header className="px-8 py-6 flex items-center justify-between shrink-0">
                 <div className="space-y-2">
                     <h1 className="text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
                     <p className="text-[14px] font-bold text-text-muted tracking-tight">Verify and refine team temporal records</p>
                 </div>
             </header>
 
-            <div className="px-3 py-3 min-[900px]:px-8 min-[900px]:py-4 flex flex-col min-[900px]:flex-row min-[900px]:flex-wrap items-stretch min-[900px]:items-center justify-between gap-3 min-[900px]:gap-4 border-b border-slate-50 sticky top-0 bg-surface/95 backdrop-blur-md z-30 w-full min-w-0">
+            <div className="px-3 py-3 min-[900px]:px-8 min-[900px]:py-4 flex flex-col min-[900px]:flex-row min-[900px]:flex-wrap items-stretch min-[900px]:items-center justify-between gap-3 min-[900px]:gap-4 sticky top-0 bg-main/95 backdrop-blur-md z-30 w-full min-w-0">
 
                 {/* Date + timezone */}
                 <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-6 w-full min-[900px]:w-auto min-w-0">
@@ -1024,7 +1024,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                             <th className="py-6 px-4 border-b border-border w-12"></th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-border">
                         {displayRows.map((s, idx) => (
                             <tr key={idx} onClick={() => onRowClick(s.user_id)} className="group hover:bg-surface-hover/50 transition-all cursor-pointer">
                                 <td className="py-8 px-10">
@@ -1099,7 +1099,7 @@ function WeeklyView({ entries, onDayClick }: { entries: DailyEntry[], onDayClick
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-6">
             {entries.map((day, i) => (
-                <div key={i} className="bg-surface border border-border rounded-md p-6 flex flex-col items-center gap-4 hover:border-primary/30 hover:shadow-lg hover:shadow-slate-200/40 transition-all cursor-pointer group" onClick={() => onDayClick(day.date)}>
+                <div key={i} className="bg-surface border border-border rounded-md p-6 flex flex-col items-center gap-4 hover:border-primary/30 hover:shadow-lg hover:shadow-black/20 transition-all cursor-pointer group" onClick={() => onDayClick(day.date)}>
                     <span className="text-[10px] font-bold text-text-muted ">{DAYS_SHORT[new Date(day.date + 'T12:00:00').getDay()]}</span>
                     <span className="text-2xl font-bold text-text-main group-hover:text-primary transition-colors tabular-nums">{new Date(day.date + 'T12:00:00').getDate()}</span>
                     <div className="flex flex-col items-center gap-1">
