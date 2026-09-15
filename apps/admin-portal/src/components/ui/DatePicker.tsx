@@ -16,8 +16,16 @@ interface DatePickerProps {
     displayTimezone?: string;
 }
 
-/** Width of the calendar panel; the overflow check below depends on it. */
-const PANEL_WIDTH = 320;
+/**
+ * The calendar takes its width from the control it hangs off, so it lines up
+ * with it instead of overhanging on both sides — the Screenshots date pill is
+ * ~254px against a panel hard-coded to 320px, and no amount of re-centring
+ * hides a panel wider than its trigger.
+ *
+ * The floor stops a short trigger squashing the day grid: seven columns plus
+ * the panel's own padding need roughly this much to stay square and legible.
+ */
+const MIN_PANEL_WIDTH = 288;
 
 export function DatePicker({
     value, 
@@ -30,12 +38,13 @@ export function DatePicker({
 }: DatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
 
-    // The panel is a fixed 320px anchored to the trigger's LEFT edge, so any
-    // trigger sitting within 320px of the window edge pushed it off screen —
-    // which is every page whose date control lives in the top-right corner.
-    // Measure on open and flip to right-anchored when there is not room.
+    // Measured from the trigger on open: the panel takes its width, and only
+    // shifts off centre when that would carry it past a window edge. The old
+    // fixed 320px anchored to the trigger's LEFT edge pushed the panel off
+    // screen on every page whose date control sits in the top-right corner.
     const triggerRef = useRef<HTMLDivElement>(null);
     const [align, setAlign] = useState<'centre' | 'left' | 'right'>('centre');
+    const [panelWidth, setPanelWidth] = useState(MIN_PANEL_WIDTH);
 
     useLayoutEffect(() => {
         if (!isOpen) return;
@@ -43,16 +52,15 @@ export function DatePicker({
         const decide = () => {
             const rect = triggerRef.current?.getBoundingClientRect();
             if (!rect) return;
-            // Centred on the trigger is the default: the panel is wider than
-            // most triggers, and centring spreads that overhang evenly instead
-            // of dumping all of it on one side.
-            //
-            // Only when centring would run past a window edge does it fall back
-            // to hugging that edge — which is the narrow-window case, not the
-            // ordinary one.
+            // Match the trigger, never go below the floor.
+            const width = Math.max(rect.width, MIN_PANEL_WIDTH);
+            setPanelWidth(width);
+
+            // Only a trigger narrower than the floor can still overhang, and
+            // then by a few pixels, so the edge checks stay as a safety net.
             const centre = rect.left + rect.width / 2;
-            const overflowsRight = centre + PANEL_WIDTH / 2 > window.innerWidth - 16;
-            const overflowsLeft = centre - PANEL_WIDTH / 2 < 16;
+            const overflowsRight = centre + width / 2 > window.innerWidth - 16;
+            const overflowsLeft = centre - width / 2 < 16;
 
             setAlign(overflowsRight ? 'right' : overflowsLeft ? 'left' : 'centre');
         };
@@ -172,8 +180,9 @@ export function DatePicker({
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        style={{ width: panelWidth }}
                         className={clsx(
-                            "absolute top-[calc(100%+8px)] w-[320px] bg-surface border border-border rounded-2xl shadow-premium z-[110] p-5 overflow-hidden",
+                            "absolute top-[calc(100%+8px)] bg-surface border border-border rounded-2xl shadow-premium z-[110] p-5 overflow-hidden",
                             align === 'centre' && "left-1/2 -translate-x-1/2",
                             align === 'left' && "left-0",
                             align === 'right' && "right-0"
