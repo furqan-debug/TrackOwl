@@ -9,6 +9,7 @@ import {
     Camera
 } from 'lucide-react';
 import { PageLayout, StatMetric, FilterSelect, LoadingState, ScreenshotModal, DatePicker, RefreshButton } from '../components/ui';
+import clsx from 'clsx';
 
 import { AppUsageList } from '../components/activity/AppUsageList';
 import { ScreenshotGallery } from '../components/activity/ScreenshotGallery';
@@ -454,10 +455,18 @@ export function Activity() {
                                         <button
                                             onClick={loadMoreScreenshots}
                                             disabled={loadingMore}
-                                            className="flex items-center gap-3 px-6 py-3 bg-surface border border-border rounded-xl hover:bg-surface-hover transition-all shadow-shell-sm"
+                                            className={clsx(
+                                                "flex items-center gap-3 px-6 py-3 bg-surface border border-border rounded-xl hover:bg-surface-hover transition-all shadow-shell-sm",
+                                                // Same accent pulse as the refresh button. The spinner alone
+                                                // used text-primary, which is bright gold in dark mode but
+                                                // navy on a white button in light mode — visible, but flat,
+                                                // with nothing that reads as "working". --accent is gold in
+                                                // both themes.
+                                                loadingMore && "is-refreshing"
+                                            )}
                                         >
                                             {loadingMore ? (
-                                                <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+                                                <RefreshCw className="w-4 h-4 animate-spin text-accent" />
                                             ) : (
                                                 <Camera className="w-4 h-4 text-text-muted" />
                                             )}
