@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker } from '../components/ui';
 import clsx from 'clsx';
-import { getGroupingDateInTz, formatDuration, zonedWallClockToUtc, utcToZonedWallClock } from '../lib/dataUtils';
+import { getGroupingDateInTz, formatDuration, manualEntryInterval, utcToZonedWallClock } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
 
 interface Session {
@@ -486,13 +486,12 @@ export function Timesheets() {
         // what the desktop app buckets "today" by. `new Date(bare string)` used
         // to parse in the admin's own browser timezone, so an admin in UTC+5
         // adding 11:00 for an org on LA time wrote 11:00 PM the previous LA day.
-        const startedAt = zonedWallClockToUtc(addTimeData.date, addTimeData.startTime, orgTimezone);
-        const endedAt = zonedWallClockToUtc(addTimeData.date, addTimeData.endTime, orgTimezone);
-
-        if (endedAt.getTime() <= startedAt.getTime()) {
-            alert('End time must be after start time.');
+        const interval = manualEntryInterval(addTimeData.date, addTimeData.startTime, addTimeData.endTime, orgTimezone);
+        if ('error' in interval) {
+            alert(interval.error);
             return;
         }
+        const { startedAt, endedAt } = interval;
 
         setSubmittingEntry(true);
         try {
@@ -524,16 +523,12 @@ export function Timesheets() {
             alert('Still loading organization settings — try again in a moment.');
             return;
         }
-        const startedAt = zonedWallClockToUtc(addTimeData.date, addTimeData.startTime, orgTimezone);
-        const endedAt = zonedWallClockToUtc(addTimeData.date, addTimeData.endTime, orgTimezone);
-
-        // Without this an end before the start produced a negative-duration row
-        // that overlapped no calendar day, so it rendered nowhere while still
-        // existing in the database — the entry that "disappeared".
-        if (endedAt.getTime() <= startedAt.getTime()) {
-            alert('End time must be after start time.');
+        const interval = manualEntryInterval(addTimeData.date, addTimeData.startTime, addTimeData.endTime, orgTimezone);
+        if ('error' in interval) {
+            alert(interval.error);
             return;
         }
+        const { startedAt, endedAt } = interval;
 
         setSubmittingEntry(true);
         try {
@@ -849,7 +844,14 @@ export function Timesheets() {
                             <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({ ...addTimeData, startTime: e.target.value })} />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-text-muted ">End <span className="text-text-muted/60">({orgTimezone})</span></label>
+                            <label className="text-[10px] font-bold text-text-muted flex items-center gap-2">
+                                <span>End <span className="text-text-muted/60">({orgTimezone})</span></span>
+                                {/* An end before the start is read as an overnight shift. Say so,
+                                    rather than silently moving the entry to a day they did not pick. */}
+                                {addTimeData.endTime && addTimeData.startTime && addTimeData.endTime < addTimeData.startTime && (
+                                    <span className="text-accent normal-case">ends next day</span>
+                                )}
+                            </label>
                             <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({ ...addTimeData, endTime: e.target.value })} />
                         </div>
                     </div>
@@ -904,7 +906,14 @@ export function Timesheets() {
                             <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({ ...addTimeData, startTime: e.target.value })} />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-text-muted ">End <span className="text-text-muted/60">({orgTimezone})</span></label>
+                            <label className="text-[10px] font-bold text-text-muted flex items-center gap-2">
+                                <span>End <span className="text-text-muted/60">({orgTimezone})</span></span>
+                                {/* An end before the start is read as an overnight shift. Say so,
+                                    rather than silently moving the entry to a day they did not pick. */}
+                                {addTimeData.endTime && addTimeData.startTime && addTimeData.endTime < addTimeData.startTime && (
+                                    <span className="text-accent normal-case">ends next day</span>
+                                )}
+                            </label>
                             <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({ ...addTimeData, endTime: e.target.value })} />
                         </div>
                     </div>
