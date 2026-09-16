@@ -6,7 +6,7 @@ import {
     Monitor, Clock,
     RefreshCw,
     ChevronLeft, ChevronRight,
-    Search, Camera
+    Camera
 } from 'lucide-react';
 import { PageLayout, StatMetric, FilterSelect, LoadingState, ScreenshotModal, DatePicker, RefreshButton } from '../components/ui';
 import clsx from 'clsx';
@@ -69,10 +69,13 @@ export function Activity() {
     const [members, setMembers] = useState<MemberInfo[]>([]);
     const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
     const [sessionMinutes, setSessionMinutes] = useState(0);
-    const [searchTerm, setSearchTerm] = useState('');
 
     // Pagination for screenshots
-    const [screenshotLimit, setScreenshotLimit] = useState(10);
+    // A ref, not state: as state this sat in fetchData's dependency list, so
+    // "Load More" re-created fetchData, which re-fired the page-level fetch
+    // effect with loading:true — the whole page went to the loader, and a
+    // second redundant request went out alongside the one Load More asked for.
+    const screenshotLimitRef = useRef(10);
     const [hasMoreScreenshots, setHasMoreScreenshots] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
 
@@ -98,9 +101,9 @@ export function Activity() {
         });
     }, [organizationId]);
 
-    const fetchData = useCallback(async (isSilent = false, forceRefresh = false, overrideLimit?: number) => {
+    const fetchData = useCallback(async (isSilent = false, forceRefresh = false, overrideLimit?: number, quiet = false) => {
         const mySeq = ++requestSeqRef.current;
-        const currentLimit = overrideLimit ?? screenshotLimit;
+        const currentLimit = overrideLimit ?? screenshotLimitRef.current;
         const cacheKey = `${profile?.id}_${selectedDate}_${selectedMemberId}_${currentLimit}`;
 
         if (!forceRefresh && activityCache && activityCacheKey === cacheKey) {
@@ -120,7 +123,9 @@ export function Activity() {
             return;
         }
 
-        if (!isSilent) setLoading(true);
+        // quiet drives neither spinner: the caller is showing its own.
+        if (quiet) { /* no-op */ }
+        else if (!isSilent) setLoading(true);
         else setRefreshing(true);
         // forceRefresh means the button was pressed, so it also drives the
         // button's own state. Keyed off `loading` instead, the pulse fired on
@@ -171,11 +176,12 @@ export function Activity() {
                 setRefreshing(false);
             }
         }
-    }, [selectedDate, selectedMemberId, members, screenshotLimit]);
+    }, [selectedDate, selectedMemberId, members]);
 
-    // Reset pagination when filters change
+    // Reset pagination when filters change. Declared above the fetch effect so
+    // it runs first in the same commit, and the refetch below already sees 10.
     useEffect(() => {
-        setScreenshotLimit(10);
+        screenshotLimitRef.current = 10;
     }, [selectedMemberId, selectedDate]);
 
     // Re-fetch data whenever any dependency changes
@@ -188,11 +194,13 @@ export function Activity() {
         if (loadingMore || refreshing || !hasMoreScreenshots) return;
 
         setLoadingMore(true);
-        const newLimit = screenshotLimit + 12; // Load in batches of 12 for better grid alignment
-        setScreenshotLimit(newLimit);
+        const newLimit = screenshotLimitRef.current + 12; // Load in batches of 12 for better grid alignment
+        screenshotLimitRef.current = newLimit;
 
-        // Trigger a silent fetch immediately with the new limit
-        await fetchData(true, false, newLimit);
+        // quiet: loadingMore is the only thing that should show. Left to the
+        // silent path this set `refreshing`, which pulses the header's refresh
+        // button — claiming a press the user never made.
+        await fetchData(true, false, newLimit, true);
         setLoadingMore(false);
     };
 
@@ -422,7 +430,7 @@ export function Activity() {
                     {/* Screenshots */}
                     <div className="lg:col-span-12">
                         <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border overflow-hidden flex flex-col">
-                            <div className="px-8 py-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface shrink-0">
+                            <div className="px-8 py-6 border-b border-border flex items-center bg-surface shrink-0">
                                 <div className="flex items-center gap-5">
                                     <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white shadow-shell-md">
                                         <Camera className="w-5 h-5" />
@@ -431,27 +439,6 @@ export function Activity() {
                                         <h3 className="text-[18px] font-bold text-text-main">Captures</h3>
                                         <p className="text-[13px] font-medium text-text-muted mt-0.5 tracking-[0.1em]">{screenshots.length} automated work captures</p>
                                     </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="relative group/search w-[240px]">
-                                        <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
-                                        <input
-                                            type="text"
-                                            placeholder="Search titles..."
-                                            value={searchTerm}
-                                            onChange={e => setSearchTerm(e.target.value)}
-                                            className="w-full bg-main/50 border border-border rounded-xl pl-10 pr-4 py-2 text-[12px] font-medium text-text-main focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner"
-                                        />
-                                    </div>
-                                    <button
-                                        onClick={() => fetchData(true)}
-                                        className={clsx(
-                                            "w-10 h-10 flex items-center justify-center border border-border rounded-xl transition-all",
-                                            refreshing ? "text-primary bg-primary/5" : "text-text-muted hover:text-text-main hover:bg-surface-hover"
-                                        )}
-                                    >
-                                        <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
-                                    </button>
                                 </div>
                             </div>
                             <div className="p-8">
@@ -467,11 +454,19 @@ export function Activity() {
                                     <div className="mt-12 flex justify-center">
                                         <button
                                             onClick={loadMoreScreenshots}
-                                            disabled={loadingMore || refreshing}
-                                            className="flex items-center gap-3 px-6 py-3 bg-surface border border-border rounded-xl hover:bg-surface-hover transition-all shadow-shell-sm"
+                                            disabled={loadingMore}
+                                            className={clsx(
+                                                "flex items-center gap-3 px-6 py-3 bg-surface border border-border rounded-xl hover:bg-surface-hover transition-all shadow-shell-sm",
+                                                // Same accent pulse as the refresh button. The spinner alone
+                                                // used text-primary, which is bright gold in dark mode but
+                                                // navy on a white button in light mode — visible, but flat,
+                                                // with nothing that reads as "working". --accent is gold in
+                                                // both themes.
+                                                loadingMore && "is-refreshing"
+                                            )}
                                         >
-                                            {loadingMore || refreshing ? (
-                                                <RefreshCw className="w-4 h-4 animate-spin text-primary" />
+                                            {loadingMore ? (
+                                                <RefreshCw className="w-4 h-4 animate-spin text-accent" />
                                             ) : (
                                                 <Camera className="w-4 h-4 text-text-muted" />
                                             )}

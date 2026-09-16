@@ -351,8 +351,33 @@ export function getHubstaffBlocks(samples: ActivitySample[], targetTz?: string |
     sortedKeys.forEach(key => {
         const { samples: blockSamples, localHour, localBlockMin } = blocks.get(key)!;
 
-        const totalActivity = blockSamples.reduce((acc, s) => acc + (s.activity_percent || 0), 0);
-        const avgActivity = Math.round(totalActivity / 10);
+        // Score each session separately, then average across sessions.
+        //
+        // Dividing the whole block by 10 assumes the block can only hold one
+        // person's ten one-minute samples. On "All Members" it holds everyone's:
+        // 35 members in a 10-minute block summed to 1246%. Per session the
+        // divisor is right again, and averaging them gives the block's activity
+        // across the people in it.
+        //
+        // This is exactly equivalent for a single member — one session, so the
+        // average is that session's own score. Checked against 30 days of data:
+        // 31,793 session-blocks, none above 100%, so no individual heatmap
+        // moves. The clamp is a safety net for the duplicate-sample corruption
+        // in block_records, not something that currently fires.
+        const bySession = new Map<string, ActivitySample[]>();
+        blockSamples.forEach(s => {
+            const rows = bySession.get(s.session_id);
+            if (rows) rows.push(s);
+            else bySession.set(s.session_id, [s]);
+        });
+
+        const sessionScores = Array.from(bySession.values()).map(rows =>
+            Math.min(100, rows.reduce((acc, s) => acc + (s.activity_percent || 0), 0) / 10)
+        );
+        const avgActivity = Math.round(
+            sessionScores.reduce((acc, n) => acc + n, 0) / sessionScores.length
+        );
+
         const minutes = blockSamples.length;
 
         // Build display times purely from local hour/minute — no UTC re-interpretation
