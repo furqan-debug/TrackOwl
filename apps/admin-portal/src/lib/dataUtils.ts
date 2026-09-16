@@ -115,6 +115,48 @@ export function utcToZonedWallClock(date: Date, tz: string): { date: string; tim
     };
 }
 
+/**
+ * Turn an entered date + start/end wall clock into a real UTC interval.
+ *
+ * An end earlier than the start means the shift ran past midnight: 9:00 PM to
+ * 5:00 AM is eight hours, not minus sixteen. The form has one date field, so
+ * without rolling the end forward that entry was stored backwards — and a
+ * backwards interval overlaps no calendar day, so it rendered on none while
+ * still sitting in the table.
+ *
+ * Equal times are rejected rather than guessed: 09:00 to 09:00 could mean a
+ * zero-length entry or a full 24 hours, and neither is worth assuming.
+ */
+export function manualEntryInterval(
+    dateStr: string,
+    startTime: string,
+    endTime: string,
+    tz: string,
+): { startedAt: Date; endedAt: Date; crossesMidnight: boolean } | { error: string } {
+    if (!dateStr || !startTime || !endTime) return { error: 'Pick a date, a start time and an end time.' };
+    if (startTime === endTime) return { error: 'Start and end times cannot be the same.' };
+
+    const startedAt = zonedWallClockToUtc(dateStr, startTime, tz);
+    const crossesMidnight = endTime < startTime;
+
+    const endDateStr = crossesMidnight ? nextDay(dateStr) : dateStr;
+    const endedAt = zonedWallClockToUtc(endDateStr, endTime, tz);
+
+    // Belt and braces. With the rollover above this cannot trigger, but the
+    // rule the display depends on is "end is after start", so assert it here
+    // rather than trust that it fell out correctly.
+    if (endedAt.getTime() <= startedAt.getTime()) return { error: 'End time must be after start time.' };
+
+    return { startedAt, endedAt, crossesMidnight };
+}
+
+/** "2026-09-16" -> "2026-09-17", month and year ends included. */
+function nextDay(dateStr: string): string {
+    const [y, mo, d] = dateStr.split('-').map(Number);
+    const next = new Date(Date.UTC(y, mo - 1, d + 1));
+    return next.toISOString().substring(0, 10);
+}
+
 export interface HubstaffBlock {
     id: string; // block identifier (e.g. "2024-03-20T09:00")
     startTime: string;
