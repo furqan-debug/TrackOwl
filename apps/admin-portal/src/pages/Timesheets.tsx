@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker } from '../components/ui';
 import clsx from 'clsx';
-import { getGroupingDateInTz, formatDuration } from '../lib/dataUtils';
+import { getGroupingDateInTz, formatDuration, zonedWallClockToUtc, utcToZonedWallClock } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
 
 interface Session {
@@ -66,6 +66,9 @@ export function Timesheets() {
     const [members, setMembers] = useState<MemberInfo[]>([]);
     const [activeTimezone, setActiveTimezone] = useState<string>('Org Local');
     const [orgTimezone, setOrgTimezone] = useState<string>('UTC');
+    // Guards both entry modals: without it a second click sent a second insert.
+    // Three duplicate groups (10 rows) in the table got there this way.
+    const [submittingEntry, setSubmittingEntry] = useState(false);
     // orgTimezone starts as a placeholder and is filled in by fetchOrgSettings().
     // The default activeTimezone is 'Org Local', so querying before this resolves
     // buckets every session into UTC days instead of the org's.
@@ -385,11 +388,6 @@ export function Timesheets() {
                 const startLocal = new Date(startLocalStr);
                 const endLocal = new Date(endLocalStr);
 
-                // DEBUG LOG FOR FIRST SESSION
-                if (s.id === sessions[0]?.id) {
-                    console.log(`DEBUG: startedAtMs=${startedAtMs}, effectiveEndMs=${effectiveEndMs}, tz=${tz}`);
-                }
-
                 Object.keys(dailyMap).forEach(key => {
                     const dayStartLocal = new Date(`${key}T00:00:00`);
                     const dayEndLocal = new Date(`${key}T23:59:59.999`);
@@ -478,15 +476,32 @@ export function Timesheets() {
             alert('Please select both a project and a member.');
             return;
         }
+        // orgTimezone is a 'UTC' placeholder until fetchOrgSettings lands, and
+        // writing against the placeholder would put the entry hours out.
+        if (!orgSettingsLoaded) {
+            alert('Still loading organization settings — try again in a moment.');
+            return;
+        }
+        // Entered in the ORG timezone, which is what the rows are keyed to and
+        // what the desktop app buckets "today" by. `new Date(bare string)` used
+        // to parse in the admin's own browser timezone, so an admin in UTC+5
+        // adding 11:00 for an org on LA time wrote 11:00 PM the previous LA day.
+        const startedAt = zonedWallClockToUtc(addTimeData.date, addTimeData.startTime, orgTimezone);
+        const endedAt = zonedWallClockToUtc(addTimeData.date, addTimeData.endTime, orgTimezone);
+
+        if (endedAt.getTime() <= startedAt.getTime()) {
+            alert('End time must be after start time.');
+            return;
+        }
+
+        setSubmittingEntry(true);
         try {
-            const startStr = `${addTimeData.date}T${addTimeData.startTime}:00`;
-            const endStr = `${addTimeData.date}T${addTimeData.endTime}:00`;
             const { error } = await supabase.from('sessions').insert({
                 project_id: addTimeData.projectId,
                 user_id: addTimeData.userId,
                 organization_id: organizationId,
-                started_at: new Date(startStr).toISOString(),
-                ended_at: new Date(endStr).toISOString(),
+                started_at: startedAt.toISOString(),
+                ended_at: endedAt.toISOString(),
                 manual: true
             } as any);
             if (error) throw error;
@@ -495,19 +510,38 @@ export function Timesheets() {
         } catch (err) {
             console.error('Failed to add manual time:', err);
             alert('Error adding manual time entry.');
+        } finally {
+            setSubmittingEntry(false);
         }
     }
 
     async function handleEditSubmit() {
         if (!editingSession || !addTimeData.projectId || !addTimeData.userId) return;
+
+        // orgTimezone is a 'UTC' placeholder until fetchOrgSettings lands, and
+        // writing against the placeholder would put the entry hours out.
+        if (!orgSettingsLoaded) {
+            alert('Still loading organization settings — try again in a moment.');
+            return;
+        }
+        const startedAt = zonedWallClockToUtc(addTimeData.date, addTimeData.startTime, orgTimezone);
+        const endedAt = zonedWallClockToUtc(addTimeData.date, addTimeData.endTime, orgTimezone);
+
+        // Without this an end before the start produced a negative-duration row
+        // that overlapped no calendar day, so it rendered nowhere while still
+        // existing in the database — the entry that "disappeared".
+        if (endedAt.getTime() <= startedAt.getTime()) {
+            alert('End time must be after start time.');
+            return;
+        }
+
+        setSubmittingEntry(true);
         try {
-            const startStr = `${addTimeData.date}T${addTimeData.startTime}:00`;
-            const endStr = `${addTimeData.date}T${addTimeData.endTime}:00`;
             const { error } = await supabase.from('sessions').update({
                 project_id: addTimeData.projectId,
                 user_id: addTimeData.userId,
-                started_at: new Date(startStr).toISOString(),
-                ended_at: new Date(endStr).toISOString()
+                started_at: startedAt.toISOString(),
+                ended_at: endedAt.toISOString()
             }).eq('id', editingSession.id);
             if (error) throw error;
             setShowEditTimeModal(false);
@@ -516,6 +550,8 @@ export function Timesheets() {
         } catch (err) {
             console.error('Failed to edit manual time:', err);
             alert('Error editing time entry.');
+        } finally {
+            setSubmittingEntry(false);
         }
     }
 
@@ -537,15 +573,18 @@ export function Timesheets() {
         const start = new Date(session.original_started_at || session.started_at);
         const end = (session.original_ended_at || session.ended_at) ? new Date(session.original_ended_at || session.ended_at) : new Date(session.effective_end || new Date());
 
-        const pad = (n: number) => n.toString().padStart(2, '0');
-        const localDateStr = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
+        // Read back in the same timezone it was written in. getHours() is the
+        // browser's, so the form used to show 11:00 AM for a row displaying
+        // 12:00 am, and saving that round trip shifted the entry again.
+        const startLocal = utcToZonedWallClock(start, orgTimezone);
+        const endLocal = utcToZonedWallClock(end, orgTimezone);
 
         setAddTimeData({
             projectId: session.project_id || '',
             userId: session.user_id || '',
-            date: localDateStr,
-            startTime: pad(start.getHours()) + ':' + pad(start.getMinutes()),
-            endTime: pad(end.getHours()) + ':' + pad(end.getMinutes())
+            date: startLocal.date,
+            startTime: startLocal.time,
+            endTime: endLocal.time
         });
         setEditingSession(session);
         setShowEditTimeModal(true);
@@ -798,7 +837,7 @@ export function Timesheets() {
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-text-muted ">Date</label>
+                        <label className="text-[10px] font-bold text-text-muted ">Date <span className="text-text-muted/60">({orgTimezone})</span></label>
                         <DatePicker
                             value={addTimeData.date}
                             onChange={(val) => setAddTimeData({ ...addTimeData, date: val })}
@@ -806,16 +845,16 @@ export function Timesheets() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-text-muted ">Start</label>
+                            <label className="text-[10px] font-bold text-text-muted ">Start <span className="text-text-muted/60">({orgTimezone})</span></label>
                             <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({ ...addTimeData, startTime: e.target.value })} />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-text-muted ">End</label>
+                            <label className="text-[10px] font-bold text-text-muted ">End <span className="text-text-muted/60">({orgTimezone})</span></label>
                             <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({ ...addTimeData, endTime: e.target.value })} />
                         </div>
                     </div>
                     <div className="flex justify-end pt-2">
-                        <button onClick={handleManualAddTime} className="px-8 h-11 bg-primary text-white rounded-md text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">Submit Entry</button>
+                        <button onClick={handleManualAddTime} disabled={submittingEntry} className="px-8 h-11 bg-primary text-white rounded-md text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Submit Entry'}</button>
                     </div>
                 </div>
             </Modal>
@@ -853,7 +892,7 @@ export function Timesheets() {
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-text-muted ">Date (Local Timezone)</label>
+                        <label className="text-[10px] font-bold text-text-muted ">Date <span className="text-text-muted/60">({orgTimezone})</span></label>
                         <DatePicker
                             value={addTimeData.date}
                             onChange={(val) => setAddTimeData({ ...addTimeData, date: val })}
@@ -861,16 +900,16 @@ export function Timesheets() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-text-muted ">Start</label>
+                            <label className="text-[10px] font-bold text-text-muted ">Start <span className="text-text-muted/60">({orgTimezone})</span></label>
                             <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({ ...addTimeData, startTime: e.target.value })} />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-text-muted ">End</label>
+                            <label className="text-[10px] font-bold text-text-muted ">End <span className="text-text-muted/60">({orgTimezone})</span></label>
                             <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({ ...addTimeData, endTime: e.target.value })} />
                         </div>
                     </div>
                     <div className="flex justify-end pt-2">
-                        <button onClick={handleEditSubmit} className="px-8 h-11 bg-primary text-white rounded-md text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all">Save Changes</button>
+                        <button onClick={handleEditSubmit} disabled={submittingEntry} className="px-8 h-11 bg-primary text-white rounded-md text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Save Changes'}</button>
                     </div>
                 </div>
             </Modal>

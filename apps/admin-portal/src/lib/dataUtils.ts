@@ -55,6 +55,66 @@ export function orgLocalToUtc(dateStr: string, timeOfDay: 'start' | 'end', tz: s
     }
 }
 
+/**
+ * The wall-clock time `date` shows in `tz`, minus the same instant in UTC.
+ * Positive east of Greenwich. Recomputed per instant, so DST is handled.
+ */
+function tzOffsetMs(date: Date, tz: string): number {
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour12: false,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+    }).formatToParts(date);
+
+    const get = (type: string) => parseInt(parts.find(p => p.type === type)?.value ?? '0', 10);
+    // hour12:false reports midnight as 24 in some engines, hence the modulo.
+    const asIfUtc = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour') % 24, get('minute'), get('second'));
+    return asIfUtc - date.getTime();
+}
+
+/**
+ * "2026-09-16" + "11:00" in `tz` -> the UTC instant that wall-clock names.
+ *
+ * `new Date("2026-09-16T11:00:00")` is NOT this: that parses in the browser's
+ * own timezone, so an admin in UTC+5 entering 11:00 for an org on LA time was
+ * writing 11:00 PM the previous LA day. The manual time entries were 11 hours
+ * out and split across two days in the timesheet.
+ */
+export function zonedWallClockToUtc(dateStr: string, timeStr: string, tz: string): Date {
+    const [y, mo, d] = dateStr.split('-').map(Number);
+    const [h, mi] = timeStr.split(':').map(Number);
+
+    // Start by reading the wall clock as if it were UTC, then subtract the zone's
+    // offset. The offset depends on the instant, so take it again at the result:
+    // near a DST transition the first guess can land on the wrong side.
+    const naive = Date.UTC(y, mo - 1, d, h, mi, 0);
+    let utc = new Date(naive - tzOffsetMs(new Date(naive), tz));
+    const settled = tzOffsetMs(utc, tz);
+    if (naive - settled !== utc.getTime()) utc = new Date(naive - settled);
+    return utc;
+}
+
+/**
+ * The inverse: an instant -> the date and HH:MM it reads as in `tz`.
+ * Used to populate the edit form, so it shows the same numbers as the row.
+ */
+export function utcToZonedWallClock(date: Date, tz: string): { date: string; time: string } {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: tz,
+        hour12: false,
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit',
+    }).formatToParts(date);
+
+    const get = (type: string) => parts.find(p => p.type === type)?.value ?? '00';
+    const hour = String(parseInt(get('hour'), 10) % 24).padStart(2, '0');
+    return {
+        date: `${get('year')}-${get('month')}-${get('day')}`,
+        time: `${hour}:${get('minute')}`,
+    };
+}
+
 export interface HubstaffBlock {
     id: string; // block identifier (e.g. "2024-03-20T09:00")
     startTime: string;
