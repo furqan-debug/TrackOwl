@@ -87,10 +87,12 @@ export const reportService = {
         } catch (_) {}
     }
 
-    const { data: members } = await supabase.from('members')
-        .select('id, full_name, timezone, idle_limit')
+    const { data: membersData } = await supabase.from('members')
+        .select('id, full_name, timezone, idle_limit, auth_user_id')
         .eq('organization_id', organizationId)
         .order('full_name', { ascending: true });
+
+    const members = membersData || [];
 
     // Paginate sessions to avoid Supabase's 1000-row PostgREST cap
     const allSessions: any[] = [];
@@ -117,78 +119,26 @@ export const reportService = {
     }
     const sessions = allSessions;
 
-    const { data: samplesData, error: samplesErr } = await supabase.rpc('get_raw_activity_samples', {
-        p_org_id: organizationId,
-        p_start_iso: start.toISOString(),
-        p_end_iso: end.toISOString(),
-        p_member_ids: selectedMemberId.toLowerCase() !== 'all' ? [selectedMemberId] : null
-    });
-    if (samplesErr) {
-        console.error("Error fetching daily totals samples:", samplesErr);
-    }
-    const samples = samplesData || [];
-
-    if (!members || !sessions) {
-        return { data: [], members: members || [] };
-    }
-
     const memberMap: Record<string, any> = {};
     members.forEach((m: any) => {
         memberMap[m.id] = m;
         if (m.auth_user_id) memberMap[m.auth_user_id] = m;
     });
 
-    const sessionToUserId = new Map();
-    (sessions || []).forEach((s: any) => sessionToUserId.set(s.id, s.user_id));
-
-    const seen = new Set<string>();
-    const dedupedSamples: any[] = [];
-    const sortedSamples = [...(samples || [])].sort((a: any, b: any) => (b.activity_percent ?? 0) - (a.activity_percent ?? 0));
-
-    sortedSamples.forEach((s: any) => {
-        const uid = s.user_id || sessionToUserId.get(s.session_id);
-        const member = uid ? memberMap[uid] : null;
-        if (!member) return;
-        const canonicalId = member.id;
-        const minute = new Date(s.recorded_at).toISOString().substring(0, 16);
-        const key = `${canonicalId}_${minute}`;
-        if (seen.has(key)) return;
-        seen.add(key);
-        dedupedSamples.push({ ...s, canonical_user_id: canonicalId });
-    });
-
-    const userSamples = new Map<string, any[]>();
-    dedupedSamples.forEach(s => {
-        const uid = s.canonical_user_id;
-        if (!uid) return;
-        if (!userSamples.has(uid)) userSamples.set(uid, []);
-        userSamples.get(uid)!.push(s);
-    });
-
     const stats: Record<string, number[]> = {};
-    members.forEach((m: any) => stats[m.id] = [0,0,0,0,0,0,0]);
+    members.forEach((m: any) => stats[m.id] = [0, 0, 0, 0, 0, 0, 0]);
 
-    /**
-     * Maps a UTC timestamp to the 0-based column index (Mon=0…Sun=6) of the
-     * displayed week for the given member timezone.
-     *
-     * Uses the exact weekDateStrings array when available so that e.g. a sample
-     * on Wednesday Sep 9 does NOT fall into the Sep 16 (Wed) column. Without
-     * this, getDayIndexInTz returned an absolute weekday that was the same for
-     * every Wednesday regardless of which week was being viewed.
-     */
     const dateToSlot = (timestampIso: string, memberTz: string): number => {
         if (weekDateStrings && weekDateStrings.length === 7) {
             const laDate = getGroupingDateInTz(timestampIso, memberTz);
             const idx = weekDateStrings.indexOf(laDate);
-            return idx; // -1 means outside the displayed week — caller must guard
+            return idx;
         }
-        // Fallback for callers that don't pass weekDateStrings (should be removed once all callers updated)
         const dayIdxRaw = getDayIndexInTz(timestampIso, memberTz);
         return (dayIdxRaw + 6) % 7;
     };
 
-    // Process manual sessions first
+    // 1. Process manual sessions first
     sessions.forEach((s: any) => {
         if (s.manual === true) {
             const uid = s.user_id;
@@ -204,56 +154,51 @@ export const reportService = {
         }
     });
 
-    const memberDetailMap = new Map(members.map((m: any) => [m.id, m]));
+    // 2. Query block_records (the single source of truth for all tracked time)
+    let blocksQuery = supabase
+        .from('block_records')
+        .select('business_date, user_id, active_seconds, credited, block_start, block_end')
+        .gte('block_start', start.toISOString())
+        .lte('block_end', end.toISOString())
+        .eq('credited', true);
 
-    userSamples.forEach((samples, uid) => {
-        const limit = memberDetailMap.get(uid)?.idle_limit ?? 10;
-        const member = memberMap[uid];
-        const sorted = samples.sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
-        
-        const sampleByMinute = new Map();
-        sorted.forEach((s: any) => sampleByMinute.set(s.recorded_at.substring(0, 16), s));
-
-        let currentBlock: any[] = [];
-        const productiveMinutes = new Set<string>();
-
-        for (let i = 0; i < sorted.length; i++) {
-            const s = sorted[i];
-            const prev = i > 0 ? sorted[i-1] : null;
-            const gapMs = prev ? (new Date(s.recorded_at).getTime() - new Date(prev.recorded_at).getTime()) : 0;
-            const isContiguous = prev && gapMs <= 125000;
-
-            if (s.idle && isContiguous) {
-                currentBlock.push(s);
-            } else if (s.idle && !prev) {
-                currentBlock = [s];
-            } else if (s.idle && !isContiguous) {
-                if (currentBlock.length < limit) {
-                    currentBlock.forEach(b => productiveMinutes.add(b.recorded_at.substring(0, 16)));
-                }
-                currentBlock = [s];
-            } else {
-                productiveMinutes.add(s.recorded_at.substring(0, 16));
-                if (currentBlock.length < limit) {
-                    currentBlock.forEach(b => productiveMinutes.add(b.recorded_at.substring(0, 16)));
-                }
-                currentBlock = [];
-            }
+    if (organizationId) {
+        blocksQuery = blocksQuery.eq('organization_id', organizationId);
+    }
+    if (selectedMemberId.toLowerCase() !== 'all') {
+        const selectedMember = members.find((m: any) => m.id === selectedMemberId);
+        const scopedUserIds = Array.from(new Set([selectedMember?.id, selectedMember?.auth_user_id].filter(Boolean) as string[]));
+        if (scopedUserIds.length > 0) {
+            blocksQuery = blocksQuery.in('user_id', scopedUserIds);
         }
-        if (currentBlock.length < limit) {
-            currentBlock.forEach(b => productiveMinutes.add(b.recorded_at.substring(0, 16)));
-        }
+    }
 
-        if (productiveMinutes.size > 0) {
-            productiveMinutes.forEach(minuteStr => {
-                const s = sampleByMinute.get(minuteStr);
-                if (s && member) {
-                    const dayIdx = dateToSlot(s.recorded_at, member.timezone);
-                    if (dayIdx >= 0) stats[member.id][dayIdx] += (1 / 60);
-                }
-            });
+    const { data: blocksData, error: blocksErr } = await blocksQuery;
+    if (blocksErr) {
+        console.error("Error fetching daily totals block records:", blocksErr);
+    }
+    const blocks = blocksData || [];
+
+    blocks.forEach((b: any) => {
+        const member = memberMap[b.user_id];
+        if (!member) return;
+        const startMs = new Date(b.block_start).getTime();
+        const endMs = new Date(b.block_end).getTime();
+        const durSecs = Math.max(0, Math.min(600, (endMs - startMs) / 1000));
+        const durHours = durSecs / 3600;
+
+        let slotIdx = -1;
+        if (weekDateStrings && weekDateStrings.length === 7) {
+            slotIdx = weekDateStrings.indexOf(b.business_date);
+        }
+        if (slotIdx < 0) {
+            slotIdx = dateToSlot(b.block_start, member.timezone);
+        }
+        if (slotIdx >= 0 && slotIdx < 7 && stats[member.id]) {
+            stats[member.id][slotIdx] += durHours;
         }
     });
+
 
     const result: DayTotal[] = Object.entries(stats).map(([uid, totals]) => ({
         member: memberMap[uid].name,
