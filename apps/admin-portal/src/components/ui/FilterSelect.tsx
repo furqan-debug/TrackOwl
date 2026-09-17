@@ -16,13 +16,6 @@ export interface FilterSelectProps {
     label?: string;
     enableSearch?: boolean;
     sortOptions?: boolean;
-    /**
-     * Drop the trigger's own border and background, for when this sits inside a
-     * panel that already draws them. `className` lands on the outer wrapper, not
-     * the trigger, so passing border-none there never reached it — the trigger
-     * kept painting a second border and fill inside the first.
-     */
-    flush?: boolean;
 }
 
 export function FilterSelect({ 
@@ -33,8 +26,7 @@ export function FilterSelect({
     className, 
     label,
     enableSearch = true,
-    sortOptions = true,
-    flush = false
+    sortOptions = true
 }: FilterSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
@@ -88,11 +80,9 @@ export function FilterSelect({
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
                     "flex items-center gap-3 px-4 py-2 cursor-pointer transition-all h-full rounded-xl select-none",
-                    flush
-                        ? (isOpen ? "bg-surface-hover" : "hover:bg-surface-hover")
-                        : isOpen
-                            ? "bg-surface-hover border-[var(--border-hover)] shadow-inner"
-                            : "bg-surface hover:bg-surface-hover hover:border-[var(--border-hover)] border border-border"
+                    isOpen
+                        ? "bg-surface-hover border-[var(--border-hover)] shadow-inner"
+                        : "bg-surface hover:bg-surface-hover hover:border-[var(--border-hover)] border border-border"
                 )}
             >
                 {/* Stays muted while open. --primary is #FFD700 in dark mode, so
