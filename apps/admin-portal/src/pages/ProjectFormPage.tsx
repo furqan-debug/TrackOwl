@@ -194,7 +194,6 @@ export function ProjectFormPage() {
             maxWidth="full"
             title={isEdit ? "Edit Project" : "New Project"}
             description="Configure project settings, budget limits, and team assignments."
-            backButton={{ onClick: () => navigate('/dashboard/projects'), label: 'Back to Projects' }}
             actions={
                 <div className="flex items-center gap-4">
                     <button 

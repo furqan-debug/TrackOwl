@@ -612,14 +612,14 @@ export function Timesheets() {
 
     return (
         <div className="flex flex-col min-h-screen bg-main font-sans text-text-main">
-            <header className="px-8 py-6 flex items-center justify-between shrink-0">
+            <header className="px-4 pt-4 pb-6 md:px-10 md:pt-12 md:pb-6 flex items-center justify-between shrink-0">
                 <div className="space-y-2">
                     <h1 className="text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
                     <p className="text-[14px] font-bold text-text-muted tracking-tight">Verify and refine team temporal records</p>
                 </div>
             </header>
 
-            <div className="px-3 py-3 min-[900px]:px-8 min-[900px]:py-4 flex flex-col min-[900px]:flex-row min-[900px]:flex-wrap items-stretch min-[900px]:items-center justify-between gap-3 min-[900px]:gap-4 w-full min-w-0">
+            <div className="px-4 py-3 min-[900px]:px-10 min-[900px]:py-4 flex flex-col min-[900px]:flex-row min-[900px]:flex-wrap items-stretch min-[900px]:items-center justify-between gap-3 min-[900px]:gap-4 w-full min-w-0">
 
                 {/* Date + timezone */}
                 <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-6 w-full min-[900px]:w-auto min-w-0">
