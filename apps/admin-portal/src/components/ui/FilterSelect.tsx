@@ -95,7 +95,11 @@ export function FilterSelect({
                             : "bg-surface hover:bg-surface-hover hover:border-[var(--border-hover)] border border-border"
                 )}
             >
-                <div className={clsx("shrink-0 transition-colors", isOpen ? "text-primary" : "text-text-muted")}>
+                {/* Stays muted while open. --primary is #FFD700 in dark mode, so
+                    opening the dropdown turned the icon and chevron gold and the
+                    pill looked like a different control than the one clicked. The
+                    rotated chevron already says it is open. */}
+                <div className="shrink-0 transition-colors text-text-muted">
                     {icon}
                 </div>
                 <div className="flex items-center gap-2 flex-1">
@@ -108,7 +112,7 @@ export function FilterSelect({
                     <span className="text-[12px] font-bold text-text-main min-w-[80px] truncate">{activeLabel}</span>
                 </div>
                 <ChevronDown 
-                    className={clsx("w-3.5 h-3.5 transition-transform duration-300", isOpen ? "text-primary rotate-180" : "text-text-muted")} 
+                    className={clsx("w-3.5 h-3.5 transition-transform duration-300 text-text-muted", isOpen && "rotate-180")} 
                     strokeWidth={2.5} 
                 />
             </div>
