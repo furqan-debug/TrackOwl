@@ -55,9 +55,14 @@ export function PageLayout({
                                     {backButton.label || 'Go Back'}
                                 </button>
                             )}
-                            <div className="space-y-1">
+                            <div className="space-y-1 relative">
+                                {/* Above the title without taking layout space, so a page
+                                    with an eyebrow puts its <h1> at the same height as one
+                                    without. In flow it pushed the heading down a line, and
+                                    the four pages carrying one sat lower than the rest.
+                                    Stays in flow below md, where there is no room above. */}
                                 {eyebrow && (
-                                    <span className="text-[10px] md:text-[11px] font-bold tracking-[0.05em] text-text-muted uppercase block">
+                                    <span className="text-[10px] md:text-[11px] font-bold tracking-[0.05em] text-text-muted uppercase block md:absolute md:bottom-full md:left-0 md:mb-1 md:whitespace-nowrap">
                                         {eyebrow}
                                     </span>
                                 )}
