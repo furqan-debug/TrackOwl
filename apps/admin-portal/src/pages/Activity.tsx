@@ -279,7 +279,11 @@ export function Activity() {
             description="Visual audit and activity timeline for workspace members."
             actions={
                 <div className="flex items-center gap-4">
-                    <div className="bg-surface border border-border p-1 rounded-xl flex items-center shadow-shell-sm">
+                    {/* h-10 to match the date pill and the refresh button. Without it
+                        this one sized to its own text and sat two pixels short, so the
+                        three controls did not line up. Height only — the width still
+                        comes from the content. */}
+                    <div className="flex items-center h-10 bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
                         <FilterSelect
                             icon={<Users className="w-3.5 h-3.5 text-text-muted" />}
                             value={selectedMemberId}
