@@ -342,6 +342,7 @@ export function SecurityPage() {
     return (
         <PageLayout
             maxWidth="full"
+            eyebrow="ACCOUNT SECURITY"
             title="Security Settings"
             description="Manage your account protection and sign-in credentials."
         >

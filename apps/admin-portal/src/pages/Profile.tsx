@@ -171,6 +171,7 @@ export function ProfilePage() {
     return (
         <PageLayout
             maxWidth="full"
+            eyebrow="ACCOUNT & IDENTITY"
             title="Profile Settings"
             description="Manage your global workspace identity and track your personal productivity."
 

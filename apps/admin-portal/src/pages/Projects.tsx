@@ -172,6 +172,7 @@ export function Projects() {
     return (
         <PageLayout
             maxWidth="full"
+            eyebrow="PORTFOLIO & ASSETS"
             title="Projects"
             description="Strategic oversight of workspace projects and team allocations."
             actions={

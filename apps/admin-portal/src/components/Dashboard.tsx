@@ -472,6 +472,7 @@ export function Dashboard() {
     return (
         <PageLayout
             maxWidth="full"
+            eyebrow="WORKSPACE ANALYTICS & INSIGHTS"
             title="Team Overview"
             description="Building the future of global work. Strategic leadership for the modern enterprise."
             actions={
