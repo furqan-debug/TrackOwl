@@ -236,7 +236,6 @@ export const activityService = {
             return new Date(normalized).getTime();
         };
 
-        const nowMs = new Date().getTime();
         const mins = sessions.reduce((acc, s) => {
             const startedAtMs = parseDbTimestamp(s.started_at) || new Date(s.started_at).getTime();
             
