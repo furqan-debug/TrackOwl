@@ -174,6 +174,8 @@ export function AppUsage() {
         setCurrentPage(1);
     }, [searchTerm]);
 
+    const isToday = selectedDate === new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+
     return (
         <PageLayout
             maxWidth="full"
@@ -181,23 +183,46 @@ export function AppUsage() {
             description="See which apps and websites your team is using while tracking time."
             actions={
                 <div className="flex items-center gap-4">
-                    <div className="h-10 min-w-[200px]">
-                        <FilterSelect
-                            icon={<Users className="w-3.5 h-3.5" />}
-                            value={selectedMemberId}
-                            onChange={setSelectedMemberId}
-                            options={[
-                                { id: 'all', name: 'Every Member' },
-                                ...members.map(m => ({ id: m.id, name: m.full_name }))
-                            ]}
-                        />
-                    </div>
-
-                    <DatePicker
-                        value={selectedDate}
-                        onChange={setSelectedDate}
-                        className="h-10 min-w-[180px]"
+                    <FilterSelect
+                        icon={<Users className="w-3.5 h-3.5 text-text-muted" />}
+                        value={selectedMemberId}
+                        onChange={setSelectedMemberId}
+                        options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
+                        className="h-10"
                     />
+
+                    {/* Same date control as Screenshots: the picker alone had no way
+                        to step a day at a time. */}
+                    <div className="flex items-center h-10 bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
+                        <button
+                            onClick={() => {
+                                const [y, m, d] = selectedDate.split('-').map(Number);
+                                const dateObj = new Date(y, m - 1, d);
+                                dateObj.setDate(dateObj.getDate() - 1);
+                                setSelectedDate(dateObj.toLocaleDateString('en-CA'));
+                            }}
+                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <DatePicker
+                            value={selectedDate}
+                            onChange={(val) => setSelectedDate(val)}
+                            className="min-w-[180px]"
+                        />
+                        <button
+                            onClick={() => {
+                                const [y, m, d] = selectedDate.split('-').map(Number);
+                                const dateObj = new Date(y, m - 1, d);
+                                dateObj.setDate(dateObj.getDate() + 1);
+                                setSelectedDate(dateObj.toLocaleDateString('en-CA'));
+                            }}
+                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg disabled:opacity-20"
+                            disabled={isToday}
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
 
                     <RefreshButton
                         onClick={() => fetchData(false, true)}
