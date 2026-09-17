@@ -644,7 +644,10 @@ export function Timesheets() {
 
                 {/* Everything else, stacked, on the right. The switcher was on this
                     side and these were on the left. */}
-                <div className="flex flex-col min-[900px]:items-end gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
+                {/* Lifted 24px above the switcher's line. The header's right side is
+                    empty, so this rises into it without meeting the heading, which is
+                    on the left. */}
+                <div className="flex flex-col min-[900px]:items-end min-[900px]:-mt-6 gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
 
                     {/* Date + timezone */}
                     <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-6 w-full min-[900px]:w-auto min-w-0">
