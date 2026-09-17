@@ -56,9 +56,9 @@ BEGIN
     );
 
   IF v_has_blocks THEN
-    -- Read from block_records (single source of truth)
+    -- Read from block_records (clamped to 600s max per block, identical to Reports)
     SELECT 
-      COALESCE(ROUND(SUM(EXTRACT(EPOCH FROM (br.block_end - br.block_start))) FILTER (WHERE br.credited = true) / 60), 0)::int,
+      COALESCE(ROUND(SUM(LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 600)) FILTER (WHERE br.credited = true) / 60), 0)::int,
       COALESCE(SUM(br.activity_percent) FILTER (WHERE br.credited = true), 0)::bigint,
       COALESCE(COUNT(*) FILTER (WHERE br.credited = true), 0)::int,
       COUNT(DISTINCT s.project_id),
@@ -70,7 +70,7 @@ BEGIN
       v_projects_worked,
       v_active_members
     FROM public.block_records br
-    JOIN sessions s ON br.session_id = s.id
+    LEFT JOIN sessions s ON br.session_id = s.id
     WHERE br.organization_id = p_org_id
       AND br.block_start >= p_start_iso 
       AND br.block_end <= p_end_iso
@@ -80,9 +80,9 @@ BEGIN
         OR (p_project_ids IS NOT NULL AND s.project_id = ANY(p_project_ids))
       );
 
-    -- Prev period from block_records
+    -- Prev period from block_records (clamped to 600s)
     SELECT 
-      COALESCE(ROUND(SUM(EXTRACT(EPOCH FROM (br.block_end - br.block_start))) FILTER (WHERE br.credited = true) / 60), 0)::int,
+      COALESCE(ROUND(SUM(LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 600)) FILTER (WHERE br.credited = true) / 60), 0)::int,
       COALESCE(SUM(br.activity_percent) FILTER (WHERE br.credited = true), 0)::bigint,
       COALESCE(COUNT(*) FILTER (WHERE br.credited = true), 0)::int
     INTO 
@@ -90,7 +90,7 @@ BEGIN
       v_prev_activity_sum,
       v_prev_activity_count
     FROM public.block_records br
-    JOIN sessions s ON br.session_id = s.id
+    LEFT JOIN sessions s ON br.session_id = s.id
     WHERE br.organization_id = p_org_id
       AND br.block_start >= p_prev_start_iso 
       AND br.block_end <= p_prev_end_iso
@@ -106,7 +106,7 @@ BEGIN
     FROM (
       SELECT br.app_name, COUNT(*) as cnt
       FROM public.block_records br
-      JOIN sessions s ON br.session_id = s.id
+      LEFT JOIN sessions s ON br.session_id = s.id
       WHERE br.organization_id = p_org_id
         AND br.block_start >= p_start_iso 
         AND br.block_end <= p_end_iso
@@ -124,17 +124,17 @@ BEGIN
       LIMIT 20
     ) t;
 
-    -- User stats from block_records
+    -- User stats from block_records (clamped to 600s)
     SELECT COALESCE(jsonb_object_agg(user_id::text, json_build_object('mins', mins, 'activity_sum', act_sum, 'cnt', cnt)), '{}'::jsonb)
     INTO v_user_stats
     FROM (
       SELECT 
         br.user_id, 
-        COALESCE(ROUND(SUM(EXTRACT(EPOCH FROM (br.block_end - br.block_start))) FILTER (WHERE br.credited = true) / 60), 0)::int as mins, 
+        COALESCE(ROUND(SUM(LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 600)) FILTER (WHERE br.credited = true) / 60), 0)::int as mins, 
         COALESCE(SUM(br.activity_percent) FILTER (WHERE br.credited = true), 0) as act_sum,
         COUNT(*) FILTER (WHERE br.credited = true) as cnt
       FROM public.block_records br
-      JOIN sessions s ON br.session_id = s.id
+      LEFT JOIN sessions s ON br.session_id = s.id
       WHERE br.organization_id = p_org_id
         AND br.block_start >= p_start_iso 
         AND br.block_end <= p_end_iso
@@ -146,13 +146,13 @@ BEGIN
       GROUP BY br.user_id
     ) t;
 
-    -- Project stats from block_records
+    -- Project stats from block_records (clamped to 600s)
     SELECT COALESCE(jsonb_object_agg(project_id::text, json_build_object('mins', mins, 'activity_sum', act_sum, 'cnt', cnt)), '{}'::jsonb)
     INTO v_proj_stats
     FROM (
       SELECT 
         s.project_id, 
-        COALESCE(ROUND(SUM(EXTRACT(EPOCH FROM (br.block_end - br.block_start))) FILTER (WHERE br.credited = true) / 60), 0)::int as mins, 
+        COALESCE(ROUND(SUM(LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 600)) FILTER (WHERE br.credited = true) / 60), 0)::int as mins, 
         COALESCE(SUM(br.activity_percent) FILTER (WHERE br.credited = true), 0) as act_sum,
         COUNT(*) FILTER (WHERE br.credited = true) as cnt
       FROM public.block_records br
