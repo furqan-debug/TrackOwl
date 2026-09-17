@@ -289,7 +289,8 @@ export function Activity() {
                             value={selectedMemberId}
                             onChange={setSelectedMemberId}
                             options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
-                            className="border-none bg-transparent hover:bg-surface-hover transition-all rounded-lg"
+                            className="h-full"
+                            flush
                         />
                     </div>
 
