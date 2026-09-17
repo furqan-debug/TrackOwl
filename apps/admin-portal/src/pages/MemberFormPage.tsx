@@ -26,6 +26,7 @@ import {
     ChevronLeft,
     ArrowLeft,
     Settings2,
+    Hourglass,
 } from 'lucide-react';
 import { LoadingState, DatePicker } from '../components/ui';
 import { SecureImage } from '../components/ui/SecureImage';
@@ -1463,53 +1464,37 @@ export function MemberFormPage() {
                                                             placeholder="10"
                                                         />
 
-                                                        <div className="space-y-2">
-                                                            <label className="text-[11px] font-bold text-text-muted">
-                                                                Idle Time
-                                                                Handling
-                                                            </label>
-
-                                                            <div className="relative">
-                                                                <select
-                                                                    value={
-                                                                        keepIdleMode
-                                                                    }
-                                                                    onChange={(
-                                                                        e
-                                                                    ) =>
-                                                                        setKeepIdleMode(
-                                                                            e
-                                                                                .target
-                                                                                .value as
-                                                                            | 'prompt'
-                                                                            | 'always'
-                                                                            | 'never'
-                                                                        )
-                                                                    }
-                                                                    className="w-full h-[52px] pl-5 pr-10 bg-surface border border-border rounded-xl text-[13px] font-bold text-text-primary outline-none focus:border-primary transition-all appearance-none cursor-pointer"
-                                                                >
-                                                                    <option value="prompt">
-                                                                        Prompt
-                                                                        user each
-                                                                        time
-                                                                    </option>
-
-                                                                    <option value="always">
-                                                                        Always
-                                                                        keep idle
-                                                                        time
-                                                                    </option>
-
-                                                                    <option value="never">
-                                                                        Always
-                                                                        discard
-                                                                        idle time
-                                                                    </option>
-                                                                </select>
-
-                                                                <ChevronLeft className="w-4 h-4 text-text-muted absolute right-4 top-1/2 -translate-y-1/2 -rotate-90 pointer-events-none" />
-                                                            </div>
-                                                        </div>
+                                                        <FormSelect
+                                                            label="Idle Time Handling"
+                                                            value={keepIdleMode}
+                                                            onChange={(
+                                                                val: string
+                                                            ) =>
+                                                                setKeepIdleMode(
+                                                                    val as
+                                                                    | 'prompt'
+                                                                    | 'always'
+                                                                    | 'never'
+                                                                )
+                                                            }
+                                                            icon={
+                                                                <Hourglass className="w-4 h-4" />
+                                                            }
+                                                            options={[
+                                                                {
+                                                                    label: 'Prompt user each time',
+                                                                    value: 'prompt',
+                                                                },
+                                                                {
+                                                                    label: 'Always keep idle time',
+                                                                    value: 'always',
+                                                                },
+                                                                {
+                                                                    label: 'Always discard idle time',
+                                                                    value: 'never',
+                                                                },
+                                                            ]}
+                                                        />
                                                     </div>
                                                 )}
                                             </div>
