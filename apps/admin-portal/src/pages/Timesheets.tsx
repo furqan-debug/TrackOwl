@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import {
     ChevronLeft, ChevronRight,
@@ -75,7 +75,25 @@ export function Timesheets() {
     const [orgSettingsLoaded, setOrgSettingsLoaded] = useState(false);
     const [projects, setProjects] = useState<any[]>([]);
     const [projectMembersMap, setProjectMembersMap] = useState<Record<string, string[]>>({}); // memberId -> projectId[]
-    const [selectedMember, setSelectedMember] = useState<string>('all');
+    // The selected member lives in the URL, not in component state. Drilling
+    // into someone from the All Members list is a navigation as far as the user
+    // is concerned, so Back should undo it and return to the list — with it in
+    // state, Back left Timesheets altogether and went wherever they came from.
+    const [searchParams, setSearchParams] = useSearchParams();
+    const selectedMember = searchParams.get('member') || 'all';
+
+    const setSelectedMember = (id: string) => {
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            // 'all' is the default, so it stays out of the URL: /timesheets and
+            // /timesheets?member=all would otherwise be two history entries for
+            // the same view, and Back between them would look like nothing
+            // happened.
+            if (!id || id === 'all') next.delete('member');
+            else next.set('member', id);
+            return next;
+        });
+    };
     const [filterProjectId, setFilterProjectId] = useState<string>('all');
 
     const toProperCase = (str: string) => {
@@ -143,19 +161,14 @@ export function Timesheets() {
         return { start, end };
     }, [selectedDate, viewMode]);
 
-    // Timesheet se Report page par jump karne ke liye
-    const openReportForMember = (userId: string) => {
-        // Timesheet ka user_id ho sakta hai auth_user_id ho; usay members.id se match karo
+    // Drill from the All Members list into one member's own timesheet. This used
+    // to navigate to Reports, which answered a different question than the row
+    // the user clicked.
+    const openMemberTimesheet = (userId: string) => {
+        // A row's user_id may be the auth_user_id rather than the member id, so
+        // match on either before handing it to the filter.
         const member = members.find(m => m.id === userId || m.auth_user_id === userId);
-        const memberId = member?.id || userId;
-
-        // Current view ke hisaab se start aur end date
-        const pad = (n: number) => String(n).padStart(2, '0');
-        const toStr = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-        const startStr = toStr(range.start);
-        const endStr = toStr(range.end);
-
-        navigate(`/dashboard/reports?member=${memberId}&start=${startStr}&end=${endStr}`);
+        setSelectedMember(member?.id || userId);
     };
 
     useEffect(() => {
@@ -606,7 +619,7 @@ export function Timesheets() {
                 </div>
             </header>
 
-            <div className="px-3 py-3 min-[900px]:px-8 min-[900px]:py-4 flex flex-col min-[900px]:flex-row min-[900px]:flex-wrap items-stretch min-[900px]:items-center justify-between gap-3 min-[900px]:gap-4 sticky top-0 bg-main/95 backdrop-blur-md z-30 w-full min-w-0">
+            <div className="px-3 py-3 min-[900px]:px-8 min-[900px]:py-4 flex flex-col min-[900px]:flex-row min-[900px]:flex-wrap items-stretch min-[900px]:items-center justify-between gap-3 min-[900px]:gap-4 w-full min-w-0">
 
                 {/* Date + timezone */}
                 <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-6 w-full min-[900px]:w-auto min-w-0">
@@ -758,7 +771,7 @@ export function Timesheets() {
                                 toProperCase={toProperCase}
                                 onEditSession={openEditModal}
                                 onDeleteSession={openDeleteModal}
-                                onRowClick={openReportForMember}
+                                onRowClick={openMemberTimesheet}
                             />
                         )}
 
@@ -946,6 +959,10 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
 }) {
     const day = entries[0];
 
+    // 'all' shows one summary row per member and those drill in; anything else is
+    // already that member's individual sessions.
+    const isAggregatedView = selectedMember === 'all';
+
     const displayRows = useMemo(() => {
         if (!day) return [];
 
@@ -1077,7 +1094,17 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                     </thead>
                     <tbody className="divide-y divide-border">
                         {displayRows.map((s, idx) => (
-                            <tr key={idx} onClick={() => onRowClick(s.user_id)} className="group hover:bg-surface-hover/50 transition-all cursor-pointer">
+                            // Only the aggregated rows drill in. Once a member is
+                            // selected these are their individual sessions, and
+                            // clicking one has nowhere to go.
+                            <tr
+                                key={idx}
+                                onClick={isAggregatedView ? () => onRowClick(s.user_id) : undefined}
+                                className={clsx(
+                                    "group hover:bg-surface-hover/50 transition-all",
+                                    isAggregatedView && "cursor-pointer"
+                                )}
+                            >
                                 <td className="py-8 px-10">
                                     <div className="flex flex-col gap-1.5">
                                         <span className="text-[16px] font-bold text-text-main tracking-tight">{s.project_name}</span>
