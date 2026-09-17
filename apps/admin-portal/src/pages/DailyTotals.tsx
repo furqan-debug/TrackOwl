@@ -21,15 +21,20 @@ export function DailyTotals() {
     const [allMembers, setAllMembers] = useState<{ id: string; full_name: string; timezone?: string; idle_limit?: number | null }[]>([]);
 
     const weekDateStrings = useMemo(() => {
-        const todayTzStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+        const tz = displayTimezone || 'UTC';
+        // Get today's date string in the display timezone (YYYY-MM-DD)
+        const todayTzStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+        // Determine today's day-of-week in the display timezone (0=Sun … 6=Sat)
+        const DOW_MAP: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+        const dayStr = new Intl.DateTimeFormat('en-US', { timeZone: tz, weekday: 'short' }).format(new Date());
+        const dow = DOW_MAP[dayStr] ?? 0;
+        // Distance to most-recent Monday (Mon=1, so we step back `(dow + 6) % 7` days)
+        const daysToMonday = (dow + 6) % 7;
+        // Build 7 date strings by offsetting from today in display TZ (use UTC noon to avoid DST edge cases)
         const [ty, tm, td] = todayTzStr.split('-').map(Number);
-        const anchor = new Date(ty, tm - 1, td);
-        const dayOfWeek = anchor.getDay() || 7;
-
         return Array.from({ length: 7 }, (_, i) => {
-            const d = new Date(ty, tm - 1, td);
-            d.setDate(td - dayOfWeek + 1 + i + (weekOffset * 7));
-            return d.toLocaleDateString('en-CA');
+            const utcNoon = Date.UTC(ty, tm - 1, td - daysToMonday + i + (weekOffset * 7), 12, 0, 0);
+            return new Date(utcNoon).toLocaleDateString('en-CA', { timeZone: tz });
         });
     }, [displayTimezone, weekOffset]);
 
@@ -55,7 +60,8 @@ export function DailyTotals() {
                 start,
                 end,
                 organizationId: organizationId ?? undefined,
-                selectedMemberId
+                selectedMemberId,
+                weekDateStrings,
             });
 
             setData(result);

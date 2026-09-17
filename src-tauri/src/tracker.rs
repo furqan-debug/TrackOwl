@@ -449,9 +449,10 @@ pub fn start_sample_loop_inner(
             if sleep_actual_elapsed > 60_000 {
                 eprintln!("[tracker] ⚠️ System sleep/hibernation detected (sleep gap: {}ms). Auto-terminating interrupted session.", sleep_actual_elapsed);
                 
-                // Flush accumulator before exiting to preserve active work prior to sleep
-                let sleep_stop_time = chrono::Utc::now();
-                if let Some(partial) = accumulator.flush_partial_at(sleep_stop_time) {
+                // Flush accumulator before exiting to preserve active work prior to sleep.
+                // Use flush_partial() which caps block_end at last_sample_time + 60s,
+                // instead of Utc::now() which is the moment the machine WOKE UP (hours later).
+                if let Some(partial) = accumulator.flush_partial() {
                     flush_block_record(&partial, &db, &cfg, &auth_token);
                 }
 

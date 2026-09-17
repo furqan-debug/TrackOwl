@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
-import { getDayIndexInTz, getEffectiveEnd } from '../lib/dataUtils';
+import { getDayIndexInTz, getEffectiveEnd, getGroupingDateInTz } from '../lib/dataUtils';
+
 
 export interface OwedRow {
     member_id: string;
@@ -75,8 +76,9 @@ export const reportService = {
     end: Date;
     organizationId?: string;
     selectedMemberId: string;
+    weekDateStrings?: string[]; // ['2026-09-14', ..., '2026-09-20'] Mon-Sun
   }): Promise<{ data: DayTotal[]; members: any[] }> {
-    const { start, end, organizationId, selectedMemberId } = options;
+    const { start, end, organizationId, selectedMemberId, weekDateStrings } = options;
 
     // Auto-terminate any ghost sessions in database based on Termination Grace Period
     if (organizationId) {
@@ -166,6 +168,26 @@ export const reportService = {
     const stats: Record<string, number[]> = {};
     members.forEach((m: any) => stats[m.id] = [0,0,0,0,0,0,0]);
 
+    /**
+     * Maps a UTC timestamp to the 0-based column index (Mon=0…Sun=6) of the
+     * displayed week for the given member timezone.
+     *
+     * Uses the exact weekDateStrings array when available so that e.g. a sample
+     * on Wednesday Sep 9 does NOT fall into the Sep 16 (Wed) column. Without
+     * this, getDayIndexInTz returned an absolute weekday that was the same for
+     * every Wednesday regardless of which week was being viewed.
+     */
+    const dateToSlot = (timestampIso: string, memberTz: string): number => {
+        if (weekDateStrings && weekDateStrings.length === 7) {
+            const laDate = getGroupingDateInTz(timestampIso, memberTz);
+            const idx = weekDateStrings.indexOf(laDate);
+            return idx; // -1 means outside the displayed week — caller must guard
+        }
+        // Fallback for callers that don't pass weekDateStrings (should be removed once all callers updated)
+        const dayIdxRaw = getDayIndexInTz(timestampIso, memberTz);
+        return (dayIdxRaw + 6) % 7;
+    };
+
     // Process manual sessions first
     sessions.forEach((s: any) => {
         if (s.manual === true) {
@@ -176,8 +198,8 @@ export const reportService = {
             const startMs = new Date(s.started_at).getTime();
             const durationHrs = (endMs - startMs) / (1000 * 60 * 60);
 
-            const dayIdxRaw = getDayIndexInTz(s.started_at, member.timezone);
-            const dayIdx = (dayIdxRaw + 6) % 7;
+            const dayIdx = dateToSlot(s.started_at, member.timezone);
+            if (dayIdx < 0) return; // session starts outside the displayed week — skip
             stats[member.id][dayIdx] += durationHrs;
         }
     });
@@ -226,9 +248,8 @@ export const reportService = {
             productiveMinutes.forEach(minuteStr => {
                 const s = sampleByMinute.get(minuteStr);
                 if (s && member) {
-                    const dayIdxRaw = getDayIndexInTz(s.recorded_at, member.timezone);
-                    const dayIdx = (dayIdxRaw + 6) % 7; 
-                    stats[member.id][dayIdx] += (1 / 60);
+                    const dayIdx = dateToSlot(s.recorded_at, member.timezone);
+                    if (dayIdx >= 0) stats[member.id][dayIdx] += (1 / 60);
                 }
             });
         }
