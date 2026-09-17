@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import {
     ChevronLeft, ChevronRight,
@@ -75,7 +75,25 @@ export function Timesheets() {
     const [orgSettingsLoaded, setOrgSettingsLoaded] = useState(false);
     const [projects, setProjects] = useState<any[]>([]);
     const [projectMembersMap, setProjectMembersMap] = useState<Record<string, string[]>>({}); // memberId -> projectId[]
-    const [selectedMember, setSelectedMember] = useState<string>('all');
+    // The selected member lives in the URL, not in component state. Drilling
+    // into someone from the All Members list is a navigation as far as the user
+    // is concerned, so Back should undo it and return to the list — with it in
+    // state, Back left Timesheets altogether and went wherever they came from.
+    const [searchParams, setSearchParams] = useSearchParams();
+    const selectedMember = searchParams.get('member') || 'all';
+
+    const setSelectedMember = (id: string) => {
+        setSearchParams(prev => {
+            const next = new URLSearchParams(prev);
+            // 'all' is the default, so it stays out of the URL: /timesheets and
+            // /timesheets?member=all would otherwise be two history entries for
+            // the same view, and Back between them would look like nothing
+            // happened.
+            if (!id || id === 'all') next.delete('member');
+            else next.set('member', id);
+            return next;
+        });
+    };
     const [filterProjectId, setFilterProjectId] = useState<string>('all');
 
     const toProperCase = (str: string) => {
