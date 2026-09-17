@@ -279,15 +279,18 @@ export function Activity() {
             description="Visual audit and activity timeline for workspace members."
             actions={
                 <div className="flex items-center gap-4">
-                    <div className="bg-surface border border-border p-1 rounded-xl flex items-center shadow-shell-sm">
-                        <FilterSelect
-                            icon={<Users className="w-3.5 h-3.5 text-text-muted" />}
-                            value={selectedMemberId}
-                            onChange={setSelectedMemberId}
-                            options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
-                            className="border-none bg-transparent hover:bg-surface-hover transition-all rounded-lg"
-                        />
-                    </div>
+                    {/* No wrapper panel. It drew a border and background of its own and
+                        then 4px of padding, so the trigger floated inside a visible
+                        frame instead of filling the control. FilterSelect draws its own
+                        pill, the way it does on every other page. h-10 matches the date
+                        pill and the refresh button. */}
+                    <FilterSelect
+                        icon={<Users className="w-3.5 h-3.5 text-text-muted" />}
+                        value={selectedMemberId}
+                        onChange={setSelectedMemberId}
+                        options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
+                        className="h-10"
+                    />
 
                     <div className="flex items-center h-10 bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
                         <button
