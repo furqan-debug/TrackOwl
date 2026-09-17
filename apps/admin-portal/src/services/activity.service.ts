@@ -247,27 +247,7 @@ export const activityService = {
             }
 
             const stats = (statsData || []).find((st: any) => st.session_id === s.id);
-            const sampleCount = stats ? parseInt(stats.sample_count) : 0;
-            const lastSampleTime = stats && stats.last_sample_at ? (parseDbTimestamp(stats.last_sample_at) || startedAtMs) : startedAtMs;
-
-            const isTrulyActive = !s.ended_at && (nowMs - startedAtMs < 14 * 60 * 60 * 1000);
-
-            let effectiveEndMs = nowMs;
-            if (s.ended_at) {
-                effectiveEndMs = parseDbTimestamp(s.ended_at) || new Date(s.ended_at).getTime();
-            } else if (isTrulyActive) {
-                effectiveEndMs = nowMs;
-            } else if (sampleCount > 0) {
-                effectiveEndMs = Math.max(lastSampleTime, startedAtMs);
-            } else {
-                effectiveEndMs = nowMs;
-            }
-
-            const overlapStartMs = Math.max(startedAtMs, startMs);
-            const overlapEndMs = Math.min(effectiveEndMs, endMs);
-            
-            let durationMins = (overlapEndMs - overlapStartMs) / 60000;
-            if (durationMins < 0) durationMins = 0;
+            const durationMins = stats && stats.duration_mins !== undefined ? Number(stats.duration_mins) : (stats ? parseInt(stats.sample_count || '0') : 0);
             
             return acc + durationMins;
         }, 0);

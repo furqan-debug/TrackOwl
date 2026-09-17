@@ -1,6 +1,16 @@
--- ==============================================================
--- Updated get_dashboard_metrics to read from block_records
--- ==============================================================
+﻿-- =============================================================================
+-- Align get_dashboard_metrics with Reports and Timesheets
+--
+-- Applies LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 600)
+-- across all block_records aggregations in get_dashboard_metrics:
+-- - v_total_mins
+-- - v_prev_total_mins
+-- - v_user_stats (per-user mins)
+-- - v_proj_stats (per-project mins)
+--
+-- This eliminates timer drift / sleep gap inflation in the Team Overview Dashboard
+-- and guarantees that Dashboard total matches Reports and Timesheets.
+-- =============================================================================
 
 CREATE OR REPLACE FUNCTION public.get_dashboard_metrics(
   p_org_id uuid,
@@ -14,7 +24,7 @@ CREATE OR REPLACE FUNCTION public.get_dashboard_metrics(
 RETURNS jsonb
 SECURITY DEFINER
 STABLE
-AS $$
+AS \$\$
 DECLARE
   v_total_mins int := 0;
   v_activity_sum bigint := 0;
@@ -177,7 +187,7 @@ BEGIN
         TO_CHAR(br.block_start AT TIME ZONE 'UTC', 'Dy') as day_name, 
         COUNT(*) as cnt
       FROM public.block_records br
-      JOIN sessions s ON br.session_id = s.id
+      LEFT JOIN sessions s ON br.session_id = s.id
       WHERE br.organization_id = p_org_id
         AND br.block_start >= p_start_iso 
         AND br.block_end <= p_end_iso
@@ -327,14 +337,14 @@ BEGIN
       ss.id,
       ss.user_id,
       ss.file_url as path,
-      ss.recorded_at as "recordedAt",
+      ss.recorded_at as recordedAt,
       COALESCE((
         SELECT ast.activity_percent 
         FROM activity_samples ast 
         WHERE ast.session_id = ss.session_id 
         ORDER BY ABS(EXTRACT(EPOCH FROM ast.recorded_at - ss.recorded_at)) ASC 
         LIMIT 1
-      ), 0) as "activityPercent"
+      ), 0) as activityPercent
     FROM screenshots ss
     JOIN sessions s ON ss.session_id = s.id
     WHERE ss.organization_id = p_org_id
@@ -365,4 +375,6 @@ BEGIN
     'screenshots', v_user_screenshots
   );
 END;
-$$ LANGUAGE plpgsql;
+\$\$ LANGUAGE plpgsql;
+
+NOTIFY pgrst, 'reload schema';
