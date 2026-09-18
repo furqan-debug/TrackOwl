@@ -1112,7 +1112,12 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
     const monthName = month.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
     return (
-        <div className="flex-1 min-w-[300px]">
+        // 270, not 300: two months plus the 16px gap, the container's 16px of
+        // padding, the 176px presets column and the shell's 10px have to fit the
+        // popup's 780px. At 300 that came to 818, and since the months container
+        // is min-w-0 it shrank below its content and the grid ran under the
+        // presets instead of overflowing visibly.
+        <div className="flex-1 min-w-[270px]">
             <div className="p-4 rounded-xl flex items-center justify-between text-white mb-4" style={{ backgroundColor: 'var(--chart-gold)' }}>
                 <button onClick={onPrev} className="hover:bg-surface-hover/20 p-1 rounded-lg transition-colors"><ChevronLeft className="w-4 h-4" /></button>
                 <span className="text-[13px] font-black ">{monthName}</span>
