@@ -78,7 +78,7 @@ export function CustomizedReports() {
                         />
                     </div>
                     <div className="flex items-center gap-3">
-                        <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-text-muted hover:text-slate-600 transition-colors">
+                        <button className="flex items-center gap-2 px-4 py-2 text-xs font-bold text-text-muted hover:text-text-main transition-colors">
                             <Filter className="w-4 h-4" />
                             Filter by Type
                         </button>
@@ -122,7 +122,7 @@ export function CustomizedReports() {
 
                                 <div className="flex items-center justify-between border-t border-border/50 pt-5">
                                     <div className="flex items-center gap-3">
-                                        <button className="p-2 text-text-muted hover:text-slate-600 hover:bg-slate-200/50 rounded-xl transition-all">
+                                        <button className="p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-xl transition-all">
                                             <Edit2 className="w-4 h-4" />
                                         </button>
                                         <button className="p-2 text-text-muted hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all">

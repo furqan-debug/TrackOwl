@@ -424,7 +424,7 @@ export function Todos() {
                                 'p-2 rounded-lg transition-all',
                                 viewMode === 'list'
                                     ? 'bg-slate-900 text-white shadow-shell-sm'
-                                    : 'text-text-muted hover:text-slate-900 hover:bg-surface-hover'
+                                    : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                             )}
                         >
                             <List className="w-4 h-4" />
@@ -438,7 +438,7 @@ export function Todos() {
                                 'p-2 rounded-lg transition-all',
                                 viewMode === 'grid'
                                     ? 'bg-slate-900 text-white shadow-shell-sm'
-                                    : 'text-text-muted hover:text-slate-900 hover:bg-surface-hover'
+                                    : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                             )}
                         >
                             <LayoutGrid className="w-4 h-4" />
@@ -626,7 +626,7 @@ export function Todos() {
                                             statusFilter ===
                                                 status
                                                 ? 'bg-slate-900 text-white shadow-shell-sm'
-                                                : 'text-text-muted hover:text-slate-900 hover:bg-surface-hover'
+                                                : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                                         )}
                                     >
                                         {status === 'Done'
