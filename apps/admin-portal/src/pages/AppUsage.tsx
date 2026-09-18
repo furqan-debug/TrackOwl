@@ -188,7 +188,10 @@ export function AppUsage() {
                         value={selectedMemberId}
                         onChange={setSelectedMemberId}
                         options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
-                        className="h-10"
+                        // Wider than its content needs. The dropdown is w-full, so the
+                        // trigger's width is also the list's, and at content width the
+                        // longer member names were truncating.
+                        className="h-10 min-w-[240px]"
                     />
 
                     {/* Same date control as Screenshots: the picker alone had no way

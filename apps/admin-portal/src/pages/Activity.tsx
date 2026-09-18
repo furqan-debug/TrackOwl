@@ -289,7 +289,10 @@ export function Activity() {
                         value={selectedMemberId}
                         onChange={setSelectedMemberId}
                         options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
-                        className="h-10"
+                        // Wider than its content needs. The dropdown is w-full, so the
+                        // trigger's width is also the list's, and at content width the
+                        // longer member names were truncating.
+                        className="h-10 min-w-[240px]"
                     />
 
                     <div className="flex items-center h-10 bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
