@@ -649,7 +649,7 @@ export function Timesheets() {
                 <div className="min-[900px]:mt-3 w-full min-[900px]:w-auto min-w-0">
                     <div className="flex flex-col min-[900px]:items-end gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
 
-                        {/* Date + timezone */}
+                        {/* Date + actions */}
                         <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-6 w-full min-[900px]:w-auto min-w-0">
 
                             {/* Date navigation */}
@@ -683,54 +683,6 @@ export function Timesheets() {
 
                             </div>
 
-                            {/* Timezone */}
-                            <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0">
-                                <FilterSelect
-                                    icon={<Clock className="w-4 h-4 shrink-0" />}
-                                    value={activeTimezone}
-                                    onChange={setActiveTimezone}
-                                    options={[
-                                        { id: 'Admin Local', name: 'Admin Local (Browser)' },
-                                        { id: 'Org Local', name: 'Organization Timezone' },
-                                        { id: 'User Local', name: 'User Local (Auto)' },
-                                        { id: 'UTC', name: 'UTC (Universal)' },
-                                        ...Array.from(
-                                            new Set(
-                                                members
-                                                    .map(m => m.timezone)
-                                                    .filter(tz => tz && tz !== 'UTC')
-                                            )
-                                        )
-                                            .sort()
-                                            .map(tz => ({
-                                                id: tz as string,
-                                                name: tz as string
-                                            }))
-                                    ]}
-                                />
-                            </div>
-                        </div>
-
-
-                        {/* Member + actions */}
-                        <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
-
-                            {/* Member */}
-                            <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[220px] min-w-0">
-                                <FilterSelect
-                                    icon={<Users className="w-4 h-4 shrink-0" />}
-                                    value={selectedMember}
-                                    onChange={setSelectedMember}
-                                    options={[
-                                        { id: 'all', name: 'All Members' },
-                                        ...members.map((m: MemberInfo) => ({
-                                            id: m.id,
-                                            name: m.full_name
-                                        }))
-                                    ]}
-                                />
-                            </div>
-
                             {/* Buttons */}
                             <div className="grid grid-cols-2 gap-3 w-full min-[900px]:w-auto min-[900px]:flex">
 
@@ -759,6 +711,54 @@ export function Timesheets() {
                                     <span>Add time</span>
                                 </button>
 
+                            </div>
+                        </div>
+
+
+                        {/* Member + timezone */}
+                        <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
+
+                            {/* Member */}
+                            <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[220px] min-w-0">
+                                <FilterSelect
+                                    icon={<Users className="w-4 h-4 shrink-0" />}
+                                    value={selectedMember}
+                                    onChange={setSelectedMember}
+                                    options={[
+                                        { id: 'all', name: 'All Members' },
+                                        ...members.map((m: MemberInfo) => ({
+                                            id: m.id,
+                                            name: m.full_name
+                                        }))
+                                    ]}
+                                />
+                            </div>
+
+                            {/* Timezone */}
+                            <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0">
+                                <FilterSelect
+                                    icon={<Clock className="w-4 h-4 shrink-0" />}
+                                    value={activeTimezone}
+                                    onChange={setActiveTimezone}
+                                    options={[
+                                        { id: 'Admin Local', name: 'Admin Local (Browser)' },
+                                        { id: 'Org Local', name: 'Organization Timezone' },
+                                        { id: 'User Local', name: 'User Local (Auto)' },
+                                        { id: 'UTC', name: 'UTC (Universal)' },
+                                        ...Array.from(
+                                            new Set(
+                                                members
+                                                    .map(m => m.timezone)
+                                                    .filter(tz => tz && tz !== 'UTC')
+                                            )
+                                        )
+                                            .sort()
+                                            .map(tz => ({
+                                                id: tz as string,
+                                                name: tz as string
+                                            }))
+                                    ]}
+                                />
                             </div>
                         </div>
 
