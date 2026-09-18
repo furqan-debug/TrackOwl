@@ -613,9 +613,35 @@ export function Timesheets() {
     return (
         <div className="flex flex-col min-h-screen bg-main font-sans text-text-main">
             <header className="px-4 pt-4 pb-1 md:px-10 md:pt-12 md:pb-1 flex flex-col min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-between gap-3 min-[900px]:gap-4 shrink-0">
-                <div className="space-y-2">
-                    <h1 className="text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
-                    <p className="text-[14px] font-bold text-text-muted tracking-tight">Verify and refine team temporal records</p>
+                <div className="flex flex-col gap-4 min-w-0">
+                    <div className="space-y-2">
+                        <h1 className="text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
+                        <p className="text-[14px] font-bold text-text-muted tracking-tight">Verify and refine team temporal records</p>
+                    </div>
+
+                    {/* View switcher */}
+                    <div className="flex bg-main/50 p-1 rounded-md border border-border/50 h-12 w-full min-[900px]:w-auto min-w-0">
+
+                        {(['daily', 'weekly', 'calendar'] as const).map(mode => (
+                            <button
+                                key={mode}
+                                onClick={() => setViewMode(mode)}
+                                className={clsx(
+                                    "flex-1 min-[900px]:flex-none px-2 min-[900px]:px-8 rounded-md text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
+                                    viewMode === mode
+                                        ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
+                                        : "text-text-muted hover:text-slate-600"
+                                )}
+                            >
+                                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                            </button>
+                        ))}
+
+                    </div>
+
+
+                    {/* Everything else, stacked, on the right. The switcher was on this
+                        side and these were on the left. */}
                 </div>
 
                 {/* Nudged below the heading's top edge rather than flush against
@@ -741,32 +767,6 @@ export function Timesheets() {
                 </div>
             </header>
 
-            <div className="px-4 pt-3 pb-3 min-[900px]:px-10 min-[900px]:pt-0 min-[900px]:pb-4 flex items-stretch min-[900px]:items-center w-full min-w-0">
-
-                {/* View switcher */}
-                <div className="flex bg-main/50 p-1 rounded-md border border-border/50 h-12 w-full min-[900px]:w-auto min-w-0">
-
-                    {(['daily', 'weekly', 'calendar'] as const).map(mode => (
-                        <button
-                            key={mode}
-                            onClick={() => setViewMode(mode)}
-                            className={clsx(
-                                "flex-1 min-[900px]:flex-none px-2 min-[900px]:px-8 rounded-md text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
-                                viewMode === mode
-                                    ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
-                                    : "text-text-muted hover:text-slate-600"
-                            )}
-                        >
-                            {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                        </button>
-                    ))}
-
-                </div>
-
-
-                {/* Everything else, stacked, on the right. The switcher was on this
-                    side and these were on the left. */}
-            </div>
 
             <main className="flex-1 min-h-0 overflow-y-auto px-4 py-5 min-[900px]:px-10 min-[900px]:py-10 custom-scrollbar min-w-0">
                 {loading ? (
