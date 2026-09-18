@@ -1,17 +1,19 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import {
     ChevronLeft, ChevronRight,
     Users,
     Plus, Filter,
     Clock, FolderOpen,
-    MoreVertical, Edit2, Trash2
+    MoreVertical, Edit2, Trash2,
+    Star
 } from 'lucide-react';
 import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker } from '../components/ui';
 import clsx from 'clsx';
 import { getGroupingDateInTz, formatDuration, manualEntryInterval, utcToZonedWallClock } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
+import { useFavorites } from '../context/FavoritesContext';
 
 interface Session {
     id: string;
@@ -60,6 +62,12 @@ export function Timesheets() {
     const { profile, managedMemberIds, managedProjectIds, displayTimezone, timezoneReady } = useAuth();
     const organizationId = profile?.organization_id;
     const navigate = useNavigate();
+
+    // This page builds its own header rather than using PageLayout, which is why
+    // it was the only one without a favourite star. Same hook, same behaviour.
+    const location = useLocation();
+    const { toggleFavorite, isFavorite } = useFavorites();
+    const isFav = isFavorite(location.pathname);
 
     const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'calendar'>('daily');
     const [entries, setEntries] = useState<DailyEntry[]>([]);
@@ -615,7 +623,19 @@ export function Timesheets() {
             <header className="px-4 pt-4 pb-1 md:px-10 md:pt-12 md:pb-1 flex flex-col min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-between gap-3 min-[900px]:gap-4 shrink-0">
                 <div className="flex flex-col gap-4 min-w-0">
                     <div className="space-y-2">
-                        <h1 className="text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
+                            <button
+                                onClick={() => toggleFavorite('Timesheets', location.pathname)}
+                                className={clsx(
+                                    "p-2 rounded-xl transition-all",
+                                    isFav ? "text-[var(--accent)] bg-[var(--accent)]/10" : "text-text-muted hover:text-[var(--accent)] hover:bg-surface-hover"
+                                )}
+                                title={isFav ? "Remove from Favorites" : "Add to Favorites"}
+                            >
+                                <Star className={clsx("w-5 h-5 transition-colors", isFav && "fill-[var(--accent)]")} strokeWidth={isFav ? 2 : 2.5} />
+                            </button>
+                        </div>
                         <p className="text-[14px] font-bold text-text-muted tracking-tight">Verify and refine team temporal records</p>
                     </div>
 
