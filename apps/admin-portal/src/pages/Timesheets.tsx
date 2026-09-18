@@ -618,7 +618,9 @@ export function Timesheets() {
                     <p className="text-[14px] font-bold text-text-muted tracking-tight">Verify and refine team temporal records</p>
                 </div>
 
-                <div className="w-full min-[900px]:w-auto min-w-0">
+                {/* Nudged below the heading's top edge rather than flush against
+                    it, which read as slightly too high. */}
+                <div className="min-[900px]:mt-3 w-full min-[900px]:w-auto min-w-0">
                     <div className="flex flex-col min-[900px]:items-end gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
 
                         {/* Date + timezone */}
