@@ -551,7 +551,7 @@ export function Reports() {
             title="Reports"
             description="Detailed activity analytics and time distribution."
             actions={
-                <div className="flex items-center gap-3 w-full">
+                <div className="flex items-center flex-wrap gap-3 w-full">
                     <div className="flex items-center bg-surface border border-border rounded-xl shadow-shell-sm shrink-0 h-12">
                         <button
                             onClick={() => shiftRange(-1)}
@@ -581,7 +581,7 @@ export function Reports() {
                             </div>
 
                             {showRangeDropdown && (
-                                <div className="absolute top-full -left-11 mt-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="absolute top-full left-0 lg:-left-11 mt-4 z-50 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 duration-200">
                                     <DateRangePicker
                                         range={range}
                                         setRange={setRange}
@@ -1057,12 +1057,12 @@ function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any)
     };
 
     return (
-        <div className="bg-surface border border-border rounded-2xl shadow-2xl flex p-1 overflow-hidden min-w-[780px]">
-            <div className="flex-1 flex border-r border-border p-2 gap-4">
+        <div className="bg-surface border border-border rounded-2xl shadow-2xl flex flex-col lg:flex-row p-1 w-[min(780px,calc(100vw-2rem))] max-h-[80vh] overflow-y-auto">
+            <div className="flex-1 flex flex-col sm:flex-row border-b lg:border-b-0 lg:border-r border-border p-2 gap-4 min-w-0">
                 <MonthView month={leftMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
                 <MonthView month={rightMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
             </div>
-            <div className="w-44 p-4 flex flex-col gap-2 bg-surface-hover/30">
+            <div className="w-full lg:w-44 shrink-0 p-4 flex flex-col gap-2 bg-surface-hover/30">
                 {RANGES.filter(r => r !== 'Custom').map(r => (
                     <button
                         key={r}
