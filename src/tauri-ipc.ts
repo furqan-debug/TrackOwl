@@ -89,6 +89,7 @@ export const trackerAPI = {
         cb(ev.payload);
       });
     }
+    return Promise.resolve(() => {});
   },
   
   onScreenshotCaptured: (cb: () => void) => {
@@ -97,6 +98,7 @@ export const trackerAPI = {
         cb();
       });
     }
+    return Promise.resolve(() => {});
   },
 
   onUpdateProgress: (cb: (pct: number) => void) => {
@@ -105,6 +107,7 @@ export const trackerAPI = {
         cb(ev.payload);
       });
     }
+    return Promise.resolve(() => {});
   },
 
   onUpdateAvailable: (cb: (info: { available: boolean, version: string | null, notes: string | null, platform?: string }) => void) => {
@@ -113,6 +116,7 @@ export const trackerAPI = {
         cb(ev.payload);
       });
     }
+    return Promise.resolve(() => {});
   },
 
   onIdleDialogDismissed: (cb: () => void) => {
@@ -121,6 +125,7 @@ export const trackerAPI = {
         cb();
       });
     }
+    return Promise.resolve(() => {});
   },
 
   onUserReturnedFromIdle: (cb: () => void) => {
@@ -129,6 +134,7 @@ export const trackerAPI = {
         cb();
       });
     }
+    return Promise.resolve(() => {});
   },
 
   onTrackingInterruptedSleep: (cb: () => void) => {
@@ -137,6 +143,7 @@ export const trackerAPI = {
         cb();
       });
     }
+    return Promise.resolve(() => {});
   },
 
   /** Install the pending auto-update (downloads + restarts app) */
