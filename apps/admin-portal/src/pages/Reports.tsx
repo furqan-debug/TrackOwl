@@ -1117,7 +1117,7 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
         // popup's 780px. At 300 that came to 818, and since the months container
         // is min-w-0 it shrank below its content and the grid ran under the
         // presets instead of overflowing visibly.
-        <div className="flex-1 min-w-[270px]">
+        <div className="flex-1 min-w-[270px] flex flex-col">
             <div className="p-4 rounded-xl flex items-center justify-between text-white mb-4" style={{ backgroundColor: 'var(--chart-gold)' }}>
                 <button onClick={onPrev} className="hover:bg-surface-hover/20 p-1 rounded-lg transition-colors"><ChevronLeft className="w-4 h-4" /></button>
                 <span className="text-[13px] font-black ">{monthName}</span>
@@ -1149,7 +1149,7 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
                     );
                 })}
             </div>
-            <div className="mt-4 pt-4 border-t border-slate-50 text-center">
+            <div className="mt-auto pt-4 border-t border-border text-center">
                 <span className="text-[10px] font-bold text-text-muted ">
                     {month.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                 </span>
