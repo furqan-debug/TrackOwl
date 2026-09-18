@@ -107,8 +107,13 @@ export function FilterSelect({
                 />
             </div>
             
+            {/* The panel anchors to the trigger's RIGHT edge. With left-0 it grew
+                rightwards off the trigger whenever the trigger was narrower than
+                min-w-[220px], which is most of them. Right-anchored it ends where the
+                trigger ends and any extra width falls to the left, under the control
+                rather than past it. */}
             {isOpen && (
-                <div className="absolute top-[calc(100%+8px)] left-0 min-w-[220px] w-full max-h-[400px] bg-main border border-border rounded-xl shadow-premium z-[100] flex flex-col p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-[calc(100%+8px)] right-0 min-w-[220px] w-full max-h-[400px] bg-main border border-border rounded-xl shadow-premium z-[100] flex flex-col p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
                     {enableSearch && (
                         <div className="relative mb-1.5 px-1">
                             <Search className="w-3 h-3 absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
