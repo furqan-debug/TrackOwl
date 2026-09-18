@@ -1119,9 +1119,9 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
         // presets instead of overflowing visibly.
         <div className="flex-1 min-w-[270px] flex flex-col">
             <div className="p-4 rounded-xl flex items-center justify-between text-white mb-4" style={{ backgroundColor: 'var(--chart-gold)' }}>
-                <button onClick={onPrev} className="hover:bg-surface-hover/20 p-1 rounded-lg transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+                <button onClick={onPrev} className="p-1.5 rounded-lg transition-all hover:bg-black/20 active:bg-black/30 hover:scale-110 active:scale-95"><ChevronLeft className="w-4 h-4" /></button>
                 <span className="text-[13px] font-black ">{monthName}</span>
-                <button onClick={onNext} className="hover:bg-surface-hover/20 p-1 rounded-lg transition-colors"><ChevronRight className="w-4 h-4" /></button>
+                <button onClick={onNext} className="p-1.5 rounded-lg transition-all hover:bg-black/20 active:bg-black/30 hover:scale-110 active:scale-95"><ChevronRight className="w-4 h-4" /></button>
             </div>
             <div className="grid grid-cols-7 gap-1 text-center">
                 {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
