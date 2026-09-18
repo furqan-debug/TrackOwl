@@ -441,7 +441,7 @@ export function ProjectFormPage() {
                                             className={clsx(
                                                 "w-full flex items-center justify-between p-3 rounded-xl transition-all group",
                                                 isSelected 
-                                                    ? "bg-slate-900 text-white shadow-shell-md" 
+                                                    ? "bg-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-md" 
                                                     : "hover:bg-surface-hover text-text-muted border border-transparent"
                                             )}
                                         >

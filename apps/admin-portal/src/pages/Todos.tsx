@@ -415,7 +415,7 @@ export function Todos() {
                             className={clsx(
                                 'p-2 rounded-lg transition-all',
                                 viewMode === 'list'
-                                    ? 'bg-slate-900 text-white shadow-shell-sm'
+                                    ? 'bg-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-sm'
                                     : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                             )}
                         >
@@ -429,7 +429,7 @@ export function Todos() {
                             className={clsx(
                                 'p-2 rounded-lg transition-all',
                                 viewMode === 'grid'
-                                    ? 'bg-slate-900 text-white shadow-shell-sm'
+                                    ? 'bg-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-sm'
                                     : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                             )}
                         >
@@ -624,7 +624,7 @@ export function Todos() {
                                                 `,
                                                 statusFilter ===
                                                     status
-                                                    ? 'bg-slate-900 text-white shadow-shell-sm'
+                                                    ? 'bg-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-sm'
                                                     : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                                             )}
                                         >
