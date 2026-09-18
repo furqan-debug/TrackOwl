@@ -612,13 +612,13 @@ export function Timesheets() {
 
     return (
         <div className="flex flex-col min-h-screen bg-main font-sans text-text-main">
-            <header className="px-4 pt-4 pb-1 md:px-10 md:pt-12 md:pb-1 flex flex-col min-[900px]:flex-row min-[900px]:items-end min-[900px]:justify-between gap-3 min-[900px]:gap-4 shrink-0">
+            <header className="px-4 pt-4 pb-1 md:px-10 md:pt-12 md:pb-1 flex flex-col min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-between gap-3 min-[900px]:gap-4 shrink-0">
                 <div className="space-y-2">
                     <h1 className="text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
                     <p className="text-[14px] font-bold text-text-muted tracking-tight">Verify and refine team temporal records</p>
                 </div>
 
-                <div className="min-[900px]:pb-1 w-full min-[900px]:w-auto min-w-0">
+                <div className="w-full min-[900px]:w-auto min-w-0">
                     <div className="flex flex-col min-[900px]:items-end gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
 
                         {/* Date + timezone */}
