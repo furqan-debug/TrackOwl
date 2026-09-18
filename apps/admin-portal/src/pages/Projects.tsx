@@ -183,7 +183,7 @@ export function Projects() {
                                 className={clsx(
                                     "px-6 py-2.5 rounded-xl text-[13px] font-bold transition-all",
                                     activeTab === tab
-                                        ? "bg-slate-900 text-white shadow-shell-sm"
+                                        ? "bg-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-sm"
                                         : "text-text-muted hover:text-text-main hover:bg-surface-hover"
                                 )}
                             >
@@ -385,7 +385,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                     className={clsx(
                         "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
                         isSelected
-                            ? "bg-slate-900 border-slate-900 text-white shadow-shell-sm"
+                            ? "bg-[var(--text-main)] border-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-sm"
                             : "bg-surface border-border group-hover/row:border-primary/40"
                     )}
                 >
