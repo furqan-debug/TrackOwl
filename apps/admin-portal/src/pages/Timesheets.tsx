@@ -741,7 +741,7 @@ export function Timesheets() {
                 </div>
             </header>
 
-            <div className="px-4 pt-3 pb-3 min-[900px]:px-10 min-[900px]:pt-4 min-[900px]:pb-4 flex items-stretch min-[900px]:items-center w-full min-w-0">
+            <div className="px-4 pt-3 pb-3 min-[900px]:px-10 min-[900px]:pt-0 min-[900px]:pb-4 flex items-stretch min-[900px]:items-center w-full min-w-0">
 
                 {/* View switcher */}
                 <div className="flex bg-main/50 p-1 rounded-md border border-border/50 h-12 w-full min-[900px]:w-auto min-w-0">
