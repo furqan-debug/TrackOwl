@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useLayoutEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
 import { 
     ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
     ChevronDown 
@@ -43,6 +43,7 @@ export function DatePicker({
     // fixed 320px anchored to the trigger's LEFT edge pushed the panel off
     // screen on every page whose date control sits in the top-right corner.
     const triggerRef = useRef<HTMLDivElement>(null);
+    const rootRef = useRef<HTMLDivElement>(null);
     const [align, setAlign] = useState<'centre' | 'left' | 'right'>('centre');
     const [panelWidth, setPanelWidth] = useState(MIN_PANEL_WIDTH);
 
@@ -68,6 +69,28 @@ export function DatePicker({
         decide();
         window.addEventListener('resize', decide);
         return () => window.removeEventListener('resize', decide);
+    }, [isOpen]);
+
+    // Dismiss on a click anywhere else. Without this the calendar only closed
+    // by picking a date or clicking the trigger again, so clicking elsewhere on
+    // the page left it hanging open over the content. FilterSelect has always
+    // done this; this component never did.
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleClickOutside = (event: MouseEvent) => {
+            if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') setIsOpen(false);
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscape);
+        };
     }, [isOpen]);
 
     const [viewDate, setViewDate] = useState(() => {
@@ -151,7 +174,7 @@ export function DatePicker({
     };
 
     return (
-        <div className={clsx("relative", className)}>
+        <div ref={rootRef} className={clsx("relative", className)}>
             {/* Input Trigger */}
             <div 
                 ref={triggerRef}
