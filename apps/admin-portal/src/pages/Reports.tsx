@@ -552,18 +552,18 @@ export function Reports() {
             description="Detailed activity analytics and time distribution."
             actions={
                 <div className="flex items-center gap-3 w-full">
-                    <div className="flex items-center bg-surface border border-border rounded-xl shadow-shell-sm shrink-0 h-10">
+                    <div className="flex items-center bg-surface border border-border rounded-xl shadow-shell-sm shrink-0 h-12">
                         <button
                             onClick={() => shiftRange(-1)}
-                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-primary transition-all border-r border-border rounded-l-xl h-full"
+                            className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all border-r border-border rounded-l-xl h-full"
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="w-5 h-5" />
                         </button>
 
                         {/* The label sets the control's width — the two arrows either side are
                             fixed. 100px was narrower than the date it holds, so the control
                             sized to the text and changed width as the range changed. */}
-                        <div className="relative group min-w-[200px]">
+                        <div className="relative group min-w-[214px]">
                             <div
                                 onClick={() => {
                                     setShowRangeDropdown(!showRangeDropdown);
@@ -600,9 +600,9 @@ export function Reports() {
 
                         <button
                             onClick={() => shiftRange(1)}
-                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-primary transition-all border-l border-border rounded-r-xl h-full"
+                            className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all border-l border-border rounded-r-xl h-full"
                         >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
 
