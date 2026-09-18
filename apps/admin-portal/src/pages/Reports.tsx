@@ -560,7 +560,10 @@ export function Reports() {
                             <ChevronLeft className="w-4 h-4" />
                         </button>
 
-                        <div className="relative group min-w-[100px]">
+                        {/* The label sets the control's width — the two arrows either side are
+                            fixed. 100px was narrower than the date it holds, so the control
+                            sized to the text and changed width as the range changed. */}
+                        <div className="relative group min-w-[200px]">
                             <div
                                 onClick={() => {
                                     setShowRangeDropdown(!showRangeDropdown);
