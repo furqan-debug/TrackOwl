@@ -603,15 +603,6 @@ export function Reports() {
                         </button>
                     </div>
 
-                    <button
-                        onClick={() => { setRange('Today'); setOffset(0); }}
-                        className="px-4 py-2 bg-surface border border-border rounded-xl text-[11px] font-bold text-text-muted hover:text-primary hover:bg-surface-hover transition-all shadow-shell-sm h-10"
-                    >
-                        Today
-                    </button>
-
-                    <div className="w-px h-6 bg-slate-200 mx-1 shrink-0" />
-
                     <FilterSelect
                         label="Team"
                         icon={<Users className="w-3.5 h-3.5" />}
