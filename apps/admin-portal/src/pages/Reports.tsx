@@ -551,16 +551,19 @@ export function Reports() {
             title="Reports"
             description="Detailed activity analytics and time distribution."
             actions={
-                <div className="flex items-center gap-3 w-full">
-                    <div className="flex items-center bg-surface border border-border rounded-xl shadow-shell-sm shrink-0 h-10">
+                <div className="flex items-center flex-wrap gap-3 w-full">
+                    <div className="flex items-center bg-surface border border-border rounded-xl shadow-shell-sm shrink-0 h-12">
                         <button
                             onClick={() => shiftRange(-1)}
-                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-primary transition-all border-r border-border rounded-l-xl h-full"
+                            className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all border-r border-border rounded-l-xl h-full"
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="w-5 h-5" />
                         </button>
 
-                        <div className="relative group min-w-[100px]">
+                        {/* The label sets the control's width — the two arrows either side are
+                            fixed. 100px was narrower than the date it holds, so the control
+                            sized to the text and changed width as the range changed. */}
+                        <div className="relative group min-w-[214px]">
                             <div
                                 onClick={() => {
                                     setShowRangeDropdown(!showRangeDropdown);
@@ -578,7 +581,7 @@ export function Reports() {
                             </div>
 
                             {showRangeDropdown && (
-                                <div className="absolute top-full left-0 mt-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="absolute top-full left-0 lg:-left-11 mt-4 z-50 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 duration-200">
                                     <DateRangePicker
                                         range={range}
                                         setRange={setRange}
@@ -597,20 +600,11 @@ export function Reports() {
 
                         <button
                             onClick={() => shiftRange(1)}
-                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-primary transition-all border-l border-border rounded-r-xl h-full"
+                            className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all border-l border-border rounded-r-xl h-full"
                         >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-5 h-5" />
                         </button>
                     </div>
-
-                    <button
-                        onClick={() => { setRange('Today'); setOffset(0); }}
-                        className="px-4 py-2 bg-surface border border-border rounded-xl text-[11px] font-bold text-text-muted hover:text-primary hover:bg-surface-hover transition-all shadow-shell-sm h-10"
-                    >
-                        Today
-                    </button>
-
-                    <div className="w-px h-6 bg-slate-200 mx-1 shrink-0" />
 
                     <FilterSelect
                         label="Team"
@@ -1063,12 +1057,12 @@ function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any)
     };
 
     return (
-        <div className="bg-surface border border-border rounded-2xl shadow-2xl flex p-1 overflow-hidden min-w-[850px]">
-            <div className="flex-1 flex border-r border-border p-2 gap-4">
+        <div className="bg-surface border border-border rounded-2xl shadow-2xl flex flex-col lg:flex-row p-1 w-[min(780px,calc(100vw-2rem))] max-h-[80vh] overflow-y-auto">
+            <div className="flex-1 flex flex-col sm:flex-row border-b lg:border-b-0 lg:border-r border-border p-2 gap-4 min-w-0">
                 <MonthView month={leftMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
                 <MonthView month={rightMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
             </div>
-            <div className="w-56 p-4 flex flex-col gap-2 bg-surface-hover/30">
+            <div className="w-full lg:w-44 shrink-0 p-4 flex flex-col gap-2 bg-surface-hover/30">
                 {RANGES.filter(r => r !== 'Custom').map(r => (
                     <button
                         key={r}
@@ -1118,11 +1112,16 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
     const monthName = month.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
     return (
-        <div className="flex-1 min-w-[300px]">
+        // 270, not 300: two months plus the 16px gap, the container's 16px of
+        // padding, the 176px presets column and the shell's 10px have to fit the
+        // popup's 780px. At 300 that came to 818, and since the months container
+        // is min-w-0 it shrank below its content and the grid ran under the
+        // presets instead of overflowing visibly.
+        <div className="flex-1 min-w-[270px] flex flex-col">
             <div className="p-4 rounded-xl flex items-center justify-between text-white mb-4" style={{ backgroundColor: 'var(--chart-gold)' }}>
-                <button onClick={onPrev} className="hover:bg-surface-hover/20 p-1 rounded-lg transition-colors"><ChevronLeft className="w-4 h-4" /></button>
+                <button onClick={onPrev} className="p-1.5 rounded-lg transition-all hover:bg-black/20 active:bg-black/30 hover:scale-110 active:scale-95"><ChevronLeft className="w-4 h-4" /></button>
                 <span className="text-[13px] font-black ">{monthName}</span>
-                <button onClick={onNext} className="hover:bg-surface-hover/20 p-1 rounded-lg transition-colors"><ChevronRight className="w-4 h-4" /></button>
+                <button onClick={onNext} className="p-1.5 rounded-lg transition-all hover:bg-black/20 active:bg-black/30 hover:scale-110 active:scale-95"><ChevronRight className="w-4 h-4" /></button>
             </div>
             <div className="grid grid-cols-7 gap-1 text-center">
                 {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
@@ -1150,7 +1149,7 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
                     );
                 })}
             </div>
-            <div className="mt-4 pt-4 border-t border-slate-50 text-center">
+            <div className="mt-auto pt-4 border-t border-border text-center">
                 <span className="text-[10px] font-bold text-text-muted ">
                     {month.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                 </span>
