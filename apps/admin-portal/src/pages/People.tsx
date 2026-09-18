@@ -387,7 +387,7 @@ export function People() {
                     onClick={() => setActiveTab('Members')}
                     className={clsx(
                         "px-6 rounded-lg text-[12px] font-bold transition-all h-full",
-                        activeTab === 'Members' ? "bg-surface text-text-main shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
+                        activeTab === 'Members' ? "bg-surface text-text-main shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-text-main"
                     )}
                 >
                     Members ({membersCount})
@@ -396,7 +396,7 @@ export function People() {
                     onClick={() => setActiveTab('Invites')}
                     className={clsx(
                         "px-6 rounded-lg text-[12px] font-bold transition-all h-full",
-                        activeTab === 'Invites' ? "bg-surface text-text-main shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
+                        activeTab === 'Invites' ? "bg-surface text-text-main shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-text-main"
                     )}
                 >
                     Pending Invites ({invitesCount})

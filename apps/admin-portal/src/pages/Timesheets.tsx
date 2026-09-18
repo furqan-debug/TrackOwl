@@ -630,7 +630,7 @@ export function Timesheets() {
                                     "flex-1 min-[900px]:flex-none px-2 min-[900px]:px-8 rounded-md text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
                                     viewMode === mode
                                         ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
-                                        : "text-text-muted hover:text-slate-600"
+                                        : "text-text-muted hover:text-text-main"
                                 )}
                             >
                                 {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -719,7 +719,7 @@ export function Timesheets() {
                         <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
 
                             {/* Member */}
-                            <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[220px] min-w-0">
+                            <div className="h-16 w-full min-[900px]:w-auto min-[900px]:min-w-[220px] min-w-0">
                                 <FilterSelect
                                     icon={<Users className="w-4 h-4 shrink-0" />}
                                     value={selectedMember}
@@ -735,7 +735,7 @@ export function Timesheets() {
                             </div>
 
                             {/* Timezone */}
-                            <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0">
+                            <div className="h-16 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0">
                                 <FilterSelect
                                     icon={<Clock className="w-4 h-4 shrink-0" />}
                                     value={activeTimezone}
