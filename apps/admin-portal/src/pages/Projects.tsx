@@ -186,7 +186,7 @@ export function Projects() {
                                     "px-6 py-2.5 rounded-xl text-[13px] font-bold transition-all",
                                     activeTab === tab
                                         ? "bg-slate-900 text-white shadow-shell-sm"
-                                        : "text-text-muted hover:text-slate-900 hover:bg-surface-hover"
+                                        : "text-text-muted hover:text-text-main hover:bg-surface-hover"
                                 )}
                             >
                                 {tab}
@@ -258,7 +258,7 @@ export function Projects() {
                                 onClick={() => fetchProjects(true, true)}
                                 className={clsx(
                                     "w-10 h-10 flex items-center justify-center border border-border rounded-xl transition-all",
-                                    refreshing ? "text-[var(--chart-gold)] bg-primary/5" : "text-text-muted hover:text-slate-900 hover:bg-surface-hover"
+                                    refreshing ? "text-[var(--chart-gold)] bg-primary/5" : "text-text-muted hover:text-text-main hover:bg-surface-hover"
                                 )}
                             >
                                 <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
@@ -473,7 +473,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
             <td className="pr-8 py-5 text-right relative" ref={dropRef} onClick={(e) => e.stopPropagation()}>
                 <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-slate-900 hover:bg-surface-hover hover:border hover:border-slate-200 transition-all"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-text-main hover:bg-surface-hover hover:border hover:border-slate-200 transition-all"
                 >
                     <MoreHorizontal className="w-4 h-4" />
                 </button>

@@ -802,7 +802,7 @@ export function Reports() {
                                                 "flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border",
                                                 showColumnDropdown || showEmpId || showEmail
                                                     ? "bg-surface-hover border-border text-primary shadow-shell-sm" 
-                                                    : "bg-surface border-transparent text-text-muted hover:bg-surface-hover hover:text-slate-900"
+                                                    : "bg-surface border-transparent text-text-muted hover:bg-surface-hover hover:text-text-main"
                                             )}
                                         >
                                             <ActivityIcon className="w-3.5 h-3.5" />
@@ -839,7 +839,7 @@ export function Reports() {
                                                 setShowColumnDropdown(false);
                                                 setShowRangeDropdown(false);
                                             }}
-                                            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border bg-surface border-transparent text-text-muted hover:bg-surface-hover hover:text-slate-900"
+                                            className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border bg-surface border-transparent text-text-muted hover:bg-surface-hover hover:text-text-main"
                                         >
                                             <Download className="w-3.5 h-3.5" />
                                             <span>Export</span>
@@ -861,7 +861,7 @@ export function Reports() {
                                             onClick={() => {
                                                 if (scrollRef.current) scrollRef.current.scrollBy({ left: -400, behavior: 'smooth' });
                                             }}
-                                            className="p-2 hover:bg-surface-hover hover:shadow-sm text-text-muted hover:text-slate-900 transition-all rounded-lg"
+                                            className="p-2 hover:bg-surface-hover hover:shadow-sm text-text-muted hover:text-text-main transition-all rounded-lg"
                                         >
                                             <ChevronLeft className="w-4 h-4" />
                                         </button>
@@ -869,7 +869,7 @@ export function Reports() {
                                             onClick={() => {
                                                 if (scrollRef.current) scrollRef.current.scrollBy({ left: 400, behavior: 'smooth' });
                                             }}
-                                            className="p-2 hover:bg-surface-hover hover:shadow-sm text-text-muted hover:text-slate-900 transition-all rounded-lg"
+                                            className="p-2 hover:bg-surface-hover hover:shadow-sm text-text-muted hover:text-text-main transition-all rounded-lg"
                                         >
                                             <ChevronRight className="w-4 h-4" />
                                         </button>
@@ -1069,7 +1069,7 @@ function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any)
                         onClick={() => { setRange(r); setOffset(0); onCancel(); }}
                         className={clsx(
                             "w-full text-left px-4 py-2.5 rounded-xl text-[11px] font-black transition-all border",
-                            range === r ? "bg-surface border-border shadow-shell-sm" : "text-text-muted border-transparent hover:text-slate-900 hover:bg-surface-hover"
+                            range === r ? "bg-surface border-border shadow-shell-sm" : "text-text-muted border-transparent hover:text-text-main hover:bg-surface-hover"
                         )}
                         style={range === r ? { color: 'var(--chart-gold)' } : {}}
                     >

@@ -1248,7 +1248,7 @@ function CalendarView({ entries, onDayClick }: { entries: DailyEntry[], onDayCli
                                 "
                             >
                                 {/* Date */}
-                                <span className="text-[12px] sm:text-[13px] font-bold text-text-muted group-hover:text-slate-900 transition-colors">
+                                <span className="text-[12px] sm:text-[13px] font-bold text-text-muted group-hover:text-text-main transition-colors">
                                     {new Date(day.date + 'T12:00:00').getDate()}
                                 </span>
 
