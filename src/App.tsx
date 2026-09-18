@@ -1543,7 +1543,7 @@ export default function App() {
         );
         await handleStop();
         setTrackingError('Tracking was automatically stopped because your computer entered sleep or hibernation mode.');
-      }).then((u: any) => { unlisten = u; });
+      })?.then((u: any) => { unlisten = u; });
     }
     return () => { if (unlisten) unlisten(); };
   }, []);
