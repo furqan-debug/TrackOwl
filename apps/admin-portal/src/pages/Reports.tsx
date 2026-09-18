@@ -581,7 +581,7 @@ export function Reports() {
                             </div>
 
                             {showRangeDropdown && (
-                                <div className="absolute top-full -left-11 mt-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="absolute top-full -left-11 mt-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                                     <DateRangePicker
                                         range={range}
                                         setRange={setRange}
