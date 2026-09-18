@@ -456,7 +456,7 @@ export function Clients() {
                                                 transition-all
                                             `,
                                             statusFilter === status
-                                                ? 'bg-slate-900 text-white shadow-shell-sm'
+                                                ? 'bg-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-sm'
                                                 : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                                         )}
                                     >

@@ -5,11 +5,13 @@ import { useAuth } from '../context/AuthContext';
 import { 
     Check,
     Layout, Users, Target, Info, Clock,
-    ChevronDown, Search, RefreshCw
+    Search, RefreshCw,
+    Building2, CircleDot, Wallet
 } from 'lucide-react';
 import { 
     PageLayout, 
     LoadingState,
+    FormSelect,
 } from '../components/ui';
 import clsx from 'clsx';
 
@@ -250,34 +252,24 @@ export function ProjectFormPage() {
                                     />
                                 </div>
                                 
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-muted ml-1">Client</label>
-                                    <div className="relative">
-                                        <select 
-                                            value={clientId} 
-                                            onChange={e => setClientId(e.target.value)}
-                                            className="w-full px-5 py-3 bg-surface-hover/50 border border-border rounded-xl text-[14px] font-semibold text-text-main outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner appearance-none cursor-pointer"
-                                        >
-                                            <option value="">No Client (Internal)</option>
-                                            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                        </select>
-                                        <ChevronDown className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                                    </div>
-                                </div>
+                                <FormSelect
+                                    label="Client"
+                                    value={clientId}
+                                    onChange={setClientId}
+                                    icon={<Building2 className="w-4 h-4" />}
+                                    options={[
+                                        { label: 'No Client (Internal)', value: '' },
+                                        ...clients.map(c => ({ label: c.name, value: c.id })),
+                                    ]}
+                                />
 
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-bold text-text-muted ml-1">Status</label>
-                                    <div className="relative">
-                                        <select 
-                                            value={status} 
-                                            onChange={e => setStatus(e.target.value as any)}
-                                            className="w-full px-5 py-3 bg-surface-hover/50 border border-border rounded-xl text-[14px] font-semibold text-text-main outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner appearance-none cursor-pointer"
-                                        >
-                                            {['Active', 'Archived', 'Completed'].map(s => <option key={s} value={s}>{s}</option>)}
-                                        </select>
-                                        <ChevronDown className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                                    </div>
-                                </div>
+                                <FormSelect
+                                    label="Status"
+                                    value={status}
+                                    onChange={(val: string) => setStatus(val as any)}
+                                    icon={<CircleDot className="w-4 h-4" />}
+                                    options={['Active', 'Archived', 'Completed'].map(s => ({ label: s, value: s }))}
+                                />
 
                                 <div className="flex items-center justify-between p-5 bg-surface-hover border border-border rounded-xl">
                                     <div>
@@ -334,21 +326,13 @@ export function ProjectFormPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                                 <div className="space-y-6">
-                                    <div className="space-y-2">
-                                        <label className="text-[10px] font-bold text-text-muted ml-1">Budget Type</label>
-                                        <div className="relative">
-                                            <select 
-                                                value={budgetType} 
-                                                onChange={e => setBudgetType(e.target.value as BudgetType)}
-                                                className="w-full px-5 py-3 bg-surface-hover/50 border border-border rounded-xl text-[14px] font-semibold text-text-main outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner appearance-none cursor-pointer"
-                                            >
-                                                {['No budget', 'Total hours', 'Total amount', 'Monthly hours', 'Monthly amount'].map(t => (
-                                                    <option key={t} value={t}>{t}</option>
-                                                ))}
-                                            </select>
-                                            <ChevronDown className="w-4 h-4 absolute right-4 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
-                                        </div>
-                                    </div>
+                                    <FormSelect
+                                        label="Budget Type"
+                                        value={budgetType}
+                                        onChange={(val: string) => setBudgetType(val as BudgetType)}
+                                        icon={<Wallet className="w-4 h-4" />}
+                                        options={['No budget', 'Total hours', 'Total amount', 'Monthly hours', 'Monthly amount'].map(t => ({ label: t, value: t }))}
+                                    />
                                     
                                     {budgetType !== 'No budget' && (
                                         <div className="space-y-2 animate-in slide-in-from-top-2 duration-300">
@@ -441,7 +425,7 @@ export function ProjectFormPage() {
                                             className={clsx(
                                                 "w-full flex items-center justify-between p-3 rounded-xl transition-all group",
                                                 isSelected 
-                                                    ? "bg-slate-900 text-white shadow-shell-md" 
+                                                    ? "bg-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-md" 
                                                     : "hover:bg-surface-hover text-text-muted border border-transparent"
                                             )}
                                         >

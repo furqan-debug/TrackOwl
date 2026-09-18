@@ -399,14 +399,6 @@ export function Todos() {
         statusFilter
     ]);
 
-    if (loading) {
-        return (
-            <div className="h-screen flex items-center justify-center bg-surface">
-                <LoadingState />
-            </div>
-        );
-    }
-
     return (
         <PageLayout
             maxWidth="full"
@@ -423,7 +415,7 @@ export function Todos() {
                             className={clsx(
                                 'p-2 rounded-lg transition-all',
                                 viewMode === 'list'
-                                    ? 'bg-slate-900 text-white shadow-shell-sm'
+                                    ? 'bg-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-sm'
                                     : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                             )}
                         >
@@ -437,7 +429,7 @@ export function Todos() {
                             className={clsx(
                                 'p-2 rounded-lg transition-all',
                                 viewMode === 'grid'
-                                    ? 'bg-slate-900 text-white shadow-shell-sm'
+                                    ? 'bg-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-sm'
                                     : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
                             )}
                         >
@@ -468,272 +460,280 @@ export function Todos() {
                 </div>
             }
         >
-            <div className="flex flex-col gap-6 sm:gap-8 pb-20 min-w-0 max-w-full">
-
-                {/* KPI Strip */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-10 min-w-0">
-                    <StatMetric
-                        icon={
-                            <Timer className="w-5 h-5" />
-                        }
-                        label="In Flight"
-                        value={
-                            todos.filter(
-                                t => t.status !== 'Done'
-                            ).length
-                        }
-                        sub="Pending objectives"
-                        accent="brand-gradient"
-                    />
-
-                    <StatMetric
-                        icon={
-                            <CheckSquare className="w-5 h-5" />
-                        }
-                        label="Resolved"
-                        value={
-                            todos.filter(
-                                t => t.status === 'Done'
-                            ).length
-                        }
-                        sub="Successfully closed"
-                        accent="brand-gradient"
-                    />
-
-                    <StatMetric
-                        icon={
-                            <ClipboardList className="w-5 h-5" />
-                        }
-                        label="Resource Load"
-                        value={
-                            todos.filter(
-                                t =>
-                                    getTodoAssigneeIds(t)
-                                        .length > 0
-                            ).length
-                        }
-                        sub="Tasks with owners"
-                        accent="brand-gradient"
-                    />
+            {/* Inside the layout, not in place of it: the heading and the toolbar
+                stay put while the content area loads. */}
+            {loading ? (
+                <div className="min-h-[60vh] flex items-center justify-center">
+                    <LoadingState />
                 </div>
+            ) : (
+                <div className="flex flex-col gap-6 sm:gap-8 pb-20 min-w-0 max-w-full">
 
-                {/* Task Ledger */}
-                <div
-                    className="
-                        bg-surface
-                        border border-border
-                        rounded-[20px] sm:rounded-[24px]
-                        shadow-shell-sm
-                        overflow-hidden
-                        flex flex-col
-                        min-h-[500px] sm:min-h-[600px]
-                        w-full
-                        max-w-full
-                        min-w-0
-                    "
-                >
-                    {/* Toolbar */}
+                    {/* KPI Strip */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-10 min-w-0">
+                        <StatMetric
+                            icon={
+                                <Timer className="w-5 h-5" />
+                            }
+                            label="In Flight"
+                            value={
+                                todos.filter(
+                                    t => t.status !== 'Done'
+                                ).length
+                            }
+                            sub="Pending objectives"
+                            accent="brand-gradient"
+                        />
+
+                        <StatMetric
+                            icon={
+                                <CheckSquare className="w-5 h-5" />
+                            }
+                            label="Resolved"
+                            value={
+                                todos.filter(
+                                    t => t.status === 'Done'
+                                ).length
+                            }
+                            sub="Successfully closed"
+                            accent="brand-gradient"
+                        />
+
+                        <StatMetric
+                            icon={
+                                <ClipboardList className="w-5 h-5" />
+                            }
+                            label="Resource Load"
+                            value={
+                                todos.filter(
+                                    t =>
+                                        getTodoAssigneeIds(t)
+                                            .length > 0
+                                ).length
+                            }
+                            sub="Tasks with owners"
+                            accent="brand-gradient"
+                        />
+                    </div>
+
+                    {/* Task Ledger */}
                     <div
                         className="
-                            px-4 sm:px-6 lg:px-8
-                            py-4 sm:py-6
-                            border-b border-border
-                            flex flex-col
-                            lg:flex-row
-                            lg:items-center
-                            lg:justify-between
-                            gap-4
                             bg-surface
-                            shrink-0
+                            border border-border
+                            rounded-[20px] sm:rounded-[24px]
+                            shadow-shell-sm
+                            overflow-hidden
+                            flex flex-col
+                            min-h-[500px] sm:min-h-[600px]
+                            w-full
+                            max-w-full
                             min-w-0
                         "
                     >
-                        {/* Search */}
-                        <div className="relative group/search w-full lg:w-[420px] max-w-full min-w-0">
-                            <Search className="w-5 h-5 absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within/search:text-primary transition-colors" />
+                        {/* Toolbar */}
+                        <div
+                            className="
+                                px-4 sm:px-6 lg:px-8
+                                py-4 sm:py-6
+                                border-b border-border
+                                flex flex-col
+                                lg:flex-row
+                                lg:items-center
+                                lg:justify-between
+                                gap-4
+                                bg-surface
+                                shrink-0
+                                min-w-0
+                            "
+                        >
+                            {/* Search */}
+                            <div className="relative group/search w-full lg:w-[420px] max-w-full min-w-0">
+                                <Search className="w-5 h-5 absolute left-4 sm:left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within/search:text-primary transition-colors" />
 
-                            <input
-                                type="text"
-                                placeholder="Filter objectives..."
-                                value={searchTerm}
-                                onChange={e =>
-                                    setSearchTerm(
-                                        e.target.value
-                                    )
-                                }
-                                className="
-                                    w-full
-                                    min-w-0
-                                    h-11 sm:h-12
-                                    pl-12 sm:pl-14
-                                    pr-4 sm:pr-6
-                                    bg-surface-solid
-                                    border border-border
-                                    rounded-xl
-                                    text-[13px] sm:text-[14px]
-                                    font-medium
-                                    text-text-main
-                                    placeholder:text-text-muted/60
-                                    outline-none
-                                    focus:border-primary
-                                    shadow-shell-sm
-                                    focus:shadow-shell
-                                    transition-all
-                                "
-                            />
-                        </div>
-
-                        {/* Filters */}
-                        <div className="flex items-center gap-2 sm:gap-4 min-w-0 w-full lg:w-auto">
-                            <div
-                                className="
-                                    bg-surface
-                                    border border-border
-                                    p-1
-                                    rounded-2xl
-                                    flex items-center
-                                    shadow-shell-sm
-                                    min-w-0
-                                    flex-1
-                                    overflow-x-auto
-                                    scrollbar-hide
-                                "
-                            >
-                                {[
-                                    'All',
-                                    'Todo',
-                                    'In Progress',
-                                    'Done'
-                                ].map(status => (
-                                    <button
-                                        key={status}
-                                        onClick={() =>
-                                            setStatusFilter(
-                                                status
-                                            )
-                                        }
-                                        className={clsx(
-                                            `
-                                            px-3 sm:px-5 lg:px-6
-                                            py-2.5
-                                            rounded-xl
-                                            text-[11px] sm:text-[13px]
-                                            font-bold
-                                            transition-all
-                                            whitespace-nowrap
-                                            shrink-0
-                                            `,
-                                            statusFilter ===
-                                                status
-                                                ? 'bg-slate-900 text-white shadow-shell-sm'
-                                                : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
-                                        )}
-                                    >
-                                        {status === 'Done'
-                                            ? 'Closed'
-                                            : status}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <button
-                                onClick={() =>
-                                    fetchData(true)
-                                }
-                                className={clsx(
-                                    `
-                                    w-10 h-10 sm:w-12 sm:h-12
-                                    shrink-0
-                                    flex items-center justify-center
-                                    bg-surface
-                                    border border-border
-                                    rounded-xl
-                                    hover:bg-surface-hover
-                                    transition-all
-                                    text-text-muted
-                                    shadow-shell-sm
-                                    active:scale-95
-                                    duration-200
-                                    `,
-                                    refreshing &&
-                                        'text-primary'
-                                )}
-                            >
-                                <RefreshCw
-                                    className={clsx(
-                                        'w-4 h-4 sm:w-5 sm:h-5',
-                                        refreshing &&
-                                            'animate-spin'
-                                    )}
+                                <input
+                                    type="text"
+                                    placeholder="Filter objectives..."
+                                    value={searchTerm}
+                                    onChange={e =>
+                                        setSearchTerm(
+                                            e.target.value
+                                        )
+                                    }
+                                    className="
+                                        w-full
+                                        min-w-0
+                                        h-11 sm:h-12
+                                        pl-12 sm:pl-14
+                                        pr-4 sm:pr-6
+                                        bg-surface-solid
+                                        border border-border
+                                        rounded-xl
+                                        text-[13px] sm:text-[14px]
+                                        font-medium
+                                        text-text-main
+                                        placeholder:text-text-muted/60
+                                        outline-none
+                                        focus:border-primary
+                                        shadow-shell-sm
+                                        focus:shadow-shell
+                                        transition-all
+                                    "
                                 />
-                            </button>
-                        </div>
-                    </div>
+                            </div>
 
-                    {/* Content */}
-                    <div className="p-3 sm:p-5 lg:p-8 min-w-0 max-w-full">
-                        {filteredTodos.length === 0 ? (
-                            <EmptyState
-                                icon={
-                                    <CheckCircle2 />
-                                }
-                                title="Objectives Cleared"
-                                description="No tasks match your current criteria."
-                            />
-                        ) : viewMode === 'list' ? (
-                            <div className="divide-y divide-slate-100/80 min-w-0">
-                                {filteredTodos.map(todo => (
-                                    <TodoListItem
-                                        key={todo.id}
-                                        todo={todo}
-                                        onToggle={() =>
-                                            toggleStatus(
-                                                todo
-                                            )
-                                        }
-                                        onEdit={() =>
-                                            handleOpenEdit(
-                                                todo
-                                            )
-                                        }
-                                        onDelete={() =>
-                                            setDeletingTodo(
-                                                todo
-                                            )
-                                        }
-                                        isViewer={isViewer}
+                            {/* Filters */}
+                            <div className="flex items-center gap-2 sm:gap-4 min-w-0 w-full lg:w-auto">
+                                <div
+                                    className="
+                                        bg-surface
+                                        border border-border
+                                        p-1
+                                        rounded-2xl
+                                        flex items-center
+                                        shadow-shell-sm
+                                        min-w-0
+                                        flex-1
+                                        overflow-x-auto
+                                        scrollbar-hide
+                                    "
+                                >
+                                    {[
+                                        'All',
+                                        'Todo',
+                                        'In Progress',
+                                        'Done'
+                                    ].map(status => (
+                                        <button
+                                            key={status}
+                                            onClick={() =>
+                                                setStatusFilter(
+                                                    status
+                                                )
+                                            }
+                                            className={clsx(
+                                                `
+                                                px-3 sm:px-5 lg:px-6
+                                                py-2.5
+                                                rounded-xl
+                                                text-[11px] sm:text-[13px]
+                                                font-bold
+                                                transition-all
+                                                whitespace-nowrap
+                                                shrink-0
+                                                `,
+                                                statusFilter ===
+                                                    status
+                                                    ? 'bg-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-sm'
+                                                    : 'text-text-muted hover:text-text-main hover:bg-surface-hover'
+                                            )}
+                                        >
+                                            {status === 'Done'
+                                                ? 'Closed'
+                                                : status}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={() =>
+                                        fetchData(true)
+                                    }
+                                    className={clsx(
+                                        `
+                                        w-10 h-10 sm:w-12 sm:h-12
+                                        shrink-0
+                                        flex items-center justify-center
+                                        bg-surface
+                                        border border-border
+                                        rounded-xl
+                                        hover:bg-surface-hover
+                                        transition-all
+                                        text-text-muted
+                                        shadow-shell-sm
+                                        active:scale-95
+                                        duration-200
+                                        `,
+                                        refreshing &&
+                                            'text-primary'
+                                    )}
+                                >
+                                    <RefreshCw
+                                        className={clsx(
+                                            'w-4 h-4 sm:w-5 sm:h-5',
+                                            refreshing &&
+                                                'animate-spin'
+                                        )}
                                     />
-                                ))}
+                                </button>
                             </div>
-                        ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                                {filteredTodos.map(todo => (
-                                    <TodoGridItem
-                                        key={todo.id}
-                                        todo={todo}
-                                        onToggle={() =>
-                                            toggleStatus(
-                                                todo
-                                            )
-                                        }
-                                        onEdit={() =>
-                                            handleOpenEdit(
-                                                todo
-                                            )
-                                        }
-                                        onDelete={() =>
-                                            setDeletingTodo(
-                                                todo
-                                            )
-                                        }
-                                        isViewer={isViewer}
-                                    />
-                                ))}
-                            </div>
-                        )}
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-3 sm:p-5 lg:p-8 min-w-0 max-w-full">
+                            {filteredTodos.length === 0 ? (
+                                <EmptyState
+                                    icon={
+                                        <CheckCircle2 />
+                                    }
+                                    title="Objectives Cleared"
+                                    description="No tasks match your current criteria."
+                                />
+                            ) : viewMode === 'list' ? (
+                                <div className="divide-y divide-slate-100/80 min-w-0">
+                                    {filteredTodos.map(todo => (
+                                        <TodoListItem
+                                            key={todo.id}
+                                            todo={todo}
+                                            onToggle={() =>
+                                                toggleStatus(
+                                                    todo
+                                                )
+                                            }
+                                            onEdit={() =>
+                                                handleOpenEdit(
+                                                    todo
+                                                )
+                                            }
+                                            onDelete={() =>
+                                                setDeletingTodo(
+                                                    todo
+                                                )
+                                            }
+                                            isViewer={isViewer}
+                                        />
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                                    {filteredTodos.map(todo => (
+                                        <TodoGridItem
+                                            key={todo.id}
+                                            todo={todo}
+                                            onToggle={() =>
+                                                toggleStatus(
+                                                    todo
+                                                )
+                                            }
+                                            onEdit={() =>
+                                                handleOpenEdit(
+                                                    todo
+                                                )
+                                            }
+                                            onDelete={() =>
+                                                setDeletingTodo(
+                                                    todo
+                                                )
+                                            }
+                                            isViewer={isViewer}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* =========================
                 ADD / EDIT TASK MODAL

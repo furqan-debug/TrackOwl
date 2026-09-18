@@ -167,8 +167,6 @@ export function Projects() {
         return { total, overBudget, uniqueClients };
     }, [projects]);
 
-    if (loading) return <div className="h-screen flex items-center justify-center bg-surface"><LoadingState /></div>;
-
     return (
         <PageLayout
             maxWidth="full"
@@ -185,7 +183,7 @@ export function Projects() {
                                 className={clsx(
                                     "px-6 py-2.5 rounded-xl text-[13px] font-bold transition-all",
                                     activeTab === tab
-                                        ? "bg-slate-900 text-white shadow-shell-sm"
+                                        ? "bg-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-sm"
                                         : "text-text-muted hover:text-text-main hover:bg-surface-hover"
                                 )}
                             >
@@ -205,135 +203,143 @@ export function Projects() {
                 </div>
             }
         >
-            <div className="flex flex-col gap-8 pb-20">
-
-                {/* 📊 KPI Row: Operational Metrics */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
-                    <StatMetric
-                        icon={<Briefcase className="w-5 h-5" />}
-                        label="Total Projects"
-                        value={stats.total}
-                        sub={`${activeTab} status`}
-                        accent="brand-gradient"
-                    />
-                    <StatMetric
-                        icon={<Building2 className="w-5 h-5" />}
-                        label="Active Clients"
-                        value={stats.uniqueClients}
-                        sub="Managed entities"
-                        accent="brand-gradient"
-                    />
-                    <StatMetric
-                        icon={<Check className="w-5 h-5" />}
-                        label="In Budget"
-                        value={`${projects.length - stats.overBudget}`}
-                        sub="Operational health"
-                        accent="brand-gradient"
-                    />
-                    <StatMetric
-                        icon={<Layers className="w-5 h-5" />}
-                        label="Pending Tasks"
-                        value={projects.reduce((acc, p) => acc + p.todoCount, 0)}
-                        sub="Total deliverables"
-                        accent="brand-gradient"
-                    />
+            {/* Inside the layout, not in place of it: the heading and the toolbar
+                stay put while the content area loads. */}
+            {loading ? (
+                <div className="min-h-[60vh] flex items-center justify-center">
+                    <LoadingState />
                 </div>
+            ) : (
+                <div className="flex flex-col gap-8 pb-20">
 
-                {/* 🏗️ Main Ledger */}
-                <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border overflow-hidden flex flex-col">
-                    <div className="px-8 py-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface shrink-0">
-                        <div className="flex items-center gap-4">
-                            <div className="relative group/search w-[420px]">
-                                <Search className="w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within/search:text-primary transition-colors" />
-                                <input
-                                    type="text"
-                                    placeholder="Search project or client..."
-                                    value={searchQuery}
-                                    onChange={e => setSearchQuery(e.target.value)}
-                                    className="w-full bg-surface-hover/50 border border-border rounded-2xl pl-14 pr-6 py-4 text-[15px] font-medium focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner"
-                                />
-                            </div>
-
-                            <button
-                                onClick={() => fetchProjects(true, true)}
-                                className={clsx(
-                                    "w-10 h-10 flex items-center justify-center border border-border rounded-xl transition-all",
-                                    refreshing ? "text-[var(--chart-gold)] bg-primary/5" : "text-text-muted hover:text-text-main hover:bg-surface-hover"
-                                )}
-                            >
-                                <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
-                            </button>
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                            {selectedIds.size > 0 && (
-                                <button
-                                    onClick={handleBulkArchive}
-                                    className="h-10 px-5 bg-slate-900 text-white rounded-xl text-[11px] font-bold flex items-center gap-2 shadow-shell-sm transition-all hover:brightness-110"
-                                >
-                                    <Archive className="w-4 h-4" />
-                                    {activeTab === 'Active' ? 'Archive' : 'Restore'} ({selectedIds.size})
-                                </button>
-                            )}
-                            <div className="flex items-center gap-4 px-6 py-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                <span className="text-[12px] font-bold text-emerald-500 ">Online Now</span>
-                            </div>
-                        </div>
+                    {/* 📊 KPI Row: Operational Metrics */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
+                        <StatMetric
+                            icon={<Briefcase className="w-5 h-5" />}
+                            label="Total Projects"
+                            value={stats.total}
+                            sub={`${activeTab} status`}
+                            accent="brand-gradient"
+                        />
+                        <StatMetric
+                            icon={<Building2 className="w-5 h-5" />}
+                            label="Active Clients"
+                            value={stats.uniqueClients}
+                            sub="Managed entities"
+                            accent="brand-gradient"
+                        />
+                        <StatMetric
+                            icon={<Check className="w-5 h-5" />}
+                            label="In Budget"
+                            value={`${projects.length - stats.overBudget}`}
+                            sub="Operational health"
+                            accent="brand-gradient"
+                        />
+                        <StatMetric
+                            icon={<Layers className="w-5 h-5" />}
+                            label="Pending Tasks"
+                            value={projects.reduce((acc, p) => acc + p.todoCount, 0)}
+                            sub="Total deliverables"
+                            accent="brand-gradient"
+                        />
                     </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-surface-hover/50 border-b border-border">
-                                    <th className="pl-8 py-4 w-12">
-                                        <button
-                                            onClick={toggleSelectAll}
-                                            className={clsx(
-                                                "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
-                                                selectedIds.size === filteredProjects.length && filteredProjects.length > 0
-                                                    ? "bg-slate-900 border-slate-900 text-white"
-                                                    : "bg-surface border-border hover:border-primary/40"
-                                            )}
-                                        >
-                                            {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 && <Check className="w-3 h-3 stroke-[3]" />}
-                                        </button>
-                                    </th>
-                                    <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Project</th>
-                                    <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Tracking</th>
-                                    <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-center">Team</th>
-                                    <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Budget & Configuration</th>
-                                    <th className="pr-8 py-4 w-12"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {filteredProjects.map(p => (
-                                    <ProjectRow
-                                        key={p.id}
-                                        project={p}
-                                        isSelected={selectedIds.has(p.id)}
-                                        onSelect={() => toggleSelect(p.id)}
-                                        onEdit={() => navigate(`/dashboard/projects/${p.id}/edit`)}
-                                        isViewer={isViewer}
-                                        onRefresh={() => fetchProjects(true)}
+                    {/* 🏗️ Main Ledger */}
+                    <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border overflow-hidden flex flex-col">
+                        <div className="px-8 py-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface shrink-0">
+                            <div className="flex items-center gap-4">
+                                <div className="relative group/search w-[420px]">
+                                    <Search className="w-5 h-5 absolute left-5 top-1/2 -translate-y-1/2 text-text-muted group-focus-within/search:text-primary transition-colors" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search project or client..."
+                                        value={searchQuery}
+                                        onChange={e => setSearchQuery(e.target.value)}
+                                        className="w-full bg-surface-hover/50 border border-border rounded-2xl pl-14 pr-6 py-4 text-[15px] font-medium focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner"
                                     />
-                                ))}
-                                {filteredProjects.length === 0 && !loading && (
-                                    <tr>
-                                        <td colSpan={6} className="py-24">
-                                            <EmptyState
-                                                icon={<Briefcase className="w-6 h-6" />}
-                                                title="No Projects Found"
-                                                description="Refine your search or create a new project to get started."
-                                            />
-                                        </td>
-                                    </tr>
+                                </div>
+
+                                <button
+                                    onClick={() => fetchProjects(true, true)}
+                                    className={clsx(
+                                        "w-10 h-10 flex items-center justify-center border border-border rounded-xl transition-all",
+                                        refreshing ? "text-[var(--chart-gold)] bg-primary/5" : "text-text-muted hover:text-text-main hover:bg-surface-hover"
+                                    )}
+                                >
+                                    <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
+                                </button>
+                            </div>
+
+                            <div className="flex items-center gap-3">
+                                {selectedIds.size > 0 && (
+                                    <button
+                                        onClick={handleBulkArchive}
+                                        className="h-10 px-5 bg-slate-900 text-white rounded-xl text-[11px] font-bold flex items-center gap-2 shadow-shell-sm transition-all hover:brightness-110"
+                                    >
+                                        <Archive className="w-4 h-4" />
+                                        {activeTab === 'Active' ? 'Archive' : 'Restore'} ({selectedIds.size})
+                                    </button>
                                 )}
-                            </tbody>
-                        </table>
+                                <div className="flex items-center gap-4 px-6 py-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    <span className="text-[12px] font-bold text-emerald-500 ">Online Now</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-surface-hover/50 border-b border-border">
+                                        <th className="pl-8 py-4 w-12">
+                                            <button
+                                                onClick={toggleSelectAll}
+                                                className={clsx(
+                                                    "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
+                                                    selectedIds.size === filteredProjects.length && filteredProjects.length > 0
+                                                        ? "bg-slate-900 border-slate-900 text-white"
+                                                        : "bg-surface border-border hover:border-primary/40"
+                                                )}
+                                            >
+                                                {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 && <Check className="w-3 h-3 stroke-[3]" />}
+                                            </button>
+                                        </th>
+                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Project</th>
+                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Tracking</th>
+                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-center">Team</th>
+                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Budget & Configuration</th>
+                                        <th className="pr-8 py-4 w-12"></th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {filteredProjects.map(p => (
+                                        <ProjectRow
+                                            key={p.id}
+                                            project={p}
+                                            isSelected={selectedIds.has(p.id)}
+                                            onSelect={() => toggleSelect(p.id)}
+                                            onEdit={() => navigate(`/dashboard/projects/${p.id}/edit`)}
+                                            isViewer={isViewer}
+                                            onRefresh={() => fetchProjects(true)}
+                                        />
+                                    ))}
+                                    {filteredProjects.length === 0 && !loading && (
+                                        <tr>
+                                            <td colSpan={6} className="py-24">
+                                                <EmptyState
+                                                    icon={<Briefcase className="w-6 h-6" />}
+                                                    title="No Projects Found"
+                                                    description="Refine your search or create a new project to get started."
+                                                />
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
+            )}
         </PageLayout>
     );
 }
@@ -379,7 +385,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                     className={clsx(
                         "w-5 h-5 rounded-md border flex items-center justify-center transition-all",
                         isSelected
-                            ? "bg-slate-900 border-slate-900 text-white shadow-shell-sm"
+                            ? "bg-[var(--text-main)] border-[var(--text-main)] text-[var(--bg-surface)] shadow-shell-sm"
                             : "bg-surface border-border group-hover/row:border-primary/40"
                     )}
                 >
