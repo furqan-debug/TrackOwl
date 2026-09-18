@@ -612,14 +612,134 @@ export function Timesheets() {
 
     return (
         <div className="flex flex-col min-h-screen bg-main font-sans text-text-main">
-            <header className="px-4 pt-4 pb-1 md:px-10 md:pt-12 md:pb-1 flex items-center justify-between shrink-0">
+            <header className="px-4 pt-4 pb-1 md:px-10 md:pt-12 md:pb-1 flex flex-col min-[900px]:flex-row min-[900px]:items-end min-[900px]:justify-between gap-3 min-[900px]:gap-4 shrink-0">
                 <div className="space-y-2">
                     <h1 className="text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
                     <p className="text-[14px] font-bold text-text-muted tracking-tight">Verify and refine team temporal records</p>
                 </div>
+
+                <div className="min-[900px]:pb-1 w-full min-[900px]:w-auto min-w-0">
+                    <div className="flex flex-col min-[900px]:items-end gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
+
+                        {/* Date + timezone */}
+                        <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-6 w-full min-[900px]:w-auto min-w-0">
+
+                            {/* Date navigation */}
+                            <div className="flex items-center bg-surface border border-border rounded-md p-1 shadow-shell-sm h-12 w-full min-[900px]:w-auto min-w-0">
+
+                                <button
+                                    onClick={() => navigateDate(-1)}
+                                    className="p-3 shrink-0 hover:bg-surface-hover rounded-md transition-all text-text-muted hover:text-primary"
+                                >
+                                    <ChevronLeft className="w-5 h-5" />
+                                </button>
+
+                                <div className="flex-1 min-w-0">
+                                    <DatePicker
+                                        value={getGroupingDateInTz(selectedDate, undefined)}
+                                        onChange={(val) => {
+                                            if (val) {
+                                                setSelectedDate(new Date(val + 'T12:00:00'));
+                                            }
+                                        }}
+                                        className="w-full min-w-0"
+                                    />
+                                </div>
+
+                                <button
+                                    onClick={() => navigateDate(1)}
+                                    className="p-3 shrink-0 hover:bg-surface-hover rounded-md transition-all text-text-muted hover:text-primary"
+                                >
+                                    <ChevronRight className="w-5 h-5" />
+                                </button>
+
+                            </div>
+
+                            {/* Timezone */}
+                            <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0">
+                                <FilterSelect
+                                    icon={<Clock className="w-4 h-4 shrink-0" />}
+                                    value={activeTimezone}
+                                    onChange={setActiveTimezone}
+                                    options={[
+                                        { id: 'Admin Local', name: 'Admin Local (Browser)' },
+                                        { id: 'Org Local', name: 'Organization Timezone' },
+                                        { id: 'User Local', name: 'User Local (Auto)' },
+                                        { id: 'UTC', name: 'UTC (Universal)' },
+                                        ...Array.from(
+                                            new Set(
+                                                members
+                                                    .map(m => m.timezone)
+                                                    .filter(tz => tz && tz !== 'UTC')
+                                            )
+                                        )
+                                            .sort()
+                                            .map(tz => ({
+                                                id: tz as string,
+                                                name: tz as string
+                                            }))
+                                    ]}
+                                />
+                            </div>
+                        </div>
+
+
+                        {/* Member + actions */}
+                        <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
+
+                            {/* Member */}
+                            <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[220px] min-w-0">
+                                <FilterSelect
+                                    icon={<Users className="w-4 h-4 shrink-0" />}
+                                    value={selectedMember}
+                                    onChange={setSelectedMember}
+                                    options={[
+                                        { id: 'all', name: 'All Members' },
+                                        ...members.map((m: MemberInfo) => ({
+                                            id: m.id,
+                                            name: m.full_name
+                                        }))
+                                    ]}
+                                />
+                            </div>
+
+                            {/* Buttons */}
+                            <div className="grid grid-cols-2 gap-3 w-full min-[900px]:w-auto min-[900px]:flex">
+
+                                <button
+                                    onClick={() => setShowFilters(true)}
+                                    className="flex items-center justify-center gap-2 px-4 min-[900px]:px-6 h-12 bg-surface border border-border text-text-muted rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all whitespace-nowrap min-w-0"
+                                >
+                                    <Filter className="w-4 h-4 shrink-0" />
+                                    <span>Filter</span>
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        setAddTimeData({
+                                            projectId: '',
+                                            userId: '',
+                                            date: new Date().toISOString().split('T')[0],
+                                            startTime: '09:00',
+                                            endTime: '17:00'
+                                        });
+                                        setShowAddTime(true);
+                                    }}
+                                    className="flex items-center justify-center gap-2 px-4 min-[900px]:px-8 h-12 bg-primary text-white rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all whitespace-nowrap min-w-0"
+                                >
+                                    <Plus className="w-5 h-5 shrink-0" />
+                                    <span>Add time</span>
+                                </button>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
             </header>
 
-            <div className="px-4 pt-0 pb-3 min-[900px]:px-10 min-[900px]:pt-0 min-[900px]:pb-4 flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-start justify-between gap-3 min-[900px]:gap-4 w-full min-w-0">
+            <div className="px-4 pt-3 pb-3 min-[900px]:px-10 min-[900px]:pt-4 min-[900px]:pb-4 flex items-stretch min-[900px]:items-center w-full min-w-0">
 
                 {/* View switcher */}
                 <div className="flex bg-main/50 p-1 rounded-md border border-border/50 h-12 w-full min-[900px]:w-auto min-w-0">
@@ -644,126 +764,6 @@ export function Timesheets() {
 
                 {/* Everything else, stacked, on the right. The switcher was on this
                     side and these were on the left. */}
-                {/* Lifted 24px above the switcher's line. The header's right side is
-                    empty, so this rises into it without meeting the heading, which is
-                    on the left. */}
-                <div className="flex flex-col min-[900px]:items-end min-[900px]:-mt-6 gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
-
-                    {/* Date + timezone */}
-                    <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-6 w-full min-[900px]:w-auto min-w-0">
-
-                        {/* Date navigation */}
-                        <div className="flex items-center bg-surface border border-border rounded-md p-1 shadow-shell-sm h-12 w-full min-[900px]:w-auto min-w-0">
-
-                            <button
-                                onClick={() => navigateDate(-1)}
-                                className="p-3 shrink-0 hover:bg-surface-hover rounded-md transition-all text-text-muted hover:text-primary"
-                            >
-                                <ChevronLeft className="w-5 h-5" />
-                            </button>
-
-                            <div className="flex-1 min-w-0">
-                                <DatePicker
-                                    value={getGroupingDateInTz(selectedDate, undefined)}
-                                    onChange={(val) => {
-                                        if (val) {
-                                            setSelectedDate(new Date(val + 'T12:00:00'));
-                                        }
-                                    }}
-                                    className="w-full min-w-0"
-                                />
-                            </div>
-
-                            <button
-                                onClick={() => navigateDate(1)}
-                                className="p-3 shrink-0 hover:bg-surface-hover rounded-md transition-all text-text-muted hover:text-primary"
-                            >
-                                <ChevronRight className="w-5 h-5" />
-                            </button>
-
-                        </div>
-
-                        {/* Timezone */}
-                        <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0">
-                            <FilterSelect
-                                icon={<Clock className="w-4 h-4 shrink-0" />}
-                                value={activeTimezone}
-                                onChange={setActiveTimezone}
-                                options={[
-                                    { id: 'Admin Local', name: 'Admin Local (Browser)' },
-                                    { id: 'Org Local', name: 'Organization Timezone' },
-                                    { id: 'User Local', name: 'User Local (Auto)' },
-                                    { id: 'UTC', name: 'UTC (Universal)' },
-                                    ...Array.from(
-                                        new Set(
-                                            members
-                                                .map(m => m.timezone)
-                                                .filter(tz => tz && tz !== 'UTC')
-                                        )
-                                    )
-                                        .sort()
-                                        .map(tz => ({
-                                            id: tz as string,
-                                            name: tz as string
-                                        }))
-                                ]}
-                            />
-                        </div>
-                    </div>
-
-
-                    {/* Member + actions */}
-                    <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
-
-                        {/* Member */}
-                        <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[220px] min-w-0">
-                            <FilterSelect
-                                icon={<Users className="w-4 h-4 shrink-0" />}
-                                value={selectedMember}
-                                onChange={setSelectedMember}
-                                options={[
-                                    { id: 'all', name: 'All Members' },
-                                    ...members.map((m: MemberInfo) => ({
-                                        id: m.id,
-                                        name: m.full_name
-                                    }))
-                                ]}
-                            />
-                        </div>
-
-                        {/* Buttons */}
-                        <div className="grid grid-cols-2 gap-3 w-full min-[900px]:w-auto min-[900px]:flex">
-
-                            <button
-                                onClick={() => setShowFilters(true)}
-                                className="flex items-center justify-center gap-2 px-4 min-[900px]:px-6 h-12 bg-surface border border-border text-text-muted rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all whitespace-nowrap min-w-0"
-                            >
-                                <Filter className="w-4 h-4 shrink-0" />
-                                <span>Filter</span>
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    setAddTimeData({
-                                        projectId: '',
-                                        userId: '',
-                                        date: new Date().toISOString().split('T')[0],
-                                        startTime: '09:00',
-                                        endTime: '17:00'
-                                    });
-                                    setShowAddTime(true);
-                                }}
-                                className="flex items-center justify-center gap-2 px-4 min-[900px]:px-8 h-12 bg-primary text-white rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all whitespace-nowrap min-w-0"
-                            >
-                                <Plus className="w-5 h-5 shrink-0" />
-                                <span>Add time</span>
-                            </button>
-
-                        </div>
-                    </div>
-
-                </div>
-
             </div>
 
             <main className="flex-1 min-h-0 overflow-y-auto px-4 py-5 min-[900px]:px-10 min-[900px]:py-10 custom-scrollbar min-w-0">
