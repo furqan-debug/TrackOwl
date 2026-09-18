@@ -195,13 +195,18 @@ jobs:
       # Re-upload the signed Windows installers + new .sig to the GitHub release
       - name: Upload Signed Windows Installers to Release
         if: matrix.platform == 'windows-latest'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.version.outputs.NUM) }}
-          files: |
-            src-tauri/target/release/bundle/nsis/TrackOwl_${{ steps.version.outputs.NUM }}_x64-setup.exe
-            src-tauri/target/release/bundle/nsis/TrackOwl_${{ steps.version.outputs.NUM }}_x64-setup.exe.sig
-            src-tauri/target/release/bundle/msi/TrackOwl_${{ steps.version.outputs.NUM }}_x64_en-US.msi
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $VERSION = "${{ steps.version.outputs.NUM }}"
+          $TAG = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}" } else { "v$VERSION" }
+          Write-Host "Overwriting release assets for tag $TAG with signed binaries..."
+          gh release upload $TAG `
+            "src-tauri/target/release/bundle/nsis/TrackOwl_${VERSION}_x64-setup.exe" `
+            "src-tauri/target/release/bundle/nsis/TrackOwl_${VERSION}_x64-setup.exe.sig" `
+            "src-tauri/target/release/bundle/msi/TrackOwl_${VERSION}_x64_en-US.msi" `
+            --clobber
 
       # Upload macOS Installers (.dmg and updater bundles)
       - name: Upload macOS Installers to Release
