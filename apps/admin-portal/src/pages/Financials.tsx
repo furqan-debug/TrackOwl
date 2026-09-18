@@ -90,7 +90,7 @@ export function Financials() {
                                 onClick={() => setRange(r)}
                                 className={clsx(
                                     "px-4 rounded-lg text-[10px] font-bold transition-all h-full",
-                                    range === r ? "bg-surface text-[var(--chart-gold)] shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-slate-600"
+                                    range === r ? "bg-surface text-[var(--chart-gold)] shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-text-main"
                                 )}
                             >
                                 {r}

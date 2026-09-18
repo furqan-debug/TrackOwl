@@ -1,17 +1,19 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import {
     ChevronLeft, ChevronRight,
     Users,
     Plus, Filter,
     Clock, FolderOpen,
-    MoreVertical, Edit2, Trash2
+    MoreVertical, Edit2, Trash2,
+    Star
 } from 'lucide-react';
 import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker } from '../components/ui';
 import clsx from 'clsx';
 import { getGroupingDateInTz, formatDuration, manualEntryInterval, utcToZonedWallClock } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
+import { useFavorites } from '../context/FavoritesContext';
 
 interface Session {
     id: string;
@@ -60,6 +62,12 @@ export function Timesheets() {
     const { profile, managedMemberIds, managedProjectIds, displayTimezone, timezoneReady } = useAuth();
     const organizationId = profile?.organization_id;
     const navigate = useNavigate();
+
+    // This page builds its own header rather than using PageLayout, which is why
+    // it was the only one without a favourite star. Same hook, same behaviour.
+    const location = useLocation();
+    const { toggleFavorite, isFavorite } = useFavorites();
+    const isFav = isFavorite(location.pathname);
 
     const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'calendar'>('daily');
     const [entries, setEntries] = useState<DailyEntry[]>([]);
@@ -615,7 +623,19 @@ export function Timesheets() {
             <header className="px-4 pt-4 pb-1 md:px-10 md:pt-12 md:pb-1 flex flex-col min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-between gap-3 min-[900px]:gap-4 shrink-0">
                 <div className="flex flex-col gap-4 min-w-0">
                     <div className="space-y-2">
-                        <h1 className="text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
+                            <button
+                                onClick={() => toggleFavorite('Timesheets', location.pathname)}
+                                className={clsx(
+                                    "p-2 rounded-xl transition-all",
+                                    isFav ? "text-[var(--accent)] bg-[var(--accent)]/10" : "text-text-muted hover:text-[var(--accent)] hover:bg-surface-hover"
+                                )}
+                                title={isFav ? "Remove from Favorites" : "Add to Favorites"}
+                            >
+                                <Star className={clsx("w-5 h-5 transition-colors", isFav && "fill-[var(--accent)]")} strokeWidth={isFav ? 2 : 2.5} />
+                            </button>
+                        </div>
                         <p className="text-[14px] font-bold text-text-muted tracking-tight">Verify and refine team temporal records</p>
                     </div>
 
@@ -630,7 +650,7 @@ export function Timesheets() {
                                     "flex-1 min-[900px]:flex-none px-2 min-[900px]:px-8 rounded-md text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
                                     viewMode === mode
                                         ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
-                                        : "text-text-muted hover:text-slate-600"
+                                        : "text-text-muted hover:text-text-main"
                                 )}
                             >
                                 {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -649,7 +669,7 @@ export function Timesheets() {
                 <div className="min-[900px]:mt-3 w-full min-[900px]:w-auto min-w-0">
                     <div className="flex flex-col min-[900px]:items-end gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
 
-                        {/* Date + timezone */}
+                        {/* Date + actions */}
                         <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-6 w-full min-[900px]:w-auto min-w-0">
 
                             {/* Date navigation */}
@@ -683,54 +703,6 @@ export function Timesheets() {
 
                             </div>
 
-                            {/* Timezone */}
-                            <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0">
-                                <FilterSelect
-                                    icon={<Clock className="w-4 h-4 shrink-0" />}
-                                    value={activeTimezone}
-                                    onChange={setActiveTimezone}
-                                    options={[
-                                        { id: 'Admin Local', name: 'Admin Local (Browser)' },
-                                        { id: 'Org Local', name: 'Organization Timezone' },
-                                        { id: 'User Local', name: 'User Local (Auto)' },
-                                        { id: 'UTC', name: 'UTC (Universal)' },
-                                        ...Array.from(
-                                            new Set(
-                                                members
-                                                    .map(m => m.timezone)
-                                                    .filter(tz => tz && tz !== 'UTC')
-                                            )
-                                        )
-                                            .sort()
-                                            .map(tz => ({
-                                                id: tz as string,
-                                                name: tz as string
-                                            }))
-                                    ]}
-                                />
-                            </div>
-                        </div>
-
-
-                        {/* Member + actions */}
-                        <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
-
-                            {/* Member */}
-                            <div className="h-12 w-full min-[900px]:w-auto min-[900px]:min-w-[220px] min-w-0">
-                                <FilterSelect
-                                    icon={<Users className="w-4 h-4 shrink-0" />}
-                                    value={selectedMember}
-                                    onChange={setSelectedMember}
-                                    options={[
-                                        { id: 'all', name: 'All Members' },
-                                        ...members.map((m: MemberInfo) => ({
-                                            id: m.id,
-                                            name: m.full_name
-                                        }))
-                                    ]}
-                                />
-                            </div>
-
                             {/* Buttons */}
                             <div className="grid grid-cols-2 gap-3 w-full min-[900px]:w-auto min-[900px]:flex">
 
@@ -759,6 +731,54 @@ export function Timesheets() {
                                     <span>Add time</span>
                                 </button>
 
+                            </div>
+                        </div>
+
+
+                        {/* Member + timezone */}
+                        <div className="flex flex-col min-[900px]:flex-row items-stretch min-[900px]:items-center gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0">
+
+                            {/* Member */}
+                            <div className="h-16 w-full min-[900px]:w-auto min-[900px]:min-w-[220px] min-w-0">
+                                <FilterSelect
+                                    icon={<Users className="w-4 h-4 shrink-0" />}
+                                    value={selectedMember}
+                                    onChange={setSelectedMember}
+                                    options={[
+                                        { id: 'all', name: 'All Members' },
+                                        ...members.map((m: MemberInfo) => ({
+                                            id: m.id,
+                                            name: m.full_name
+                                        }))
+                                    ]}
+                                />
+                            </div>
+
+                            {/* Timezone */}
+                            <div className="h-16 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0">
+                                <FilterSelect
+                                    icon={<Clock className="w-4 h-4 shrink-0" />}
+                                    value={activeTimezone}
+                                    onChange={setActiveTimezone}
+                                    options={[
+                                        { id: 'Admin Local', name: 'Admin Local (Browser)' },
+                                        { id: 'Org Local', name: 'Organization Timezone' },
+                                        { id: 'User Local', name: 'User Local (Auto)' },
+                                        { id: 'UTC', name: 'UTC (Universal)' },
+                                        ...Array.from(
+                                            new Set(
+                                                members
+                                                    .map(m => m.timezone)
+                                                    .filter(tz => tz && tz !== 'UTC')
+                                            )
+                                        )
+                                            .sort()
+                                            .map(tz => ({
+                                                id: tz as string,
+                                                name: tz as string
+                                            }))
+                                    ]}
+                                />
                             </div>
                         </div>
 
@@ -1248,7 +1268,7 @@ function CalendarView({ entries, onDayClick }: { entries: DailyEntry[], onDayCli
                                 "
                             >
                                 {/* Date */}
-                                <span className="text-[12px] sm:text-[13px] font-bold text-text-muted group-hover:text-slate-900 transition-colors">
+                                <span className="text-[12px] sm:text-[13px] font-bold text-text-muted group-hover:text-text-main transition-colors">
                                     {new Date(day.date + 'T12:00:00').getDate()}
                                 </span>
 
