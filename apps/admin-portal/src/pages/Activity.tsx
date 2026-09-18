@@ -58,7 +58,10 @@ export function Activity() {
     const organizationId = profile?.organization_id;
     const [samples, setSamples] = useState<ActivitySample[]>([]);
     const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    // The fetch below is gated on members arriving, so without knowing the
+    // query has resolved an org with no active members would spin forever.
+    const [membersLoaded, setMembersLoaded] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const requestSeqRef = useRef(0);
     
@@ -82,7 +85,10 @@ export function Activity() {
 
     useEffect(() => {
         import('../lib/supabase').then(({ supabase }) => {
-            if (!organizationId) return;
+            if (!organizationId) {
+                setMembersLoaded(true);
+                return;
+            }
             let query = supabase.from('members')
                 .select('id, auth_user_id, full_name, timezone, keep_idle, email, avatar_url, idle_limit')
                 .eq('organization_id', organizationId)
@@ -97,6 +103,7 @@ export function Activity() {
             
             query.then(({ data }) => {
                 if (data) setMembers(data);
+                setMembersLoaded(true);
             });
         });
     }, [organizationId]);
@@ -186,9 +193,15 @@ export function Activity() {
 
     // Re-fetch data whenever any dependency changes
         useEffect(() => {
-        if (members.length === 0) return;
+        if (!membersLoaded) return;
+        // Resolved and genuinely empty: there is nothing to fetch, so stop the
+        // loader rather than leave it running against a request that never goes.
+        if (members.length === 0) {
+            setLoading(false);
+            return;
+        }
         fetchData(false);
-    }, [fetchData, members]);
+    }, [fetchData, members, membersLoaded]);
 
     const loadMoreScreenshots = async () => {
         if (loadingMore || refreshing || !hasMoreScreenshots) return;
