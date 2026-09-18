@@ -241,37 +241,6 @@ export function DatePicker({
                                 </div>
                             ))}
                         </div>
-
-                        {/* Footer Actions — mt-6 pt-4 left 40px of dead space between
-                            the last week and these two buttons, which read as an empty
-                            row of the calendar. Just enough now to separate them. */}
-                        <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); onChange(''); setIsOpen(false); }}
-                                className="text-[11px] font-black text-error hover:opacity-80 transition-opacity uppercase tracking-widest"
-                            >
-                                Clear
-                            </button>
-                            <button 
-                                onClick={(e) => { 
-                                    e.stopPropagation();
-                                    let iso;
-                                    if (displayTimezone) {
-                                        iso = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone });
-                                    } else {
-                                        const now = new Date();
-                                        iso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-                                    }
-                                    const [y, m, d] = iso.split('-').map(Number);
-                                    setViewDate(new Date(y, m - 1, d));
-                                    onChange(iso);
-                                    setIsOpen(false);
-                                }}
-                                className="text-[11px] font-black text-accent hover:opacity-80 transition-opacity uppercase tracking-widest"
-                            >
-                                Today
-                            </button>
-                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
