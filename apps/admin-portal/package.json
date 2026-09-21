@@ -22,6 +22,7 @@
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.18.2",
     "recharts": "^3.10.1",
+    "simple-icons": "^16.32.0",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
