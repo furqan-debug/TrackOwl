@@ -244,6 +244,22 @@ export function ProjectFormPage() {
                 max-w-6xl centred it was narrower than the heading above it and
                 stopped well short of the Create Project button on the right. */}
             <div className="pb-20">
+                {/* At the top, next to the Create Project button that produced it.
+                    This used to sit at the very bottom of the right-hand column,
+                    below the members and teams panels, so the page said nothing
+                    where you were looking and the reason was off-screen. */}
+                {error && (
+                    <div className="mb-6 bg-rose-50 border border-rose-200 px-5 py-4 rounded-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-2 shadow-shell-sm">
+                        <div className="w-10 h-10 rounded-xl bg-rose-500 flex items-center justify-center text-white shadow-shell-sm shrink-0">
+                            <Info className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <span className="text-[9px] font-bold text-rose-500 block mb-0.5">Error</span>
+                            <p className="text-xs font-bold text-rose-900 leading-tight">{error}</p>
+                        </div>
+                    </div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     
                     {/* 🛠️ Main Configuration */}
@@ -526,18 +542,6 @@ export function ProjectFormPage() {
                                 </div>
                             </div>
                         </div>
-
-                        {error && (
-                            <div className="bg-rose-50 border border-rose-200 p-6 rounded-[24px] flex items-center gap-4 animate-in slide-in-from-top-2 shadow-shell-sm">
-                                <div className="w-10 h-10 rounded-xl bg-rose-500 flex items-center justify-center text-white shadow-shell-sm shrink-0">
-                                    <Info className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <span className="text-[9px] font-bold text-rose-500 block mb-0.5">Error</span>
-                                    <p className="text-xs font-bold text-rose-900 leading-tight">{error}</p>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
