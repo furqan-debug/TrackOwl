@@ -6,7 +6,6 @@ import {
     Check, Users,
     Trash2, Archive,
     Building2, Briefcase, Layers,
-    RefreshCw,
     ArrowUpRight
 } from 'lucide-react';
 import clsx from 'clsx';
@@ -58,7 +57,6 @@ export function Projects() {
 
     const [projects, setProjects] = useState<Project[]>([]);
     const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
     const [activeTab, setActiveTab] = useState<ProjectStatus>('Active');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -72,8 +70,9 @@ export function Projects() {
             return;
         }
 
+        // isSilent means no loader: a refresh behind the scenes, after an
+        // archive or a delete, should not blank the table.
         if (!isSilent) setLoading(true);
-        else setRefreshing(true);
 
         try {
             let query = supabase
@@ -117,7 +116,6 @@ export function Projects() {
             console.error(err);
         } finally {
             setLoading(false);
-            setRefreshing(false);
         }
     }, [activeTab]);
 
@@ -259,15 +257,6 @@ export function Projects() {
                                     />
                                 </div>
 
-                                <button
-                                    onClick={() => fetchProjects(true, true)}
-                                    className={clsx(
-                                        "w-10 h-10 flex items-center justify-center border border-border rounded-xl transition-all",
-                                        refreshing ? "text-[var(--chart-gold)] bg-primary/5" : "text-text-muted hover:text-text-main hover:bg-surface-hover"
-                                    )}
-                                >
-                                    <RefreshCw className={clsx("w-4 h-4", refreshing && "animate-spin")} />
-                                </button>
                             </div>
 
                             <div className="flex items-center gap-3">
@@ -280,9 +269,20 @@ export function Projects() {
                                         {activeTab === 'Active' ? 'Archive' : 'Restore'} ({selectedIds.size})
                                     </button>
                                 )}
-                                <div className="flex items-center gap-4 px-6 py-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                    <span className="text-[12px] font-bold text-emerald-500 ">Online Now</span>
+                                <div className={clsx(
+                                    "flex items-center gap-4 px-6 py-2.5 rounded-full border",
+                                    activeTab === 'Active'
+                                        ? "bg-emerald-500/10 border-emerald-500/20"
+                                        : "bg-text-muted/10 border-text-muted/20"
+                                )}>
+                                    <div className={clsx(
+                                        "w-2 h-2 rounded-full",
+                                        activeTab === 'Active' ? "bg-emerald-500 animate-pulse" : "bg-text-muted"
+                                    )} />
+                                    <span className={clsx(
+                                        "text-[12px] font-bold",
+                                        activeTab === 'Active' ? "text-emerald-500" : "text-text-muted"
+                                    )}>{activeTab === 'Active' ? 'Online Now' : 'Completed'}</span>
                                 </div>
                             </div>
                         </div>
