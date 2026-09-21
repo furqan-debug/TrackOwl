@@ -18,6 +18,7 @@ import {
     formatDuration,
     orgLocalToUtc
 } from '../lib/dataUtils';
+import { chartColorAt } from '../lib/projectColors';
 import {
     ResponsiveContainer,
     AreaChart,
@@ -668,14 +669,13 @@ export function Dashboard() {
                                                     paddingAngle={8}
                                                     dataKey="minutes"
                                                 >
+                                                    {/* Five shades of gold cycled with index % 5 meant
+                                                        every fifth slice repeated, and the five were close
+                                                        enough that no slice could be told from its
+                                                        neighbours or matched to the list below. Eight
+                                                        distinct hues, the same set a project can be given. */}
                                                     {projectActivity.map((_, index) => (
-                                                        <Cell key={`cell-${index}`} fill={[
-                                                            'var(--chart-pie-primary)',
-                                                            'var(--chart-gold-secondary)',
-                                                            'var(--chart-gold-light)',
-                                                            'var(--chart-gold-soft)',
-                                                            'var(--chart-gold-muted)'
-                                                        ][index % 5]} />
+                                                        <Cell key={`cell-${index}`} fill={chartColorAt(index)} />
                                                     ))}
                                                 </Pie>
                                                 <Tooltip
@@ -707,15 +707,9 @@ export function Dashboard() {
                                         {projectActivity.slice(0, 3).map((proj, index) => (
                                             <div key={proj.id} className="flex items-center justify-between group cursor-default">
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-2 h-2 rounded-full" style={{
-                                                        backgroundColor: [
-                                                            'var(--chart-pie-primary)',
-                                                            'var(--chart-gold-secondary)',
-                                                            'var(--chart-gold-light)',
-                                                            'var(--chart-gold-soft)',
-                                                            'var(--chart-gold-muted)'
-                                                        ][index % 5]
-                                                    }} />
+                                                    {/* Same index, same colour as the slice above:
+                                                        the dot is what ties a row to its arc. */}
+                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: chartColorAt(index) }} />
                                                     <span className="text-[13px] font-bold text-text-main group-hover:text-primary transition-colors">{proj.name}</span>
                                                 </div>
                                                 <span className="text-[12px] font-black text-text-muted tabular-nums">{formatDuration(proj.minutes)}</span>
