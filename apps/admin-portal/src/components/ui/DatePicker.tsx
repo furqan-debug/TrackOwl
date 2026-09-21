@@ -205,14 +205,14 @@ export function DatePicker({
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         style={{ width: panelWidth }}
                         className={clsx(
-                            "absolute top-[calc(100%+8px)] bg-surface border border-border rounded-2xl shadow-premium z-[110] p-5 overflow-hidden",
+                            "absolute top-[calc(100%+8px)] bg-surface border border-border rounded-2xl shadow-premium z-[110] p-4 overflow-hidden",
                             align === 'centre' && "left-1/2 -translate-x-1/2",
                             align === 'left' && "left-0",
                             align === 'right' && "right-0"
                         )}
                     >
                         {/* Header */}
-                        <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center justify-between mb-3">
                             <h4 className="text-[14px] font-black text-text-main tracking-tight">
                                 {viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                             </h4>
@@ -235,7 +235,7 @@ export function DatePicker({
                         {/* Week Headers */}
                         <div className="grid grid-cols-7 gap-1 mb-2">
                             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-                                <div key={d} className="text-[10px] font-black text-text-muted text-center uppercase tracking-widest py-2">
+                                <div key={d} className="text-[10px] font-black text-text-muted text-center uppercase tracking-widest py-1">
                                     {d}
                                 </div>
                             ))}
@@ -248,7 +248,7 @@ export function DatePicker({
                                     key={i}
                                     onClick={(e) => { e.stopPropagation(); handleDateSelect(d.day, d.month, d.year); }}
                                     className={clsx(
-                                        "aspect-square flex items-center justify-center text-[12px] font-bold rounded-xl cursor-pointer transition-all relative group",
+                                        "h-9 flex items-center justify-center text-[12px] font-bold rounded-lg cursor-pointer transition-all relative group",
                                         !d.current && "opacity-20",
                                         isSelected(d.day, d.month, d.year)
                                             ? "bg-primary text-white shadow-glow-primary scale-110 z-10"

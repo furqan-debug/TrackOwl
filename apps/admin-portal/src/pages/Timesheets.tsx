@@ -9,7 +9,7 @@ import {
     MoreVertical, Edit2, Trash2,
     Star
 } from 'lucide-react';
-import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker } from '../components/ui';
+import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker, TimeField } from '../components/ui';
 import clsx from 'clsx';
 import { getGroupingDateInTz, formatDuration, manualEntryInterval, utcToZonedWallClock } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
@@ -882,21 +882,25 @@ export function Timesheets() {
                             onChange={(val) => setAddTimeData({ ...addTimeData, date: val })}
                         />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                        <TimeField
+                            label="Start"
+                            hint={orgTimezone}
+                            value={addTimeData.startTime}
+                            onChange={(val) => setAddTimeData({ ...addTimeData, startTime: val })}
+                        />
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-text-muted ">Start <span className="text-text-muted/60">({orgTimezone})</span></label>
-                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({ ...addTimeData, startTime: e.target.value })} />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-text-muted flex items-center gap-2">
-                                <span>End <span className="text-text-muted/60">({orgTimezone})</span></span>
-                                {/* An end before the start is read as an overnight shift. Say so,
-                                    rather than silently moving the entry to a day they did not pick. */}
-                                {addTimeData.endTime && addTimeData.startTime && addTimeData.endTime < addTimeData.startTime && (
-                                    <span className="text-accent normal-case">ends next day</span>
-                                )}
-                            </label>
-                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({ ...addTimeData, endTime: e.target.value })} />
+                            {/* An end before the start is read as an overnight shift. Say so,
+                                rather than silently moving the entry to a day they did not pick. */}
+                            {addTimeData.endTime && addTimeData.startTime && addTimeData.endTime < addTimeData.startTime && (
+                                <span className="text-[10px] font-bold text-accent">ends next day</span>
+                            )}
+                            <TimeField
+                                label="End"
+                                hint={orgTimezone}
+                                value={addTimeData.endTime}
+                                onChange={(val) => setAddTimeData({ ...addTimeData, endTime: val })}
+                            />
                         </div>
                     </div>
                     <div className="flex justify-end pt-2">
@@ -944,21 +948,25 @@ export function Timesheets() {
                             onChange={(val) => setAddTimeData({ ...addTimeData, date: val })}
                         />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                        <TimeField
+                            label="Start"
+                            hint={orgTimezone}
+                            value={addTimeData.startTime}
+                            onChange={(val) => setAddTimeData({ ...addTimeData, startTime: val })}
+                        />
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-text-muted ">Start <span className="text-text-muted/60">({orgTimezone})</span></label>
-                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.startTime} onChange={(e) => setAddTimeData({ ...addTimeData, startTime: e.target.value })} />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-text-muted flex items-center gap-2">
-                                <span>End <span className="text-text-muted/60">({orgTimezone})</span></span>
-                                {/* An end before the start is read as an overnight shift. Say so,
-                                    rather than silently moving the entry to a day they did not pick. */}
-                                {addTimeData.endTime && addTimeData.startTime && addTimeData.endTime < addTimeData.startTime && (
-                                    <span className="text-accent normal-case">ends next day</span>
-                                )}
-                            </label>
-                            <input type="time" className="w-full h-11 bg-surface-hover border border-border rounded-md px-4 text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all" value={addTimeData.endTime} onChange={(e) => setAddTimeData({ ...addTimeData, endTime: e.target.value })} />
+                            {/* An end before the start is read as an overnight shift. Say so,
+                                rather than silently moving the entry to a day they did not pick. */}
+                            {addTimeData.endTime && addTimeData.startTime && addTimeData.endTime < addTimeData.startTime && (
+                                <span className="text-[10px] font-bold text-accent">ends next day</span>
+                            )}
+                            <TimeField
+                                label="End"
+                                hint={orgTimezone}
+                                value={addTimeData.endTime}
+                                onChange={(val) => setAddTimeData({ ...addTimeData, endTime: val })}
+                            />
                         </div>
                     </div>
                     <div className="flex justify-end pt-2">
