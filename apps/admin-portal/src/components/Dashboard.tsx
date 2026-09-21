@@ -353,12 +353,12 @@ export function Dashboard() {
                 .slice(0, 4);
 
             const finalProjectActivity = Object.entries(aggregated.proj_stats || {})
-                .map(([id, p]: [string, any]) => ({
+                .map(([id, p]: [string, any], index) => ({
                     id,
                     name: projectMap[id]?.name || 'Unknown',
                     minutes: p.mins,
                     activityScore: p.cnt > 0 ? Math.round(p.activity_sum / p.cnt) : 0,
-                    color: projectMap[id]?.color || 'var(--color-chart-main)'
+                    color: projectMap[id]?.color || chartColorAt(index)
                 }))
                 .sort((a, b) => b.minutes - a.minutes);
 
@@ -669,13 +669,12 @@ export function Dashboard() {
                                                     paddingAngle={8}
                                                     dataKey="minutes"
                                                 >
-                                                    {/* Five shades of gold cycled with index % 5 meant
-                                                        every fifth slice repeated, and the five were close
-                                                        enough that no slice could be told from its
-                                                        neighbours or matched to the list below. Eight
-                                                        distinct hues, the same set a project can be given. */}
-                                                    {projectActivity.map((_, index) => (
-                                                        <Cell key={`cell-${index}`} fill={chartColorAt(index)} />
+                                                    {/* The project's own colour, so the ring matches the
+                                                        swatch chosen on the project and the dot everywhere
+                                                        else. A project with none set falls back to the
+                                                        palette by position. */}
+                                                    {projectActivity.map((proj, index) => (
+                                                        <Cell key={`cell-${index}`} fill={proj.color || chartColorAt(index)} />
                                                     ))}
                                                 </Pie>
                                                 <Tooltip
@@ -707,9 +706,9 @@ export function Dashboard() {
                                         {projectActivity.slice(0, 3).map((proj, index) => (
                                             <div key={proj.id} className="flex items-center justify-between group cursor-default">
                                                 <div className="flex items-center gap-3">
-                                                    {/* Same index, same colour as the slice above:
-                                                        the dot is what ties a row to its arc. */}
-                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: chartColorAt(index) }} />
+                                                    {/* Same colour as the slice above: the dot is what
+                                                        ties a row to its arc. */}
+                                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: proj.color || chartColorAt(index) }} />
                                                     <span className="text-[13px] font-bold text-text-main group-hover:text-primary transition-colors">{proj.name}</span>
                                                 </div>
                                                 <span className="text-[12px] font-black text-text-muted tabular-nums">{formatDuration(proj.minutes)}</span>
