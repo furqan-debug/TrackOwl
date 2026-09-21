@@ -46,7 +46,7 @@ export function ProjectFormPage() {
 
     // Form State
     const [name, setName] = useState('');
-    const [color, setColor] = useState('#4E68D4');
+    const [color, setColor] = useState('#617DE6');
     const [clientId, setClientId] = useState('');
     const [billable, setBillable] = useState(true);
     const [budgetType, setBudgetType] = useState<BudgetType>('No budget');
@@ -65,24 +65,29 @@ export function ProjectFormPage() {
     const [teams, setTeams] = useState<Team[]>([]);
     const [memberSearch, setMemberSearch] = useState('');
 
-    // Eight hues held at a similar mid lightness so they sit together and with
-    // the brand's navy and gold. Mid tones because the colour is not only a
-    // swatch: the projects list prints the project name IN this colour on a 10%
-    // tint of it, so each has to read on white and on the dark surface. Every
-    // one clears 3:1 against both, checked rather than eyeballed.
+    // Eight project colours, generated in OKLCH at a fixed lightness (0.62) and
+    // chroma (0.16) with the hues spaced around the wheel. Fixing L and C is
+    // what makes them look like a set rather than eight colours that happen to
+    // be together: none shouts louder than the others, and none fades next to
+    // them.
+    //
+    // Mid lightness because the colour is not only a swatch — the projects list
+    // prints the project name IN it, on a 10% tint of itself, so each has to
+    // read on white and on the dark surface. All eight clear 3:1 against both
+    // #FFFFFF and #0F172A, measured rather than eyeballed.
     //
     // Hex only. The list used to include var(--color-chart-main), and the
     // places that build a tint by appending alpha — `${project.color}10` —
-    // produced "var(--color-chart-main)10", which is not a colour at all.
+    // turned that into "var(--color-chart-main)10", which is not a colour.
     const COLORS = [
-        '#AD7F12', // gold
-        '#D4762A', // orange
-        '#CE4A63', // rose
-        '#8257C4', // purple
-        '#4E68D4', // indigo
-        '#2489B8', // sky
-        '#12907F', // teal
-        '#4F9440', // green
+        '#B27B00', // gold — the brand hue
+        '#D06217', // orange
+        '#D5565D', // rose
+        '#C35AA4', // magenta
+        '#966CD7', // purple
+        '#617DE6', // indigo
+        '#00A2A4', // teal
+        '#2B9F4A', // green
     ];
 
     useEffect(() => {
@@ -115,7 +120,7 @@ export function ProjectFormPage() {
                 if (pError) throw pError;
                 if (project) {
                     setName(project.name);
-                    setColor(project.color || '#4E68D4');
+                    setColor(project.color || '#617DE6');
                     setClientId(project.client_id || '');
                     setBillable(project.billable);
                     setBudgetType(project.budget_type || 'No budget');
