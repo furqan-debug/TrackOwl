@@ -101,6 +101,24 @@ export function DatePicker({
         return new Date();
     });
 
+    // viewDate was set once at mount and moved only by the arrows, so it never
+    // followed the selection. Picking 31 August from the grey leading row of a
+    // September grid set the value but left the grid on September — reopening
+    // showed the wrong month with the selected day sitting outside it.
+    //
+    // Keyed on isOpen too, so opening after paging around without choosing
+    // anything returns to the month the value is actually in.
+    useEffect(() => {
+        if (!value) return;
+        const [y, m, d] = value.split('-').map(Number);
+        if (!Number.isFinite(y) || !Number.isFinite(m)) return;
+        setViewDate(prev =>
+            prev.getFullYear() === y && prev.getMonth() === m - 1
+                ? prev
+                : new Date(y, m - 1, d)
+        );
+    }, [value, isOpen]);
+
     const selectedDate = useMemo(() => {
         if (!value) return null;
         const [year, month, day] = value.split('-').map(Number);
@@ -113,10 +131,22 @@ export function DatePicker({
         const firstDay = new Date(year, month, 1).getDay();
         const days = new Date(year, month + 1, 0).getDate();
         
+        // The neighbouring months carry their own year. month - 1 and month + 1
+        // with this year attached gave "2026-00-28" for December 2025 and
+        // "2026-13-01" for January 2027, and the click handler wrote them
+        // straight out. Let Date normalise the rollover instead.
+        const prevMonth = new Date(year, month - 1, 1);
+        const nextMonth = new Date(year, month + 1, 1);
+
         const prevMonthDays = new Date(year, month, 0).getDate();
         const prevDays = [];
         for (let i = firstDay - 1; i >= 0; i--) {
-            prevDays.push({ day: prevMonthDays - i, month: month - 1, year, current: false });
+            prevDays.push({
+                day: prevMonthDays - i,
+                month: prevMonth.getMonth(),
+                year: prevMonth.getFullYear(),
+                current: false,
+            });
         }
 
         const currentDays = [];
@@ -133,7 +163,12 @@ export function DatePicker({
         const filled = prevDays.length + currentDays.length;
         const remaining = Math.ceil(filled / 7) * 7 - filled;
         for (let i = 1; i <= remaining; i++) {
-            nextDays.push({ day: i, month: month + 1, year, current: false });
+            nextDays.push({
+                day: i,
+                month: nextMonth.getMonth(),
+                year: nextMonth.getFullYear(),
+                current: false,
+            });
         }
 
         return [...prevDays, ...currentDays, ...nextDays];
