@@ -282,7 +282,7 @@ export function Projects() {
                                     <span className={clsx(
                                         "text-[12px] font-bold",
                                         activeTab === 'Active' ? "text-emerald-500" : "text-text-muted"
-                                    )}>{activeTab === 'Active' ? 'Online Now' : 'Completed'}</span>
+                                    )}>{activeTab === 'Active' ? 'Online Now' : 'Paused'}</span>
                                 </div>
                             </div>
                         </div>
