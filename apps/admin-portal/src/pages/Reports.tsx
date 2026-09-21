@@ -1174,8 +1174,8 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
                             className={clsx(
                                 "py-3 text-[12px] font-medium transition-all rounded-lg relative z-10",
                                 selected ? "text-white shadow-lg shadow-[var(--chart-gold)]/30" :
-                                    inRange ? "bg-[var(--chart-gold)]/5" :
-                                        "text-text-muted hover:bg-surface-hover"
+                                    inRange ? "bg-[var(--chart-gold)]/5 hover:bg-primary hover:text-[var(--bg-surface)]" :
+                                        "text-text-muted hover:bg-primary hover:text-[var(--bg-surface)]"
                             )}
                             style={selected ? { backgroundColor: 'var(--chart-gold)' } : inRange ? { color: 'var(--chart-gold)' } : {}}
                         >
