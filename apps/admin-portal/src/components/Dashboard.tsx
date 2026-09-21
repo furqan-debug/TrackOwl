@@ -694,11 +694,14 @@ export function Dashboard() {
                                                     }}
                                                     labelStyle={{ color: 'var(--text-main)', fontWeight: 700 }}
                                                     itemStyle={{ color: 'var(--text-main)' }}
+                                                    wrapperStyle={{ zIndex: 50 }}
                                                     formatter={(value: any) => formatDuration(Number(value))}
                                                 />
                                             </PieChart>
                                         </ResponsiveContainer>
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                        {/* z-0: this used to paint over the tooltip, which has no
+                                            stacking order of its own and comes earlier in the DOM. */}
+                                        <div className="absolute inset-0 z-0 flex flex-col items-center justify-center pointer-events-none">
                                             <span className="text-[28px] font-black text-text-main tracking-tight leading-none">
                                                 {formatDuration(stats.totalProductiveMinutes).split(' ')[0]}
                                             </span>
