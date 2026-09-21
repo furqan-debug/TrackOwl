@@ -482,7 +482,7 @@ export function ProjectFormPage() {
                                                 <div className={clsx(
                                                     "w-8 h-8 rounded-lg flex items-center justify-center text-[10px] font-bold border shrink-0 transition-all shadow-shell-sm",
                                                     isSelected 
-                                                        ? "bg-surface/10 border-white/20 text-white" 
+                                                        ? "bg-[var(--bg-surface)]/10 border-[var(--bg-surface)]/20 text-[var(--bg-surface)]" 
                                                         : "bg-surface border-border text-text-muted"
                                                 )}>
                                                     {m.full_name.charAt(0).toUpperCase()}
@@ -490,11 +490,11 @@ export function ProjectFormPage() {
                                                 <div className="truncate">
                                                     <p className={clsx(
                                                         "text-[12px] font-bold leading-none mb-1",
-                                                        isSelected ? "text-white" : "text-text-main"
+                                                        isSelected ? "text-[var(--bg-surface)]" : "text-text-main"
                                                     )}>{m.full_name}</p>
                                                     <p className={clsx(
                                                         "text-[9px] font-bold opacity-60",
-                                                        isSelected ? "text-white/70" : "text-text-muted"
+                                                        isSelected ? "text-[var(--bg-surface)]/70" : "text-text-muted"
                                                     )}>{m.role}</p>
                                                 </div>
                                             </div>
