@@ -216,7 +216,10 @@ export function ProjectFormPage() {
                 </div>
             }
         >
-            <div className="max-w-6xl mx-auto pb-20">
+            {/* The header runs the full width, so the content has to as well. At
+                max-w-6xl centred it was narrower than the heading above it and
+                stopped well short of the Create Project button on the right. */}
+            <div className="pb-20">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     
                     {/* 🛠️ Main Configuration */}
