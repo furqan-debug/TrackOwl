@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, Check } from 'lucide-react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { ChevronLeft, Check, Search } from 'lucide-react';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,8 +21,29 @@ export function FormSelect({
     disabled,
     icon,
     description,
+    // Type to narrow the list. Off by default: a handful of options is quicker
+    // to read than to filter, and a search box on three of them is noise.
+    enableSearch = false,
 }: any) {
     const [isOpen, setIsOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const searchRef = useRef<HTMLInputElement>(null);
+
+    const filteredOptions = useMemo(() => {
+        if (!enableSearch || !searchTerm) return options;
+        const needle = searchTerm.toLowerCase();
+        return options.filter((o: any) => String(o.label).toLowerCase().includes(needle));
+    }, [options, searchTerm, enableSearch]);
+
+    // Focus the box on open, and clear whatever was typed on close, so the next
+    // open starts from the full list.
+    useEffect(() => {
+        if (isOpen && enableSearch) {
+            const id = setTimeout(() => searchRef.current?.focus(), 60);
+            return () => clearTimeout(id);
+        }
+        setSearchTerm('');
+    }, [isOpen, enableSearch]);
 
     const ref = useRef<HTMLDivElement>(null);
 
@@ -123,7 +144,26 @@ export function FormSelect({
                             transition={{ duration: 0.2 }}
                             className="absolute top-[calc(100%+8px)] left-0 w-full bg-surface border border-border rounded-2xl shadow-premium z-[100] flex flex-col p-2 max-h-[260px] overflow-y-auto custom-scrollbar"
                         >
-                            {options.map((opt: any) => (
+                            {enableSearch && (
+                                <div className="relative mb-1.5 shrink-0">
+                                    <Search className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
+                                    <input
+                                        ref={searchRef}
+                                        type="text"
+                                        value={searchTerm}
+                                        onChange={e => setSearchTerm(e.target.value)}
+                                        onClick={e => e.stopPropagation()}
+                                        placeholder="Type to filter…"
+                                        className="w-full bg-surface-hover border border-border rounded-lg pl-8 pr-3 py-1.5 text-[11px] font-medium text-text-main outline-none focus:border-primary/40 transition-all"
+                                    />
+                                </div>
+                            )}
+                            {filteredOptions.length === 0 && (
+                                <div className="px-3 py-4 text-center text-[11px] font-bold text-text-muted">
+                                    No match
+                                </div>
+                            )}
+                            {filteredOptions.map((opt: any) => (
                                 <div
                                     key={opt.value}
                                     onClick={() => {
