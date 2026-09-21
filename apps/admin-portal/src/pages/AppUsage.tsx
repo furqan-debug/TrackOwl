@@ -9,7 +9,7 @@ import {
     ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { PageLayout, StatMetric, LoadingState, EmptyState, FilterSelect, DatePicker, RefreshButton } from '../components/ui';
+import { PageLayout, StatMetric, LoadingState, EmptyState, FilterSelect, DatePicker, RefreshButton, AppIcon } from '../components/ui';
 import clsx from 'clsx';
 import { orgLocalToUtc } from '../lib/dataUtils';
 
@@ -343,9 +343,7 @@ export function AppUsage() {
                                         <tr key={i} onClick={toggleExpand} className="hover:bg-surface-hover transition-colors group cursor-pointer">
                                         <td className="px-10 py-5">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-xl bg-surface-hover border border-border flex items-center justify-center shadow-shell-sm group-hover:bg-primary group-hover:text-white transition-all text-text-muted overflow-hidden">
-                                                    <AppWindow className="w-5 h-5 shrink-0" />
-                                                </div>
+                                                <AppIcon name={app.raw_app || ''} className="w-10 h-10 shadow-shell-sm" />
                                                 <div className="flex flex-col min-w-0">
                                                     <span className={clsx("text-sm font-black text-text-main leading-tight tracking-tight group-hover:text-primary transition-colors", !isExpanded && "truncate max-w-[200px]")} title={app.raw_app}>
                                                         {app.raw_app || 'Unknown'}

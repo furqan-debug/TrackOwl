@@ -9,6 +9,7 @@ export { RefreshButton } from './RefreshButton';
 export { FilterSelect } from './FilterSelect';
 export { FormSelect } from './FormSelect';
 export { TimeField } from './TimeField';
+export { AppIcon } from './AppIcon';
 export { PageHeader } from './PageHeader';
 export { StatusBadge } from './StatusBadge';
 export { Modal } from './Modal';
