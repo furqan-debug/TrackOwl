@@ -46,7 +46,7 @@ export function ProjectFormPage() {
 
     // Form State
     const [name, setName] = useState('');
-    const [color, setColor] = useState('#3b82f6');
+    const [color, setColor] = useState('#4E68D4');
     const [clientId, setClientId] = useState('');
     const [billable, setBillable] = useState(true);
     const [budgetType, setBudgetType] = useState<BudgetType>('No budget');
@@ -65,7 +65,25 @@ export function ProjectFormPage() {
     const [teams, setTeams] = useState<Team[]>([]);
     const [memberSearch, setMemberSearch] = useState('');
 
-    const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#10b981', '#14b8a6', '#f59e0b', '#ef4444', 'var(--color-chart-main)', '#84cc16'];
+    // Eight hues held at a similar mid lightness so they sit together and with
+    // the brand's navy and gold. Mid tones because the colour is not only a
+    // swatch: the projects list prints the project name IN this colour on a 10%
+    // tint of it, so each has to read on white and on the dark surface. Every
+    // one clears 3:1 against both, checked rather than eyeballed.
+    //
+    // Hex only. The list used to include var(--color-chart-main), and the
+    // places that build a tint by appending alpha — `${project.color}10` —
+    // produced "var(--color-chart-main)10", which is not a colour at all.
+    const COLORS = [
+        '#AD7F12', // gold
+        '#D4762A', // orange
+        '#CE4A63', // rose
+        '#8257C4', // purple
+        '#4E68D4', // indigo
+        '#2489B8', // sky
+        '#12907F', // teal
+        '#4F9440', // green
+    ];
 
     useEffect(() => {
         loadData();
@@ -97,7 +115,7 @@ export function ProjectFormPage() {
                 if (pError) throw pError;
                 if (project) {
                     setName(project.name);
-                    setColor(project.color || '#3b82f6');
+                    setColor(project.color || '#4E68D4');
                     setClientId(project.client_id || '');
                     setBillable(project.billable);
                     setBudgetType(project.budget_type || 'No budget');
