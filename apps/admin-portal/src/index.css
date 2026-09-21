@@ -36,6 +36,19 @@
   --color-border-hover: var(--border-hover, #CBD5E1);
   --color-text-main: var(--text-main);
   --color-text-muted: var(--text-muted);
+  /* Tailwind v4 only builds a utility for a colour registered here, so
+     bg-surface-solid and text-text-primary were generating nothing at all —
+     the form fields using them had no background and no colour of their own,
+     which left them invisible against a white modal. Both map to the solid
+     surface and main text they were named for. */
+  --color-surface-solid: var(--bg-surface);
+  --color-text-primary: var(--text-main);
+  /* Tailwind v4 only builds a utility for a colour registered here, so
+     bg-surface-solid and text-text-primary were generating nothing at all —
+     the form fields using them had no background and no colour of their own.
+     Both map to the solid surface and main text they were named for. */
+  --color-surface-solid: var(--bg-surface);
+  --color-text-primary: var(--text-main);
 
   /* Status Colors */
   --color-success: #10B981;

@@ -51,7 +51,7 @@ interface OnlineMember {
     fullName: string;
     projectName: string;
     timeWorkedToday: number;
-    status: 'working' | 'idle' | 'offline';
+    status: 'working' | 'idle' | 'offline' | 'worked';
     lastActive: string;
     avatarUrl?: string;
     email?: string;
@@ -371,14 +371,20 @@ export function Dashboard() {
                 .sort((a, b) => b.minutes - a.minutes)
                 .slice(0, 5);
 
-            const statusRank: Record<string, number> = { working: 0, idle: 1, offline: 2 };
+            const statusRank: Record<string, number> = { working: 0, worked: 0, idle: 1, offline: 2 };
             const online: OnlineMember[] = members.map(m => {
                 const uStats = (aggregated.user_stats || {})[m.id] || { mins: 0, activity_sum: 0, cnt: 0 };
-                const activeSession = (liveSessions || []).find(s => s.user_id === m.id);
-                let status: 'working' | 'idle' | 'offline' = 'offline';
+                // Live status only means something for today. On any other date
+                // the question is who tracked time then, which is what uStats
+                // already holds for the viewed day.
+                const activeSession = isTodayView ? (liveSessions || []).find(s => s.user_id === m.id) : undefined;
+                let status: 'working' | 'idle' | 'offline' | 'worked' = 'offline';
                 let activeProjectName = 'None';
 
-                if (activeSession) {
+                if (!isTodayView) {
+                    status = uStats.mins > 0 ? 'worked' : 'offline';
+                    activeProjectName = '';
+                } else if (activeSession) {
                     activeProjectName = projectMap[activeSession.project_id]?.name || 'Unknown Project';
                     const samples = latestActiveSamplesMap.get(activeSession.id) || [];
 
@@ -413,7 +419,13 @@ export function Dashboard() {
                     status,
                     lastActive: activeSession ? activeSession.started_at : m.id
                 };
-            }).sort((a, b) => (statusRank[a.status] ?? 3) - (statusRank[b.status] ?? 3));
+            })
+                // On a past date, only the people who actually worked it. Today
+                // lists everyone, because seeing who is offline right now is the
+                // point of a live directory — but on the 18th, 18 of the 44
+                // members had nothing to show and filled the list with 0m rows.
+                .filter(m => isTodayView || m.timeWorkedToday > 0)
+                .sort((a, b) => (statusRank[a.status] ?? 3) - (statusRank[b.status] ?? 3));
 
             // A newer fetch started while this one was in flight — its results are
             // authoritative, so drop everything computed here rather than letting
@@ -465,7 +477,7 @@ export function Dashboard() {
                 setRefreshing(false);
             }
         }
-    }, [viewDateStr, displayTimezone, timezoneReady, dateInitialized, organizationId, profile?.id, profile?.role, managedMemberIds, managedProjectIds]);
+    }, [viewDateStr, displayTimezone, timezoneReady, dateInitialized, isTodayView, organizationId, profile?.id, profile?.role, managedMemberIds, managedProjectIds]);
 
     useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
@@ -505,7 +517,7 @@ export function Dashboard() {
                     {!isTodayView && (
                         <button
                             onClick={goToToday}
-                            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all duration-200 shrink-0 animate-in fade-in slide-in-from-top-2 duration-300"
+                            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-widest hover:bg-primary hover:text-[var(--bg-surface)] hover:border-primary hover:shadow-shell-sm active:scale-95 transition-all duration-200 shrink-0 animate-in fade-in slide-in-from-top-2 duration-300"
                         >
                             <span>Today</span>
                         </button>
@@ -562,9 +574,9 @@ export function Dashboard() {
                     />
                     <StatMetric
                         icon={<Users className="w-5 h-5" />}
-                        label="Live Presence"
+                        label={isTodayView ? "Live Presence" : "Members Active"}
                         value={onlineMembers.filter(m => m.status !== 'offline').length}
-                        sub="Members currently active"
+                        sub={isTodayView ? "Members currently active" : "Tracked time on this date"}
                         accent="brand-gradient"
                         className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]"
                     />
@@ -827,13 +839,15 @@ export function Dashboard() {
                         <div className="bg-surface rounded-2xl shadow-premium overflow-hidden flex flex-col h-full border border-border">
                             <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0">
                                 <div>
-                                    <h3 className="text-[15px] md:text-[18px] font-bold tracking-tight mb-1 md:mb-2" style={{ color: 'var(--chart-gold)' }}>Live Directory</h3>
-                                    <p className="text-[11px] md:text-[13px] font-bold text-text-muted tracking-[0.1em]">Real-time status updates</p>
+                                    <h3 className="text-[15px] md:text-[18px] font-bold tracking-tight mb-1 md:mb-2" style={{ color: 'var(--chart-gold)' }}>{isTodayView ? 'Live Directory' : 'Team Directory'}</h3>
+                                    <p className="text-[11px] md:text-[13px] font-bold text-text-muted tracking-[0.1em]">{isTodayView ? 'Real-time status updates' : 'Status for the selected date'}</p>
                                 </div>
-                                <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-success/10 border border-success/20">
-                                    <div className="w-2 h-2 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                    <span className="text-[11px] font-bold text-success tracking-[0.1em]">Live Now</span>
-                                </div>
+                                {isTodayView && (
+                                    <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-success/10 border border-success/20">
+                                        <div className="w-2 h-2 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                                        <span className="text-[11px] font-bold text-success tracking-[0.1em]">Live Now</span>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="flex-1 overflow-y-auto no-scrollbar">
@@ -857,7 +871,7 @@ export function Dashboard() {
                                                             </div>
                                                             <div className={clsx(
                                                                 "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[3px] border-surface shadow-md",
-                                                                member.status === 'working' ? "bg-success shadow-success/20" : member.status === 'idle' ? "bg-warning shadow-warning/20" : "bg-text-muted"
+                                                                member.status === 'working' || member.status === 'worked' ? "bg-success shadow-success/20" : member.status === 'idle' ? "bg-warning shadow-warning/20" : "bg-text-muted"
                                                             )} />
                                                         </div>
                                                         <div className="flex flex-col min-w-0">
@@ -867,9 +881,11 @@ export function Dashboard() {
                                                             )}>
                                                                 {member.fullName ? toProperCase(member.fullName) : toEmailCase(member.email || '')}
                                                             </span>
-                                                            <span className="text-[12px] text-text-muted font-bold tracking-tight mt-2 truncate max-w-[140px] opacity-70 tracking-[0.1em]">
-                                                                {member.projectName}
-                                                            </span>
+                                                            {member.projectName && (
+                                                                <span className="text-[12px] text-text-muted font-bold tracking-tight mt-2 truncate max-w-[140px] opacity-70 tracking-[0.1em]">
+                                                                    {member.projectName}
+                                                                </span>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </td>
@@ -880,7 +896,7 @@ export function Dashboard() {
                                                         </span>
                                                         <span className={clsx(
                                                             "text-[11px] font-bold tracking-[0.15em] mt-2.5 px-3 py-1 rounded-lg",
-                                                            member.status === 'working' ? "text-success bg-success/10" : member.status === 'idle' ? "text-warning bg-warning/10" : "text-text-muted bg-surface-hover"
+                                                            member.status === 'working' || member.status === 'worked' ? "text-success bg-success/10" : member.status === 'idle' ? "text-warning bg-warning/10" : "text-text-muted bg-surface-hover"
                                                         )}>
                                                             {member.status}
                                                         </span>
