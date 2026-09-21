@@ -17,6 +17,7 @@ import {
     StatMetric
 } from '../components/ui';
 import { useNavigate } from 'react-router-dom';
+import { readProjectsCache, writeProjectsCache, invalidateProjectsCache } from '../lib/projectsCache';
 
 type ProjectStatus = 'Active' | 'Archived';
 type BudgetType = 'No budget' | 'Total hours' | 'Total amount' | 'Monthly hours' | 'Monthly amount';
@@ -48,8 +49,7 @@ interface Project {
 
 
 // Module-level cache
-let projectsCache: any = null;
-let projectsCacheKey: string | null = null;
+// The cache lives in lib/projectsCache so the project form can invalidate it.
 
 export function Projects() {
     const { profile, managedProjectIds } = useAuth();
@@ -65,8 +65,9 @@ export function Projects() {
 
     const fetchProjects = useCallback(async (isSilent = false, forceRefresh = false) => {
         const cacheKey = activeTab;
-        if (!forceRefresh && projectsCache && projectsCacheKey === cacheKey) {
-            setProjects(projectsCache.data);
+        const cached = forceRefresh ? null : readProjectsCache(cacheKey);
+        if (cached) {
+            setProjects(cached);
             setLoading(false);
             return;
         }
@@ -111,9 +112,7 @@ export function Projects() {
 
             setProjects(formatted);
 
-            // Update cache
-            projectsCache = { data: formatted };
-            projectsCacheKey = cacheKey;
+            writeProjectsCache(cacheKey, formatted);
         } catch (err) {
             console.error(err);
         } finally {
@@ -153,6 +152,7 @@ export function Projects() {
         try {
             await supabase.from('projects').update({ status: newStatus }).in('id', Array.from(selectedIds));
             setSelectedIds(new Set());
+            invalidateProjectsCache();
             await fetchProjects();
         } catch (err) {
             console.error(err);
@@ -320,7 +320,7 @@ export function Projects() {
                                             onSelect={() => toggleSelect(p.id)}
                                             onEdit={() => navigate(`/dashboard/projects/${p.id}/edit`)}
                                             isViewer={isViewer}
-                                            onRefresh={() => fetchProjects(true)}
+                                            onRefresh={() => { invalidateProjectsCache(); fetchProjects(true); }}
                                         />
                                     ))}
                                     {filteredProjects.length === 0 && !loading && (

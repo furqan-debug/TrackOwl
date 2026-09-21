@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PROJECT_COLORS, DEFAULT_PROJECT_COLOR } from '../lib/projectColors';
+import { invalidateProjectsCache } from '../lib/projectsCache';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -182,6 +183,9 @@ export function ProjectFormPage() {
                 }
             }
 
+            // The list caches its rows and has no idea anything changed, so
+            // without this it serves the pre-edit name, status and colour.
+            invalidateProjectsCache();
             navigate('/dashboard/projects');
         } catch (err: any) {
             setNotice('error');
