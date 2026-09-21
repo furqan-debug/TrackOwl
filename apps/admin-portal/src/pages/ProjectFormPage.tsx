@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PROJECT_COLORS, DEFAULT_PROJECT_COLOR } from '../lib/projectColors';
+import { invalidateProjectsCache } from '../lib/projectsCache';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { 
     Check,
     Layout, Users, Target, Info, Clock,
-    Search, RefreshCw,
+    Search, RefreshCw, AlertTriangle,
     Building2, CircleDot, Wallet
 } from 'lucide-react';
 import { 
@@ -43,10 +45,13 @@ export function ProjectFormPage() {
     const [loading, setLoading] = useState(isEdit);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    // A missing project name is the form telling you something; a failed save is
+    // the system failing. They are not the same and should not look the same.
+    const [notice, setNotice] = useState<'warning' | 'error'>('error');
 
     // Form State
     const [name, setName] = useState('');
-    const [color, setColor] = useState('#3b82f6');
+    const [color, setColor] = useState(DEFAULT_PROJECT_COLOR);
     const [clientId, setClientId] = useState('');
     const [billable, setBillable] = useState(true);
     const [budgetType, setBudgetType] = useState<BudgetType>('No budget');
@@ -65,7 +70,6 @@ export function ProjectFormPage() {
     const [teams, setTeams] = useState<Team[]>([]);
     const [memberSearch, setMemberSearch] = useState('');
 
-    const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#10b981', '#14b8a6', '#f59e0b', '#ef4444', 'var(--color-chart-main)', '#84cc16'];
 
     useEffect(() => {
         loadData();
@@ -97,7 +101,7 @@ export function ProjectFormPage() {
                 if (pError) throw pError;
                 if (project) {
                     setName(project.name);
-                    setColor(project.color || '#3b82f6');
+                    setColor(project.color || DEFAULT_PROJECT_COLOR);
                     setClientId(project.client_id || '');
                     setBillable(project.billable);
                     setBudgetType(project.budget_type || 'No budget');
@@ -109,6 +113,7 @@ export function ProjectFormPage() {
                 }
             }
         } catch (err: any) {
+            setNotice('error');
             setError(err.message);
         } finally {
             setLoading(false);
@@ -117,7 +122,8 @@ export function ProjectFormPage() {
 
     async function handleSave() {
         if (!name.trim()) {
-            setError('Project name is mandatory');
+            setNotice('warning');
+            setError('Project name is required');
             return;
         }
         setSaving(true);
@@ -131,7 +137,8 @@ export function ProjectFormPage() {
                 organization_id: profile?.organization_id ?? null,
                 billable,
                 budget_type: budgetType,
-                budget_limit: budgetLimit ? parseFloat(budgetLimit) : null,
+                // Never below zero, whatever route the value arrived by.
+                budget_limit: budgetLimit ? Math.max(0, parseFloat(budgetLimit)) : null,
                 status,
             };
 
@@ -176,8 +183,12 @@ export function ProjectFormPage() {
                 }
             }
 
+            // The list caches its rows and has no idea anything changed, so
+            // without this it serves the pre-edit name, status and colour.
+            invalidateProjectsCache();
             navigate('/dashboard/projects');
         } catch (err: any) {
+            setNotice('error');
             setError(err.message);
         } finally {
             setSaving(false);
@@ -198,6 +209,34 @@ export function ProjectFormPage() {
             description="Configure project settings, budget limits, and team assignments."
             actions={
                 <div className="flex items-center gap-4">
+                    {error && (
+                        <div
+                            className={clsx(
+                                // inline-flex, so it is as wide as what it says. As a
+                                // block it stretched the full content width for four
+                                // words. Theme tokens rather than rose-50/rose-900,
+                                // which are light-mode colours and washed out on the
+                                // dark surface.
+                                "inline-flex items-center gap-2.5 pl-2 pr-4 py-2 rounded-xl border shadow-shell-sm animate-in fade-in slide-in-from-top-2",
+                                notice === 'warning'
+                                    ? "bg-warning/10 border-warning/30"
+                                    : "bg-error/10 border-error/30"
+                            )}
+                        >
+                            <div
+                                className={clsx(
+                                    "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-[var(--bg-surface)]",
+                                    notice === 'warning' ? "bg-warning" : "bg-error"
+                                )}
+                            >
+                                {notice === 'warning' ? <AlertTriangle className="w-4 h-4" /> : <Info className="w-4 h-4" />}
+                            </div>
+                            {/* No "Warning" / "Error" label: the icon and the colour
+                                already say which it is, and the word doubled the
+                                height of a one-line message. */}
+                            <p className="text-[12px] font-bold text-text-main leading-tight">{error}</p>
+                        </div>
+                    )}
                     <button 
                         onClick={handleSave} 
                         disabled={saving}
@@ -216,7 +255,10 @@ export function ProjectFormPage() {
                 </div>
             }
         >
-            <div className="max-w-6xl mx-auto pb-20">
+            {/* The header runs the full width, so the content has to as well. At
+                max-w-6xl centred it was narrower than the heading above it and
+                stopped well short of the Create Project button on the right. */}
+            <div className="pb-20">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     
                     {/* 🛠️ Main Configuration */}
@@ -294,7 +336,7 @@ export function ProjectFormPage() {
                             <div className="mt-10 pt-8 border-t border-border">
                                 <label className="text-[10px] font-bold text-text-muted ml-1 mb-4 block">Project Color</label>
                                 <div className="flex flex-wrap gap-3">
-                                    {COLORS.map(c => (
+                                    {PROJECT_COLORS.map(c => (
                                         <button
                                             key={c}
                                             type="button"
@@ -346,8 +388,15 @@ export function ProjectFormPage() {
                                                 </div>
                                                 <input 
                                                     type="number" 
+                                                    min="0"
+                                                    step="any"
                                                     value={budgetLimit} 
-                                                    onChange={e => setBudgetLimit(e.target.value)}
+                                                    onChange={e => {
+                                                        // min= stops the spinner but not typing or
+                                                        // pasting, so the value is checked as well.
+                                                        const next = e.target.value;
+                                                        if (next === '' || parseFloat(next) >= 0) setBudgetLimit(next);
+                                                    }}
                                                     className="w-full pl-16 pr-5 py-3 bg-surface-hover/50 border border-border rounded-xl text-[16px] font-bold text-text-main outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner"
                                                     placeholder="0.00"
                                                 />
@@ -492,18 +541,6 @@ export function ProjectFormPage() {
                                 </div>
                             </div>
                         </div>
-
-                        {error && (
-                            <div className="bg-rose-50 border border-rose-200 p-6 rounded-[24px] flex items-center gap-4 animate-in slide-in-from-top-2 shadow-shell-sm">
-                                <div className="w-10 h-10 rounded-xl bg-rose-500 flex items-center justify-center text-white shadow-shell-sm shrink-0">
-                                    <Info className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <span className="text-[9px] font-bold text-rose-500 block mb-0.5">Error</span>
-                                    <p className="text-xs font-bold text-rose-900 leading-tight">{error}</p>
-                                </div>
-                            </div>
-                        )}
                     </div>
                 </div>
             </div>
