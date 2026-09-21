@@ -236,7 +236,7 @@ export function ProjectFormPage() {
                                 // words. Theme tokens rather than rose-50/rose-900,
                                 // which are light-mode colours and washed out on the
                                 // dark surface.
-                                "inline-flex items-center gap-3 pl-3 pr-5 py-3 rounded-2xl border shadow-shell-sm animate-in fade-in slide-in-from-top-2",
+                                "inline-flex items-center gap-2.5 pl-2 pr-4 py-2 rounded-xl border shadow-shell-sm animate-in fade-in slide-in-from-top-2",
                                 notice === 'warning'
                                     ? "bg-warning/10 border-warning/30"
                                     : "bg-error/10 border-error/30"
@@ -244,23 +244,16 @@ export function ProjectFormPage() {
                         >
                             <div
                                 className={clsx(
-                                    "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-[var(--bg-surface)]",
+                                    "w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-[var(--bg-surface)]",
                                     notice === 'warning' ? "bg-warning" : "bg-error"
                                 )}
                             >
                                 {notice === 'warning' ? <AlertTriangle className="w-4 h-4" /> : <Info className="w-4 h-4" />}
                             </div>
-                            <div>
-                                <span
-                                    className={clsx(
-                                        "text-[9px] font-bold block mb-0.5 uppercase tracking-widest",
-                                        notice === 'warning' ? "text-warning" : "text-error"
-                                    )}
-                                >
-                                    {notice === 'warning' ? 'Warning' : 'Error'}
-                                </span>
-                                <p className="text-[12px] font-bold text-text-main leading-tight">{error}</p>
-                            </div>
+                            {/* No "Warning" / "Error" label: the icon and the colour
+                                already say which it is, and the word doubled the
+                                height of a one-line message. */}
+                            <p className="text-[12px] font-bold text-text-main leading-tight">{error}</p>
                         </div>
                     )}
                     <button 
