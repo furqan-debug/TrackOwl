@@ -517,7 +517,7 @@ export function Dashboard() {
                     {!isTodayView && (
                         <button
                             onClick={goToToday}
-                            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-widest hover:bg-primary/20 transition-all duration-200 shrink-0 animate-in fade-in slide-in-from-top-2 duration-300"
+                            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-widest hover:bg-primary hover:text-[var(--bg-surface)] hover:border-primary hover:shadow-shell-sm active:scale-95 transition-all duration-200 shrink-0 animate-in fade-in slide-in-from-top-2 duration-300"
                         >
                             <span>Today</span>
                         </button>
