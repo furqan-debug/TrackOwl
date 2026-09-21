@@ -112,7 +112,7 @@ export function FilterSelect({
                 edge or the other depending on which side it was anchored to. Long
                 names truncate instead, which the rows already handle. */}
             {isOpen && (
-                <div className="absolute top-[calc(100%+8px)] right-0 w-full max-h-[400px] bg-main border border-border rounded-xl shadow-premium z-[100] flex flex-col p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute top-[calc(100%+8px)] right-0 w-full max-h-[400px] bg-surface border border-border rounded-xl shadow-premium z-[100] flex flex-col p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
                     {enableSearch && (
                         <div className="relative mb-1.5 px-1">
                             <Search className="w-3 h-3 absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -122,7 +122,7 @@ export function FilterSelect({
                                 placeholder="Search..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full bg-surface border border-border rounded-lg pl-8 pr-3 py-1.5 text-[11px] font-medium text-text-main focus:outline-none focus:border-primary/40 transition-all"
+                                className="w-full bg-surface-hover border border-border rounded-lg pl-8 pr-3 py-1.5 text-[11px] font-medium text-text-main focus:outline-none focus:border-primary/40 transition-all"
                                 onClick={(e) => e.stopPropagation()}
                             />
                         </div>
@@ -137,7 +137,7 @@ export function FilterSelect({
                                     "flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all text-[12px] font-bold",
                                     value === allOption.id 
                                         ? "bg-surface-hover text-text-main" 
-                                        : "text-text-main hover:bg-surface hover:text-text-main"
+                                        : "text-text-main hover:bg-surface-hover hover:text-text-main"
                                 )}
                             >
                                 <span className="truncate pr-4">{allOption.name}</span>
@@ -156,7 +156,7 @@ export function FilterSelect({
                                         "flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition-all text-[12px] font-bold mb-0.5 last:mb-0",
                                         value === o.id 
                                             ? "bg-surface-hover text-text-main" 
-                                            : "text-text-main hover:bg-surface hover:text-text-main"
+                                            : "text-text-main hover:bg-surface-hover hover:text-text-main"
                                     )}
                                 >
                                     <span className="truncate pr-4">{o.name}</span>
