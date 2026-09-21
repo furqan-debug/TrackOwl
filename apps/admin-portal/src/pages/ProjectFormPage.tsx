@@ -228,6 +228,41 @@ export function ProjectFormPage() {
             description="Configure project settings, budget limits, and team assignments."
             actions={
                 <div className="flex items-center gap-4">
+                    {error && (
+                        <div
+                            className={clsx(
+                                // inline-flex, so it is as wide as what it says. As a
+                                // block it stretched the full content width for four
+                                // words. Theme tokens rather than rose-50/rose-900,
+                                // which are light-mode colours and washed out on the
+                                // dark surface.
+                                "inline-flex items-center gap-3 pl-3 pr-5 py-3 rounded-2xl border shadow-shell-sm animate-in fade-in slide-in-from-top-2",
+                                notice === 'warning'
+                                    ? "bg-warning/10 border-warning/30"
+                                    : "bg-error/10 border-error/30"
+                            )}
+                        >
+                            <div
+                                className={clsx(
+                                    "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-[var(--bg-surface)]",
+                                    notice === 'warning' ? "bg-warning" : "bg-error"
+                                )}
+                            >
+                                {notice === 'warning' ? <AlertTriangle className="w-4 h-4" /> : <Info className="w-4 h-4" />}
+                            </div>
+                            <div>
+                                <span
+                                    className={clsx(
+                                        "text-[9px] font-bold block mb-0.5 uppercase tracking-widest",
+                                        notice === 'warning' ? "text-warning" : "text-error"
+                                    )}
+                                >
+                                    {notice === 'warning' ? 'Warning' : 'Error'}
+                                </span>
+                                <p className="text-[12px] font-bold text-text-main leading-tight">{error}</p>
+                            </div>
+                        </div>
+                    )}
                     <button 
                         onClick={handleSave} 
                         disabled={saving}
@@ -250,46 +285,6 @@ export function ProjectFormPage() {
                 max-w-6xl centred it was narrower than the heading above it and
                 stopped well short of the Create Project button on the right. */}
             <div className="pb-20">
-                {/* At the top, next to the Create Project button that produced it.
-                    This used to sit at the very bottom of the right-hand column,
-                    below the members and teams panels, so the page said nothing
-                    where you were looking and the reason was off-screen. */}
-                {error && (
-                    <div
-                        className={clsx(
-                            // inline-flex, so it is as wide as what it says. As a
-                            // block it stretched the full content width for four
-                            // words. Theme tokens rather than rose-50/rose-900,
-                            // which are light-mode colours and washed out on the
-                            // dark surface.
-                            "mb-6 inline-flex items-center gap-3 pl-3 pr-5 py-3 rounded-2xl border shadow-shell-sm animate-in fade-in slide-in-from-top-2",
-                            notice === 'warning'
-                                ? "bg-warning/10 border-warning/30"
-                                : "bg-error/10 border-error/30"
-                        )}
-                    >
-                        <div
-                            className={clsx(
-                                "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-[var(--bg-surface)]",
-                                notice === 'warning' ? "bg-warning" : "bg-error"
-                            )}
-                        >
-                            {notice === 'warning' ? <AlertTriangle className="w-4 h-4" /> : <Info className="w-4 h-4" />}
-                        </div>
-                        <div>
-                            <span
-                                className={clsx(
-                                    "text-[9px] font-bold block mb-0.5 uppercase tracking-widest",
-                                    notice === 'warning' ? "text-warning" : "text-error"
-                                )}
-                            >
-                                {notice === 'warning' ? 'Warning' : 'Error'}
-                            </span>
-                            <p className="text-[12px] font-bold text-text-main leading-tight">{error}</p>
-                        </div>
-                    </div>
-                )}
-
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     
                     {/* 🛠️ Main Configuration */}
