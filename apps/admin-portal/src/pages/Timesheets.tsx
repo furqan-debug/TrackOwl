@@ -738,7 +738,7 @@ export function Timesheets() {
 
 
                         {/* Member */}
-                        <div className="h-16 w-full min-[900px]:min-w-[220px] min-w-0">
+                        <div className="h-16 w-full min-[900px]:w-auto min-[900px]:ml-auto min-[900px]:min-w-[220px] min-w-0">
                             <FilterSelect
                                 icon={<Users className="w-4 h-4 shrink-0" />}
                                 value={selectedMember}
