@@ -253,7 +253,7 @@ export function DatePicker({
                                         isSelected(d.day, d.month, d.year)
                                             ? "bg-primary text-white shadow-glow-primary scale-110 z-10"
                                             : d.current 
-                                                ? "text-text-main hover:bg-accent/10 hover:text-accent" 
+                                                ? "text-text-main hover:bg-primary hover:text-[var(--bg-surface)]" 
                                                 : "text-text-muted hover:bg-surface-hover",
                                     )}
                                 >
