@@ -419,7 +419,13 @@ export function Dashboard() {
                     status,
                     lastActive: activeSession ? activeSession.started_at : m.id
                 };
-            }).sort((a, b) => (statusRank[a.status] ?? 3) - (statusRank[b.status] ?? 3));
+            })
+                // On a past date, only the people who actually worked it. Today
+                // lists everyone, because seeing who is offline right now is the
+                // point of a live directory — but on the 18th, 18 of the 44
+                // members had nothing to show and filled the list with 0m rows.
+                .filter(m => isTodayView || m.timeWorkedToday > 0)
+                .sort((a, b) => (statusRank[a.status] ?? 3) - (statusRank[b.status] ?? 3));
 
             // A newer fetch started while this one was in flight — its results are
             // authoritative, so drop everything computed here rather than letting
