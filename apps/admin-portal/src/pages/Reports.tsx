@@ -88,6 +88,12 @@ export function Reports() {
     );
     const [offset, setOffset] = useState(0); // offset in days
     const [showRangeDropdown, setShowRangeDropdown] = useState(false);
+    // None of this page's three dropdowns closed on an outside click — they
+    // only toggled from their own trigger, so opening one left the others up
+    // and clicking anywhere else on the page did nothing.
+    const rangeRef = useRef<HTMLDivElement>(null);
+    const columnRef = useRef<HTMLDivElement>(null);
+    const downloadRef = useRef<HTMLDivElement>(null);
     const [customStart, setCustomStart] = useState<Date | null>(initialUrlParams.start);
     const [customEnd, setCustomEnd] = useState<Date | null>(initialUrlParams.end);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -109,6 +115,35 @@ export function Reports() {
     const [selectedMemberId, setSelectedMemberId] = useState<string>(initialUrlParams.member ?? 'All');
     const [showColumnDropdown, setShowColumnDropdown] = useState(false);
     const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+
+    // Close whichever dropdown the click fell outside of. Each listener is only
+    // attached while something is open, so nothing runs in the common case.
+    useEffect(() => {
+        if (!showRangeDropdown && !showColumnDropdown && !showDownloadDropdown) return;
+
+        const outside = (ref: React.RefObject<HTMLDivElement | null>, target: Node) =>
+            !!ref.current && !ref.current.contains(target);
+
+        const handleClickOutside = (event: MouseEvent) => {
+            const target = event.target as Node;
+            if (showRangeDropdown && outside(rangeRef, target)) setShowRangeDropdown(false);
+            if (showColumnDropdown && outside(columnRef, target)) setShowColumnDropdown(false);
+            if (showDownloadDropdown && outside(downloadRef, target)) setShowDownloadDropdown(false);
+        };
+        const handleEscape = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') return;
+            setShowRangeDropdown(false);
+            setShowColumnDropdown(false);
+            setShowDownloadDropdown(false);
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        document.addEventListener('keydown', handleEscape);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('keydown', handleEscape);
+        };
+    }, [showRangeDropdown, showColumnDropdown, showDownloadDropdown]);
     const [showEmpId, setShowEmpId] = useState(false);
     const [showEmail, setShowEmail] = useState(false);
     const [tableData, setTableData] = useState<{
@@ -563,7 +598,7 @@ export function Reports() {
                         {/* The label sets the control's width — the two arrows either side are
                             fixed. 100px was narrower than the date it holds, so the control
                             sized to the text and changed width as the range changed. */}
-                        <div className="relative group min-w-[214px]">
+                        <div ref={rangeRef} className="relative group min-w-[214px]">
                             <div
                                 onClick={() => {
                                     setShowRangeDropdown(!showRangeDropdown);
@@ -791,7 +826,7 @@ export function Reports() {
                                     <p className="text-[10px] font-bold text-text-muted ">Weekly performance distribution</p>
                                 </div>
                                 <div className="flex items-center gap-4">
-                                    <div className="relative group">
+                                    <div ref={columnRef} className="relative group">
                                         <button
                                             onClick={() => {
                                                 setShowColumnDropdown(!showColumnDropdown);
@@ -832,7 +867,7 @@ export function Reports() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="relative group">
+                                    <div ref={downloadRef} className="relative group">
                                         <button
                                             onClick={() => {
                                                 setShowDownloadDropdown(!showDownloadDropdown);
