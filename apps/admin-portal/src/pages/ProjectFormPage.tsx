@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PROJECT_COLORS, DEFAULT_PROJECT_COLOR } from '../lib/projectColors';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { 
@@ -49,7 +50,7 @@ export function ProjectFormPage() {
 
     // Form State
     const [name, setName] = useState('');
-    const [color, setColor] = useState('#617DE6');
+    const [color, setColor] = useState(DEFAULT_PROJECT_COLOR);
     const [clientId, setClientId] = useState('');
     const [billable, setBillable] = useState(true);
     const [budgetType, setBudgetType] = useState<BudgetType>('No budget');
@@ -68,30 +69,6 @@ export function ProjectFormPage() {
     const [teams, setTeams] = useState<Team[]>([]);
     const [memberSearch, setMemberSearch] = useState('');
 
-    // Eight project colours, generated in OKLCH at a fixed lightness (0.62) and
-    // chroma (0.16) with the hues spaced around the wheel. Fixing L and C is
-    // what makes them look like a set rather than eight colours that happen to
-    // be together: none shouts louder than the others, and none fades next to
-    // them.
-    //
-    // Mid lightness because the colour is not only a swatch — the projects list
-    // prints the project name IN it, on a 10% tint of itself, so each has to
-    // read on white and on the dark surface. All eight clear 3:1 against both
-    // #FFFFFF and #0F172A, measured rather than eyeballed.
-    //
-    // Hex only. The list used to include var(--color-chart-main), and the
-    // places that build a tint by appending alpha — `${project.color}10` —
-    // turned that into "var(--color-chart-main)10", which is not a colour.
-    const COLORS = [
-        '#B27B00', // gold — the brand hue
-        '#D06217', // orange
-        '#D5565D', // rose
-        '#C35AA4', // magenta
-        '#966CD7', // purple
-        '#617DE6', // indigo
-        '#00A2A4', // teal
-        '#2B9F4A', // green
-    ];
 
     useEffect(() => {
         loadData();
@@ -123,7 +100,7 @@ export function ProjectFormPage() {
                 if (pError) throw pError;
                 if (project) {
                     setName(project.name);
-                    setColor(project.color || '#617DE6');
+                    setColor(project.color || DEFAULT_PROJECT_COLOR);
                     setClientId(project.client_id || '');
                     setBillable(project.billable);
                     setBudgetType(project.budget_type || 'No budget');
@@ -355,7 +332,7 @@ export function ProjectFormPage() {
                             <div className="mt-10 pt-8 border-t border-border">
                                 <label className="text-[10px] font-bold text-text-muted ml-1 mb-4 block">Project Color</label>
                                 <div className="flex flex-wrap gap-3">
-                                    {COLORS.map(c => (
+                                    {PROJECT_COLORS.map(c => (
                                         <button
                                             key={c}
                                             type="button"
