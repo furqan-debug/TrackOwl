@@ -676,7 +676,7 @@ export function Timesheets() {
 
 
                         {/* Date navigation */}
-                        <div className="flex items-center bg-surface border border-border rounded-md p-1 shadow-shell-sm h-12 w-full min-[900px]:w-auto min-w-0">
+                        <div className="flex items-center bg-surface border border-border rounded-md p-1 shadow-shell-sm h-12 w-full min-w-0">
 
                             <button
                                 onClick={() => navigateDate(-1)}
@@ -738,7 +738,7 @@ export function Timesheets() {
 
 
                         {/* Member */}
-                        <div className="h-16 w-full min-[900px]:w-auto min-[900px]:min-w-[220px] min-w-0">
+                        <div className="h-16 w-full min-[900px]:min-w-[220px] min-w-0">
                             <FilterSelect
                                 icon={<Users className="w-4 h-4 shrink-0" />}
                                 value={selectedMember}
