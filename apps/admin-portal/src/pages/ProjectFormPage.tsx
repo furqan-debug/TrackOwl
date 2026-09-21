@@ -131,7 +131,8 @@ export function ProjectFormPage() {
                 organization_id: profile?.organization_id ?? null,
                 billable,
                 budget_type: budgetType,
-                budget_limit: budgetLimit ? parseFloat(budgetLimit) : null,
+                // Never below zero, whatever route the value arrived by.
+                budget_limit: budgetLimit ? Math.max(0, parseFloat(budgetLimit)) : null,
                 status,
             };
 
@@ -349,8 +350,15 @@ export function ProjectFormPage() {
                                                 </div>
                                                 <input 
                                                     type="number" 
+                                                    min="0"
+                                                    step="any"
                                                     value={budgetLimit} 
-                                                    onChange={e => setBudgetLimit(e.target.value)}
+                                                    onChange={e => {
+                                                        // min= stops the spinner but not typing or
+                                                        // pasting, so the value is checked as well.
+                                                        const next = e.target.value;
+                                                        if (next === '' || parseFloat(next) >= 0) setBudgetLimit(next);
+                                                    }}
                                                     className="w-full pl-16 pr-5 py-3 bg-surface-hover/50 border border-border rounded-xl text-[16px] font-bold text-text-main outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all shadow-inner"
                                                     placeholder="0.00"
                                                 />
