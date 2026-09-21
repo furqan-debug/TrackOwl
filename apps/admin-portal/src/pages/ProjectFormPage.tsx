@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
     Check,
     Layout, Users, Target, Info, Clock,
-    Search, RefreshCw,
+    Search, RefreshCw, AlertTriangle,
     Building2, CircleDot, Wallet
 } from 'lucide-react';
 import { 
@@ -43,6 +43,9 @@ export function ProjectFormPage() {
     const [loading, setLoading] = useState(isEdit);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    // A missing project name is the form telling you something; a failed save is
+    // the system failing. They are not the same and should not look the same.
+    const [notice, setNotice] = useState<'warning' | 'error'>('error');
 
     // Form State
     const [name, setName] = useState('');
@@ -132,6 +135,7 @@ export function ProjectFormPage() {
                 }
             }
         } catch (err: any) {
+            setNotice('error');
             setError(err.message);
         } finally {
             setLoading(false);
@@ -140,7 +144,8 @@ export function ProjectFormPage() {
 
     async function handleSave() {
         if (!name.trim()) {
-            setError('Project name is mandatory');
+            setNotice('warning');
+            setError('Project name is required');
             return;
         }
         setSaving(true);
@@ -202,6 +207,7 @@ export function ProjectFormPage() {
 
             navigate('/dashboard/projects');
         } catch (err: any) {
+            setNotice('error');
             setError(err.message);
         } finally {
             setSaving(false);
@@ -249,13 +255,37 @@ export function ProjectFormPage() {
                     below the members and teams panels, so the page said nothing
                     where you were looking and the reason was off-screen. */}
                 {error && (
-                    <div className="mb-6 bg-rose-50 border border-rose-200 px-5 py-4 rounded-2xl flex items-center gap-4 animate-in fade-in slide-in-from-top-2 shadow-shell-sm">
-                        <div className="w-10 h-10 rounded-xl bg-rose-500 flex items-center justify-center text-white shadow-shell-sm shrink-0">
-                            <Info className="w-5 h-5" />
+                    <div
+                        className={clsx(
+                            // inline-flex, so it is as wide as what it says. As a
+                            // block it stretched the full content width for four
+                            // words. Theme tokens rather than rose-50/rose-900,
+                            // which are light-mode colours and washed out on the
+                            // dark surface.
+                            "mb-6 inline-flex items-center gap-3 pl-3 pr-5 py-3 rounded-2xl border shadow-shell-sm animate-in fade-in slide-in-from-top-2",
+                            notice === 'warning'
+                                ? "bg-warning/10 border-warning/30"
+                                : "bg-error/10 border-error/30"
+                        )}
+                    >
+                        <div
+                            className={clsx(
+                                "w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-[var(--bg-surface)]",
+                                notice === 'warning' ? "bg-warning" : "bg-error"
+                            )}
+                        >
+                            {notice === 'warning' ? <AlertTriangle className="w-4 h-4" /> : <Info className="w-4 h-4" />}
                         </div>
                         <div>
-                            <span className="text-[9px] font-bold text-rose-500 block mb-0.5">Error</span>
-                            <p className="text-xs font-bold text-rose-900 leading-tight">{error}</p>
+                            <span
+                                className={clsx(
+                                    "text-[9px] font-bold block mb-0.5 uppercase tracking-widest",
+                                    notice === 'warning' ? "text-warning" : "text-error"
+                                )}
+                            >
+                                {notice === 'warning' ? 'Warning' : 'Error'}
+                            </span>
+                            <p className="text-[12px] font-bold text-text-main leading-tight">{error}</p>
                         </div>
                     </div>
                 )}
