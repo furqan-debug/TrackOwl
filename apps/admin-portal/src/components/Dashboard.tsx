@@ -677,24 +677,31 @@ export function Dashboard() {
                                                         <Cell key={`cell-${index}`} fill={proj.color || chartColorAt(index)} />
                                                     ))}
                                                 </Pie>
+                                                {/* Theme tokens, not #ffffff and #000000. A white card
+                                                    with black text is a light-mode tooltip that stayed
+                                                    white in dark mode, and Recharts colours the value
+                                                    after the slice it came from, so on a pale slice it
+                                                    was light text on a light card. Forcing all three
+                                                    styles to text-main keeps it readable either way. */}
                                                 <Tooltip
                                                     contentStyle={{
-                                                        backgroundColor: '#ffffff',
-                                                        border: '1px solid #e5e7eb',
-                                                        borderRadius: '0px',
-                                                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-                                                        color: '#000000',
+                                                        backgroundColor: 'var(--bg-surface)',
+                                                        border: '1px solid var(--border-color)',
+                                                        borderRadius: '12px',
+                                                        boxShadow: 'var(--shadow-premium)',
+                                                        fontSize: '12px',
+                                                        color: 'var(--text-main)',
                                                     }}
-                                                    labelStyle={{
-                                                        color: '#000000',
-                                                    }}
-                                                    itemStyle={{
-                                                        color: '#000000',
-                                                    }}
+                                                    labelStyle={{ color: 'var(--text-main)', fontWeight: 700 }}
+                                                    itemStyle={{ color: 'var(--text-main)' }}
+                                                    wrapperStyle={{ zIndex: 50 }}
+                                                    formatter={(value: any) => formatDuration(Number(value))}
                                                 />
                                             </PieChart>
                                         </ResponsiveContainer>
-                                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                        {/* z-0: this used to paint over the tooltip, which has no
+                                            stacking order of its own and comes earlier in the DOM. */}
+                                        <div className="absolute inset-0 z-0 flex flex-col items-center justify-center pointer-events-none">
                                             <span className="text-[28px] font-black text-text-main tracking-tight leading-none">
                                                 {formatDuration(stats.totalProductiveMinutes).split(' ')[0]}
                                             </span>
