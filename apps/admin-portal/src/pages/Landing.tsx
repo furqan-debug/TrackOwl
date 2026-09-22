@@ -1,30 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
     Check,
     Monitor,
-    Clock,
     TrendingUp,
-    BarChart3,
     Globe,
-    Briefcase,
-    MessageSquare,
     Users,
     Shield,
-    Lock,
     Eye,
     ChevronDown,
     ArrowRight,
-    FileText,
     Download,
     ArrowUp,
-    Palette,
     Laptop,
-    ShoppingCart,
     X,
     Send,
-    Loader2
+    Loader2,
+    Timer,
+    Radar,
+    House,
+    UserSearch,
+    UserPlus,
+    Code,
+    Headset,
+    CalendarClock,
+    Building2,
+    Handshake,
+    Megaphone,
+    PenTool,
+    ShoppingBag,
+    LineChart,
+    ClipboardList,
+    ShieldCheck,
+    HeartHandshake,
+    type LucideIcon
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
@@ -326,6 +336,53 @@ ${message}`
     );
 }
 
+/** Counts up from 0 to `to` once the metric bar fades in. */
+function CountUp({ to, start = true, decimals = 1, suffix = '', delay = 0, duration = 1.4 }: { to: number; start?: boolean; decimals?: number; suffix?: string; delay?: number; duration?: number }) {
+    const [value, setValue] = useState(0);
+
+    useEffect(() => {
+        if (!start) return;
+        let frame = 0;
+        let started: number | null = null;
+        const step = (ts: number) => {
+            if (started === null) started = ts;
+            const p = Math.min((ts - started) / (duration * 1000), 1);
+            setValue(to * (1 - Math.pow(1 - p, 3)));
+            if (p < 1) frame = requestAnimationFrame(step);
+        };
+        const timer = window.setTimeout(() => { frame = requestAnimationFrame(step); }, delay * 1000);
+        return () => { window.clearTimeout(timer); cancelAnimationFrame(frame); };
+    }, [to, start, delay, duration]);
+
+    return <>{value.toFixed(decimals)}{suffix}</>;
+}
+
+/** Trending-up icon that draws itself from the starting dot upward. */
+function TrendLine({ className, start = true, delay = 0 }: { className?: string; start?: boolean; delay?: number }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+            <motion.circle
+                cx="2" cy="17" r="1.8" fill="currentColor" stroke="none"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={start ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }}
+                transition={{ duration: 0.3, delay }}
+            />
+            <motion.polyline
+                points="2 17 8.5 10.5 13.5 15.5 22 7"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: start ? 1 : 0 }}
+                transition={{ duration: 1.4, delay: delay + 0.3, ease: 'easeInOut' }}
+            />
+            <motion.polyline
+                points="16 7 22 7 22 13"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: start ? 1 : 0 }}
+                transition={{ duration: 0.3, delay: delay + 1.6 }}
+            />
+        </svg>
+    );
+}
+
 export function Landing() {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
@@ -410,80 +467,83 @@ export function Landing() {
         return () => clearInterval(interval);
     }, [headlineSlides.length]);
 
-    const metrics = [
-        { title: '99.9%', subtitle: 'Platform uptime', icon: TrendingUp, color: 'text-green-500' },
+    const metricsRef = useRef<HTMLDivElement>(null);
+    // The bar animates the first time it is scrolled into view, not on page load.
+    const metricsInView = useInView(metricsRef, { once: true, amount: 0.5 });
+
+    const stepsRef = useRef<HTMLDivElement>(null);
+    const stepsInView = useInView(stepsRef, { once: true, amount: 0.15 });
+
+    const industriesRef = useRef<HTMLDivElement>(null);
+    const industriesInView = useInView(industriesRef, { once: true, amount: 0.2 });
+
+    const featuresRef = useRef<HTMLDivElement>(null);
+    const featuresInView = useInView(featuresRef, { once: true, amount: 0.2 });
+
+    const metrics: { title: string; subtitle: string; icon: LucideIcon; color: string; countTo?: number }[] = [
+        { title: '99.9%', subtitle: 'Platform uptime', icon: TrendingUp, color: 'text-green-500', countTo: 99.9 },
         { title: 'Real-time', subtitle: 'Workforce insights', icon: Eye, color: 'text-blue-500' },
         { title: 'Enterprise-grade', subtitle: 'Security', icon: Shield, color: 'text-blue-600' },
         { title: 'Ethical &', subtitle: 'Transparent tracking', icon: Users, color: 'text-blue-500' }
     ];
 
+    // One brand-consistent icon treatment: navy tile, gold glyph, inverting on hover.
     const features = [
         {
             title: 'Smart time tracking',
             desc: 'Automatically track work hours, productivity trends, and active sessions with precision.',
-            icon: Clock,
-            color: 'text-green-500',
-            bg: 'bg-green-50'
+            icon: Timer
         },
         {
             title: 'Workforce visibility',
             desc: 'Gain real-time operational visibility across remote and distributed teams.',
-            icon: Users,
-            color: 'text-blue-500',
-            bg: 'bg-blue-50'
+            icon: Radar
         },
         {
             title: 'Productivity analytics',
             desc: 'Transform workforce data into actionable insights with detailed reports and dashboards.',
-            icon: BarChart3,
-            color: 'text-purple-500',
-            bg: 'bg-purple-50'
+            icon: LineChart
         },
         {
             title: 'Team activity reports',
             desc: 'Review productivity patterns, attendance, and operational performance in one place.',
-            icon: FileText,
-            color: 'text-yellow-500',
-            bg: 'bg-yellow-50'
+            icon: ClipboardList
         },
         {
             title: 'Enterprise security',
             desc: 'Built with enterprise-grade infrastructure, encryption, and secure access controls.',
-            icon: Lock,
-            color: 'text-green-600',
-            bg: 'bg-green-50'
+            icon: ShieldCheck
         },
         {
             title: 'Ethical monitoring',
             desc: 'Transparent, consent-based tracking built around trust and accountability.',
-            icon: Shield,
-            color: 'text-orange-500',
-            bg: 'bg-orange-50'
+            icon: HeartHandshake
         }
     ];
 
+    // Blue-family treatment, deliberately distinct from the navy/gold feature tiles.
     const industries = [
-        { name: 'Remote teams', icon: Globe, color: 'text-yellow-500' },
-        { name: 'Staffing agencies', icon: Users, color: 'text-blue-400' },
-        { name: 'Software houses', icon: Monitor, color: 'text-blue-600' },
-        { name: 'Customer support teams', icon: MessageSquare, color: 'text-blue-500' },
-        { name: 'Virtual assistants', icon: Users, color: 'text-blue-400' },
-        { name: 'Enterprise operations', icon: Briefcase, color: 'text-blue-600' },
-        { name: 'Distributed workforces', icon: Globe, color: 'text-blue-500' },
-        { name: 'Consulting firms', icon: FileText, color: 'text-yellow-600' },
-        { name: 'Marketing agencies', icon: TrendingUp, color: 'text-emerald-500' },
-        { name: 'Design studios', icon: Palette, color: 'text-pink-500' },
-        { name: 'Freelancers & Contractors', icon: Laptop, color: 'text-indigo-500' },
-        { name: 'E-commerce teams', icon: ShoppingCart, color: 'text-cyan-500' }
+        { name: 'Remote teams', icon: House },
+        { name: 'Staffing agencies', icon: UserSearch },
+        { name: 'Software houses', icon: Code },
+        { name: 'Customer support teams', icon: Headset },
+        { name: 'Virtual assistants', icon: CalendarClock },
+        { name: 'Enterprise operations', icon: Building2 },
+        { name: 'Distributed workforces', icon: Globe },
+        { name: 'Consulting firms', icon: Handshake },
+        { name: 'Marketing agencies', icon: Megaphone },
+        { name: 'Design studios', icon: PenTool },
+        { name: 'Freelancers & Contractors', icon: Laptop },
+        { name: 'E-commerce teams', icon: ShoppingBag }
     ];
 
     const steps = [
-        { num: 1, title: 'Create your admin account', desc: 'Set up your TrackOwl™ workspace with secure, free admin account creation and enterprise-ready onboarding.', color: 'bg-green-500', text: 'text-green-500' },
-        { num: 2, title: 'Create your organization', desc: 'Configure your organization structure, workforce settings, operational policies, and tracking preferences.', color: 'bg-blue-600', text: 'text-blue-600' },
-        { num: 3, title: 'Invite your team members', desc: 'Easily invite employees, contractors, and remote staff to join your organization\'s workspace.', color: 'bg-orange-500', text: 'text-orange-500' },
-        { num: 4, title: 'Install TrackOwl™', desc: 'Deploy the TrackOwl™ desktop application with secure, consent-based workforce tracking.', color: 'bg-green-500', text: 'text-green-500' },
-        { num: 5, title: 'Monitor operations', desc: 'Track productivity, attendance, app usage, screenshots, and workforce activity in real time through a centralized dashboard.', color: 'bg-blue-600', text: 'text-blue-600' },
-        { num: 6, title: 'Optimize performance', desc: 'Use analytics, reports, and operational insights to improve accountability, efficiency, and team performance.', color: 'bg-orange-500', text: 'text-orange-500' }
+        { num: 1, title: 'Create your admin account', desc: 'Set up your TrackOwl™ workspace with secure, free admin account creation and enterprise-ready onboarding.', icon: UserPlus },
+        { num: 2, title: 'Create your organization', desc: 'Configure your organization structure, workforce settings, operational policies, and tracking preferences.', icon: Building2 },
+        { num: 3, title: 'Invite your team members', desc: 'Easily invite employees, contractors, and remote staff to join your organization\'s workspace.', icon: Send },
+        { num: 4, title: 'Install TrackOwl™', desc: 'Deploy the TrackOwl™ desktop application with secure, consent-based workforce tracking.', icon: Download },
+        { num: 5, title: 'Monitor operations', desc: 'Track productivity, attendance, app usage, screenshots, and workforce activity in real time through a centralized dashboard.', icon: Monitor },
+        { num: 6, title: 'Optimize performance', desc: 'Use analytics, reports, and operational insights to improve accountability, efficiency, and team performance.', icon: TrendingUp }
     ];
 
     const testimonials = [
@@ -669,43 +729,67 @@ export function Landing() {
 
                         {/* Hero Dashboard Mockup Container */}
                         <div className="col-span-1 lg:col-span-7 relative lg:-mr-32 xl:-mr-48 z-20 mt-12 lg:mt-0 w-full min-w-0">
+                            {/* Hover scale lives on its own wrapper so it never inherits the entrance delay. */}
                             <motion.div
-                                initial={{ opacity: 0, y: 40, rotateY: 10 }}
-                                animate={{ opacity: 1, y: 0, rotateY: 0 }}
-                                transition={{ duration: 0.8, delay: 0.4 }}
-                                className="relative rounded-[1.5rem] border-[6px] border-slate-800/80 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] bg-white overflow-hidden"
+                                whileHover={{ scale: 1.03 }}
+                                transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+                                className="will-change-transform"
                             >
-                                {/* Browser-like Header */}
-                                <div className="h-10 bg-slate-800/80 flex items-center px-4 gap-2 border-b border-white/5">
-                                    <div className="flex gap-1.5">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-                                        <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                                <motion.div
+                                    initial={{ opacity: 0, y: 40, rotateY: 10 }}
+                                    animate={{ opacity: 1, y: 0, rotateY: 0 }}
+                                    transition={{ duration: 0.8, delay: 0.4 }}
+                                    className="relative rounded-[1.5rem] border-[6px] border-slate-800/80 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] bg-white overflow-hidden"
+                                >
+                                    {/* Browser-like Header */}
+                                    <div className="h-10 bg-slate-800/80 flex items-center px-4 gap-2 border-b border-white/5">
+                                        <div className="flex gap-1.5">
+                                            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                                            <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Mockup Content (Simulated Dashboard) */}
-                                <img src={HeroDashboard} alt="Dashboard Preview" className="w-full h-auto object-cover border-t border-white/10" />
+                                    {/* Mockup Content (Simulated Dashboard) */}
+                                    <img src={HeroDashboard} alt="Dashboard Preview" className="w-full h-auto object-cover border-t border-white/10" />
+                                </motion.div>
                             </motion.div>
                         </div>
                     </div>
                 </section>
 
                 {/* HERO METRICS OVERLAP */}
-                <div className="relative z-30 mx-auto max-w-[1200px] px-4 -mt-20 lg:-mt-24 mb-16">
-                    <div className="bg-white rounded-[2rem] md:rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-4 px-6 md:px-8 flex flex-col md:flex-row items-center justify-between border border-slate-100">
+                <div ref={metricsRef} className="relative z-30 mx-auto max-w-[1200px] px-4 -mt-12 md:-mt-14 mb-16">
+                    <div className="bg-white rounded-[2rem] md:rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-6 md:py-8 px-6 md:px-8 flex flex-col md:flex-row items-center justify-between border border-slate-100">
                         {metrics.map((m, i) => {
                             const Icon = m.icon;
+                            const appear = 0.15 + i * 0.35;
                             return (
-                                <div key={i} className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start py-3 md:py-0 border-b md:border-b-0 md:border-r border-slate-100 last:border-0 px-4">
+                                <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: metricsInView ? 1 : 0 }}
+                                    transition={{ duration: 0.5, delay: appear, ease: 'easeOut' }}
+                                    className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start py-3 md:py-0 border-b md:border-b-0 md:border-r border-slate-100 last:border-0 px-4"
+                                >
                                     <div className={`p-2 rounded-lg bg-slate-50 ${m.color}`}>
-                                        <Icon className="w-6 h-6" strokeWidth={2.5} />
+                                        {m.countTo !== undefined
+                                            ? <TrendLine className="w-6 h-6" start={metricsInView} delay={appear + 0.2} />
+                                            : <Icon
+                                                className={`w-6 h-6 ${metricsInView ? 'metric-icon-draw' : 'opacity-0'}`}
+                                                strokeWidth={2.5}
+                                                style={{ '--draw-delay': `${appear + 0.2}s` } as CSSProperties}
+                                            />}
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-base font-black text-slate-900 leading-tight">{m.title}</span>
+                                        <span className="text-base font-black text-slate-900 leading-tight tabular-nums">
+                                            {m.countTo !== undefined
+                                                ? <CountUp to={m.countTo} start={metricsInView} suffix="%" delay={appear + 0.2} duration={1.7} />
+                                                : m.title}
+                                        </span>
                                         <span className="text-xs font-semibold text-slate-500 leading-tight">{m.subtitle}</span>
                                     </div>
-                                </div>
+                                </motion.div>
                             );
                         })}
                     </div>
@@ -720,19 +804,29 @@ export function Landing() {
                             <p className="text-lg font-medium text-slate-500">Everything you need to track, monitor, and optimize your team performance.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                        <div ref={featuresRef} className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                             {features.map((f, i) => {
                                 const Icon = f.icon;
+                                // Row by row: both cards in a row come in together, sliding
+                                // in from their own side of the grid.
+                                const row = Math.floor(i / 2);
+                                const fromX = i % 2 === 0 ? -24 : 24;
                                 return (
-                                    <div key={i} className="p-6 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex gap-5 items-start">
-                                        <div className={twMerge("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0", f.bg, f.color)}>
-                                            <Icon className="w-6 h-6" strokeWidth={2.5} />
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, x: fromX }}
+                                        animate={featuresInView ? { opacity: 1, x: 0 } : { opacity: 0, x: fromX }}
+                                        transition={{ duration: 0.9, delay: row * 0.18, ease: [0.22, 1, 0.36, 1] }}
+                                        className="group p-6 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-[#facc15]/40 transition-[box-shadow,border-color] duration-300 flex gap-5 items-start"
+                                    >
+                                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-[#001b4d] text-[#facc15] ring-1 ring-[#001b4d]/10 shadow-[0_6px_16px_-6px_rgba(0,27,77,0.6)] group-hover:bg-[#facc15] group-hover:text-[#001b4d] group-hover:shadow-[0_6px_18px_-6px_rgba(250,204,21,0.8)] transition-colors duration-300">
+                                            <Icon className="w-6 h-6" strokeWidth={2} />
                                         </div>
                                         <div>
                                             <h4 className="text-xl font-bold text-slate-900 mb-2">{f.title}</h4>
                                             <p className="text-base font-medium text-slate-500 leading-relaxed text-justify">{f.desc}</p>
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 );
                             })}
                         </div>
@@ -741,11 +835,17 @@ export function Landing() {
 
                 {/* PLATFORM SHOWCASE SECTION */}
                 <section id="showcase" className="py-24 bg-white overflow-hidden">
-                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                        <div className="relative">
-                            <div className="rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] overflow-hidden flex">
-                                <img src={ShowcaseDashboard} alt="Platform Showcase" className="w-full h-auto object-cover" />
-                            </div>
+                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+                        {/* Reaches 40px into the column gap so the shot gains width on its right edge. */}
+                        <div className="relative lg:-mr-10">
+                            {/* The card is sized by the screenshot itself: no crop, no padding around it. */}
+                            <motion.div
+                                whileHover={{ scale: 1.03 }}
+                                transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+                                className="will-change-transform rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] overflow-hidden flex"
+                            >
+                                <img src={ShowcaseDashboard} alt="Platform Showcase" className="w-full h-auto" />
+                            </motion.div>
                         </div>
 
                         <div>
@@ -779,14 +879,22 @@ export function Landing() {
                 <section id="industries" className="py-16 bg-slate-50">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center">
                         <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d] mb-20">Built for modern businesses</h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-12 max-w-5xl mx-auto justify-items-center">
+                        <div ref={industriesRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-12 max-w-5xl mx-auto justify-items-center">
                             {industries.map((ind, i) => {
                                 const Icon = ind.icon;
                                 return (
-                                    <div key={i} className="flex flex-col items-center gap-3">
-                                        <Icon className={`w-10 h-10 ${ind.color}`} strokeWidth={1.5} />
-                                        <span className="text-sm font-bold text-slate-600">{ind.name}</span>
-                                    </div>
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, y: 16 }}
+                                        animate={industriesInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+                                        transition={{ duration: 0.75, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                                        className="group flex flex-col items-center gap-3"
+                                    >
+                                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white text-[#18315e] ring-1 ring-[#18315e]/15 shadow-[0_4px_14px_-6px_rgba(24,49,94,0.35)] group-hover:bg-[#18315e] group-hover:text-white group-hover:ring-[#18315e] group-hover:shadow-[0_8px_20px_-6px_rgba(24,49,94,0.55)] group-hover:-translate-y-1 transition-[background-color,color,box-shadow,transform] duration-300">
+                                            <Icon className="w-6 h-6" strokeWidth={1.75} />
+                                        </div>
+                                        <span className="text-sm font-bold text-[#18315e] transition-colors duration-300">{ind.name}</span>
+                                    </motion.div>
                                 );
                             })}
                         </div>
@@ -794,96 +902,50 @@ export function Landing() {
                 </section>
 
                 {/* HOW IT WORKS */}
-                <section id="how-it-works" className="py-24 bg-white">
+                <section id="how-it-works" className="py-24 bg-[#001b4d]">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d]">Simple setup. Powerful insights.</h2>
+                            <h2 className="text-3xl font-extrabold tracking-tight text-[#facc15]">Simple setup. Powerful insights.</h2>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-                            {steps.map((s, i) => (
-                                <div key={i} className="relative flex flex-col items-center text-center">
-                                    {/* Arrow connector for desktop */}
-                                    {i < steps.length - 1 && (i + 1) % 3 !== 0 && (
-                                        <div className="hidden md:block absolute top-12 left-[60%] w-[80%] h-[2px] bg-yellow-400/30 z-0">
-                                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 border-t-2 border-r-2 border-yellow-400 rotate-45" />
-                                        </div>
-                                    )}
-                                    <div className="flex flex-col items-start text-left bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100 shadow-sm w-full relative z-10 h-full">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className={`w-12 h-12 rounded-full ${s.color} text-white flex items-center justify-center text-xl font-black`}>
-                                                {s.num}
-                                            </div>
-                                            <h3 className="text-xl font-bold text-slate-900">{s.title}</h3>
-                                        </div>
-                                        <p className="text-base font-medium text-slate-500 leading-relaxed mb-6 text-justify">{s.desc}</p>
+                        <div ref={stepsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+                            {steps.map((s, i) => {
+                                const Icon = s.icon;
+                                return (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={stepsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                                        transition={{ duration: 0.8, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                                        className="group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white p-7 shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#18315e]/25 hover:shadow-[0_18px_40px_-24px_rgba(24,49,94,0.45)] transition-[box-shadow,border-color] duration-300"
+                                    >
+                                        {/* Oversized step numeral, sitting behind the content as a watermark. */}
+                                        <span className="pointer-events-none absolute -right-2 -top-6 text-[7rem] font-black leading-none text-[#18315e]/[0.05] select-none">
+                                            {s.num}
+                                        </span>
 
-                                        {/* Little illustrations inside the card */}
-                                        <div className="mt-auto w-full h-24 bg-white rounded-xl border border-slate-100 flex items-center justify-center p-3">
-                                            {i === 0 && (
-                                                <div className="w-full h-full bg-green-50 rounded border border-green-100 flex items-center justify-center relative">
-                                                    <div className="w-12 h-14 bg-white border border-green-200 rounded shadow-sm flex flex-col items-center justify-center gap-2">
-                                                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center text-green-600"><Shield className="w-3 h-3" /></div>
-                                                        <div className="w-6 h-1 bg-green-200 rounded-full" />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {i === 1 && (
-                                                <div className="w-full h-full bg-blue-50 rounded border border-blue-100 flex flex-col items-center justify-center gap-1.5">
-                                                    <div className="w-8 h-4 bg-blue-500 rounded-sm shadow-sm" />
-                                                    <div className="w-12 h-px bg-blue-300" />
-                                                    <div className="flex gap-2">
-                                                        <div className="w-6 h-4 bg-blue-400 rounded-sm shadow-sm" />
-                                                        <div className="w-6 h-4 bg-blue-400 rounded-sm shadow-sm" />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {i === 2 && (
-                                                <div className="w-full h-full bg-orange-50 rounded border border-orange-100 flex items-center justify-center relative">
-                                                    <div className="w-14 h-10 bg-white border border-orange-200 rounded shadow-sm flex flex-col justify-center px-2 gap-1.5 relative z-10">
-                                                        <div className="w-full h-1 bg-orange-100 rounded-full" />
-                                                        <div className="w-2/3 h-1 bg-orange-100 rounded-full" />
-                                                        <div className="absolute -right-2 -bottom-2 w-6 h-6 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center text-white font-black text-sm leading-none">+</div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {i === 3 && (
-                                                <div className="w-full h-full bg-green-50 rounded border border-green-100 flex items-center justify-center">
-                                                    <div className="relative">
-                                                        <Monitor className="w-10 h-10 text-green-500" strokeWidth={1.5} />
-                                                        <div className="absolute inset-0 flex items-center justify-center mb-1">
-                                                            <Download className="w-4 h-4 text-green-600" strokeWidth={3} />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {i === 4 && (
-                                                <div className="w-full h-full bg-blue-50 rounded border border-blue-100 flex flex-col p-2 gap-1.5">
-                                                    <div className="w-full flex gap-1.5 h-1/2">
-                                                        <div className="flex-1 bg-blue-200 rounded-sm" />
-                                                        <div className="flex-[2] bg-blue-400 rounded-sm shadow-sm" />
-                                                    </div>
-                                                    <div className="w-full flex gap-1.5 h-1/2">
-                                                        <div className="flex-1 bg-blue-300 rounded-sm shadow-sm" />
-                                                        <div className="flex-1 bg-blue-500 rounded-sm shadow-sm" />
-                                                        <div className="flex-1 bg-blue-400 rounded-sm shadow-sm" />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {i === 5 && (
-                                                <div className="w-full h-full bg-orange-50 rounded border border-orange-100 flex flex-col justify-end p-2 relative overflow-hidden">
-                                                    <TrendingUp className="w-10 h-10 text-orange-500 absolute top-2 right-2 opacity-20" />
-                                                    <div className="flex items-end justify-between gap-1 w-full h-full z-10 pt-4">
-                                                        {[30, 45, 40, 60, 55, 80, 95].map((h, j) => (
-                                                            <div key={j} className="w-full bg-gradient-to-t from-orange-400 to-orange-300 rounded-t-sm shadow-sm" style={{ height: `${h}%` }} />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
+                                        <div className="relative flex items-center gap-4">
+                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#18315e] text-white shadow-[0_8px_18px_-8px_rgba(24,49,94,0.7)] group-hover:scale-105 transition-transform duration-300">
+                                                <Icon className="h-5 w-5" strokeWidth={2} />
+                                            </div>
+                                            <div>
+                                                <span className="block text-[11px] font-black uppercase tracking-[0.18em] text-[#18315e]/45">Step {s.num}</span>
+                                                <h3 className="text-lg font-bold leading-snug text-[#18315e]">{s.title}</h3>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            ))}
+
+                                        <p className="relative mt-4 text-[15px] font-medium leading-relaxed text-slate-500">{s.desc}</p>
+
+                                        {/* Progress rail: fills to this step's share of the six. */}
+                                        {/* mt-auto pins every rail to the same baseline across the row. */}
+                                        <div className="relative mt-auto pt-6">
+                                            <div className="h-[3px] w-full overflow-hidden rounded-full bg-[#18315e]/10">
+                                                <div className="h-full rounded-full bg-[#18315e]" style={{ width: `${(s.num / steps.length) * 100}%` }} />
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
                         </div>
                     </div>
                 </section>

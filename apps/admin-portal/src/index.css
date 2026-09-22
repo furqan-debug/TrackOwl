@@ -645,3 +645,40 @@
     image-rendering: auto;
   }
 }
+/* Landing hero metrics: each icon draws itself in as its tile fades up. The
+   delay is handed in per tile so the icons follow the same one-by-one order. */
+@keyframes metric-icon-draw {
+  from {
+    stroke-dashoffset: 100;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.metric-icon-draw > * {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: metric-icon-draw 1.1s ease-in-out forwards;
+  animation-delay: var(--draw-delay, 0s);
+}
+
+.metric-icon-draw > *:nth-child(2) {
+  animation-delay: calc(var(--draw-delay, 0s) + 0.25s);
+}
+
+.metric-icon-draw > *:nth-child(3) {
+  animation-delay: calc(var(--draw-delay, 0s) + 0.5s);
+}
+
+.metric-icon-draw > *:nth-child(4) {
+  animation-delay: calc(var(--draw-delay, 0s) + 0.75s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .metric-icon-draw > * {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
