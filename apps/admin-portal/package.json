@@ -7,10 +7,12 @@
     "dev": "vite",
     "build": "node build.js",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "gen:app-icons": "node scripts/generate-app-icons.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.98.0",
+    "brand-icons": "npm:simple-icons@^11.15.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "jspdf": "^4.2.1",
@@ -22,10 +24,13 @@
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.18.2",
     "recharts": "^3.10.1",
+    "simple-icons": "^16.32.0",
     "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@iconify-json/logos": "^1.2.14",
+    "@iconify-json/vscode-icons": "^1.2.80",
     "@tailwindcss/postcss": "^4.2.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.7",
