@@ -1,113 +1,205 @@
 import { useMemo } from 'react';
 import clsx from 'clsx';
 import {
-    siGooglechrome,
-    siZoom,
-    siWhatsapp,
-    siAnydesk,
-    siFirefox,
-    siNotepadplusplus,
-    siSpotify,
-    siDiscord,
-    siTelegram,
-    siGooglemeet,
-    siGooglesheets,
-    siGooglecalendar,
-    siGmail,
-    siGoogledrive,
-    siGithub,
-    siFigma,
-    siNotion,
-    siTrello,
-    siJira,
-    siPostman,
-    siOpera,
-    siBrave,
+    siGooglechrome, siZoom, siWhatsapp, siAnydesk, siFirefox, siNotepadplusplus,
+    siSpotify, siDiscord, siTelegram, siGooglemeet, siGooglesheets, siGoogledocs,
+    siGoogleforms, siGooglecalendar, siGmail, siGoogledrive, siGithub, siFigma,
+    siNotion, siTrello, siJira, siPostman, siOpera, siBrave, siSteam, siRoblox,
+    siClaude, siAnthropic, siFacebook, siInstagram, siYoutube, siTiktok, siX,
+    siReddit, siStackoverflow, siNpm, siDocker, siVercel, siSupabase, siZendesk,
+    siHubspot, siAsana, siClickup, siMiro, siLoom, siDropbox, siTeamviewer,
+    siViber, siSignal,
 } from 'simple-icons';
+/**
+ * simple-icons withdrew every Microsoft, Slack, Adobe, LinkedIn and OpenAI mark
+ * in v12 under its trademark policy, so the current package carries none of
+ * them and those apps fell through to a lettered tile. They are still in v11,
+ * which is installed alongside under an alias purely for these.
+ *
+ * Showing a vendor's own logo to label that vendor's app is how every launcher
+ * and task manager identifies software. Nothing here is redrawn or restyled.
+ */
+import {
+    siMicrosoft, siMicrosoftteams, siMicrosoftedge, siMicrosoftword,
+    siMicrosoftexcel, siMicrosoftpowerpoint, siMicrosoftoutlook,
+    siMicrosoftonenote, siMicrosoftonedrive, siMicrosoftsharepoint,
+    siMicrosoftvisio, siMicrosoftaccess, siMicrosoftstore, siMicrosoftbing,
+    siSkype, siSlack, siLinkedin, siSalesforce, siCanva, siVisualstudiocode,
+    siAdobeacrobatreader, siAdobephotoshop, siAdobeillustrator, siOpenai,
+    siWindows, siWindowsterminal,
+} from 'brand-icons';
+import trackOwlIcon from '../../assets/branding/icon.png';
+import notepadIcon from '../../assets/app-icons/notepad.png';
+import { COLOR_ART } from './appIconArt';
+import { Settings, Calendar, Calculator, Scissors, Grid3x3, type LucideIcon } from 'lucide-react';
+
+/**
+ * Apps with no logo anywhere: not in the Iconify collections, not in
+ * simple-icons. Rather than a letter, they get a pictogram of what the app
+ * actually is, in the vendor's own colour — a keypad for Dialpad, a gear for
+ * Settings. Not the real mark, but it reads as the app at a glance, which a
+ * lone "D" on a tile never did.
+ *
+ * Anything here is superseded the moment real artwork lands in IMAGE_ICONS.
+ */
+const GLYPHS: Record<string, { icon: LucideIcon; color: string }> = {
+    'settings': { icon: Settings, color: '#0078D7' },
+    'systemsettings': { icon: Settings, color: '#0078D7' },
+    'calendar': { icon: Calendar, color: '#0078D7' },
+    'calculator': { icon: Calculator, color: '#4A7BC8' },
+    'snippingtool': { icon: Scissors, color: '#6B5BD2' },
+    'snipping tool': { icon: Scissors, color: '#6B5BD2' },
+    'dialpad for desktops': { icon: Grid3x3, color: '#7C52FF' },
+    'dialpad': { icon: Grid3x3, color: '#7C52FF' },
+};
 
 type Logo = { path: string; hex: string };
 
 /**
+ * Apps whose icon is artwork rather than a single-path mark: this product's
+ * own, and the full-colour icons dropped into assets/app-icons for apps no
+ * icon set carries. Each is drawn on a tile tinted to match it.
+ */
+type ImageIcon = { src: string; tint: string; border: string };
+
+const OWL: ImageIcon = { src: trackOwlIcon, tint: '#001B4D', border: '#F2CB00' };
+
+const IMAGE_ICONS: Record<string, ImageIcon> = {
+    'trackowl': OWL, 'digireps tracker': OWL, 'trackowl desktop': OWL,
+    'notepad': { src: notepadIcon, tint: '#4A90D9', border: '#4A90D9' },
+};
+
+/**
  * The same app arrives under several names: "Google Chrome" and "chrome",
  * "Microsoft Teams" and "ms-teams", "LockApp.exe", "WhatsApp.Root",
- * "Microsoft.Notes". Matching exactly would put a logo on 59% of Chrome rows
- * and leave the other 2% blank, so everything is normalised first.
+ * "Microsoft.Notes", "Explorer.EXE". One row even reads "Spotify\x16\x01FileV"
+ * — the tracker occasionally writes control characters into the name. Matching
+ * exactly would put a logo on 59% of Chrome rows and leave the other 2% blank,
+ * so everything is normalised and stripped first.
  */
 function normalise(name: string): string {
     return name
+        // eslint-disable-next-line no-control-regex
+        .replace(/[\u0000-\u001F\u007F]/g, '')
         .toLowerCase()
         .replace(/\.exe$/, '')
-        .replace(/\.(root|app|desktop)$/, '')
+        .replace(/\.(root|app|desktop|store|client)$/, '')
         .replace(/[._-]+/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
 }
 
-/** Real logos, for the apps a licensed icon set actually carries. */
+/**
+ * Real logos. Almost the whole fleet resolves here; what is left over is a
+ * handful of niche vendors no icon set carries.
+ */
 const LOGOS: Record<string, Logo> = {
-    'google chrome': siGooglechrome,
-    'chrome': siGooglechrome,
-    'zoom meetings': siZoom,
-    'zoom': siZoom,
-    'zoom workplace': siZoom,
-    'whatsapp': siWhatsapp,
-    'anydesk': siAnydesk,
-    'firefox': siFirefox,
-    'mozilla firefox': siFirefox,
-    'notepad++': siNotepadplusplus,
-    'spotify': siSpotify,
-    'discord': siDiscord,
-    'telegram': siTelegram,
-    'google meet': siGooglemeet,
-    'meet': siGooglemeet,
-    'google sheets': siGooglesheets,
-    'google calendar': siGooglecalendar,
-    'gmail': siGmail,
-    'google drive': siGoogledrive,
-    'github': siGithub,
+    // Browsers
+    'google chrome': siGooglechrome, 'chrome': siGooglechrome,
+    'microsoft edge': siMicrosoftedge, 'msedge': siMicrosoftedge,
+    'edge': siMicrosoftedge,
+    'firefox': siFirefox, 'mozilla firefox': siFirefox,
+    'opera': siOpera, 'brave': siBrave,
+    // Microsoft 365
+    'microsoft teams': siMicrosoftteams, 'ms teams': siMicrosoftteams,
+    'teams': siMicrosoftteams,
+    'microsoft word': siMicrosoftword, 'winword': siMicrosoftword,
+    'microsoft excel': siMicrosoftexcel, 'excel': siMicrosoftexcel,
+    'microsoft powerpoint': siMicrosoftpowerpoint, 'powerpnt': siMicrosoftpowerpoint,
+    'microsoft outlook': siMicrosoftoutlook, 'outlook': siMicrosoftoutlook,
+    'microsoft notes': siMicrosoftonenote, 'onenote': siMicrosoftonenote,
+    'onedrive': siMicrosoftonedrive, 'sharepoint': siMicrosoftsharepoint,
+    'visio': siMicrosoftvisio, 'access': siMicrosoftaccess,
+    'microsoft store': siMicrosoftstore, 'bing': siMicrosoftbing,
+    'skype': siSkype,
+    // Windows itself, for the shell processes the tracker reports by name.
+    // Only the shell belongs here. Notepad, Calculator, Settings and Snipping
+    // Tool are separate apps, and wearing Microsoft's corporate mark would say
+    // they are Windows itself — they are handled above instead.
+    'windows explorer': siWindows, 'explorer': siWindows,
+    'lockapp': siWindows, 'loginwindow': siWindows,
+    'searchhost': siWindows, 'shellhost': siWindows,
+    'shellexperiencehost': siWindows, 'windows shell experience host': siWindows,
+    'applicationframehost': siWindows, 'application frame host': siWindows,
+    'file picker ui host': siWindows, 'widgetboard': siWindows,
+    'monotificationux': siWindows, 'textinputhost': siWindows,
+    'taskmgr': siWindows, 'task manager': siWindows,
+    'windows terminal host': siWindowsterminal, 'windowsterminal': siWindowsterminal,
+    // Meetings and messaging
+    'zoom meetings': siZoom, 'zoom': siZoom, 'zoom workplace': siZoom,
+    'slack': siSlack, 'whatsapp': siWhatsapp,
+    'discord': siDiscord, 'telegram': siTelegram,
+    'viber': siViber, 'signal': siSignal,
+    'google meet': siGooglemeet, 'meet': siGooglemeet,
+    // Google
+    'google sheets': siGooglesheets, 'google docs': siGoogledocs,
+    'google forms': siGoogleforms, 'google calendar': siGooglecalendar,
+    'gmail': siGmail, 'google drive': siGoogledrive,
+    // Work and creative
+    'linkedin': siLinkedin, 'salesforce': siSalesforce, 'canva': siCanva,
+    'zendesk': siZendesk, 'hubspot': siHubspot, 'asana': siAsana,
+    'clickup': siClickup, 'miro': siMiro, 'loom': siLoom, 'notion': siNotion,
+    'trello': siTrello, 'jira': siJira, 'dropbox': siDropbox,
+    'acrobat': siAdobeacrobatreader, 'adobe acrobat': siAdobeacrobatreader,
+    'adobe acrobat reader': siAdobeacrobatreader,
+    'photoshop': siAdobephotoshop, 'adobe photoshop': siAdobephotoshop,
+    'illustrator': siAdobeillustrator, 'adobe illustrator': siAdobeillustrator,
     'figma': siFigma,
-    'notion': siNotion,
-    'trello': siTrello,
-    'jira': siJira,
-    'postman': siPostman,
-    'opera': siOpera,
-    'brave': siBrave,
+    // Developer
+    'visual studio code': siVisualstudiocode, 'code': siVisualstudiocode,
+    'vscode': siVisualstudiocode,
+    'github': siGithub, 'postman': siPostman, 'npm': siNpm,
+    'docker': siDocker, 'vercel': siVercel, 'supabase': siSupabase,
+    'stack overflow': siStackoverflow, 'notepad++': siNotepadplusplus,
+    // AI
+    'claude': siClaude, 'anthropic': siAnthropic,
+    'chatgpt': siOpenai, 'openai': siOpenai,
+    // Remote access and media
+    'anydesk': siAnydesk, 'teamviewer': siTeamviewer, 'spotify': siSpotify,
+    'steam': siSteam, 'steam client webhelper': siSteam,
+    'roblox': siRoblox, 'roblox game': siRoblox,
+    // Social
+    'facebook': siFacebook, 'instagram': siInstagram, 'youtube': siYoutube,
+    'tiktok': siTiktok, 'x': siX, 'reddit': siReddit,
+    // Generic Microsoft, for anything above that the specific marks miss
+    'microsoft': siMicrosoft,
 };
 
 /**
- * Brand colours for apps with no logo available. Microsoft's marks and Slack's
- * were withdrawn from the icon set over trademark, and drawing them by hand
- * would mean shipping a bad imitation of someone's logo — so these get their
- * initial on a tile in the right colour instead, which is recognisable without
- * pretending to be the real mark.
+ * The leftovers: small vendors whose logos no icon set ships. Rather than
+ * redraw someone's mark by eye and get it subtly wrong, these show their
+ * initial on a tile in the vendor's own colour.
  */
 const BRAND_COLORS: Record<string, string> = {
-    'microsoft teams': '#6264A7',
-    'ms teams': '#6264A7',
-    'teams': '#6264A7',
-    'microsoft edge': '#0078D7',
-    'msedge': '#0078D7',
-    'edge': '#0078D7',
-    'slack': '#4A154B',
-    'microsoft word': '#2B579A',
-    'winword': '#2B579A',
-    'microsoft excel': '#217346',
-    'excel': '#217346',
-    'microsoft powerpoint': '#D24726',
-    'outlook': '#0072C6',
-    'microsoft outlook': '#0072C6',
-    'microsoft notes': '#7719AA',
-    'onenote': '#7719AA',
-    'notepad': '#5A5A5A',
-    'windows explorer': '#FFB900',
-    'explorer': '#FFB900',
-    'dialpad for desktops': '#7C52FF',
-    'dialpad': '#7C52FF',
-    'wps office': '#D0433B',
-    'visual studio code': '#007ACC',
-    'code': '#007ACC',
-    'trackowl': '#F2CB00',
+    'ringcentral': '#FF7A00', 'balto': '#00A5B5',
+    'wps office': '#D0433B', 'wps': '#D0433B',
+    'metatrader 5 terminal': '#1C6BBA', 'metatrader 5 client terminal': '#1C6BBA',
+    'metatrader': '#1C6BBA',
+    'antigravity': '#5B8DEF',
+    'antigravity agentic desktop application': '#5B8DEF',
+    'mumu android device': '#FF6A00', 'mumu': '#FF6A00',
+    'scrnli': '#4C6FFF',
 };
+
+/**
+ * Exact match first, then the longest known name the app's own starts with.
+ *
+ * The prefix pass catches the trailing words a launcher adds — "Roblox Game
+ * Client", "Steam Client WebHelper" — and the occasional mangled name, such as
+ * the row that arrives as "Spotify" followed by control characters and the
+ * word FileV. Longest wins, so "google sheets" is not beaten by "google" and
+ * "microsoft teams" is not beaten by "microsoft".
+ */
+function lookup<T>(map: Record<string, T>, key: string): T | null {
+    if (map[key]) return map[key];
+    let best: string | null = null;
+    for (const candidate of Object.keys(map)) {
+        if (key.startsWith(candidate) && (!best || candidate.length > best.length)) {
+            best = candidate;
+        }
+    }
+    return best ? map[best] : null;
+}
 
 interface AppIconProps {
     name: string;
@@ -119,21 +211,78 @@ interface AppIconProps {
  * A logo for an app, or failing that its initial in the app's brand colour.
  *
  * Nothing is fetched: no favicon service, no network call per row. A monitoring
- * product should not be sending the list of sites its users visit to a third
- * party just to decorate a table.
+ * product should not send the list of apps its users run to a third party just
+ * to decorate a table.
  */
 export function AppIcon({ name, className }: AppIconProps) {
-    const { logo, color, initial } = useMemo(() => {
+    const { image, art, glyph, logo, color, initial } = useMemo(() => {
         const key = normalise(name || '');
-        const found = LOGOS[key];
+        const found = lookup(LOGOS, key);
         return {
+            // Exact only: the prefix pass would hand Notepad's artwork to
+            // Notepad++, which is a different app with its own mark.
+            image: IMAGE_ICONS[key] ?? null,
+            art: lookup(COLOR_ART, key),
+            glyph: lookup(GLYPHS, key),
             logo: found ?? null,
-            color: found?.hex ? `#${found.hex}` : BRAND_COLORS[key] ?? null,
+            color: found?.hex ? `#${found.hex}` : lookup(BRAND_COLORS, key),
             initial: (name || '?').replace(/[^\p{L}\p{N}]/u, '').charAt(0).toUpperCase() || '?',
         };
     }, [name]);
 
-    // Unknown app: a neutral tile, the same as before this existed.
+    if (image) {
+        return (
+            <div
+                className={clsx(
+                    'rounded-xl border flex items-center justify-center shrink-0 overflow-hidden',
+                    className
+                )}
+                style={{ backgroundColor: `${image.tint}1A`, borderColor: `${image.border}33` }}
+                title={name}
+            >
+                <img src={image.src} alt="" className="w-3/4 h-3/4 object-contain" />
+            </div>
+        );
+    }
+
+    // The app's real logo, in its own colours.
+    if (art) {
+        return (
+            <div
+                className={clsx(
+                    'rounded-xl border flex items-center justify-center shrink-0',
+                    // Tinted where the brand colour is known, neutral otherwise.
+                    !color && 'bg-surface-hover border-border',
+                    className
+                )}
+                style={color ? { backgroundColor: `${color}14`, borderColor: `${color}2E` } : undefined}
+                title={name}
+            >
+                <svg
+                    viewBox={`0 0 ${art.w} ${art.h}`}
+                    className="w-3/5 h-3/5"
+                    aria-hidden
+                    dangerouslySetInnerHTML={{ __html: art.body }}
+                />
+            </div>
+        );
+    }
+
+    // No logo exists for this app anywhere — show what it does instead.
+    if (glyph) {
+        const Glyph = glyph.icon;
+        return (
+            <div
+                className={clsx('rounded-xl border flex items-center justify-center shrink-0', className)}
+                style={{ backgroundColor: `${glyph.color}1A`, borderColor: `${glyph.color}33` }}
+                title={name}
+            >
+                <Glyph className="w-1/2 h-1/2" style={{ color: glyph.color }} strokeWidth={2.25} />
+            </div>
+        );
+    }
+
+    // Unknown app: the neutral tile it had before any of this existed.
     if (!logo && !color) {
         return (
             <div
@@ -142,6 +291,7 @@ export function AppIcon({ name, className }: AppIconProps) {
                     'text-text-muted text-[12px] font-bold shrink-0',
                     className
                 )}
+                title={name}
             >
                 {initial}
             </div>
@@ -150,13 +300,10 @@ export function AppIcon({ name, className }: AppIconProps) {
 
     return (
         <div
-            className={clsx(
-                'rounded-xl border flex items-center justify-center shrink-0',
-                className
-            )}
+            className={clsx('rounded-xl border flex items-center justify-center shrink-0', className)}
             style={{
-                // A tint of the brand colour, so a wall of logos does not turn
-                // into a wall of saturated squares.
+                // A tint of the brand colour, so a list of logos does not become
+                // a wall of saturated squares.
                 backgroundColor: `${color}1A`,
                 borderColor: `${color}33`,
                 color: color ?? undefined,
