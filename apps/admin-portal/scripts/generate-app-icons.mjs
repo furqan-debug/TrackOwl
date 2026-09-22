@@ -43,7 +43,7 @@ const MAP = {
     'microsoft': 'logos:microsoft',
     // Windows shell
     'windows explorer': 'logos:microsoft-windows', 'explorer': 'logos:microsoft-windows',
-    'settings': 'logos:microsoft-windows', 'lockapp': 'logos:microsoft-windows',
+    'lockapp': 'logos:microsoft-windows',
     'loginwindow': 'logos:microsoft-windows', 'searchhost': 'logos:microsoft-windows',
     'shellhost': 'logos:microsoft-windows', 'shellexperiencehost': 'logos:microsoft-windows',
     'windows shell experience host': 'logos:microsoft-windows',
@@ -51,7 +51,7 @@ const MAP = {
     'application frame host': 'logos:microsoft-windows',
     'file picker ui host': 'logos:microsoft-windows', 'widgetboard': 'logos:microsoft-windows',
     'monotificationux': 'logos:microsoft-windows', 'textinputhost': 'logos:microsoft-windows',
-    'systemsettings': 'logos:microsoft-windows', 'taskmgr': 'logos:microsoft-windows',
+    'taskmgr': 'logos:microsoft-windows',
     'task manager': 'logos:microsoft-windows',
     // Meetings and messaging
     'zoom meetings': 'logos:zoom', 'zoom': 'logos:zoom', 'zoom workplace': 'logos:zoom',
