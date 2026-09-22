@@ -1,4 +1,5 @@
-import { Monitor, Globe } from 'lucide-react';
+import { Monitor } from 'lucide-react';
+import { AppIcon } from '../ui/AppIcon';
 import { EmptyState } from '../ui';
 
 interface AppUsageListProps {
@@ -21,13 +22,7 @@ export function AppUsageList({ samples }: AppUsageListProps) {
             {list.map(({ app, count, percent }, i) => (
                 <div key={i} className="flex items-center justify-between px-8 py-5 hover:bg-surface-hover transition-all duration-200 group">
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-main border border-border flex items-center justify-center text-text-muted group-hover:bg-surface group-hover:border-primary/20 group-hover:text-primary transition-all shadow-shell-sm">
-                            {(app.toLowerCase().includes('chrome') || app.toLowerCase().includes('browser')) ? (
-                                <Globe className="w-5 h-5 text-sky-500" />
-                            ) : (
-                                <Monitor className="w-5 h-5" />
-                            )}
-                        </div>
+                        <AppIcon name={app} className="w-10 h-10 shadow-shell-sm" />
                         <div className="flex flex-col min-w-0">
                             <span className="text-sm font-black text-text-main leading-none truncate max-w-[180px] tracking-tight">
                                 {app}
