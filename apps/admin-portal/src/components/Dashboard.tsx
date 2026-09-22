@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 import {
     Clock, Users, FolderOpen,
     Camera, TrendingUp, BarChart3,
-    Monitor, Globe,
+    Monitor,
     ChevronLeft, ChevronRight,
     MoreHorizontal,
     ArrowUpRight
@@ -14,6 +14,7 @@ import clsx from 'clsx';
 import { PageLayout, EmptyState, LoadingState, StatMetric, ScreenshotModal, DatePicker, RefreshButton } from './ui';
 import { FeatureLockOverlay } from './access/FeatureLockOverlay';
 import { SecureImage } from './ui/SecureImage';
+import { AppIcon } from './ui/AppIcon';
 import {
     formatDuration,
     orgLocalToUtc
@@ -994,13 +995,7 @@ export function Dashboard() {
                                     appUsage.map((app, i) => (
                                         <div key={i} className="flex items-center justify-between px-5 py-4 md:px-10 md:py-5 hover:bg-surface-hover/50 transition-all duration-300 group">
                                             <div className="flex items-center gap-4 min-w-0">
-                                                <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-text-muted shadow-sm shrink-0 group-hover:border-primary/20 transition-all duration-500">
-                                                    {(app.name.toLowerCase().includes('chrome') || app.name.toLowerCase().includes('browser')) ? (
-                                                        <Globe className="w-5 h-5 text-info opacity-70 group-hover:opacity-100 transition-opacity" />
-                                                    ) : (
-                                                        <Monitor className="w-5 h-5 opacity-40 group-hover:opacity-80 transition-opacity" />
-                                                    )}
-                                                </div>
+                                                <AppIcon name={app.name} className="w-10 h-10 shadow-sm" />
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="text-[13px] font-bold text-text-main tracking-tight truncate group-hover:text-primary transition-colors">{app.name}</span>
                                                     <span className="text-[9px] text-text-muted font-bold mt-1 opacity-60">System Process</span>
