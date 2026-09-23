@@ -336,6 +336,9 @@ ${message}`
     );
 }
 
+/** Seconds each testimonial holds before the next one slides in. */
+const QUOTE_INTERVAL = 7;
+
 /** Counts up from 0 to `to` once the metric bar fades in. */
 function CountUp({ to, start = true, decimals = 1, suffix = '', delay = 0, duration = 1.4 }: { to: number; start?: boolean; decimals?: number; suffix?: string; delay?: number; duration?: number }) {
     const [value, setValue] = useState(0);
@@ -471,6 +474,20 @@ export function Landing() {
     // The bar animates the first time it is scrolled into view, not on page load.
     const metricsInView = useInView(metricsRef, { once: true, amount: 0.5 });
 
+    const quotesRef = useRef<HTMLDivElement>(null);
+    const quotesInView = useInView(quotesRef, { once: true, amount: 0.3 });
+    const [activeQuote, setActiveQuote] = useState(0);
+    const [quotesPaused, setQuotesPaused] = useState(false);
+
+    // Quotes advance on their own, and hold while the reader is hovering them.
+    useEffect(() => {
+        if (quotesPaused || !quotesInView) return;
+        const interval = setInterval(() => {
+            setActiveQuote((prev) => (prev + 1) % testimonials.length);
+        }, QUOTE_INTERVAL * 1000);
+        return () => clearInterval(interval);
+    }, [quotesPaused, quotesInView]);
+
     const stepsRef = useRef<HTMLDivElement>(null);
     const stepsInView = useInView(stepsRef, { once: true, amount: 0.15 });
 
@@ -550,17 +567,23 @@ export function Landing() {
         {
             quote: "TrackOwl™ gave us complete operational visibility across our remote workforce without creating a culture of micromanagement.",
             author: "Operations Director",
-            role: "Remote BPO"
+            role: "Remote BPO",
+            avatar: "https://i.pravatar.cc/160?img=10",
+            highlight: "Visibility without micromanagement"
         },
         {
             quote: "The analytics and reporting capabilities helped us identify inefficiencies we never noticed before.",
             author: "Founder",
-            role: "Digital Agency"
+            role: "Digital Agency",
+            avatar: "https://i.pravatar.cc/160?img=11",
+            highlight: "Inefficiencies we never noticed"
         },
         {
             quote: "Clean interface, powerful insights, and enterprise-level reliability.",
             author: "Workforce Manager",
-            role: "Distributed Team"
+            role: "Distributed Team",
+            avatar: "https://i.pravatar.cc/160?img=12",
+            highlight: "Enterprise-level reliability"
         }
     ];
 
@@ -633,8 +656,8 @@ export function Landing() {
                             onClick={() => navigate('/signup')}
                             className="group relative overflow-hidden px-5 sm:px-6 py-2 sm:py-2.5 bg-[#facc15] text-[#001338] text-sm sm:text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] cursor-pointer transition-all hover:scale-105 active:scale-95"
                         >
-                            <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
-                            <span className="relative z-10">Start free trial</span>
+                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
+                            <span className="relative z-10 transition-colors duration-300 delay-700">Start free trial</span>
                         </button>
                     </div>
                 </nav>
@@ -702,14 +725,15 @@ export function Landing() {
                                     onClick={() => navigate('/signup')}
                                     className="group relative overflow-hidden w-full sm:w-auto px-8 py-3.5 bg-[#facc15] text-[#001338] text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
                                 >
-                                    <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
-                                    <span className="relative z-10">Start free trial</span>
+                                    <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
+                                    <span className="relative z-10 transition-colors duration-300 delay-700">Start free trial</span>
                                     <ArrowRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </button>
                                 <button
                                     onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
-                                    className="w-full sm:w-auto px-8 py-3.5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-base font-bold rounded-full transition-all active:scale-95 flex items-center justify-center">
-                                    Book a demo
+                                    className="group relative overflow-hidden w-full sm:w-auto px-8 py-3.5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-base font-bold rounded-full transition-all active:scale-95 flex items-center justify-center">
+                                    <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: 'rgba(255,255,255,0.16)' }}><i /></span>
+                                    <span className="relative z-10">Book a demo</span>
                                 </button>
                             </motion.div>
 
@@ -864,8 +888,8 @@ export function Landing() {
                                     'Screenshot visibility system'
                                 ].map((hl, i) => (
                                     <div key={i} className="flex items-start gap-3">
-                                        <div className="w-5 h-5 rounded-full bg-blue-600/15 flex items-center justify-center shrink-0 mt-0.5">
-                                            <Check className="w-3.5 h-3.5 text-blue-600" strokeWidth={3.5} />
+                                        <div className="w-5 h-5 rounded-full bg-[#facc15] flex items-center justify-center shrink-0 mt-0.5">
+                                            <Check className="w-3.5 h-3.5 text-[#001b4d]" strokeWidth={3.5} />
                                         </div>
                                         <span className="text-sm sm:text-base font-semibold text-slate-700 leading-tight">{hl}</span>
                                     </div>
@@ -905,7 +929,7 @@ export function Landing() {
                 <section id="how-it-works" className="py-24 bg-[#001b4d]">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl font-extrabold tracking-tight text-[#facc15]">Simple setup. Powerful insights.</h2>
+                            <h2 className="text-3xl font-extrabold tracking-tight text-white">Simple setup. <span className="text-[#facc15]">Powerful insights.</span></h2>
                         </div>
 
                         <div ref={stepsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
@@ -925,7 +949,7 @@ export function Landing() {
                                         </span>
 
                                         <div className="relative flex items-center gap-4">
-                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#18315e] text-white shadow-[0_8px_18px_-8px_rgba(24,49,94,0.7)] group-hover:scale-105 transition-transform duration-300">
+                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#18315e] text-[#facc15] shadow-[0_8px_18px_-8px_rgba(24,49,94,0.7)] group-hover:scale-105 transition-transform duration-300">
                                                 <Icon className="h-5 w-5" strokeWidth={2} />
                                             </div>
                                             <div>
@@ -951,25 +975,136 @@ export function Landing() {
                 </section>
 
                 {/* TESTIMONIALS */}
-                <section className="py-16 bg-slate-50">
-                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+                <section className="py-20 bg-slate-50">
+                    <div
+                        ref={quotesRef}
+                        className="mx-auto max-w-[1200px] px-6 lg:px-8"
+                        onMouseEnter={() => setQuotesPaused(true)}
+                        onMouseLeave={() => setQuotesPaused(false)}
+                    >
                         <div className="text-center mb-12">
-                            <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d]">What teams are saying</h2>
+                            <span className="text-[#facc15] text-sm font-black uppercase tracking-[0.2em]">Customer stories</span>
+                            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#001b4d]">What teams are saying</h2>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {testimonials.map((t, i) => (
-                                <div key={i} className="p-8 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm flex flex-col justify-between relative">
-                                    <div className="absolute top-6 left-6 text-blue-100 text-6xl font-serif leading-none">"</div>
-                                    <p className="text-lg text-slate-700 font-medium mb-8 leading-relaxed relative z-10 pt-4">{t.quote}</p>
-                                    <div className="flex items-center gap-3">
-                                        <img src={`https://i.pravatar.cc/100?img=${i + 10}`} className="w-14 h-14 rounded-full" alt="" />
-                                        <div>
-                                            <div className="text-base font-bold text-slate-900">{t.author}</div>
-                                            <div className="text-sm font-semibold text-slate-500">{t.role}</div>
-                                        </div>
-                                    </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                            {/* Featured quote */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 24 }}
+                                animate={quotesInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+                                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                                className="lg:col-span-7 relative flex flex-col overflow-hidden rounded-[2rem] bg-[#001b4d] p-8 md:p-12 text-white shadow-[0_30px_60px_-30px_rgba(0,27,77,0.7)]"
+                            >
+                                {/* Oversized gold quote mark behind the words. */}
+                                <span className="pointer-events-none absolute -top-16 right-2 select-none font-serif text-[16rem] leading-none text-[#facc15]/10">&rdquo;</span>
+
+                                {/* All three quotes share one grid cell, so the panel is always
+                                    as tall as the longest and never resizes between them. */}
+                                <div className="relative grid flex-1 grid-cols-1">
+                                    {testimonials.map((t, i) => {
+                                        const isActive = i === activeQuote;
+                                        return (
+                                            <motion.div
+                                                key={i}
+                                                aria-hidden={!isActive}
+                                                initial={false}
+                                                animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 10 }}
+                                                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                                                className={twMerge(
+                                                    "col-start-1 row-start-1 flex h-full flex-col",
+                                                    isActive ? "" : "pointer-events-none"
+                                                )}
+                                            >
+                                                <span className="text-[11px] font-black uppercase tracking-[0.22em] text-[#facc15]">
+                                                    {t.highlight}
+                                                </span>
+                                                <p className="mt-5 text-xl md:text-[1.75rem] font-semibold leading-snug text-white">
+                                                    {t.quote}
+                                                </p>
+                                                <div className="mt-auto flex items-center gap-4 pt-10">
+                                                    <img
+                                                        src={t.avatar}
+                                                        alt=""
+                                                        loading="lazy"
+                                                        className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-[#facc15] ring-offset-2 ring-offset-[#001b4d]"
+                                                    />
+                                                    <div>
+                                                        <div className="text-base font-bold text-white">{t.author}</div>
+                                                        <div className="text-sm font-semibold text-white/55">{t.role}</div>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        );
+                                    })}
                                 </div>
-                            ))}
+
+                                {/* Timer rail: restarts with each quote, freezes while hovered. */}
+                                <div className="relative mt-8 h-[3px] w-full overflow-hidden rounded-full bg-white/10">
+                                    <motion.div
+                                        key={`${activeQuote}-${quotesPaused}`}
+                                        className="h-full rounded-full bg-[#facc15]"
+                                        initial={{ width: quotesPaused ? '100%' : '0%' }}
+                                        animate={{ width: '100%' }}
+                                        transition={{ duration: quotesPaused ? 0 : QUOTE_INTERVAL, ease: 'linear' }}
+                                    />
+                                </div>
+                            </motion.div>
+
+                            {/* Pick a voice */}
+                            <div className="lg:col-span-5 flex flex-col gap-4">
+                                {testimonials.map((t, i) => {
+                                    const isActive = i === activeQuote;
+                                    return (
+                                        <motion.button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => setActiveQuote(i)}
+                                            aria-pressed={isActive}
+                                            initial={{ opacity: 0, x: 24 }}
+                                            animate={quotesInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 24 }}
+                                            transition={{ duration: 0.7, delay: 0.15 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                                            className={twMerge(
+                                                "group relative flex flex-1 items-center gap-4 overflow-hidden rounded-[1.25rem] border p-5 text-left transition-[background-color,border-color,box-shadow] duration-300",
+                                                isActive
+                                                    ? "border-[#18315e] bg-[#18315e] shadow-[0_16px_34px_-22px_rgba(24,49,94,0.9)]"
+                                                    : "border-slate-200/80 bg-white hover:border-[#18315e]/30"
+                                            )}
+                                        >
+                                            {/* Same rising blob as the page's other buttons. */}
+                                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#18315e' }}><i /></span>
+
+                                            {/* Gold rail marks the quote being shown. */}
+                                            <span className={twMerge(
+                                                "absolute left-0 top-0 z-10 h-full w-1 bg-[#facc15] transition-transform duration-300 origin-top",
+                                                isActive ? "scale-y-100" : "scale-y-0"
+                                            )} />
+                                            <img
+                                                src={t.avatar}
+                                                alt=""
+                                                loading="lazy"
+                                                className={twMerge(
+                                                    "relative z-10 h-11 w-11 shrink-0 rounded-full object-cover ring-2 transition-[box-shadow,filter] duration-300",
+                                                    isActive ? "ring-[#facc15]" : "ring-[#18315e]/15 grayscale group-hover:grayscale-0"
+                                                )}
+                                            />
+                                            <div className="relative z-10 min-w-0">
+                                                <div className={twMerge("text-sm font-bold transition-colors duration-300", isActive ? "text-white" : "text-[#18315e] group-hover:text-white")}>
+                                                    {t.author}
+                                                </div>
+                                                <div className={twMerge("text-xs font-semibold transition-colors duration-300", isActive ? "text-white/55" : "text-slate-500 group-hover:text-white/55")}>
+                                                    {t.role}
+                                                </div>
+                                                <p className={twMerge(
+                                                    "mt-1 truncate text-xs font-medium transition-colors duration-300",
+                                                    isActive ? "text-[#facc15]" : "text-slate-400 group-hover:text-[#facc15]"
+                                                )}>
+                                                    {t.highlight}
+                                                </p>
+                                            </div>
+                                        </motion.button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -977,15 +1112,19 @@ export function Landing() {
                 {/* SECURITY & PRIVACY SECTION */}
                 <section id="security" className="py-24 bg-white">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+                        <div className="text-center mb-10">
+                            <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d]">Security &amp; privacy</h2>
+                        </div>
+
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
                             {/* Security Card - Dark */}
                             <div className="col-span-3 rounded-[2rem] bg-[#001338] p-6 md:p-10 flex flex-col justify-center relative overflow-hidden text-white shadow-xl">
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-20 pointer-events-none">
-                                    <Shield className="w-64 h-64 text-blue-400" strokeWidth={1} />
+                                    <Shield className="w-64 h-64 text-[#facc15]" strokeWidth={1} />
                                 </div>
 
-                                <h2 className="text-3xl font-extrabold tracking-tight mb-4 relative z-10">Enterprise-grade security & privacy</h2>
+                                <h3 className="text-3xl font-extrabold tracking-tight mb-4 relative z-10">Enterprise-grade security & privacy</h3>
                                 <p className="text-lg text-slate-300 mb-8 max-w-md relative z-10 text-justify">
                                     TrackOwl™ is built with security, transparency, and ethical monitoring at its core.
                                 </p>
@@ -996,7 +1135,7 @@ export function Landing() {
                                         'Role-based access control', 'Continuous security monitoring'
                                     ].map((s, i) => (
                                         <div key={i} className="flex items-center gap-2">
-                                            <Check className="w-6 h-6 text-blue-400 shrink-0" strokeWidth={3} />
+                                            <Check className="w-6 h-6 text-[#facc15] shrink-0" strokeWidth={3} />
                                             <span className="text-base font-bold text-slate-200">{s}</span>
                                         </div>
                                     ))}
@@ -1042,8 +1181,8 @@ export function Landing() {
                                 </div>
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-green-500 text-white text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
-                                    <span className="absolute inset-0 z-0 bg-green-600 translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-[#f8fafc] text-[#18315e] text-lg font-bold cursor-pointer border border-[#18315e]/20 hover:border-[#18315e] transition-colors shadow-sm mt-auto">
+                                    <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#e2e8f0' }}><i /></span>
                                     <span className="relative z-10">Get started</span>
                                 </button>
                             </div>
@@ -1063,8 +1202,8 @@ export function Landing() {
                                 </div>
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-blue-600 text-white text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
-                                    <span className="absolute inset-0 z-0 bg-blue-700 translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-[#facc15] text-[#001b4d] text-lg font-bold cursor-pointer transition-colors shadow-[0_10px_24px_-12px_rgba(234,179,8,0.9)] mt-auto">
+                                    <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
                                     <span className="relative z-10">Start free trial</span>
                                 </button>
                             </div>
@@ -1080,8 +1219,8 @@ export function Landing() {
                                 </div>
                                 <button
                                     onClick={() => { setContactType('sales'); setIsContactOpen(true); }}
-                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-[#facc15] text-[#001b4d] text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
-                                    <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-[#18315e] text-white text-lg font-bold cursor-pointer transition-colors shadow-[0_10px_24px_-12px_rgba(24,49,94,0.9)] mt-auto">
+                                    <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#001b4d' }}><i /></span>
                                     <span className="relative z-10">Talk to sales</span>
                                 </button>
                             </div>
@@ -1158,10 +1297,13 @@ export function Landing() {
                 </section>
 
                 {/* DOWNLOAD SECTION */}
-                <section id="download" className="py-24 bg-[#eab308] relative overflow-hidden">
+                <section id="download" className="py-24 bg-[linear-gradient(165deg,#fde047_0%,#facc15_28%,#eab308_62%,#ca9a04_100%)] relative overflow-hidden">
+                    {/* Curved top edge: the white section above sweeps down into the band. */}
+                    <div aria-hidden className="pointer-events-none absolute inset-x-[-15%] -top-28 h-44 rounded-[100%] bg-white" />
+
                     {/* Background decorations */}
                     <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl opacity-30 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-black/10 rounded-full blur-3xl opacity-20 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#001b4d]/25 rounded-full blur-3xl opacity-30 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
                     <div className="mx-auto w-full max-w-[1400px] px-6 lg:px-8 relative z-10">
                         <div className="text-center mb-12">
@@ -1185,7 +1327,7 @@ export function Landing() {
                                         <a
                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.58/TrackOwl_2.0.58_x64-setup.exe"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-[#B8860B] text-white text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
-                                            <span className="absolute inset-0 z-0 bg-[#9E7209] -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0" />
+                                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#9E7209' }}><i /></span>
                                             <span className="relative z-10 flex items-center justify-center gap-2">
                                                 <Download className="w-4 h-4" /> Download .exe
                                             </span>
@@ -1196,7 +1338,7 @@ export function Landing() {
                                         <a
                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.58/TrackOwl_2.0.58_x64_en-US.msi"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-[#F5E6CA] text-[#B8860B] border border-[#EADCBF] text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
-                                            <span className="absolute inset-0 z-0 bg-[#EADCBF] -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0" />
+                                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#EADCBF' }}><i /></span>
                                             <span className="relative z-10 flex items-center justify-center gap-2">
                                                 <Download className="w-4 h-4" /> Download .msi
                                             </span>
@@ -1218,7 +1360,7 @@ export function Landing() {
                                         <a
                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.58/TrackOwl_2.0.58_aarch64.dmg"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-slate-800 text-white text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
-                                            <span className="absolute inset-0 z-0 bg-slate-950 -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0" />
+                                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#020617' }}><i /></span>
                                             <span className="relative z-10 flex items-center justify-center gap-2">
                                                 <Download className="w-4 h-4" /> Apple Silicon (M1/M2/M3)
                                             </span>
@@ -1229,7 +1371,7 @@ export function Landing() {
                                         <a
                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.58/TrackOwl_2.0.58_x64.dmg"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-slate-50 text-slate-800 border border-slate-200 text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
-                                            <span className="absolute inset-0 z-0 bg-slate-200 -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0" />
+                                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#e2e8f0' }}><i /></span>
                                             <span className="relative z-10 flex items-center justify-center gap-2">
                                                 <Download className="w-4 h-4" /> Intel Processor
                                             </span>
@@ -1245,8 +1387,12 @@ export function Landing() {
             </main>
 
             {/* FINAL CTA SECTION */}
-            <section className="bg-[#001338] py-16 md:py-24 relative z-10 border-b border-white/10">
-                <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center flex flex-col items-center">
+            <section className="bg-[#001338] py-16 md:py-24 relative z-10 border-b border-white/10 overflow-hidden">
+                {/* Background glowing effects, same pair the hero uses */}
+                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#002766] blur-[150px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[150px] rounded-full pointer-events-none" />
+
+                <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center flex flex-col items-center relative z-10">
                     <img src={HeaderLogo} className="h-16 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] mb-6" alt="TrackOwl" />
                     <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6">Gain complete workforce visibility</h2>
                     <p className="text-2xl text-slate-300 font-medium mb-10 max-w-3xl leading-relaxed">
@@ -1257,13 +1403,14 @@ export function Landing() {
                         <button
                             onClick={() => navigate('/signup')}
                             className="group relative overflow-hidden w-full sm:w-auto px-12 py-5 bg-[#facc15] text-[#001338] text-lg font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] cursor-pointer transition-all hover:scale-105 active:scale-95">
-                            <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
-                            <span className="relative z-10">Start free trial</span>
+                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
+                            <span className="relative z-10 transition-colors duration-300 delay-700">Start free trial</span>
                         </button>
                         <button
                             onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
-                            className="w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold cursor-pointer rounded-full transition-all active:scale-95">
-                            Schedule a demo
+                            className="group relative overflow-hidden w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold cursor-pointer rounded-full transition-all active:scale-95">
+                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: 'rgba(255,255,255,0.16)' }}><i /></span>
+                            <span className="relative z-10">Schedule a demo</span>
                         </button>
                     </div>
                     <p className="text-lg font-medium text-slate-400">Built for modern businesses managing remote teams at scale.</p>

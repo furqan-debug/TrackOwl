@@ -682,3 +682,43 @@
     stroke-dashoffset: 0;
   }
 }
+
+/* Liquid buttons: a round blob swells up from the bottom edge on hover until
+   it floods the button, the way leonardo.ai does it. The blob is centred on
+   the bottom edge itself (top: 100% + translate -50%), so it always starts as
+   a point on that edge — sizing it off the width alone pushed the start point
+   up past the middle on short, wide buttons. */
+.goo-fill {
+  position: absolute;
+  /* Negative inset so the layer spans the border box: on bordered buttons an
+     inset of 0 stops inside the border and the blob starts 2px high. */
+  inset: -2px;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  overflow: hidden;
+}
+
+.goo-fill > i {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 150%;
+  aspect-ratio: 1;
+  border-radius: 9999px;
+  background: var(--goo, #eab308);
+  transform: translate(-50%, -50%) scale(0);
+  transition: transform 2s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.group:hover .goo-fill > i,
+.group:focus-visible .goo-fill > i {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goo-fill > i {
+    transition: none;
+  }
+}
