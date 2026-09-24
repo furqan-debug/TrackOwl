@@ -1,15 +1,15 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Routes, Route, Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { 
-  Search, ChevronRight, BookOpen, Clock,
+  Search, ChevronRight, BookOpen, Clock, ArrowUp,
   Rocket, Building, Users, UsersRound, FolderKanban, CheckSquare,
   Monitor, Camera, Activity, CalendarClock, MapPin, DollarSign,
   CreditCard, FileText, Briefcase, Settings, Blocks, ShieldCheck, HelpCircle,
   Check, ChevronDown, Loader2
 } from 'lucide-react';
 import { marked } from 'marked';
+import { motion, AnimatePresence } from 'framer-motion';
 import HeaderLogo from '../assets/branding/header-2.svg';
-import LogoLight from '../assets/branding/logo-light.svg';
 import { Footer } from '../components/Footer';
 import { ContactModal } from './Landing';
 import '../support.css';
@@ -129,45 +129,56 @@ function Layout({ children, search, setSearch }: { children: React.ReactNode; se
       .slice(0, 5);
   }, [search]);
 
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const isHomePage = location.pathname === '/support' || location.pathname === '/support/';
 
   return (
     <div className="layout">
       <header className="header">
-        {/* Back to the main site: on /support itself a link to /support did nothing. */}
-        <Link to="/" className="header-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <img src={LogoLight} style={{ height: '32px', objectFit: 'contain' }} alt="TrackOwl" />
-        </Link>
+        {/* Same centred 1400px row the other public page headers use. */}
+        <div className="header-inner">
+          {/* Back to the main site: on /support itself a link to /support did nothing. */}
+          <Link to="/" className="header-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <img src={HeaderLogo} style={{ height: '40px', objectFit: 'contain' }} alt="TrackOwl" />
+          </Link>
 
-        {!isHomePage && (
-          <div className="search-container" style={{ marginLeft: 'auto' }}>
-            <Search className="search-icon" size={18} />
-            <input 
-              type="text" 
-              className="search-input" 
-              placeholder="Search documentation..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-            {search && searchResults.length > 0 && (
-              <div className="search-results-dropdown">
-                {searchResults.map(res => (
-                  <div 
-                    key={res.slug}
-                    className="search-result-item"
-                    onClick={() => {
-                      setSearch('');
-                      navigate(`/support/article/${encodeURIComponent(res.slug)}`);
-                    }}
-                  >
-                    <div className="search-result-title">{res.title}</div>
-                    <div className="search-result-category">{res.category}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+          {!isHomePage && (
+            <div className="search-container" style={{ marginLeft: 'auto' }}>
+              <Search className="search-icon" size={18} />
+              <input 
+                type="text" 
+                className="search-input" 
+                placeholder="Search documentation..." 
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && searchResults.length > 0 && (
+                <div className="search-results-dropdown">
+                  {searchResults.map(res => (
+                    <div 
+                      key={res.slug}
+                      className="search-result-item"
+                      onClick={() => {
+                        setSearch('');
+                        navigate(`/support/article/${encodeURIComponent(res.slug)}`);
+                      }}
+                    >
+                      <div className="search-result-title">{res.title}</div>
+                      <div className="search-result-category">{res.category}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </header>
 
       <main className="content-wrapper" style={{ minHeight: '60vh' }}>
@@ -207,6 +218,22 @@ function Layout({ children, search, setSearch }: { children: React.ReactNode; se
 
       {/* FOOTER */}
       <Footer />
+
+      {/* Scroll to Top Button, same as the other public pages */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            className="fixed bottom-6 right-6 z-[120] p-3.5 rounded-full bg-[#001338] text-[#F7BC00] shadow-2xl hover:bg-[#002766] transition-all hover:scale-110 active:scale-95 border border-white/10 cursor-pointer flex items-center justify-center"
+            title="Scroll to Top"
+          >
+            <ArrowUp className="w-5 h-5" strokeWidth={3} />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       <ContactModal 
           isOpen={isContactOpen} 

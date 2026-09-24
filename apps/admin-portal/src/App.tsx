@@ -53,7 +53,7 @@ import { FavoritesProvider } from './context/FavoritesContext';
 import { AuthProvider } from './context/AuthContext';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 function AuthRedirect() {
   const navigate = useNavigate();
@@ -86,11 +86,34 @@ function AuthRedirect() {
   return null;
 }
 
+/**
+ * Routing keeps the window's scroll position across navigations, so following a
+ * link from halfway down one page dropped you halfway down the next. Reset to
+ * the top on every path change, while still honouring in-page #anchors.
+ */
+function ScrollToTop() {
+  const { pathname, hash } = useLocation();
+
+  useEffect(() => {
+    if (hash) {
+      const target = document.getElementById(hash.slice(1));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+        return;
+      }
+    }
+    window.scrollTo(0, 0);
+  }, [pathname, hash]);
+
+  return null;
+}
+
 function App() {
   return (
     <AuthProvider>
       <FavoritesProvider>
         <Router>
+          <ScrollToTop />
           <Routes>
             <Route path="/" element={<><AuthRedirect /><Landing /></>} />
             <Route path="/privacy" element={<Privacy />} />
