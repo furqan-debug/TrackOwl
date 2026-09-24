@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef, type CSSProperties } from 'react';
 import { activityService } from '../services/activity.service';
 import type { AppEntry } from '../services/activity.service';
 import { useAuth } from '../context/AuthContext';
@@ -9,7 +9,7 @@ import {
     ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { PageLayout, StatMetric, LoadingState, EmptyState, FilterSelect, DatePicker, RefreshButton, AppIcon } from '../components/ui';
+import { PageLayout, StatMetric, LoadingState, EmptyState, FilterSelect, DatePicker, RefreshButton, AppIcon, PieShareTooltip } from '../components/ui';
 import clsx from 'clsx';
 import { orgLocalToUtc } from '../lib/dataUtils';
 
@@ -23,7 +23,17 @@ interface MemberInfo {
     idle_limit?: number | null;
 }
 
-const COLORS = ['var(--chart-pie-slot-0)', '#4f46e5', '#4338ca', '#3730a3', '#312e81', '#1e1b4b'];
+// Every slot is a token, so the ramp follows the theme. Only the first one did
+// before; the other five were literal indigos that stayed put when the theme
+// flipped, and on the dark card they were darker than the card itself.
+const COLORS = [
+    'var(--chart-pie-slot-0)',
+    'var(--chart-pie-slot-1)',
+    'var(--chart-pie-slot-2)',
+    'var(--chart-pie-slot-3)',
+    'var(--chart-pie-slot-4)',
+    'var(--chart-pie-slot-5)',
+];
 
 // categorizeApp logic moved to activityService
 
@@ -159,6 +169,29 @@ export function AppUsage() {
         return top;
     }, [apps]);
 
+    // Sum of the slices drawn — the top five plus the "Other Content" rollup —
+    // so a slice's share is of the whole ring and they add to 100%.
+    const chartTotal = useMemo(
+        () => chartData.reduce((sum, d) => sum + (Number(d.value) || 0), 0),
+        [chartData]
+    );
+
+    // What the named slices account for, for the middle of the ring.
+    //
+    // The two cards beside this chart already give the app count and the total
+    // time, so repeating either in the hole would say nothing new. How much of
+    // the day the top few apps carry is not on the page anywhere else, and it
+    // is the question the ring is already drawing an answer to.
+    const topShare = useMemo(() => {
+        const other = chartData.find(d => d.name === 'Other Content')?.value ?? 0;
+        if (chartTotal <= 0) return null;
+        const named = chartData.filter(d => d.name !== 'Other Content').length;
+        return {
+            percent: Math.round(((chartTotal - other) / chartTotal) * 100),
+            named,
+        };
+    }, [chartData, chartTotal]);
+
     const filteredApps = apps.filter(a => {
         const term = searchTerm.toLowerCase();
         return (a.raw_app && a.raw_app.toLowerCase().includes(term)) ||
@@ -266,16 +299,47 @@ export function AppUsage() {
                             </div>
                         </div>
 
-                        <div className="flex-1 min-h-[220px]">
+                        <div className="flex-1 min-h-[220px] relative">
                             {apps.length === 0 ? <EmptyState icon={<AppWindow />} title="No data" /> : (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie data={chartData} cx="50%" cy="50%" innerRadius={70} outerRadius={95} paddingAngle={4} dataKey="value" stroke="none">
-                                            {chartData.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                            {/* Same hover behaviour as the other donuts: the slice
+                                                under the pointer keeps its colour while the rest go
+                                                faint and pale. --slice-glow is the slice's own fill,
+                                                so no colour changes. See .donut-slice in index.css. */}
+                                            {chartData.map((_: any, i: number) => {
+                                                const color = COLORS[i % COLORS.length];
+                                                return (
+                                                    <Cell
+                                                        key={i}
+                                                        fill={color}
+                                                        className="donut-slice"
+                                                        style={{ '--slice-glow': color } as CSSProperties}
+                                                    />
+                                                );
+                                            })}
                                         </Pie>
-                                        <RechartsTooltip contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #f1f5f9', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '11px', fontWeight: '800' }} />
+                                        {/* Was the default tooltip: a bare count ("Other Content :
+                                            5099") on a card hard-coded to #fff, which stayed white in
+                                            dark mode. formatTime is what the rest of this page uses
+                                            for the same figure. */}
+                                        <RechartsTooltip content={<PieShareTooltip total={chartTotal} formatValue={formatTime} />} />
                                     </PieChart>
                                 </ResponsiveContainer>
+                            )}
+                            {/* pointer-events-none, or the label would sit over the
+                                middle of the ring and swallow hovers on the slices
+                                nearest it. */}
+                            {apps.length > 0 && topShare && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span className="text-2xl font-black text-text-main leading-none tabular-nums">
+                                        {topShare.percent}%
+                                    </span>
+                                    <span className="text-[9px] font-bold text-text-muted mt-1.5 tracking-[0.1em] uppercase">
+                                        Top {topShare.named}
+                                    </span>
+                                </div>
                             )}
                         </div>
 

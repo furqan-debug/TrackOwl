@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, type CSSProperties } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '../lib/supabase';
@@ -20,7 +20,7 @@ import {
 } from 'recharts';
 import {
     PageLayout, StatMetric, FilterSelect,
-    LoadingState, EmptyState, RefreshButton
+    LoadingState, EmptyState, RefreshButton, PieShareTooltip
 } from '../components/ui';
 import clsx from 'clsx';
 import Lenis from 'lenis';
@@ -101,6 +101,10 @@ export function Reports() {
     const [loading, setLoading] = useState(true);
     const [dailyActivity, setDailyActivity] = useState<{ date: string; activity: number; minutes: number }[]>([]);
     const [appBreakdown, setAppBreakdown] = useState<{ name: string; value: number }[]>([]);
+    // The donut draws the top 8 apps, so a share is of those 8 and not of all
+    // tracked time — otherwise the ring would be a full circle whose slices
+    // added to less than 100%.
+    const appBreakdownTotal = appBreakdown.reduce((sum, a) => sum + (Number(a.value) || 0), 0);
     const [screenshotCount, setScreenshotCount] = useState(0);
     const [totalSessions, setTotalSessions] = useState(0);
     const [totalMins, setTotalMins] = useState(0);
@@ -750,11 +754,25 @@ export function Reports() {
                                                     paddingAngle={4}
                                                     dataKey="value"
                                                 >
-                                                    {appBreakdown.map((_, i) => (
-                                                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />
-                                                    ))}
+                                                    {/* Same hover behaviour as the dashboard donut: the
+                                                        slice under the pointer keeps its colour while the
+                                                        rest go faint and pale. --slice-glow is the slice's
+                                                        own fill, so no colour changes here. See
+                                                        .donut-slice in index.css. */}
+                                                    {appBreakdown.map((_, i) => {
+                                                        const color = CHART_COLORS[i % CHART_COLORS.length];
+                                                        return (
+                                                            <Cell
+                                                                key={i}
+                                                                fill={color}
+                                                                strokeWidth={0}
+                                                                className="donut-slice"
+                                                                style={{ '--slice-glow': color } as CSSProperties}
+                                                            />
+                                                        );
+                                                    })}
                                                 </Pie>
-                                                <Tooltip content={<CustomTooltip />} />
+                                                <Tooltip content={<PieShareTooltip total={appBreakdownTotal} />} />
                                             </PieChart>
                                         </ResponsiveContainer>
                                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
@@ -769,8 +787,11 @@ export function Reports() {
                                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
                                                     <span className="text-[11px] font-bold text-text-main truncate max-w-[120px] group-hover:text-primary transition-colors">{item.name}</span>
                                                 </div>
+                                                {/* app_stats gives minutes, and this printed the raw
+                                                    number — "37052" beside a header reading "940h 34m",
+                                                    which reads as a count rather than a duration. */}
                                                 <span className="text-[10px] font-bold text-text-muted tabular-nums">
-                                                    {item.value}
+                                                    {formatDuration(item.value)}
                                                 </span>
                                             </div>
                                         ))}

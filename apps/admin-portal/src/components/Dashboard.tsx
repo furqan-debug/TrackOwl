@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef, type CSSProperties } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import {
@@ -20,6 +20,7 @@ import {
     orgLocalToUtc
 } from '../lib/dataUtils';
 import { chartColorAt } from '../lib/projectColors';
+import { onProjectsChanged } from '../lib/projectsCache';
 import {
     ResponsiveContainer,
     AreaChart,
@@ -77,6 +78,16 @@ interface AppUsage {
 let dashboardCache: any = null;
 let dashboardCacheWeek: string | null = null;
 let dashboardCacheUser: string | null = null;
+
+// The donut is coloured from the projects table and those colours are cached
+// here. The key is date plus user, and editing a project changes neither, so
+// saving a new colour left the ring painting the old one until the page was
+// reloaded. Clear it whenever a project changes.
+onProjectsChanged(() => {
+    dashboardCache = null;
+    dashboardCacheWeek = null;
+    dashboardCacheUser = null;
+});
 
 
 interface DashStats {
@@ -668,15 +679,31 @@ export function Dashboard() {
                                                     innerRadius={70}
                                                     outerRadius={95}
                                                     paddingAngle={8}
+                                                    // Recharts outlines every sector in white by default.
+                                                    // On a dark card that is a hard white edge around each
+                                                    // slice, and on the slivers it is most of the slice.
+                                                    // The other donuts in the portal already set this.
+                                                    stroke="none"
                                                     dataKey="minutes"
                                                 >
                                                     {/* The project's own colour, so the ring matches the
                                                         swatch chosen on the project and the dot everywhere
                                                         else. A project with none set falls back to the
                                                         palette by position. */}
-                                                    {projectActivity.map((proj, index) => (
-                                                        <Cell key={`cell-${index}`} fill={proj.color || chartColorAt(index)} />
-                                                    ))}
+                                                    {projectActivity.map((proj, index) => {
+                                                        const color = proj.color || chartColorAt(index);
+                                                        return (
+                                                            <Cell
+                                                                key={`cell-${index}`}
+                                                                fill={color}
+                                                                className="donut-slice"
+                                                                // The halo colour follows the slice, so it is
+                                                                // the project's own colour and never a shared
+                                                                // accent. See .donut-slice in index.css.
+                                                                style={{ '--slice-glow': color } as CSSProperties}
+                                                            />
+                                                        );
+                                                    })}
                                                 </Pie>
                                                 {/* Theme tokens, not #ffffff and #000000. A white card
                                                     with black text is a light-mode tooltip that stayed
@@ -798,7 +825,7 @@ export function Dashboard() {
                                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/ss:opacity-100 transition-opacity duration-300" />
 
                                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/ss:opacity-100 transition-all duration-300 scale-90 group-hover/ss:scale-100">
-                                                                    <div className="px-4 py-2 rounded-xl glass-panel text-[11px] font-bold text-slate-900 shadow-xl border-white/40">Inspect</div>
+                                                                    <div className="px-4 py-2 rounded-xl glass-panel text-[11px] font-bold text-text-main shadow-xl border-border">Inspect</div>
                                                                 </div>
 
                                                                 <div className="absolute bottom-3 right-3 translate-y-1 group-hover/ss:translate-y-0 transition-transform duration-300">

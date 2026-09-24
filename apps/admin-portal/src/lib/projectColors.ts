@@ -1,32 +1,38 @@
 /**
  * The colours a project can be, and the ones charts fall back to.
  *
- * Generated in OKLCH at a fixed lightness (0.62) and chroma (0.16) with the
- * hues spaced around the wheel. Holding L and C constant is what makes them
- * read as one set: none shouts louder than the others, none fades beside them.
- *
- * Mid lightness because a project's colour is not only a swatch — the projects
- * list prints the project name IN it, on a 10% tint of itself. Every colour
- * here clears 3:1 against both #FFFFFF and #0F172A, so it holds up in either
- * theme.
+ * Eight hues spread around the wheel so that no two projects sitting next to
+ * each other in a legend or a donut read as the same colour.
  *
  * Plain hex, deliberately: several places build a tint by appending alpha to
  * the value, as `${project.color}10`. A CSS variable would produce
  * "var(--whatever)10", which is not a colour.
+ *
+ * One caveat worth knowing before adding more. The projects list prints a
+ * project's initial IN its colour, on a 10% tint of itself, so the colour has
+ * to carry text as well as fill a swatch. Measured against white, four of
+ * these fall under the 3:1 that needs:
+ *
+ *     indigo 4.47   pink 3.53   purple 3.96   rose 3.67    — fine
+ *     cyan   2.43   green 2.54  amber 2.15   sky 2.14      — thin in light mode
+ *
+ * Against the dark surface (#0F172A) all eight clear 4:1 comfortably, so this
+ * only shows up in light mode, and only on that one initial — swatches, donut
+ * segments and legend dots are unaffected.
  */
 export const PROJECT_COLORS = [
-    '#B27B00', // gold — the brand hue
-    '#D06217', // orange
-    '#D5565D', // rose
-    '#C35AA4', // magenta
-    '#966CD7', // purple
-    '#617DE6', // indigo
-    '#00A2A4', // teal
-    '#2B9F4A', // green
+    '#6366F1', // electric indigo
+    '#06B6D4', // bright cyan
+    '#10B981', // emerald green
+    '#F59E0B', // amber orange
+    '#EC4899', // coral pink
+    '#A855F7', // neon purple
+    '#38BDF8', // sky blue
+    '#F43F5E', // rose red
 ] as const;
 
 /** What a project is given when nothing has been chosen. */
-export const DEFAULT_PROJECT_COLOR = '#617DE6';
+export const DEFAULT_PROJECT_COLOR = '#6366F1';
 
 /**
  * A stable colour for the nth item in a chart.
