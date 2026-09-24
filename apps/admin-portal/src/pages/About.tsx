@@ -21,16 +21,17 @@ export function About() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-white font-sans tracking-[0.03em] text-slate-900 overflow-x-hidden flex flex-col justify-between">
+        <div className="min-h-screen bg-white font-sans tracking-[0.03em] text-slate-900 overflow-x-clip flex flex-col justify-between">
+            {/* Navigation */}
+            <header className="sticky top-0 z-[100] bg-[#001338]/95 backdrop-blur-xl border-b border-white/10 py-5 shadow-md">
+                <nav className="mx-auto flex max-w-[1400px] h-14 items-center justify-between px-6">
+                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+                        <img src={HeaderLogo} alt="TrackOwl" className="h-10 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
+                    </div>
+                </nav>
+            </header>
+
             <div>
-                {/* Navigation */}
-                <header className="bg-[#001338] py-5 shadow-md">
-                    <nav className="mx-auto flex max-w-[1400px] h-14 items-center justify-between px-6">
-                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-                            <img src={HeaderLogo} alt="TrackOwl" className="h-10 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
-                        </div>
-                    </nav>
-                </header>
 
                 {/* Hero / Statement Section */}
                 <section className="bg-[#001338] text-white py-24 relative overflow-hidden">
@@ -52,8 +53,8 @@ export function About() {
                 <main className="mx-auto max-w-[1200px] px-6 lg:px-8 py-20 relative z-20">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
                         
-                        {/* Sticky Left Sidebar */}
-                        <div className="lg:col-span-4 lg:sticky lg:top-28 h-fit">
+                        {/* Left Sidebar */}
+                        <div className="lg:col-span-4 h-fit">
                             <h2 className="text-2xl font-black text-[#001338] uppercase tracking-wider mb-6 border-l-4 border-[#F7BC00] pl-4">
                                 The TrackOwl Way
                             </h2>
