@@ -23,7 +23,17 @@ interface MemberInfo {
     idle_limit?: number | null;
 }
 
-const COLORS = ['var(--chart-pie-slot-0)', '#4f46e5', '#4338ca', '#3730a3', '#312e81', '#1e1b4b'];
+// Every slot is a token, so the ramp follows the theme. Only the first one did
+// before; the other five were literal indigos that stayed put when the theme
+// flipped, and on the dark card they were darker than the card itself.
+const COLORS = [
+    'var(--chart-pie-slot-0)',
+    'var(--chart-pie-slot-1)',
+    'var(--chart-pie-slot-2)',
+    'var(--chart-pie-slot-3)',
+    'var(--chart-pie-slot-4)',
+    'var(--chart-pie-slot-5)',
+];
 
 // categorizeApp logic moved to activityService
 
