@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef, type CSSProperties } from 'react';
 import { activityService } from '../services/activity.service';
 import type { AppEntry } from '../services/activity.service';
 import { useAuth } from '../context/AuthContext';
@@ -271,7 +271,21 @@ export function AppUsage() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie data={chartData} cx="50%" cy="50%" innerRadius={70} outerRadius={95} paddingAngle={4} dataKey="value" stroke="none">
-                                            {chartData.map((_: any, i: number) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                                            {/* Same hover behaviour as the other donuts: the slice
+                                                under the pointer keeps its colour while the rest go
+                                                faint and pale. --slice-glow is the slice's own fill,
+                                                so no colour changes. See .donut-slice in index.css. */}
+                                            {chartData.map((_: any, i: number) => {
+                                                const color = COLORS[i % COLORS.length];
+                                                return (
+                                                    <Cell
+                                                        key={i}
+                                                        fill={color}
+                                                        className="donut-slice"
+                                                        style={{ '--slice-glow': color } as CSSProperties}
+                                                    />
+                                                );
+                                            })}
                                         </Pie>
                                         <RechartsTooltip contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #f1f5f9', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '11px', fontWeight: '800' }} />
                                     </PieChart>
