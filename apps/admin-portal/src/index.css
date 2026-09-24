@@ -722,3 +722,24 @@
     transition: none;
   }
 }
+
+/* Time Distribution donut: the hovered slice lifts on its own colour.
+   --slice-glow is set per Cell to that project's colour, so the halo always
+   matches the swatch on the project rather than one shared accent.
+
+   The reference this came from used 10px and 20px shadows, which read as a
+   bloom over a dark card. Halved to 5px and 10px: enough to pick the slice
+   out, not enough to wash into its neighbours. */
+.donut-slice {
+  transition: filter 0.25s ease;
+}
+
+.donut-slice:hover {
+  filter: drop-shadow(0 0 5px var(--slice-glow)) drop-shadow(0 0 10px var(--slice-glow));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .donut-slice {
+    transition: none;
+  }
+}
