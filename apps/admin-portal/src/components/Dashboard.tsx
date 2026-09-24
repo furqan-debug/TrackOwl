@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef, type CSSProperties } from 'react';
 import { motion } from 'framer-motion';
 import { supabase } from '../lib/supabase';
 import {
@@ -674,9 +674,20 @@ export function Dashboard() {
                                                         swatch chosen on the project and the dot everywhere
                                                         else. A project with none set falls back to the
                                                         palette by position. */}
-                                                    {projectActivity.map((proj, index) => (
-                                                        <Cell key={`cell-${index}`} fill={proj.color || chartColorAt(index)} />
-                                                    ))}
+                                                    {projectActivity.map((proj, index) => {
+                                                        const color = proj.color || chartColorAt(index);
+                                                        return (
+                                                            <Cell
+                                                                key={`cell-${index}`}
+                                                                fill={color}
+                                                                className="donut-slice"
+                                                                // The halo colour follows the slice, so it is
+                                                                // the project's own colour and never a shared
+                                                                // accent. See .donut-slice in index.css.
+                                                                style={{ '--slice-glow': color } as CSSProperties}
+                                                            />
+                                                        );
+                                                    })}
                                                 </Pie>
                                                 {/* Theme tokens, not #ffffff and #000000. A white card
                                                     with black text is a light-mode tooltip that stayed
