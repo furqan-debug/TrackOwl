@@ -783,8 +783,11 @@ export function Reports() {
                                                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
                                                     <span className="text-[11px] font-bold text-text-main truncate max-w-[120px] group-hover:text-primary transition-colors">{item.name}</span>
                                                 </div>
+                                                {/* app_stats gives minutes, and this printed the raw
+                                                    number — "37052" beside a header reading "940h 34m",
+                                                    which reads as a count rather than a duration. */}
                                                 <span className="text-[10px] font-bold text-text-muted tabular-nums">
-                                                    {item.value}
+                                                    {formatDuration(item.value)}
                                                 </span>
                                             </div>
                                         ))}
