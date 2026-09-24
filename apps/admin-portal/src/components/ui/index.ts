@@ -16,3 +16,4 @@ export { Modal } from './Modal';
 export { StatMetric } from './StatMetric';
 export { ScreenshotModal } from './ScreenshotModal';
 export { DatePicker } from './DatePicker';
+export { PieShareTooltip } from './PieShareTooltip';
