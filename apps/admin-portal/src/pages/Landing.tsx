@@ -1,30 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useInView } from 'framer-motion';
 import {
     Check,
     Monitor,
-    Clock,
     TrendingUp,
-    BarChart3,
     Globe,
-    Briefcase,
-    MessageSquare,
     Users,
     Shield,
-    Lock,
     Eye,
     ChevronDown,
     ArrowRight,
-    FileText,
     Download,
     ArrowUp,
-    Palette,
     Laptop,
-    ShoppingCart,
     X,
     Send,
-    Loader2
+    Loader2,
+    Timer,
+    Radar,
+    House,
+    UserSearch,
+    UserPlus,
+    Code,
+    Headset,
+    CalendarClock,
+    Building2,
+    Handshake,
+    Megaphone,
+    PenTool,
+    ShoppingBag,
+    LineChart,
+    ClipboardList,
+    ShieldCheck,
+    HeartHandshake,
+    type LucideIcon
 } from 'lucide-react';
 import { twMerge } from 'tailwind-merge';
 
@@ -326,6 +336,56 @@ ${message}`
     );
 }
 
+/** Seconds each testimonial holds before the next one slides in. */
+const QUOTE_INTERVAL = 7;
+
+/** Counts up from 0 to `to` once the metric bar fades in. */
+function CountUp({ to, start = true, decimals = 1, suffix = '', delay = 0, duration = 1.4 }: { to: number; start?: boolean; decimals?: number; suffix?: string; delay?: number; duration?: number }) {
+    const [value, setValue] = useState(0);
+
+    useEffect(() => {
+        if (!start) return;
+        let frame = 0;
+        let started: number | null = null;
+        const step = (ts: number) => {
+            if (started === null) started = ts;
+            const p = Math.min((ts - started) / (duration * 1000), 1);
+            setValue(to * (1 - Math.pow(1 - p, 3)));
+            if (p < 1) frame = requestAnimationFrame(step);
+        };
+        const timer = window.setTimeout(() => { frame = requestAnimationFrame(step); }, delay * 1000);
+        return () => { window.clearTimeout(timer); cancelAnimationFrame(frame); };
+    }, [to, start, delay, duration]);
+
+    return <>{value.toFixed(decimals)}{suffix}</>;
+}
+
+/** Trending-up icon that draws itself from the starting dot upward. */
+function TrendLine({ className, start = true, delay = 0 }: { className?: string; start?: boolean; delay?: number }) {
+    return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden>
+            <motion.circle
+                cx="2" cy="17" r="1.8" fill="currentColor" stroke="none"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={start ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }}
+                transition={{ duration: 0.3, delay }}
+            />
+            <motion.polyline
+                points="2 17 8.5 10.5 13.5 15.5 22 7"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: start ? 1 : 0 }}
+                transition={{ duration: 1.4, delay: delay + 0.3, ease: 'easeInOut' }}
+            />
+            <motion.polyline
+                points="16 7 22 7 22 13"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: start ? 1 : 0 }}
+                transition={{ duration: 0.3, delay: delay + 1.6 }}
+            />
+        </svg>
+    );
+}
+
 export function Landing() {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
@@ -410,97 +470,120 @@ export function Landing() {
         return () => clearInterval(interval);
     }, [headlineSlides.length]);
 
-    const metrics = [
-        { title: '99.9%', subtitle: 'Platform uptime', icon: TrendingUp, color: 'text-green-500' },
+    const metricsRef = useRef<HTMLDivElement>(null);
+    // The bar animates the first time it is scrolled into view, not on page load.
+    const metricsInView = useInView(metricsRef, { once: true, amount: 0.5 });
+
+    const quotesRef = useRef<HTMLDivElement>(null);
+    const quotesInView = useInView(quotesRef, { once: true, amount: 0.3 });
+    const [activeQuote, setActiveQuote] = useState(0);
+    const [quotesPaused, setQuotesPaused] = useState(false);
+
+    // Quotes advance on their own, and hold while the reader is hovering them.
+    useEffect(() => {
+        if (quotesPaused || !quotesInView) return;
+        const interval = setInterval(() => {
+            setActiveQuote((prev) => (prev + 1) % testimonials.length);
+        }, QUOTE_INTERVAL * 1000);
+        return () => clearInterval(interval);
+    }, [quotesPaused, quotesInView]);
+
+    const stepsRef = useRef<HTMLDivElement>(null);
+    const stepsInView = useInView(stepsRef, { once: true, amount: 0.15 });
+
+    const industriesRef = useRef<HTMLDivElement>(null);
+    const industriesInView = useInView(industriesRef, { once: true, amount: 0.2 });
+
+    const featuresRef = useRef<HTMLDivElement>(null);
+    const featuresInView = useInView(featuresRef, { once: true, amount: 0.2 });
+
+    const metrics: { title: string; subtitle: string; icon: LucideIcon; color: string; countTo?: number }[] = [
+        { title: '99.9%', subtitle: 'Platform uptime', icon: TrendingUp, color: 'text-green-500', countTo: 99.9 },
         { title: 'Real-time', subtitle: 'Workforce insights', icon: Eye, color: 'text-blue-500' },
         { title: 'Enterprise-grade', subtitle: 'Security', icon: Shield, color: 'text-blue-600' },
         { title: 'Ethical &', subtitle: 'Transparent tracking', icon: Users, color: 'text-blue-500' }
     ];
 
+    // One brand-consistent icon treatment: navy tile, gold glyph, inverting on hover.
     const features = [
         {
             title: 'Smart time tracking',
             desc: 'Automatically track work hours, productivity trends, and active sessions with precision.',
-            icon: Clock,
-            color: 'text-green-500',
-            bg: 'bg-green-50'
+            icon: Timer
         },
         {
             title: 'Workforce visibility',
             desc: 'Gain real-time operational visibility across remote and distributed teams.',
-            icon: Users,
-            color: 'text-blue-500',
-            bg: 'bg-blue-50'
+            icon: Radar
         },
         {
             title: 'Productivity analytics',
             desc: 'Transform workforce data into actionable insights with detailed reports and dashboards.',
-            icon: BarChart3,
-            color: 'text-purple-500',
-            bg: 'bg-purple-50'
+            icon: LineChart
         },
         {
             title: 'Team activity reports',
             desc: 'Review productivity patterns, attendance, and operational performance in one place.',
-            icon: FileText,
-            color: 'text-yellow-500',
-            bg: 'bg-yellow-50'
+            icon: ClipboardList
         },
         {
             title: 'Enterprise security',
             desc: 'Built with enterprise-grade infrastructure, encryption, and secure access controls.',
-            icon: Lock,
-            color: 'text-green-600',
-            bg: 'bg-green-50'
+            icon: ShieldCheck
         },
         {
             title: 'Ethical monitoring',
             desc: 'Transparent, consent-based tracking built around trust and accountability.',
-            icon: Shield,
-            color: 'text-orange-500',
-            bg: 'bg-orange-50'
+            icon: HeartHandshake
         }
     ];
 
+    // Blue-family treatment, deliberately distinct from the navy/gold feature tiles.
     const industries = [
-        { name: 'Remote teams', icon: Globe, color: 'text-yellow-500' },
-        { name: 'Staffing agencies', icon: Users, color: 'text-blue-400' },
-        { name: 'Software houses', icon: Monitor, color: 'text-blue-600' },
-        { name: 'Customer support teams', icon: MessageSquare, color: 'text-blue-500' },
-        { name: 'Virtual assistants', icon: Users, color: 'text-blue-400' },
-        { name: 'Enterprise operations', icon: Briefcase, color: 'text-blue-600' },
-        { name: 'Distributed workforces', icon: Globe, color: 'text-blue-500' },
-        { name: 'Consulting firms', icon: FileText, color: 'text-yellow-600' },
-        { name: 'Marketing agencies', icon: TrendingUp, color: 'text-emerald-500' },
-        { name: 'Design studios', icon: Palette, color: 'text-pink-500' },
-        { name: 'Freelancers & Contractors', icon: Laptop, color: 'text-indigo-500' },
-        { name: 'E-commerce teams', icon: ShoppingCart, color: 'text-cyan-500' }
+        { name: 'Remote teams', icon: House },
+        { name: 'Staffing agencies', icon: UserSearch },
+        { name: 'Software houses', icon: Code },
+        { name: 'Customer support teams', icon: Headset },
+        { name: 'Virtual assistants', icon: CalendarClock },
+        { name: 'Enterprise operations', icon: Building2 },
+        { name: 'Distributed workforces', icon: Globe },
+        { name: 'Consulting firms', icon: Handshake },
+        { name: 'Marketing agencies', icon: Megaphone },
+        { name: 'Design studios', icon: PenTool },
+        { name: 'Freelancers & Contractors', icon: Laptop },
+        { name: 'E-commerce teams', icon: ShoppingBag }
     ];
 
     const steps = [
-        { num: 1, title: 'Create your admin account', desc: 'Set up your TrackOwl™ workspace with secure, free admin account creation and enterprise-ready onboarding.', color: 'bg-green-500', text: 'text-green-500' },
-        { num: 2, title: 'Create your organization', desc: 'Configure your organization structure, workforce settings, operational policies, and tracking preferences.', color: 'bg-blue-600', text: 'text-blue-600' },
-        { num: 3, title: 'Invite your team members', desc: 'Easily invite employees, contractors, and remote staff to join your organization\'s workspace.', color: 'bg-orange-500', text: 'text-orange-500' },
-        { num: 4, title: 'Install TrackOwl™', desc: 'Deploy the TrackOwl™ desktop application with secure, consent-based workforce tracking.', color: 'bg-green-500', text: 'text-green-500' },
-        { num: 5, title: 'Monitor operations', desc: 'Track productivity, attendance, app usage, screenshots, and workforce activity in real time through a centralized dashboard.', color: 'bg-blue-600', text: 'text-blue-600' },
-        { num: 6, title: 'Optimize performance', desc: 'Use analytics, reports, and operational insights to improve accountability, efficiency, and team performance.', color: 'bg-orange-500', text: 'text-orange-500' }
+        { num: 1, title: 'Create your admin account', desc: 'Set up your TrackOwl™ workspace with secure, free admin account creation and enterprise-ready onboarding.', icon: UserPlus },
+        { num: 2, title: 'Create your organization', desc: 'Configure your organization structure, workforce settings, operational policies, and tracking preferences.', icon: Building2 },
+        { num: 3, title: 'Invite your team members', desc: 'Easily invite employees, contractors, and remote staff to join your organization\'s workspace.', icon: Send },
+        { num: 4, title: 'Install TrackOwl™', desc: 'Deploy the TrackOwl™ desktop application with secure, consent-based workforce tracking.', icon: Download },
+        { num: 5, title: 'Monitor operations', desc: 'Track productivity, attendance, app usage, screenshots, and workforce activity in real time through a centralized dashboard.', icon: Monitor },
+        { num: 6, title: 'Optimize performance', desc: 'Use analytics, reports, and operational insights to improve accountability, efficiency, and team performance.', icon: TrendingUp }
     ];
 
     const testimonials = [
         {
             quote: "TrackOwl™ gave us complete operational visibility across our remote workforce without creating a culture of micromanagement.",
             author: "Operations Director",
-            role: "Remote BPO"
+            role: "Remote BPO",
+            avatar: "https://i.pravatar.cc/160?img=10",
+            highlight: "Visibility without micromanagement"
         },
         {
             quote: "The analytics and reporting capabilities helped us identify inefficiencies we never noticed before.",
             author: "Founder",
-            role: "Digital Agency"
+            role: "Digital Agency",
+            avatar: "https://i.pravatar.cc/160?img=11",
+            highlight: "Inefficiencies we never noticed"
         },
         {
             quote: "Clean interface, powerful insights, and enterprise-level reliability.",
             author: "Workforce Manager",
-            role: "Distributed Team"
+            role: "Distributed Team",
+            avatar: "https://i.pravatar.cc/160?img=12",
+            highlight: "Enterprise-level reliability"
         }
     ];
 
@@ -573,8 +656,8 @@ export function Landing() {
                             onClick={() => navigate('/signup')}
                             className="group relative overflow-hidden px-5 sm:px-6 py-2 sm:py-2.5 bg-[#facc15] text-[#001338] text-sm sm:text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] cursor-pointer transition-all hover:scale-105 active:scale-95"
                         >
-                            <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
-                            <span className="relative z-10">Start free trial</span>
+                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
+                            <span className="relative z-10 transition-colors duration-300 delay-700">Start free trial</span>
                         </button>
                     </div>
                 </nav>
@@ -642,14 +725,15 @@ export function Landing() {
                                     onClick={() => navigate('/signup')}
                                     className="group relative overflow-hidden w-full sm:w-auto px-8 py-3.5 bg-[#facc15] text-[#001338] text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
                                 >
-                                    <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
-                                    <span className="relative z-10">Start free trial</span>
+                                    <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
+                                    <span className="relative z-10 transition-colors duration-300 delay-700">Start free trial</span>
                                     <ArrowRight className="relative z-10 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                                 </button>
                                 <button
                                     onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
-                                    className="w-full sm:w-auto px-8 py-3.5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-base font-bold rounded-full transition-all active:scale-95 flex items-center justify-center">
-                                    Book a demo
+                                    className="group relative overflow-hidden w-full sm:w-auto px-8 py-3.5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-base font-bold rounded-full transition-all active:scale-95 flex items-center justify-center">
+                                    <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: 'rgba(255,255,255,0.16)' }}><i /></span>
+                                    <span className="relative z-10">Book a demo</span>
                                 </button>
                             </motion.div>
 
@@ -669,43 +753,67 @@ export function Landing() {
 
                         {/* Hero Dashboard Mockup Container */}
                         <div className="col-span-1 lg:col-span-7 relative lg:-mr-32 xl:-mr-48 z-20 mt-12 lg:mt-0 w-full min-w-0">
+                            {/* Hover scale lives on its own wrapper so it never inherits the entrance delay. */}
                             <motion.div
-                                initial={{ opacity: 0, y: 40, rotateY: 10 }}
-                                animate={{ opacity: 1, y: 0, rotateY: 0 }}
-                                transition={{ duration: 0.8, delay: 0.4 }}
-                                className="relative rounded-[1.5rem] border-[6px] border-slate-800/80 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] bg-white overflow-hidden"
+                                whileHover={{ scale: 1.03 }}
+                                transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+                                className="will-change-transform"
                             >
-                                {/* Browser-like Header */}
-                                <div className="h-10 bg-slate-800/80 flex items-center px-4 gap-2 border-b border-white/5">
-                                    <div className="flex gap-1.5">
-                                        <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                                        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-                                        <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                                <motion.div
+                                    initial={{ opacity: 0, y: 40, rotateY: 10 }}
+                                    animate={{ opacity: 1, y: 0, rotateY: 0 }}
+                                    transition={{ duration: 0.8, delay: 0.4 }}
+                                    className="relative rounded-[1.5rem] border-[6px] border-slate-800/80 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] bg-white overflow-hidden"
+                                >
+                                    {/* Browser-like Header */}
+                                    <div className="h-10 bg-slate-800/80 flex items-center px-4 gap-2 border-b border-white/5">
+                                        <div className="flex gap-1.5">
+                                            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                                            <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Mockup Content (Simulated Dashboard) */}
-                                <img src={HeroDashboard} alt="Dashboard Preview" className="w-full h-auto object-cover border-t border-white/10" />
+                                    {/* Mockup Content (Simulated Dashboard) */}
+                                    <img src={HeroDashboard} alt="Dashboard Preview" className="w-full h-auto object-cover border-t border-white/10" />
+                                </motion.div>
                             </motion.div>
                         </div>
                     </div>
                 </section>
 
                 {/* HERO METRICS OVERLAP */}
-                <div className="relative z-30 mx-auto max-w-[1200px] px-4 -mt-20 lg:-mt-24 mb-16">
-                    <div className="bg-white rounded-[2rem] md:rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-4 px-6 md:px-8 flex flex-col md:flex-row items-center justify-between border border-slate-100">
+                <div ref={metricsRef} className="relative z-30 mx-auto max-w-[1200px] px-4 -mt-12 md:-mt-14 mb-16">
+                    <div className="bg-white rounded-[2rem] md:rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-6 md:py-8 px-6 md:px-8 flex flex-col md:flex-row items-center justify-between border border-slate-100">
                         {metrics.map((m, i) => {
                             const Icon = m.icon;
+                            const appear = 0.15 + i * 0.35;
                             return (
-                                <div key={i} className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start py-3 md:py-0 border-b md:border-b-0 md:border-r border-slate-100 last:border-0 px-4">
+                                <motion.div
+                                    key={i}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: metricsInView ? 1 : 0 }}
+                                    transition={{ duration: 0.5, delay: appear, ease: 'easeOut' }}
+                                    className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start py-3 md:py-0 border-b md:border-b-0 md:border-r border-slate-100 last:border-0 px-4"
+                                >
                                     <div className={`p-2 rounded-lg bg-slate-50 ${m.color}`}>
-                                        <Icon className="w-6 h-6" strokeWidth={2.5} />
+                                        {m.countTo !== undefined
+                                            ? <TrendLine className="w-6 h-6" start={metricsInView} delay={appear + 0.2} />
+                                            : <Icon
+                                                className={`w-6 h-6 ${metricsInView ? 'metric-icon-draw' : 'opacity-0'}`}
+                                                strokeWidth={2.5}
+                                                style={{ '--draw-delay': `${appear + 0.2}s` } as CSSProperties}
+                                            />}
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-base font-black text-slate-900 leading-tight">{m.title}</span>
+                                        <span className="text-base font-black text-slate-900 leading-tight tabular-nums">
+                                            {m.countTo !== undefined
+                                                ? <CountUp to={m.countTo} start={metricsInView} suffix="%" delay={appear + 0.2} duration={1.7} />
+                                                : m.title}
+                                        </span>
                                         <span className="text-xs font-semibold text-slate-500 leading-tight">{m.subtitle}</span>
                                     </div>
-                                </div>
+                                </motion.div>
                             );
                         })}
                     </div>
@@ -720,19 +828,29 @@ export function Landing() {
                             <p className="text-lg font-medium text-slate-500">Everything you need to track, monitor, and optimize your team performance.</p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                        <div ref={featuresRef} className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
                             {features.map((f, i) => {
                                 const Icon = f.icon;
+                                // Row by row: both cards in a row come in together, sliding
+                                // in from their own side of the grid.
+                                const row = Math.floor(i / 2);
+                                const fromX = i % 2 === 0 ? -24 : 24;
                                 return (
-                                    <div key={i} className="p-6 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow flex gap-5 items-start">
-                                        <div className={twMerge("w-12 h-12 rounded-2xl flex items-center justify-center shrink-0", f.bg, f.color)}>
-                                            <Icon className="w-6 h-6" strokeWidth={2.5} />
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, x: fromX }}
+                                        animate={featuresInView ? { opacity: 1, x: 0 } : { opacity: 0, x: fromX }}
+                                        transition={{ duration: 0.9, delay: row * 0.18, ease: [0.22, 1, 0.36, 1] }}
+                                        className="group p-6 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-[#facc15]/40 transition-[box-shadow,border-color] duration-300 flex gap-5 items-start"
+                                    >
+                                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-[#001b4d] text-[#facc15] ring-1 ring-[#001b4d]/10 shadow-[0_6px_16px_-6px_rgba(0,27,77,0.6)] group-hover:bg-[#facc15] group-hover:text-[#001b4d] group-hover:shadow-[0_6px_18px_-6px_rgba(250,204,21,0.8)] transition-colors duration-300">
+                                            <Icon className="w-6 h-6" strokeWidth={2} />
                                         </div>
                                         <div>
                                             <h4 className="text-xl font-bold text-slate-900 mb-2">{f.title}</h4>
                                             <p className="text-base font-medium text-slate-500 leading-relaxed text-justify">{f.desc}</p>
                                         </div>
-                                    </div>
+                                    </motion.div>
                                 );
                             })}
                         </div>
@@ -741,11 +859,17 @@ export function Landing() {
 
                 {/* PLATFORM SHOWCASE SECTION */}
                 <section id="showcase" className="py-24 bg-white overflow-hidden">
-                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                        <div className="relative">
-                            <div className="rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] overflow-hidden flex">
-                                <img src={ShowcaseDashboard} alt="Platform Showcase" className="w-full h-auto object-cover" />
-                            </div>
+                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
+                        {/* Reaches 40px into the column gap so the shot gains width on its right edge. */}
+                        <div className="relative lg:-mr-10">
+                            {/* The card is sized by the screenshot itself: no crop, no padding around it. */}
+                            <motion.div
+                                whileHover={{ scale: 1.03 }}
+                                transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+                                className="will-change-transform rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] overflow-hidden flex"
+                            >
+                                <img src={ShowcaseDashboard} alt="Platform Showcase" className="w-full h-auto" />
+                            </motion.div>
                         </div>
 
                         <div>
@@ -764,8 +888,8 @@ export function Landing() {
                                     'Screenshot visibility system'
                                 ].map((hl, i) => (
                                     <div key={i} className="flex items-start gap-3">
-                                        <div className="w-5 h-5 rounded-full bg-blue-600/15 flex items-center justify-center shrink-0 mt-0.5">
-                                            <Check className="w-3.5 h-3.5 text-blue-600" strokeWidth={3.5} />
+                                        <div className="w-5 h-5 rounded-full bg-[#facc15] flex items-center justify-center shrink-0 mt-0.5">
+                                            <Check className="w-3.5 h-3.5 text-[#001b4d]" strokeWidth={3.5} />
                                         </div>
                                         <span className="text-sm sm:text-base font-semibold text-slate-700 leading-tight">{hl}</span>
                                     </div>
@@ -779,14 +903,22 @@ export function Landing() {
                 <section id="industries" className="py-16 bg-slate-50">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center">
                         <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d] mb-20">Built for modern businesses</h2>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-12 max-w-5xl mx-auto justify-items-center">
+                        <div ref={industriesRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-12 max-w-5xl mx-auto justify-items-center">
                             {industries.map((ind, i) => {
                                 const Icon = ind.icon;
                                 return (
-                                    <div key={i} className="flex flex-col items-center gap-3">
-                                        <Icon className={`w-10 h-10 ${ind.color}`} strokeWidth={1.5} />
-                                        <span className="text-sm font-bold text-slate-600">{ind.name}</span>
-                                    </div>
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, y: 16 }}
+                                        animate={industriesInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
+                                        transition={{ duration: 0.75, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
+                                        className="group flex flex-col items-center gap-3"
+                                    >
+                                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white text-[#18315e] ring-1 ring-[#18315e]/15 shadow-[0_4px_14px_-6px_rgba(24,49,94,0.35)] group-hover:bg-[#18315e] group-hover:text-white group-hover:ring-[#18315e] group-hover:shadow-[0_8px_20px_-6px_rgba(24,49,94,0.55)] group-hover:-translate-y-1 transition-[background-color,color,box-shadow,transform] duration-300">
+                                            <Icon className="w-6 h-6" strokeWidth={1.75} />
+                                        </div>
+                                        <span className="text-sm font-bold text-[#18315e] transition-colors duration-300">{ind.name}</span>
+                                    </motion.div>
                                 );
                             })}
                         </div>
@@ -794,120 +926,185 @@ export function Landing() {
                 </section>
 
                 {/* HOW IT WORKS */}
-                <section id="how-it-works" className="py-24 bg-white">
+                <section id="how-it-works" className="py-24 bg-[#001b4d]">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d]">Simple setup. Powerful insights.</h2>
+                            <h2 className="text-3xl font-extrabold tracking-tight text-white">Simple setup. <span className="text-[#facc15]">Powerful insights.</span></h2>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-                            {steps.map((s, i) => (
-                                <div key={i} className="relative flex flex-col items-center text-center">
-                                    {/* Arrow connector for desktop */}
-                                    {i < steps.length - 1 && (i + 1) % 3 !== 0 && (
-                                        <div className="hidden md:block absolute top-12 left-[60%] w-[80%] h-[2px] bg-yellow-400/30 z-0">
-                                            <div className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 border-t-2 border-r-2 border-yellow-400 rotate-45" />
-                                        </div>
-                                    )}
-                                    <div className="flex flex-col items-start text-left bg-slate-50 p-6 rounded-[1.5rem] border border-slate-100 shadow-sm w-full relative z-10 h-full">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <div className={`w-12 h-12 rounded-full ${s.color} text-white flex items-center justify-center text-xl font-black`}>
-                                                {s.num}
-                                            </div>
-                                            <h3 className="text-xl font-bold text-slate-900">{s.title}</h3>
-                                        </div>
-                                        <p className="text-base font-medium text-slate-500 leading-relaxed mb-6 text-justify">{s.desc}</p>
+                        <div ref={stepsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+                            {steps.map((s, i) => {
+                                const Icon = s.icon;
+                                return (
+                                    <motion.div
+                                        key={i}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={stepsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                                        transition={{ duration: 0.8, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                                        className="group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white p-7 shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#18315e]/25 hover:shadow-[0_18px_40px_-24px_rgba(24,49,94,0.45)] transition-[box-shadow,border-color] duration-300"
+                                    >
+                                        {/* Oversized step numeral, sitting behind the content as a watermark. */}
+                                        <span className="pointer-events-none absolute -right-2 -top-6 text-[7rem] font-black leading-none text-[#18315e]/[0.05] select-none">
+                                            {s.num}
+                                        </span>
 
-                                        {/* Little illustrations inside the card */}
-                                        <div className="mt-auto w-full h-24 bg-white rounded-xl border border-slate-100 flex items-center justify-center p-3">
-                                            {i === 0 && (
-                                                <div className="w-full h-full bg-green-50 rounded border border-green-100 flex items-center justify-center relative">
-                                                    <div className="w-12 h-14 bg-white border border-green-200 rounded shadow-sm flex flex-col items-center justify-center gap-2">
-                                                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center text-green-600"><Shield className="w-3 h-3" /></div>
-                                                        <div className="w-6 h-1 bg-green-200 rounded-full" />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {i === 1 && (
-                                                <div className="w-full h-full bg-blue-50 rounded border border-blue-100 flex flex-col items-center justify-center gap-1.5">
-                                                    <div className="w-8 h-4 bg-blue-500 rounded-sm shadow-sm" />
-                                                    <div className="w-12 h-px bg-blue-300" />
-                                                    <div className="flex gap-2">
-                                                        <div className="w-6 h-4 bg-blue-400 rounded-sm shadow-sm" />
-                                                        <div className="w-6 h-4 bg-blue-400 rounded-sm shadow-sm" />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {i === 2 && (
-                                                <div className="w-full h-full bg-orange-50 rounded border border-orange-100 flex items-center justify-center relative">
-                                                    <div className="w-14 h-10 bg-white border border-orange-200 rounded shadow-sm flex flex-col justify-center px-2 gap-1.5 relative z-10">
-                                                        <div className="w-full h-1 bg-orange-100 rounded-full" />
-                                                        <div className="w-2/3 h-1 bg-orange-100 rounded-full" />
-                                                        <div className="absolute -right-2 -bottom-2 w-6 h-6 bg-orange-500 rounded-full border-2 border-white flex items-center justify-center text-white font-black text-sm leading-none">+</div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {i === 3 && (
-                                                <div className="w-full h-full bg-green-50 rounded border border-green-100 flex items-center justify-center">
-                                                    <div className="relative">
-                                                        <Monitor className="w-10 h-10 text-green-500" strokeWidth={1.5} />
-                                                        <div className="absolute inset-0 flex items-center justify-center mb-1">
-                                                            <Download className="w-4 h-4 text-green-600" strokeWidth={3} />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {i === 4 && (
-                                                <div className="w-full h-full bg-blue-50 rounded border border-blue-100 flex flex-col p-2 gap-1.5">
-                                                    <div className="w-full flex gap-1.5 h-1/2">
-                                                        <div className="flex-1 bg-blue-200 rounded-sm" />
-                                                        <div className="flex-[2] bg-blue-400 rounded-sm shadow-sm" />
-                                                    </div>
-                                                    <div className="w-full flex gap-1.5 h-1/2">
-                                                        <div className="flex-1 bg-blue-300 rounded-sm shadow-sm" />
-                                                        <div className="flex-1 bg-blue-500 rounded-sm shadow-sm" />
-                                                        <div className="flex-1 bg-blue-400 rounded-sm shadow-sm" />
-                                                    </div>
-                                                </div>
-                                            )}
-                                            {i === 5 && (
-                                                <div className="w-full h-full bg-orange-50 rounded border border-orange-100 flex flex-col justify-end p-2 relative overflow-hidden">
-                                                    <TrendingUp className="w-10 h-10 text-orange-500 absolute top-2 right-2 opacity-20" />
-                                                    <div className="flex items-end justify-between gap-1 w-full h-full z-10 pt-4">
-                                                        {[30, 45, 40, 60, 55, 80, 95].map((h, j) => (
-                                                            <div key={j} className="w-full bg-gradient-to-t from-orange-400 to-orange-300 rounded-t-sm shadow-sm" style={{ height: `${h}%` }} />
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
+                                        <div className="relative flex items-center gap-4">
+                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#18315e] text-[#facc15] shadow-[0_8px_18px_-8px_rgba(24,49,94,0.7)] group-hover:scale-105 transition-transform duration-300">
+                                                <Icon className="h-5 w-5" strokeWidth={2} />
+                                            </div>
+                                            <div>
+                                                <span className="block text-[11px] font-black uppercase tracking-[0.18em] text-[#18315e]/45">Step {s.num}</span>
+                                                <h3 className="text-lg font-bold leading-snug text-[#18315e]">{s.title}</h3>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            ))}
+
+                                        <p className="relative mt-4 text-[15px] font-medium leading-relaxed text-slate-500">{s.desc}</p>
+
+                                        {/* Progress rail: fills to this step's share of the six. */}
+                                        {/* mt-auto pins every rail to the same baseline across the row. */}
+                                        <div className="relative mt-auto pt-6">
+                                            <div className="h-[3px] w-full overflow-hidden rounded-full bg-[#18315e]/10">
+                                                <div className="h-full rounded-full bg-[#18315e]" style={{ width: `${(s.num / steps.length) * 100}%` }} />
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
                         </div>
                     </div>
                 </section>
 
                 {/* TESTIMONIALS */}
-                <section className="py-16 bg-slate-50">
-                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+                <section className="py-20 bg-slate-50">
+                    <div
+                        ref={quotesRef}
+                        className="mx-auto max-w-[1200px] px-6 lg:px-8"
+                        onMouseEnter={() => setQuotesPaused(true)}
+                        onMouseLeave={() => setQuotesPaused(false)}
+                    >
                         <div className="text-center mb-12">
-                            <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d]">What teams are saying</h2>
+                            <span className="text-[#facc15] text-sm font-black uppercase tracking-[0.2em]">Customer stories</span>
+                            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#001b4d]">What teams are saying</h2>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {testimonials.map((t, i) => (
-                                <div key={i} className="p-8 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm flex flex-col justify-between relative">
-                                    <div className="absolute top-6 left-6 text-blue-100 text-6xl font-serif leading-none">"</div>
-                                    <p className="text-lg text-slate-700 font-medium mb-8 leading-relaxed relative z-10 pt-4">{t.quote}</p>
-                                    <div className="flex items-center gap-3">
-                                        <img src={`https://i.pravatar.cc/100?img=${i + 10}`} className="w-14 h-14 rounded-full" alt="" />
-                                        <div>
-                                            <div className="text-base font-bold text-slate-900">{t.author}</div>
-                                            <div className="text-sm font-semibold text-slate-500">{t.role}</div>
-                                        </div>
-                                    </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                            {/* Featured quote */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 24 }}
+                                animate={quotesInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
+                                transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                                className="lg:col-span-7 relative flex flex-col overflow-hidden rounded-[2rem] bg-[#001b4d] p-8 md:p-12 text-white shadow-[0_30px_60px_-30px_rgba(0,27,77,0.7)]"
+                            >
+                                {/* Oversized gold quote mark behind the words. */}
+                                <span className="pointer-events-none absolute -top-16 right-2 select-none font-serif text-[16rem] leading-none text-[#facc15]/10">&rdquo;</span>
+
+                                {/* All three quotes share one grid cell, so the panel is always
+                                    as tall as the longest and never resizes between them. */}
+                                <div className="relative grid flex-1 grid-cols-1">
+                                    {testimonials.map((t, i) => {
+                                        const isActive = i === activeQuote;
+                                        return (
+                                            <motion.div
+                                                key={i}
+                                                aria-hidden={!isActive}
+                                                initial={false}
+                                                animate={{ opacity: isActive ? 1 : 0, y: isActive ? 0 : 10 }}
+                                                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                                                className={twMerge(
+                                                    "col-start-1 row-start-1 flex h-full flex-col",
+                                                    isActive ? "" : "pointer-events-none"
+                                                )}
+                                            >
+                                                <span className="text-[11px] font-black uppercase tracking-[0.22em] text-[#facc15]">
+                                                    {t.highlight}
+                                                </span>
+                                                <p className="mt-5 text-xl md:text-[1.75rem] font-semibold leading-snug text-white">
+                                                    {t.quote}
+                                                </p>
+                                                <div className="mt-auto flex items-center gap-4 pt-10">
+                                                    <img
+                                                        src={t.avatar}
+                                                        alt=""
+                                                        loading="lazy"
+                                                        className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-[#facc15] ring-offset-2 ring-offset-[#001b4d]"
+                                                    />
+                                                    <div>
+                                                        <div className="text-base font-bold text-white">{t.author}</div>
+                                                        <div className="text-sm font-semibold text-white/55">{t.role}</div>
+                                                    </div>
+                                                </div>
+                                            </motion.div>
+                                        );
+                                    })}
                                 </div>
-                            ))}
+
+                                {/* Timer rail: restarts with each quote, freezes while hovered. */}
+                                <div className="relative mt-8 h-[3px] w-full overflow-hidden rounded-full bg-white/10">
+                                    <motion.div
+                                        key={`${activeQuote}-${quotesPaused}`}
+                                        className="h-full rounded-full bg-[#facc15]"
+                                        initial={{ width: quotesPaused ? '100%' : '0%' }}
+                                        animate={{ width: '100%' }}
+                                        transition={{ duration: quotesPaused ? 0 : QUOTE_INTERVAL, ease: 'linear' }}
+                                    />
+                                </div>
+                            </motion.div>
+
+                            {/* Pick a voice */}
+                            <div className="lg:col-span-5 flex flex-col gap-4">
+                                {testimonials.map((t, i) => {
+                                    const isActive = i === activeQuote;
+                                    return (
+                                        <motion.button
+                                            key={i}
+                                            type="button"
+                                            onClick={() => setActiveQuote(i)}
+                                            aria-pressed={isActive}
+                                            initial={{ opacity: 0, x: 24 }}
+                                            animate={quotesInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 24 }}
+                                            transition={{ duration: 0.7, delay: 0.15 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+                                            className={twMerge(
+                                                "group relative flex flex-1 items-center gap-4 overflow-hidden rounded-[1.25rem] border p-5 text-left transition-[background-color,border-color,box-shadow] duration-300",
+                                                isActive
+                                                    ? "border-[#18315e] bg-[#18315e] shadow-[0_16px_34px_-22px_rgba(24,49,94,0.9)]"
+                                                    : "border-slate-200/80 bg-white hover:border-[#18315e]/30"
+                                            )}
+                                        >
+                                            {/* Same rising blob as the page's other buttons. */}
+                                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#18315e' }}><i /></span>
+
+                                            {/* Gold rail marks the quote being shown. */}
+                                            <span className={twMerge(
+                                                "absolute left-0 top-0 z-10 h-full w-1 bg-[#facc15] transition-transform duration-300 origin-top",
+                                                isActive ? "scale-y-100" : "scale-y-0"
+                                            )} />
+                                            <img
+                                                src={t.avatar}
+                                                alt=""
+                                                loading="lazy"
+                                                className={twMerge(
+                                                    "relative z-10 h-11 w-11 shrink-0 rounded-full object-cover ring-2 transition-[box-shadow,filter] duration-300",
+                                                    isActive ? "ring-[#facc15]" : "ring-[#18315e]/15 grayscale group-hover:grayscale-0"
+                                                )}
+                                            />
+                                            <div className="relative z-10 min-w-0">
+                                                <div className={twMerge("text-sm font-bold transition-colors duration-300", isActive ? "text-white" : "text-[#18315e] group-hover:text-white")}>
+                                                    {t.author}
+                                                </div>
+                                                <div className={twMerge("text-xs font-semibold transition-colors duration-300", isActive ? "text-white/55" : "text-slate-500 group-hover:text-white/55")}>
+                                                    {t.role}
+                                                </div>
+                                                <p className={twMerge(
+                                                    "mt-1 truncate text-xs font-medium transition-colors duration-300",
+                                                    isActive ? "text-[#facc15]" : "text-slate-400 group-hover:text-[#facc15]"
+                                                )}>
+                                                    {t.highlight}
+                                                </p>
+                                            </div>
+                                        </motion.button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -915,15 +1112,19 @@ export function Landing() {
                 {/* SECURITY & PRIVACY SECTION */}
                 <section id="security" className="py-24 bg-white">
                     <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+                        <div className="text-center mb-10">
+                            <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d]">Security &amp; privacy</h2>
+                        </div>
+
                         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
                             {/* Security Card - Dark */}
                             <div className="col-span-3 rounded-[2rem] bg-[#001338] p-6 md:p-10 flex flex-col justify-center relative overflow-hidden text-white shadow-xl">
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-20 pointer-events-none">
-                                    <Shield className="w-64 h-64 text-blue-400" strokeWidth={1} />
+                                    <Shield className="w-64 h-64 text-[#facc15]" strokeWidth={1} />
                                 </div>
 
-                                <h2 className="text-3xl font-extrabold tracking-tight mb-4 relative z-10">Enterprise-grade security & privacy</h2>
+                                <h3 className="text-3xl font-extrabold tracking-tight mb-4 relative z-10">Enterprise-grade security & privacy</h3>
                                 <p className="text-lg text-slate-300 mb-8 max-w-md relative z-10 text-justify">
                                     TrackOwl™ is built with security, transparency, and ethical monitoring at its core.
                                 </p>
@@ -934,7 +1135,7 @@ export function Landing() {
                                         'Role-based access control', 'Continuous security monitoring'
                                     ].map((s, i) => (
                                         <div key={i} className="flex items-center gap-2">
-                                            <Check className="w-6 h-6 text-blue-400 shrink-0" strokeWidth={3} />
+                                            <Check className="w-6 h-6 text-[#facc15] shrink-0" strokeWidth={3} />
                                             <span className="text-base font-bold text-slate-200">{s}</span>
                                         </div>
                                     ))}
@@ -980,8 +1181,8 @@ export function Landing() {
                                 </div>
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-green-500 text-white text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
-                                    <span className="absolute inset-0 z-0 bg-green-600 translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-[#f8fafc] text-[#18315e] text-lg font-bold cursor-pointer border border-[#18315e]/20 hover:border-[#18315e] transition-colors shadow-sm mt-auto">
+                                    <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#e2e8f0' }}><i /></span>
                                     <span className="relative z-10">Get started</span>
                                 </button>
                             </div>
@@ -1001,8 +1202,8 @@ export function Landing() {
                                 </div>
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-blue-600 text-white text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
-                                    <span className="absolute inset-0 z-0 bg-blue-700 translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-[#facc15] text-[#001b4d] text-lg font-bold cursor-pointer transition-colors shadow-[0_10px_24px_-12px_rgba(234,179,8,0.9)] mt-auto">
+                                    <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
                                     <span className="relative z-10">Start free trial</span>
                                 </button>
                             </div>
@@ -1018,8 +1219,8 @@ export function Landing() {
                                 </div>
                                 <button
                                     onClick={() => { setContactType('sales'); setIsContactOpen(true); }}
-                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-[#facc15] text-[#001b4d] text-lg font-bold cursor-pointer transition-colors shadow-md mt-auto">
-                                    <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
+                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-[#18315e] text-white text-lg font-bold cursor-pointer transition-colors shadow-[0_10px_24px_-12px_rgba(24,49,94,0.9)] mt-auto">
+                                    <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#001b4d' }}><i /></span>
                                     <span className="relative z-10">Talk to sales</span>
                                 </button>
                             </div>
@@ -1096,10 +1297,13 @@ export function Landing() {
                 </section>
 
                 {/* DOWNLOAD SECTION */}
-                <section id="download" className="py-24 bg-[#eab308] relative overflow-hidden">
+                <section id="download" className="py-24 bg-[linear-gradient(165deg,#fde047_0%,#facc15_28%,#eab308_62%,#ca9a04_100%)] relative overflow-hidden">
+                    {/* Curved top edge: the white section above sweeps down into the band. */}
+                    <div aria-hidden className="pointer-events-none absolute inset-x-[-15%] -top-28 h-44 rounded-[100%] bg-white" />
+
                     {/* Background decorations */}
                     <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl opacity-30 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
-                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-black/10 rounded-full blur-3xl opacity-20 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#001b4d]/25 rounded-full blur-3xl opacity-30 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
                     <div className="mx-auto w-full max-w-[1400px] px-6 lg:px-8 relative z-10">
                         <div className="text-center mb-12">
@@ -1123,7 +1327,7 @@ export function Landing() {
                                         <a
                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.58/TrackOwl_2.0.58_x64-setup.exe"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-[#B8860B] text-white text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
-                                            <span className="absolute inset-0 z-0 bg-[#9E7209] -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0" />
+                                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#9E7209' }}><i /></span>
                                             <span className="relative z-10 flex items-center justify-center gap-2">
                                                 <Download className="w-4 h-4" /> Download .exe
                                             </span>
@@ -1134,7 +1338,7 @@ export function Landing() {
                                         <a
                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.58/TrackOwl_2.0.58_x64_en-US.msi"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-[#F5E6CA] text-[#B8860B] border border-[#EADCBF] text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
-                                            <span className="absolute inset-0 z-0 bg-[#EADCBF] -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0" />
+                                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#EADCBF' }}><i /></span>
                                             <span className="relative z-10 flex items-center justify-center gap-2">
                                                 <Download className="w-4 h-4" /> Download .msi
                                             </span>
@@ -1156,7 +1360,7 @@ export function Landing() {
                                         <a
                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.58/TrackOwl_2.0.58_aarch64.dmg"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-slate-800 text-white text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
-                                            <span className="absolute inset-0 z-0 bg-slate-950 -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0" />
+                                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#020617' }}><i /></span>
                                             <span className="relative z-10 flex items-center justify-center gap-2">
                                                 <Download className="w-4 h-4" /> Apple Silicon (M1/M2/M3)
                                             </span>
@@ -1167,7 +1371,7 @@ export function Landing() {
                                         <a
                                             href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.58/TrackOwl_2.0.58_x64.dmg"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-slate-50 text-slate-800 border border-slate-200 text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
-                                            <span className="absolute inset-0 z-0 bg-slate-200 -translate-x-full transition-transform duration-500 ease-out group-hover:translate-x-0" />
+                                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#e2e8f0' }}><i /></span>
                                             <span className="relative z-10 flex items-center justify-center gap-2">
                                                 <Download className="w-4 h-4" /> Intel Processor
                                             </span>
@@ -1183,8 +1387,12 @@ export function Landing() {
             </main>
 
             {/* FINAL CTA SECTION */}
-            <section className="bg-[#001338] py-16 md:py-24 relative z-10 border-b border-white/10">
-                <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center flex flex-col items-center">
+            <section className="bg-[#001338] py-16 md:py-24 relative z-10 border-b border-white/10 overflow-hidden">
+                {/* Background glowing effects, same pair the hero uses */}
+                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#002766] blur-[150px] rounded-full pointer-events-none" />
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[150px] rounded-full pointer-events-none" />
+
+                <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center flex flex-col items-center relative z-10">
                     <img src={HeaderLogo} className="h-16 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] mb-6" alt="TrackOwl" />
                     <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6">Gain complete workforce visibility</h2>
                     <p className="text-2xl text-slate-300 font-medium mb-10 max-w-3xl leading-relaxed">
@@ -1195,13 +1403,14 @@ export function Landing() {
                         <button
                             onClick={() => navigate('/signup')}
                             className="group relative overflow-hidden w-full sm:w-auto px-12 py-5 bg-[#facc15] text-[#001338] text-lg font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] cursor-pointer transition-all hover:scale-105 active:scale-95">
-                            <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
-                            <span className="relative z-10">Start free trial</span>
+                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
+                            <span className="relative z-10 transition-colors duration-300 delay-700">Start free trial</span>
                         </button>
                         <button
                             onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
-                            className="w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold cursor-pointer rounded-full transition-all active:scale-95">
-                            Schedule a demo
+                            className="group relative overflow-hidden w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold cursor-pointer rounded-full transition-all active:scale-95">
+                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: 'rgba(255,255,255,0.16)' }}><i /></span>
+                            <span className="relative z-10">Schedule a demo</span>
                         </button>
                     </div>
                     <p className="text-lg font-medium text-slate-400">Built for modern businesses managing remote teams at scale.</p>

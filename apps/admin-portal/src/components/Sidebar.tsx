@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import { ChevronDown, ChevronLeft, Star, Zap, LogOut, Lock, Sun, Moon } from 'lucide-react';
+import { ChevronDown, ChevronLeft, Star, Zap, LogOut, Lock, Sun, Moon, Crown } from 'lucide-react';
 import { navStructure, matchActive, activeSibling, type BadgeType, type Role } from '../nav/navModel';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
@@ -345,7 +345,11 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                     {!effectiveCollapsed && (
                         <div className="flex items-center justify-between gap-3">
                             <div className="px-3 py-1.5 rounded-lg bg-white/[0.05] border border-white/10 flex items-center gap-2 flex-1">
-                                <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                                {isPremium ? (
+                                    <Crown className="w-3 h-3 text-accent shrink-0" fill="currentColor" strokeWidth={2} />
+                                ) : (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-white/25 shrink-0" />
+                                )}
                                 <span className="text-[10px] font-bold text-white/60 uppercase tracking-widest">
                                     {organization?.subscription_status === 'None' 
                                         ? 'No Active Plan' 
