@@ -21,8 +21,30 @@ export function writeProjectsCache(key: string, data: any): void {
     cachedData = data;
 }
 
+/**
+ * Other caches holding project-derived data, to be emptied alongside this one.
+ *
+ * The projects list is not the only screen that remembers a project's colour.
+ * The dashboard caches the donut, colours and all, under a key of date and
+ * user — neither of which changes when someone edits a project — so it went on
+ * serving the previous colour until the page was reloaded outright.
+ */
+const listeners = new Set<() => void>();
+
+/**
+ * Register a cache to be cleared whenever a project changes.
+ * Returns an unsubscribe, though a module-level cache never needs it.
+ */
+export function onProjectsChanged(clear: () => void): () => void {
+    listeners.add(clear);
+    return () => {
+        listeners.delete(clear);
+    };
+}
+
 /** Call after anything that changes a project, so the list refetches. */
 export function invalidateProjectsCache(): void {
     cachedData = null;
     cachedKey = null;
+    for (const clear of listeners) clear();
 }
