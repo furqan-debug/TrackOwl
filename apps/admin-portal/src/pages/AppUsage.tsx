@@ -176,6 +176,22 @@ export function AppUsage() {
         [chartData]
     );
 
+    // What the named slices account for, for the middle of the ring.
+    //
+    // The two cards beside this chart already give the app count and the total
+    // time, so repeating either in the hole would say nothing new. How much of
+    // the day the top few apps carry is not on the page anywhere else, and it
+    // is the question the ring is already drawing an answer to.
+    const topShare = useMemo(() => {
+        const other = chartData.find(d => d.name === 'Other Content')?.value ?? 0;
+        if (chartTotal <= 0) return null;
+        const named = chartData.filter(d => d.name !== 'Other Content').length;
+        return {
+            percent: Math.round(((chartTotal - other) / chartTotal) * 100),
+            named,
+        };
+    }, [chartData, chartTotal]);
+
     const filteredApps = apps.filter(a => {
         const term = searchTerm.toLowerCase();
         return (a.raw_app && a.raw_app.toLowerCase().includes(term)) ||
@@ -283,7 +299,7 @@ export function AppUsage() {
                             </div>
                         </div>
 
-                        <div className="flex-1 min-h-[220px]">
+                        <div className="flex-1 min-h-[220px] relative">
                             {apps.length === 0 ? <EmptyState icon={<AppWindow />} title="No data" /> : (
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
@@ -311,6 +327,19 @@ export function AppUsage() {
                                         <RechartsTooltip content={<PieShareTooltip total={chartTotal} formatValue={formatTime} />} />
                                     </PieChart>
                                 </ResponsiveContainer>
+                            )}
+                            {/* pointer-events-none, or the label would sit over the
+                                middle of the ring and swallow hovers on the slices
+                                nearest it. */}
+                            {apps.length > 0 && topShare && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span className="text-2xl font-black text-text-main leading-none tabular-nums">
+                                        {topShare.percent}%
+                                    </span>
+                                    <span className="text-[9px] font-bold text-text-muted mt-1.5 tracking-[0.1em] uppercase">
+                                        Top {topShare.named}
+                                    </span>
+                                </div>
                             )}
                         </div>
 
