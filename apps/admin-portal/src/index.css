@@ -723,19 +723,33 @@
   }
 }
 
-/* Time Distribution donut: the hovered slice lifts on its own colour.
+/* Time Distribution donut: hovering a slice focuses it and pushes the rest
+   back, so the eye lands on one project rather than scanning eight.
+
    --slice-glow is set per Cell to that project's colour, so the halo always
    matches the swatch on the project rather than one shared accent.
 
-   The reference this came from used 10px and 20px shadows, which read as a
-   bloom over a dark card. Halved to 5px and 10px: enough to pick the slice
-   out, not enough to wash into its neighbours. */
+   Three things happen at once, and the drop in saturation is the one doing
+   most of the work: a dimmed slice still competes when it keeps its colour,
+   so the others go pale as well as faint, and the hovered slice is the only
+   saturated thing on the ring. That lets the halo itself stay small.
+
+   The group only reports hover when a slice under the pointer does, so the
+   transparent gaps between slices never dim the whole ring. */
 .donut-slice {
-  transition: filter 0.25s ease;
+  transition: filter 0.3s ease, opacity 0.3s ease;
 }
 
-.donut-slice:hover {
-  filter: drop-shadow(0 0 5px var(--slice-glow)) drop-shadow(0 0 10px var(--slice-glow));
+.recharts-pie:hover .donut-slice {
+  opacity: 0.28;
+  filter: saturate(0.35);
+}
+
+.recharts-pie .donut-slice:hover {
+  opacity: 1;
+  filter: saturate(1.08)
+    drop-shadow(0 0 3px var(--slice-glow))
+    drop-shadow(0 0 7px var(--slice-glow));
 }
 
 @media (prefers-reduced-motion: reduce) {
