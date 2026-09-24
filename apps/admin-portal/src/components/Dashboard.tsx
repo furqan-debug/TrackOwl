@@ -798,7 +798,7 @@ export function Dashboard() {
                                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover/ss:opacity-100 transition-opacity duration-300" />
 
                                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/ss:opacity-100 transition-all duration-300 scale-90 group-hover/ss:scale-100">
-                                                                    <div className="px-4 py-2 rounded-xl glass-panel text-[11px] font-bold text-slate-900 shadow-xl border-white/40">Inspect</div>
+                                                                    <div className="px-4 py-2 rounded-xl glass-panel text-[11px] font-bold text-text-main shadow-xl border-border">Inspect</div>
                                                                 </div>
 
                                                                 <div className="absolute bottom-3 right-3 translate-y-1 group-hover/ss:translate-y-0 transition-transform duration-300">
