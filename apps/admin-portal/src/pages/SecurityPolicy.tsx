@@ -21,16 +21,17 @@ export function SecurityPolicy() {
     }, []);
 
     return (
-        <div className="min-h-screen bg-white font-sans tracking-[0.03em] text-slate-900 overflow-x-hidden flex flex-col justify-between">
+        <div className="min-h-screen bg-white font-sans tracking-[0.03em] text-slate-900 overflow-x-clip flex flex-col justify-between">
+            {/* Navigation */}
+            <header className="sticky top-0 z-[100] bg-[#001338]/95 backdrop-blur-xl border-b border-white/10 py-5 shadow-md">
+                <nav className="mx-auto flex max-w-[1400px] h-14 items-center justify-between px-6">
+                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+                        <img src={HeaderLogo} alt="TrackOwl" className="h-10 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
+                    </div>
+                </nav>
+            </header>
+
             <div>
-                {/* Navigation */}
-                <header className="bg-[#001338] py-5 shadow-md">
-                    <nav className="mx-auto flex max-w-[1400px] h-14 items-center justify-between px-6">
-                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-                            <img src={HeaderLogo} alt="TrackOwl" className="h-10 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)]" />
-                        </div>
-                    </nav>
-                </header>
 
                 <main className="mx-auto max-w-5xl px-6 py-20">
                     <h1 className="text-4xl md:text-5xl font-black text-[#001b4d] mb-6">

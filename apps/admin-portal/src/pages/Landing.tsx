@@ -607,6 +607,10 @@ export function Landing() {
         {
             q: "Can employees access their own activity data?",
             a: "Yes. Users can access information associated with their own accounts."
+        },
+        {
+            q: "Which platforms does the desktop app support?",
+            a: "The TrackOwl™ desktop app runs on Windows 10 and 11 (64-bit) and macOS 11.0 (Big Sur) or later, with separate builds for Apple Silicon and Intel processors."
         }
     ];
 
@@ -1237,14 +1241,14 @@ export function Landing() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                             {/* Left Column */}
                             <div className="space-y-4">
-                                {[0, 2, 4].map((i) => (
-                                    <div key={i} className="border-b border-slate-100">
+                                {faqs.map((_, i) => i).filter((i) => i % 2 === 0).map((i) => (
+                                    <div key={i} className={twMerge("rounded-xl border bg-white overflow-hidden transition-all duration-300", activeFaq === i ? "border-[#facc15] shadow-[0_10px_30px_rgba(0,27,77,0.08)]" : "border-slate-200")}>
                                         <button
                                             onClick={() => setActiveFaq(activeFaq === i ? null : i)}
-                                            className="w-full py-5 flex items-center justify-between text-left text-lg font-bold text-slate-800 focus:outline-none"
+                                            className="w-full px-5 py-5 flex items-center justify-between gap-4 text-left text-lg font-bold text-[#18315e] focus:outline-none"
                                         >
                                             {faqs[i].q}
-                                            <ChevronDown className={twMerge("w-5 h-5 text-blue-600 transition-transform", activeFaq === i && "rotate-180")} />
+                                            <ChevronDown className={twMerge("w-5 h-5 transition-all", activeFaq === i ? "rotate-180 text-[#facc15]" : "text-[#18315e]")} />
                                         </button>
                                         <AnimatePresence>
                                             {activeFaq === i && (
@@ -1254,7 +1258,7 @@ export function Landing() {
                                                     exit={{ height: 0 }}
                                                     className="overflow-hidden"
                                                 >
-                                                    <div className="pb-5 text-slate-500 text-base font-medium leading-relaxed text-justify">
+                                                    <div className="px-5 pb-5 text-slate-500 text-base font-medium leading-relaxed text-justify">
                                                         {faqs[i].a}
                                                     </div>
                                                 </motion.div>
@@ -1266,14 +1270,14 @@ export function Landing() {
 
                             {/* Right Column */}
                             <div className="space-y-4">
-                                {[1, 3].map((i) => (
-                                    <div key={i} className="border-b border-slate-100">
+                                {faqs.map((_, i) => i).filter((i) => i % 2 === 1).map((i) => (
+                                    <div key={i} className={twMerge("rounded-xl border bg-white overflow-hidden transition-all duration-300", activeFaq === i ? "border-[#facc15] shadow-[0_10px_30px_rgba(0,27,77,0.08)]" : "border-slate-200")}>
                                         <button
                                             onClick={() => setActiveFaq(activeFaq === i ? null : i)}
-                                            className="w-full py-5 flex items-center justify-between text-left text-lg font-bold text-slate-800 focus:outline-none"
+                                            className="w-full px-5 py-5 flex items-center justify-between gap-4 text-left text-lg font-bold text-[#18315e] focus:outline-none"
                                         >
                                             {faqs[i].q}
-                                            <ChevronDown className={twMerge("w-5 h-5 text-blue-600 transition-transform", activeFaq === i && "rotate-180")} />
+                                            <ChevronDown className={twMerge("w-5 h-5 transition-all", activeFaq === i ? "rotate-180 text-[#facc15]" : "text-[#18315e]")} />
                                         </button>
                                         <AnimatePresence>
                                             {activeFaq === i && (
@@ -1283,7 +1287,7 @@ export function Landing() {
                                                     exit={{ height: 0 }}
                                                     className="overflow-hidden"
                                                 >
-                                                    <div className="pb-5 text-slate-500 text-base font-medium leading-relaxed text-justify">
+                                                    <div className="px-5 pb-5 text-slate-500 text-base font-medium leading-relaxed text-justify">
                                                         {faqs[i].a}
                                                     </div>
                                                 </motion.div>

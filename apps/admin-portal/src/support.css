@@ -10,7 +10,7 @@
   --primary: #18315e;
   --primary-hover: #001b4d;
   --accent: #facc15;
-  --header-bg: #ffffff;
+  --header-bg: #001b4d;
   --card-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.025);
   --header-gradient: linear-gradient(135deg, #18315e, #001b4d);
 }
@@ -1029,12 +1029,16 @@
 
 /* Premium Header top-bar Styling (White Background, Fixed on top) */
 header.header {
-  height: 72px !important;
-  background-color: #ffffff !important; /* White background */
-  border-bottom: 1px solid #e2e8f0 !important; /* Light bottom border */
+  /* Matches the About / Privacy / Terms / Security header: py-5 + a 56px row. */
+  height: 96px !important;
+  background-color: rgba(0, 19, 56, 0.95) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
   display: flex !important;
   align-items: center !important;
-  padding: 0 2rem !important;
+  padding: 0 !important;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
@@ -1045,12 +1049,24 @@ header.header {
 }
 
 .layout {
-  padding-top: 72px !important;
+  padding-top: 96px !important;
+}
+
+/* Centred row, matching `mx-auto max-w-[1400px] px-6` on the other pages. */
+header.header .header-inner {
+  width: 100% !important;
+  max-width: 1400px !important;
+  margin: 0 auto !important;
+  padding: 0 1.5rem !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
 }
 
 header.header a.header-logo img {
-  height: 32px !important;
+  height: 40px !important;
   object-fit: contain !important;
+  filter: drop-shadow(0 0 15px rgba(250, 204, 21, 0.5));
 }
 
 /* Header search input (for article/category pages) */
@@ -1063,21 +1079,21 @@ header.header .search-input {
   width: 100% !important;
   padding: 0.65rem 1rem 0.65rem 2.5rem !important;
   border-radius: 9999px !important;
-  border: 1px solid #cbd5e1 !important;
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
   font-size: 0.9rem !important;
   transition: all 0.3s ease !important;
 }
 
 header.header .search-input::placeholder {
-  color: #94a3b8 !important;
+  color: rgba(255, 255, 255, 0.55) !important;
 }
 
 header.header .search-input:focus {
   outline: none !important;
   border-color: #facc15 !important;
-  background-color: #ffffff !important;
+  background-color: rgba(255, 255, 255, 0.14) !important;
   box-shadow: 0 0 0 3px rgba(250, 204, 21, 0.25) !important;
 }
 
@@ -1086,5 +1102,5 @@ header.header .search-icon {
   left: 0.95rem !important;
   top: 50% !important;
   transform: translateY(-50%) !important;
-  color: #94a3b8 !important;
+  color: rgba(255, 255, 255, 0.6) !important;
 }
