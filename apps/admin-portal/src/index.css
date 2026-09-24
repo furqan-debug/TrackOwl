@@ -128,6 +128,17 @@
     /* Slice 1: gold in light, grey in dark */
     --chart-pie-slot-0: #f1bc34;
 
+    /* App Distribution's indigo ramp. These were hard-coded in AppUsage.tsx,
+       so the chart kept one set of colours in both themes: five near-black
+       indigos that read well on a white card and all but vanished on a dark
+       one. Light mode keeps exactly the values it had; dark mode runs the
+       ramp the other way, pale to deep, so every slice stays visible. */
+    --chart-pie-slot-1: #4f46e5;
+    --chart-pie-slot-2: #4338ca;
+    --chart-pie-slot-3: #3730a3;
+    --chart-pie-slot-4: #312e81;
+    --chart-pie-slot-5: #1e1b4b;
+
 
     --color-chart-main: var(--chart-gold);
     --color-chart-highlight: var(--chart-gold-light);
@@ -211,6 +222,16 @@
     --chart-pie-primary: #f0f0f3;
     /* Dark mode: grey instead of gold for pie slice 1 */
     --chart-pie-slot-0: var(--chart-gold);
+
+    /* Ramp inverted for the dark card: the light-mode values are darker than
+       the surface they sit on — the deepest measured 1.06:1 against it, which
+       is no slice at all. These run 11.4:1 down to 3.8:1, so every slice
+       clears the 3:1 a graphical object needs, smallest included. */
+    --chart-pie-slot-1: #C7D2FE;
+    --chart-pie-slot-2: #AFB9FB;
+    --chart-pie-slot-3: #97A2F9;
+    --chart-pie-slot-4: #7E8AF5;
+    --chart-pie-slot-5: #6366F1;
   }
 
   /* Safe Dark Mode Overrides for Hardcoded Light Classes */
@@ -719,6 +740,41 @@
 
 @media (prefers-reduced-motion: reduce) {
   .goo-fill > i {
+    transition: none;
+  }
+}
+
+/* Time Distribution donut: hovering a slice focuses it and pushes the rest
+   back, so the eye lands on one project rather than scanning eight.
+
+   --slice-glow is set per Cell to that project's colour, so the halo always
+   matches the swatch on the project rather than one shared accent.
+
+   Three things happen at once, and the drop in saturation is the one doing
+   most of the work: a dimmed slice still competes when it keeps its colour,
+   so the others go pale as well as faint, and the hovered slice is the only
+   saturated thing on the ring. That lets the halo itself stay small.
+
+   The group only reports hover when a slice under the pointer does, so the
+   transparent gaps between slices never dim the whole ring. */
+.donut-slice {
+  transition: filter 0.3s ease, opacity 0.3s ease;
+}
+
+.recharts-pie:hover .donut-slice {
+  opacity: 0.28;
+  filter: saturate(0.35);
+}
+
+.recharts-pie .donut-slice:hover {
+  opacity: 1;
+  filter: saturate(1.08)
+    drop-shadow(0 0 3px var(--slice-glow))
+    drop-shadow(0 0 7px var(--slice-glow));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .donut-slice {
     transition: none;
   }
 }
