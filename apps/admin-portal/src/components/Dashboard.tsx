@@ -668,6 +668,11 @@ export function Dashboard() {
                                                     innerRadius={70}
                                                     outerRadius={95}
                                                     paddingAngle={8}
+                                                    // Recharts outlines every sector in white by default.
+                                                    // On a dark card that is a hard white edge around each
+                                                    // slice, and on the slivers it is most of the slice.
+                                                    // The other donuts in the portal already set this.
+                                                    stroke="none"
                                                     dataKey="minutes"
                                                 >
                                                     {/* The project's own colour, so the ring matches the
