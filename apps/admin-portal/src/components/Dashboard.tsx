@@ -20,6 +20,7 @@ import {
     orgLocalToUtc
 } from '../lib/dataUtils';
 import { chartColorAt } from '../lib/projectColors';
+import { onProjectsChanged } from '../lib/projectsCache';
 import {
     ResponsiveContainer,
     AreaChart,
@@ -77,6 +78,16 @@ interface AppUsage {
 let dashboardCache: any = null;
 let dashboardCacheWeek: string | null = null;
 let dashboardCacheUser: string | null = null;
+
+// The donut is coloured from the projects table and those colours are cached
+// here. The key is date plus user, and editing a project changes neither, so
+// saving a new colour left the ring painting the old one until the page was
+// reloaded. Clear it whenever a project changes.
+onProjectsChanged(() => {
+    dashboardCache = null;
+    dashboardCacheWeek = null;
+    dashboardCacheUser = null;
+});
 
 
 interface DashStats {
