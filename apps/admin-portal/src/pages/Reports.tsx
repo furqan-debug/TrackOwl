@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, type CSSProperties } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '../lib/supabase';
@@ -750,9 +750,23 @@ export function Reports() {
                                                     paddingAngle={4}
                                                     dataKey="value"
                                                 >
-                                                    {appBreakdown.map((_, i) => (
-                                                        <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={0} />
-                                                    ))}
+                                                    {/* Same hover behaviour as the dashboard donut: the
+                                                        slice under the pointer keeps its colour while the
+                                                        rest go faint and pale. --slice-glow is the slice's
+                                                        own fill, so no colour changes here. See
+                                                        .donut-slice in index.css. */}
+                                                    {appBreakdown.map((_, i) => {
+                                                        const color = CHART_COLORS[i % CHART_COLORS.length];
+                                                        return (
+                                                            <Cell
+                                                                key={i}
+                                                                fill={color}
+                                                                strokeWidth={0}
+                                                                className="donut-slice"
+                                                                style={{ '--slice-glow': color } as CSSProperties}
+                                                            />
+                                                        );
+                                                    })}
                                                 </Pie>
                                                 <Tooltip content={<CustomTooltip />} />
                                             </PieChart>
