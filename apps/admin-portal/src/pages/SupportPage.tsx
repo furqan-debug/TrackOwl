@@ -20,9 +20,12 @@ const modules = import.meta.glob('../content/*.md', { query: '?raw', eager: true
 function parseMarkdown(rawContent: string) {
   let title = 'Untitled Document';
   let category = 'Uncategorized';
-  let content = rawContent;
+  // Normalise line endings first: a Windows checkout hands us CRLF, which the
+  // frontmatter and alert patterns below (all written against \n) never match,
+  // leaving every article Untitled and Uncategorized.
+  let content = rawContent.replace(/\r\n/g, '\n');
 
-  const match = rawContent.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (match) {
     const frontmatter = match[1];
     content = match[2];
@@ -131,7 +134,8 @@ function Layout({ children, search, setSearch }: { children: React.ReactNode; se
   return (
     <div className="layout">
       <header className="header">
-        <Link to="/support" className="header-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Back to the main site: on /support itself a link to /support did nothing. */}
+        <Link to="/" className="header-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <img src={LogoLight} style={{ height: '32px', objectFit: 'contain' }} alt="TrackOwl" />
         </Link>
 
@@ -171,8 +175,12 @@ function Layout({ children, search, setSearch }: { children: React.ReactNode; se
       </main>
 
       {/* FINAL CTA SECTION */}
-      <section className="bg-[#001338] py-16 md:py-24 relative z-10 border-b border-white/10">
-          <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center flex flex-col items-center">
+      <section className="bg-[#001338] py-16 md:py-24 relative z-10 border-b border-white/10 overflow-hidden">
+          {/* Background glowing effects, same pair the hero uses */}
+          <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#002766] blur-[150px] rounded-full pointer-events-none" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[150px] rounded-full pointer-events-none" />
+
+          <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center flex flex-col items-center relative z-10">
               <img src={HeaderLogo} className="h-16 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] mb-6" alt="TrackOwl" />
               <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6">Gain complete workforce visibility</h2>
               <p className="text-2xl text-slate-300 font-medium mb-10 max-w-3xl leading-relaxed">
@@ -183,13 +191,14 @@ function Layout({ children, search, setSearch }: { children: React.ReactNode; se
                   <button
                       onClick={() => navigate('/signup')}
                       className="group relative overflow-hidden w-full sm:w-auto px-12 py-5 bg-[#facc15] text-[#001338] text-lg font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] transition-all hover:scale-105 active:scale-95 cursor-pointer">
-                      <span className="absolute inset-0 z-0 bg-[#eab308] translate-y-[100%] transition-transform duration-500 ease-out group-hover:translate-y-0" />
-                      <span className="relative z-10">Start free trial</span>
+                      <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
+                      <span className="relative z-10 transition-colors duration-300 delay-700">Start free trial</span>
                   </button>
                   <button
                       onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
-                      className="w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold cursor-pointer rounded-full transition-all active:scale-95">
-                      Schedule a demo
+                      className="group relative overflow-hidden w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold cursor-pointer rounded-full transition-all active:scale-95">
+                      <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: 'rgba(255,255,255,0.16)' }}><i /></span>
+                      <span className="relative z-10">Schedule a demo</span>
                   </button>
               </div>
               <p className="text-lg font-medium text-slate-400">Built for modern businesses managing remote teams at scale.</p>
@@ -456,14 +465,17 @@ ${message}`
                         disabled={loading}
                         className="support-form-submit-btn"
                     >
-                        {loading ? (
-                            <>
-                                <Loader2 className="animate-spin w-5 h-5 mr-2" />
-                                Submitting...
-                            </>
-                        ) : (
-                            'Submit Request'
-                        )}
+                        <span aria-hidden className="goo-fill"><i /></span>
+                        <span className="submit-label">
+                            {loading ? (
+                                <>
+                                    <Loader2 className="animate-spin w-5 h-5 mr-2" />
+                                    Submitting...
+                                </>
+                            ) : (
+                                'Submit Request'
+                            )}
+                        </span>
                     </button>
                 </form>
             )}
@@ -552,6 +564,7 @@ function HomePageView({ search, setSearch }: { search: string; setSearch: (s: st
   return (
     <div className="home-page-wrapper">
       <div className="home-hero-banner">
+        <div aria-hidden className="home-hero-glow"><span /><span /></div>
         <div className="home-hero-banner-content animate-fade-in">
           <h1 className="home-hero-title">TrackOwl Support</h1>
           <p className="home-hero-subtitle">Find help, articles, and step-by-step guides for everything TrackOwl.</p>
@@ -676,7 +689,7 @@ function CategoryPageView() {
         {categoryArticles.map(a => (
           <Link key={a.slug} to={`/support/article/${encodeURIComponent(a.slug)}`} className="article-list-item">
              <BookOpen size={16} className="article-list-icon" />
-             {a.title}
+             <span>{a.title}</span>
           </Link>
         ))}
       </div>
@@ -699,10 +712,6 @@ function ArticlePageView() {
     );
   }
 
-  const words = article.content.split(/\s+/).length;
-  const readingTime = Math.max(1, Math.ceil(words / 200));
-  const headings = Array.from(article.content.matchAll(/^##\s+(.*)$/gm)).map(m => m[1]);
-
   return (
     <div className="article-page animate-fade-in">
       <div className="article-hero">
@@ -720,29 +729,12 @@ function ArticlePageView() {
 
       <div className="article-container article-split">
         <div className="article-main">
-          <div className="article-meta">
-            <Clock size={16} />
-            {readingTime} min read
-          </div>
-
           <div 
             className="article-content"
             dangerouslySetInnerHTML={{ __html: article.html as string }} 
           />
         </div>
         
-        {headings.length > 0 && (
-          <div className="article-sidebar">
-            <div className="toc-wrapper">
-              <div className="toc-title">In this article</div>
-              {headings.map((heading, i) => (
-                <a key={i} href={`#${heading.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`} className="toc-link">
-                  {heading}
-                </a>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
