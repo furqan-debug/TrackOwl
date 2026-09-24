@@ -9,7 +9,7 @@ import {
     ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { PageLayout, StatMetric, LoadingState, EmptyState, FilterSelect, DatePicker, RefreshButton, AppIcon } from '../components/ui';
+import { PageLayout, StatMetric, LoadingState, EmptyState, FilterSelect, DatePicker, RefreshButton, AppIcon, PieShareTooltip } from '../components/ui';
 import clsx from 'clsx';
 import { orgLocalToUtc } from '../lib/dataUtils';
 
@@ -169,6 +169,13 @@ export function AppUsage() {
         return top;
     }, [apps]);
 
+    // Sum of the slices drawn — the top five plus the "Other Content" rollup —
+    // so a slice's share is of the whole ring and they add to 100%.
+    const chartTotal = useMemo(
+        () => chartData.reduce((sum, d) => sum + (Number(d.value) || 0), 0),
+        [chartData]
+    );
+
     const filteredApps = apps.filter(a => {
         const term = searchTerm.toLowerCase();
         return (a.raw_app && a.raw_app.toLowerCase().includes(term)) ||
@@ -297,7 +304,11 @@ export function AppUsage() {
                                                 );
                                             })}
                                         </Pie>
-                                        <RechartsTooltip contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: '1px solid #f1f5f9', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)', fontSize: '11px', fontWeight: '800' }} />
+                                        {/* Was the default tooltip: a bare count ("Other Content :
+                                            5099") on a card hard-coded to #fff, which stayed white in
+                                            dark mode. formatTime is what the rest of this page uses
+                                            for the same figure. */}
+                                        <RechartsTooltip content={<PieShareTooltip total={chartTotal} formatValue={formatTime} />} />
                                     </PieChart>
                                 </ResponsiveContainer>
                             )}

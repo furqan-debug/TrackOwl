@@ -20,7 +20,7 @@ import {
 } from 'recharts';
 import {
     PageLayout, StatMetric, FilterSelect,
-    LoadingState, EmptyState, RefreshButton
+    LoadingState, EmptyState, RefreshButton, PieShareTooltip
 } from '../components/ui';
 import clsx from 'clsx';
 import Lenis from 'lenis';
@@ -1076,47 +1076,6 @@ function CustomTooltip({ active, payload, label, unit }: any) {
         );
     }
     return null;
-}
-
-/**
- * Tooltip for the Top Apps donut.
- *
- * CustomTooltip labels whatever it is handed "% Activity" unless told
- * otherwise, so hovering a slice read "37322 % Activity" — a figure that is
- * neither a percentage nor an activity score, but minutes, and with no way to
- * tell which app it belonged to.
- *
- * A donut is a share of a whole, so that is what this says: the app's name, its
- * time, and its share of the ring. `total` is the sum of the slices drawn, so
- * the shares add to 100%.
- */
-function PieShareTooltip({ active, payload, total }: any) {
-    if (!active || !payload?.length) return null;
-
-    const slice = payload[0];
-    const value = Number(slice.value) || 0;
-    const share = total > 0 ? (value / total) * 100 : 0;
-    // The slice's own colour, so the dot matches what the pointer is on.
-    const color = slice.payload?.fill || 'var(--chart-gold)';
-
-    return (
-        <div className="p-4 bg-surface/90 backdrop-blur-md rounded-2xl shadow-2xl border border-border min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
-            <p className="text-[9px] font-black text-text-muted mb-3 pb-2 border-b border-border truncate">
-                {slice.name}
-            </p>
-            <div className="flex items-center gap-4">
-                <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
-                <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-black text-text-main tracking-tighter tabular-nums">
-                        {share < 1 && share > 0 ? '<1' : Math.round(share)}%
-                    </span>
-                    <span className="text-[10px] font-black text-text-muted">
-                        {formatDuration(value)}
-                    </span>
-                </div>
-            </div>
-        </div>
-    );
 }
 
 function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any) {
