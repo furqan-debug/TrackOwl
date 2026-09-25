@@ -26,7 +26,8 @@ import {
     Modal,
     Input,
     StatMetric,
-    DatePicker
+    DatePicker,
+    FormSelect
 } from '../components/ui';
 
 import { useAuth } from '../context/AuthContext';
@@ -368,6 +369,26 @@ export function Todos() {
         setEditTodo(null);
         setAssigneeSearch('');
     }
+
+    /**
+     * The members the assignee list is showing.
+     *
+     * Shared with Select all deliberately: the button acts on exactly what is
+     * on screen, so with a search typed it selects the matches rather than
+     * quietly assigning the whole company.
+     */
+    const shownMembers = useMemo(() => {
+        const query = assigneeSearch.toLowerCase();
+        return allMembers.filter(
+            member =>
+                member.full_name.toLowerCase().includes(query) ||
+                member.email.toLowerCase().includes(query)
+        );
+    }, [allMembers, assigneeSearch]);
+
+    const allShownAssigned =
+        shownMembers.length > 0 &&
+        shownMembers.every(m => formData.assignee_ids.includes(m.id));
 
     const filteredTodos = useMemo(() => {
         return todos.filter(todo => {
@@ -747,8 +768,33 @@ export function Todos() {
                         : 'New objective'
                 }
                 subtitle="Specify deliverables and resource allocation."
+                maxWidth="max-w-5xl"
+                height="h-[660px]"
+                footer={
+                    <>
+                        <Button
+                            type="button"
+                            onClick={handleCloseModal}
+                            variant="secondary"
+                            className="w-full sm:w-auto sm:min-w-[140px]"
+                        >
+                            Discard
+                        </Button>
+
+                        <Button
+                            form="objective-form"
+                            type="submit"
+                            disabled={saving || !formData.project_id}
+                            variant="primary"
+                            className="w-full sm:w-auto sm:min-w-[140px]"
+                        >
+                            {saving ? 'Syncing...' : 'Save'}
+                        </Button>
+                    </>
+                }
             >
                 <form
+                    id="objective-form"
                     onSubmit={handleSubmit}
                     className="
                         w-full
@@ -758,243 +804,278 @@ export function Todos() {
                         overflow-x-hidden
                     "
                 >
-                    {/* Title */}
-                    <div className="w-full min-w-0">
-                        <Input
-                            label="Title"
-                            required
-                            value={formData.title}
-                            onChange={e =>
-                                setFormData({
-                                    ...formData,
-                                    title: e.target.value
-                                })
-                            }
-                            placeholder="Deliverable name..."
-                            leftIcon={
-                                <Tag className="w-4 h-4" />
-                            }
-                        />
-                    </div>
+                    {/* Two columns on a wide screen: what the task is on the
+                        left, where it belongs on the right. One column below
+                        that, in the original order. */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-5 w-full min-w-0 items-start">
 
-                    {/* Assignees */}
-                    <div className="space-y-2 w-full min-w-0">
-                        <div
-                            className="
-                                flex
-                                flex-col
-                                sm:flex-row
-                                sm:items-center
-                                sm:justify-between
-                                gap-2
-                                px-1
-                                min-w-0
-                            "
-                        >
-                            <label className="text-[10px] font-black text-text-muted uppercase tracking-wider shrink-0">
-                                Assign Objectives To
-                            </label>
+                        <div className="space-y-5 min-w-0">
+                        {/* Title */}
+                        <div className="w-full min-w-0">
+                            <Input
+                                label="Title"
+                                required
+                                value={formData.title}
+                                onChange={e =>
+                                    setFormData({
+                                        ...formData,
+                                        title: e.target.value
+                                    })
+                                }
+                                placeholder="Deliverable name..."
+                                leftIcon={
+                                    <Tag className="w-4 h-4" />
+                                }
+                            />
+                        </div>
 
+                        {/* Assignees */}
+                        <div className="space-y-2 w-full min-w-0">
+                            {/* The label is gone: "Assign objectives to" sat above a
+                                box of people with checkboxes, which was never in
+                                doubt. The search takes the width it freed. */}
                             <input
                                 type="text"
                                 placeholder="Search assignees..."
                                 value={assigneeSearch}
                                 onChange={e =>
-                                    setAssigneeSearch(
-                                        e.target.value
-                                    )
+                                    setAssigneeSearch(e.target.value)
                                 }
                                 className="
                                     w-full
-                                    sm:w-48
                                     max-w-full
                                     min-w-0
-                                    text-[11px]
+                                    text-[13px]
                                     font-semibold
                                     text-text-main
-                                    placeholder:text-slate-300
+                                    placeholder:text-text-muted
                                     outline-none
                                     border border-border
-                                    rounded-lg
-                                    px-2.5 py-2 sm:py-1
+                                    rounded-xl
+                                    px-4 py-3
                                     bg-surface-hover
                                     shadow-inner
                                     focus:border-primary/50
                                     transition-colors
                                 "
                             />
-                        </div>
 
-                        <div
-                            className="
-                                border border-border
-                                rounded-xl
-                                p-2 sm:p-3
-                                bg-surface-hover
-                                max-h-[160px]
-                                overflow-y-auto
-                                overflow-x-hidden
-                                custom-scrollbar
-                                space-y-1.5
-                                shadow-inner
-                                w-full
-                                min-w-0
-                            "
-                        >
-                            {allMembers
-                                .filter(
-                                    member =>
-                                        member.full_name
-                                            .toLowerCase()
-                                            .includes(
-                                                assigneeSearch.toLowerCase()
-                                            ) ||
-                                        member.email
-                                            .toLowerCase()
-                                            .includes(
-                                                assigneeSearch.toLowerCase()
-                                            )
-                                )
-                                .map(member => {
-                                    const isAssigned =
-                                        formData.assignee_ids.includes(
-                                            member.id
-                                        );
+                            {shownMembers.length > 0 && (
+                                <div className="flex items-center justify-between gap-2 px-1">
+                                    <span className="text-[10px] font-bold text-text-muted">
+                                        {assigneeSearch
+                                            ? `${shownMembers.length} matching`
+                                            : `${shownMembers.length} members`}
+                                    </span>
 
-                                    return (
-                                        <label
-                                            key={member.id}
-                                            className="
-                                                flex
-                                                items-center
-                                                justify-between
-                                                gap-2
-                                                p-2
-                                                rounded-lg
-                                                hover:bg-surface/50
-                                                cursor-pointer
-                                                transition-all
-                                                min-w-0
-                                                w-full
-                                            "
-                                        >
-                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
-                                                    {getInitials(
-                                                        member.full_name
-                                                    )}
-                                                </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const shownIds = shownMembers.map(m => m.id);
+                                            setFormData({
+                                                ...formData,
+                                                assignee_ids: allShownAssigned
+                                                    ? formData.assignee_ids.filter(
+                                                          id => !shownIds.includes(id)
+                                                      )
+                                                    : Array.from(
+                                                          new Set([
+                                                              ...formData.assignee_ids,
+                                                              ...shownIds
+                                                          ])
+                                                      )
+                                            });
+                                        }}
+                                        className="
+                                            text-[10px] font-black uppercase tracking-wider
+                                            px-2.5 py-1 rounded-lg border transition-colors
+                                            border-border text-text-muted
+                                            hover:border-primary/40 hover:text-text-main
+                                        "
+                                    >
+                                        {allShownAssigned ? 'Clear all' : 'Select all'}
+                                    </button>
+                                </div>
+                            )}
 
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-[12px] font-bold text-text-main leading-tight truncate">
-                                                        {
-                                                            member.full_name
-                                                        }
-                                                    </p>
+                            <div
+                                className="
+                                    border border-border
+                                    rounded-xl
+                                    p-2 sm:p-3
+                                    bg-surface-hover
+                                    max-h-[186px]
+                                    overflow-y-auto
+                                    overflow-x-hidden
+                                    custom-scrollbar
+                                    space-y-1.5
+                                    shadow-inner
+                                    w-full
+                                    min-w-0
+                                "
+                            >
+                                {shownMembers
+                                    .map(member => {
+                                        const isAssigned =
+                                            formData.assignee_ids.includes(
+                                                member.id
+                                            );
 
-                                                    <p className="text-[9px] text-text-muted font-mono truncate">
-                                                        {
-                                                            member.email
-                                                        }
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <input
-                                                type="checkbox"
-                                                checked={
-                                                    isAssigned
-                                                }
-                                                onChange={() => {
-                                                    const next =
-                                                        isAssigned
-                                                            ? formData.assignee_ids.filter(
-                                                                  id =>
-                                                                      id !==
-                                                                      member.id
-                                                              )
-                                                            : [
-                                                                  ...formData.assignee_ids,
-                                                                  member.id
-                                                              ];
-
-                                                    setFormData(
-                                                        {
-                                                            ...formData,
-                                                            assignee_ids:
-                                                                next
-                                                        }
-                                                    );
-                                                }}
+                                        return (
+                                            <label
+                                                key={member.id}
                                                 className="
-                                                    w-4 h-4
-                                                    rounded
-                                                    border-border
-                                                    text-primary
-                                                    focus:ring-primary
+                                                    flex
+                                                    items-center
+                                                    justify-between
+                                                    gap-2
+                                                    p-2
+                                                    rounded-lg
+                                                    hover:bg-surface/50
                                                     cursor-pointer
-                                                    shrink-0
+                                                    transition-all
+                                                    min-w-0
+                                                    w-full
                                                 "
-                                            />
-                                        </label>
-                                    );
-                                })}
+                                            >
+                                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                    <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
+                                                        {getInitials(
+                                                            member.full_name
+                                                        )}
+                                                    </div>
+
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-[12px] font-bold text-text-main leading-tight truncate">
+                                                            {
+                                                                member.full_name
+                                                            }
+                                                        </p>
+
+                                                        <p className="text-[9px] text-text-muted font-mono truncate">
+                                                            {
+                                                                member.email
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <input
+                                                    type="checkbox"
+                                                    checked={
+                                                        isAssigned
+                                                    }
+                                                    onChange={() => {
+                                                        const next =
+                                                            isAssigned
+                                                                ? formData.assignee_ids.filter(
+                                                                      id =>
+                                                                          id !==
+                                                                          member.id
+                                                                  )
+                                                                : [
+                                                                      ...formData.assignee_ids,
+                                                                      member.id
+                                                                  ];
+
+                                                        setFormData(
+                                                            {
+                                                                ...formData,
+                                                                assignee_ids:
+                                                                    next
+                                                            }
+                                                        );
+                                                    }}
+                                                    className="
+                                                        w-4 h-4
+                                                        rounded
+                                                        border-border
+                                                        text-primary
+                                                        focus:ring-primary
+                                                        cursor-pointer
+                                                        shrink-0
+                                                    "
+                                                />
+                                            </label>
+                                        );
+                                    })}
+                            </div>
                         </div>
-                    </div>
 
-                    {/* Description */}
-                    <div className="space-y-1.5 w-full min-w-0">
-                        <label className="text-[10px] font-black text-text-muted px-1">
-                            Context / Details
-                        </label>
+                        </div>
 
-                        <textarea
-                            rows={3}
-                            value={formData.description}
-                            onChange={e =>
-                                setFormData({
-                                    ...formData,
-                                    description:
-                                        e.target.value
-                                })
-                            }
-                            className="
-                                w-full
-                                max-w-full
-                                min-w-0
-                                px-4 py-3
-                                bg-surface-hover
-                                border border-border
-                                rounded-xl
-                                text-sm
-                                font-medium
-                                text-text-main
-                                placeholder:text-slate-300
-                                outline-none
-                                focus:border-primary
-                                transition-all
-                                resize-none
-                                overflow-y-auto
-                            "
-                        />
-                    </div>
+                        <div className="space-y-5 min-w-0">
+                        {/* Project and date sit above the notes box, not below it.
+                            The calendar opens downward from this field, and with
+                            the field at the bottom of the column there was not
+                            enough room left in the dialog to show it — the body
+                            scrolled to reach a panel that had only just opened.
+                            Higher up it has the rest of the column to open into,
+                            and simply overlaps the notes box. */}
+                        {/* Project + Date */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0">
+                            {/* Was a native <select>. The browser decides which way
+                                one of those opens and it was choosing upward, and the
+                                list it draws is the operating system's — grey rows, a
+                                blue selection bar, nothing that follows the theme.
+                                FormSelect is the app's own and opens downward. */}
+                            <div className="min-w-0">
+                                <FormSelect
+                                    label="Host Project"
+                                    value={formData.project_id}
+                                    onChange={(value: string) =>
+                                        setFormData({
+                                            ...formData,
+                                            project_id: value
+                                        })
+                                    }
+                                    options={[
+                                        { value: '', label: 'Target...' },
+                                        ...projects.map(project => ({
+                                            value: project.id,
+                                            label: project.name
+                                        }))
+                                    ]}
+                                />
+                            </div>
 
-                    {/* Project + Date */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0">
-                        <div className="space-y-1.5 min-w-0">
-                            <label className="text-[10px] font-black text-text-muted px-1">
-                                Host Project
+                            <div className="space-y-1.5 min-w-0">
+                                <label className="block text-[11px] font-bold text-text-muted tracking-[0.15em] mb-2.5 ml-1">
+                                    Resolution Date
+                                </label>
+
+                                <div className="w-full min-w-0 max-w-full">
+                                    <DatePicker
+                                        value={
+                                            formData.due_date
+                                        }
+                                        onChange={value =>
+                                            setFormData({
+                                                ...formData,
+                                                due_date: value
+                                            })
+                                        }
+                                        className="w-full max-w-full"
+                                        panelAlign="right"
+                                        triggerClassName="h-[56px] rounded-2xl [&_span]:text-[14px]"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Description */}
+                        <div className="space-y-1.5 w-full min-w-0">
+                            <label className="block text-[11px] font-bold text-text-muted tracking-[0.15em] mb-2.5 ml-1">
+                                Context / Details
                             </label>
 
-                            <select
-                                required
-                                value={
-                                    formData.project_id
-                                }
+                            <textarea
+                                rows={7}
+                                value={formData.description}
                                 onChange={e =>
                                     setFormData({
                                         ...formData,
-                                        project_id:
+                                        description:
                                             e.target.value
                                     })
                                 }
@@ -1002,92 +1083,26 @@ export function Todos() {
                                     w-full
                                     max-w-full
                                     min-w-0
-                                    px-4 py-2.5
+                                    px-4 py-3
                                     bg-surface-hover
                                     border border-border
                                     rounded-xl
                                     text-sm
-                                    font-semibold
+                                    font-medium
                                     text-text-main
+                                    placeholder:text-slate-300
                                     outline-none
                                     focus:border-primary
                                     transition-all
-                                    cursor-pointer
+                                    resize-none
+                                    overflow-y-auto
                                 "
-                            >
-                                <option value="">
-                                    Target...
-                                </option>
-
-                                {projects.map(project => (
-                                    <option
-                                        key={project.id}
-                                        value={project.id}
-                                    >
-                                        {project.name}
-                                    </option>
-                                ))}
-                            </select>
+                            />
                         </div>
 
-                        <div className="space-y-1.5 min-w-0">
-                            <label className="text-[10px] font-black text-text-muted px-1">
-                                Resolution Date
-                            </label>
 
-                            <div className="w-full min-w-0 max-w-full">
-                                <DatePicker
-                                    value={
-                                        formData.due_date
-                                    }
-                                    onChange={value =>
-                                        setFormData({
-                                            ...formData,
-                                            due_date: value
-                                        })
-                                    }
-                                    className="w-full max-w-full"
-                                />
-                            </div>
                         </div>
-                    </div>
 
-                    {/* Modal Actions */}
-                    <div
-                        className="
-                            pt-3 sm:pt-4
-                            flex
-                            flex-col-reverse
-                            sm:flex-row
-                            gap-3
-                            w-full
-                            min-w-0
-                        "
-                    >
-                        <Button
-                            type="button"
-                            onClick={
-                                handleCloseModal
-                            }
-                            variant="secondary"
-                            className="w-full sm:flex-1 min-w-0"
-                        >
-                            Discard
-                        </Button>
-
-                        <Button
-                            type="submit"
-                            disabled={
-                                saving ||
-                                !formData.project_id
-                            }
-                            variant="primary"
-                            className="w-full sm:flex-1 min-w-0"
-                        >
-                            {saving
-                                ? 'Syncing...'
-                                : 'Commit Changes'}
-                        </Button>
                     </div>
                 </form>
             </Modal>

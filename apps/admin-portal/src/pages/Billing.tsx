@@ -359,7 +359,6 @@ export function Billing() {
         <PageLayout
             title="Billing & Subscription"
             description="Manage your plan, seat usage, and payment methods."
-            maxWidth="6xl"
         >
             {/* Post-Checkout Sync Banner: shown while webhook propagates */}
             {syncingAfterCheckout && (
