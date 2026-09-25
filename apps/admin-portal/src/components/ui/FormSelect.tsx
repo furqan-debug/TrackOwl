@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, Check } from 'lucide-react';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -25,6 +26,46 @@ export function FormSelect({
     const [isOpen, setIsOpen] = useState(false);
 
     const ref = useRef<HTMLDivElement>(null);
+    const triggerRef = useRef<HTMLDivElement>(null);
+    const panelRef = useRef<HTMLDivElement>(null);
+
+    /** Roughly how tall the list gets, for deciding up or down. */
+    const PANEL_MAX = 260;
+
+    const [panelPos, setPanelPos] = useState({ top: 0, left: 0, width: 0 });
+
+    /**
+     * The list is rendered through a portal on the body, so it is not inside
+     * anything that scrolls. Rendered in place it was part of the dialog's
+     * scrolling content, and opening it grew a scrollbar the dialog did not
+     * otherwise need — visible room on screen, but the content box had got
+     * taller. Out here it takes part in no layout and simply overlays.
+     */
+    useLayoutEffect(() => {
+        if (!isOpen) return;
+
+        const place = () => {
+            const rect = triggerRef.current?.getBoundingClientRect();
+            if (!rect) return;
+
+            const below = rect.bottom + 8;
+            const fitsBelow = below + PANEL_MAX <= window.innerHeight - 16;
+
+            setPanelPos({
+                top: fitsBelow ? below : Math.max(16, rect.top - PANEL_MAX - 8),
+                left: rect.left,
+                width: rect.width,
+            });
+        };
+
+        place();
+        window.addEventListener('resize', place);
+        window.addEventListener('scroll', place, true);
+        return () => {
+            window.removeEventListener('resize', place);
+            window.removeEventListener('scroll', place, true);
+        };
+    }, [isOpen]);
 
     const activeLabel =
         options.find((o: any) => o.value === value)?.label || value;
@@ -33,7 +74,8 @@ export function FormSelect({
         const handler = (e: MouseEvent) => {
             if (
                 ref.current &&
-                !ref.current.contains(e.target as Node)
+                !ref.current.contains(e.target as Node) &&
+                !panelRef.current?.contains(e.target as Node)
             ) {
                 setIsOpen(false);
             }
@@ -54,7 +96,7 @@ export function FormSelect({
                 {label}
             </label>
 
-            <div className="relative mt-auto">
+            <div className="relative mt-auto" ref={triggerRef}>
                 <div
                     onClick={() =>
                         !disabled && setIsOpen(!isOpen)
@@ -102,9 +144,14 @@ export function FormSelect({
                     />
                 </div>
 
-                <AnimatePresence>
-                    {isOpen && (
-                        <motion.div
+                {/* Portal, so the list is outside anything that scrolls.
+                    AnimatePresence goes inside it — it animates the children it
+                    is handed, and a portal is not one of those. */}
+                {createPortal(
+                    <AnimatePresence>
+                        {isOpen && (
+                            <motion.div
+                                ref={panelRef}
                             initial={{
                                 opacity: 0,
                                 y: -10,
@@ -120,9 +167,16 @@ export function FormSelect({
                                 y: -10,
                                 scale: 0.95,
                             }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute top-[calc(100%+8px)] left-0 w-full bg-surface border border-border rounded-2xl shadow-premium z-[100] flex flex-col p-2 max-h-[260px] overflow-y-auto custom-scrollbar"
-                        >
+                                transition={{ duration: 0.2 }}
+                                style={{
+                                    position: 'fixed',
+                                    top: panelPos.top,
+                                    left: panelPos.left,
+                                    width: panelPos.width,
+                                }}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                className="bg-surface border border-border rounded-2xl shadow-premium z-[200] flex flex-col p-2 max-h-[260px] overflow-y-auto custom-scrollbar"
+                            >
                             {options.map((opt: any) => (
                                 <div
                                     key={opt.value}
@@ -144,9 +198,11 @@ export function FormSelect({
                                     )}
                                 </div>
                             ))}
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>,
+                    document.body
+                )}
             </div>
 
             {description && (
