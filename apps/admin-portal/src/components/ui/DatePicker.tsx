@@ -3,6 +3,7 @@ import {
     ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
     ChevronDown 
 } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,6 +13,22 @@ interface DatePickerProps {
     label?: string;
     placeholder?: string;
     className?: string;
+    /**
+     * Pin the panel to one edge of the trigger instead of working it out from
+     * the window.
+     *
+     * The automatic choice only knows about the window, so inside a dialog it
+     * stays centred and overhangs the dialog's edge, where the scroll box
+     * clips it — on the objective form that cut the Sunday column off the
+     * left of the calendar.
+     */
+    panelAlign?: 'auto' | 'left' | 'right';
+    /**
+     * Extra classes for the trigger, so a date field can be given the same
+     * height as the select beside it. `className` lands on the wrapper, which
+     * cannot do that.
+     */
+    triggerClassName?: string;
     displayValue?: string;
     displayTimezone?: string;
 }
@@ -27,12 +44,21 @@ interface DatePickerProps {
  */
 const MIN_PANEL_WIDTH = 288;
 
+/**
+ * Roughly how tall the panel is, used only to decide up or down. Measuring the
+ * real thing would mean rendering it first and moving it after, which shows as
+ * a jump.
+ */
+const PANEL_HEIGHT = 320;
+
 export function DatePicker({
     value, 
     onChange, 
     label, 
     placeholder = "Select date",
     className,
+    panelAlign = 'auto',
+    triggerClassName,
     displayValue,
     displayTimezone
 }: DatePickerProps) {
@@ -44,32 +70,57 @@ export function DatePicker({
     // screen on every page whose date control sits in the top-right corner.
     const triggerRef = useRef<HTMLDivElement>(null);
     const rootRef = useRef<HTMLDivElement>(null);
-    const [align, setAlign] = useState<'centre' | 'left' | 'right'>('centre');
-    const [panelWidth, setPanelWidth] = useState(MIN_PANEL_WIDTH);
+    const panelRef = useRef<HTMLDivElement>(null);
+    const [panelPos, setPanelPos] = useState({ top: 0, left: 0, width: MIN_PANEL_WIDTH });
 
+    /**
+     * Where to put the panel, in viewport coordinates.
+     *
+     * It is rendered through a portal on the body rather than inside the
+     * field. Inside, it is part of whatever is scrolling: on the objective
+     * dialog its height counted toward the content the dialog thought it had
+     * to scroll, so opening the calendar grew a scrollbar even with room on
+     * screen to show it. Out of the dialog it takes part in no layout at all
+     * and simply overlays.
+     */
     useLayoutEffect(() => {
         if (!isOpen) return;
 
-        const decide = () => {
+        const place = () => {
             const rect = triggerRef.current?.getBoundingClientRect();
             if (!rect) return;
-            // Match the trigger, never go below the floor.
+
             const width = Math.max(rect.width, MIN_PANEL_WIDTH);
-            setPanelWidth(width);
 
-            // Only a trigger narrower than the floor can still overhang, and
-            // then by a few pixels, so the edge checks stay as a safety net.
-            const centre = rect.left + rect.width / 2;
-            const overflowsRight = centre + width / 2 > window.innerWidth - 16;
-            const overflowsLeft = centre - width / 2 < 16;
+            // Which edge to hang from. 'auto' keeps it under the trigger.
+            let left =
+                panelAlign === 'right'
+                    ? rect.right - width
+                    : panelAlign === 'left'
+                        ? rect.left
+                        : rect.left + rect.width / 2 - width / 2;
 
-            setAlign(overflowsRight ? 'right' : overflowsLeft ? 'left' : 'centre');
+            // Never off the edge of the window.
+            if (left + width > window.innerWidth - 16) left = window.innerWidth - width - 16;
+            if (left < 16) left = 16;
+
+            // Downward, unless the window itself has no room for it there.
+            const below = rect.bottom + 8;
+            const fitsBelow = below + PANEL_HEIGHT <= window.innerHeight - 16;
+            const top = fitsBelow ? below : Math.max(16, rect.top - PANEL_HEIGHT - 8);
+
+            setPanelPos({ top, left, width });
         };
 
-        decide();
-        window.addEventListener('resize', decide);
-        return () => window.removeEventListener('resize', decide);
-    }, [isOpen]);
+        place();
+        // Fixed coordinates go stale as soon as anything moves underneath.
+        window.addEventListener('resize', place);
+        window.addEventListener('scroll', place, true);
+        return () => {
+            window.removeEventListener('resize', place);
+            window.removeEventListener('scroll', place, true);
+        };
+    }, [isOpen, panelAlign]);
 
     // Dismiss on a click anywhere else. Without this the calendar only closed
     // by picking a date or clicking the trigger again, so clicking elsewhere on
@@ -78,7 +129,11 @@ export function DatePicker({
     useEffect(() => {
         if (!isOpen) return;
         const handleClickOutside = (event: MouseEvent) => {
-            if (rootRef.current && !rootRef.current.contains(event.target as Node)) {
+            const target = event.target as Node;
+            // The panel is outside this component's DOM now, so a click in it
+            // is not inside rootRef — without the second check, using a month
+            // arrow would count as clicking away and close the calendar.
+            if (!rootRef.current?.contains(target) && !panelRef.current?.contains(target)) {
                 setIsOpen(false);
             }
         };
@@ -216,6 +271,7 @@ export function DatePicker({
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
                     "flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-all rounded-xl select-none border",
+                    triggerClassName,
                     isOpen 
                         ? "bg-surface-hover border-primary/30 shadow-inner" 
                         : "bg-surface hover:bg-surface-hover hover:border-primary/20 border-border shadow-shell-sm"
@@ -232,20 +288,27 @@ export function DatePicker({
             </div>
 
             {/* Calendar Dropdown */}
-            <AnimatePresence>
-                {isOpen && (
-                    <motion.div 
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        style={{ width: panelWidth }}
-                        className={clsx(
-                            "absolute top-[calc(100%+8px)] bg-surface border border-border rounded-2xl shadow-premium z-[110] p-3 overflow-hidden",
-                            align === 'centre' && "left-1/2 -translate-x-1/2",
-                            align === 'left' && "left-0",
-                            align === 'right' && "right-0"
-                        )}
-                    >
+            {/* Portal, so the panel is not part of anything that scrolls.
+                AnimatePresence goes INSIDE it: it animates the children it is
+                handed, and a portal is not one of those — wrapping the portal
+                in it means it tracks nothing and renders nothing. */}
+            {createPortal(
+                <AnimatePresence>
+                    {isOpen && (
+                        <motion.div
+                            ref={panelRef}
+                            initial={{ opacity: 0, y: 8, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 8, scale: 0.97 }}
+                            style={{
+                                position: 'fixed',
+                                top: panelPos.top,
+                                left: panelPos.left,
+                                width: panelPos.width,
+                            }}
+                            onMouseDown={(e) => e.stopPropagation()}
+                            className="bg-surface border border-border rounded-2xl shadow-premium z-[200] p-3 overflow-hidden"
+                        >
                         {/* Header */}
                         <div className="flex items-center justify-between mb-2">
                             <h4 className="text-[14px] font-black text-text-main tracking-tight">
@@ -299,9 +362,11 @@ export function DatePicker({
                                 </div>
                             ))}
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        </motion.div>
+                    )}
+                </AnimatePresence>,
+                document.body
+            )}
         </div>
     );
 }
