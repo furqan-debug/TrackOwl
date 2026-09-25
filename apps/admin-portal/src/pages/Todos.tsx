@@ -960,43 +960,13 @@ export function Todos() {
                         </div>
 
                         <div className="space-y-5 min-w-0">
-                        {/* Description */}
-                        <div className="space-y-1.5 w-full min-w-0">
-                            <label className="block text-[11px] font-bold text-text-muted tracking-[0.15em] mb-2.5 ml-1">
-                                Context / Details
-                            </label>
-
-                            <textarea
-                                rows={3}
-                                value={formData.description}
-                                onChange={e =>
-                                    setFormData({
-                                        ...formData,
-                                        description:
-                                            e.target.value
-                                    })
-                                }
-                                className="
-                                    w-full
-                                    max-w-full
-                                    min-w-0
-                                    px-4 py-3
-                                    bg-surface-hover
-                                    border border-border
-                                    rounded-xl
-                                    text-sm
-                                    font-medium
-                                    text-text-main
-                                    placeholder:text-slate-300
-                                    outline-none
-                                    focus:border-primary
-                                    transition-all
-                                    resize-none
-                                    overflow-y-auto
-                                "
-                            />
-                        </div>
-
+                        {/* Project and date sit above the notes box, not below it.
+                            The calendar opens downward from this field, and with
+                            the field at the bottom of the column there was not
+                            enough room left in the dialog to show it — the body
+                            scrolled to reach a panel that had only just opened.
+                            Higher up it has the rest of the column to open into,
+                            and simply overlaps the notes box. */}
                         {/* Project + Date */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0">
                             {/* Was a native <select>. The browser decides which way
@@ -1047,6 +1017,44 @@ export function Todos() {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Description */}
+                        <div className="space-y-1.5 w-full min-w-0">
+                            <label className="block text-[11px] font-bold text-text-muted tracking-[0.15em] mb-2.5 ml-1">
+                                Context / Details
+                            </label>
+
+                            <textarea
+                                rows={3}
+                                value={formData.description}
+                                onChange={e =>
+                                    setFormData({
+                                        ...formData,
+                                        description:
+                                            e.target.value
+                                    })
+                                }
+                                className="
+                                    w-full
+                                    max-w-full
+                                    min-w-0
+                                    px-4 py-3
+                                    bg-surface-hover
+                                    border border-border
+                                    rounded-xl
+                                    text-sm
+                                    font-medium
+                                    text-text-main
+                                    placeholder:text-slate-300
+                                    outline-none
+                                    focus:border-primary
+                                    transition-all
+                                    resize-none
+                                    overflow-y-auto
+                                "
+                            />
+                        </div>
+
 
                         </div>
 
