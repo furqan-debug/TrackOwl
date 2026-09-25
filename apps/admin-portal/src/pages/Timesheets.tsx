@@ -624,7 +624,7 @@ export function Timesheets() {
                 <div className="flex flex-col gap-4 min-w-0">
                     <div className="space-y-2">
                         <div className="flex items-center gap-4">
-                            <h1 className="text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
+                            <h1 className="text-3xl md:text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
                             <button
                                 onClick={() => toggleFavorite('Timesheets', location.pathname)}
                                 className={clsx(
