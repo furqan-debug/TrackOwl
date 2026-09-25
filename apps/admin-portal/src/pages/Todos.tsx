@@ -748,7 +748,7 @@ export function Todos() {
                         : 'New objective'
                 }
                 subtitle="Specify deliverables and resource allocation."
-                maxWidth="max-w-4xl"
+                maxWidth="max-w-5xl"
                 height="h-[660px]"
                 footer={
                     <>
@@ -1012,7 +1012,7 @@ export function Todos() {
                                         }
                                         className="w-full max-w-full"
                                         panelAlign="right"
-                                        triggerClassName="h-[56px] rounded-2xl"
+                                        triggerClassName="h-[56px] rounded-2xl [&_span]:text-[14px]"
                                     />
                                 </div>
                             </div>
@@ -1025,7 +1025,7 @@ export function Todos() {
                             </label>
 
                             <textarea
-                                rows={3}
+                                rows={7}
                                 value={formData.description}
                                 onChange={e =>
                                     setFormData({
