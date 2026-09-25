@@ -370,6 +370,26 @@ export function Todos() {
         setAssigneeSearch('');
     }
 
+    /**
+     * The members the assignee list is showing.
+     *
+     * Shared with Select all deliberately: the button acts on exactly what is
+     * on screen, so with a search typed it selects the matches rather than
+     * quietly assigning the whole company.
+     */
+    const shownMembers = useMemo(() => {
+        const query = assigneeSearch.toLowerCase();
+        return allMembers.filter(
+            member =>
+                member.full_name.toLowerCase().includes(query) ||
+                member.email.toLowerCase().includes(query)
+        );
+    }, [allMembers, assigneeSearch]);
+
+    const allShownAssigned =
+        shownMembers.length > 0 &&
+        shownMembers.every(m => formData.assignee_ids.includes(m.id));
+
     const filteredTodos = useMemo(() => {
         return todos.filter(todo => {
             const query = searchTerm.toLowerCase();
@@ -840,6 +860,44 @@ export function Todos() {
                                 "
                             />
 
+                            {shownMembers.length > 0 && (
+                                <div className="flex items-center justify-between gap-2 px-1">
+                                    <span className="text-[10px] font-bold text-text-muted">
+                                        {assigneeSearch
+                                            ? `${shownMembers.length} matching`
+                                            : `${shownMembers.length} members`}
+                                    </span>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const shownIds = shownMembers.map(m => m.id);
+                                            setFormData({
+                                                ...formData,
+                                                assignee_ids: allShownAssigned
+                                                    ? formData.assignee_ids.filter(
+                                                          id => !shownIds.includes(id)
+                                                      )
+                                                    : Array.from(
+                                                          new Set([
+                                                              ...formData.assignee_ids,
+                                                              ...shownIds
+                                                          ])
+                                                      )
+                                            });
+                                        }}
+                                        className="
+                                            text-[10px] font-black uppercase tracking-wider
+                                            px-2.5 py-1 rounded-lg border transition-colors
+                                            border-border text-text-muted
+                                            hover:border-primary/40 hover:text-text-main
+                                        "
+                                    >
+                                        {allShownAssigned ? 'Clear all' : 'Select all'}
+                                    </button>
+                                </div>
+                            )}
+
                             <div
                                 className="
                                     border border-border
@@ -856,20 +914,7 @@ export function Todos() {
                                     min-w-0
                                 "
                             >
-                                {allMembers
-                                    .filter(
-                                        member =>
-                                            member.full_name
-                                                .toLowerCase()
-                                                .includes(
-                                                    assigneeSearch.toLowerCase()
-                                                ) ||
-                                            member.email
-                                                .toLowerCase()
-                                                .includes(
-                                                    assigneeSearch.toLowerCase()
-                                                )
-                                    )
+                                {shownMembers
                                     .map(member => {
                                         const isAssigned =
                                             formData.assignee_ids.includes(

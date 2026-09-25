@@ -117,7 +117,7 @@ export function Modal({
                             {subtitle && (
                                 <div className="mt-1 min-w-0">
                                     {typeof subtitle === 'string' ? (
-                                        <p className="text-[10px] font-bold text-text-muted font-mono break-words">
+                                        <p className="text-[12px] font-semibold text-text-muted break-words">
                                             {subtitle}
                                         </p>
                                     ) : (
