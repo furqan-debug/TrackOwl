@@ -26,7 +26,8 @@ import {
     Modal,
     Input,
     StatMetric,
-    DatePicker
+    DatePicker,
+    FormSelect
 } from '../components/ui';
 
 import { useAuth } from '../context/AuthContext';
@@ -748,7 +749,7 @@ export function Todos() {
                 }
                 subtitle="Specify deliverables and resource allocation."
                 maxWidth="max-w-3xl"
-                height="h-[720px]"
+                height="h-[760px]"
                 footer={
                     <>
                         <Button
@@ -810,51 +811,34 @@ export function Todos() {
 
                         {/* Assignees */}
                         <div className="space-y-2 w-full min-w-0">
-                            <div
+                            {/* The label is gone: "Assign objectives to" sat above a
+                                box of people with checkboxes, which was never in
+                                doubt. The search takes the width it freed. */}
+                            <input
+                                type="text"
+                                placeholder="Search assignees..."
+                                value={assigneeSearch}
+                                onChange={e =>
+                                    setAssigneeSearch(e.target.value)
+                                }
                                 className="
-                                    flex
-                                    flex-col
-                                    sm:flex-row
-                                    sm:items-center
-                                    sm:justify-between
-                                    gap-2
-                                    px-1
+                                    w-full
+                                    max-w-full
                                     min-w-0
+                                    text-[13px]
+                                    font-semibold
+                                    text-text-main
+                                    placeholder:text-text-muted
+                                    outline-none
+                                    border border-border
+                                    rounded-xl
+                                    px-4 py-3
+                                    bg-surface-hover
+                                    shadow-inner
+                                    focus:border-primary/50
+                                    transition-colors
                                 "
-                            >
-                                <label className="text-[10px] font-black text-text-muted uppercase tracking-wider shrink-0">
-                                    Assign Objectives To
-                                </label>
-
-                                <input
-                                    type="text"
-                                    placeholder="Search assignees..."
-                                    value={assigneeSearch}
-                                    onChange={e =>
-                                        setAssigneeSearch(
-                                            e.target.value
-                                        )
-                                    }
-                                    className="
-                                        w-full
-                                        sm:w-48
-                                        max-w-full
-                                        min-w-0
-                                        text-[11px]
-                                        font-semibold
-                                        text-text-main
-                                        placeholder:text-slate-300
-                                        outline-none
-                                        border border-border
-                                        rounded-lg
-                                        px-2.5 py-2 sm:py-1
-                                        bg-surface-hover
-                                        shadow-inner
-                                        focus:border-primary/50
-                                        transition-colors
-                                    "
-                                />
-                            </div>
+                            />
 
                             <div
                                 className="
@@ -862,7 +846,7 @@ export function Todos() {
                                     rounded-xl
                                     p-2 sm:p-3
                                     bg-surface-hover
-                                    max-h-[320px]
+                                    max-h-[186px]
                                     overflow-y-auto
                                     overflow-x-hidden
                                     custom-scrollbar
@@ -978,7 +962,7 @@ export function Todos() {
                         <div className="space-y-5 min-w-0">
                         {/* Description */}
                         <div className="space-y-1.5 w-full min-w-0">
-                            <label className="text-[10px] font-black text-text-muted px-1">
+                            <label className="block text-[11px] font-bold text-text-muted tracking-[0.15em] mb-2.5 ml-1">
                                 Context / Details
                             </label>
 
@@ -1015,57 +999,33 @@ export function Todos() {
 
                         {/* Project + Date */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0">
-                            <div className="space-y-1.5 min-w-0">
-                                <label className="text-[10px] font-black text-text-muted px-1">
-                                    Host Project
-                                </label>
-
-                                <select
-                                    required
-                                    value={
-                                        formData.project_id
-                                    }
-                                    onChange={e =>
+                            {/* Was a native <select>. The browser decides which way
+                                one of those opens and it was choosing upward, and the
+                                list it draws is the operating system's — grey rows, a
+                                blue selection bar, nothing that follows the theme.
+                                FormSelect is the app's own and opens downward. */}
+                            <div className="min-w-0">
+                                <FormSelect
+                                    label="Host Project"
+                                    value={formData.project_id}
+                                    onChange={(value: string) =>
                                         setFormData({
                                             ...formData,
-                                            project_id:
-                                                e.target.value
+                                            project_id: value
                                         })
                                     }
-                                    className="
-                                        w-full
-                                        max-w-full
-                                        min-w-0
-                                        px-4 py-2.5
-                                        bg-surface-hover
-                                        border border-border
-                                        rounded-xl
-                                        text-sm
-                                        font-semibold
-                                        text-text-main
-                                        outline-none
-                                        focus:border-primary
-                                        transition-all
-                                        cursor-pointer
-                                    "
-                                >
-                                    <option value="">
-                                        Target...
-                                    </option>
-
-                                    {projects.map(project => (
-                                        <option
-                                            key={project.id}
-                                            value={project.id}
-                                        >
-                                            {project.name}
-                                        </option>
-                                    ))}
-                                </select>
+                                    options={[
+                                        { value: '', label: 'Target...' },
+                                        ...projects.map(project => ({
+                                            value: project.id,
+                                            label: project.name
+                                        }))
+                                    ]}
+                                />
                             </div>
 
                             <div className="space-y-1.5 min-w-0">
-                                <label className="text-[10px] font-black text-text-muted px-1">
+                                <label className="block text-[11px] font-bold text-text-muted tracking-[0.15em] mb-2.5 ml-1">
                                     Resolution Date
                                 </label>
 
@@ -1081,6 +1041,8 @@ export function Todos() {
                                             })
                                         }
                                         className="w-full max-w-full"
+                                        panelAlign="right"
+                                        triggerClassName="h-[56px] rounded-2xl"
                                     />
                                 </div>
                             </div>

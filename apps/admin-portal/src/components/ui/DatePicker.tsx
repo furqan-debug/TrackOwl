@@ -12,6 +12,22 @@ interface DatePickerProps {
     label?: string;
     placeholder?: string;
     className?: string;
+    /**
+     * Pin the panel to one edge of the trigger instead of working it out from
+     * the window.
+     *
+     * The automatic choice only knows about the window, so inside a dialog it
+     * stays centred and overhangs the dialog's edge, where the scroll box
+     * clips it — on the objective form that cut the Sunday column off the
+     * left of the calendar.
+     */
+    panelAlign?: 'auto' | 'left' | 'right';
+    /**
+     * Extra classes for the trigger, so a date field can be given the same
+     * height as the select beside it. `className` lands on the wrapper, which
+     * cannot do that.
+     */
+    triggerClassName?: string;
     displayValue?: string;
     displayTimezone?: string;
 }
@@ -33,6 +49,8 @@ export function DatePicker({
     label, 
     placeholder = "Select date",
     className,
+    panelAlign = 'auto',
+    triggerClassName,
     displayValue,
     displayTimezone
 }: DatePickerProps) {
@@ -63,13 +81,18 @@ export function DatePicker({
             const overflowsRight = centre + width / 2 > window.innerWidth - 16;
             const overflowsLeft = centre - width / 2 < 16;
 
+            if (panelAlign !== 'auto') {
+                setAlign(panelAlign);
+                return;
+            }
+
             setAlign(overflowsRight ? 'right' : overflowsLeft ? 'left' : 'centre');
         };
 
         decide();
         window.addEventListener('resize', decide);
         return () => window.removeEventListener('resize', decide);
-    }, [isOpen]);
+    }, [isOpen, panelAlign]);
 
     // Dismiss on a click anywhere else. Without this the calendar only closed
     // by picking a date or clicking the trigger again, so clicking elsewhere on
@@ -216,6 +239,7 @@ export function DatePicker({
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
                     "flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-all rounded-xl select-none border",
+                    triggerClassName,
                     isOpen 
                         ? "bg-surface-hover border-primary/30 shadow-inner" 
                         : "bg-surface hover:bg-surface-hover hover:border-primary/20 border-border shadow-shell-sm"
