@@ -10,7 +10,7 @@ export interface PageLayoutProps {
     description?: string;
     children: ReactNode;
     /** Max width: '7xl' (1280px) default, or 'full' for no max */
-    maxWidth?: '7xl' | '6xl' | 'full';
+    maxWidth?: 'wide' | '7xl' | '6xl' | 'full';
     /** Optional actions (e.g. buttons) to show next to title on desktop */
     actions?: ReactNode;
     /** Optional back button configuration */
@@ -25,7 +25,7 @@ export function PageLayout({
     eyebrow,
     description,
     children,
-    maxWidth = '7xl',
+    maxWidth = 'wide',
     actions,
     backButton,
 }: PageLayoutProps) {
@@ -34,7 +34,17 @@ export function PageLayout({
     const isFav = isFavorite(location.pathname);
 
     const maxClass =
-        maxWidth === '7xl' ? 'max-w-7xl mx-auto' : maxWidth === '6xl' ? 'max-w-6xl mx-auto' : 'max-w-none w-full';
+        maxWidth === 'wide'
+            // Matches what Timesheets caps its own content at, so a page laid
+            // out by this component starts at the same left edge as that one.
+            // The old default centred at max-w-7xl, which on a normal screen
+            // left a gutter no other page had.
+            ? 'max-w-[1600px] mx-auto'
+            : maxWidth === '7xl'
+                ? 'max-w-7xl mx-auto'
+                : maxWidth === '6xl'
+                    ? 'max-w-6xl mx-auto'
+                    : 'max-w-none w-full';
 
     return (
         <div className={clsx("p-4 md:px-10 md:py-12 w-full animate-in fade-in slide-in-from-top-4 duration-1000", maxClass)}>
