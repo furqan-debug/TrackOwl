@@ -11,6 +11,11 @@ export interface ModalProps {
     children: ReactNode;
     footer?: ReactNode;
     maxWidth?: string;
+    /**
+     * Height class for the panel. Defaults to what every dialog had before it
+     * was a prop, so nothing moves unless a caller asks for it.
+     */
+    height?: string;
     allowOverflow?: boolean;
 }
 
@@ -22,6 +27,7 @@ export function Modal({
     children,
     footer,
     maxWidth = 'max-w-lg',
+    height = 'h-[680px]',
     allowOverflow = false,
 }: ModalProps) {
     useEffect(() => {
@@ -57,7 +63,6 @@ export function Modal({
                     `
                     bg-surface
                     rounded-2xl sm:rounded-[32px]
-                    h-[680px]
                     w-[calc(100vw-24px)]
                     sm:w-[calc(100vw-48px)]
                     max-h-[calc(100dvh-24px)]
@@ -74,6 +79,7 @@ export function Modal({
                     allowOverflow
                         ? "overflow-visible"
                         : "overflow-hidden",
+                    height,
                     maxWidth
                 )}
 
