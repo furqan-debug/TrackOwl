@@ -748,8 +748,8 @@ export function Todos() {
                         : 'New objective'
                 }
                 subtitle="Specify deliverables and resource allocation."
-                maxWidth="max-w-3xl"
-                height="h-[760px]"
+                maxWidth="max-w-4xl"
+                height="h-[660px]"
                 footer={
                     <>
                         <Button
