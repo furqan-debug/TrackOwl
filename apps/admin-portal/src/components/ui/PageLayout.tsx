@@ -68,7 +68,7 @@ export function PageLayout({
                                 )}
                                 {title && (
                                     <div className="flex items-center gap-4">
-                                        <h1 className="text-3xl md:text-4xl font-bold heading-gradient">
+                                        <h1 className="text-3xl md:text-4xl font-bold heading-gradient tracking-tight font-heading">
                                             {title}
                                         </h1>
                                         <button
@@ -84,7 +84,7 @@ export function PageLayout({
                                     </div>
                                 )}
                                 {description && (
-                                    <p className="text-[14px] md:text-[16px] font-medium text-slate-600 dark:text-slate-300 max-w-2xl tracking-[0.02em] leading-relaxed">
+                                    <p className="text-[14px] font-bold text-text-muted tracking-tight max-w-2xl">
                                         {description}
                                     </p>
                                 )}
