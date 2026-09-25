@@ -747,8 +747,33 @@ export function Todos() {
                         : 'New objective'
                 }
                 subtitle="Specify deliverables and resource allocation."
+                maxWidth="max-w-3xl"
+                height="h-[720px]"
+                footer={
+                    <>
+                        <Button
+                            type="button"
+                            onClick={handleCloseModal}
+                            variant="secondary"
+                            className="w-full sm:w-auto sm:min-w-[140px]"
+                        >
+                            Discard
+                        </Button>
+
+                        <Button
+                            form="objective-form"
+                            type="submit"
+                            disabled={saving || !formData.project_id}
+                            variant="primary"
+                            className="w-full sm:w-auto sm:min-w-[140px]"
+                        >
+                            {saving ? 'Syncing...' : 'Save'}
+                        </Button>
+                    </>
+                }
             >
                 <form
+                    id="objective-form"
                     onSubmit={handleSubmit}
                     className="
                         w-full
@@ -758,243 +783,212 @@ export function Todos() {
                         overflow-x-hidden
                     "
                 >
-                    {/* Title */}
-                    <div className="w-full min-w-0">
-                        <Input
-                            label="Title"
-                            required
-                            value={formData.title}
-                            onChange={e =>
-                                setFormData({
-                                    ...formData,
-                                    title: e.target.value
-                                })
-                            }
-                            placeholder="Deliverable name..."
-                            leftIcon={
-                                <Tag className="w-4 h-4" />
-                            }
-                        />
-                    </div>
+                    {/* Two columns on a wide screen: what the task is on the
+                        left, where it belongs on the right. One column below
+                        that, in the original order. */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-6 gap-y-5 w-full min-w-0 items-start">
 
-                    {/* Assignees */}
-                    <div className="space-y-2 w-full min-w-0">
-                        <div
-                            className="
-                                flex
-                                flex-col
-                                sm:flex-row
-                                sm:items-center
-                                sm:justify-between
-                                gap-2
-                                px-1
-                                min-w-0
-                            "
-                        >
-                            <label className="text-[10px] font-black text-text-muted uppercase tracking-wider shrink-0">
-                                Assign Objectives To
-                            </label>
-
-                            <input
-                                type="text"
-                                placeholder="Search assignees..."
-                                value={assigneeSearch}
-                                onChange={e =>
-                                    setAssigneeSearch(
-                                        e.target.value
-                                    )
-                                }
-                                className="
-                                    w-full
-                                    sm:w-48
-                                    max-w-full
-                                    min-w-0
-                                    text-[11px]
-                                    font-semibold
-                                    text-text-main
-                                    placeholder:text-slate-300
-                                    outline-none
-                                    border border-border
-                                    rounded-lg
-                                    px-2.5 py-2 sm:py-1
-                                    bg-surface-hover
-                                    shadow-inner
-                                    focus:border-primary/50
-                                    transition-colors
-                                "
-                            />
-                        </div>
-
-                        <div
-                            className="
-                                border border-border
-                                rounded-xl
-                                p-2 sm:p-3
-                                bg-surface-hover
-                                max-h-[160px]
-                                overflow-y-auto
-                                overflow-x-hidden
-                                custom-scrollbar
-                                space-y-1.5
-                                shadow-inner
-                                w-full
-                                min-w-0
-                            "
-                        >
-                            {allMembers
-                                .filter(
-                                    member =>
-                                        member.full_name
-                                            .toLowerCase()
-                                            .includes(
-                                                assigneeSearch.toLowerCase()
-                                            ) ||
-                                        member.email
-                                            .toLowerCase()
-                                            .includes(
-                                                assigneeSearch.toLowerCase()
-                                            )
-                                )
-                                .map(member => {
-                                    const isAssigned =
-                                        formData.assignee_ids.includes(
-                                            member.id
-                                        );
-
-                                    return (
-                                        <label
-                                            key={member.id}
-                                            className="
-                                                flex
-                                                items-center
-                                                justify-between
-                                                gap-2
-                                                p-2
-                                                rounded-lg
-                                                hover:bg-surface/50
-                                                cursor-pointer
-                                                transition-all
-                                                min-w-0
-                                                w-full
-                                            "
-                                        >
-                                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                                                <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
-                                                    {getInitials(
-                                                        member.full_name
-                                                    )}
-                                                </div>
-
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="text-[12px] font-bold text-text-main leading-tight truncate">
-                                                        {
-                                                            member.full_name
-                                                        }
-                                                    </p>
-
-                                                    <p className="text-[9px] text-text-muted font-mono truncate">
-                                                        {
-                                                            member.email
-                                                        }
-                                                    </p>
-                                                </div>
-                                            </div>
-
-                                            <input
-                                                type="checkbox"
-                                                checked={
-                                                    isAssigned
-                                                }
-                                                onChange={() => {
-                                                    const next =
-                                                        isAssigned
-                                                            ? formData.assignee_ids.filter(
-                                                                  id =>
-                                                                      id !==
-                                                                      member.id
-                                                              )
-                                                            : [
-                                                                  ...formData.assignee_ids,
-                                                                  member.id
-                                                              ];
-
-                                                    setFormData(
-                                                        {
-                                                            ...formData,
-                                                            assignee_ids:
-                                                                next
-                                                        }
-                                                    );
-                                                }}
-                                                className="
-                                                    w-4 h-4
-                                                    rounded
-                                                    border-border
-                                                    text-primary
-                                                    focus:ring-primary
-                                                    cursor-pointer
-                                                    shrink-0
-                                                "
-                                            />
-                                        </label>
-                                    );
-                                })}
-                        </div>
-                    </div>
-
-                    {/* Description */}
-                    <div className="space-y-1.5 w-full min-w-0">
-                        <label className="text-[10px] font-black text-text-muted px-1">
-                            Context / Details
-                        </label>
-
-                        <textarea
-                            rows={3}
-                            value={formData.description}
-                            onChange={e =>
-                                setFormData({
-                                    ...formData,
-                                    description:
-                                        e.target.value
-                                })
-                            }
-                            className="
-                                w-full
-                                max-w-full
-                                min-w-0
-                                px-4 py-3
-                                bg-surface-hover
-                                border border-border
-                                rounded-xl
-                                text-sm
-                                font-medium
-                                text-text-main
-                                placeholder:text-slate-300
-                                outline-none
-                                focus:border-primary
-                                transition-all
-                                resize-none
-                                overflow-y-auto
-                            "
-                        />
-                    </div>
-
-                    {/* Project + Date */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0">
-                        <div className="space-y-1.5 min-w-0">
-                            <label className="text-[10px] font-black text-text-muted px-1">
-                                Host Project
-                            </label>
-
-                            <select
+                        <div className="space-y-5 min-w-0">
+                        {/* Title */}
+                        <div className="w-full min-w-0">
+                            <Input
+                                label="Title"
                                 required
-                                value={
-                                    formData.project_id
-                                }
+                                value={formData.title}
                                 onChange={e =>
                                     setFormData({
                                         ...formData,
-                                        project_id:
+                                        title: e.target.value
+                                    })
+                                }
+                                placeholder="Deliverable name..."
+                                leftIcon={
+                                    <Tag className="w-4 h-4" />
+                                }
+                            />
+                        </div>
+
+                        {/* Assignees */}
+                        <div className="space-y-2 w-full min-w-0">
+                            <div
+                                className="
+                                    flex
+                                    flex-col
+                                    sm:flex-row
+                                    sm:items-center
+                                    sm:justify-between
+                                    gap-2
+                                    px-1
+                                    min-w-0
+                                "
+                            >
+                                <label className="text-[10px] font-black text-text-muted uppercase tracking-wider shrink-0">
+                                    Assign Objectives To
+                                </label>
+
+                                <input
+                                    type="text"
+                                    placeholder="Search assignees..."
+                                    value={assigneeSearch}
+                                    onChange={e =>
+                                        setAssigneeSearch(
+                                            e.target.value
+                                        )
+                                    }
+                                    className="
+                                        w-full
+                                        sm:w-48
+                                        max-w-full
+                                        min-w-0
+                                        text-[11px]
+                                        font-semibold
+                                        text-text-main
+                                        placeholder:text-slate-300
+                                        outline-none
+                                        border border-border
+                                        rounded-lg
+                                        px-2.5 py-2 sm:py-1
+                                        bg-surface-hover
+                                        shadow-inner
+                                        focus:border-primary/50
+                                        transition-colors
+                                    "
+                                />
+                            </div>
+
+                            <div
+                                className="
+                                    border border-border
+                                    rounded-xl
+                                    p-2 sm:p-3
+                                    bg-surface-hover
+                                    max-h-[320px]
+                                    overflow-y-auto
+                                    overflow-x-hidden
+                                    custom-scrollbar
+                                    space-y-1.5
+                                    shadow-inner
+                                    w-full
+                                    min-w-0
+                                "
+                            >
+                                {allMembers
+                                    .filter(
+                                        member =>
+                                            member.full_name
+                                                .toLowerCase()
+                                                .includes(
+                                                    assigneeSearch.toLowerCase()
+                                                ) ||
+                                            member.email
+                                                .toLowerCase()
+                                                .includes(
+                                                    assigneeSearch.toLowerCase()
+                                                )
+                                    )
+                                    .map(member => {
+                                        const isAssigned =
+                                            formData.assignee_ids.includes(
+                                                member.id
+                                            );
+
+                                        return (
+                                            <label
+                                                key={member.id}
+                                                className="
+                                                    flex
+                                                    items-center
+                                                    justify-between
+                                                    gap-2
+                                                    p-2
+                                                    rounded-lg
+                                                    hover:bg-surface/50
+                                                    cursor-pointer
+                                                    transition-all
+                                                    min-w-0
+                                                    w-full
+                                                "
+                                            >
+                                                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                                                    <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
+                                                        {getInitials(
+                                                            member.full_name
+                                                        )}
+                                                    </div>
+
+                                                    <div className="min-w-0 flex-1">
+                                                        <p className="text-[12px] font-bold text-text-main leading-tight truncate">
+                                                            {
+                                                                member.full_name
+                                                            }
+                                                        </p>
+
+                                                        <p className="text-[9px] text-text-muted font-mono truncate">
+                                                            {
+                                                                member.email
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <input
+                                                    type="checkbox"
+                                                    checked={
+                                                        isAssigned
+                                                    }
+                                                    onChange={() => {
+                                                        const next =
+                                                            isAssigned
+                                                                ? formData.assignee_ids.filter(
+                                                                      id =>
+                                                                          id !==
+                                                                          member.id
+                                                                  )
+                                                                : [
+                                                                      ...formData.assignee_ids,
+                                                                      member.id
+                                                                  ];
+
+                                                        setFormData(
+                                                            {
+                                                                ...formData,
+                                                                assignee_ids:
+                                                                    next
+                                                            }
+                                                        );
+                                                    }}
+                                                    className="
+                                                        w-4 h-4
+                                                        rounded
+                                                        border-border
+                                                        text-primary
+                                                        focus:ring-primary
+                                                        cursor-pointer
+                                                        shrink-0
+                                                    "
+                                                />
+                                            </label>
+                                        );
+                                    })}
+                            </div>
+                        </div>
+
+                        </div>
+
+                        <div className="space-y-5 min-w-0">
+                        {/* Description */}
+                        <div className="space-y-1.5 w-full min-w-0">
+                            <label className="text-[10px] font-black text-text-muted px-1">
+                                Context / Details
+                            </label>
+
+                            <textarea
+                                rows={3}
+                                value={formData.description}
+                                onChange={e =>
+                                    setFormData({
+                                        ...formData,
+                                        description:
                                             e.target.value
                                     })
                                 }
@@ -1002,92 +996,98 @@ export function Todos() {
                                     w-full
                                     max-w-full
                                     min-w-0
-                                    px-4 py-2.5
+                                    px-4 py-3
                                     bg-surface-hover
                                     border border-border
                                     rounded-xl
                                     text-sm
-                                    font-semibold
+                                    font-medium
                                     text-text-main
+                                    placeholder:text-slate-300
                                     outline-none
                                     focus:border-primary
                                     transition-all
-                                    cursor-pointer
+                                    resize-none
+                                    overflow-y-auto
                                 "
-                            >
-                                <option value="">
-                                    Target...
-                                </option>
-
-                                {projects.map(project => (
-                                    <option
-                                        key={project.id}
-                                        value={project.id}
-                                    >
-                                        {project.name}
-                                    </option>
-                                ))}
-                            </select>
+                            />
                         </div>
 
-                        <div className="space-y-1.5 min-w-0">
-                            <label className="text-[10px] font-black text-text-muted px-1">
-                                Resolution Date
-                            </label>
+                        {/* Project + Date */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full min-w-0">
+                            <div className="space-y-1.5 min-w-0">
+                                <label className="text-[10px] font-black text-text-muted px-1">
+                                    Host Project
+                                </label>
 
-                            <div className="w-full min-w-0 max-w-full">
-                                <DatePicker
+                                <select
+                                    required
                                     value={
-                                        formData.due_date
+                                        formData.project_id
                                     }
-                                    onChange={value =>
+                                    onChange={e =>
                                         setFormData({
                                             ...formData,
-                                            due_date: value
+                                            project_id:
+                                                e.target.value
                                         })
                                     }
-                                    className="w-full max-w-full"
-                                />
+                                    className="
+                                        w-full
+                                        max-w-full
+                                        min-w-0
+                                        px-4 py-2.5
+                                        bg-surface-hover
+                                        border border-border
+                                        rounded-xl
+                                        text-sm
+                                        font-semibold
+                                        text-text-main
+                                        outline-none
+                                        focus:border-primary
+                                        transition-all
+                                        cursor-pointer
+                                    "
+                                >
+                                    <option value="">
+                                        Target...
+                                    </option>
+
+                                    {projects.map(project => (
+                                        <option
+                                            key={project.id}
+                                            value={project.id}
+                                        >
+                                            {project.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-1.5 min-w-0">
+                                <label className="text-[10px] font-black text-text-muted px-1">
+                                    Resolution Date
+                                </label>
+
+                                <div className="w-full min-w-0 max-w-full">
+                                    <DatePicker
+                                        value={
+                                            formData.due_date
+                                        }
+                                        onChange={value =>
+                                            setFormData({
+                                                ...formData,
+                                                due_date: value
+                                            })
+                                        }
+                                        className="w-full max-w-full"
+                                    />
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* Modal Actions */}
-                    <div
-                        className="
-                            pt-3 sm:pt-4
-                            flex
-                            flex-col-reverse
-                            sm:flex-row
-                            gap-3
-                            w-full
-                            min-w-0
-                        "
-                    >
-                        <Button
-                            type="button"
-                            onClick={
-                                handleCloseModal
-                            }
-                            variant="secondary"
-                            className="w-full sm:flex-1 min-w-0"
-                        >
-                            Discard
-                        </Button>
+                        </div>
 
-                        <Button
-                            type="submit"
-                            disabled={
-                                saving ||
-                                !formData.project_id
-                            }
-                            variant="primary"
-                            className="w-full sm:flex-1 min-w-0"
-                        >
-                            {saving
-                                ? 'Syncing...'
-                                : 'Commit Changes'}
-                        </Button>
                     </div>
                 </form>
             </Modal>
