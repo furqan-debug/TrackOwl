@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker, TimeField } from '../components/ui';
 import clsx from 'clsx';
-import { getGroupingDateInTz, formatDuration, manualEntryInterval, utcToZonedWallClock } from '../lib/dataUtils';
+import { getGroupingDateInTz, formatDuration, manualEntryInterval, utcToZonedWallClock, zonedWallClockToUtc } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../context/FavoritesContext';
 
@@ -403,25 +403,23 @@ export function Timesheets() {
                     effectiveEndMs = Math.min(nowMs, startedAtMs + (10 * 60000));
                 }
 
-                // Convert to target timezone dates to measure local day bounds overlap
-                const startLocalStr = new Date(startedAtMs).toLocaleString('en-US', { timeZone: tz });
-                const endLocalStr = new Date(effectiveEndMs).toLocaleString('en-US', { timeZone: tz });
-                const startLocal = new Date(startLocalStr);
-                const endLocal = new Date(endLocalStr);
+                // Resolve exact timezone string
+                const resolvedTz = tz || orgTimezone || Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 
                 Object.keys(dailyMap).forEach(key => {
-                    const dayStartLocal = new Date(`${key}T00:00:00`);
-                    const dayEndLocal = new Date(`${key}T23:59:59.999`);
+                    const dayStartUtc = zonedWallClockToUtc(key, '00:00', resolvedTz);
+                    const dayStartUtcMs = dayStartUtc.getTime();
+                    const dayEndUtcMs = dayStartUtcMs + 24 * 60 * 60 * 1000;
 
-                    const overlapStartMs = Math.max(startLocal.getTime(), dayStartLocal.getTime());
-                    const overlapEndMs = Math.min(endLocal.getTime(), dayEndLocal.getTime());
+                    const overlapStartMs = Math.max(startedAtMs, dayStartUtcMs);
+                    const overlapEndMs = Math.min(effectiveEndMs, dayEndUtcMs);
 
                     // Check if the session overlaps with this calendar day
-                    if (overlapEndMs > overlapStartMs || (isTrulyActive && overlapEndMs >= overlapStartMs && overlapEndMs === dayEndLocal.getTime())) {
+                    if (overlapEndMs > overlapStartMs || (isTrulyActive && overlapEndMs >= overlapStartMs && overlapEndMs === dayEndUtcMs)) {
 
                         // Calculate absolute UTC timestamps for the segment
-                        const segmentAbsoluteStartMs = startedAtMs + (overlapStartMs - startLocal.getTime());
-                        const segmentAbsoluteEndMs = effectiveEndMs + (overlapEndMs - endLocal.getTime());
+                        const segmentAbsoluteStartMs = overlapStartMs;
+                        const segmentAbsoluteEndMs = overlapEndMs;
 
                         // The WINDOW this segment spans — used only for the times shown
                         // on the row, never for the hours credited.
@@ -429,16 +427,14 @@ export function Timesheets() {
                         if (segmentSpanMins < 0) segmentSpanMins = 0;
 
                         const totalSpanMins = Math.max(1, (effectiveEndMs - startedAtMs) / 60000);
-                        const durationRatio = segmentSpanMins / totalSpanMins;
+                        // If the session is wholly contained in this day, ratio is exactly 1.0 (no rounding drift)
+                        const durationRatio = (startedAtMs >= dayStartUtcMs && effectiveEndMs <= dayEndUtcMs)
+                            ? 1.0
+                            : Math.min(1.0, segmentSpanMins / totalSpanMins);
                         const segmentOfflineMins = Math.round(offlineMins * durationRatio);
 
-                        // The TIME CREDITED is one minute per recorded sample, which is
-                        // what Reports, Amounts Owed and the desktop app all count. The
-                        // wall-clock span is not the same number: a session keeps running
-                        // while the machine sleeps or the tracker is paused, and those
-                        // minutes produce no sample, so span always reads high.
-                        // Manual entries have no samples by definition, so they are still
-                        // credited by their span — that span IS the entry.
+                        // The TIME CREDITED is duration_mins from block_records/samples.
+                        // For sessions wholly within the day, segmentDurationMins is exactly sampleCount.
                         const segmentDurationMins = isManual
                             ? segmentSpanMins
                             : sampleCount * durationRatio;
@@ -448,7 +444,7 @@ export function Timesheets() {
                             original_started_at: s.started_at,
                             original_ended_at: s.ended_at,
                             started_at: new Date(segmentAbsoluteStartMs).toISOString(),
-                            ended_at: isTrulyActive && overlapEndMs === endLocal.getTime() ? null : new Date(segmentAbsoluteEndMs).toISOString(),
+                            ended_at: isTrulyActive && overlapEndMs === dayEndUtcMs ? null : new Date(segmentAbsoluteEndMs).toISOString(),
                             activity_percent: (isManual || !stats || durationMins === 0) ? 0 : score,
                             idle_percent: (isManual || !stats || durationMins === 0) ? 0 : Math.max(0, 100 - score),
                             manual_percent: isManual ? 100 : 0,
@@ -456,7 +452,7 @@ export function Timesheets() {
                             offline_mins: segmentOfflineMins,
                             user_name: member?.full_name || 'System User',
                             display_timezone: tz,
-                            is_active: isTrulyActive && (overlapEndMs === endLocal.getTime()),
+                            is_active: isTrulyActive && (overlapEndMs === dayEndUtcMs),
                             effective_end: isTrulyActive ? undefined : new Date(segmentAbsoluteEndMs).toISOString()
                         });
                     }
