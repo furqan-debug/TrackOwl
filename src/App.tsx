@@ -1364,6 +1364,12 @@ export default function App() {
         const stat = statsMap[p.id];
         if (!stat) return { ...p, stats: { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, activityPercent: 0, keptIdleSeconds: 0 } };
 
+        let storedToday = 0;
+        try {
+          const v = localStorage.getItem(`trackowl_today_${todayStr}_${p.id}`);
+          if (v) storedToday = Number(v) || 0;
+        } catch (_) {}
+
         let storedFloor = 0;
         try {
           const val = localStorage.getItem(`trackowl_limit_floor_${todayStr}_${p.id}`);
@@ -1374,15 +1380,24 @@ export default function App() {
           ? Math.max(floor!.minTodaySecs, storedFloor)
           : storedFloor;
 
-        const todaySeconds = activeFloorSecs > 0
-          ? Math.max(stat.todaySeconds, activeFloorSecs)
-          : stat.todaySeconds;
+        // Today's tracked time must be monotonic — never decrease due to network sync lag or partial block flush delay!
+        const todaySeconds = Math.max(
+          stat.todaySeconds,
+          p.stats?.todaySeconds || 0,
+          storedToday,
+          activeFloorSecs
+        );
+
+        // Keep localStorage in sync with the latest authoritative maximum
+        try {
+          localStorage.setItem(`trackowl_today_${todayStr}_${p.id}`, String(todaySeconds));
+        } catch (_) {}
 
         return {
           ...p,
           stats: {
             todaySeconds,
-            weeklySeconds: Math.max(stat.weeklySeconds, todaySeconds),
+            weeklySeconds: Math.max(stat.weeklySeconds, p.stats?.weeklySeconds || 0, todaySeconds),
             weeklyIdleSeconds: stat.weeklyIdleSeconds,
             keptIdleSeconds: stat.keptIdleSeconds,
             activityPercent: stat.sampleCount > 0
@@ -1467,11 +1482,48 @@ export default function App() {
           .select('*, project_members!inner(member_id)')
           .eq('project_members.member_id', userObj.id);
         const projectsList = projs || [];
-        setProjects(projectsList);
+        const orgTzStr: string = (restoredTz as string) || 'UTC';
+        const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: orgTzStr });
+
+        // Clean up any stale localStorage tracker keys older than 7 days
+        try {
+          const cutoffStr = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && (k.startsWith('trackowl_today_') || k.startsWith('trackowl_limit_floor_'))) {
+              const parts = k.split('_');
+              const datePart = parts[2];
+              if (datePart && datePart < cutoffStr) {
+                localStorage.removeItem(k);
+              }
+            }
+          }
+        } catch (_) {}
+
+        // Pre-seed projects with today's tracked time so refresh never flickers to 0 or loses time
+        const seededList = projectsList.map((p: any) => {
+          let storedToday = 0;
+          try {
+            const v = localStorage.getItem(`trackowl_today_${todayKey}_${p.id}`);
+            if (v) storedToday = Number(v) || 0;
+          } catch (_) {}
+          return {
+            ...p,
+            stats: {
+              todaySeconds: storedToday,
+              weeklySeconds: storedToday,
+              weeklyIdleSeconds: 0,
+              activityPercent: 0,
+              keptIdleSeconds: 0
+            }
+          };
+        });
+
+        setProjects(seededList);
         setScreen('projects');
         fetchAndSubscribeTodos(userObj.id);
         reconcileOrphanedSessions(userObj.id);
-        fetchDashboardStats(userObj.id, projectsList);
+        fetchDashboardStats(userObj.id, seededList);
       } else {
         clearSession();
       }
@@ -1862,6 +1914,15 @@ export default function App() {
         }
 
         if (!isIdleSample) blockHadActivityRef.current = true;
+
+        // Continuously persist live elapsed seconds to localStorage so a page refresh or unexpected reload preserves every minute
+        if (activeProject && sessionElapsedRef.current > 0) {
+          try {
+            const tz = orgTimezoneRef.current || 'UTC';
+            const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+            localStorage.setItem(`trackowl_today_${todayKey}_${activeProject.id}`, String(sessionElapsedRef.current));
+          } catch (_) {}
+        }
 
         // Idle fires only when a whole block has closed with nothing in it.
         const limit = user?.idle_limit || 10;
@@ -2594,6 +2655,27 @@ export default function App() {
       console.log('[App] stopTracking response:', res);
     } catch (err) {
       console.error('[App] stopTracking FAILED:', err);
+    }
+
+    // Persist final today's elapsed seconds immediately so there is zero delay or time loss
+    const finalElapsed = sessionElapsedRef.current;
+    const stoppingProj = activeProjectRef.current || activeProject;
+    if (stoppingProj && finalElapsed > 0) {
+      try {
+        const tz = orgTimezoneRef.current || 'UTC';
+        const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+        localStorage.setItem(`trackowl_today_${todayKey}_${stoppingProj.id}`, String(finalElapsed));
+      } catch (_) {}
+      setProjects(prev => prev.map(p => p.id === stoppingProj.id ? {
+        ...p,
+        stats: {
+          todaySeconds: Math.max(p.stats?.todaySeconds || 0, finalElapsed),
+          weeklySeconds: Math.max(p.stats?.weeklySeconds || 0, finalElapsed),
+          weeklyIdleSeconds: p.stats?.weeklyIdleSeconds || 0,
+          keptIdleSeconds: p.stats?.keptIdleSeconds || 0,
+          activityPercent: p.stats?.activityPercent || 0
+        }
+      } : p));
     }
 
     // Reset idle overlay state first — this unblocks the UI immediately
