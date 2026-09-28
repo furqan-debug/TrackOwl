@@ -976,16 +976,14 @@ export default function App() {
   }, [projects]);
   const [isTracking, setIsTracking] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+  const isPausedRef = useRef(false);
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
   const [liveElapsed, setLiveElapsed] = useState<number>(0);
   const sessionElapsedRef = useRef<number>(0);
+  const sessionStartTodaySecsRef = useRef<number | null>(null);
 
-  useEffect(() => {
-    let int: any;
-    if (isTracking && !isPaused) {
-      int = setInterval(() => setLiveElapsed(e => e + 1), 1000);
-    }
-    return () => clearInterval(int);
-  }, [isTracking, isPaused]);
   const [sessionId, _setSessionId] = useState<string | null>(null);
   const sessionIdRef = useRef<string | null>(null);
   const lastIdleSessionIdRef = useRef<string | null>(null);
@@ -1420,7 +1418,31 @@ export default function App() {
         };
       });
       setProjects(updatedProjects);
+      projectsRef.current = updatedProjects;
       setIsOnline(true);
+
+      const activeProjId = activeProjectRef.current?.id || activeProject?.id;
+      if (activeProjId) {
+        const freshActive = updatedProjects.find(p => p.id === activeProjId);
+        if (freshActive) {
+          setActiveProject(freshActive);
+          activeProjectRef.current = freshActive;
+
+          // Reconcile client timer with authoritative DB credited time if tracking and lagging behind
+          if (isTracking && !isPausedRef.current && freshActive?.stats?.todaySeconds) {
+            if (sessionElapsedRef.current < freshActive.stats.todaySeconds) {
+              console.warn(`[stats] Reconciling sessionElapsedRef (${sessionElapsedRef.current}s) with authoritative DB todaySeconds (${freshActive.stats.todaySeconds}s)`);
+              const diff = freshActive.stats.todaySeconds - sessionElapsedRef.current;
+              sessionElapsedRef.current = freshActive.stats.todaySeconds;
+              if (sessionStartTodaySecsRef.current !== null) {
+                sessionStartTodaySecsRef.current += diff;
+              }
+              setLiveElapsed(freshActive.stats.todaySeconds);
+            }
+          }
+        }
+      }
+
 
       setLastSyncTime(now);
       localStorage.setItem('lastSyncTime', now.toISOString());
@@ -1748,8 +1770,13 @@ export default function App() {
       //    Block-aligned callers pass an explicit cutoff — the end of the last block
       //    that had activity — so a partially-worked block is never clipped. Callers
       //    without one fall back to a rolling window, with a 15s buffer for clock skew.
-      const startTime = cutoffIso
+      //    CRITICAL: startTime must NEVER be earlier than this session's start time!
+      const sessionStartIso = sessionAnchorMsRef.current ? new Date(sessionAnchorMsRef.current).toISOString() : null;
+      let startTime = cutoffIso
         ?? new Date(Date.now() - ((minutes * 60 + 15) * 1000)).toISOString();
+      if (sessionStartIso && startTime < sessionStartIso) {
+        startTime = sessionStartIso;
+      }
       console.log('[App] Executing idle sample discard from cutoff:', startTime, 'for session:', activeSessionId);
 
       await Promise.all([
@@ -1769,12 +1796,36 @@ export default function App() {
         trackerAPI.discardIdleCache(activeSessionId, startTime),
       ]);
 
-      // 2. Adjust local timer — subtract the discarded idle time from display
-      const discardedSecs = cutoffIso
-        ? Math.max(0, Math.round((Date.now() - Date.parse(cutoffIso)) / 1000))
-        : minutes * 60;
-      sessionElapsedRef.current = Math.max(0, sessionElapsedRef.current - discardedSecs);
-      setLiveElapsed((prev: number) => Math.max(0, prev - discardedSecs));
+      // 2. Adjust local timer — subtract the discarded idle time from display.
+      //    CRITICAL SAFETY BOUND: A session can ONLY discard time that was tracked
+      //    during THIS session. Discarding must NEVER eat into time earned in earlier
+      //    sessions from earlier in the day!
+      const sessionRunningSecs = sessionAnchorMsRef.current
+        ? Math.max(0, Math.floor((Date.now() - sessionAnchorMsRef.current) / 1000))
+        : 0;
+      const sessionAccruedSecs = sessionStartTodaySecsRef.current !== null
+        ? Math.max(0, sessionElapsedRef.current - sessionStartTodaySecsRef.current)
+        : sessionRunningSecs;
+      const maxDiscardableSecs = (sessionRunningSecs > 0 && sessionAccruedSecs > 0)
+        ? Math.min(sessionRunningSecs, sessionAccruedSecs)
+        : Math.max(sessionRunningSecs, sessionAccruedSecs);
+
+      let requestedDiscardSecs = minutes * 60;
+      if (cutoffIso) {
+        const cutoffMs = Date.parse(cutoffIso);
+        if (!isNaN(cutoffMs)) {
+          const boundedCutoffMs = sessionAnchorMsRef.current
+            ? Math.max(cutoffMs, sessionAnchorMsRef.current)
+            : cutoffMs;
+          requestedDiscardSecs = Math.max(0, Math.round((Date.now() - boundedCutoffMs) / 1000));
+        }
+      }
+
+      const safeDiscardSecs = Math.max(0, Math.min(requestedDiscardSecs, maxDiscardableSecs));
+      console.log(`[App] discardIdleTime: requested=${requestedDiscardSecs}s, maxDiscardable=${maxDiscardableSecs}s, safeDiscardSecs=${safeDiscardSecs}s (sessionElapsed was ${sessionElapsedRef.current}s)`);
+
+      sessionElapsedRef.current = Math.max(0, sessionElapsedRef.current - safeDiscardSecs);
+      setLiveElapsed((prev: number) => Math.max(0, prev - safeDiscardSecs));
       // Reset live idle display to 0 — idle time is fully discarded, not carried forward
       setLiveIdleSeconds(0);
 
@@ -2068,6 +2119,8 @@ export default function App() {
       const secsSinceMidnight = Math.max(0, Math.floor((Date.now() - midnightMs) / 1000));
       sessionElapsedRef.current = Math.min(sessionElapsedRef.current, secsSinceMidnight);
       setLiveElapsed(prev => Math.min(prev, secsSinceMidnight));
+      sessionStartTodaySecsRef.current = 0;
+      sessionAnchorMsRef.current = Math.max(sessionAnchorMsRef.current || midnightMs, midnightMs);
 
       // A stale day floor would re-inflate the freshly reset total.
       limitFloorRef.current = null;
@@ -2108,8 +2161,13 @@ export default function App() {
 
     const setupAbsoluteIdleListener = async () => {
       unlisten = await trackerAPI.onTrackingSample(async (sample: any) => {
-        // Guard: don't trigger twice
+        // Guard: don't trigger twice or if paused / not actively tracking
         if (isAutoTerminatingRef.current) return;
+        if (isPausedRef.current) return;
+
+        // Ensure sample belongs to the current active session
+        const currentSid = sessionIdRef.current || sessionId;
+        if (currentSid && sample.session_id && sample.session_id !== currentSid) return;
 
         // Same rule as the idle popup: any input counts, including mouse
         // movement and scrolling. Checking clicks/keypresses here would
@@ -2137,7 +2195,7 @@ export default function App() {
 
             // Discard the trailing idle block before stopping so payroll is not inflated.
             // We pass the accumulated idle minutes so the correct number of samples get purged.
-            discardIdleTime(minsElapsed, false, sample.session_id);
+            await discardIdleTime(minsElapsed, false, sample.session_id);
 
             await handleStop();
 
@@ -2154,7 +2212,8 @@ export default function App() {
 
     return () => {
       if (unlisten) unlisten();
-      // Do NOT reset absoluteIdleRef here — it must persist across re-renders
+      absoluteIdleRef.current = 0;
+      isAutoTerminatingRef.current = false;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isTracking, user?.id, user?.organization_settings?.autoStopOnIdle, user?.organization_settings?.idleAutoStopMinutes]);
@@ -2282,6 +2341,8 @@ export default function App() {
     if (isTracking && !isPaused) {
       timerRef.current = setInterval(() => {
         sessionElapsedRef.current += 1;
+        setLiveElapsed(sessionElapsedRef.current);
+
         
         // Limit check inside interval to avoid React re-renders
         if (user && activeProject) {
@@ -2575,10 +2636,13 @@ export default function App() {
     const todaySecs = Math.max(sessionElapsedRef.current, dbTodaySecs);
 
     sessionElapsedRef.current = todaySecs;
+    sessionStartTodaySecsRef.current = todaySecs;
     setLiveElapsed(todaySecs);
 
     setLiveIdleSeconds(0); // reset live idle counter for new session
     idleMinutesRef.current = 0; // reset inactivity counter for new session
+    absoluteIdleRef.current = 0; // reset absolute idle counter for new session
+    isAutoTerminatingRef.current = false;
     sessionAnchorMsRef.current = Date.now(); // blocks are counted from here
     currentBlockIdRef.current = null;      // start block tracking fresh
     blockHadActivityRef.current = false;
@@ -2589,6 +2653,7 @@ export default function App() {
     setIsPaused(false);
     setTrackingError(null);
     setIsTracking(true);
+
     setScreen('tracker');
 
     try {
@@ -2707,6 +2772,7 @@ export default function App() {
     setSessionId(null);
     setActiveProject(null);
     sessionElapsedRef.current = 0;
+    sessionStartTodaySecsRef.current = 0;
     setLiveElapsed(0);
     idleMinutesRef.current = 0;
     isHandlingIdleRef.current = false;
@@ -2733,6 +2799,8 @@ export default function App() {
 
   async function handlePause() {
     setIsPaused(true);
+    absoluteIdleRef.current = 0;
+    isAutoTerminatingRef.current = false;
     await trackerAPI.pauseTracking();
   }
 
@@ -2761,6 +2829,8 @@ export default function App() {
     setIsPaused(true);
     setSessionId(null);
     sessionIdRef.current = null;
+    absoluteIdleRef.current = 0;
+    isAutoTerminatingRef.current = false;
   };
 
   // Leaving the away popup by choosing to KEEP the away time (e.g. offline work, call, meeting)
@@ -2784,6 +2854,8 @@ export default function App() {
 
     setLiveIdleSeconds(0);
     idleMinutesRef.current = 0;
+    absoluteIdleRef.current = 0;
+    isAutoTerminatingRef.current = false;
     await handleResume();
   };
 
@@ -2795,6 +2867,9 @@ export default function App() {
     blockHadActivityRef.current = false;
     blankBlockCountRef.current = 0;
     lastActiveBlockEndRef.current = null;
+    absoluteIdleRef.current = 0;
+    isAutoTerminatingRef.current = false;
+
 
     const wasIdleClosed = idleClosedSessionRef.current || !sessionIdRef.current;
     idleClosedSessionRef.current = false;
