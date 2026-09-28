@@ -275,28 +275,131 @@ pub fn get_active_window() -> (String, String) {
     }
 }
 
-// ─── Browser domain extraction (title-based, safe) ───────────────────────────
-// Note: We intentionally do NOT use PowerShell UIAutomation to read browser
-// URLs. Spawning a hidden PowerShell process with -ExecutionPolicy Bypass
-// triggers Windows Defender behavioral detection (classified as RAT/spyware),
-// causing the app to be quarantined and deleted at runtime.
-// Domain is extracted from the browser window title instead — safe and reliable.
+// ─── Browser domain extraction (native UIAutomation COM + title fallback) ─────
+// On Windows: calls UIAutomationCore.dll in-process (no child process spawned).
+// This is identical to how screen readers (NVDA, JAWS) read browser URLs —
+// completely safe from Windows Defender behavioral detection.
+// On macOS / other: falls back to window-title parsing.
 const BROWSER_NAMES: &[&str] = &[
     "chrome", "google chrome", "chromium", "firefox", "mozilla firefox",
     "msedge", "microsoft edge", "brave", "opera", "vivaldi", "arc",
 ];
+
+// Thread-local flag so we only call CoInitializeEx once per thread.
+// COM stays initialized for the thread's lifetime (cleaned up on thread exit).
+#[cfg(target_os = "windows")]
+thread_local! {
+    static COM_INIT_DONE: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
+}
 
 pub fn get_browser_domain(app_name: &str, title: &str) -> String {
     let lower = app_name.to_lowercase();
     if !BROWSER_NAMES.iter().any(|b| lower.contains(b)) {
         return String::new();
     }
-    // Parse domain from window title (safe, no child process spawning)
+
+    // Windows: try native UIAutomation COM API (in-process, Defender-safe)
+    #[cfg(target_os = "windows")]
+    if let Some(domain) = get_url_via_uiautomation() {
+        return domain;
+    }
+
+    // Fallback for all platforms: parse domain from window title
     extract_domain_from_title(title)
 }
 
+/// Reads the focused browser's address bar via Windows UIAutomation COM API.
+/// No child processes — calls UIAutomationCore.dll directly inside this process.
+#[cfg(target_os = "windows")]
+fn get_url_via_uiautomation() -> Option<String> {
+    use windows::Win32::System::Com::{CoInitializeEx, COINIT_APARTMENTTHREADED};
+
+    // Initialize COM as STA once per thread. is_ok() covers both:
+    //   S_OK (0)     = freshly initialized
+    //   S_FALSE (1)  = already STA-initialized on this thread
+    // Errors (e.g. RPC_E_CHANGED_MODE for MTA) leave COM_INIT_DONE = false.
+    COM_INIT_DONE.with(|done| {
+        if !done.get() {
+            unsafe {
+                if CoInitializeEx(None, COINIT_APARTMENTTHREADED).is_ok() {
+                    done.set(true);
+                }
+            }
+        }
+    });
+
+    if !COM_INIT_DONE.with(|d| d.get()) {
+        return None; // COM not usable on this thread
+    }
+
+    unsafe { try_get_focused_browser_url() }
+}
+
+/// Inner unsafe helper — walks the UIAutomation element tree from the focused
+/// element upward, looking for a ValuePattern that contains an http/https URL.
+#[cfg(target_os = "windows")]
+unsafe fn try_get_focused_browser_url() -> Option<String> {
+    use windows::{
+        core::Interface,
+        Win32::System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER},
+        Win32::UI::Accessibility::{
+            CUIAutomation, IUIAutomation, IUIAutomationValuePattern, UIA_ValuePatternId,
+        },
+    };
+
+    // Create the UIAutomation factory (equivalent to new CUIAutomation() in C++)
+    let automation: IUIAutomation =
+        CoCreateInstance(&CUIAutomation, None, CLSCTX_INPROC_SERVER).ok()?;
+
+    // Get the currently focused UI element (the active browser address bar)
+    let focused = automation.GetFocusedElement().ok()?;
+
+    // Create a tree walker to traverse parent elements
+    let condition = automation.CreateTrueCondition().ok()?;
+    let walker = automation.CreateTreeWalker(&condition).ok()?;
+
+    let mut current = focused;
+    for _ in 0..10 {
+        // Check if this element has a Value containing an http URL
+        if let Ok(raw_pattern) = current.GetCurrentPattern(UIA_ValuePatternId) {
+            if let Ok(val_pattern) = raw_pattern.cast::<IUIAutomationValuePattern>() {
+                if let Ok(bstr) = val_pattern.CurrentValue() {
+                    let s = bstr.to_string();
+                    if s.starts_with("http://") || s.starts_with("https://") {
+                        return Some(extract_hostname_from_url(&s));
+                    }
+                }
+            }
+        }
+
+        // Walk up to the parent element; stop at desktop root (returns Err)
+        match walker.GetParentElement(&current) {
+            Ok(parent) => current = parent,
+            Err(_) => break,
+        }
+    }
+    None
+}
+
+/// Extracts just the hostname from a full URL string.
+fn extract_hostname_from_url(url: &str) -> String {
+    url.strip_prefix("https://")
+        .or_else(|| url.strip_prefix("http://"))
+        .unwrap_or(url)
+        .split('/')
+        .next()
+        .unwrap_or("")
+        .split('?')
+        .next()
+        .unwrap_or("")
+        .split('#')
+        .next()
+        .unwrap_or("")
+        .to_lowercase()
+}
+
 fn extract_domain_from_title(title: &str) -> String {
-    // Strip known browser suffixes to isolate the page title/domain
+    // Strip known browser suffixes to isolate the page title/domain portion
     let suffixes = [
         " - Google Chrome", " - Microsoft Edge", " - Mozilla Firefox",
         " — Firefox", " - Brave", " - Opera", " - Vivaldi",
@@ -308,12 +411,11 @@ fn extract_domain_from_title(title: &str) -> String {
             break;
         }
     }
-    // Try to extract a domain-like token from the remaining title
     regex_domain(&t).unwrap_or_default()
 }
 
 fn regex_domain(s: &str) -> Option<String> {
-    // Simple manual parse: look for word.tld pattern (e.g. github.com, slack.com)
+    // Look for a word.tld token (e.g. github.com, slack.com) in the title
     for word in s.split_whitespace() {
         let w = word.trim_matches(|c: char| !c.is_alphanumeric() && c != '.' && c != '-');
         if w.matches('.').count() >= 1 {
@@ -325,6 +427,7 @@ fn regex_domain(s: &str) -> Option<String> {
     }
     None
 }
+
 
 // ─── 60-second sample loop ────────────────────────────────────────────────────
 /// Emits "tracking-sample" Tauri events every `interval_ms`.
