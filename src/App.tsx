@@ -2226,7 +2226,14 @@ export default function App() {
           const { data: proj } = await sb.from('projects').select('name, color').eq('id', t.project_id).single();
           const enriched: Todo = { ...t, projectName: proj?.name, projectColor: proj?.color };
           setTodos(prev => [enriched, ...prev]);
-          trackerAPI.showNotification('📋 New Task Assigned', t.title + (proj?.name ? ` — ${proj.name}` : ''));
+          // The note goes in the body. It is the part that says what to
+          // actually do, and it was being dropped here as well as in the list.
+          const heading = t.title + (proj?.name ? ` — ${proj.name}` : '');
+          const note = (t.description || '').trim();
+          trackerAPI.showNotification(
+            '📋 New Task Assigned',
+            note ? `${heading}\n${note}` : heading
+          );
         }
       )
       .subscribe();
@@ -3536,6 +3543,18 @@ function Topbar({ user, onLogout, onSettings, todoBadge, disabled, orgTimezone }
 // ─────────────────────────────────────────────────────────────────────────────
 function MyTasksPanel({ todos, onDone, disabled }: { todos: Todo[]; onDone: (id: string) => void; disabled?: boolean }) {
   const [open, setOpen] = useState(true);
+  // Which rows are showing their note. The window is 440px wide and this panel
+  // sits under the project list, so a note shown permanently on every task
+  // would push the rest off screen — one long note is enough to do it.
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggle = (id: string) =>
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   if (todos.length === 0) return null;
   return (
     <div className={`tasks-panel ${disabled ? 'disabled-actions' : ''}`}>
@@ -3550,30 +3569,74 @@ function MyTasksPanel({ todos, onDone, disabled }: { todos: Todo[]; onDone: (id:
 
       {open && (
         <div className="tasks-list">
-          {todos.map(todo => (
-            <div key={todo.id} className="task-item">
-              <button className="task-check-btn" onClick={() => onDone(todo.id)} title="Mark as done">
-                <Circle size={14} />
-              </button>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '0.25rem' }}>
-                  <span className="task-title">{todo.title}</span>
-                  {todo.projectName && (
-                    <span className="task-project-tag" style={{
-                      background: 'var(--accent-light)',
-                      color: 'var(--accent)',
-                    }}>{todo.projectName}</span>
-                  )}
-                </div>
-                {todo.due_date && (
-                  <div className="task-meta">
-                    <Calendar size={10} />
-                    {new Date(todo.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          {todos.map(todo => {
+            const note = (todo.description || '').trim();
+            const isOpen = expanded.has(todo.id);
+
+            return (
+              <div key={todo.id} className="task-item">
+                <button className="task-check-btn" onClick={() => onDone(todo.id)} title="Mark as done">
+                  <Circle size={14} />
+                </button>
+
+                {/* The whole row opens the note, not a small arrow — easier to
+                    hit, and it is the obvious thing to press. Plain text when
+                    there is no note, so nothing invites a press that does
+                    nothing. */}
+                {note ? (
+                  <button
+                    type="button"
+                    className="task-body task-body-toggle"
+                    onClick={() => toggle(todo.id)}
+                    aria-expanded={isOpen}
+                    title={isOpen ? 'Hide details' : 'Show details'}
+                  >
+                    <div className="task-line">
+                      <span className="task-title">{todo.title}</span>
+                      {todo.projectName && (
+                        <span className="task-project-tag" style={{
+                          background: 'var(--accent-light)',
+                          color: 'var(--accent)',
+                        }}>{todo.projectName}</span>
+                      )}
+                      <ChevronDown
+                        size={12}
+                        className={`task-caret ${isOpen ? 'open' : ''}`}
+                      />
+                    </div>
+
+                    {isOpen && <p className="task-note">{note}</p>}
+
+                    {todo.due_date && (
+                      <div className="task-meta">
+                        <Calendar size={10} />
+                        {new Date(todo.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
+                    )}
+                  </button>
+                ) : (
+                  <div className="task-body">
+                    <div className="task-line">
+                      <span className="task-title">{todo.title}</span>
+                      {todo.projectName && (
+                        <span className="task-project-tag" style={{
+                          background: 'var(--accent-light)',
+                          color: 'var(--accent)',
+                        }}>{todo.projectName}</span>
+                      )}
+                    </div>
+
+                    {todo.due_date && (
+                      <div className="task-meta">
+                        <Calendar size={10} />
+                        {new Date(todo.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
