@@ -358,8 +358,21 @@ function AppFooter({ lastSyncTime, isSyncing, onSync, isOnline }: {
   const [loc, setLoc] = useState<string | null>(null);
 
   useEffect(() => {
-    // 1. Get Version (Injected at build time via Vite to ensure it always loads instantly)
-    setVersion((import.meta.env as any).VITE_APP_VERSION || '1.3.4');
+    // 1. Get Version (Dynamically get from Tauri runtime, fallback to build-time injected version)
+    const fetchVersion = async () => {
+      try {
+        const { getVersion } = await import('@tauri-apps/api/app');
+        const v = await getVersion();
+        if (v) {
+          setVersion(v);
+          return;
+        }
+      } catch {
+        // Fallback if not running in Tauri window
+      }
+      setVersion((import.meta.env as any).VITE_APP_VERSION || '2.0.60');
+    };
+    fetchVersion();
 
     // 2. Get Location
     const fetchLoc = async () => {
@@ -3786,21 +3799,41 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
         )}
 
         {/* Lightweight Summary Breakdown (Fills vertical balance when project count is small) */}
-        {projects.length > 0 && projects.length < 4 && displayTotalWeek > 0 && (
-          <div className="breakdown-card">
-            <div className="breakdown-header">
-              <span className="breakdown-title">This Week's Breakdown</span>
-              <span className="breakdown-metric">
-                {formatTime(displayTotalWeek)} {weeklyLimitHours ? `/ ${weeklyLimitHours}h goal` : ''}
-              </span>
-            </div>
+        {projects.length > 0 && projects.length < 4 && displayTotalWeek > 0 && (() => {
+          const effectiveWeeklyGoalHours = weeklyLimitHours || (dailyLimitHours ? dailyLimitHours * Math.max(1, user.work_days?.length || 5) : null);
+          const effectiveWeeklyGoalSecs = (typeof effectiveWeeklyGoalHours === 'number' && effectiveWeeklyGoalHours > 0)
+            ? effectiveWeeklyGoalHours * 3600
+            : null;
 
-            <div className="breakdown-progress-track">
-              {projects
-                .filter(p => getProjectWeekly(p) > 0)
-                .map(p => {
+          const totalWeeklyCapacity = effectiveWeeklyGoalSecs
+            ? Math.max(effectiveWeeklyGoalSecs, displayTotalWeek)
+            : displayTotalWeek;
+
+          const overallWeeklyPct = totalWeeklyCapacity > 0
+            ? Math.min(100, Math.round((displayTotalWeek / totalWeeklyCapacity) * 100))
+            : 0;
+
+          // For small tracked times (>0), provide a minimum visible width so the indicator is visible
+          const visualWeeklyPct = Math.max(displayTotalWeek > 0 ? 3 : 0, overallWeeklyPct);
+
+          const activeProjects = projects.filter(p => getProjectWeekly(p) > 0);
+
+          return (
+            <div className="breakdown-card">
+              <div className="breakdown-header">
+                <span className="breakdown-title">This Week's Breakdown</span>
+                <span className="breakdown-metric">
+                  {formatTime(displayTotalWeek)} {effectiveWeeklyGoalHours ? `/ ${effectiveWeeklyGoalHours}h goal` : ''}
+                </span>
+              </div>
+
+              <div className="breakdown-progress-track" title={`${overallWeeklyPct}% of weekly goal`}>
+                {activeProjects.map((p, idx) => {
                   const sec = getProjectWeekly(p);
-                  const pct = Math.max(2, (sec / (displayTotalWeek || 1)) * 100);
+                  const projectShare = displayTotalWeek > 0 ? sec / displayTotalWeek : 0;
+                  const pct = projectShare * visualWeeklyPct;
+                  const isLast = idx === activeProjects.length - 1;
+
                   return (
                     <div
                       key={p.id}
@@ -3808,17 +3841,16 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                       style={{
                         width: `${pct}%`,
                         backgroundColor: p.color || '#D4AF37',
+                        borderRadius: isLast && visualWeeklyPct < 100 ? '0 9999px 9999px 0' : undefined,
                       }}
                       title={`${p.name}: ${formatTime(sec)}`}
                     />
                   );
                 })}
-            </div>
+              </div>
 
-            <div className="breakdown-legend">
-              {projects
-                .filter(p => getProjectWeekly(p) > 0)
-                .map(p => (
+              <div className="breakdown-legend">
+                {activeProjects.map(p => (
                   <div key={p.id} className="breakdown-legend-item">
                     <span
                       className="breakdown-legend-dot"
@@ -3830,9 +3862,10 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                     </strong>
                   </div>
                 ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
 
       <MyTasksPanel todos={todos} onDone={onTodoDone} />
