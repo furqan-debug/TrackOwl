@@ -275,7 +275,12 @@ pub fn get_active_window() -> (String, String) {
     }
 }
 
-// ─── Browser URL extraction (PowerShell UIAutomation) ────────────────────────
+// ─── Browser domain extraction (title-based, safe) ───────────────────────────
+// Note: We intentionally do NOT use PowerShell UIAutomation to read browser
+// URLs. Spawning a hidden PowerShell process with -ExecutionPolicy Bypass
+// triggers Windows Defender behavioral detection (classified as RAT/spyware),
+// causing the app to be quarantined and deleted at runtime.
+// Domain is extracted from the browser window title instead — safe and reliable.
 const BROWSER_NAMES: &[&str] = &[
     "chrome", "google chrome", "chromium", "firefox", "mozilla firefox",
     "msedge", "microsoft edge", "brave", "opera", "vivaldi", "arc",
@@ -286,65 +291,16 @@ pub fn get_browser_domain(app_name: &str, title: &str) -> String {
     if !BROWSER_NAMES.iter().any(|b| lower.contains(b)) {
         return String::new();
     }
-
-    // Try PowerShell UIAutomation (Windows only)
-    #[cfg(target_os = "windows")]
-    if let Some(url) = get_url_via_powershell() {
-        return url;
-    }
-
-    // Fallback: parse domain from window title
+    // Parse domain from window title (safe, no child process spawning)
     extract_domain_from_title(title)
 }
 
-#[cfg(target_os = "windows")]
-fn get_url_via_powershell() -> Option<String> {
-    use std::os::windows::process::CommandExt;
-    const CREATE_NO_WINDOW: u32 = 0x08000000;
-
-    let ps_script = r#"
-Add-Type -AssemblyName UIAutomationClient
-Add-Type -AssemblyName UIAutomationTypes
-$focused = [System.Windows.Automation.AutomationElement]::FocusedElement
-if ($null -eq $focused) { exit 1 }
-$parent = $focused
-for ($i = 0; $i -lt 8; $i++) {
-  $pattern = $null
-  try { $pattern = $parent.GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern) } catch {}
-  if ($pattern) {
-    $val = ($pattern).Current.Value
-    if ($val -match '^https?://') { Write-Output $val; exit 0 }
-  }
-  try { $parent = $parent.TreeWalker.RawViewWalker.GetParent($parent) } catch { break }
-  if ($null -eq $parent) { break }
-}
-exit 1
-"#;
-
-    let output = std::process::Command::new("powershell")
-        .creation_flags(CREATE_NO_WINDOW)
-        .args(["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", ps_script])
-        .output()
-        .ok()?;
-
-    let raw = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    if raw.is_empty() { return None; }
-
-    // Extract hostname by simple string parsing (no url crate needed)
-    let hostname = if let Some(after_scheme) = raw.strip_prefix("https://").or_else(|| raw.strip_prefix("http://")) {
-        after_scheme.split('/').next().unwrap_or(after_scheme)
-                     .split('?').next().unwrap_or(after_scheme)
-                     .split('#').next().unwrap_or(after_scheme)
-    } else {
-        raw.as_str()
-    };
-
-    Some(hostname.to_string())
-}
-
 fn extract_domain_from_title(title: &str) -> String {
-    // Strip known browser suffixes
-    let suffixes = [" - Google Chrome", " - Microsoft Edge", " - Mozilla Firefox", " — Firefox", " - Brave"];
+    // Strip known browser suffixes to isolate the page title/domain
+    let suffixes = [
+        " - Google Chrome", " - Microsoft Edge", " - Mozilla Firefox",
+        " — Firefox", " - Brave", " - Opera", " - Vivaldi",
+    ];
     let mut t = title.to_string();
     for suffix in &suffixes {
         if t.ends_with(suffix) {
@@ -352,13 +308,12 @@ fn extract_domain_from_title(title: &str) -> String {
             break;
         }
     }
-    // Try to extract a domain
-    let re_domain = regex_domain(&t);
-    re_domain.unwrap_or_default()
+    // Try to extract a domain-like token from the remaining title
+    regex_domain(&t).unwrap_or_default()
 }
 
 fn regex_domain(s: &str) -> Option<String> {
-    // Simple manual parse: look for word.word pattern
+    // Simple manual parse: look for word.tld pattern (e.g. github.com, slack.com)
     for word in s.split_whitespace() {
         let w = word.trim_matches(|c: char| !c.is_alphanumeric() && c != '.' && c != '-');
         if w.matches('.').count() >= 1 {
