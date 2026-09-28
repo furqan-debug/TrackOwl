@@ -390,7 +390,11 @@ export function Timesheets() {
                 const isManual = s.manual === true;
 
                 const nowMs = new Date().getTime();
-                const isTrulyActive = !isManual && !s.ended_at;
+                // A session is considered active if ended_at is null, not manual, and has seen heartbeat within 15 mins
+                const isRecentlyActive = sampleCount === 0
+                    ? (nowMs - startedAtMs < 15 * 60000)
+                    : (nowMs - lastSampleTime < 15 * 60000);
+                const isTrulyActive = !isManual && !s.ended_at && isRecentlyActive;
 
                 let effectiveEndMs = nowMs;
                 if (s.ended_at) {
@@ -434,10 +438,15 @@ export function Timesheets() {
                         const segmentOfflineMins = Math.round(offlineMins * durationRatio);
 
                         // The TIME CREDITED is duration_mins from block_records/samples.
-                        // For sessions wholly within the day, segmentDurationMins is exactly sampleCount.
+                        // For an actively running session, include in-progress minutes since the last block so Timesheets
+                        // matches the desktop app in real time.
+                        const liveCreditedMins = isTrulyActive
+                            ? Math.max(sampleCount, Math.round(segmentSpanMins))
+                            : sampleCount;
                         const segmentDurationMins = isManual
                             ? segmentSpanMins
-                            : sampleCount * durationRatio;
+                            : liveCreditedMins * durationRatio;
+
 
                         dailyMap[key].sessions.push({
                             ...s,
