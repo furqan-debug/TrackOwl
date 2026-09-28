@@ -39,3 +39,14 @@ active-win-pos-rs = "0.11.0"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.9"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+# Used for in-process UIAutomation COM API to read browser URLs.
+# This is the same technique used by Hubstaff, Time Doctor, etc.
+# No child process spawning — calls UIAutomationCore.dll directly, which is
+# indistinguishable from a screen reader and safe from Defender detection.
+windows = { version = "0.58", features = [
+    "Win32_UI_Accessibility",
+    "Win32_System_Com",
+    "Win32_Foundation",
+] }
