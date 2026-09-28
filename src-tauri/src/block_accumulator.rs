@@ -47,7 +47,7 @@ impl BlockAccumulator {
     pub fn new(org_timezone: String, idle_policy: String) -> Self {
         Self {
             samples: Vec::with_capacity(SAMPLES_PER_BLOCK),
-            block_start: None,
+            block_start: Some(chrono::Utc::now()),
             org_timezone,
             idle_policy,
         }
@@ -56,10 +56,13 @@ impl BlockAccumulator {
     /// Add a 60-second sample. Returns a completed BlockRecord if the block is now full.
     pub fn push(&mut self, sample: ActivitySample) -> Option<BlockRecord> {
         if self.block_start.is_none() {
-            // Parse start from first sample's recorded_at
-            self.block_start = chrono::DateTime::parse_from_rfc3339(&sample.recorded_at)
+            // A 60-second sample's recorded_at is the timestamp at the END of that minute.
+            // If block_start was unset, anchor it 60s before the first sample.
+            let sample_time = chrono::DateTime::parse_from_rfc3339(&sample.recorded_at)
                 .ok()
-                .map(|dt| dt.with_timezone(&chrono::Utc));
+                .map(|dt| dt.with_timezone(&chrono::Utc))
+                .unwrap_or_else(chrono::Utc::now);
+            self.block_start = Some(sample_time - chrono::Duration::seconds(60));
         }
         self.samples.push(sample);
 
@@ -72,7 +75,7 @@ impl BlockAccumulator {
     }
 
     /// Force-flush a partial block at session stop (may be < 10 samples).
-    /// Uses last_sample + 60s as block_end.
+    /// Uses last_sample as block_end.
     pub fn flush_partial(&mut self) -> Option<BlockRecord> {
         if self.samples.is_empty() {
             return None;
@@ -87,29 +90,46 @@ impl BlockAccumulator {
             return None;
         }
         let mut block = self.flush();
-        // Override block_end with the actual stop timestamp
-        block.block_end = stop_time.to_rfc3339();
+        // Override block_end with the actual stop timestamp, guaranteed >= block_start
+        let b_start = chrono::DateTime::parse_from_rfc3339(&block.block_start)
+            .ok()
+            .map(|dt| dt.with_timezone(&chrono::Utc))
+            .unwrap_or(stop_time);
+        let effective_stop = if stop_time >= b_start { stop_time } else { b_start };
+        block.block_end = effective_stop.to_rfc3339();
+
+        // Recompute duration-based activity percent for this partial window
+        let window_secs = (effective_stop - b_start).num_seconds().max(1) as f32;
+        let active_secs = block.active_seconds as f32;
+        block.activity_percent = ((active_secs / window_secs.min(BLOCK_WINDOW_SECS)) * 100.0).min(100.0) as i32;
+
         // Recompute business_date based on the real stop time
-        block.business_date = compute_business_date(&stop_time, &self.org_timezone);
+        block.business_date = compute_business_date(&effective_stop, &self.org_timezone);
         Some(block)
     }
 
     fn flush(&mut self) -> BlockRecord {
-        use chrono::TimeZone;
-
         let samples = std::mem::replace(&mut self.samples, Vec::with_capacity(SAMPLES_PER_BLOCK));
         let block_start = self.block_start.take().unwrap_or_else(chrono::Utc::now);
 
-        // The block_end is the recorded_at of the last sample + 60s
+        // The block_end is the recorded_at of the last sample in this block
         let last_sample_time = samples.last()
             .and_then(|s| chrono::DateTime::parse_from_rfc3339(&s.recorded_at).ok())
             .map(|dt| dt.with_timezone(&chrono::Utc))
-            .unwrap_or(block_start);
-        let block_end = last_sample_time + chrono::Duration::seconds(60);
+            .unwrap_or_else(|| block_start + chrono::Duration::seconds(600));
+        let block_end = if last_sample_time >= block_start {
+            last_sample_time
+        } else {
+            block_start + chrono::Duration::seconds(600)
+        };
+
+        // Initialize block_start of the next block to the exact end of this block
+        self.block_start = Some(block_end);
 
         // Aggregate active_seconds across all samples in the block
         let active_seconds: u32 = samples.iter().map(|s| s.active_seconds).sum();
-        let activity_percent = ((active_seconds as f32 / BLOCK_WINDOW_SECS) * 100.0).min(100.0) as i32;
+        let window_secs = (block_end - block_start).num_seconds().max(1) as f32;
+        let activity_percent = ((active_seconds as f32 / window_secs.min(BLOCK_WINDOW_SECS)) * 100.0).min(100.0) as i32;
         let is_productive = active_seconds > 0;
 
         // Apply idle policy at block close time
@@ -169,41 +189,14 @@ impl BlockAccumulator {
 }
 
 /// Convert a UTC timestamp to the org-timezone date string (YYYY-MM-DD).
+/// Uses chrono-tz for exact dynamic IANA timezone resolution (including DST).
 /// Falls back to UTC if the timezone string is invalid.
 pub fn compute_business_date(utc: &chrono::DateTime<chrono::Utc>, org_tz: &str) -> String {
-    // Use chrono-tz if available; otherwise fall back to a simple UTC offset
-    // We implement a simple lookup for common IANA timezone offsets
-    let offset_hours = iana_tz_offset_hours(org_tz);
-    let local = *utc + chrono::Duration::hours(offset_hours);
-    local.format("%Y-%m-%d").to_string()
-}
-
-/// Returns a whole-hour UTC offset for common IANA timezone names.
-/// This is a simple fallback since chrono-tz is not in the dependency tree.
-/// Covers all timezone strings actually stored in org settings.
-fn iana_tz_offset_hours(tz: &str) -> i64 {
-    match tz {
-        "America/Los_Angeles" | "US/Pacific"              => -8,
-        "America/Denver" | "US/Mountain"                  => -7,
-        "America/Chicago" | "US/Central"                  => -6,
-        "America/New_York" | "US/Eastern"                 => -5,
-        "America/Halifax"                                  => -4,
-        "America/Sao_Paulo"                               => -3,
-        "Atlantic/Azores"                                  => -1,
-        "UTC" | "Etc/UTC" | "GMT"                         =>  0,
-        "Europe/London" | "Europe/Lisbon"                  =>  0,
-        "Europe/Berlin" | "Europe/Paris" | "Europe/Rome"  =>  1,
-        "Europe/Helsinki" | "Europe/Kiev"                  =>  2,
-        "Europe/Moscow"                                    =>  3,
-        "Asia/Dubai"                                       =>  4,
-        "Asia/Karachi" | "Asia/Tashkent"                  =>  5,
-        "Asia/Dhaka"                                       =>  6,
-        "Asia/Bangkok" | "Asia/Jakarta"                    =>  7,
-        "Asia/Shanghai" | "Asia/Singapore" | "Asia/Hong_Kong" => 8,
-        "Asia/Tokyo" | "Asia/Seoul"                        =>  9,
-        "Australia/Sydney" | "Australia/Melbourne"         => 10,
-        "Pacific/Auckland"                                 => 12,
-        _ => 0, // default UTC
+    if let Ok(tz) = org_tz.parse::<chrono_tz::Tz>() {
+        let local = utc.with_timezone(&tz);
+        local.format("%Y-%m-%d").to_string()
+    } else {
+        utc.format("%Y-%m-%d").to_string()
     }
 }
 

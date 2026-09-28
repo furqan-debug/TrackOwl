@@ -1225,17 +1225,21 @@ export default function App() {
           const endMs = b.block_end ? new Date(b.block_end).getTime() : startMs + 600000;
           const blockDurationSecs = Math.max(0, Math.min(600, Math.round((endMs - startMs) / 1000)));
 
+          const blockDate = b.block_start
+            ? new Date(b.block_start).toLocaleDateString('en-CA', { timeZone: orgTimezone })
+            : b.business_date;
+
           if (b.credited) {
             statsMap[pid].weeklySeconds += blockDurationSecs;
             statsMap[pid].totalActivity += (b.activity_percent ?? 0);
             statsMap[pid].sampleCount++;
 
-            if (b.business_date === todayStr) {
+            if (b.business_date === todayStr || blockDate === todayStr) {
               statsMap[pid].todaySeconds += blockDurationSecs;
             }
           } else {
             statsMap[pid].weeklyIdleSeconds += blockDurationSecs;
-            if (b.business_date === todayStr) {
+            if (b.business_date === todayStr || blockDate === todayStr) {
               statsMap[pid].keptIdleSeconds += blockDurationSecs;
             }
           }

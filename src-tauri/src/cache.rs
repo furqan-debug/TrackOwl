@@ -248,6 +248,11 @@ pub fn purge_samples_after(
         "DELETE FROM activity_samples WHERE session_id = ?1 AND recorded_at >= ?2",
         params![session_id, after_iso],
     )?;
+    // Also remove discarded blocks from local block cache so they are not re-uploaded
+    let _ = conn.execute(
+        "DELETE FROM block_records WHERE session_id = ?1 AND block_start >= ?2",
+        params![session_id, after_iso],
+    );
     Ok(n)
 }
 
