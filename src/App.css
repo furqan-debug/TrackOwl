@@ -991,6 +991,54 @@ input:checked+.slider:before {
   margin-left: 0.25rem;
 }
 
+.task-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The row is a button when it has a note to open, so it has to be stripped
+   back to looking like the row it replaces. */
+.task-body-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+}
+
+.task-line {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.task-caret {
+  color: var(--text-tertiary);
+  transition: transform 0.2s;
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: center;
+}
+
+.task-caret.open {
+  transform: rotate(180deg);
+}
+
+.task-note {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  margin: 0.3rem 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 .task-meta {
   display: flex;
   align-items: center;
