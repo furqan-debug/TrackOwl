@@ -772,7 +772,7 @@ export function Reports() {
                                                         );
                                                     })}
                                                 </Pie>
-                                                <Tooltip content={<PieShareTooltip total={appBreakdownTotal} />} />
+                                                <Tooltip content={<PieShareTooltip total={appBreakdownTotal} />} wrapperStyle={{ zIndex: 50 }} />
                                             </PieChart>
                                         </ResponsiveContainer>
                                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">

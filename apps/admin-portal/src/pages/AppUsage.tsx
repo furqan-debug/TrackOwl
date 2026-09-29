@@ -324,7 +324,7 @@ export function AppUsage() {
                                             5099") on a card hard-coded to #fff, which stayed white in
                                             dark mode. formatTime is what the rest of this page uses
                                             for the same figure. */}
-                                        <RechartsTooltip content={<PieShareTooltip total={chartTotal} formatValue={formatTime} />} />
+                                        <RechartsTooltip content={<PieShareTooltip total={chartTotal} formatValue={formatTime} />} wrapperStyle={{ zIndex: 50 }} />
                                     </PieChart>
                                 </ResponsiveContainer>
                             )}
