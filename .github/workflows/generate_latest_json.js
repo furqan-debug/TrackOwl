@@ -1,10 +1,10 @@
 import fs from 'fs';
 
 async function run() {
-  const repo = process.env.GITHUB_REPOSITORY;
+  const repo = process.env.GITHUB_REPOSITORY || process.argv[3] || 'furqan-debug/TrackOwl';
   const config = JSON.parse(fs.readFileSync('src-tauri/tauri.conf.json', 'utf8'));
-  const tag = (process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME) ? process.env.GITHUB_REF_NAME : `v${config.version}`;
-  const token = process.env.GITHUB_TOKEN;
+  const tag = (process.env.GITHUB_REF_TYPE === 'tag' && process.env.GITHUB_REF_NAME) ? process.env.GITHUB_REF_NAME : (process.argv[4] || `v${config.version}`);
+  const token = process.env.GITHUB_TOKEN || process.argv[2];
 
   console.log(`Generating and publishing latest.json for ${repo} at tag ${tag}`);
 
@@ -46,18 +46,21 @@ async function run() {
         const sig = await getSig(sigAsset.url);
         const sigClean = sig.trim();
 
+        // Normalize URL to always use the final release tag instead of temporary untagged draft hashes
+        const finalUrl = asset.browser_download_url.replace(/\/download\/[^\/]+\//, `/download/${tag}/`);
+
         if (asset.name.includes('aarch64')) {
-          platforms['darwin-aarch64'] = { signature: sigClean, url: asset.browser_download_url };
-          platforms['darwin-aarch64-app'] = { signature: sigClean, url: asset.browser_download_url };
+          platforms['darwin-aarch64'] = { signature: sigClean, url: finalUrl };
+          platforms['darwin-aarch64-app'] = { signature: sigClean, url: finalUrl };
         } else if (asset.name.includes('x64.app.tar.gz') || asset.name === 'TrackOwl.app.tar.gz') {
-          platforms['darwin-x86_64'] = { signature: sigClean, url: asset.browser_download_url };
-          platforms['darwin-x86_64-app'] = { signature: sigClean, url: asset.browser_download_url };
+          platforms['darwin-x86_64'] = { signature: sigClean, url: finalUrl };
+          platforms['darwin-x86_64-app'] = { signature: sigClean, url: finalUrl };
         } else if (asset.name.endsWith('x64-setup.exe')) {
           // Both windows-x86_64 and windows-x86_64-nsis point to the setup exe for NSIS auto-updating
-          platforms['windows-x86_64'] = { signature: sigClean, url: asset.browser_download_url };
-          platforms['windows-x86_64-nsis'] = { signature: sigClean, url: asset.browser_download_url };
+          platforms['windows-x86_64'] = { signature: sigClean, url: finalUrl };
+          platforms['windows-x86_64-nsis'] = { signature: sigClean, url: finalUrl };
         } else if (asset.name.endsWith('x64_en-US.msi')) {
-          platforms['windows-x86_64-msi'] = { signature: sigClean, url: asset.browser_download_url };
+          platforms['windows-x86_64-msi'] = { signature: sigClean, url: finalUrl };
         }
       }
     }
