@@ -214,6 +214,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.version.outputs.NUM) }}
+          draft: true
           files: |
             src-tauri/target/*/release/bundle/dmg/*.dmg
             src-tauri/target/release/bundle/dmg/*.dmg
