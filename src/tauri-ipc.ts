@@ -34,10 +34,15 @@ export function isWindowsOS(): boolean {
 
 export const trackerAPI = {
   /** Start a new tracking session — returns { status, session_id?, error? } */
-  startTracking: async (projectId: string, userId: string, token?: string) => {
+  startTracking: async (projectId: string, userId: string, token?: string, serverOffsetSecs?: number) => {
     const invoke = getInvoke();
     if (!invoke) return { status: 'running', session_id: 'demo-' + Date.now() };
-    return invoke('start_tracking', { projectId, userId, token: token ?? '' });
+    return invoke('start_tracking', { 
+      projectId, 
+      userId, 
+      token: token ?? '',
+      serverOffsetSecs: typeof serverOffsetSecs === 'number' ? serverOffsetSecs : 0
+    });
   },
 
   /** Update Rust-side token for background sync calls */

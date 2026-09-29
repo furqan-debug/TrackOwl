@@ -36,6 +36,9 @@ pub struct AppState {
     pub last_idle_limit: Arc<Mutex<u32>>,
     pub plan_type: Arc<Mutex<String>>,
     pub screenshots_enabled: Arc<Mutex<bool>>,
+    pub server_offset_secs: Arc<Mutex<i64>>,
+    pub org_timezone: Arc<Mutex<String>>,
+    pub idle_policy: Arc<Mutex<String>>,
 }
 
 impl Default for AppState {
@@ -62,6 +65,9 @@ impl Default for AppState {
             last_idle_limit: Arc::new(Mutex::new(10)),
             plan_type: Arc::new(Mutex::new("Basic".to_string())),
             screenshots_enabled: Arc::new(Mutex::new(true)),
+            server_offset_secs: Arc::new(Mutex::new(0)),
+            org_timezone: Arc::new(Mutex::new("UTC".to_string())),
+            idle_policy: Arc::new(Mutex::new("prompt".to_string())),
         }
     }
 }
@@ -231,7 +237,7 @@ pub fn supabase_get(
 
 // ─── IPC Commands ─────────────────────────────────────────────────────────────
 
-/// invoke('start_tracking', { projectId, userId, token })
+/// invoke('start_tracking', { projectId, userId, token, serverOffsetSecs })
 /// Creates a session row in Supabase and starts tracker threads.
 #[tauri::command]
 fn start_tracking(
@@ -240,7 +246,10 @@ fn start_tracking(
     project_id: String,
     user_id: String,
     token: String,
+    server_offset_secs: Option<i64>,
 ) -> TrackingResult {
+    let offset_secs = server_offset_secs.unwrap_or(0);
+
     // Check if tracking is already running to prevent duplicate loops
     {
         let is_running = state.lock().unwrap().tracking_running.lock().unwrap().clone();
@@ -398,6 +407,9 @@ fn start_tracking(
                         s.org_id = org_id.clone();
                         *s.plan_type.lock().unwrap() = plan_type.clone();
                         *s.screenshots_enabled.lock().unwrap() = screenshots_enabled;
+                        *s.server_offset_secs.lock().unwrap() = offset_secs;
+                        *s.org_timezone.lock().unwrap() = org_timezone.clone();
+                        *s.idle_policy.lock().unwrap() = idle_policy.clone();
                         *s.tracking_running.lock().unwrap() = true;
                         // Mark tracker as not-done so stop_tracking will wait for partial flush
                         *s.tracker_done.lock().unwrap() = false;
@@ -419,12 +431,14 @@ fn start_tracking(
                         plan_type.clone(),
                         org_timezone.clone(),
                         idle_policy.clone(),
+                        offset_secs,
                     );
                     if screenshots_enabled {
                         tracker::start_screenshot_loop(
                             app.clone(), session_id.clone(), cfg.clone(), Arc::clone(&running), 
                             Arc::clone(&auth_arc), org_id, user_id.clone(),
                             plan_type.clone(),
+                            offset_secs,
                         );
                     } else {
                         println!("[lib] 📷 Screenshots disabled for this member (screenshots_enabled=false). Skipping screenshot loop.");
@@ -448,7 +462,7 @@ fn start_tracking(
 /// invoke('stop_tracking')
 #[tauri::command]
 fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>) -> TrackingResult {
-    let (cfg, auth_arc, session_id, running, tracker_done, db_arc, user_id, org_id, plan_type, screenshots_enabled) = {
+    let (cfg, auth_arc, session_id, running, tracker_done, db_arc, user_id, org_id, plan_type, screenshots_enabled, offset_secs) = {
         let mut s = state.lock().unwrap();
         let res = (
             SupabaseConfig { url: s.supabase_url.clone(), anon_key: s.supabase_anon_key.clone() },
@@ -461,13 +475,15 @@ fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>
             s.org_id.clone(),
             s.plan_type.lock().unwrap().clone(),
             *s.screenshots_enabled.lock().unwrap(),
+            *s.server_offset_secs.lock().unwrap(),
         );
         res
     };
 
     // Capture the exact stop time BEFORE signaling the tracker thread to stop.
-    // This is the authoritative ended_at — the wall-clock moment the user clicked Stop.
-    let stop_time = chrono::Utc::now().to_rfc3339();
+    // This is the authoritative ended_at — the wall-clock moment the user clicked Stop,
+    // adjusted for authoritative server time.
+    let stop_time = (chrono::Utc::now() + chrono::Duration::seconds(offset_secs)).to_rfc3339();
 
     *running.lock().unwrap() = false;
 
@@ -508,6 +524,7 @@ fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>
                 &uid,
                 "STOP",
                 db_conn.as_ref(),
+                offset_secs,
             );
         });
     }
@@ -554,7 +571,7 @@ fn resume_tracking(
     app: tauri::AppHandle,
     state: tauri::State<'_, Mutex<AppState>>,
 ) -> TrackingResult {
-    let (cfg, session_id, counts, running, tracker_done, auth_arc, db_arc, user_id, org_id, plan_type, screenshots_enabled) = {
+    let (cfg, session_id, counts, running, tracker_done, auth_arc, db_arc, user_id, org_id, plan_type, screenshots_enabled, offset_secs, org_tz, idle_pol) = {
         let s = state.lock().unwrap();
         // Guard against duplicate loops
         if *s.tracking_running.lock().unwrap() {
@@ -576,6 +593,9 @@ fn resume_tracking(
             s.org_id.clone(),
             s.plan_type.lock().unwrap().clone(),
             *s.screenshots_enabled.lock().unwrap(),
+            *s.server_offset_secs.lock().unwrap(),
+            s.org_timezone.lock().unwrap().clone(),
+            s.idle_policy.lock().unwrap().clone(),
         );
         res
     };
@@ -607,16 +627,21 @@ fn resume_tracking(
     // Reset done-flag so stop_tracking will wait for the resumed tracker's partial flush
     *tracker_done.lock().unwrap() = false;
 
-    tracker::start_sample_loop(
+    tracker::start_sample_loop_inner(
         app.clone(), Arc::clone(&counts), sid.clone(),
-        cfg.clone(), Arc::clone(&running), Arc::clone(&tracker_done), 60_000, Arc::clone(&db_arc), Arc::clone(&auth_arc),
+        cfg.clone(), Arc::clone(&running), Arc::clone(&tracker_done), 60_000,
+        Arc::clone(&db_arc), Arc::clone(&auth_arc),
         plan_type.clone(),
+        org_tz,
+        idle_pol,
+        offset_secs,
     );
     if screenshots_enabled {
         tracker::start_screenshot_loop(
             app.clone(), sid.clone(), cfg.clone(), Arc::clone(&running), 
             Arc::clone(&auth_arc), org_id, user_id.unwrap_or_default(),
             plan_type.clone(),
+            offset_secs,
         );
     }
     // The always-on sync loop is started in set_auth_token.

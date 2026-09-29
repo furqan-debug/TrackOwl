@@ -31,6 +31,7 @@ interface DatePickerProps {
     triggerClassName?: string;
     displayValue?: string;
     displayTimezone?: string;
+    maxDate?: string; // YYYY-MM-DD
 }
 
 /**
@@ -60,7 +61,8 @@ export function DatePicker({
     panelAlign = 'auto',
     triggerClassName,
     displayValue,
-    displayTimezone
+    displayTimezone,
+    maxDate
 }: DatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -229,17 +231,32 @@ export function DatePicker({
         return [...prevDays, ...currentDays, ...nextDays];
     }, [viewDate]);
 
+    const canGoNext = useMemo(() => {
+        if (!maxDate) return true;
+        const nextMonth = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
+        const firstOfNext = `${nextMonth.getFullYear()}-${String(nextMonth.getMonth() + 1).padStart(2, '0')}-01`;
+        return firstOfNext <= maxDate;
+    }, [viewDate, maxDate]);
+
     const handleMonthNav = (dir: 'prev' | 'next') => {
+        if (dir === 'next' && !canGoNext) return;
         const d = new Date(viewDate);
         d.setMonth(d.getMonth() + (dir === 'prev' ? -1 : 1));
         setViewDate(d);
     };
 
     const handleDateSelect = (day: number, month: number, year: number) => {
-    const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    onChange(iso);
-    setIsOpen(false);
-};
+        const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        if (maxDate && iso > maxDate) return;
+        onChange(iso);
+        setIsOpen(false);
+    };
+
+    const isFuture = (day: number, month: number, year: number) => {
+        if (!maxDate) return false;
+        const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        return iso > maxDate;
+    };
 
     const isToday = (day: number, month: number, year: number) => {
         if (displayTimezone) {
@@ -322,8 +339,12 @@ export function DatePicker({
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
                                 <button 
-                                    onClick={(e) => { e.stopPropagation(); handleMonthNav('next'); }}
-                                    className="p-1.5 hover:bg-surface-hover rounded-lg text-text-muted transition-colors"
+                                    onClick={(e) => { e.stopPropagation(); if (canGoNext) handleMonthNav('next'); }}
+                                    disabled={!canGoNext}
+                                    className={clsx(
+                                        "p-1.5 rounded-lg transition-colors",
+                                        canGoNext ? "hover:bg-surface-hover text-text-muted" : "opacity-20 cursor-not-allowed text-text-muted"
+                                    )}
                                 >
                                     <ChevronRight className="w-4 h-4" />
                                 </button>
@@ -341,26 +362,34 @@ export function DatePicker({
 
                         {/* Day Grid */}
                         <div className="grid grid-cols-7 gap-1">
-                            {daysInMonth.map((d, i) => (
-                                <div 
-                                    key={i}
-                                    onClick={(e) => { e.stopPropagation(); handleDateSelect(d.day, d.month, d.year); }}
-                                    className={clsx(
-                                        "h-8 flex items-center justify-center text-[12px] font-bold rounded-lg cursor-pointer transition-all relative group",
-                                        !d.current && "opacity-20",
-                                        isSelected(d.day, d.month, d.year)
-                                            ? "bg-primary text-white shadow-glow-primary scale-110 z-10"
-                                            : d.current 
-                                                ? "text-text-main hover:bg-primary hover:text-[var(--bg-surface)]" 
-                                                : "text-text-muted hover:bg-surface-hover",
-                                    )}
-                                >
-                                    {d.day}
-                                    {isToday(d.day, d.month, d.year) && !isSelected(d.day, d.month, d.year) && (
-                                        <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-accent" />
-                                    )}
-                                </div>
-                            ))}
+                            {daysInMonth.map((d, i) => {
+                                const future = isFuture(d.day, d.month, d.year);
+                                return (
+                                    <div 
+                                        key={i}
+                                        onClick={future ? undefined : (e) => { e.stopPropagation(); handleDateSelect(d.day, d.month, d.year); }}
+                                        className={clsx(
+                                            "h-8 flex items-center justify-center text-[12px] font-bold rounded-lg transition-all relative group",
+                                            future 
+                                                ? "opacity-20 cursor-not-allowed pointer-events-none text-text-muted" 
+                                                : "cursor-pointer",
+                                            !d.current && !future && "opacity-20",
+                                            isSelected(d.day, d.month, d.year)
+                                                ? "bg-primary text-white shadow-glow-primary scale-110 z-10"
+                                                : future
+                                                    ? ""
+                                                    : d.current 
+                                                        ? "text-text-main hover:bg-primary hover:text-[var(--bg-surface)]" 
+                                                        : "text-text-muted hover:bg-surface-hover",
+                                        )}
+                                    >
+                                        {d.day}
+                                        {isToday(d.day, d.month, d.year) && !isSelected(d.day, d.month, d.year) && (
+                                            <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-accent" />
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                         </motion.div>
                     )}

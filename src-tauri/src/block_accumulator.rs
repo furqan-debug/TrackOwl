@@ -41,15 +41,18 @@ pub struct BlockAccumulator {
     block_start:   Option<chrono::DateTime<chrono::Utc>>,
     org_timezone:  String,      // e.g. "America/Los_Angeles"
     idle_policy:   String,      // "always" | "prompt" | "never"
+    server_offset_secs: i64,
 }
 
 impl BlockAccumulator {
-    pub fn new(org_timezone: String, idle_policy: String) -> Self {
+    pub fn new(org_timezone: String, idle_policy: String, server_offset_secs: i64) -> Self {
+        let server_now = chrono::Utc::now() + chrono::Duration::seconds(server_offset_secs);
         Self {
             samples: Vec::with_capacity(SAMPLES_PER_BLOCK),
-            block_start: Some(chrono::Utc::now()),
+            block_start: Some(server_now),
             org_timezone,
             idle_policy,
+            server_offset_secs,
         }
     }
 
@@ -58,10 +61,11 @@ impl BlockAccumulator {
         if self.block_start.is_none() {
             // A 60-second sample's recorded_at is the timestamp at the END of that minute.
             // If block_start was unset, anchor it 60s before the first sample.
+            let server_now = chrono::Utc::now() + chrono::Duration::seconds(self.server_offset_secs);
             let sample_time = chrono::DateTime::parse_from_rfc3339(&sample.recorded_at)
                 .ok()
                 .map(|dt| dt.with_timezone(&chrono::Utc))
-                .unwrap_or_else(chrono::Utc::now);
+                .unwrap_or(server_now);
             self.block_start = Some(sample_time - chrono::Duration::seconds(60));
         }
         self.samples.push(sample);
@@ -110,7 +114,8 @@ impl BlockAccumulator {
 
     fn flush(&mut self) -> BlockRecord {
         let samples = std::mem::replace(&mut self.samples, Vec::with_capacity(SAMPLES_PER_BLOCK));
-        let block_start = self.block_start.take().unwrap_or_else(chrono::Utc::now);
+        let server_now = chrono::Utc::now() + chrono::Duration::seconds(self.server_offset_secs);
+        let block_start = self.block_start.take().unwrap_or(server_now);
 
         // The block_end is the recorded_at of the last sample in this block
         let last_sample_time = samples.last()

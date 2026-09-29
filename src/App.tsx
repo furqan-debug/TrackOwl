@@ -10,6 +10,12 @@ import {
    Bell, ShieldCheck, Smartphone, Trash2
 } from 'lucide-react';
 import { trackerAPI, isWindowsOS } from './tauri-ipc';
+import { 
+  syncServerTime, 
+  getTrueServerNow, 
+  getOrgBusinessDate, 
+  getServerOffsetSecs 
+} from './lib/serverTime';
 
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import './App.css';
@@ -22,6 +28,11 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 }
 
 const supabaseInstance: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// Sync client clock offset with authoritative Supabase server immediately
+if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+  syncServerTime(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
 
 async function getSupabase() {
   return supabaseInstance;
@@ -277,7 +288,7 @@ const WEEKDAY_SHORT = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const WEEKDAY_FULL = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 /** ISO weekday (1-7) for `at` as seen in `tz`. Falls back to UTC on a bad zone. */
-function isoWeekdayIn(tz: string | undefined, at: Date = new Date()): number {
+function isoWeekdayIn(tz: string | undefined, at: Date = getTrueServerNow()): number {
   let short: string;
   try {
     short = at.toLocaleDateString('en-US', { timeZone: tz || 'UTC', weekday: 'short' });
@@ -295,7 +306,7 @@ function isoWeekdayIn(tz: string | undefined, at: Date = new Date()): number {
  * member must not be locked out — so it allows tracking. Only an explicit
  * list of days can block anything.
  */
-function isWorkDayNow(workDays: number[] | undefined | null, tz: string | undefined, at: Date = new Date()): boolean {
+function isWorkDayNow(workDays: number[] | undefined | null, tz: string | undefined, at: Date = getTrueServerNow()): boolean {
   if (!Array.isArray(workDays) || workDays.length === 0) return true;
   return workDays.includes(isoWeekdayIn(tz, at));
 }
@@ -307,10 +318,10 @@ function workDaysLabel(workDays: number[] | undefined | null): string {
 }
 
 function LocalClock({ orgTimezone }: { orgTimezone?: string }) {
-  const [now, setNow] = useState(new Date());
+  const [now, setNow] = useState(() => getTrueServerNow());
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 1000);
+    const timer = setInterval(() => setNow(getTrueServerNow()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -1171,8 +1182,8 @@ export default function App() {
       orgTimezoneRef.current = orgTimezone;
       setOrgTimezone(orgTimezone);
 
-      const now = new Date();
-      const todayInOrg = now.toLocaleDateString('en-CA', { timeZone: orgTimezone });
+      const now = getTrueServerNow();
+      const todayInOrg = getOrgBusinessDate(orgTimezone);
 
       // Start of current week in orgTimezone (Monday)
       const [y, mo, d] = todayInOrg.split('-').map(Number);
@@ -1237,9 +1248,9 @@ export default function App() {
           const endMs = b.block_end ? new Date(b.block_end).getTime() : startMs + 600000;
           const blockDurationSecs = Math.max(0, Math.min(600, Math.round((endMs - startMs) / 1000)));
 
-          const blockDate = b.block_start
+          const blockDate = b.business_date || (b.block_start
             ? new Date(b.block_start).toLocaleDateString('en-CA', { timeZone: orgTimezone })
-            : b.business_date;
+            : todayStr);
 
           if (b.credited) {
             statsMap[pid].weeklySeconds += blockDurationSecs;
@@ -1555,7 +1566,7 @@ export default function App() {
           .eq('project_members.member_id', userObj.id);
         const projectsList = projs || [];
         const orgTzStr: string = (restoredTz as string) || orgTimezoneRef.current || 'UTC';
-        const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: orgTzStr });
+        const todayKey = getOrgBusinessDate(orgTzStr);
 
         // Clean up any stale localStorage tracker keys older than 7 days
         try {
@@ -2032,7 +2043,7 @@ export default function App() {
         if (activeProject && sessionElapsedRef.current > 0) {
           try {
             const tz = orgTimezoneRef.current || orgTimezone || 'UTC';
-            const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+            const todayKey = getOrgBusinessDate(tz);
             localStorage.setItem(`trackowl_today_${todayKey}_${activeProject.id}`, String(sessionElapsedRef.current));
           } catch (_) {}
         }
@@ -2151,7 +2162,7 @@ export default function App() {
       const tz = orgTimezoneRef.current || orgTimezone;
       if (!tz) return;
 
-      const today = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+      const today = getOrgBusinessDate(tz);
 
       if (orgDayRef.current === null) {
         orgDayRef.current = today;
@@ -2170,7 +2181,7 @@ export default function App() {
         // Math.min keeps this safe for a session that started after midnight (its
         // elapsed value is already correct and must not be inflated).
         const midnightMs = orgLocalToUtc(today, 'start', tz).getTime();
-        const secsSinceMidnight = Math.max(0, Math.floor((Date.now() - midnightMs) / 1000));
+        const secsSinceMidnight = Math.max(0, Math.floor((getTrueServerNow().getTime() - midnightMs) / 1000));
         sessionElapsedRef.current = Math.min(sessionElapsedRef.current, secsSinceMidnight);
         setLiveElapsed(prev => Math.min(prev, secsSinceMidnight));
         sessionStartTodaySecsRef.current = 0;
@@ -2205,6 +2216,17 @@ export default function App() {
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, projects, isTracking, orgTimezone]);
+
+  // ─── Background Server Time Sync ─────────────────────────────────────────────
+  // Periodically refresh the server clock offset to keep client and server synchronized.
+  useEffect(() => {
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) return;
+    syncServerTime(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const timer = setInterval(() => {
+      syncServerTime(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }, 5 * 60_000);
+    return () => clearInterval(timer);
+  }, []);
 
   // ─── Org-Level Absolute Auto-Terminate Session (bypasses keep_idle_mode) ──────
   // This effect listens to every tracking sample and maintains an independent
@@ -2445,7 +2467,7 @@ export default function App() {
           const weeklyLimitSecs = (typeof weeklyLimitHours === 'number' && weeklyLimitHours > 0) ? weeklyLimitHours * 3600 : null;
 
           const tz = orgTimezoneRef.current || orgTimezone || 'UTC';
-          const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+          const todayKey = getOrgBusinessDate(tz);
 
           // sessionElapsedRef is pre-seeded with activeProject.todaySeconds at session start,
           // so we only need to add OTHER projects' totals to avoid double-counting.
@@ -2618,7 +2640,7 @@ export default function App() {
       setUser(userObj);
 
       const orgTzStr: string = (loginTz as string) || orgTimezoneRef.current || 'UTC';
-      const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: orgTzStr });
+      const todayKey = getOrgBusinessDate(orgTzStr);
       const seededList = (projectsData || []).map((p: any) => {
         let storedToday = 0;
         try {
@@ -2689,7 +2711,7 @@ export default function App() {
     // question — an unscheduled day has no allowance to spend in the first
     // place.
     const orgTz = orgTimezoneRef.current || orgTimezone || 'UTC';
-    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: orgTz });
+    const todayStr = getOrgBusinessDate(orgTz);
     if (!isWorkDayNow(user?.work_days, orgTz)) {
       const todayName = WEEKDAY_FULL[isoWeekdayIn(orgTz)];
       setTrackingError(`${todayName} is not one of your scheduled working days.`);
@@ -2778,7 +2800,7 @@ export default function App() {
       const { data: { session } } = await sb.auth.getSession();
       const token = session?.access_token;
 
-      const res: any = await trackerAPI.startTracking(project.id, user?.id ?? '', token);
+      const res: any = await trackerAPI.startTracking(project.id, user?.id ?? '', token, getServerOffsetSecs());
       if (res?.status === 'error') {
         let rawErr = res.error || '';
         
@@ -2861,7 +2883,7 @@ export default function App() {
     const stoppingProj = activeProjectRef.current || activeProject;
     if (stoppingProj && finalElapsed > 0) {
       const tz = orgTimezoneRef.current || orgTimezone || 'UTC';
-      const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+      const todayKey = getOrgBusinessDate(tz);
       try {
         localStorage.setItem(`trackowl_today_${todayKey}_${stoppingProj.id}`, String(finalElapsed));
       } catch (_) {}
@@ -3854,7 +3876,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   onNonWorkDay?: (dayName: string, scheduleLabel: string, projectName?: string) => void;
 }) {
   const tz = orgTimezone || 'UTC';
-  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+  const todayStr = getOrgBusinessDate(tz);
 
   const getProjectToday = (p: Project) => {
     if (isTracking && activeProjectId && p.id === activeProjectId) {
@@ -4248,7 +4270,7 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
   }, [idlePaused, onResumeFromIdle]);
 
   const tz = orgTimezone || 'UTC';
-  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+  const todayStr = getOrgBusinessDate(tz);
   const baseKeptIdle = (project.stats?.dateStr === todayStr ? project.stats?.keptIdleSeconds : 0) || 0;
 
   // NEW FORMULA: Productive = Total Elapsed - Idle
