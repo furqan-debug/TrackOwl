@@ -165,26 +165,38 @@ export function Dashboard() {
 
 
 
+    const todayOrgStr = useMemo(() => {
+        return new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+    }, [displayTimezone]);
+
     const navigateDate = (direction: 'prev' | 'next') => {
         const [y, m, d] = viewDateStr.split('-').map(Number);
         const next = new Date(y, m - 1, d);
         next.setDate(next.getDate() + (direction === 'prev' ? -1 : 1));
-        setViewDateStr(next.toLocaleDateString('en-CA'));
+        const nextStr = next.toLocaleDateString('en-CA');
+        if (direction === 'next' && todayOrgStr && nextStr > todayOrgStr) {
+            setViewDateStr(todayOrgStr);
+            return;
+        }
+        setViewDateStr(nextStr);
     };
 
     const handleDateChange = (dateStr: string) => {
         if (!dateStr) return;
+        if (todayOrgStr && dateStr > todayOrgStr) {
+            setViewDateStr(todayOrgStr);
+            return;
+        }
         setViewDateStr(dateStr);
     };
 
     const goToToday = () => {
-        setViewDateStr(new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' }));
+        setViewDateStr(todayOrgStr);
     };
 
     const isTodayView = useMemo(() => {
-        const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
-        return viewDateStr === todayStr;
-    }, [viewDateStr, displayTimezone]);
+        return viewDateStr === todayOrgStr;
+    }, [viewDateStr, todayOrgStr]);
 
     const fetchDashboardData = useCallback(async (forceRefresh = false, isSilent = false) => {
         // Wait for the real timezone. Firing before it resolves issued a second,
@@ -516,13 +528,14 @@ export function Dashboard() {
                         <DatePicker
                             value={viewDateStr}
                             displayTimezone={displayTimezone}
+                            maxDate={todayOrgStr}
                             onChange={(val) => handleDateChange(val)}
                             className="flex-1 min-w-0"
                         />
                         <button
                             onClick={() => navigateDate('next')}
                             className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-md disabled:opacity-30 disabled:hover:bg-transparent"
-                            disabled={isTodayView}
+                            disabled={isTodayView || viewDateStr >= todayOrgStr}
                         >
                             <ChevronRight className="w-5 h-5" />
                         </button>

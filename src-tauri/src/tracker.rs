@@ -450,7 +450,7 @@ pub fn start_sample_loop(
     // Defaults to UTC timezone / "never" discard — overridden by start_sample_loop_inner
     // when lib.rs has fetched the org timezone and idle policy.
     start_sample_loop_inner(app, counts, session_id, cfg, running, tracker_done, interval_ms,
-        db, auth_token, plan_type, "UTC".to_string(), "never".to_string())
+        db, auth_token, plan_type, "UTC".to_string(), "never".to_string(), 0)
 }
 
 /// The real loop — accepts org_timezone and idle_policy.
@@ -468,6 +468,7 @@ pub fn start_sample_loop_inner(
     plan_type: String,
     org_timezone: String,
     idle_policy: String,
+    server_offset_secs: i64,
 ) {
     thread::spawn(move || {
         let mut last_title: Option<String> = None;
@@ -479,7 +480,7 @@ pub fn start_sample_loop_inner(
 
         // Block accumulator — groups 10 × 60s samples into one 10-minute BlockRecord
         let mut accumulator = crate::block_accumulator::BlockAccumulator::new(
-            org_timezone, idle_policy,
+            org_timezone, idle_policy, server_offset_secs,
         );
 
         // Initialize local SQLite block_records cache table
@@ -569,7 +570,7 @@ pub fn start_sample_loop_inner(
 
             let sample = ActivitySample {
                 session_id: session_id.clone(),
-                recorded_at: chrono::Utc::now().to_rfc3339(),
+                recorded_at: (chrono::Utc::now() + chrono::Duration::seconds(server_offset_secs)).to_rfc3339(),
                 mouse_clicks: mouse,
                 key_presses: keyboard,
                 app_name,
@@ -652,7 +653,7 @@ pub fn start_sample_loop_inner(
 
             let final_sample = ActivitySample {
                 session_id: session_id.clone(),
-                recorded_at: chrono::Utc::now().to_rfc3339(),
+                recorded_at: (chrono::Utc::now() + chrono::Duration::seconds(server_offset_secs)).to_rfc3339(),
                 mouse_clicks: mouse,
                 key_presses: keyboard,
                 app_name,
@@ -677,7 +678,7 @@ pub fn start_sample_loop_inner(
 
         // ── Flush any partial block (< 10 samples) ───────────────────────────
         // Use the real stop wall-clock as block_end so the block reflects exact stop time
-        let stop_wall_clock = chrono::Utc::now();
+        let stop_wall_clock = chrono::Utc::now() + chrono::Duration::seconds(server_offset_secs);
         if let Some(partial) = accumulator.flush_partial_at(stop_wall_clock) {
             println!("[tracker] 📦 Partial block on stop: {} active_secs={} activity={}%",
                 partial.business_date, partial.active_seconds, partial.activity_percent);
@@ -751,6 +752,7 @@ pub fn take_mandatory_screenshot(
     user_id: &str,
     label: &str, // e.g. "START" or "STOP"
     db_conn: Option<&rusqlite::Connection>,
+    server_offset_secs: i64,
 ) {
     println!("[tracker] 📸 Mandatory {} screenshot — capturing...", label);
 
@@ -759,7 +761,7 @@ pub fn take_mandatory_screenshot(
         return;
     };
 
-    let captured_at  = chrono::Utc::now();
+    let captured_at  = chrono::Utc::now() + chrono::Duration::seconds(server_offset_secs);
     let recorded_at  = captured_at.to_rfc3339();
     let captured_ms  = captured_at.timestamp_millis();
     let org_slug     = organization_id.unwrap_or("unknown");
@@ -818,6 +820,7 @@ pub fn start_screenshot_loop(
     organization_id: Option<String>,
     user_id: String,
     plan_type: String,
+    server_offset_secs: i64,
 ) {
     if plan_type != "Premium" && plan_type != "Trial" {
         println!("[tracker] 🛡️ Plan is {}, skipping screenshot loop.", plan_type);
@@ -842,6 +845,7 @@ pub fn start_screenshot_loop(
             &user_id,
             "START",
             db_conn.as_ref(),
+            server_offset_secs,
         );
 
         loop {
@@ -881,7 +885,7 @@ pub fn start_screenshot_loop(
             );
 
             if let Some(base64_data) = capture_screenshot() {
-                let captured_at = chrono::Utc::now();
+                let captured_at = chrono::Utc::now() + chrono::Duration::seconds(server_offset_secs);
                 let recorded_at = captured_at.to_rfc3339();
                 let captured_ms = captured_at.timestamp_millis();
 
