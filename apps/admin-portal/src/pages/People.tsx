@@ -809,8 +809,8 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
                 />
 
                 <div className="grid grid-cols-2 gap-3">
-                    <FormField label="Pay Rate ($/hr)" value={form.addPayRate} onChange={form.setAddPayRate} type="number" placeholder="0.00" />
-                    <FormField label="Bill Rate ($/hr)" value={form.addBillRate} onChange={form.setAddBillRate} type="number" placeholder="0.00" />
+                    <FormField label="Pay Rate ($/hr)" value={form.addPayRate} onChange={form.setAddPayRate} type="number" min={0} step="0.01" placeholder="0.00" />
+                    <FormField label="Bill Rate ($/hr)" value={form.addBillRate} onChange={form.setAddBillRate} type="number" min={0} step="0.01" placeholder="0.00" />
                 </div>
 
                 <div className="grid grid-cols-3 gap-3">
@@ -830,7 +830,14 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
     );
 }
 
-function FormField({ label, value, onChange, type = 'text', icon, placeholder, disabled }: any) {
+function FormField({ label, value, onChange, type = 'text', icon, placeholder, disabled, min, step }: any) {
+    // A number input takes a typed minus whether or not min is set — min only
+    // governs the spinner and form validation, so -5 reaches state unchallenged.
+    // Strip it here for fields that cannot be negative.
+    const blocksNegative = type === 'number' && min !== undefined && Number(min) >= 0;
+    const handleChange = (raw: string) =>
+        onChange(blocksNegative ? raw.replace(/-/g, '') : raw);
+
     return (
         <div className="space-y-1 group flex flex-col relative">
             <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em] ml-1">{label}</label>
@@ -839,9 +846,11 @@ function FormField({ label, value, onChange, type = 'text', icon, placeholder, d
                 <input
                     type={type}
                     value={value || ''}
-                    onChange={e => onChange(e.target.value)}
+                    onChange={e => handleChange(e.target.value)}
                     placeholder={placeholder}
                     disabled={disabled}
+                    min={min}
+                    step={step}
                     className={clsx(
                         "w-full h-11 bg-surface-solid border border-border rounded-2xl text-[14px] font-bold text-text-primary outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all shadow-shell-sm placeholder:text-text-muted/40",
                         icon ? "pl-12 pr-4" : "px-4",
