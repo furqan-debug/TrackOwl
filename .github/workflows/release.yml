@@ -233,16 +233,10 @@ jobs:
         id: version
         run: |
           node -e "const v = require('./src-tauri/tauri.conf.json').version; console.log('NUM=' + v); require('fs').appendFileSync(process.env.GITHUB_OUTPUT, 'NUM=' + v + '\n')"
-      - name: Generate latest.json
+      - name: Generate and Publish latest.json
         run: node .github/workflows/generate_latest_json.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Upload latest.json to Release and Publish
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.version.outputs.NUM) }}
-          files: latest.json
-          draft: false
 
   publish-appstore:
     if: github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'macos'
