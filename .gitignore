@@ -19,6 +19,7 @@ bin/
 *.app
 *.deb
 *.rpm
+latest.json
 
 # Environment files
 .env
