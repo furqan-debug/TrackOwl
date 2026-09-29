@@ -34,7 +34,7 @@ async function run() {
         
         let platformKey = '';
         if (asset.name.includes('aarch64')) platformKey = 'darwin-aarch64';
-        else if (asset.name.includes('x64.app.tar.gz')) platformKey = 'darwin-x86_64';
+        else if (asset.name.includes('x64.app.tar.gz') || asset.name === 'TrackOwl.app.tar.gz') platformKey = 'darwin-x86_64';
         else if (asset.name.endsWith('x64-setup.exe')) platformKey = 'windows-x86_64';
         else if (asset.name.includes('universal.tar.gz')) platformKey = 'darwin-universal';
         
