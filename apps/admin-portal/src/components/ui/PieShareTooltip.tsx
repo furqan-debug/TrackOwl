@@ -40,7 +40,7 @@ export function PieShareTooltip({
     const color = slice.payload?.fill || 'var(--chart-gold)';
 
     return (
-        <div className="p-4 bg-surface/90 backdrop-blur-md rounded-2xl shadow-2xl border border-border min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
+        <div className="p-4 bg-surface rounded-2xl shadow-2xl border border-border min-w-[180px] animate-in fade-in zoom-in-95 duration-200">
             <p className="text-[9px] font-black text-text-muted mb-3 pb-2 border-b border-border truncate">
                 {slice.name}
             </p>
