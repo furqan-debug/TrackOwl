@@ -778,3 +778,99 @@
     transition: none;
   }
 }
+
+/* Glow button: a rotating sheen runs around the rim while a soft blob follows
+   the pointer inside. Used on the login Sign in button. The purple of the
+   original is swapped for the brand navy and gold. */
+.glow-button {
+  --button-background: #001b4d;
+  --button-color: #ffffff;
+  --button-shadow: rgba(0, 27, 77, 0.25);
+  --button-shine-left: rgba(250, 204, 21, 0.5);
+  --button-shine-right: rgba(255, 236, 153, 0.65);
+  --button-glow: #facc15;
+
+  appearance: none;
+  outline: none;
+  border: none;
+  font-family: inherit;
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  color: var(--button-color);
+  padding: 0;
+  margin: 0;
+  background: none;
+  z-index: 1;
+  box-shadow: 0 8px 20px var(--button-shadow);
+}
+
+.glow-button .gradient {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  transform: scaleY(1.02) scaleX(1.005) rotate(-0.35deg);
+}
+
+.glow-button .gradient::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  transform: scale(1.05) translateY(-44px) rotate(0deg) translateZ(0);
+  padding-bottom: 100%;
+  border-radius: 50%;
+  background: linear-gradient(90deg, var(--button-shine-left), var(--button-shine-right));
+  animation: glow-button-rotate linear 2s infinite;
+}
+
+.glow-button .label {
+  z-index: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  height: 100%;
+  padding: 0 28px;
+  border-radius: inherit;
+  background-color: var(--button-background);
+  overflow: hidden;
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
+}
+
+.glow-button .label::before {
+  content: '';
+  position: absolute;
+  left: -16px;
+  top: -16px;
+  transform: translate(var(--pointer-x, 0px), var(--pointer-y, 0px)) translateZ(0);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--button-glow);
+  opacity: var(--button-glow-opacity, 0);
+  transition: opacity var(--button-glow-duration, 0.5s);
+  filter: blur(20px);
+}
+
+.glow-button:hover {
+  --button-glow-opacity: 1;
+  --button-glow-duration: 0.25s;
+}
+
+@keyframes glow-button-rotate {
+  to {
+    transform: scale(1.05) translateY(-44px) rotate(360deg) translateZ(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow-button .gradient::before {
+    animation: none;
+  }
+}

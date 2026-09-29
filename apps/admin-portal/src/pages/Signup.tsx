@@ -180,10 +180,19 @@ export function Signup() {
                                     <button
                                         type="submit"
                                         disabled={loading}
-                                        className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 border-0 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
+                                        onMouseMove={(e) => {
+                                            // Feeds the blob inside .label::before so it trails the cursor.
+                                            const rect = e.currentTarget.getBoundingClientRect();
+                                            e.currentTarget.style.setProperty('--pointer-x', `${e.clientX - rect.left}px`);
+                                            e.currentTarget.style.setProperty('--pointer-y', `${e.clientY - rect.top}px`);
+                                        }}
+                                        className="glow-button w-full h-12 font-bold text-sm active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                                     >
-                                        {loading ? 'Creating workspace...' : 'Create workspace'}
-                                        {!loading && <ArrowRight className="w-4 h-4" />}
+                                        <span className="gradient" aria-hidden />
+                                        <span className="label">
+                                            {loading ? 'Creating workspace...' : 'Create workspace'}
+                                            {!loading && <ArrowRight className="w-4 h-4" />}
+                                        </span>
                                     </button>
                                 </form>
                             </div>
