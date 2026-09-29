@@ -123,6 +123,7 @@ interface Project {
     weeklyIdleSeconds?: number;
     activityPercent: number;
     keptIdleSeconds?: number;
+    dateStr?: string;
   };
 }
 
@@ -1032,7 +1033,7 @@ export default function App() {
   const isFetchingStatsRef = useRef(false); // persistent concurrency guard for stats fetching
   // After a limit-triggered stop, holds the minimum todaySeconds to display so the DB lag
   // cannot push the display below the snapped limit value. Expires after 30s.
-  const limitFloorRef = useRef<{ projectId: string; minTodaySecs: number; expiresAt: number } | null>(null);
+  const limitFloorRef = useRef<{ projectId: string; minTodaySecs: number; expiresAt: number; dateStr?: string } | null>(null);
   const [limitReachedModal, setLimitReachedModal] = useState<{
     type: 'daily' | 'weekly' | 'non_work_day';
     limitHours?: number;
@@ -1366,14 +1367,14 @@ export default function App() {
       }
 
       // Apply limit floor: after a limit-triggered stop, DB rounding or lag must never drop below the reached limit.
-      // Check in-memory floor as well as persisted floor for today.
+      // Check in-memory floor as well as persisted floor for today. Floor strictly expires at midnight in org timezone.
       const floor = limitFloorRef.current;
-      const floorActive = floor !== null && Date.now() < floor.expiresAt;
+      const floorActive = floor !== null && floor.dateStr === todayStr && Date.now() < floor.expiresAt;
       if (floor !== null && !floorActive) limitFloorRef.current = null; // expire
 
       const updatedProjects = currentProjects.map(p => {
         const stat = statsMap[p.id];
-        if (!stat) return { ...p, stats: { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, activityPercent: 0, keptIdleSeconds: 0 } };
+        if (!stat) return { ...p, stats: { todaySeconds: 0, weeklySeconds: 0, weeklyIdleSeconds: 0, activityPercent: 0, keptIdleSeconds: 0, dateStr: todayStr } };
 
         let storedToday = 0;
         try {
@@ -1391,12 +1392,40 @@ export default function App() {
           ? Math.max(floor!.minTodaySecs, storedFloor)
           : storedFloor;
 
-        // Today's tracked time must be monotonic — never decrease due to network sync lag or partial block flush delay!
+        // Check if there are any sessions in DB today for this project, or if we are actively tracking it now
+        const hasSessionToday = (sessionData || []).some((s: any) => {
+          if (s.project_id !== p.id) return false;
+          const sDate = dateFormatter.format(new Date(s.started_at));
+          return sDate === todayStr;
+        });
+        const isActivelyTrackingThis = isTracking && (activeProjectRef.current?.id === p.id || activeProject?.id === p.id);
+
+        // If DB has 0 sessions today AND user is not currently tracking this project,
+        // any storedToday or activeFloorSecs in localStorage is stale contamination from a previous day.
+        if (!hasSessionToday && !isActivelyTrackingThis && stat.todaySeconds === 0) {
+          if (storedToday > 0 || storedFloor > 0) {
+            console.warn(`[stats] Clearing stale leftover localStorage for project ${p.name} on ${todayStr} (storedToday=${storedToday}s, storedFloor=${storedFloor}s)`);
+            try {
+              localStorage.removeItem(`trackowl_today_${todayStr}_${p.id}`);
+              localStorage.removeItem(`trackowl_limit_floor_${todayStr}_${p.id}`);
+            } catch (_) {}
+            storedToday = 0;
+          }
+        }
+
+        // Only consider in-memory p.stats?.todaySeconds if it belongs to today's org date
+        const memoryToday = (p.stats?.dateStr === todayStr) ? (p.stats.todaySeconds || 0) : 0;
+
+        const effectiveFloor = (!hasSessionToday && !isActivelyTrackingThis && stat.todaySeconds === 0)
+          ? 0
+          : activeFloorSecs;
+
+        // Today's tracked time must be monotonic within today's date in org timezone
         const todaySeconds = Math.max(
           stat.todaySeconds,
-          p.stats?.todaySeconds || 0,
+          memoryToday,
           storedToday,
-          activeFloorSecs
+          effectiveFloor
         );
 
         // Keep localStorage in sync with the latest authoritative maximum
@@ -1404,16 +1433,21 @@ export default function App() {
           localStorage.setItem(`trackowl_today_${todayStr}_${p.id}`, String(todaySeconds));
         } catch (_) {}
 
+        // For weekly: add the un-synced today difference to stat.weeklySeconds
+        const liveTodayDiff = Math.max(0, todaySeconds - stat.todaySeconds);
+        const weeklySeconds = stat.weeklySeconds + liveTodayDiff;
+
         return {
           ...p,
           stats: {
             todaySeconds,
-            weeklySeconds: Math.max(stat.weeklySeconds, p.stats?.weeklySeconds || 0, todaySeconds),
+            weeklySeconds,
             weeklyIdleSeconds: stat.weeklyIdleSeconds,
             keptIdleSeconds: stat.keptIdleSeconds,
             activityPercent: stat.sampleCount > 0
               ? Math.round(stat.totalActivity / stat.sampleCount)
-              : 0
+              : 0,
+            dateStr: todayStr
           }
         };
       });
@@ -1483,6 +1517,9 @@ export default function App() {
 
       if (member) {
         const tz = await syncTimezone(sb, member.id, member.timezone);
+        const orgObj = Array.isArray(member.organizations) ? member.organizations[0] : member.organizations;
+        const orgSettings = orgObj?.settings || {};
+        const orgPlanType = orgObj?.plan_type || 'Basic';
         const userObj: User = {
           id: member.id,
           email: member.email,
@@ -1501,13 +1538,13 @@ export default function App() {
           keep_idle: member.keep_idle,
           phone: member.phone,
           custom_fields: member.custom_fields || {},
-          plan_type: member.organizations?.plan_type || 'Basic',
-          organization_settings: member.organizations?.settings || {}
+          plan_type: orgPlanType,
+          organization_settings: orgSettings
         };
         console.log('USER LOADED (Session)');
         // Seed the payroll day boundary from settings already fetched with the
         // member row, so the first stats computation never has to guess it.
-        const restoredTz = member.organizations?.settings?.orgTimezone;
+        const restoredTz = orgSettings?.orgTimezone;
         if (restoredTz) {
           orgTimezoneRef.current = restoredTz;
           setOrgTimezone(restoredTz);
@@ -1517,7 +1554,7 @@ export default function App() {
           .select('*, project_members!inner(member_id)')
           .eq('project_members.member_id', userObj.id);
         const projectsList = projs || [];
-        const orgTzStr: string = (restoredTz as string) || 'UTC';
+        const orgTzStr: string = (restoredTz as string) || orgTimezoneRef.current || 'UTC';
         const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: orgTzStr });
 
         // Clean up any stale localStorage tracker keys older than 7 days
@@ -1549,7 +1586,8 @@ export default function App() {
               weeklySeconds: storedToday,
               weeklyIdleSeconds: 0,
               activityPercent: 0,
-              keptIdleSeconds: 0
+              keptIdleSeconds: 0,
+              dateStr: todayKey
             }
           };
         });
@@ -1661,21 +1699,32 @@ export default function App() {
             const newPlanType: string = payload.new?.plan_type || 'Basic';
             const prevPlanType = user?.plan_type || 'Basic';
 
-            if (newPlanType === prevPlanType) return;
+            const newSettings = payload.new?.settings;
+            if (newSettings) {
+              const newTz = newSettings.orgTimezone;
+              if (newTz && newTz !== orgTimezoneRef.current) {
+                console.log(`[App] 🔄 Org timezone changed: ${orgTimezoneRef.current} → ${newTz}`);
+                orgTimezoneRef.current = newTz;
+                setOrgTimezone(newTz);
+              }
+              setUser(prev => prev ? { ...prev, organization_settings: newSettings } : prev);
+            }
 
-            console.log(`[App] 🔄 Org plan changed: ${prevPlanType} → ${newPlanType}`);
+            if (newPlanType !== prevPlanType) {
+              console.log(`[App] 🔄 Org plan changed: ${prevPlanType} → ${newPlanType}`);
 
-            // 1. Update React state so UI reflects new plan immediately
-            setUser(prev => prev ? { ...prev, plan_type: newPlanType } : prev);
+              // 1. Update React state so UI reflects new plan immediately
+              setUser(prev => prev ? { ...prev, plan_type: newPlanType } : prev);
 
-            // 2. Push to Rust backend so next tracking session respects new plan
-            const tauri = (window as any).__TAURI__;
-            if (tauri?.core?.invoke) {
-              try {
-                await tauri.core.invoke('update_plan', { plan: newPlanType });
-                console.log('[App] ✅ Rust backend plan updated to', newPlanType);
-              } catch (e) {
-                console.error('[App] Failed to update Rust plan:', e);
+              // 2. Push to Rust backend so next tracking session respects new plan
+              const tauri = (window as any).__TAURI__;
+              if (tauri?.core?.invoke) {
+                try {
+                  await tauri.core.invoke('update_plan', { plan: newPlanType });
+                  console.log('[App] ✅ Rust backend plan updated to', newPlanType);
+                } catch (e) {
+                  console.error('[App] Failed to update Rust plan:', e);
+                }
               }
             }
           }
@@ -1982,7 +2031,7 @@ export default function App() {
         // Continuously persist live elapsed seconds to localStorage so a page refresh or unexpected reload preserves every minute
         if (activeProject && sessionElapsedRef.current > 0) {
           try {
-            const tz = orgTimezoneRef.current || 'UTC';
+            const tz = orgTimezoneRef.current || orgTimezone || 'UTC';
             const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: tz });
             localStorage.setItem(`trackowl_today_${todayKey}_${activeProject.id}`, String(sessionElapsedRef.current));
           } catch (_) {}
@@ -2099,8 +2148,8 @@ export default function App() {
     if (!user) return;
 
     const checkRollover = () => {
-      const tz = orgTimezoneRef.current;
-      if (!tz) return; // boundary unknown — do not guess
+      const tz = orgTimezoneRef.current || orgTimezone;
+      if (!tz) return;
 
       const today = new Date().toLocaleDateString('en-CA', { timeZone: tz });
 
@@ -2110,29 +2159,52 @@ export default function App() {
       }
       if (orgDayRef.current === today) return;
 
+      console.log(`[Rollover] Org day rollover detected: ${orgDayRef.current} -> ${today} (${tz})`);
       orgDayRef.current = today;
-
-      // Clamp the live counter to the time elapsed since the new org midnight.
-      // Math.min keeps this safe for a session that started after midnight (its
-      // elapsed value is already correct and must not be inflated).
-      const midnightMs = orgLocalToUtc(today, 'start', tz).getTime();
-      const secsSinceMidnight = Math.max(0, Math.floor((Date.now() - midnightMs) / 1000));
-      sessionElapsedRef.current = Math.min(sessionElapsedRef.current, secsSinceMidnight);
-      setLiveElapsed(prev => Math.min(prev, secsSinceMidnight));
-      sessionStartTodaySecsRef.current = 0;
-      sessionAnchorMsRef.current = Math.max(sessionAnchorMsRef.current || midnightMs, midnightMs);
 
       // A stale day floor would re-inflate the freshly reset total.
       limitFloorRef.current = null;
 
-      fetchDashboardStats(user.id, projects);
+      if (isTracking) {
+        // Clamp the live counter to the time elapsed since the new org midnight.
+        // Math.min keeps this safe for a session that started after midnight (its
+        // elapsed value is already correct and must not be inflated).
+        const midnightMs = orgLocalToUtc(today, 'start', tz).getTime();
+        const secsSinceMidnight = Math.max(0, Math.floor((Date.now() - midnightMs) / 1000));
+        sessionElapsedRef.current = Math.min(sessionElapsedRef.current, secsSinceMidnight);
+        setLiveElapsed(prev => Math.min(prev, secsSinceMidnight));
+        sessionStartTodaySecsRef.current = 0;
+        sessionAnchorMsRef.current = Math.max(sessionAnchorMsRef.current || midnightMs, midnightMs);
+      } else {
+        sessionElapsedRef.current = 0;
+        sessionStartTodaySecsRef.current = 0;
+        setLiveElapsed(0);
+      }
+
+      // Clear any daily limit errors or non-work-day modals from yesterday
+      setTrackingError(null);
+      setLimitReachedModal(prev => (prev?.type === 'daily' || prev?.type === 'non_work_day') ? null : prev);
+
+      // Reset todaySeconds to 0 in projects state so stale yesterday time isn't passed into fetchDashboardStats
+      const resetProjects = (projectsRef.current || projects).map(p => ({
+        ...p,
+        stats: p.stats ? {
+          ...p.stats,
+          todaySeconds: 0,
+          dateStr: today
+        } : undefined
+      }));
+      setProjects(resetProjects);
+      projectsRef.current = resetProjects;
+
+      fetchDashboardStats(user.id, resetProjects);
     };
 
     checkRollover();
-    const interval = setInterval(checkRollover, 30_000);
+    const interval = setInterval(checkRollover, 10_000);
     return () => clearInterval(interval);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, projects]);
+  }, [user?.id, projects, isTracking, orgTimezone]);
 
   // ─── Org-Level Absolute Auto-Terminate Session (bypasses keep_idle_mode) ──────
   // This effect listens to every tracking sample and maintains an independent
@@ -2372,11 +2444,17 @@ export default function App() {
           const dailyLimitSecs = (typeof dailyLimitHours === 'number' && dailyLimitHours > 0) ? dailyLimitHours * 3600 : null;
           const weeklyLimitSecs = (typeof weeklyLimitHours === 'number' && weeklyLimitHours > 0) ? weeklyLimitHours * 3600 : null;
 
+          const tz = orgTimezoneRef.current || orgTimezone || 'UTC';
+          const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+
           // sessionElapsedRef is pre-seeded with activeProject.todaySeconds at session start,
           // so we only need to add OTHER projects' totals to avoid double-counting.
           const otherProjectsToday = projects
             .filter(p => p.id !== activeProject.id)
-            .reduce((s, p) => s + (p.stats?.todaySeconds || 0), 0);
+            .reduce((s, p) => {
+              if (p.stats?.dateStr && p.stats.dateStr !== todayKey) return s;
+              return s + (p.stats?.todaySeconds || 0);
+            }, 0);
           const currentToday = otherProjectsToday + sessionElapsedRef.current;
 
           const otherProjectsWeek = projects
@@ -2402,15 +2480,16 @@ export default function App() {
             if (timerRef.current) clearInterval(timerRef.current); // stop ticking immediately
 
             // Floor the DB refresh for this project so it can't show less than the reached limit.
+            // Strictly expires at midnight in org timezone so it never bleeds into the next day.
             if (activeProject) {
+              const orgMidnightMs = orgLocalToUtc(todayKey, 'end', tz).getTime();
               limitFloorRef.current = {
                 projectId: activeProject.id,
                 minTodaySecs: snappedElapsed,
-                expiresAt: Date.now() + 24 * 3600 * 1000
+                expiresAt: orgMidnightMs,
+                dateStr: todayKey
               };
               try {
-                const tz = orgTimezoneRef.current || 'UTC';
-                const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: tz });
                 localStorage.setItem(`trackowl_limit_floor_${todayKey}_${activeProject.id}`, String(snappedElapsed));
               } catch (_) {}
             }
@@ -2497,6 +2576,9 @@ export default function App() {
       }
 
       const tz = await syncTimezone(sb, member.id, member.timezone);
+      const orgObj = Array.isArray(member.organizations) ? member.organizations[0] : member.organizations;
+      const orgSettings = orgObj?.settings || {};
+      const orgPlanType = orgObj?.plan_type || 'Basic';
       const userObj: User = {
         id: member.id,
         email: member.email,
@@ -2515,12 +2597,12 @@ export default function App() {
         keep_idle: member.keep_idle,
         phone: member.phone,
         custom_fields: member.custom_fields || {},
-        plan_type: member.organizations?.plan_type || 'Basic',
-        organization_settings: member.organizations?.settings || {}
+        plan_type: orgPlanType,
+        organization_settings: orgSettings
       };
       // Seed the payroll day boundary from settings already fetched with the
       // member row, so the first stats computation never has to guess it.
-      const loginTz = member.organizations?.settings?.orgTimezone;
+      const loginTz = orgSettings?.orgTimezone;
       if (loginTz) {
         orgTimezoneRef.current = loginTz;
         setOrgTimezone(loginTz);
@@ -2534,12 +2616,33 @@ export default function App() {
 
       if (rememberMe) saveSession(token);
       setUser(userObj);
-      const projectList = projectsData || [];
-      setProjects(projectList);
+
+      const orgTzStr: string = (loginTz as string) || orgTimezoneRef.current || 'UTC';
+      const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: orgTzStr });
+      const seededList = (projectsData || []).map((p: any) => {
+        let storedToday = 0;
+        try {
+          const v = localStorage.getItem(`trackowl_today_${todayKey}_${p.id}`);
+          if (v) storedToday = Number(v) || 0;
+        } catch (_) {}
+        return {
+          ...p,
+          stats: {
+            todaySeconds: storedToday,
+            weeklySeconds: storedToday,
+            weeklyIdleSeconds: 0,
+            activityPercent: 0,
+            keptIdleSeconds: 0,
+            dateStr: todayKey
+          }
+        };
+      });
+
+      setProjects(seededList);
       setScreen('projects');
       fetchAndSubscribeTodos(userObj.id);
       reconcileOrphanedSessions(userObj.id);
-      fetchDashboardStats(userObj.id, projectList);
+      fetchDashboardStats(userObj.id, seededList);
       return null;
     } catch (err: any) {
       return err.message || 'Login encountered an unexpected error.';
@@ -2585,7 +2688,8 @@ export default function App() {
     // Checked before the hour limits because it is the more fundamental
     // question — an unscheduled day has no allowance to spend in the first
     // place.
-    const orgTz = orgTimezoneRef.current || orgTimezone;
+    const orgTz = orgTimezoneRef.current || orgTimezone || 'UTC';
+    const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: orgTz });
     if (!isWorkDayNow(user?.work_days, orgTz)) {
       const todayName = WEEKDAY_FULL[isoWeekdayIn(orgTz)];
       setTrackingError(`${todayName} is not one of your scheduled working days.`);
@@ -2606,7 +2710,11 @@ export default function App() {
     const dailyLimitSecs = (typeof dailyLimitHours === 'number' && dailyLimitHours > 0) ? dailyLimitHours * 3600 : null;
     const weeklyLimitSecs = (typeof weeklyLimitHours === 'number' && weeklyLimitHours > 0) ? weeklyLimitHours * 3600 : null;
 
-    const totalToday = projects.reduce((s, p) => s + (p.stats?.todaySeconds || 0), 0);
+    // Only count stats that belong to today's date in org timezone
+    const totalToday = projects.reduce((s, p) => {
+      if (p.stats?.dateStr && p.stats.dateStr !== todayStr) return s;
+      return s + (p.stats?.todaySeconds || 0);
+    }, 0);
     const totalWeek = projects.reduce((s, p) => s + (p.stats?.weeklySeconds || 0), 0);
 
     if (dailyLimitSecs !== null && totalToday >= dailyLimitSecs) {
@@ -2632,7 +2740,9 @@ export default function App() {
 
     // Seed the timer with the authoritative todaySeconds calculated by fetchDashboardStats
     const currentProj = (projectsRef.current || projects).find(p => p.id === project.id) || project;
-    const dbTodaySecs = currentProj.stats?.todaySeconds ?? project.stats?.todaySeconds ?? 0;
+    const dbTodaySecs = (currentProj.stats?.dateStr === todayStr ? currentProj.stats?.todaySeconds : 0)
+      ?? (project.stats?.dateStr === todayStr ? project.stats?.todaySeconds : 0)
+      ?? 0;
     const todaySecs = Math.max(sessionElapsedRef.current, dbTodaySecs);
 
     sessionElapsedRef.current = todaySecs;
@@ -2746,19 +2856,20 @@ export default function App() {
     const finalElapsed = sessionElapsedRef.current;
     const stoppingProj = activeProjectRef.current || activeProject;
     if (stoppingProj && finalElapsed > 0) {
+      const tz = orgTimezoneRef.current || orgTimezone || 'UTC';
+      const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: tz });
       try {
-        const tz = orgTimezoneRef.current || 'UTC';
-        const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: tz });
         localStorage.setItem(`trackowl_today_${todayKey}_${stoppingProj.id}`, String(finalElapsed));
       } catch (_) {}
       setProjects(prev => prev.map(p => p.id === stoppingProj.id ? {
         ...p,
         stats: {
-          todaySeconds: Math.max(p.stats?.todaySeconds || 0, finalElapsed),
+          todaySeconds: Math.max((p.stats?.dateStr === todayKey ? p.stats?.todaySeconds : 0) || 0, finalElapsed),
           weeklySeconds: Math.max(p.stats?.weeklySeconds || 0, finalElapsed),
           weeklyIdleSeconds: p.stats?.weeklyIdleSeconds || 0,
           keptIdleSeconds: p.stats?.keptIdleSeconds || 0,
-          activityPercent: p.stats?.activityPercent || 0
+          activityPercent: p.stats?.activityPercent || 0,
+          dateStr: todayKey
         }
       } : p));
     }
@@ -3738,9 +3849,15 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   onLimitReached?: (type: 'daily' | 'weekly', limitHours: number, projectName?: string) => void;
   onNonWorkDay?: (dayName: string, scheduleLabel: string, projectName?: string) => void;
 }) {
+  const tz = orgTimezone || 'UTC';
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+
   const getProjectToday = (p: Project) => {
     if (isTracking && activeProjectId && p.id === activeProjectId) {
       return localElapsed || 0;
+    }
+    if (p.stats?.dateStr && p.stats.dateStr !== todayStr) {
+      return 0;
     }
     return p.stats?.todaySeconds || 0;
   };
@@ -3748,7 +3865,8 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   const getProjectWeekly = (p: Project) => {
     const baseWeekly = p.stats?.weeklySeconds || 0;
     if (isTracking && activeProjectId && p.id === activeProjectId) {
-      const otherDaysWeekly = Math.max(0, baseWeekly - (p.stats?.todaySeconds || 0));
+      const todaySecs = (p.stats?.dateStr === todayStr ? p.stats?.todaySeconds : 0) || 0;
+      const otherDaysWeekly = Math.max(0, baseWeekly - todaySecs);
       return otherDaysWeekly + (localElapsed || 0);
     }
     return baseWeekly;
@@ -3758,7 +3876,10 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
   const displayTotalWeek = projects.reduce((s, p) => s + getProjectWeekly(p), 0);
   
   // Total tracked = all samples × 60s (including idle below limit)
-  const totalToday = projects.reduce((s, p) => s + (p.stats?.todaySeconds || 0), 0);
+  const totalToday = projects.reduce((s, p) => {
+    if (p.stats?.dateStr && p.stats.dateStr !== todayStr) return s;
+    return s + (p.stats?.todaySeconds || 0);
+  }, 0);
   const totalWeek = projects.reduce((s, p) => s + (p.stats?.weeklySeconds || 0), 0);
   const tracked = projects.filter(p => (p.stats?.weeklySeconds || 0) > 0);
   const avgActivity = tracked.length > 0
@@ -4122,7 +4243,9 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
     };
   }, [idlePaused, onResumeFromIdle]);
 
-  const baseKeptIdle = project.stats?.keptIdleSeconds || 0;
+  const tz = orgTimezone || 'UTC';
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: tz });
+  const baseKeptIdle = (project.stats?.dateStr === todayStr ? project.stats?.keptIdleSeconds : 0) || 0;
 
   // NEW FORMULA: Productive = Total Elapsed - Idle
   // liveIdleSeconds accumulates idle in the current unsaved session

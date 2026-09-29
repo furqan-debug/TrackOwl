@@ -197,8 +197,8 @@ To trigger a new production release:
 1. Ensure `package.json`, `src-tauri/Cargo.toml`, and `src-tauri/tauri.conf.json` versions are aligned.
 2. Push a git tag following semantic versioning:
    ```bash
-   git tag -a v2.0.61 -m "TrackOwl v2.0.61 release"
-   git push origin v2.0.61
+   git tag -a v2.0.62 -m "TrackOwl v2.0.62 release"
+   git push origin v2.0.62
    ```
 
 3. GitHub Actions builds, signs, and generates the `latest.json` updater manifest automatically.
