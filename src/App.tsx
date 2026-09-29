@@ -2710,12 +2710,16 @@ export default function App() {
     const dailyLimitSecs = (typeof dailyLimitHours === 'number' && dailyLimitHours > 0) ? dailyLimitHours * 3600 : null;
     const weeklyLimitSecs = (typeof weeklyLimitHours === 'number' && weeklyLimitHours > 0) ? weeklyLimitHours * 3600 : null;
 
+    // Use projectsRef.current (always the freshest state, updated by rollover/stats) to avoid
+    // stale-closure bugs where `projects` still reflects yesterday's todaySeconds after a midnight rollover.
+    const freshProjects = projectsRef.current.length > 0 ? projectsRef.current : projects;
+
     // Only count stats that belong to today's date in org timezone
-    const totalToday = projects.reduce((s, p) => {
+    const totalToday = freshProjects.reduce((s, p) => {
       if (p.stats?.dateStr && p.stats.dateStr !== todayStr) return s;
       return s + (p.stats?.todaySeconds || 0);
     }, 0);
-    const totalWeek = projects.reduce((s, p) => s + (p.stats?.weeklySeconds || 0), 0);
+    const totalWeek = freshProjects.reduce((s, p) => s + (p.stats?.weeklySeconds || 0), 0);
 
     if (dailyLimitSecs !== null && totalToday >= dailyLimitSecs) {
       setTrackingError(`Daily limit (${dailyLimitHours}h) reached. Please contact your manager.`);
