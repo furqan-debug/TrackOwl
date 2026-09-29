@@ -319,8 +319,10 @@ fn start_tracking(
             let json_rows: serde_json::Value = serde_json::from_str(&resp_body).unwrap_or(serde_json::json!([]));
             let first = json_rows.get(0);
             let id = first.and_then(|r| r.get("organization_id")).and_then(|v| v.as_str()).map(|s| s.to_string());
-            let plan = first.and_then(|r| r.get("organizations")).and_then(|v| v.get("plan_type")).and_then(|v| v.as_str()).unwrap_or("Basic").to_string();
-            let tz = first.and_then(|r| r.get("organizations")).and_then(|v| v.get("settings")).and_then(|s| s.get("orgTimezone")).and_then(|v| v.as_str()).unwrap_or("UTC").to_string();
+            let org_val = first.and_then(|r| r.get("organizations"));
+            let org_obj = org_val.and_then(|v| if v.is_array() { v.get(0) } else { Some(v) });
+            let plan = org_obj.and_then(|v| v.get("plan_type")).and_then(|v| v.as_str()).unwrap_or("Basic").to_string();
+            let tz = org_obj.and_then(|v| v.get("settings")).and_then(|s| s.get("orgTimezone")).and_then(|v| v.as_str()).unwrap_or("UTC").to_string();
             println!("[lib] 🔍 Organization lookup for project {}: {:?}, Plan: {}, TZ: {}", project_id, id, plan, tz);
             (id, plan, tz, "never".to_string()) // idle_policy fetched below
         }
