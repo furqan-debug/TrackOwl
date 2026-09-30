@@ -14,8 +14,7 @@ import {
     Tag,
     CheckSquare,
     ClipboardList,
-    Timer,
-    RefreshCw
+    Timer
 } from 'lucide-react';
 
 import {
@@ -27,7 +26,8 @@ import {
     Input,
     StatMetric,
     DatePicker,
-    FormSelect
+    FormSelect,
+    RefreshButton
 } from '../components/ui';
 
 import { useAuth } from '../context/AuthContext';
@@ -676,37 +676,16 @@ export function Todos() {
                                     ))}
                                 </div>
 
-                                <button
-                                    onClick={() =>
-                                        fetchData(true)
-                                    }
-                                    className={clsx(
-                                        `
-                                        w-10 h-10 sm:w-12 sm:h-12
-                                        shrink-0
-                                        flex items-center justify-center
-                                        bg-surface
-                                        border border-border
-                                        rounded-xl
-                                        hover:bg-surface-hover
-                                        transition-all
-                                        text-text-muted
-                                        shadow-shell-sm
-                                        active:scale-95
-                                        duration-200
-                                        `,
-                                        refreshing &&
-                                            'text-primary'
-                                    )}
-                                >
-                                    <RefreshCw
-                                        className={clsx(
-                                            'w-4 h-4 sm:w-5 sm:h-5',
-                                            refreshing &&
-                                                'animate-spin'
-                                        )}
-                                    />
-                                </button>
+                                {/* Was a hand-written copy of the refresh button, so it
+                                    missed the pulse the shared one has and only turned
+                                    gold. RefreshButton exists precisely because four
+                                    pages had drifted apart this way. */}
+                                <RefreshButton
+                                    onClick={() => fetchData(true)}
+                                    refreshing={refreshing}
+                                    label="Refresh objectives"
+                                    className="refresh-btn--lg"
+                                />
                             </div>
                         </div>
 
