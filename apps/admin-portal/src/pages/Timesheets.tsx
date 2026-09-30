@@ -846,7 +846,11 @@ export function Timesheets() {
                 </div>
             </Modal>
 
-            <Modal isOpen={showAddTime} onClose={() => setShowAddTime(false)} title="Manual Time Entry">
+            {/* height="h-auto" so the dialog is the size of its contents. The
+                default is a flat 680px whatever it holds, and this form is a
+                little taller than that, so it scrolled by a few pixels — enough
+                for a scrollbar down the side of a form that visibly fits. */}
+            <Modal isOpen={showAddTime} onClose={() => setShowAddTime(false)} title="Manual Time Entry" height="h-auto">
                 <div className="space-y-5 py-4">
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold text-text-muted ">Team Member</label>
