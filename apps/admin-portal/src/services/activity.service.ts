@@ -260,5 +260,129 @@ export const activityService = {
             sessionMinutes: mins,
             hasMoreScreenshots: (totalSS || 0) > screenshotLimit
         };
+    },
+
+    async fetchBlockRecords(
+        organizationId: string,
+        dateStr: string,
+        members: any[],
+        selectedMemberId: string = 'all'
+    ): Promise<BlockRecordEntry[]> {
+        try {
+            const selectedMember = members.find(m => m.id === selectedMemberId);
+            const scopedUserIds = selectedMemberId.toLowerCase() !== 'all'
+                ? Array.from(new Set([selectedMember?.id, selectedMember?.auth_user_id].filter(Boolean) as string[]))
+                : [];
+
+            let query = supabase
+                .from('block_records')
+                .select('*')
+                .eq('organization_id', organizationId)
+                .eq('business_date', dateStr)
+                .order('block_start', { ascending: false });
+
+            if (scopedUserIds.length > 0) {
+                query = query.in('user_id', scopedUserIds);
+            }
+
+            const { data, error } = await query;
+            if (error) {
+                console.error('Error fetching block records:', error);
+                return [];
+            }
+
+            // Map member details to each block record
+            const memberMap = new Map<string, any>();
+            members.forEach(m => {
+                if (m.id) memberMap.set(m.id, m);
+                if (m.auth_user_id) memberMap.set(m.auth_user_id, m);
+            });
+
+            return (data || []).map((b: any) => ({
+                ...b,
+                member: memberMap.get(b.user_id) || {
+                    id: b.user_id,
+                    full_name: 'Unknown Member',
+                    email: ''
+                }
+            }));
+        } catch (err) {
+            console.error('fetchBlockRecords error:', err);
+            return [];
+        }
+    },
+
+    async fetchBlockMinuteSamples(
+        sessionId: string,
+        blockStart: string,
+        blockEnd: string
+    ): Promise<{ samples: BlockMinuteSample[]; screenshots: any[] }> {
+        try {
+            const [samplesRes, ssRes] = await Promise.all([
+                supabase
+                    .from('activity_samples')
+                    .select('id, session_id, recorded_at, mouse_clicks, key_presses, app_name, window_title, domain, idle, activity_percent, active_seconds')
+                    .eq('session_id', sessionId)
+                    .gte('recorded_at', blockStart)
+                    .lte('recorded_at', blockEnd)
+                    .order('recorded_at', { ascending: true }),
+                supabase
+                    .from('screenshots')
+                    .select('id, session_id, recorded_at, file_url')
+                    .eq('session_id', sessionId)
+                    .gte('recorded_at', blockStart)
+                    .lte('recorded_at', blockEnd)
+                    .order('recorded_at', { ascending: true }),
+            ]);
+
+            return {
+                samples: (samplesRes.data as BlockMinuteSample[]) || [],
+                screenshots: ssRes.data || [],
+            };
+        } catch (err) {
+            console.error('fetchBlockMinuteSamples error:', err);
+            return { samples: [], screenshots: [] };
+        }
     }
 };
+
+export interface BlockRecordEntry {
+    id: string;
+    session_id: string;
+    organization_id: string;
+    user_id: string;
+    business_date: string;
+    block_start: string;
+    block_end: string;
+    active_seconds: number;
+    activity_percent: number;
+    is_productive: boolean;
+    credited: boolean;
+    mouse_clicks: number;
+    key_presses: number;
+    app_name: string;
+    domain: string;
+    is_offline: boolean;
+    created_at: string;
+    member?: {
+        id: string;
+        full_name: string;
+        email?: string;
+        avatar_url?: string;
+    };
+}
+
+export interface BlockMinuteSample {
+    id: number;
+    session_id: string;
+    recorded_at: string;
+    mouse_clicks: number;
+    key_presses: number;
+    app_name: string;
+    window_title: string;
+    domain: string;
+    idle: boolean;
+    activity_percent: number;
+    active_seconds?: number;
+}
+
