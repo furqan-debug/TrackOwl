@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import {
-    Activity, Mouse, Keyboard, Clock, Search,
-    ChevronLeft, ChevronRight,
-    Zap, Users, Eye, Filter
+    Mouse, Keyboard, Clock,
+    ChevronLeft, ChevronRight, ChevronRight as ChevronRowRight,
+    Zap, Users, BarChart2
 } from 'lucide-react';
 import { activityService, type BlockRecordEntry } from '../services/activity.service';
 import { useAuth } from '../context/AuthContext';
@@ -40,10 +40,9 @@ export function ActivityBlocks() {
     const [blocks, setBlocks] = useState<BlockRecordEntry[]>([]);
     const [activeBlock, setActiveBlock] = useState<BlockRecordEntry | null>(null);
 
-    // Search & pagination
-    const [searchTerm, setSearchTerm] = useState('');
+    // Pagination
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 15;
+    const ITEMS_PER_PAGE = 20;
 
     const requestSeqRef = useRef(0);
 
@@ -127,8 +126,7 @@ export function ActivityBlocks() {
     // Aggregate KPI Stats
     const stats = useMemo(() => {
         const totalBlocks = blocks.length;
-        const totalTrackedSeconds = totalBlocks * 600; // 10 minutes per block
-        const totalActiveSeconds = blocks.reduce((acc, b) => acc + (b.active_seconds || 0), 0);
+        const totalTrackedSeconds = totalBlocks * 600;
         const totalClicks = blocks.reduce((acc, b) => acc + (b.mouse_clicks || 0), 0);
         const totalKeys = blocks.reduce((acc, b) => acc + (b.key_presses || 0), 0);
 
@@ -146,7 +144,6 @@ export function ActivityBlocks() {
         return {
             totalBlocks,
             totalTrackedTime: formatHoursMins(totalTrackedSeconds),
-            totalActiveTime: formatHoursMins(totalActiveSeconds),
             totalClicks,
             totalKeys,
             avgActivity
@@ -169,27 +166,38 @@ export function ActivityBlocks() {
         }
     };
 
-    // Filtered blocks for Table
-    const filteredBlocks = useMemo(() => {
-        if (!searchTerm.trim()) return blocks;
-        const lower = searchTerm.toLowerCase();
-        return blocks.filter(b =>
-            b.member?.full_name?.toLowerCase().includes(lower) ||
-            b.app_name?.toLowerCase().includes(lower) ||
-            b.domain?.toLowerCase().includes(lower)
-        );
-    }, [blocks, searchTerm]);
-
-    const totalPages = Math.ceil(filteredBlocks.length / ITEMS_PER_PAGE);
+    // Pagination
+    const totalPages = Math.ceil(blocks.length / ITEMS_PER_PAGE);
     const paginatedBlocks = useMemo(() => {
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
-        return filteredBlocks.slice(start, start + ITEMS_PER_PAGE);
-    }, [filteredBlocks, currentPage]);
+        return blocks.slice(start, start + ITEMS_PER_PAGE);
+    }, [blocks, currentPage]);
+
+    // Generate page number pills (max 5 visible + ellipsis)
+    const pageNumbers = useMemo(() => {
+        if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1);
+        const pages: (number | '...')[] = [1];
+        if (currentPage > 3) pages.push('...');
+        const start = Math.max(2, currentPage - 1);
+        const end = Math.min(totalPages - 1, currentPage + 1);
+        for (let i = start; i <= end; i++) pages.push(i);
+        if (currentPage < totalPages - 2) pages.push('...');
+        pages.push(totalPages);
+        return pages;
+    }, [totalPages, currentPage]);
+
+    // Activity stripe color per row
+    const stripeClass = (pct: number) => {
+        if (pct >= 60) return 'border-l-2 border-l-emerald-500';
+        if (pct >= 30) return 'border-l-2 border-l-amber-500';
+        if (pct > 0)  return 'border-l-2 border-l-rose-400/70';
+        return 'border-l-2 border-l-zinc-600/40';
+    };
 
     return (
         <PageLayout
             title="Activity Blocks"
-            description="10-minute input activity blocks, mouse clicks, keystrokes, and active movement."
+            description="10-minute granular activity windows — clicks, keystrokes, and active movement."
             actions={
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Member Filter */}
@@ -243,133 +251,92 @@ export function ActivityBlocks() {
                 </div>
             ) : (
                 <div className="flex flex-col gap-8 pb-16">
-                    {/* 📊 Metrics Summary (4 clean cards matching Activity & Dashboard) */}
+                    {/* KPI Metric Cards — differentiated accents */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         <StatMetric
-                            icon={<Clock className="w-4 h-4" />}
+                            icon={<Clock className="w-5 h-5" />}
                             label="Tracked Time"
                             value={stats.totalTrackedTime}
                             sub={`${stats.totalBlocks} ten-minute blocks`}
                             accent="brand-gradient"
                         />
                         <StatMetric
-                            icon={<Zap className="w-4 h-4" />}
+                            icon={<Zap className="w-5 h-5" />}
                             label="Avg Activity"
                             value={`${stats.avgActivity}%`}
-                            sub={`${stats.totalActiveTime} active movement`}
-                            accent="brand-gradient"
+                            sub="Active movement score"
+                            accent="emerald"
                         />
                         <StatMetric
-                            icon={<Mouse className="w-4 h-4" />}
+                            icon={<Mouse className="w-5 h-5" />}
                             label="Mouse Clicks"
                             value={stats.totalClicks.toLocaleString()}
-                            sub="User click interactions"
-                            accent="brand-gradient"
+                            sub={`across ${stats.totalBlocks} blocks`}
+                            accent="primary"
                         />
                         <StatMetric
-                            icon={<Keyboard className="w-4 h-4" />}
+                            icon={<Keyboard className="w-5 h-5" />}
                             label="Keystrokes"
                             value={stats.totalKeys.toLocaleString()}
-                            sub="Key press events"
-                            accent="brand-gradient"
+                            sub={`across ${stats.totalBlocks} blocks`}
+                            accent="amber"
                         />
                     </div>
 
-                    {/* 📋 Activity Blocks Ledger */}
+                    {/* Activity Blocks Ledger */}
                     {blocks.length === 0 ? (
                         <EmptyState
-                            icon={<Activity className="w-8 h-8 text-accent" />}
-                            title="No activity blocks recorded"
-                            description={`No 10-minute activity blocks were found on ${selectedDate} for the selected filter.`}
+                            icon={<BarChart2 className="w-10 h-10 text-accent" />}
+                            title="No activity blocks found"
+                            description={`There are no 10-minute activity windows recorded for ${selectedDate}. Members may not have tracked time that day.`}
                         />
                     ) : (
-                        <div className="bg-surface border border-border rounded-xl shadow-shell-sm overflow-hidden flex flex-col min-h-[500px]">
-                            {/* Card Header with Search */}
-                            <div className="px-6 py-4 border-b border-border flex items-center justify-between shrink-0 bg-surface-hover/40">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-9 h-9 rounded-xl bg-surface border border-border flex items-center justify-center text-accent shadow-shell-sm">
-                                        <Filter className="w-4 h-4" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-sm font-black text-text-main tracking-[0.05em]">
-                                            10-Minute Blocks ({filteredBlocks.length})
-                                        </h3>
-                                        <p className="text-[11px] text-text-muted">
-                                            Click any block to inspect minute-by-minute activity and screenshots
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <div className="relative w-72">
-                                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-text-muted" />
-                                    <input
-                                        type="text"
-                                        placeholder="Filter by member, app, domain..."
-                                        value={searchTerm}
-                                        onChange={e => {
-                                            setSearchTerm(e.target.value);
-                                            setCurrentPage(1);
-                                        }}
-                                        className="w-full bg-surface border border-border rounded-lg pl-9 pr-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-text-main placeholder:text-text-muted"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Clean Ledger Table */}
+                        <div className="bg-surface border border-border rounded-xl shadow-shell-sm overflow-hidden flex flex-col">
+                            {/* Table */}
                             <div className="overflow-x-auto flex-1">
                                 <table className="w-full text-left border-collapse">
                                     <thead>
-                                        <tr className="bg-surface-hover/30 border-b border-border">
-                                            <th className="px-6 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider">
+                                        <tr className="bg-surface-hover/50 border-b border-border">
+                                            <th className="px-5 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider w-[180px]">
                                                 Time Window
                                             </th>
-                                            <th className="px-6 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider">
+                                            <th className="px-5 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider">
                                                 Member
                                             </th>
-                                            <th className="px-6 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider">
-                                                Activity Score
+                                            <th className="px-5 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider w-[180px]">
+                                                Activity
                                             </th>
-                                            <th className="px-6 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider text-right">
-                                                Clicks
+                                            <th className="px-5 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider w-[140px]">
+                                                Input Events
                                             </th>
-                                            <th className="px-6 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider text-right">
-                                                Keystrokes
+                                            <th className="px-5 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider">
+                                                Primary App
                                             </th>
-                                            <th className="px-6 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider text-right">
-                                                Active Time
-                                            </th>
-                                            <th className="px-6 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider">
-                                                Primary Application
-                                            </th>
-                                            <th className="px-6 py-3.5 text-[11px] font-black text-text-muted uppercase tracking-wider text-right">
-                                                Drill Down
-                                            </th>
+                                            <th className="w-8" />
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border">
                                         {paginatedBlocks.map(block => {
                                             const pct = block.activity_percent;
-                                            const activeMins = Math.floor(block.active_seconds / 60);
-                                            const activeSecsRem = block.active_seconds % 60;
 
                                             return (
                                                 <tr
                                                     key={block.id}
                                                     onClick={() => setActiveBlock(block)}
-                                                    className="hover:bg-surface-hover/60 transition-colors cursor-pointer group"
+                                                    className={clsx(
+                                                        'hover:bg-surface-hover/60 transition-colors cursor-pointer group',
+                                                        stripeClass(pct)
+                                                    )}
                                                 >
                                                     {/* Time Window */}
-                                                    <td className="px-6 py-4 whitespace-nowrap">
-                                                        <div className="flex items-center gap-2">
-                                                            <Clock className="w-3.5 h-3.5 text-text-muted group-hover:text-accent transition-colors shrink-0" />
-                                                            <span className="font-mono text-xs font-bold text-text-main">
-                                                                {formatTimeRange(block.block_start, block.block_end)}
-                                                            </span>
-                                                        </div>
+                                                    <td className="px-5 py-4 whitespace-nowrap">
+                                                        <span className="font-mono text-xs font-bold text-text-main">
+                                                            {formatTimeRange(block.block_start, block.block_end)}
+                                                        </span>
                                                     </td>
 
                                                     {/* Member */}
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    <td className="px-5 py-4 whitespace-nowrap">
                                                         <div className="flex items-center gap-2.5">
                                                             <div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/30 text-accent font-bold flex items-center justify-center text-[10px] shrink-0">
                                                                 {block.member?.avatar_url ? (
@@ -388,24 +355,24 @@ export function ActivityBlocks() {
                                                         </div>
                                                     </td>
 
-                                                    {/* Activity Score */}
-                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                    {/* Activity Score + Bar */}
+                                                    <td className="px-5 py-4 whitespace-nowrap">
                                                         <div className="flex items-center gap-3">
                                                             <span className={clsx(
-                                                                "text-xs font-black font-mono w-10 text-right shrink-0",
-                                                                pct >= 60 ? "text-emerald-400" :
-                                                                pct >= 30 ? "text-accent" :
-                                                                pct > 0 ? "text-amber-400" : "text-text-muted"
+                                                                'text-xs font-black font-mono w-9 text-right shrink-0',
+                                                                pct >= 60 ? 'text-emerald-400' :
+                                                                pct >= 30 ? 'text-accent' :
+                                                                pct > 0 ? 'text-amber-400' : 'text-text-muted'
                                                             )}>
                                                                 {pct}%
                                                             </span>
-                                                            <div className="w-20 bg-surface-hover h-2 rounded-full overflow-hidden border border-border shrink-0">
+                                                            <div className="w-24 bg-surface-hover h-2.5 rounded-full overflow-hidden border border-border shrink-0">
                                                                 <div
                                                                     className={clsx(
-                                                                        "h-full rounded-full transition-all duration-300",
-                                                                        pct >= 60 ? "bg-emerald-500" :
-                                                                        pct >= 30 ? "bg-accent" :
-                                                                        pct > 0 ? "bg-amber-500" : "bg-zinc-600"
+                                                                        'h-full rounded-full transition-all duration-300',
+                                                                        pct >= 60 ? 'bg-emerald-500' :
+                                                                        pct >= 30 ? 'bg-accent' :
+                                                                        pct > 0 ? 'bg-amber-500' : 'bg-zinc-600'
                                                                     )}
                                                                     style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
                                                                 />
@@ -413,32 +380,23 @@ export function ActivityBlocks() {
                                                         </div>
                                                     </td>
 
-                                                    {/* Mouse Clicks */}
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                        <span className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-text-main">
-                                                            <Mouse className="w-3 h-3 text-blue-400/80" />
-                                                            {block.mouse_clicks.toLocaleString()}
-                                                        </span>
-                                                    </td>
-
-                                                    {/* Keystrokes */}
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                        <span className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-text-main">
-                                                            <Keyboard className="w-3 h-3 text-purple-400/80" />
-                                                            {block.key_presses.toLocaleString()}
-                                                        </span>
-                                                    </td>
-
-                                                    {/* Active Time */}
-                                                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                        <span className="font-mono text-xs text-text-muted">
-                                                            <strong className="text-text-main">{activeMins}m {activeSecsRem}s</strong> / 10m
-                                                        </span>
+                                                    {/* Input Events — Clicks + Keys merged */}
+                                                    <td className="px-5 py-4 whitespace-nowrap">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className="inline-flex items-center gap-1 font-mono text-xs text-text-main">
+                                                                <Mouse className="w-3 h-3 text-blue-400/80 shrink-0" />
+                                                                {block.mouse_clicks.toLocaleString()}
+                                                            </span>
+                                                            <span className="inline-flex items-center gap-1 font-mono text-xs text-text-main">
+                                                                <Keyboard className="w-3 h-3 text-purple-400/80 shrink-0" />
+                                                                {block.key_presses.toLocaleString()}
+                                                            </span>
+                                                        </div>
                                                     </td>
 
                                                     {/* Primary App & Domain */}
-                                                    <td className="px-6 py-4 max-w-[240px]">
-                                                        <div className="flex items-center gap-2.5 truncate">
+                                                    <td className="px-5 py-4 max-w-[220px]">
+                                                        <div className="flex items-center gap-2.5 min-w-0">
                                                             <AppIcon name={block.app_name || ''} className="w-7 h-7 shadow-shell-sm shrink-0" />
                                                             <div className="flex flex-col min-w-0">
                                                                 <span className="text-xs font-bold text-text-main truncate">
@@ -453,12 +411,9 @@ export function ActivityBlocks() {
                                                         </div>
                                                     </td>
 
-                                                    {/* Drill Down Action */}
-                                                    <td className="px-6 py-4 text-right whitespace-nowrap">
-                                                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface border border-border text-[11px] font-bold text-text-muted group-hover:text-accent group-hover:border-accent/40 transition-colors shadow-shell-sm">
-                                                            <Eye className="w-3 h-3" />
-                                                            Details
-                                                        </span>
+                                                    {/* Hover chevron — no dedicated column header */}
+                                                    <td className="pr-4 py-4 text-right w-8">
+                                                        <ChevronRowRight className="w-4 h-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
                                                     </td>
                                                 </tr>
                                             );
@@ -467,26 +422,48 @@ export function ActivityBlocks() {
                                 </table>
                             </div>
 
-                            {/* Pagination Controls */}
+                            {/* Pagination Footer */}
                             {totalPages > 1 && (
-                                <div className="px-6 py-3.5 border-t border-border flex items-center justify-between bg-surface-hover/30 shrink-0">
+                                <div className="px-5 py-3.5 border-t border-border flex items-center justify-between bg-surface-hover/30 shrink-0">
                                     <span className="text-xs text-text-muted font-medium">
-                                        Showing page <strong className="text-text-main">{currentPage}</strong> of <strong className="text-text-main">{totalPages}</strong>
+                                        Showing{' '}
+                                        <strong className="text-text-main">
+                                            {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, blocks.length)}
+                                        </strong>{' '}
+                                        of <strong className="text-text-main">{blocks.length}</strong> blocks
                                     </span>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1">
                                         <button
                                             disabled={currentPage === 1}
                                             onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                            className="px-3 py-1 bg-surface border border-border rounded-lg text-xs font-semibold text-text-main disabled:opacity-30 hover:bg-surface-hover transition-colors shadow-shell-sm"
+                                            className="p-1.5 rounded-lg text-text-muted disabled:opacity-30 hover:bg-surface hover:text-text-main transition-colors"
                                         >
-                                            Previous
+                                            <ChevronLeft className="w-3.5 h-3.5" />
                                         </button>
+                                        {pageNumbers.map((pg, idx) =>
+                                            pg === '...' ? (
+                                                <span key={`ellipsis-${idx}`} className="px-1 text-xs text-text-muted">…</span>
+                                            ) : (
+                                                <button
+                                                    key={pg}
+                                                    onClick={() => setCurrentPage(pg as number)}
+                                                    className={clsx(
+                                                        'w-7 h-7 rounded-lg text-xs font-bold transition-colors',
+                                                        currentPage === pg
+                                                            ? 'bg-primary text-white shadow-shell-sm'
+                                                            : 'text-text-muted hover:bg-surface hover:text-text-main'
+                                                    )}
+                                                >
+                                                    {pg}
+                                                </button>
+                                            )
+                                        )}
                                         <button
                                             disabled={currentPage === totalPages}
                                             onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                            className="px-3 py-1 bg-surface border border-border rounded-lg text-xs font-semibold text-text-main disabled:opacity-30 hover:bg-surface-hover transition-colors shadow-shell-sm"
+                                            className="p-1.5 rounded-lg text-text-muted disabled:opacity-30 hover:bg-surface hover:text-text-main transition-colors"
                                         >
-                                            Next
+                                            <ChevronRight className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
                                 </div>
@@ -496,7 +473,7 @@ export function ActivityBlocks() {
                 </div>
             )}
 
-            {/* Drill-Down Modal for Granular 1-Minute Inspection */}
+            {/* Drill-Down Modal */}
             <BlockDetailModal
                 block={activeBlock}
                 onClose={() => setActiveBlock(null)}
