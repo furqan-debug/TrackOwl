@@ -15,7 +15,7 @@ import {
     CheckSquare,
     ClipboardList,
     Timer,
-    RefreshCw
+    X
 } from 'lucide-react';
 
 import {
@@ -27,7 +27,8 @@ import {
     Input,
     StatMetric,
     DatePicker,
-    FormSelect
+    FormSelect,
+    RefreshButton
 } from '../components/ui';
 
 import { useAuth } from '../context/AuthContext';
@@ -62,6 +63,10 @@ interface Project {
     id: string;
     name: string;
 }
+
+/** Shortest time the refresh button stays spinning, so a fast fetch still
+    shows that the click registered. Matches Reports and App Usage. */
+const MIN_REFRESH_FEEDBACK_MS = 650;
 
 export function Todos() {
     const { profile } = useAuth();
@@ -101,6 +106,8 @@ export function Todos() {
     });
 
     const fetchData = useCallback(async (isSilent = false) => {
+        const startedAt = Date.now();
+
         if (!isSilent) {
             setLoading(true);
         } else {
@@ -175,6 +182,20 @@ export function Todos() {
             console.error(err);
         } finally {
             setLoading(false);
+
+            // Hold the spinner long enough to be seen. The query answers in
+            // about a tenth of a second, so clearing it the moment the data
+            // lands made the icon flick round once and stop — the button
+            // looked like it had done nothing at all.
+            if (isSilent) {
+                const elapsed = Date.now() - startedAt;
+                if (elapsed < MIN_REFRESH_FEEDBACK_MS) {
+                    await new Promise(resolve =>
+                        setTimeout(resolve, MIN_REFRESH_FEEDBACK_MS - elapsed)
+                    );
+                }
+            }
+
             setRefreshing(false);
         }
     }, []);
@@ -385,6 +406,18 @@ export function Todos() {
                 member.email.toLowerCase().includes(query)
         );
     }, [allMembers, assigneeSearch]);
+
+    /**
+     * Who is ticked, for the chips under the search box.
+     *
+     * The list shows three at a time and scrolls, so once you have picked
+     * someone and typed a new search, or simply scrolled past them, there was
+     * nothing on screen saying they were on the task at all.
+     */
+    const selectedAssignees = useMemo(
+        () => allMembers.filter(m => formData.assignee_ids.includes(m.id)),
+        [allMembers, formData.assignee_ids]
+    );
 
     const allShownAssigned =
         shownMembers.length > 0 &&
@@ -656,37 +689,16 @@ export function Todos() {
                                     ))}
                                 </div>
 
-                                <button
-                                    onClick={() =>
-                                        fetchData(true)
-                                    }
-                                    className={clsx(
-                                        `
-                                        w-10 h-10 sm:w-12 sm:h-12
-                                        shrink-0
-                                        flex items-center justify-center
-                                        bg-surface
-                                        border border-border
-                                        rounded-xl
-                                        hover:bg-surface-hover
-                                        transition-all
-                                        text-text-muted
-                                        shadow-shell-sm
-                                        active:scale-95
-                                        duration-200
-                                        `,
-                                        refreshing &&
-                                            'text-primary'
-                                    )}
-                                >
-                                    <RefreshCw
-                                        className={clsx(
-                                            'w-4 h-4 sm:w-5 sm:h-5',
-                                            refreshing &&
-                                                'animate-spin'
-                                        )}
-                                    />
-                                </button>
+                                {/* Was a hand-written copy of the refresh button, so it
+                                    missed the pulse the shared one has and only turned
+                                    gold. RefreshButton exists precisely because four
+                                    pages had drifted apart this way. */}
+                                <RefreshButton
+                                    onClick={() => fetchData(true)}
+                                    refreshing={refreshing}
+                                    label="Refresh objectives"
+                                    className="refresh-btn--lg"
+                                />
                             </div>
                         </div>
 
@@ -860,6 +872,10 @@ export function Todos() {
                                 "
                             />
 
+                            {/* Count and Select All sit directly under the search, above
+                                the chips. Below them they were pushed further down the
+                                dialog with every person picked — on a full roster the
+                                button ended up past the bottom of the list. */}
                             {shownMembers.length > 0 && (
                                 <div className="flex items-center justify-between gap-2 px-1">
                                     <span className="text-[10px] font-bold text-text-muted">
@@ -895,6 +911,44 @@ export function Todos() {
                                     >
                                         {allShownAssigned ? 'Clear all' : 'Select all'}
                                     </button>
+                                </div>
+                            )}
+
+                            {selectedAssignees.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 px-0.5">
+                                    {selectedAssignees.map(member => (
+                                        <button
+                                            key={member.id}
+                                            type="button"
+                                            onClick={() =>
+                                                setFormData({
+                                                    ...formData,
+                                                    assignee_ids: formData.assignee_ids.filter(
+                                                        id => id !== member.id
+                                                    )
+                                                })
+                                            }
+                                            title={`Remove ${member.full_name}`}
+                                            className="
+                                                group/chip
+                                                inline-flex items-center gap-1.5
+                                                pl-1.5 pr-2 py-1
+                                                rounded-full
+                                                bg-primary/10 border border-primary/20
+                                                hover:border-primary/40
+                                                transition-colors
+                                                max-w-full min-w-0
+                                            "
+                                        >
+                                            <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-black shrink-0">
+                                                {getInitials(member.full_name)}
+                                            </span>
+                                            <span className="text-[11px] font-bold text-text-main truncate">
+                                                {member.full_name}
+                                            </span>
+                                            <X className="w-3 h-3 text-text-muted group-hover/chip:text-text-main shrink-0" />
+                                        </button>
+                                    ))}
                                 </div>
                             )}
 
