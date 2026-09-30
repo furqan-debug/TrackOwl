@@ -18,6 +18,7 @@ import { Todos } from './pages/Todos';
 import { Clients } from './pages/Clients';
 import { Approvals } from './pages/Approvals';
 import { AppUsage } from './pages/AppUsage';
+import { ActivityBlocks } from './pages/ActivityBlocks';
 import { SettingsPage } from './pages/Settings';
 import { SecurityPage } from './pages/Security';
 import { ProfilePage } from './pages/Profile';
@@ -158,6 +159,7 @@ function App() {
                     <Route path="/settings/security" element={<SecurityPage />} />
                     <Route path="/timesheets/approvals" element={<Approvals />} />
                     <Route path="/activity/apps" element={<PremiumRoute><AppUsage /></PremiumRoute>} />
+                    <Route path="/activity/blocks" element={<PremiumRoute><ActivityBlocks /></PremiumRoute>} />
                     <Route path="/locations" element={<Locations />} />
                     <Route path="/locations/job-sites" element={<JobSites />} />
                     <Route path="/projects/todos" element={<Todos />} />

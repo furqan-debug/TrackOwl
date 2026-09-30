@@ -45,6 +45,7 @@ export const navStructure: NavGroup[] = [
         children: [
             { name: 'Screenshots', path: '/dashboard/activity', requiresPremium: true },
             { name: 'Apps & URLs', path: '/dashboard/activity/apps', requiresPremium: true },
+            { name: 'Activity Blocks', path: '/dashboard/activity/blocks', requiresPremium: true },
         ],
     },
     { 
