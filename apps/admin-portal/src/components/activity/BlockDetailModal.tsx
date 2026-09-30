@@ -88,9 +88,13 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
         'bg-rose-500';
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div className="flex min-h-full items-start justify-center p-4 pt-16 pb-10">
             {/* Modal Container */}
-            <div className="bg-surface border border-border rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-surface border border-border rounded-2xl w-full max-w-3xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
 
                 {/* ── Header ── */}
                 <div className="px-6 py-4 border-b border-border flex items-center justify-between shrink-0 bg-surface">
@@ -203,8 +207,8 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                     </div>
                 </div>
 
-                {/* ── Scrollable Body ── */}
-                <div className="flex-1 overflow-y-auto shell-scrollbar p-6 space-y-6">
+                {/* ── Body ── */}
+                <div className="p-6 space-y-6">
 
                     {/* Screenshots Filmstrip */}
                     {screenshots.length > 0 && (
@@ -348,6 +352,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                         Close
                     </button>
                 </div>
+            </div>
             </div>
 
             {/* Enlarged Screenshot Lightbox */}
