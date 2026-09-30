@@ -1256,6 +1256,8 @@ export function MemberFormPage() {
                                                         value={payRate}
                                                         onChange={setPayRate}
                                                         type="number"
+                                                        min={0}
+                                                        step="0.01"
                                                         icon={
                                                             <DollarSign className="w-4 h-4" />
                                                         }
@@ -1267,6 +1269,8 @@ export function MemberFormPage() {
                                                         value={billRate}
                                                         onChange={setBillRate}
                                                         type="number"
+                                                        min={0}
+                                                        step="0.01"
                                                         icon={
                                                             <DollarSign className="w-4 h-4" />
                                                         }
@@ -1903,6 +1907,12 @@ function FormField({
     step,
     inputMode,
 }: any) {
+    // min only governs the spinner and form validation; a typed minus still
+    // reaches state. Strip it for fields that cannot be negative.
+    const blocksNegative = type === 'number' && min !== undefined && Number(min) >= 0;
+    const handleChange = (raw: string) =>
+        onChange(blocksNegative ? raw.replace(/-/g, '') : raw);
+
     return (
         <div className="space-y-2 group flex flex-col relative min-w-0">
             <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em] ml-1">
@@ -1927,7 +1937,7 @@ function FormField({
                         <input
                             type={type}
                             value={value || ''}
-                            onChange={(e) => onChange(e.target.value)}
+                            onChange={(e) => handleChange(e.target.value)}
                             placeholder={placeholder}
                             min={min}
                             max={max}
