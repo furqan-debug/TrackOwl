@@ -14,7 +14,8 @@ import {
     Tag,
     CheckSquare,
     ClipboardList,
-    Timer
+    Timer,
+    X
 } from 'lucide-react';
 
 import {
@@ -405,6 +406,18 @@ export function Todos() {
                 member.email.toLowerCase().includes(query)
         );
     }, [allMembers, assigneeSearch]);
+
+    /**
+     * Who is ticked, for the chips under the search box.
+     *
+     * The list shows three at a time and scrolls, so once you have picked
+     * someone and typed a new search, or simply scrolled past them, there was
+     * nothing on screen saying they were on the task at all.
+     */
+    const selectedAssignees = useMemo(
+        () => allMembers.filter(m => formData.assignee_ids.includes(m.id)),
+        [allMembers, formData.assignee_ids]
+    );
 
     const allShownAssigned =
         shownMembers.length > 0 &&
@@ -858,6 +871,44 @@ export function Todos() {
                                     transition-colors
                                 "
                             />
+
+                            {selectedAssignees.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 px-0.5">
+                                    {selectedAssignees.map(member => (
+                                        <button
+                                            key={member.id}
+                                            type="button"
+                                            onClick={() =>
+                                                setFormData({
+                                                    ...formData,
+                                                    assignee_ids: formData.assignee_ids.filter(
+                                                        id => id !== member.id
+                                                    )
+                                                })
+                                            }
+                                            title={`Remove ${member.full_name}`}
+                                            className="
+                                                group/chip
+                                                inline-flex items-center gap-1.5
+                                                pl-1.5 pr-2 py-1
+                                                rounded-full
+                                                bg-primary/10 border border-primary/20
+                                                hover:border-primary/40
+                                                transition-colors
+                                                max-w-full min-w-0
+                                            "
+                                        >
+                                            <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[9px] font-black shrink-0">
+                                                {getInitials(member.full_name)}
+                                            </span>
+                                            <span className="text-[11px] font-bold text-text-main truncate">
+                                                {member.full_name}
+                                            </span>
+                                            <X className="w-3 h-3 text-text-muted group-hover/chip:text-text-main shrink-0" />
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
 
                             {shownMembers.length > 0 && (
                                 <div className="flex items-center justify-between gap-2 px-1">
