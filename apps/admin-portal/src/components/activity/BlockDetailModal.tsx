@@ -89,7 +89,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
 
     return (
         <div
-            className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+            className="fixed inset-0 z-50 overflow-y-auto bg-black/90 backdrop-blur-md animate-in fade-in duration-200"
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
             <div className="flex min-h-full items-start justify-center p-4 pt-16 pb-10">
