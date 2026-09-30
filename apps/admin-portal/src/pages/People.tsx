@@ -14,7 +14,8 @@ import {
     PageLayout,
     Modal,
     StatusBadge,
-    LoadingState
+    LoadingState,
+    FilterSelect
 } from '../components/ui';
 import { SecureImage } from '../components/ui/SecureImage';
 import { supabase } from '../lib/supabase';
@@ -445,23 +446,36 @@ export function People() {
             {showFilters && (
                 <div className="mb-6 p-4 bg-surface border border-border rounded-xl flex flex-col sm:flex-row sm:items-center gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
 
+                    {/* Both were native <select>s, so the open list was drawn by the
+                        operating system: grey rows, a blue selection bar, none of the
+                        app's type and nothing that follows the dark theme. FilterSelect
+                        is the app's own, and is what the other pages' filters use.
+
+                        Search is off — five options and three do not need a search box —
+                        and sorting is off so "All Roles" and "All Statuses" stay at the
+                        top instead of being alphabetised into the middle of the list. */}
                     <div className="flex items-center gap-2 min-w-0">
                         <label className="text-[10px] font-bold text-text-muted shrink-0">
                             Role:
                         </label>
 
-                        <select
-                            value={roleFilter}
-                            onChange={e => setRoleFilter(e.target.value)}
-                            className="h-8 min-w-0 flex-1 sm:flex-none px-3 bg-surface-hover border border-border rounded-lg text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all"
-                        >
-                            <option value="All">All Roles</option>
-                            <option value="Owner">Owner</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Manager">Manager</option>
-                            <option value="User">User</option>
-                            <option value="Viewer">Viewer</option>
-                        </select>
+                        <div className="h-9 min-w-0 flex-1 sm:flex-none sm:w-40">
+                            <FilterSelect
+                                icon={<Users className="w-3.5 h-3.5" />}
+                                value={roleFilter}
+                                onChange={setRoleFilter}
+                                enableSearch={false}
+                                sortOptions={false}
+                                options={[
+                                    { id: 'All', name: 'All Roles' },
+                                    { id: 'Owner', name: 'Owner' },
+                                    { id: 'Admin', name: 'Admin' },
+                                    { id: 'Manager', name: 'Manager' },
+                                    { id: 'User', name: 'User' },
+                                    { id: 'Viewer', name: 'Viewer' },
+                                ]}
+                            />
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-2 min-w-0">
@@ -469,15 +483,20 @@ export function People() {
                             Status:
                         </label>
 
-                        <select
-                            value={statusFilter}
-                            onChange={e => setStatusFilter(e.target.value)}
-                            className="h-8 min-w-0 flex-1 sm:flex-none px-3 bg-surface-hover border border-border rounded-lg text-[11px] font-bold text-text-main outline-none focus:border-primary transition-all"
-                        >
-                            <option value="All">All Statuses</option>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
+                        <div className="h-9 min-w-0 flex-1 sm:flex-none sm:w-40">
+                            <FilterSelect
+                                icon={<CheckCircle className="w-3.5 h-3.5" />}
+                                value={statusFilter}
+                                onChange={setStatusFilter}
+                                enableSearch={false}
+                                sortOptions={false}
+                                options={[
+                                    { id: 'All', name: 'All Statuses' },
+                                    { id: 'Active', name: 'Active' },
+                                    { id: 'Inactive', name: 'Inactive' },
+                                ]}
+                            />
+                        </div>
                     </div>
 
                     {(roleFilter !== 'All' || statusFilter !== 'All') && (
