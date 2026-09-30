@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import {
     X, Mouse, Keyboard, Clock, Activity,
-    Loader2, Image as ImageIcon
+    Loader2, Image as ImageIcon,
+    ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { activityService, type BlockRecordEntry, type BlockMinuteSample } from '../../services/activity.service';
 import { SecureImage } from '../ui/SecureImage';
@@ -19,7 +20,9 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
     const [loading, setLoading] = useState(true);
     const [samples, setSamples] = useState<BlockMinuteSample[]>([]);
     const [screenshots, setScreenshots] = useState<any[]>([]);
-    const [selectedScreenshot, setSelectedScreenshot] = useState<string | null>(null);
+    // The index, not the path. Holding the path alone meant the viewer had no
+    // idea where that image sat in the block, so there was nothing to step to.
+    const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
     useEffect(() => {
         if (!block) return;
@@ -40,6 +43,21 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
 
         return () => { active = false; };
     }, [block]);
+
+    // Above the early return: a hook that runs only while the viewer is open
+    // would change the hook count between renders. It bails on its own instead.
+    useEffect(() => {
+        if (lightboxIndex === null) return;
+
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setLightboxIndex(null);
+            if (e.key === 'ArrowRight') setLightboxIndex(i => (i === null ? i : (i + 1) % screenshots.length));
+            if (e.key === 'ArrowLeft') setLightboxIndex(i => (i === null ? i : (i - 1 + screenshots.length) % screenshots.length));
+        };
+
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [lightboxIndex, screenshots.length]);
 
     if (!block) return null;
 
@@ -221,7 +239,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                                 {screenshots.map((ss, idx) => (
                                     <div
                                         key={ss.id || idx}
-                                        onClick={() => setSelectedScreenshot(ss.file_url)}
+                                        onClick={() => setLightboxIndex(idx)}
                                         className="relative group w-40 h-24 shrink-0 rounded-xl overflow-hidden border border-border bg-black/40 cursor-pointer hover:border-accent transition-all shadow-shell-sm hover:shadow-elevated"
                                     >
                                         <SecureImage
@@ -356,22 +374,62 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
             </div>
 
             {/* Enlarged Screenshot Lightbox */}
-            {selectedScreenshot && (
+            {lightboxIndex !== null && screenshots[lightboxIndex] && (
                 <div
-                    className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center p-4"
-                    onClick={() => setSelectedScreenshot(null)}
+                    className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center py-4 px-4 sm:px-24"
+                    onClick={() => setLightboxIndex(null)}
                 >
-                    <div className="relative max-w-5xl max-h-[90vh]">
+                    {/* w-fit so this box is the width of the image. The arrows hang
+                        off this box, so as a plain block filling the available width
+                        they had no fixed relationship to the picture. */}
+                    <div className="relative w-fit max-w-5xl max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
                         <button
-                            onClick={() => setSelectedScreenshot(null)}
+                            onClick={() => setLightboxIndex(null)}
                             className="absolute -top-10 right-0 p-2 text-white/80 hover:text-white"
+                            title="Close"
                         >
                             <X className="w-6 h-6" />
                         </button>
+
+                        {screenshots.length > 1 && (
+                            <span className="absolute -top-9 left-0 text-[12px] font-bold text-white/70 tabular-nums">
+                                {lightboxIndex + 1} / {screenshots.length}
+                            </span>
+                        )}
+
                         <SecureImage
-                            path={selectedScreenshot}
+                            path={screenshots[lightboxIndex].file_url}
                             className="max-h-[85vh] w-auto rounded-xl shadow-2xl border border-white/20"
                         />
+
+                        {/* Outside the image, in the dark — on it they cover the
+                            screenshot, which is the thing being looked at. They wrap,
+                            so a pair steps back and forth without dead ends. */}
+                        {screenshots.length > 1 && (
+                            <>
+                                <button
+                                    onClick={() =>
+                                        setLightboxIndex(i =>
+                                            i === null ? i : (i - 1 + screenshots.length) % screenshots.length
+                                        )
+                                    }
+                                    title="Previous screenshot"
+                                    className="absolute -left-4 sm:-left-16 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white/80 hover:text-white transition-colors"
+                                >
+                                    <ChevronLeft className="w-6 h-6" />
+                                </button>
+
+                                <button
+                                    onClick={() =>
+                                        setLightboxIndex(i => (i === null ? i : (i + 1) % screenshots.length))
+                                    }
+                                    title="Next screenshot"
+                                    className="absolute -right-4 sm:-right-16 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/60 hover:bg-black/80 border border-white/20 text-white/80 hover:text-white transition-colors"
+                                >
+                                    <ChevronRight className="w-6 h-6" />
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
