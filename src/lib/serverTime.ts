@@ -37,7 +37,13 @@ export function updateServerClockOffset(serverDateStrOrMs: string | number | Dat
 export async function syncServerTime(supabaseUrl: string, anonKey: string): Promise<number> {
   try {
     const t0 = Date.now();
-    const res = await fetch(`${supabaseUrl}/rest/v1/?apikey=${anonKey}`, { method: 'HEAD' });
+    const res = await fetch(`${supabaseUrl}/rest/v1/projects?select=id&limit=0`, { 
+      method: 'HEAD',
+      headers: {
+        'apikey': anonKey,
+        'Authorization': `Bearer ${anonKey}`,
+      }
+    });
     const dateHeader = res.headers.get('date');
     if (dateHeader) {
       const serverMs = new Date(dateHeader).getTime();
