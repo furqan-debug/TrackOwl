@@ -439,11 +439,17 @@ export function Teams() {
             {/* =========================================================
                 CREATION WIZARD MODAL
             ========================================================== */}
+            {/* height: the dialog is a flat 680px whatever it holds, and step 1
+                comes out a little over that, so it scrolled by a few pixels — a
+                scrollbar beside a form that plainly fits. Sized to its content
+                now, with a floor: without the floor the box would jump height
+                between the three steps, since each holds a different amount. */}
             <Modal
                 isOpen={showModal}
                 onClose={() => setShowModal(false)}
                 title={editingTeam ? 'Edit Team' : 'Create New Team'}
                 maxWidth="max-w-2xl"
+                height="h-auto min-h-[620px]"
                 subtitle={
                     <div className="flex items-center gap-3 mt-2 min-w-0">
                         <div className="flex gap-1.5 shrink-0">
