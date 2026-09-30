@@ -95,12 +95,12 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                 {/* ── Header ── */}
                 <div className="px-6 py-4 border-b border-border flex items-center justify-between shrink-0 bg-surface">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-accent/20 border border-accent/30 text-accent font-bold flex items-center justify-center text-sm shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-accent/20 border border-accent/30 text-accent font-bold flex items-center justify-center text-sm shrink-0 overflow-hidden">
                             {block.member?.avatar_url ? (
-                                <img
-                                    src={block.member.avatar_url}
-                                    alt=""
-                                    className="w-full h-full rounded-full object-cover"
+                                <SecureImage
+                                    path={block.member.avatar_url}
+                                    bucket="avatars"
+                                    className="w-full h-full object-cover"
                                 />
                             ) : (
                                 initialOf(block.member?.full_name || 'U')

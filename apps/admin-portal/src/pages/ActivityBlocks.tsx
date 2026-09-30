@@ -10,6 +10,7 @@ import {
     PageLayout, StatMetric, LoadingState, EmptyState,
     FilterSelect, DatePicker, RefreshButton, AppIcon
 } from '../components/ui';
+import { SecureImage } from '../components/ui/SecureImage';
 import { BlockDetailModal } from '../components/activity/BlockDetailModal';
 import { initialOf } from '../lib/initials';
 import clsx from 'clsx';
@@ -338,12 +339,12 @@ export function ActivityBlocks() {
                                                     {/* Member */}
                                                     <td className="px-5 py-4 whitespace-nowrap">
                                                         <div className="flex items-center gap-2.5">
-                                                            <div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/30 text-accent font-bold flex items-center justify-center text-[10px] shrink-0">
+                                                            <div className="w-7 h-7 rounded-full bg-accent/20 border border-accent/30 text-accent font-bold flex items-center justify-center text-[10px] shrink-0 overflow-hidden">
                                                                 {block.member?.avatar_url ? (
-                                                                    <img
-                                                                        src={block.member.avatar_url}
-                                                                        alt=""
-                                                                        className="w-full h-full rounded-full object-cover"
+                                                                    <SecureImage
+                                                                        path={block.member.avatar_url}
+                                                                        bucket="avatars"
+                                                                        className="w-full h-full object-cover"
                                                                     />
                                                                 ) : (
                                                                     initialOf(block.member?.full_name || 'U')
