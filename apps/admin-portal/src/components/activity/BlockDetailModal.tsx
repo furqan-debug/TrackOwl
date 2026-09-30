@@ -107,9 +107,16 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                             )}
                         </div>
                         <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-base font-bold text-text-main">
-                                    {block.member?.full_name || 'Team Member'}
+                            <div className="flex items-center gap-2 min-w-0">
+                                <h3 className="text-base font-bold text-text-main truncate max-w-[260px]">
+                                    {(() => {
+                                        const name = block.member?.full_name || 'Team Member';
+                                        // If stored as email, show the local part before @
+                                        if (name.includes('@')) {
+                                            return name.split('@')[0]?.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || name;
+                                        }
+                                        return name;
+                                    })()}
                                 </h3>
                                 <span className={clsx(
                                     'text-[11px] font-bold px-2 py-0.5 rounded-full border',
@@ -141,8 +148,8 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                 </div>
 
                 {/* ── Summary Strip ── */}
-                <div className="px-6 py-4 border-b border-border bg-surface-hover/30 shrink-0">
-                    <div className="flex items-center gap-6 flex-wrap">
+                <div className="px-6 py-3.5 border-b border-border bg-surface-hover shrink-0 overflow-x-auto">
+                    <div className="flex items-center gap-5 min-w-max">
                         {/* App */}
                         <div className="flex items-center gap-2.5">
                             <AppIcon name={block.app_name || ''} className="w-8 h-8 rounded-lg shadow-shell-sm shrink-0" />
@@ -156,29 +163,29 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                             </div>
                         </div>
 
-                        <div className="w-px h-8 bg-border shrink-0" />
+                        <div className="w-px h-7 bg-border shrink-0" />
 
                         {/* Activity bar */}
-                        <div className="flex items-center gap-3 flex-1 min-w-[160px]">
+                        <div className="flex items-center gap-2.5 shrink-0">
                             <span className={clsx(
-                                'text-sm font-black font-mono shrink-0',
+                                'text-sm font-black font-mono',
                                 pct >= 60 ? 'text-emerald-400' :
                                 pct >= 30 ? 'text-accent' : 'text-rose-400'
                             )}>
                                 {pct}%
                             </span>
-                            <div className="flex-1 bg-border/40 h-2.5 rounded-full overflow-hidden min-w-[80px]">
+                            <div className="w-28 bg-border/40 h-2 rounded-full overflow-hidden">
                                 <div
                                     className={clsx('h-full rounded-full transition-all duration-500', activityBarColor)}
                                     style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
                                 />
                             </div>
-                            <span className="text-[11px] text-text-muted font-medium shrink-0">
+                            <span className="text-[11px] text-text-muted font-medium">
                                 {activeTimeLabel} active
                             </span>
                         </div>
 
-                        <div className="w-px h-8 bg-border shrink-0" />
+                        <div className="w-px h-7 bg-border shrink-0" />
 
                         {/* Input counts */}
                         <div className="flex items-center gap-4 shrink-0">
