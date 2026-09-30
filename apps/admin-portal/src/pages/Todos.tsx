@@ -63,6 +63,10 @@ interface Project {
     name: string;
 }
 
+/** Shortest time the refresh button stays spinning, so a fast fetch still
+    shows that the click registered. Matches Reports and App Usage. */
+const MIN_REFRESH_FEEDBACK_MS = 650;
+
 export function Todos() {
     const { profile } = useAuth();
     const isViewer = profile?.role === 'Viewer';
@@ -101,6 +105,8 @@ export function Todos() {
     });
 
     const fetchData = useCallback(async (isSilent = false) => {
+        const startedAt = Date.now();
+
         if (!isSilent) {
             setLoading(true);
         } else {
@@ -175,6 +181,20 @@ export function Todos() {
             console.error(err);
         } finally {
             setLoading(false);
+
+            // Hold the spinner long enough to be seen. The query answers in
+            // about a tenth of a second, so clearing it the moment the data
+            // lands made the icon flick round once and stop — the button
+            // looked like it had done nothing at all.
+            if (isSilent) {
+                const elapsed = Date.now() - startedAt;
+                if (elapsed < MIN_REFRESH_FEEDBACK_MS) {
+                    await new Promise(resolve =>
+                        setTimeout(resolve, MIN_REFRESH_FEEDBACK_MS - elapsed)
+                    );
+                }
+            }
+
             setRefreshing(false);
         }
     }, []);
