@@ -81,12 +81,18 @@ export function ActivityBlocks() {
     }, [organizationId, profile?.role, managedMemberIds]);
 
     // Fetch block records
-    const fetchBlocks = useCallback(async (isSilent = false) => {
+    const fetchBlocks = useCallback(async (isSilent = false, forceRefresh = false) => {
         if (!organizationId || !membersLoaded) return;
         const mySeq = ++requestSeqRef.current;
 
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
+
+        // forceRefresh means the button was pressed, so it spins as well as
+        // the page showing its loader. Without the second flag the two were
+        // mutually exclusive — pressing refresh could show one or the other,
+        // never both, which is why this page skipped the loader entirely.
+        if (forceRefresh) setRefreshing(true);
 
         try {
             const data = await activityService.fetchBlockRecords(
@@ -239,7 +245,7 @@ export function ActivityBlocks() {
                     </div>
 
                     <RefreshButton
-                        onClick={() => fetchBlocks(true)}
+                        onClick={() => fetchBlocks(false, true)}
                         refreshing={refreshing}
                         label="Refresh blocks"
                     />
@@ -252,7 +258,10 @@ export function ActivityBlocks() {
                 </div>
             ) : (
                 <div className="flex flex-col gap-8 pb-16">
-                    {/* KPI Metric Cards — differentiated accents */}
+                    {/* KPI cards. All four take the brand accent, so all four icons
+                        are white on a transparent tile — they were emerald, gold and
+                        amber against the first card's white, which made three of them
+                        look like status colours rather than plain labels. */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         <StatMetric
                             icon={<Clock className="w-5 h-5" />}
@@ -266,21 +275,21 @@ export function ActivityBlocks() {
                             label="Avg Activity"
                             value={`${stats.avgActivity}%`}
                             sub="Active movement score"
-                            accent="emerald"
+                            accent="brand-gradient"
                         />
                         <StatMetric
                             icon={<Mouse className="w-5 h-5" />}
                             label="Mouse Clicks"
                             value={stats.totalClicks.toLocaleString()}
                             sub={`across ${stats.totalBlocks} blocks`}
-                            accent="primary"
+                            accent="brand-gradient"
                         />
                         <StatMetric
                             icon={<Keyboard className="w-5 h-5" />}
                             label="Keystrokes"
                             value={stats.totalKeys.toLocaleString()}
                             sub={`across ${stats.totalBlocks} blocks`}
-                            accent="amber"
+                            accent="brand-gradient"
                         />
                     </div>
 
