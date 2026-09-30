@@ -81,12 +81,18 @@ export function ActivityBlocks() {
     }, [organizationId, profile?.role, managedMemberIds]);
 
     // Fetch block records
-    const fetchBlocks = useCallback(async (isSilent = false) => {
+    const fetchBlocks = useCallback(async (isSilent = false, forceRefresh = false) => {
         if (!organizationId || !membersLoaded) return;
         const mySeq = ++requestSeqRef.current;
 
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
+
+        // forceRefresh means the button was pressed, so it spins as well as
+        // the page showing its loader. Without the second flag the two were
+        // mutually exclusive — pressing refresh could show one or the other,
+        // never both, which is why this page skipped the loader entirely.
+        if (forceRefresh) setRefreshing(true);
 
         try {
             const data = await activityService.fetchBlockRecords(
@@ -239,7 +245,7 @@ export function ActivityBlocks() {
                     </div>
 
                     <RefreshButton
-                        onClick={() => fetchBlocks(true)}
+                        onClick={() => fetchBlocks(false, true)}
                         refreshing={refreshing}
                         label="Refresh blocks"
                     />
