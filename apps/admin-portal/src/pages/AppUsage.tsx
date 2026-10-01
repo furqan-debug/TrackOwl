@@ -44,7 +44,7 @@ let appUsageCache: any = null;
 let appUsageCacheKey: string | null = null;
 
 export function AppUsage() {
-    const { profile, managedMemberIds, displayTimezone } = useAuth();
+    const { profile, managedMemberIds, displayTimezone, isRep } = useAuth();
     const organizationId = profile?.organization_id;
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -54,7 +54,10 @@ export function AppUsage() {
     const requestSeqRef = useRef(0);
     const [apps, setApps] = useState<AppEntry[]>([]);
     const [members, setMembers] = useState<MemberInfo[]>([]);
-    const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
+    // Reps are locked to their own member id; admins start on 'all'
+    const [selectedMemberId, setSelectedMemberId] = useState<string>(() =>
+        isRep ? (profile?.id ?? 'all') : 'all'
+    );
     const [searchTerm, setSearchTerm] = useState('');
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
     const [currentPage, setCurrentPage] = useState(1);
@@ -77,7 +80,8 @@ export function AppUsage() {
                 .eq('status', 'Active')
                 .order('full_name', { ascending: true });
 
-            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+            // Reps only load themselves; Managers and Clients see their managed subset
+            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
             if (isScoped && managedMemberIds) {
                 const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
                 query = query.in('id', memberIdsFilter);
@@ -87,7 +91,7 @@ export function AppUsage() {
                 if (data) setMembers(data);
             });
         });
-    }, [organizationId, profile?.role, managedMemberIds]);
+    }, [organizationId, profile?.role, managedMemberIds, isRep]);
 
     const fetchData = useCallback(async (isSilent = false, forceRefresh = false) => {
         const mySeq = ++requestSeqRef.current;
@@ -213,19 +217,21 @@ export function AppUsage() {
         <PageLayout
             maxWidth="full"
             title="App Usage"
-            description="See which apps and websites your team is using while tracking time."
+            description={isRep ? "See apps and websites you use while tracking time." : "See which apps and websites your team is using while tracking time."}
             actions={
                 <div className="flex items-center gap-4">
-                    <FilterSelect
-                        icon={<Users className="w-3.5 h-3.5 text-text-muted" />}
-                        value={selectedMemberId}
-                        onChange={setSelectedMemberId}
-                        options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
-                        // Wider than its content needs. The dropdown is w-full, so the
-                        // trigger's width is also the list's, and at content width the
-                        // longer member names were truncating.
-                        className="h-10 min-w-[240px]"
-                    />
+                    {!isRep && (
+                        <FilterSelect
+                            icon={<Users className="w-3.5 h-3.5 text-text-muted" />}
+                            value={selectedMemberId}
+                            onChange={setSelectedMemberId}
+                            options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
+                            // Wider than its content needs. The dropdown is w-full, so the
+                            // trigger's width is also the list's, and at content width the
+                            // longer member names were truncating.
+                            className="h-10 min-w-[240px]"
+                        />
+                    )}
 
                     {/* Same date control as Screenshots: the picker alone had no way
                         to step a day at a time. */}

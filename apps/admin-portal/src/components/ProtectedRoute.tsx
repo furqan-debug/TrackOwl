@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
-    const { profile, loading, session, signOut, aalLevel, nextAalLevel } = useAuth();
+    const { profile, loading, session, aalLevel, nextAalLevel } = useAuth();
     const location = useLocation();
 
     if (loading) {
@@ -29,20 +29,7 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    // 3. Strictly block 'User' role from Admin Portal
-    // If we have a profile and the role is 'User', they don't belong here.
-    if (profile?.role === 'User') {
-        return (
-            <AccessDenied
-              title="Admin Portal Access Restricted"
-              message="This portal is for Admins and Managers only. Please use the TrackOwl desktop app for tracking."
-              buttonLabel="Sign Out"
-              onButtonClick={signOut}
-            />
-        );
-    }
-
-    // 4. Force Onboarding IF profile exists but NO organization_id is assigned.
+    // 3. Force Onboarding IF profile exists but NO organization_id is assigned.
     if (profile && !profile.organization_id && location.pathname !== '/onboarding') {
         return <Navigate to="/onboarding" replace />;
     }

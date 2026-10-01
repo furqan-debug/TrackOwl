@@ -64,7 +64,7 @@ let reportsCache: any = null;
 let reportsCacheKey: string | null = null;
 
 export function Reports() {
-    const { profile, managedMemberIds, displayTimezone } = useAuth();
+    const { profile, managedMemberIds, displayTimezone, isRep } = useAuth();
     const organizationId = profile?.organization_id;
     const [searchParams] = useSearchParams();
 
@@ -116,7 +116,10 @@ export function Reports() {
     const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
     const [selectedTeamId, setSelectedTeamId] = useState<string>('All');
     const [members, setMembers] = useState<{ id: string; auth_user_id?: string | null; email: string; full_name: string; pay_rate?: number; bill_rate?: number; timezone?: string; employee_id?: string }[]>([]);
-    const [selectedMemberId, setSelectedMemberId] = useState<string>(initialUrlParams.member ?? 'All');
+    // Reps are locked to their own member id; admins start on initial URL param or 'All'
+    const [selectedMemberId, setSelectedMemberId] = useState<string>(() =>
+        isRep ? (profile?.id ?? 'All') : (initialUrlParams.member ?? 'All')
+    );
     const [showColumnDropdown, setShowColumnDropdown] = useState(false);
     const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
 
@@ -249,7 +252,7 @@ export function Reports() {
             .eq('status', 'Active')
             .order('full_name', { ascending: true });
             
-        const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+        const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
         if (isScoped && managedMemberIds) {
             const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
             query = query.in('id', memberIdsFilter);
@@ -645,22 +648,26 @@ export function Reports() {
                         </button>
                     </div>
 
-                    <FilterSelect
-                        label="Team"
-                        icon={<Users className="w-3.5 h-3.5" />}
-                        value={selectedTeamId}
-                        onChange={(val) => { setSelectedTeamId(val); setSelectedMemberId('All'); }}
-                        options={[{ id: 'All', name: 'All Teams' }, ...teams]}
-                        className="h-10"
-                    />
-                    <FilterSelect
-                        label="Member"
-                        icon={<ActivityIcon className="w-3.5 h-3.5" />}
-                        value={selectedMemberId}
-                        onChange={(val) => { setSelectedMemberId(val); setSelectedTeamId('All'); }}
-                        options={[{ id: 'All', name: 'All Members' }, ...members].map((m: any) => ({ id: m.id, name: m.full_name || m.email || m.name || 'Unknown' }))}
-                        className="h-10"
-                    />
+                    {!isRep && (
+                        <>
+                            <FilterSelect
+                                label="Team"
+                                icon={<Users className="w-3.5 h-3.5" />}
+                                value={selectedTeamId}
+                                onChange={(val) => { setSelectedTeamId(val); setSelectedMemberId('All'); }}
+                                options={[{ id: 'All', name: 'All Teams' }, ...teams]}
+                                className="h-10"
+                            />
+                            <FilterSelect
+                                label="Member"
+                                icon={<ActivityIcon className="w-3.5 h-3.5" />}
+                                value={selectedMemberId}
+                                onChange={(val) => { setSelectedMemberId(val); setSelectedTeamId('All'); }}
+                                options={[{ id: 'All', name: 'All Members' }, ...members].map((m: any) => ({ id: m.id, name: m.full_name || m.email || m.name || 'Unknown' }))}
+                                className="h-10"
+                            />
+                        </>
+                    )}
 
                     <RefreshButton
                         onClick={() => fetchReports(true)}

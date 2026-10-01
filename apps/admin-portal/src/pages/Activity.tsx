@@ -54,7 +54,7 @@ let activityCache: any = null;
 let activityCacheKey: string | null = null;
 
 export function Activity() {
-    const { profile, managedMemberIds, displayTimezone } = useAuth();
+    const { profile, managedMemberIds, displayTimezone, isRep } = useAuth();
     const organizationId = profile?.organization_id;
     const [samples, setSamples] = useState<ActivitySample[]>([]);
     const [screenshots, setScreenshots] = useState<Screenshot[]>([]);
@@ -70,7 +70,10 @@ export function Activity() {
     
     const [enlargedIndex, setEnlargedIndex] = useState<number | null>(null);
     const [members, setMembers] = useState<MemberInfo[]>([]);
-    const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
+    // Reps are locked to their own member id; admins start on 'all'
+    const [selectedMemberId, setSelectedMemberId] = useState<string>(() =>
+        isRep ? (profile?.id ?? 'all') : 'all'
+    );
     const [sessionMinutes, setSessionMinutes] = useState(0);
 
     // Pagination for screenshots
@@ -95,7 +98,8 @@ export function Activity() {
                 .eq('status', 'Active')
                 .order('full_name', { ascending: true });
                 
-            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+            // Reps only load themselves; Managers and Clients see their managed subset
+            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
             if (isScoped && managedMemberIds) {
                 const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
                 query = query.in('id', memberIdsFilter);
@@ -292,11 +296,8 @@ export function Activity() {
             description="Visual audit and activity timeline for workspace members."
             actions={
                 <div className="flex items-center gap-4">
-                    {/* No wrapper panel. It drew a border and background of its own and
-                        then 4px of padding, so the trigger floated inside a visible
-                        frame instead of filling the control. FilterSelect draws its own
-                        pill, the way it does on every other page. h-10 matches the date
-                        pill and the refresh button. */}
+                    {/* Member filter — hidden for reps who see only their own data */}
+                    {!isRep && (
                     <FilterSelect
                         icon={<Users className="w-3.5 h-3.5 text-text-muted" />}
                         value={selectedMemberId}
@@ -307,6 +308,7 @@ export function Activity() {
                         // longer member names were truncating.
                         className="h-10 min-w-[240px]"
                     />
+                    )}
 
                     <div className="flex items-center h-10 bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
                         <button
