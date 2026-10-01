@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
     X, Mouse, Keyboard, Clock, Activity,
     Loader2, Image as ImageIcon,
@@ -105,14 +106,39 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
         pct >= 30 ? 'bg-accent' :
         'bg-rose-500';
 
-    return (
+    /**
+     * Rendered on the body rather than where it sits in the page.
+     *
+     * position: fixed is measured against the viewport only while no ancestor
+     * has a transform — one of those becomes the containing block instead and
+     * starts a stacking context that traps any z-index inside it. PageLayout
+     * animates itself in with a transform and this dialog renders inside it,
+     * which is why page content appeared through and over the dialog, and why
+     * the backdrop had been pushed to near-opaque black to hide it.
+     *
+     * Out on the body the dialog stacks above the page properly, so the
+     * backdrop can go back to the translucent one every other dialog uses.
+     */
+    return createPortal(
         <div
-            className="fixed inset-0 z-50 overflow-y-auto bg-black/90 backdrop-blur-md animate-in fade-in duration-200"
+            className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200"
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-            <div className="flex min-h-full items-start justify-center p-4 pt-16 pb-10">
+            {/* The close-on-outside-click has to live here, not only on the
+                scroll container above. This wrapper fills that container, so
+                every click on the dark area lands on THIS element — which made
+                e.target !== e.currentTarget up there, and the dialog never
+                closed however far outside you clicked. */}
+            <div
+                className="flex min-h-full items-center justify-center p-4"
+                onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+            >
             {/* Modal Container */}
-            <div className="bg-surface border border-border rounded-2xl w-full max-w-3xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* max-h plus a scrolling body is what keeps the header and the
+                footer in view while the middle scrolls. Without the cap the card
+                grew as tall as its content and the whole page scrolled instead,
+                carrying the Close button off the bottom of the screen. */}
+            <div className="bg-surface border border-border rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
 
                 {/* ── Header ── */}
                 <div className="px-6 py-4 border-b border-border flex items-center justify-between shrink-0 bg-surface">
@@ -226,7 +252,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                 </div>
 
                 {/* ── Body ── */}
-                <div className="p-6 space-y-6">
+                <div className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto">
 
                     {/* Screenshots Filmstrip */}
                     {screenshots.length > 0 && (
@@ -376,7 +402,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
             {/* Enlarged Screenshot Lightbox */}
             {lightboxIndex !== null && screenshots[lightboxIndex] && (
                 <div
-                    className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center py-4 px-4 sm:px-24"
+                    className="fixed inset-0 z-[110] bg-black/80 flex items-center justify-center py-4 px-4 sm:px-24"
                     onClick={() => setLightboxIndex(null)}
                 >
                     {/* w-fit so this box is the width of the image. The arrows hang
@@ -433,6 +459,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                     </div>
                 </div>
             )}
-        </div>
+        </div>,
+        document.body
     );
 }
