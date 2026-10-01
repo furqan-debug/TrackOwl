@@ -78,6 +78,32 @@ function computeIsPremium(org: OrganizationProfile | null): boolean {
     return false;
 }
 
+/** Fetches project IDs assigned to a member either directly or via their teams. */
+async function fetchUserAssignedProjectIds(memberId: string): Promise<string[]> {
+    const { data: directProjects } = await supabase
+        .from('project_members')
+        .select('project_id')
+        .eq('member_id', memberId);
+    const directProjectIds = directProjects?.map(dp => dp.project_id) || [];
+
+    const { data: userTeams } = await supabase
+        .from('team_members')
+        .select('team_id')
+        .eq('member_id', memberId);
+    const teamIds = userTeams?.map(t => t.team_id) || [];
+
+    let teamProjectIds: string[] = [];
+    if (teamIds.length > 0) {
+        const { data: pTeams } = await supabase
+            .from('project_teams')
+            .select('project_id')
+            .in('team_id', teamIds);
+        teamProjectIds = pTeams?.map(pt => pt.project_id) || [];
+    }
+
+    return Array.from(new Set([...directProjectIds, ...teamProjectIds]));
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<MemberProfile | null>(null);
@@ -298,7 +324,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 } else if (member.role === 'User') {
                     // User (rep) sees only their own data in self-service mode
                     setManagedMemberIds([member.id]);
-                    setManagedProjectIds(null);
+                    const assignedProjectIds = await fetchUserAssignedProjectIds(member.id);
+                    setManagedProjectIds(assignedProjectIds);
                 } else {
                     // Owner / Admin / Viewer: unrestricted (null = no filter applied)
                     setManagedMemberIds(null);
@@ -476,7 +503,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                     } else if (member.role === 'User') {
                         // User (rep) sees only their own data in self-service mode
                         setManagedMemberIds([member.id]);
-                        setManagedProjectIds(null);
+                        const assignedProjectIds = await fetchUserAssignedProjectIds(member.id);
+                        setManagedProjectIds(assignedProjectIds);
                     } else {
                         // Owner / Admin / Viewer: unrestricted
                         setManagedMemberIds(null);

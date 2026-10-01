@@ -228,7 +228,7 @@ export function Timesheets() {
             .eq('organization_id', organizationId)
             .order('full_name');
 
-        const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+        const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
         if (isScoped && managedMemberIds) {
             const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
             query = query.in('id', memberIdsFilter);
@@ -245,7 +245,7 @@ export function Timesheets() {
             .eq('status', 'Active')
             .order('name');
 
-        const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+        const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
         if (isScoped && managedProjectIds) {
             const projectIdsFilter = managedProjectIds.length > 0 ? managedProjectIds : ['00000000-0000-0000-0000-000000000000'];
             query = query.in('id', projectIdsFilter);
@@ -644,7 +644,9 @@ export function Timesheets() {
                                 <Star className={clsx("w-5 h-5 transition-colors", isFav && "fill-[var(--accent)]")} strokeWidth={isFav ? 2 : 2.5} />
                             </button>
                         </div>
-                        <p className="text-[14px] font-bold text-text-muted tracking-tight">Verify and refine team temporal records</p>
+                        <p className="text-[14px] font-bold text-text-muted tracking-tight">
+                            {isRep ? "Verify and review your personal tracked time and sessions" : "Verify and refine team temporal records"}
+                        </p>
                     </div>
 
                     {/* View switcher */}
@@ -729,7 +731,7 @@ export function Timesheets() {
                                 onClick={() => {
                                     setAddTimeData({
                                         projectId: '',
-                                        userId: '',
+                                        userId: isRep ? (profile?.id || '') : '',
                                         date: new Date().toISOString().split('T')[0],
                                         startTime: '09:00',
                                         endTime: '17:00'
@@ -745,24 +747,29 @@ export function Timesheets() {
                         </div>
 
 
-                        {/* Member */}
-                        <div className="h-16 w-full min-[900px]:w-auto min-[900px]:ml-auto min-[900px]:min-w-[220px] min-w-0">
-                            <FilterSelect
-                                icon={<Users className="w-4 h-4 shrink-0" />}
-                                value={selectedMember}
-                                onChange={setSelectedMember}
-                                options={[
-                                    { id: 'all', name: 'All Members' },
-                                    ...members.map((m: MemberInfo) => ({
-                                        id: m.id,
-                                        name: m.full_name
-                                    }))
-                                ]}
-                            />
-                        </div>
+                        {/* Member filter — hidden for reps who only view their own timesheets */}
+                        {!isRep && (
+                            <div className="h-16 w-full min-[900px]:w-auto min-[900px]:ml-auto min-[900px]:min-w-[220px] min-w-0">
+                                <FilterSelect
+                                    icon={<Users className="w-4 h-4 shrink-0" />}
+                                    value={selectedMember}
+                                    onChange={setSelectedMember}
+                                    options={[
+                                        { id: 'all', name: 'All Members' },
+                                        ...members.map((m: MemberInfo) => ({
+                                            id: m.id,
+                                            name: m.full_name
+                                        }))
+                                    ]}
+                                />
+                            </div>
+                        )}
 
                         {/* Timezone */}
-                        <div className="h-16 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0">
+                        <div className={clsx(
+                            "h-16 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0",
+                            isRep && "min-[900px]:ml-auto"
+                        )}>
                             <FilterSelect
                                 icon={<Clock className="w-4 h-4 shrink-0" />}
                                 value={activeTimezone}
@@ -855,20 +862,22 @@ export function Timesheets() {
                 for a scrollbar down the side of a form that visibly fits. */}
             <Modal isOpen={showAddTime} onClose={() => setShowAddTime(false)} title="Manual Time Entry" height="h-auto">
                 <div className="space-y-5 py-4">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-text-muted ">Team Member</label>
-                        <div className="h-11">
-                            <FilterSelect
-                                icon={<Users className="w-3.5 h-3.5" />}
-                                value={addTimeData.userId}
-                                onChange={(val) => setAddTimeData({ ...addTimeData, userId: val, projectId: '' })}
-                                options={[
-                                    { id: '', name: 'Select member...' },
-                                    ...members.map(m => ({ id: m.id, name: m.full_name }))
-                                ]}
-                            />
+                    {!isRep && (
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-text-muted ">Team Member</label>
+                            <div className="h-11">
+                                <FilterSelect
+                                    icon={<Users className="w-3.5 h-3.5" />}
+                                    value={addTimeData.userId}
+                                    onChange={(val) => setAddTimeData({ ...addTimeData, userId: val, projectId: '' })}
+                                    options={[
+                                        { id: '', name: 'Select member...' },
+                                        ...members.map(m => ({ id: m.id, name: m.full_name }))
+                                    ]}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    )}
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold text-text-muted ">Project</label>
                         <div className="h-11">
@@ -921,20 +930,22 @@ export function Timesheets() {
 
             <Modal isOpen={showEditTimeModal} onClose={() => setShowEditTimeModal(false)} title="Edit Time Entry">
                 <div className="space-y-5 py-4">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-text-muted ">Team Member</label>
-                        <div className="h-11">
-                            <FilterSelect
-                                icon={<Users className="w-3.5 h-3.5" />}
-                                value={addTimeData.userId}
-                                onChange={(val) => setAddTimeData({ ...addTimeData, userId: val, projectId: '' })}
-                                options={[
-                                    { id: '', name: 'Select member...' },
-                                    ...members.map(m => ({ id: m.id, name: m.full_name }))
-                                ]}
-                            />
+                    {!isRep && (
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-bold text-text-muted ">Team Member</label>
+                            <div className="h-11">
+                                <FilterSelect
+                                    icon={<Users className="w-3.5 h-3.5" />}
+                                    value={addTimeData.userId}
+                                    onChange={(val) => setAddTimeData({ ...addTimeData, userId: val, projectId: '' })}
+                                    options={[
+                                        { id: '', name: 'Select member...' },
+                                        ...members.map(m => ({ id: m.id, name: m.full_name }))
+                                    ]}
+                                />
+                            </div>
                         </div>
-                    </div>
+                    )}
                     <div className="space-y-2">
                         <label className="text-[10px] font-bold text-text-muted ">Project</label>
                         <div className="h-11">
