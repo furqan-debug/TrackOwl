@@ -59,7 +59,7 @@ let timesheetsCache: any = null;
 let timesheetsCacheKey: string | null = null;
 
 export function Timesheets() {
-    const { profile, managedMemberIds, managedProjectIds, displayTimezone, timezoneReady } = useAuth();
+    const { profile, managedMemberIds, managedProjectIds, displayTimezone, timezoneReady, isRep } = useAuth();
     const organizationId = profile?.organization_id;
     const navigate = useNavigate();
 
@@ -88,9 +88,12 @@ export function Timesheets() {
     // is concerned, so Back should undo it and return to the list — with it in
     // state, Back left Timesheets altogether and went wherever they came from.
     const [searchParams, setSearchParams] = useSearchParams();
-    const selectedMember = searchParams.get('member') || 'all';
+    // Reps are locked to their own member id — use the URL param for admins only
+    const selectedMember = isRep ? (profile?.id ?? 'all') : (searchParams.get('member') || 'all');
 
     const setSelectedMember = (id: string) => {
+        // Reps cannot change their member filter
+        if (isRep) return;
         setSearchParams(prev => {
             const next = new URLSearchParams(prev);
             // 'all' is the default, so it stays out of the URL: /timesheets and

@@ -29,14 +29,17 @@ interface MemberInfo {
 const MIN_REFRESH_FEEDBACK_MS = 650;
 
 export function ActivityBlocks() {
-    const { profile, managedMemberIds, displayTimezone } = useAuth();
+    const { profile, managedMemberIds, displayTimezone, isRep } = useAuth();
     const organizationId = profile?.organization_id;
 
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [membersLoaded, setMembersLoaded] = useState(false);
     const [members, setMembers] = useState<MemberInfo[]>([]);
-    const [selectedMemberId, setSelectedMemberId] = useState<string>('all');
+    // Reps are locked to their own member id; admins start on 'all'
+    const [selectedMemberId, setSelectedMemberId] = useState<string>(() =>
+        isRep ? (profile?.id ?? 'all') : 'all'
+    );
 
     const [selectedDate, setSelectedDate] = useState(() =>
         new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' })
@@ -71,7 +74,8 @@ export function ActivityBlocks() {
                 .eq('status', 'Active')
                 .order('full_name', { ascending: true });
 
-            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+            // Reps only load themselves; Managers and Clients see their managed subset
+            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
             if (isScoped && managedMemberIds) {
                 const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
                 query = query.in('id', memberIdsFilter);
@@ -226,7 +230,8 @@ export function ActivityBlocks() {
             description="10-minute granular activity windows — clicks, keystrokes, and active movement."
             actions={
                 <div className="flex flex-wrap items-center gap-3">
-                    {/* Member Filter */}
+                    {/* Member Filter — hidden for reps who see only their own data */}
+                    {!isRep && (
                     <div className="w-48">
                         <FilterSelect
                             icon={<Users className="w-4 h-4 text-text-muted" />}
@@ -238,6 +243,7 @@ export function ActivityBlocks() {
                             ]}
                         />
                     </div>
+                    )}
 
                     {/* Day Navigator */}
                     <div className="flex items-center h-10 bg-surface border border-border p-1 rounded-xl shadow-shell-sm">

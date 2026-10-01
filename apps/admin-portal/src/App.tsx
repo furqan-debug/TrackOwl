@@ -1,10 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AppShell } from './components/AppShell';
+import { PremiumRoute } from './components/access/PremiumRoute';
+import { RepRoute } from './components/access/RepRoute';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { Dashboard } from './components/Dashboard';
 import { Activity } from './pages/Activity';
 import { Timesheets } from './pages/Timesheets';
 import { Reports } from './pages/Reports';
-
 import { DailyTotals } from './pages/DailyTotals';
 import { AmountsOwed } from './pages/AmountsOwed';
 import { PaymentsReport } from './pages/PaymentsReport';
@@ -37,22 +39,17 @@ import { MemberTimeline } from './pages/MemberTimeline';
 import { Teams } from './pages/Teams';
 import { ChangePlan } from './pages/ChangePlan';
 import { Calendar } from './pages/Calendar';
-
 import { ProjectFormPage } from './pages/ProjectFormPage';
 import { MemberFormPage } from './pages/MemberFormPage';
 import { Billing } from './pages/Billing';
 import { Pricing } from './pages/Pricing';
 import { MockCheckout } from './pages/MockCheckout';
-import { PremiumRoute } from './components/access/PremiumRoute';
-
 import { SupportAdminLogin } from './pages/SupportAdminLogin';
 import { SupportAdminDashboard } from './pages/SupportAdminDashboard';
 import { SupportWidget } from './components/SupportWidget';
 import { SupportPage } from './pages/SupportPage';
-
 import { FavoritesProvider } from './context/FavoritesContext';
 import { AuthProvider } from './context/AuthContext';
-import { ProtectedRoute } from './components/ProtectedRoute';
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -142,39 +139,41 @@ function App() {
                 <AppShell>
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
-                    <Route path="/activity" element={<PremiumRoute><Activity /></PremiumRoute>} />
-                    <Route path="/timesheets" element={<Timesheets />} />
-                    <Route path="/reports" element={<PremiumRoute><Reports /></PremiumRoute>} />
-                    <Route path="/people" element={<People />} />
-                    <Route path="/people/:id/edit" element={<MemberFormPage />} />
-                    <Route path="/projects" element={<Projects />} />
-                    <Route path="/projects/new" element={<ProjectFormPage />} />
-                    <Route path="/projects/:id/edit" element={<ProjectFormPage />} />
-                    <Route path="/schedules" element={<Schedules />} />
-                    <Route path="/url-tracking" element={<PremiumRoute><UrlTracking /></PremiumRoute>} />
 
-                    <Route path="/member-timeline" element={<PremiumRoute><MemberTimeline /></PremiumRoute>} />
-                    <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/settings" element={<SettingsPage />} />
-                    <Route path="/settings/security" element={<SecurityPage />} />
-                    <Route path="/timesheets/approvals" element={<Approvals />} />
+                    {/* ── Pages open to all roles (data scoped per role) ─────── */}
+                    <Route path="/timesheets" element={<Timesheets />} />
+                    <Route path="/activity" element={<PremiumRoute><Activity /></PremiumRoute>} />
                     <Route path="/activity/apps" element={<PremiumRoute><AppUsage /></PremiumRoute>} />
                     <Route path="/activity/blocks" element={<PremiumRoute><ActivityBlocks /></PremiumRoute>} />
-                    <Route path="/locations" element={<Locations />} />
-                    <Route path="/locations/job-sites" element={<JobSites />} />
-                    <Route path="/projects/todos" element={<Todos />} />
-                    <Route path="/projects/clients" element={<Clients />} />
                     <Route path="/calendar" element={<Calendar />} />
-
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/settings/security" element={<SecurityPage />} />
+                    <Route path="/projects" element={<Projects />} />
+                    <Route path="/projects/todos" element={<Todos />} />
+                    <Route path="/reports" element={<PremiumRoute><Reports /></PremiumRoute>} />
                     <Route path="/reports/daily" element={<PremiumRoute><DailyTotals /></PremiumRoute>} />
-                    <Route path="/reports/owed" element={<PremiumRoute><AmountsOwed /></PremiumRoute>} />
-                    <Route path="/reports/payments" element={<PremiumRoute><PaymentsReport /></PremiumRoute>} />
-
-                    <Route path="/people/teams" element={<Teams />} />
-                    <Route path="/settings/billing" element={<Billing />} />
-                    <Route path="/settings/billing/change-plan" element={<ChangePlan />} />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/pricing/mock-checkout" element={<MockCheckout />} />
+
+                    {/* ── Admin-only pages (User role sees RepRoute AccessDenied) */}
+                    <Route path="/people" element={<RepRoute><People /></RepRoute>} />
+                    <Route path="/people/:id/edit" element={<RepRoute><MemberFormPage /></RepRoute>} />
+                    <Route path="/people/teams" element={<RepRoute><Teams /></RepRoute>} />
+                    <Route path="/timesheets/approvals" element={<RepRoute><Approvals /></RepRoute>} />
+                    <Route path="/schedules" element={<RepRoute><Schedules /></RepRoute>} />
+                    <Route path="/locations" element={<RepRoute><Locations /></RepRoute>} />
+                    <Route path="/locations/job-sites" element={<RepRoute><JobSites /></RepRoute>} />
+                    <Route path="/projects/clients" element={<RepRoute><Clients /></RepRoute>} />
+                    <Route path="/projects/new" element={<RepRoute><ProjectFormPage /></RepRoute>} />
+                    <Route path="/projects/:id/edit" element={<RepRoute><ProjectFormPage /></RepRoute>} />
+                    <Route path="/settings" element={<RepRoute><SettingsPage /></RepRoute>} />
+                    <Route path="/settings/billing" element={<RepRoute><Billing /></RepRoute>} />
+                    <Route path="/settings/billing/change-plan" element={<RepRoute><ChangePlan /></RepRoute>} />
+                    <Route path="/member-timeline" element={<RepRoute><PremiumRoute><MemberTimeline /></PremiumRoute></RepRoute>} />
+                    <Route path="/url-tracking" element={<RepRoute><PremiumRoute><UrlTracking /></PremiumRoute></RepRoute>} />
+                    <Route path="/reports/owed" element={<RepRoute><PremiumRoute><AmountsOwed /></PremiumRoute></RepRoute>} />
+                    <Route path="/reports/payments" element={<RepRoute><PremiumRoute><PaymentsReport /></PremiumRoute></RepRoute>} />
+
                     <Route path="*" element={<Navigate to="/dashboard" replace />} />
                   </Routes>
                 </AppShell>

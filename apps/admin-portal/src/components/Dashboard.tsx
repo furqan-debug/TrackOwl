@@ -100,7 +100,7 @@ interface DashStats {
     trendProductivity: number;
 }
 export function Dashboard() {
-    const { profile, managedMemberIds, managedProjectIds, isPremium, displayTimezone, timezoneReady } = useAuth();
+    const { profile, managedMemberIds, managedProjectIds, isPremium, isRep, displayTimezone, timezoneReady } = useAuth();
     const organizationId = profile?.organization_id;
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
@@ -251,7 +251,7 @@ export function Dashboard() {
             const prevWeekStartIso = prevWeekStartUtc.toISOString();
             const prevWeekEndIso = prevWeekEndUtc.toISOString();
 
-            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client';
+            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
             const memberIdsFilter = isScoped && managedMemberIds ? (managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000']) : null;
             const projectIdsFilter = isScoped && managedProjectIds ? (managedProjectIds.length > 0 ? managedProjectIds : ['00000000-0000-0000-0000-000000000000']) : null;
 
@@ -502,16 +502,16 @@ export function Dashboard() {
                 setRefreshing(false);
             }
         }
-    }, [viewDateStr, displayTimezone, timezoneReady, dateInitialized, isTodayView, organizationId, profile?.id, profile?.role, managedMemberIds, managedProjectIds]);
+    }, [viewDateStr, displayTimezone, timezoneReady, dateInitialized, isTodayView, organizationId, profile?.id, profile?.role, managedMemberIds, managedProjectIds, isRep]);
 
     useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
     return (
         <PageLayout
             maxWidth="full"
-            eyebrow="WORKSPACE ANALYTICS & INSIGHTS"
-            title="Team Overview"
-            description="Building the future of global work. Strategic leadership for the modern enterprise."
+            eyebrow={isRep ? "PERSONAL ANALYTICS & INSIGHTS" : "WORKSPACE ANALYTICS & INSIGHTS"}
+            title={isRep ? "My Overview" : "Team Overview"}
+            description={isRep ? `Welcome back, ${profile?.full_name ? (profile.full_name.includes('@') ? profile.full_name.split('@')[0] : profile.full_name.split(' ')[0]) : 'there'}. Here is your activity and productivity overview.` : "Building the future of global work. Strategic leadership for the modern enterprise."}
             actions={
                 <div className="flex items-center gap-2 md:gap-4">
                     {/* Same geometry as the Timesheets date control: h-12,
@@ -574,7 +574,7 @@ export function Dashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
                     <StatMetric
                         icon={<TrendingUp className="w-5 h-5" />}
-                        label="Team Focus"
+                        label={isRep ? "Focus Score" : "Team Focus"}
                         value={`${stats.avgActivityScore}%`}
                         sub="Avg activity score for this date"
                         trend={stats.trendFocus}
@@ -600,9 +600,9 @@ export function Dashboard() {
                     />
                     <StatMetric
                         icon={<Users className="w-5 h-5" />}
-                        label={isTodayView ? "Live Presence" : "Members Active"}
-                        value={onlineMembers.filter(m => m.status !== 'offline').length}
-                        sub={isTodayView ? "Members currently active" : "Tracked time on this date"}
+                        label={isRep ? "Live Status" : (isTodayView ? "Live Presence" : "Members Active")}
+                        value={isRep ? (onlineMembers[0]?.status ? (onlineMembers[0].status.charAt(0).toUpperCase() + onlineMembers[0].status.slice(1)) : 'Offline') : onlineMembers.filter(m => m.status !== 'offline').length}
+                        sub={isRep ? "Current tracking status" : (isTodayView ? "Members currently active" : "Tracked time on this date")}
                         accent="brand-gradient"
                         className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]"
                     />
@@ -777,7 +777,7 @@ export function Dashboard() {
                             <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 gap-3">
                                 <div className="min-w-0">
                                     <h3 className="text-[16px] md:text-[22px] font-bold mb-1 md:mb-2 tracking-[0.05em] truncate" style={{ color: 'var(--chart-gold)' }}>Visual Activity Stream</h3>
-                                    <p className="text-[11px] md:text-[14px] font-medium text-text-muted tracking-[0.1em]">Top 4 most active members</p>
+                                    <p className="text-[11px] md:text-[14px] font-medium text-text-muted tracking-[0.1em]">{isRep ? "Recent activity snapshots" : "Top 4 most active members"}</p>
                                 </div>
                                 <button
                                     onClick={() => navigate('/dashboard/activity')}
@@ -797,7 +797,7 @@ export function Dashboard() {
                                 )}
                                 <div className="h-full overflow-y-auto no-scrollbar divide-y divide-border">
                                     {userActivity.length === 0 ? (
-                                        <EmptyState icon={<Camera />} title="No activity recorded yet" description="Tracking samples will appear here once the team starts working." className="py-32" />
+                                        <EmptyState icon={<Camera />} title="No activity recorded yet" description={isRep ? "Tracking samples will appear here once you start working." : "Tracking samples will appear here once the team starts working."} className="py-32" />
                                     ) : (
                                         userActivity.map((user) => (
                                             <div key={user.userId} className="p-4 md:p-8 space-y-4 md:space-y-6 hover:bg-surface-hover transition-all group">
@@ -880,8 +880,8 @@ export function Dashboard() {
                         <div className="bg-surface rounded-2xl shadow-premium overflow-hidden flex flex-col h-full border border-border">
                             <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0">
                                 <div>
-                                    <h3 className="text-[15px] md:text-[18px] font-bold tracking-tight mb-1 md:mb-2" style={{ color: 'var(--chart-gold)' }}>{isTodayView ? 'Live Directory' : 'Team Directory'}</h3>
-                                    <p className="text-[11px] md:text-[13px] font-bold text-text-muted tracking-[0.1em]">{isTodayView ? 'Real-time status updates' : 'Status for the selected date'}</p>
+                                    <h3 className="text-[15px] md:text-[18px] font-bold tracking-tight mb-1 md:mb-2" style={{ color: 'var(--chart-gold)' }}>{isRep ? 'My Presence' : (isTodayView ? 'Live Directory' : 'Team Directory')}</h3>
+                                    <p className="text-[11px] md:text-[13px] font-bold text-text-muted tracking-[0.1em]">{isRep ? 'Current status and tracked time' : (isTodayView ? 'Real-time status updates' : 'Status for the selected date')}</p>
                                 </div>
                                 {isTodayView && (
                                     <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-success/10 border border-success/20">
@@ -895,7 +895,7 @@ export function Dashboard() {
                                 <table className="w-full text-left">
                                     <thead className="sticky top-0 bg-surface/90 backdrop-blur-md z-10">
                                         <tr className="border-b border-border">
-                                            <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Team Member</th>
+                                            <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">{isRep ? 'Member' : 'Team Member'}</th>
                                             <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-right">Performance</th>
                                         </tr>
                                     </thead>

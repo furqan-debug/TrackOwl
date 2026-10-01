@@ -55,7 +55,8 @@ export const navStructure: NavGroup[] = [
         children: [
             { name: 'Projects', path: '/dashboard/projects' },
             { name: 'To-Dos', path: '/dashboard/projects/todos' },
-            { name: 'Clients', path: '/dashboard/projects/clients', allowedRoles: ['Owner', 'Admin', 'Manager'] },
+            // Clients management is admin-only — User role not included
+            { name: 'Clients', path: '/dashboard/projects/clients', allowedRoles: ['Owner', 'Admin', 'Manager', 'Viewer'] },
         ]
     },
     { 
@@ -71,6 +72,7 @@ export const navStructure: NavGroup[] = [
         requiresPremium: true,
     },
     {
+        // People section is entirely admin/manager/viewer — User role excluded
         name: 'People',
         icon: Users,
         allowedRoles: ['Owner', 'Admin', 'Manager', 'Viewer'],
@@ -85,8 +87,11 @@ export const navStructure: NavGroup[] = [
         path: '/dashboard/settings',
         allowedRoles: ['Owner', 'Admin', 'Manager', 'User', 'Viewer'],
         children: [
-            { name: 'Org Settings', path: '/dashboard/settings', allowedRoles: ['Owner'] },
+            // Org-level settings — admin/owner only
+            { name: 'Org Settings', path: '/dashboard/settings', allowedRoles: ['Owner', 'Admin'] },
+            // Security & 2FA is personal — all roles including User
             { name: 'Security & 2FA', path: '/dashboard/settings/security' },
+            // Billing — owner only
             { name: 'Billing & Plans', path: '/dashboard/settings/billing', allowedRoles: ['Owner'] },
         ],
     },

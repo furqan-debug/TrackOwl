@@ -76,7 +76,7 @@ function nextOccurrence(h: Holiday, fromStr: string): string {
 const MIN_REFRESH_FEEDBACK_MS = 650;
 
 export function Calendar() {
-    const { profile, displayTimezone } = useAuth();
+    const { profile, displayTimezone, isRep } = useAuth();
     const orgTz = displayTimezone || 'UTC';
     const canManage = profile?.role === 'Owner' || profile?.role === 'Admin' || profile?.role === 'Manager';
 
@@ -155,7 +155,8 @@ export function Calendar() {
             setRequests((requestsData || [])
                 // Defensive org scoping: time_off_requests has no organization_id
                 // column of its own, so only keep rows for members of this org.
-                .filter(r => orgMemberIds.has(r.member_id))
+                // If the user is a rep, only show their own requests.
+                .filter(r => isRep ? r.member_id === profile?.id : orgMemberIds.has(r.member_id))
                 .map(r => ({ ...r, member_name: memberMap[r.member_id] || 'Unknown Member' })));
 
             // Superseded while this was in flight — a newer month is authoritative.

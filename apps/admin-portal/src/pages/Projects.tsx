@@ -52,7 +52,7 @@ interface Project {
 
 export function Projects() {
     const { profile, managedProjectIds } = useAuth();
-    const isViewer = profile?.role === 'Viewer';
+    const isViewer = profile?.role === 'Viewer' || profile?.role === 'User';
     const navigate = useNavigate();
 
     const [projects, setProjects] = useState<Project[]>([]);

@@ -69,7 +69,7 @@ interface Project {
 const MIN_REFRESH_FEEDBACK_MS = 650;
 
 export function Todos() {
-    const { profile } = useAuth();
+    const { profile, isRep } = useAuth();
     const isViewer = profile?.role === 'Viewer';
 
     const [searchTerm, setSearchTerm] = useState('');
@@ -423,8 +423,17 @@ export function Todos() {
         shownMembers.length > 0 &&
         shownMembers.every(m => formData.assignee_ids.includes(m.id));
 
+    // If the user is a rep, they only see tasks assigned to them
+    const baseTodos = useMemo(() => {
+        if (!isRep || !profile?.id) return todos;
+        return todos.filter(t => 
+            t.assignee_id === profile.id || 
+            (t.todo_assignees && t.todo_assignees.some(a => a.member_id === profile.id))
+        );
+    }, [todos, isRep, profile?.id]);
+
     const filteredTodos = useMemo(() => {
-        return todos.filter(todo => {
+        return baseTodos.filter(todo => {
             const query = searchTerm.toLowerCase();
 
             const matchesSearch =
@@ -448,7 +457,7 @@ export function Todos() {
             );
         });
     }, [
-        todos,
+        baseTodos,
         searchTerm,
         statusFilter
     ]);
@@ -457,7 +466,7 @@ export function Todos() {
         <PageLayout
             maxWidth="full"
             title="Tasks & Objectives"
-            description="Fine-grained management of project scope and team deliverables."
+            description={isRep ? "Manage and track your assigned tasks and objectives." : "Fine-grained management of project scope and team deliverables."}
             actions={
                 <div className="flex items-center gap-2 sm:gap-4 max-w-full min-w-0">
                     {/* View switcher */}
@@ -531,7 +540,7 @@ export function Todos() {
                             }
                             label="In Flight"
                             value={
-                                todos.filter(
+                                baseTodos.filter(
                                     t => t.status !== 'Done'
                                 ).length
                             }
@@ -545,7 +554,7 @@ export function Todos() {
                             }
                             label="Resolved"
                             value={
-                                todos.filter(
+                                baseTodos.filter(
                                     t => t.status === 'Done'
                                 ).length
                             }
@@ -557,15 +566,17 @@ export function Todos() {
                             icon={
                                 <ClipboardList className="w-5 h-5" />
                             }
-                            label="Resource Load"
+                            label={isRep ? "Assigned" : "Resource Load"}
                             value={
-                                todos.filter(
-                                    t =>
-                                        getTodoAssigneeIds(t)
-                                            .length > 0
-                                ).length
+                                isRep
+                                    ? baseTodos.length
+                                    : baseTodos.filter(
+                                        t =>
+                                            getTodoAssigneeIds(t)
+                                                .length > 0
+                                    ).length
                             }
-                            sub="Tasks with owners"
+                            sub={isRep ? "Your assigned tasks" : "Tasks with owners"}
                             accent="brand-gradient"
                         />
                     </div>

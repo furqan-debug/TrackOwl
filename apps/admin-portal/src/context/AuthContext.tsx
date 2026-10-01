@@ -42,6 +42,10 @@ interface AuthContextType {
     isPremium: boolean;
     /** True when org is on Basic plan (or free/None) — opposite of isPremium (excluding locked) */
     isBasic: boolean;
+    /** True when signed-in user has role === 'User' (regular rep/employee) */
+    isRep: boolean;
+    /** True when the portal should show only the signed-in member's own data (currently same as isRep) */
+    isSelfOnly: boolean;
     managedMemberIds: string[] | null;
     managedProjectIds: string[] | null;
     aalLevel: 'aal1' | 'aal2' | null;
@@ -106,6 +110,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const isBasic = !isPremium && 
                     organization?.subscription_status !== 'Locked' && 
                     organization?.subscription_status !== 'None';
+
+    // Derived role flags — computed from profile
+    const isRep = profile?.role === 'User';
+    /** True when the portal should restrict all data views to the signed-in member only */
+    const isSelfOnly = isRep;
 
     const fetchAal = async () => {
         try {
@@ -286,7 +295,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         setManagedProjectIds([]);
                         setManagedMemberIds([]);
                     }
+                } else if (member.role === 'User') {
+                    // User (rep) sees only their own data in self-service mode
+                    setManagedMemberIds([member.id]);
+                    setManagedProjectIds(null);
                 } else {
+                    // Owner / Admin / Viewer: unrestricted (null = no filter applied)
                     setManagedMemberIds(null);
                     setManagedProjectIds(null);
                 }
@@ -459,7 +473,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                             setManagedProjectIds([]);
                             setManagedMemberIds([]);
                         }
+                    } else if (member.role === 'User') {
+                        // User (rep) sees only their own data in self-service mode
+                        setManagedMemberIds([member.id]);
+                        setManagedProjectIds(null);
                     } else {
+                        // Owner / Admin / Viewer: unrestricted
                         setManagedMemberIds(null);
                         setManagedProjectIds(null);
                     }
@@ -514,6 +533,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             error,
             isPremium,
             isBasic,
+            isRep,
+            isSelfOnly,
             aalLevel,
             nextAalLevel,
             refreshAal,
