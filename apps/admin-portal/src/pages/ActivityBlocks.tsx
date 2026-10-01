@@ -24,6 +24,10 @@ interface MemberInfo {
     role?: string;
 }
 
+/** Shortest time a pressed refresh stays visible, so a fast query still shows
+    that the click registered. Matches Reports, App Usage and To-Dos. */
+const MIN_REFRESH_FEEDBACK_MS = 650;
+
 export function ActivityBlocks() {
     const { profile, managedMemberIds, displayTimezone } = useAuth();
     const organizationId = profile?.organization_id;
@@ -84,6 +88,7 @@ export function ActivityBlocks() {
     const fetchBlocks = useCallback(async (isSilent = false, forceRefresh = false) => {
         if (!organizationId || !membersLoaded) return;
         const mySeq = ++requestSeqRef.current;
+        const startedAt = Date.now();
 
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
@@ -110,6 +115,20 @@ export function ActivityBlocks() {
             console.error('Error fetching activity blocks:', err);
         } finally {
             if (mySeq === requestSeqRef.current) {
+                // Hold the syncing animation long enough to read. The query
+                // answers in a fraction of a second, so clearing it the moment
+                // the rows land made it flash past — the page looked like it
+                // had ignored the button. Only on a pressed refresh; a first
+                // load clears as soon as the data is there.
+                if (forceRefresh) {
+                    const elapsed = Date.now() - startedAt;
+                    if (elapsed < MIN_REFRESH_FEEDBACK_MS) {
+                        await new Promise(resolve =>
+                            setTimeout(resolve, MIN_REFRESH_FEEDBACK_MS - elapsed)
+                        );
+                    }
+                }
+
                 setLoading(false);
                 setRefreshing(false);
             }
