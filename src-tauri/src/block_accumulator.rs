@@ -117,15 +117,20 @@ impl BlockAccumulator {
         let server_now = chrono::Utc::now() + chrono::Duration::seconds(self.server_offset_secs);
         let block_start = self.block_start.take().unwrap_or(server_now);
 
-        // The block_end is the recorded_at of the last sample in this block
-        let last_sample_time = samples.last()
-            .and_then(|s| chrono::DateTime::parse_from_rfc3339(&s.recorded_at).ok())
-            .map(|dt| dt.with_timezone(&chrono::Utc))
-            .unwrap_or_else(|| block_start + chrono::Duration::seconds(600));
-        let block_end = if last_sample_time >= block_start {
-            last_sample_time
-        } else {
+        // For a full block (10 samples = 10 minutes), block_end is exactly block_start + 600 seconds.
+        // For a partial flush, use the last sample's time if available.
+        let block_end = if samples.len() >= SAMPLES_PER_BLOCK {
             block_start + chrono::Duration::seconds(600)
+        } else {
+            let last_sample_time = samples.last()
+                .and_then(|s| chrono::DateTime::parse_from_rfc3339(&s.recorded_at).ok())
+                .map(|dt| dt.with_timezone(&chrono::Utc))
+                .unwrap_or_else(|| block_start + chrono::Duration::seconds(600));
+            if last_sample_time >= block_start {
+                last_sample_time
+            } else {
+                block_start + chrono::Duration::seconds(600)
+            }
         };
 
         // Initialize block_start of the next block to the exact end of this block
