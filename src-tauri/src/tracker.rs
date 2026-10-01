@@ -493,33 +493,29 @@ pub fn start_sample_loop_inner(
             }
         }
 
+        let mut next_tick = std::time::Instant::now();
         loop {
-            let sleep_start = std::time::Instant::now();
-            thread::sleep(Duration::from_millis(tick_ms));
+            next_tick += Duration::from_millis(tick_ms);
+            let now = std::time::Instant::now();
+            if next_tick > now {
+                thread::sleep(next_tick - now);
+            } else {
+                let lag_ms = (now - next_tick).as_millis() as u64;
+                if lag_ms > 60_000 {
+                    eprintln!("[tracker] ⚠️ System sleep/hibernation detected (sleep gap: {}ms). Auto-terminating interrupted session.", lag_ms);
+                    if let Some(partial) = accumulator.flush_partial() {
+                        flush_block_record(&partial, &db, &cfg, &auth_token);
+                    }
+                    *running.lock().unwrap() = false;
+                    *tracker_done.lock().unwrap() = true;
+                    let _ = app.emit("tracking-interrupted-sleep", ());
+                    break;
+                }
+                next_tick = now;
+            }
 
             // Check running on every tick — pause takes effect within 1 second
             if !*running.lock().unwrap() { break; }
-
-            let sleep_actual_elapsed = sleep_start.elapsed().as_millis() as u64;
-
-            // System sleep / hibernation / power-loss gap detection
-            // If the actual time suspended in thread::sleep(1s) exceeded 60 seconds,
-            // the operating system was suspended or put to sleep.
-            if sleep_actual_elapsed > 60_000 {
-                eprintln!("[tracker] ⚠️ System sleep/hibernation detected (sleep gap: {}ms). Auto-terminating interrupted session.", sleep_actual_elapsed);
-                
-                // Flush accumulator before exiting to preserve active work prior to sleep.
-                // Use flush_partial() which caps block_end at last_sample_time + 60s,
-                // instead of Utc::now() which is the moment the machine WOKE UP (hours later).
-                if let Some(partial) = accumulator.flush_partial() {
-                    flush_block_record(&partial, &db, &cfg, &auth_token);
-                }
-
-                *running.lock().unwrap() = false;
-                *tracker_done.lock().unwrap() = true;
-                let _ = app.emit("tracking-interrupted-sleep", ());
-                break;
-            }
 
             ticks_elapsed += 1;
             if ticks_elapsed < ticks_per_sample {

@@ -1,19 +1,22 @@
 -- =============================================================================
 -- Migration: 20261002000001_fix_block_duration_rounding.sql
 -- 
--- Fixes the 7-minute rounding discrepancy between Activity Blocks (8h 0m)
--- and other admin portal pages (Timesheets, Reports, Dashboard, Screenshots)
--- which were reporting 7h 53m for 48 ten-minute blocks.
+-- Fixes the 8-minute discrepancy between real tracked wall-clock time
+-- and admin portal pages (Timesheets, Reports, Dashboard, Screenshots).
 --
 -- Root Cause:
--- Full 10-minute blocks flush after 10 samples (~591.5 seconds due to timer
--- execution offsets). When aggregating LEAST(EXTRACT(EPOCH FROM block_end - block_start), 600),
--- 48 blocks * ~591.5s = 28,392s / 60 = 473 minutes (7h 53m), losing 7 minutes.
+-- During tracking, loop execution delays cause each 10-minute block to span
+-- ~605-640 seconds of real wall-clock time.
+-- The previous SQL cap of LEAST(..., 600) was truncating each normal block
+-- to exactly 600s, discarding 10-30s of actual user work per block.
+-- Over 48 blocks (8 hours of continuous work), this truncation discarded
+-- ~494 seconds (8 minutes), showing 7h 53m instead of 8h 1m.
 --
 -- Solution:
--- For any block whose duration is >= 540s (the 10th sample threshold / 9 mins),
--- it is treated as a full 10-minute block (600s). Partial blocks (< 540s)
--- retain their exact elapsed seconds.
+-- Set the per-block cap to 720 seconds (12 minutes).
+-- This gives 100% credit for actual worked seconds during normal blocks
+-- (including loop delays), while still strictly protecting against sleep/gap
+-- inflation (> 12 minutes).
 -- =============================================================================
 
 -- 1. Fix get_sessions_activity_stats
@@ -40,12 +43,7 @@ AS $function$
   block_stats AS (
     SELECT
       br.session_id AS b_session_id,
-      COALESCE(ROUND(SUM(
-        CASE
-          WHEN EXTRACT(EPOCH FROM (br.block_end - br.block_start)) >= 540 THEN 600
-          ELSE LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 600)
-        END
-      ) FILTER (WHERE br.credited = true) / 60), 0)::numeric AS duration_mins,
+      COALESCE(ROUND(SUM(LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 720)) FILTER (WHERE br.credited = true) / 60), 0)::numeric AS duration_mins,
       COUNT(*) FILTER (WHERE br.credited = true)::bigint                                  AS sample_count,
       COALESCE(SUM(br.activity_percent) FILTER (WHERE br.credited = true), 0)::numeric     AS activity_sum,
       COALESCE(AVG(br.activity_percent) FILTER (WHERE br.credited = true), 0)::numeric     AS activity_percent,
@@ -102,17 +100,12 @@ DECLARE
   v_user_daily jsonb;
   v_apps       jsonb;
 BEGIN
-  -- Daily totals (org-wide) from block_records (clamped to 600s max per block, full blocks count as 600s)
+  -- Daily totals (org-wide) from block_records (clamped to 720s max per block)
   SELECT jsonb_agg(row_to_json(t)) INTO v_daily
   FROM (
     SELECT
       business_date::text AS date,
-      COALESCE(ROUND(SUM(
-        CASE
-          WHEN EXTRACT(EPOCH FROM (block_end - block_start)) >= 540 THEN 600
-          ELSE LEAST(EXTRACT(EPOCH FROM (block_end - block_start)), 600)
-        END
-      ) FILTER (WHERE credited = true) / 60), 0)::bigint AS total_minutes,
+      COALESCE(ROUND(SUM(LEAST(EXTRACT(EPOCH FROM (block_end - block_start)), 720)) FILTER (WHERE credited = true) / 60), 0)::bigint AS total_minutes,
       COALESCE(SUM(activity_percent) FILTER (WHERE credited = true), 0)::numeric AS activity_sum,
       COUNT(*) FILTER (WHERE credited = true) AS sample_count
     FROM public.block_records
@@ -124,18 +117,13 @@ BEGIN
     ORDER BY business_date ASC
   ) t;
 
-  -- Per-user daily totals from block_records (clamped to 600s max per block, full blocks count as 600s)
+  -- Per-user daily totals from block_records (clamped to 720s max per block)
   SELECT jsonb_agg(row_to_json(t)) INTO v_user_daily
   FROM (
     SELECT
       user_id,
       business_date::text AS date,
-      COALESCE(ROUND(SUM(
-        CASE
-          WHEN EXTRACT(EPOCH FROM (block_end - block_start)) >= 540 THEN 600
-          ELSE LEAST(EXTRACT(EPOCH FROM (block_end - block_start)), 600)
-        END
-      ) FILTER (WHERE credited = true) / 60), 0)::bigint AS total_minutes,
+      COALESCE(ROUND(SUM(LEAST(EXTRACT(EPOCH FROM (block_end - block_start)), 720)) FILTER (WHERE credited = true) / 60), 0)::bigint AS total_minutes,
       COALESCE(SUM(activity_percent) FILTER (WHERE credited = true), 0)::numeric AS activity_sum,
       COUNT(*) FILTER (WHERE credited = true) AS sample_count
     FROM public.block_records
@@ -146,17 +134,12 @@ BEGIN
     GROUP BY user_id, business_date
   ) t;
 
-  -- App usage totals from block_records (clamped to 600s max per block, full blocks count as 600s)
+  -- App usage totals from block_records (clamped to 720s max per block)
   SELECT jsonb_agg(row_to_json(t)) INTO v_apps
   FROM (
     SELECT
       app_name,
-      COALESCE(ROUND(SUM(
-        CASE
-          WHEN EXTRACT(EPOCH FROM (block_end - block_start)) >= 540 THEN 600
-          ELSE LEAST(EXTRACT(EPOCH FROM (block_end - block_start)), 600)
-        END
-      ) / 60), 0)::bigint AS total_minutes,
+      COALESCE(ROUND(SUM(LEAST(EXTRACT(EPOCH FROM (block_end - block_start)), 720)) / 60), 0)::bigint AS total_minutes,
       AVG(activity_percent) AS activity_sum
     FROM public.block_records
     WHERE organization_id = p_org_id
@@ -262,14 +245,9 @@ BEGIN
     );
 
   IF v_has_blocks THEN
-    -- Read from block_records (clamped to 600s max per block, full blocks count as 600s)
+    -- Read from block_records (clamped to 720s max per block)
     SELECT 
-      COALESCE(ROUND(SUM(
-        CASE
-          WHEN EXTRACT(EPOCH FROM (br.block_end - br.block_start)) >= 540 THEN 600
-          ELSE LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 600)
-        END
-      ) FILTER (WHERE br.credited = true) / 60), 0)::int,
+      COALESCE(ROUND(SUM(LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 720)) FILTER (WHERE br.credited = true) / 60), 0)::int,
       COALESCE(SUM(br.activity_percent) FILTER (WHERE br.credited = true), 0)::bigint,
       COALESCE(COUNT(*) FILTER (WHERE br.credited = true), 0)::int,
       COUNT(DISTINCT s.project_id),
@@ -291,14 +269,9 @@ BEGIN
         OR (p_project_ids IS NOT NULL AND s.project_id = ANY(p_project_ids))
       );
 
-    -- Prev period from block_records (clamped to 600s, full blocks count as 600s)
+    -- Prev period from block_records (clamped to 720s)
     SELECT 
-      COALESCE(ROUND(SUM(
-        CASE
-          WHEN EXTRACT(EPOCH FROM (br.block_end - br.block_start)) >= 540 THEN 600
-          ELSE LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 600)
-        END
-      ) FILTER (WHERE br.credited = true) / 60), 0)::int,
+      COALESCE(ROUND(SUM(LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 720)) FILTER (WHERE br.credited = true) / 60), 0)::int,
       COALESCE(SUM(br.activity_percent) FILTER (WHERE br.credited = true), 0)::bigint,
       COALESCE(COUNT(*) FILTER (WHERE br.credited = true), 0)::int
     INTO 
@@ -340,18 +313,13 @@ BEGIN
       LIMIT 20
     ) t;
 
-    -- User stats from block_records (clamped to 600s, full blocks count as 600s)
+    -- User stats from block_records (clamped to 720s)
     SELECT COALESCE(jsonb_object_agg(user_id::text, json_build_object('mins', mins, 'activity_sum', act_sum, 'cnt', cnt)), '{}'::jsonb)
     INTO v_user_stats
     FROM (
       SELECT 
         br.user_id, 
-        COALESCE(ROUND(SUM(
-          CASE
-            WHEN EXTRACT(EPOCH FROM (br.block_end - br.block_start)) >= 540 THEN 600
-            ELSE LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 600)
-          END
-        ) FILTER (WHERE br.credited = true) / 60), 0)::int as mins, 
+        COALESCE(ROUND(SUM(LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 720)) FILTER (WHERE br.credited = true) / 60), 0)::int as mins, 
         COALESCE(SUM(br.activity_percent) FILTER (WHERE br.credited = true), 0) as act_sum,
         COUNT(*) FILTER (WHERE br.credited = true) as cnt
       FROM public.block_records br
@@ -367,18 +335,13 @@ BEGIN
       GROUP BY br.user_id
     ) t;
 
-    -- Project stats from block_records (clamped to 600s, full blocks count as 600s)
+    -- Project stats from block_records (clamped to 720s)
     SELECT COALESCE(jsonb_object_agg(project_id::text, json_build_object('mins', mins, 'activity_sum', act_sum, 'cnt', cnt)), '{}'::jsonb)
     INTO v_proj_stats
     FROM (
       SELECT 
         s.project_id, 
-        COALESCE(ROUND(SUM(
-          CASE
-            WHEN EXTRACT(EPOCH FROM (br.block_end - br.block_start)) >= 540 THEN 600
-            ELSE LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 600)
-          END
-        ) FILTER (WHERE br.credited = true) / 60), 0)::int as mins, 
+        COALESCE(ROUND(SUM(LEAST(EXTRACT(EPOCH FROM (br.block_end - br.block_start)), 720)) FILTER (WHERE br.credited = true) / 60), 0)::int as mins, 
         COALESCE(SUM(br.activity_percent) FILTER (WHERE br.credited = true), 0) as act_sum,
         COUNT(*) FILTER (WHERE br.credited = true) as cnt
       FROM public.block_records br
