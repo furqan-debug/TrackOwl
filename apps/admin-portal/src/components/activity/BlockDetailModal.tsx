@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
     X, Mouse, Keyboard, Clock, Activity,
     Loader2, Image as ImageIcon,
@@ -105,9 +106,22 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
         pct >= 30 ? 'bg-accent' :
         'bg-rose-500';
 
-    return (
+    /**
+     * Rendered on the body rather than where it sits in the page.
+     *
+     * position: fixed is measured against the viewport only while no ancestor
+     * has a transform — one of those becomes the containing block instead and
+     * starts a stacking context that traps any z-index inside it. PageLayout
+     * animates itself in with a transform and this dialog renders inside it,
+     * which is why page content appeared through and over the dialog, and why
+     * the backdrop had been pushed to near-opaque black to hide it.
+     *
+     * Out on the body the dialog stacks above the page properly, so the
+     * backdrop can go back to the translucent one every other dialog uses.
+     */
+    return createPortal(
         <div
-            className="fixed inset-0 z-50 overflow-y-auto bg-black/90 backdrop-blur-md animate-in fade-in duration-200"
+            className="fixed inset-0 z-[100] overflow-y-auto bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200"
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
             {/* The close-on-outside-click has to live here, not only on the
@@ -384,7 +398,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
             {/* Enlarged Screenshot Lightbox */}
             {lightboxIndex !== null && screenshots[lightboxIndex] && (
                 <div
-                    className="fixed inset-0 z-60 bg-black/80 flex items-center justify-center py-4 px-4 sm:px-24"
+                    className="fixed inset-0 z-[110] bg-black/80 flex items-center justify-center py-4 px-4 sm:px-24"
                     onClick={() => setLightboxIndex(null)}
                 >
                     {/* w-fit so this box is the width of the image. The arrows hang
@@ -441,6 +455,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                     </div>
                 </div>
             )}
-        </div>
+        </div>,
+        document.body
     );
 }
