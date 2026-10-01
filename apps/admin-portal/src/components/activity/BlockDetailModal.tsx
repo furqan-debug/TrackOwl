@@ -110,7 +110,15 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
             className="fixed inset-0 z-50 overflow-y-auto bg-black/90 backdrop-blur-md animate-in fade-in duration-200"
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-            <div className="flex min-h-full items-start justify-center p-4 pt-16 pb-10">
+            {/* The close-on-outside-click has to live here, not only on the
+                scroll container above. This wrapper fills that container, so
+                every click on the dark area lands on THIS element — which made
+                e.target !== e.currentTarget up there, and the dialog never
+                closed however far outside you clicked. */}
+            <div
+                className="flex min-h-full items-start justify-center p-4 pt-16 pb-10"
+                onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+            >
             {/* Modal Container */}
             <div className="bg-surface border border-border rounded-2xl w-full max-w-3xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
 
