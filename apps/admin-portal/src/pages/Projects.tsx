@@ -51,7 +51,7 @@ interface Project {
 // The cache lives in lib/projectsCache so the project form can invalidate it.
 
 export function Projects() {
-    const { profile, managedProjectIds } = useAuth();
+    const { profile, managedProjectIds, isRep } = useAuth();
     const isViewer = profile?.role === 'Viewer' || profile?.role === 'User';
     const navigate = useNavigate();
 
@@ -62,7 +62,7 @@ export function Projects() {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
     const fetchProjects = useCallback(async (isSilent = false, forceRefresh = false) => {
-        const cacheKey = activeTab;
+        const cacheKey = `${profile?.id}_${activeTab}`;
         const cached = forceRefresh ? null : readProjectsCache(cacheKey);
         if (cached) {
             setProjects(cached);
@@ -87,11 +87,12 @@ export function Projects() {
                 .eq('status', activeTab)
                 .order('created_at', { ascending: false });
                 
-            if (profile?.role === 'Manager' && managedProjectIds) {
-                if (managedProjectIds.length > 0) {
+            const isScoped = (profile?.role === 'Manager' || isRep) && managedProjectIds !== null;
+            if (isScoped) {
+                if (managedProjectIds && managedProjectIds.length > 0) {
                     query = query.in('id', managedProjectIds);
                 } else {
-                    query = query.in('id', ['none']);
+                    query = query.in('id', ['00000000-0000-0000-0000-000000000000']);
                 }
             }
 
@@ -117,7 +118,7 @@ export function Projects() {
         } finally {
             setLoading(false);
         }
-    }, [activeTab]);
+    }, [activeTab, profile?.id, profile?.role, isRep, managedProjectIds]);
 
     useEffect(() => {
         fetchProjects();
@@ -170,7 +171,7 @@ export function Projects() {
             maxWidth="full"
             eyebrow="PORTFOLIO & ASSETS"
             title="Projects"
-            description="Strategic oversight of workspace projects and team allocations."
+            description={isRep ? "Projects and allocations assigned to you." : "Strategic oversight of workspace projects and team allocations."}
             actions={
                 <div className="flex items-center gap-4">
                     <div className="bg-surface border border-border p-1.5 rounded-2xl flex items-center shadow-shell-sm">
