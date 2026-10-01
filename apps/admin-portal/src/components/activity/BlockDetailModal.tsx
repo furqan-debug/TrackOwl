@@ -121,7 +121,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
      */
     return createPortal(
         <div
-            className="fixed inset-0 z-[100] overflow-y-auto bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200"
+            className="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-200"
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
             {/* The close-on-outside-click has to live here, not only on the
@@ -130,11 +130,15 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                 e.target !== e.currentTarget up there, and the dialog never
                 closed however far outside you clicked. */}
             <div
-                className="flex min-h-full items-start justify-center p-4 pt-16 pb-10"
+                className="flex min-h-full items-center justify-center p-4"
                 onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
             >
             {/* Modal Container */}
-            <div className="bg-surface border border-border rounded-2xl w-full max-w-3xl flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+            {/* max-h plus a scrolling body is what keeps the header and the
+                footer in view while the middle scrolls. Without the cap the card
+                grew as tall as its content and the whole page scrolled instead,
+                carrying the Close button off the bottom of the screen. */}
+            <div className="bg-surface border border-border rounded-2xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
 
                 {/* ── Header ── */}
                 <div className="px-6 py-4 border-b border-border flex items-center justify-between shrink-0 bg-surface">
@@ -248,7 +252,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                 </div>
 
                 {/* ── Body ── */}
-                <div className="p-6 space-y-6">
+                <div className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto">
 
                     {/* Screenshots Filmstrip */}
                     {screenshots.length > 0 && (
