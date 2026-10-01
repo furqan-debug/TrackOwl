@@ -156,7 +156,13 @@ export function ActivityBlocks() {
     // Aggregate KPI Stats
     const stats = useMemo(() => {
         const totalBlocks = blocks.length;
-        const totalTrackedSeconds = totalBlocks * 600;
+        const totalTrackedSeconds = blocks.reduce((acc, b) => {
+            if (b.credited === false) return acc;
+            const s = new Date(b.block_start).getTime();
+            const e = new Date(b.block_end).getTime();
+            const diff = Math.max(0, (e - s) / 1000);
+            return acc + Math.min(diff, 720);
+        }, 0);
         const totalClicks = blocks.reduce((acc, b) => acc + (b.mouse_clicks || 0), 0);
         const totalKeys = blocks.reduce((acc, b) => acc + (b.key_presses || 0), 0);
 

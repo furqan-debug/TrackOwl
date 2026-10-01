@@ -185,7 +185,7 @@ export const reportService = {
         const startMs = new Date(b.block_start).getTime();
         const endMs = new Date(b.block_end).getTime();
         const rawSecs = Math.max(0, (endMs - startMs) / 1000);
-        const durSecs = rawSecs >= 540 ? 600 : Math.min(600, rawSecs);
+        const durSecs = Math.min(720, rawSecs);
         const durHours = durSecs / 3600;
 
         let slotIdx = -1;
