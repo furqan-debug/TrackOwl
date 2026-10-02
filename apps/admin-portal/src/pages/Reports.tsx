@@ -639,6 +639,7 @@ export function Reports() {
                         {showRangeDropdown && (
                             <div className="absolute top-full right-0 mt-3 z-50 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 duration-200">
                                 <DateRangePicker
+                                    isRep={isRep}
                                     range={range}
                                     setRange={setRange}
                                     setOffset={setOffset}
@@ -1091,7 +1092,16 @@ function CustomTooltip({ active, payload, label, unit }: any) {
     return null;
 }
 
-function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any) {
+/**
+ * Two looks, by role.
+ *
+ * e27d0d9 redesigned this popup; the redesign was kept for a rep's own
+ * Reports page and undone for anyone who manages other people, so admins,
+ * managers and owners see what they had before. The differences are spacing,
+ * the preset button styling and the footer — the behaviour is one
+ * implementation either way.
+ */
+function DateRangePicker({ isRep, range, setRange, setOffset, onApply, onCancel }: any) {
     const [leftMonth, setLeftMonth] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
     const [selStart, setSelStart] = useState<Date | null>(null);
     const [selEnd, setSelEnd] = useState<Date | null>(null);
@@ -1126,36 +1136,70 @@ function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any)
     };
 
     return (
-        <div className="bg-surface border border-border rounded-2xl shadow-2xl flex flex-col lg:flex-row p-1 w-[min(780px,calc(100vw-2rem))] max-h-[80vh] overflow-y-auto">
-            <div className="flex-1 flex flex-col sm:flex-row border-b lg:border-b-0 lg:border-r border-border p-2 gap-4 min-w-0">
-                <MonthView month={leftMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
-                <MonthView month={rightMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
+        <div className={clsx(
+            "bg-surface border border-border rounded-2xl flex flex-col lg:flex-row overflow-y-auto",
+            isRep
+                ? "shadow-premium p-4 w-[min(740px,calc(100vw-2rem))] max-h-[85vh] gap-4"
+                : "shadow-2xl p-1 w-[min(780px,calc(100vw-2rem))] max-h-[80vh]"
+        )}>
+            <div className={clsx(
+                "flex-1 flex flex-col sm:flex-row border-b lg:border-b-0 lg:border-r min-w-0",
+                isRep
+                    ? "border-border/60 pb-4 lg:pb-0 lg:pr-4 gap-6"
+                    : "border-border p-2 gap-4"
+            )}>
+                <MonthView isRep={isRep} month={leftMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
+                <MonthView isRep={isRep} month={rightMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
             </div>
-            <div className="w-full lg:w-44 shrink-0 p-4 flex flex-col gap-2 bg-surface-hover/30">
+            <div className={clsx(
+                "w-full lg:w-44 shrink-0 flex flex-col",
+                isRep ? "gap-1.5 pt-1" : "p-4 gap-2 bg-surface-hover/30"
+            )}>
+                {isRep && (
+                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider px-3 py-1">Presets</span>
+                )}
                 {RANGES.filter(r => r !== 'Custom').map(r => (
                     <button
                         key={r}
                         onClick={() => { setRange(r); setOffset(0); onCancel(); }}
                         className={clsx(
-                            "w-full text-left px-4 py-2.5 rounded-xl text-[11px] font-black transition-all border",
-                            range === r ? "bg-surface border-border shadow-shell-sm" : "text-text-muted border-transparent hover:text-text-main hover:bg-surface-hover"
+                            "w-full text-left rounded-xl transition-all border",
+                            isRep
+                                ? "px-3 py-2 text-[12px] font-semibold"
+                                : "px-4 py-2.5 text-[11px] font-black",
+                            range === r
+                                ? isRep
+                                    ? "bg-primary/10 border-primary/25 text-primary font-bold shadow-sm"
+                                    : "bg-surface border-border shadow-shell-sm"
+                                : "text-text-muted border-transparent hover:text-text-main hover:bg-surface-hover"
                         )}
-                        style={range === r ? { color: 'var(--chart-gold)' } : {}}
+                        style={range === r && !isRep ? { color: 'var(--chart-gold)' } : {}}
                     >
                         {r}
                     </button>
                 ))}
-                <div className="mt-auto pt-4 border-t border-border flex flex-col gap-2">
+                <div className={clsx(
+                    "mt-auto border-t border-border flex flex-col gap-2",
+                    isRep ? "pt-3" : "pt-4"
+                )}>
                     <button
                         disabled={!selStart || !selEnd}
                         onClick={() => selStart && selEnd && onApply(selStart, selEnd)}
-                        className="w-full py-3 bg-[#4FC08D] hover:bg-[#3FA07D] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[12px] font-black rounded-xl transition-all"
+                        className={clsx(
+                            "w-full disabled:cursor-not-allowed text-white text-[12px] rounded-xl transition-all",
+                            isRep
+                                ? "py-2.5 bg-primary hover:bg-primary/90 disabled:opacity-40 font-bold shadow-sm"
+                                : "py-3 bg-[#4FC08D] hover:bg-[#3FA07D] disabled:opacity-50 font-black"
+                        )}
                     >
-                        Apply
+                        {isRep ? 'Apply Range' : 'Apply'}
                     </button>
                     <button
                         onClick={onCancel}
-                        className="w-full py-3 bg-surface border border-border text-text-muted text-[12px] font-black rounded-xl hover:bg-surface-hover transition-all"
+                        className={clsx(
+                            "w-full bg-surface border border-border text-text-muted text-[12px] rounded-xl hover:bg-surface-hover transition-all",
+                            isRep ? "py-2 font-semibold hover:text-text-main" : "py-3 font-black"
+                        )}
                     >
                         Cancel
                     </button>
@@ -1165,7 +1209,7 @@ function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any)
     );
 }
 
-function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }: any) {
+function MonthView({ isRep, month, onPrev, onNext, onDateClick, isSelected, isInRange }: any) {
     const year = month.getFullYear();
     const monthIdx = month.getMonth();
     const firstDay = new Date(year, monthIdx, 1).getDay();
@@ -1178,7 +1222,7 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
     for (let i = 0; i < adjustedStart; i++) days.push(null);
     for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, monthIdx, i));
 
-    const monthName = month.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const monthName = month.toLocaleDateString('en-US', { month: isRep ? 'long' : 'short', year: 'numeric' });
 
     return (
         // 270, not 300: two months plus the 16px gap, the container's 16px of
