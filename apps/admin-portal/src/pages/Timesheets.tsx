@@ -682,7 +682,13 @@ export function Timesheets() {
                         boundary between the date control and the buttons never
                         lined up with the one between the member filter and the
                         timezone. Sharing columns makes those edges meet. */}
-                    <div className="grid grid-cols-1 min-[900px]:grid-cols-[auto_auto] gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0 min-[900px]:justify-end">
+                    {/* One column for a rep. With the buttons and the member filter both
+                        hidden, two columns put the date control and the timezone side
+                        by side on one row; stacked is what this page had before. */}
+                    <div className={clsx(
+                        "grid grid-cols-1 gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0 min-[900px]:justify-end",
+                        !isRep && "min-[900px]:grid-cols-[auto_auto]"
+                    )}>
 
 
                         {/* Date navigation */}
@@ -776,13 +782,9 @@ export function Timesheets() {
                         )}
 
                         {/* Timezone */}
-                        {/* h-12 for a rep, where this sits on the same row as the
-                            date control and would otherwise stand 16px taller than
-                            it. h-16 elsewhere, matching the member filter beside
-                            it on its own row. */}
                         <div className={clsx(
-                            "w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0",
-                            isRep ? "h-12" : "h-16"
+                            "h-16 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0",
+                            isRep && "min-[900px]:ml-auto"
                         )}>
                             <FilterSelect
                                 icon={<Clock className="w-4 h-4 shrink-0" />}
