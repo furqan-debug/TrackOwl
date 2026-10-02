@@ -716,7 +716,16 @@ export function Timesheets() {
 
                         </div>
 
-                        {/* Buttons */}
+                        {/* Filter and Add time, for anyone who manages other people.
+                            Hidden for a rep: Filter exists to filter BY member, which
+                            means nothing on a page showing one person, and Add time
+                            would let someone log their own hours by hand.
+
+                            Hiding them also does the layout: the member filter is
+                            already hidden for a rep, so the grid drops from four
+                            children to two and the date picker and timezone land
+                            beside each other on the top row. */}
+                        {!isRep && (
                         <div className="grid grid-cols-2 gap-3 w-full min-[900px]:w-auto min-[900px]:flex">
 
                             <button
@@ -745,6 +754,7 @@ export function Timesheets() {
                             </button>
 
                         </div>
+                        )}
 
 
                         {/* Member filter — hidden for reps who only view their own timesheets */}
@@ -766,9 +776,13 @@ export function Timesheets() {
                         )}
 
                         {/* Timezone */}
+                        {/* h-12 for a rep, where this sits on the same row as the
+                            date control and would otherwise stand 16px taller than
+                            it. h-16 elsewhere, matching the member filter beside
+                            it on its own row. */}
                         <div className={clsx(
-                            "h-16 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0",
-                            isRep && "min-[900px]:ml-auto"
+                            "w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0",
+                            isRep ? "h-12" : "h-16"
                         )}>
                             <FilterSelect
                                 icon={<Clock className="w-4 h-4 shrink-0" />}
