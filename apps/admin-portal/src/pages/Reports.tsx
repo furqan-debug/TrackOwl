@@ -594,7 +594,7 @@ export function Reports() {
             description="Detailed activity analytics and time distribution."
             actions={
                 <div className="flex items-center flex-wrap gap-3 w-full">
-                    <div className="flex items-center bg-surface border border-border rounded-xl shadow-shell-sm shrink-0 h-12">
+                    <div ref={rangeRef} className="relative flex items-center bg-surface border border-border rounded-xl shadow-shell-sm shrink-0 h-12">
                         <button
                             onClick={() => shiftRange(-1)}
                             className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all border-r border-border rounded-l-xl h-full"
@@ -605,7 +605,7 @@ export function Reports() {
                         {/* The label sets the control's width — the two arrows either side are
                             fixed. 100px was narrower than the date it holds, so the control
                             sized to the text and changed width as the range changed. */}
-                        <div ref={rangeRef} className="relative group min-w-[214px]">
+                        <div className="group min-w-[214px]">
                             <div
                                 onClick={() => {
                                     setShowRangeDropdown(!showRangeDropdown);
@@ -622,27 +622,6 @@ export function Reports() {
                                 </span>
                             </div>
 
-                            {/* right-0: the trigger sits at the right end of the
-                                toolbar, so anchoring the 780px popup to its LEFT edge
-                                pushed it off the side of the screen — the second month
-                                and the presets ended up past the viewport with no way
-                                to reach them. */}
-                            {showRangeDropdown && (
-                                <div className="absolute top-full right-0 mt-3 z-50 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 duration-200">
-                                    <DateRangePicker
-                                        range={range}
-                                        setRange={setRange}
-                                        setOffset={setOffset}
-                                        onApply={(s: Date, e: Date) => {
-                                            setCustomStart(s);
-                                            setCustomEnd(e);
-                                            setRange('Custom');
-                                            setShowRangeDropdown(false);
-                                        }}
-                                        onCancel={() => setShowRangeDropdown(false)}
-                                    />
-                                </div>
-                            )}
                         </div>
 
                         <button
@@ -651,6 +630,28 @@ export function Reports() {
                         >
                             <ChevronRight className="w-5 h-5" />
                         </button>
+
+                        {/* Anchored on the whole control, not on the label alone.
+                            The label sits between the two arrow buttons, so right-0
+                            against it stopped one arrow's width short of the
+                            control's real right edge. Anchoring left instead pushed
+                            the 780px popup off the side of the screen entirely. */}
+                        {showRangeDropdown && (
+                            <div className="absolute top-full right-0 mt-3 z-50 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 duration-200">
+                                <DateRangePicker
+                                    range={range}
+                                    setRange={setRange}
+                                    setOffset={setOffset}
+                                    onApply={(s: Date, e: Date) => {
+                                        setCustomStart(s);
+                                        setCustomEnd(e);
+                                        setRange('Custom');
+                                        setShowRangeDropdown(false);
+                                    }}
+                                    onCancel={() => setShowRangeDropdown(false)}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {!isRep && (
