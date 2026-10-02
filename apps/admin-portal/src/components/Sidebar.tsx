@@ -127,7 +127,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 to="/dashboard"
                 className={clsx(
                     "flex items-center border-b border-white/[0.05] hover:opacity-80 transition-opacity shrink-0",
-                    effectiveCollapsed ? "justify-center px-0 py-6" : "px-6 py-6"
+                    effectiveCollapsed ? "justify-center px-0 py-4" : "px-6 py-4"
                 )}
             >
                 {effectiveCollapsed ? (
@@ -139,10 +139,10 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 )}
             </Link>
 
-            <div className={clsx("flex-1 flex flex-col pt-8", effectiveCollapsed ? "px-2 pb-4" : "px-4 pb-8")}>
+            <div className={clsx("flex-1 flex flex-col pt-4", effectiveCollapsed ? "px-2 pb-4" : "px-4 pb-8")}>
                 {/* Favorites Section */}
                 {!effectiveCollapsed && (
-                    <div className="mb-8 px-2">
+                    <div className="mb-4 px-2">
                         <button
                             type="button"
                             onClick={() => setFavoritesExpanded(!favoritesExpanded)}
@@ -157,9 +157,18 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                             <ChevronDown className={clsx("w-3 h-3 text-[var(--sidebar-text)] transition-transform duration-300", !favoritesExpanded && "-rotate-90")} />
                         </button>
 
+                        {/* No scrollbar: the list is sized to hold every favourite.
+                            The cap is only high enough for the transition to have
+                            something to animate against — at these row heights even
+                            twenty entries sit well inside it.
+
+                            Rows are deliberately tighter and smaller than the main
+                            nav below. They are a shortcut list, not the navigation
+                            itself, and at fifteen entries full-size rows would push
+                            the nav off the bottom of the sidebar. */}
                         <div className={clsx(
-                            "mt-3 space-y-1.5 overflow-hidden transition-all duration-300",
-                            favoritesExpanded ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"
+                            "mt-2 space-y-0.5 overflow-hidden transition-all duration-300",
+                            favoritesExpanded ? "max-h-[640px] opacity-100" : "max-h-0 opacity-0"
                         )}>
                             {accessibleFavorites.length > 0 ? (
                                 accessibleFavorites.map((fav) => (
@@ -168,14 +177,14 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         to={fav.path}
                                         onClick={() => onOverlayClose?.()}
                                         className={clsx(
-                                            "flex items-center gap-3 px-3 py-2.5 text-[13px] rounded-xl transition-all group",
+                                            "flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all group",
                                             location.pathname === fav.path
                                                 ? "bg-[var(--bg-menu-active)] text-[var(--sidebar-text-active)] font-bold border border-white/10"
                                                 : "text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-white/5"
                                         )}
                                     >
-                                        <div className={clsx("w-2 h-2 rounded-full", location.pathname === fav.path ? "bg-accent shadow-[0_0_8px_rgba(244,180,0,0.5)]" : "bg-white/40 group-hover:bg-accent/60")} />
-                                        <span className="truncate font-bold text-[14px]">{fav.name}</span>
+                                        <div className={clsx("w-1.5 h-1.5 rounded-full shrink-0", location.pathname === fav.path ? "bg-accent shadow-[0_0_6px_rgba(244,180,0,0.5)]" : "bg-white/40 group-hover:bg-accent/60")} />
+                                        <span className="truncate font-semibold text-[12.5px] leading-tight">{fav.name}</span>
                                     </Link>
                                 ))
                             ) : (
@@ -186,9 +195,9 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 )}
 
                 {/* Main Navigation */}
-                <nav className="space-y-2" aria-label="Primary">
+                <nav className="space-y-1" aria-label="Primary">
                     {!effectiveCollapsed && (
-                        <p className="px-4 text-[11px] font-bold text-white/40 mb-3 text-left uppercase tracking-[0.2em]">Navigation</p>
+                        <p className="px-4 text-[11px] font-bold text-white/40 mb-2 text-left uppercase tracking-[0.2em]">Navigation</p>
                     )}
                     {filteredNav.map((group) => {
                         const hasChildren = group.children && group.children.length > 0;
@@ -204,7 +213,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         onClick={() => toggleGroup(group.name)}
                                         className={clsx(
                                             'group flex items-center rounded-xl text-[14px] font-bold transition-all',
-                                            effectiveCollapsed ? 'justify-center p-3 w-full' : 'justify-between px-3.5 py-3 w-full',
+                                            effectiveCollapsed ? 'justify-center p-2.5 w-full' : 'justify-between px-3.5 py-2.5 w-full',
                                             // Collapsed, the group is the only thing standing in for
                                             // the open page, so it takes the full active pill. Expanded,
                                             // the child itself carries that — the group only needs its
@@ -239,7 +248,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         onClick={() => onOverlayClose?.()}
                                         className={clsx(
                                             'group flex items-center justify-between rounded-xl text-[14px] font-bold transition-all relative overflow-hidden',
-                                            effectiveCollapsed ? 'p-3' : 'px-3.5 py-3 gap-3',
+                                            effectiveCollapsed ? 'p-2.5' : 'px-3.5 py-2.5 gap-3',
                                             isDirectlyActive
                                                 ? 'bg-white/10 text-white shadow-lg ring-1 ring-white/10'
                                                 : 'text-[var(--sidebar-text)] hover:text-white hover:bg-white/5'

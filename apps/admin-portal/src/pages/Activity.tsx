@@ -53,6 +53,10 @@ interface MemberInfo {
 let activityCache: any = null;
 let activityCacheKey: string | null = null;
 
+/** Screenshots per page. 12 divides by the 4-, 2- and 1-column grids, so a
+    full page always fills its last row. */
+const SCREENSHOT_PAGE_SIZE = 12;
+
 export function Activity() {
     const { profile, managedMemberIds, displayTimezone, isRep } = useAuth();
     const organizationId = profile?.organization_id;
@@ -81,7 +85,10 @@ export function Activity() {
     // "Load More" re-created fetchData, which re-fired the page-level fetch
     // effect with loading:true — the whole page went to the loader, and a
     // second redundant request went out alongside the one Load More asked for.
-    const screenshotLimitRef = useRef(10);
+    // A multiple of the widest grid (4 columns), so the last row is never
+    // part-filled. Ten left two gaps. Load More already stepped by 12 for
+    // exactly this reason; only the first page had been left behind.
+    const screenshotLimitRef = useRef(SCREENSHOT_PAGE_SIZE);
     const [hasMoreScreenshots, setHasMoreScreenshots] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
 
@@ -192,7 +199,7 @@ export function Activity() {
     // Reset pagination when filters change. Declared above the fetch effect so
     // it runs first in the same commit, and the refetch below already sees 10.
     useEffect(() => {
-        screenshotLimitRef.current = 10;
+        screenshotLimitRef.current = SCREENSHOT_PAGE_SIZE;
     }, [selectedMemberId, selectedDate]);
 
     // Re-fetch data whenever any dependency changes
@@ -211,7 +218,7 @@ export function Activity() {
         if (loadingMore || refreshing || !hasMoreScreenshots) return;
 
         setLoadingMore(true);
-        const newLimit = screenshotLimitRef.current + 12; // Load in batches of 12 for better grid alignment
+        const newLimit = screenshotLimitRef.current + SCREENSHOT_PAGE_SIZE;
         screenshotLimitRef.current = newLimit;
 
         // quiet: loadingMore is the only thing that should show. Left to the
