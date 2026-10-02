@@ -662,7 +662,13 @@ export function Timesheets() {
                                 key={mode}
                                 onClick={() => setViewMode(mode)}
                                 className={clsx(
-                                    "flex-1 min-[900px]:flex-none px-2 min-[900px]:px-8 rounded-md text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
+                                    // flex-1 at every width, not just below 900px. With flex-none
+                                    // the three buttons sized to their own text, so any
+                                    // width the track had beyond that sat empty to the
+                                    // right of the last one. Filling it means the last
+                                    // button's edge is the track's edge, whatever the
+                                    // track's width turns out to be.
+                                    "flex-1 px-2 min-[900px]:px-8 rounded-md text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
                                     viewMode === mode
                                         ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
                                         // --text-muted is #CBD5E1 in dark, almost the
