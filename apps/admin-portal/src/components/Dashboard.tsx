@@ -536,8 +536,18 @@ export function Dashboard() {
         const full = profile?.full_name?.trim();
         if (!full) return 'there';
 
-        const first = full.includes('@') ? full.split('@')[0] : full.split(' ')[0];
-        return first.replace(/\.+$/, '') || 'there';
+        if (full.includes('@')) return full.split('@')[0];
+
+        const first = full.split(' ')[0];
+
+        // A name stored as initials — "M. Huzaifa" — has no first name to take,
+        // so the first word is just "M.". Greeting someone by a single letter
+        // reads worse than greeting them by the whole name, so fall back to the
+        // full one. Anything with a real first word still uses only that.
+        const isInitial = /^[A-Za-z]\.?$/.test(first);
+        const name = isInitial ? full : first;
+
+        return name.replace(/\.+$/, '') || 'there';
     })();
 
     return (
