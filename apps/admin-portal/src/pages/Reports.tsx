@@ -623,7 +623,7 @@ export function Reports() {
                             </div>
 
                             {showRangeDropdown && (
-                                <div className="absolute top-full right-0 mt-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="absolute top-full left-0 lg:-left-11 mt-4 z-50 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 duration-200">
                                     <DateRangePicker
                                         range={range}
                                         setRange={setRange}
@@ -1120,52 +1120,36 @@ function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any)
     };
 
     return (
-        <div className="bg-surface border border-border rounded-2xl shadow-premium flex flex-col lg:flex-row p-4 w-[min(740px,calc(100vw-2rem))] max-h-[85vh] overflow-y-auto gap-4">
-            <div className="flex-1 flex flex-col sm:flex-row border-b lg:border-b-0 lg:border-r border-border/60 pb-4 lg:pb-0 lg:pr-4 gap-6 min-w-0">
-                <MonthView 
-                    month={leftMonth} 
-                    onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} 
-                    onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} 
-                    onDateClick={handleDateClick} 
-                    isSelected={isSelected} 
-                    isInRange={isInRange} 
-                />
-                <MonthView 
-                    month={rightMonth} 
-                    onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} 
-                    onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} 
-                    onDateClick={handleDateClick} 
-                    isSelected={isSelected} 
-                    isInRange={isInRange} 
-                />
+        <div className="bg-surface border border-border rounded-2xl shadow-2xl flex flex-col lg:flex-row p-1 w-[min(780px,calc(100vw-2rem))] max-h-[80vh] overflow-y-auto">
+            <div className="flex-1 flex flex-col sm:flex-row border-b lg:border-b-0 lg:border-r border-border p-2 gap-4 min-w-0">
+                <MonthView month={leftMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
+                <MonthView month={rightMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
             </div>
-            <div className="w-full lg:w-44 shrink-0 flex flex-col gap-1.5 pt-1">
-                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider px-3 py-1">Presets</span>
+            <div className="w-full lg:w-44 shrink-0 p-4 flex flex-col gap-2 bg-surface-hover/30">
                 {RANGES.filter(r => r !== 'Custom').map(r => (
                     <button
                         key={r}
                         onClick={() => { setRange(r); setOffset(0); onCancel(); }}
                         className={clsx(
-                            "w-full text-left px-3 py-2 rounded-xl text-[12px] font-semibold transition-all border",
-                            range === r 
-                                ? "bg-primary/10 border-primary/25 text-primary font-bold shadow-sm" 
-                                : "text-text-muted border-transparent hover:text-text-main hover:bg-surface-hover"
+                            "w-full text-left px-4 py-2.5 rounded-xl text-[11px] font-black transition-all border",
+                            range === r ? "bg-surface border-border shadow-shell-sm" : "text-text-muted border-transparent hover:text-text-main hover:bg-surface-hover"
                         )}
+                        style={range === r ? { color: 'var(--chart-gold)' } : {}}
                     >
                         {r}
                     </button>
                 ))}
-                <div className="mt-auto pt-3 border-t border-border flex flex-col gap-2">
+                <div className="mt-auto pt-4 border-t border-border flex flex-col gap-2">
                     <button
                         disabled={!selStart || !selEnd}
                         onClick={() => selStart && selEnd && onApply(selStart, selEnd)}
-                        className="w-full py-2.5 bg-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[12px] font-bold rounded-xl transition-all shadow-sm"
+                        className="w-full py-3 bg-[#4FC08D] hover:bg-[#3FA07D] disabled:opacity-50 disabled:cursor-not-allowed text-white text-[12px] font-black rounded-xl transition-all"
                     >
-                        Apply Range
+                        Apply
                     </button>
                     <button
                         onClick={onCancel}
-                        className="w-full py-2 bg-surface hover:bg-surface-hover border border-border text-text-muted hover:text-text-main text-[12px] font-semibold rounded-xl transition-all"
+                        className="w-full py-3 bg-surface border border-border text-text-muted text-[12px] font-black rounded-xl hover:bg-surface-hover transition-all"
                     >
                         Cancel
                     </button>
@@ -1188,58 +1172,50 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
     for (let i = 0; i < adjustedStart; i++) days.push(null);
     for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, monthIdx, i));
 
-    const monthName = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const monthName = month.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 
     return (
-        <div className="flex-1 min-w-[250px] flex flex-col">
-            <div className="flex items-center justify-between pb-3 mb-2 border-b border-border/60">
-                <button 
-                    onClick={onPrev} 
-                    className="p-1.5 rounded-lg hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors"
-                    title="Previous Month"
-                >
-                    <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="text-[13px] font-bold text-text-main tracking-tight">{monthName}</span>
-                <button 
-                    onClick={onNext} 
-                    className="p-1.5 rounded-lg hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors"
-                    title="Next Month"
-                >
-                    <ChevronRight className="w-4 h-4" />
-                </button>
-            </div>
-            <div className="grid grid-cols-7 gap-1 text-center mb-1.5">
-                {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
-                    <div key={d} className="py-1 text-[10px] font-bold text-text-muted uppercase tracking-wider">{d}</div>
-                ))}
+        // 270, not 300: two months plus the 16px gap, the container's 16px of
+        // padding, the 176px presets column and the shell's 10px have to fit the
+        // popup's 780px. At 300 that came to 818, and since the months container
+        // is min-w-0 it shrank below its content and the grid ran under the
+        // presets instead of overflowing visibly.
+        <div className="flex-1 min-w-[270px] flex flex-col">
+            <div className="p-4 rounded-xl flex items-center justify-between text-white mb-4" style={{ backgroundColor: 'var(--chart-gold)' }}>
+                <button onClick={onPrev} className="p-1.5 rounded-lg transition-all hover:bg-black/20 active:bg-black/30 hover:scale-110 active:scale-95"><ChevronLeft className="w-4 h-4" /></button>
+                <span className="text-[13px] font-black ">{monthName}</span>
+                <button onClick={onNext} className="p-1.5 rounded-lg transition-all hover:bg-black/20 active:bg-black/30 hover:scale-110 active:scale-95"><ChevronRight className="w-4 h-4" /></button>
             </div>
             <div className="grid grid-cols-7 gap-1 text-center">
+                {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
+                    <div key={d} className="py-2 text-[10px] font-black opacity-60" style={{ color: 'var(--chart-gold)' }}>{d}</div>
+                ))}
                 {days.map((d, i) => {
-                    if (!d) return <div key={i} className="h-8" />;
+                    if (!d) return <div key={i} className="py-3" />;
                     const selected = isSelected(d);
                     const inRange = isInRange(d);
-                    const isToday = d.toDateString() === new Date().toDateString();
 
                     return (
                         <button
                             key={i}
                             onClick={() => onDateClick(d)}
                             className={clsx(
-                                "h-8 text-[12px] font-semibold transition-all flex items-center justify-center relative",
-                                selected
-                                    ? "bg-primary text-white font-bold rounded-lg shadow-sm shadow-primary/20 scale-105 z-10"
-                                    : inRange
-                                        ? "bg-primary/15 text-primary rounded-none hover:bg-primary/25"
-                                        : isToday
-                                            ? "text-primary font-bold hover:bg-surface-hover rounded-lg ring-1 ring-primary/40"
-                                            : "text-text-main/90 hover:bg-surface-hover hover:text-text-main rounded-lg"
+                                "py-3 text-[12px] font-medium transition-all rounded-lg relative z-10",
+                                selected ? "text-white shadow-lg shadow-[var(--chart-gold)]/30" :
+                                    inRange ? "bg-[var(--chart-gold)]/5 hover:bg-primary hover:text-[var(--bg-surface)]" :
+                                        "text-text-muted hover:bg-primary hover:text-[var(--bg-surface)]"
                             )}
+                            style={selected ? { backgroundColor: 'var(--chart-gold)' } : inRange ? { color: 'var(--chart-gold)' } : {}}
                         >
                             {d.getDate()}
                         </button>
                     );
                 })}
+            </div>
+            <div className="mt-auto pt-4 border-t border-border text-center">
+                <span className="text-[10px] font-bold text-text-muted ">
+                    {month.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </span>
             </div>
         </div>
     );
