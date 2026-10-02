@@ -51,7 +51,7 @@ export const navStructure: NavGroup[] = [
     { 
         name: 'Projects', 
         icon: FolderKanban, 
-        allowedRoles: ['Owner', 'Admin', 'Manager', 'User', 'Viewer'],
+        allowedRoles: ['Owner', 'Admin', 'Manager', 'Viewer'],
         children: [
             { name: 'Projects', path: '/dashboard/projects' },
             { name: 'To-Dos', path: '/dashboard/projects/todos' },

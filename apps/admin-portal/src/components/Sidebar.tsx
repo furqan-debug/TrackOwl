@@ -58,6 +58,19 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
             }) as typeof navStructure;
     }, [userRole]);
 
+    // Only show favorites accessible to the user's role
+    const accessibleFavorites = useMemo(() => {
+        return favorites.filter(fav => {
+            if (userRole === 'User') {
+                if (fav.path.startsWith('/dashboard/projects')) return false;
+                if (fav.path.startsWith('/dashboard/people')) return false;
+                if (fav.path === '/dashboard/settings' || fav.path.startsWith('/dashboard/settings/billing')) return false;
+                if (fav.path.startsWith('/dashboard/locations') || fav.path.startsWith('/dashboard/schedules')) return false;
+            }
+            return true;
+        });
+    }, [favorites, userRole]);
+
     useEffect(() => {
         const currentPath = location.pathname;
         const newExpanded = { ...expandedGroups };
@@ -137,9 +150,9 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                             aria-expanded={favoritesExpanded}
                         >
                             <div className="flex items-center gap-2">
-                                <Star className={clsx("w-4 h-4 transition-colors", favorites.length > 0 ? "text-accent fill-accent/20" : "text-[var(--sidebar-text)] group-hover:text-[var(--sidebar-text-active)]")} aria-hidden />
+                                <Star className={clsx("w-4 h-4 transition-colors", accessibleFavorites.length > 0 ? "text-accent fill-accent/20" : "text-[var(--sidebar-text)] group-hover:text-[var(--sidebar-text-active)]")} aria-hidden />
                                 Favorites
-                                <span className="text-[11px] opacity-60 font-mono ml-1">({favorites.length})</span>
+                                <span className="text-[11px] opacity-60 font-mono ml-1">({accessibleFavorites.length})</span>
                             </div>
                             <ChevronDown className={clsx("w-3 h-3 text-[var(--sidebar-text)] transition-transform duration-300", !favoritesExpanded && "-rotate-90")} />
                         </button>
@@ -148,8 +161,8 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                             "mt-3 space-y-1.5 overflow-hidden transition-all duration-300",
                             favoritesExpanded ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"
                         )}>
-                            {favorites.length > 0 ? (
-                                favorites.map((fav) => (
+                            {accessibleFavorites.length > 0 ? (
+                                accessibleFavorites.map((fav) => (
                                     <Link
                                         key={fav.path}
                                         to={fav.path}

@@ -38,14 +38,31 @@ export function ProfilePage() {
     useEffect(() => {
         const detectLocation = async () => {
             try {
-                const response = await fetch('https://ipapi.co/json/');
-                const data = await response.json();
-                if (data.city && data.country_name) {
-                    const locString = `${data.city}, ${data.country_name}`;
-                    setLocation(capitalizeWords(locString));
+                // Try ipwho.is first (supports browser CORS natively)
+                const response = await fetch('https://ipwho.is/');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success !== false && data.city && data.country) {
+                        const locString = `${data.city}, ${data.country}`;
+                        setLocation(capitalizeWords(locString));
+                        return;
+                    }
                 }
-            } catch (err) {
-                console.error('Failed to auto-detect location:', err);
+            } catch {
+                // Ignore network/CORS fallback silently
+            }
+
+            try {
+                const response = await fetch('https://ipapi.co/json/');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.city && data.country_name) {
+                        const locString = `${data.city}, ${data.country_name}`;
+                        setLocation(capitalizeWords(locString));
+                    }
+                }
+            } catch {
+                // Fail gracefully without spamming console errors
             }
         };
         detectLocation();

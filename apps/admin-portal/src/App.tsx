@@ -148,8 +148,6 @@ function App() {
                     <Route path="/calendar" element={<Calendar />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/settings/security" element={<SecurityPage />} />
-                    <Route path="/projects" element={<Projects />} />
-                    <Route path="/projects/todos" element={<Todos />} />
                     <Route path="/reports" element={<PremiumRoute><Reports /></PremiumRoute>} />
                     <Route path="/reports/daily" element={<PremiumRoute><DailyTotals /></PremiumRoute>} />
                     <Route path="/pricing" element={<Pricing />} />
@@ -163,6 +161,8 @@ function App() {
                     <Route path="/schedules" element={<RepRoute><Schedules /></RepRoute>} />
                     <Route path="/locations" element={<RepRoute><Locations /></RepRoute>} />
                     <Route path="/locations/job-sites" element={<RepRoute><JobSites /></RepRoute>} />
+                    <Route path="/projects" element={<RepRoute><Projects /></RepRoute>} />
+                    <Route path="/projects/todos" element={<RepRoute><Todos /></RepRoute>} />
                     <Route path="/projects/clients" element={<RepRoute><Clients /></RepRoute>} />
                     <Route path="/projects/new" element={<RepRoute><ProjectFormPage /></RepRoute>} />
                     <Route path="/projects/:id/edit" element={<RepRoute><ProjectFormPage /></RepRoute>} />
