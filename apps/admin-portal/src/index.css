@@ -874,3 +874,35 @@
     animation: none;
   }
 }
+
+/* The favourites list in the sidebar. A default scrollbar is a pale slab
+   against the navy, so this is a thin one in the sidebar's own palette. It
+   only shows on hover, since the list is short and a permanent bar beside
+   three items reads as clutter. */
+.fav-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 0.2s;
+}
+
+.fav-scroll:hover {
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+
+.fav-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.fav-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.fav-scroll::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+
+.fav-scroll:hover::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+}
