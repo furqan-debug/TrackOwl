@@ -157,20 +157,18 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                             <ChevronDown className={clsx("w-3 h-3 text-[var(--sidebar-text)] transition-transform duration-300", !favoritesExpanded && "-rotate-90")} />
                         </button>
 
-                        {/* The cap used to be 300px with overflow hidden, which fits
-                            about six rows — so a seventh and eighth favourite were
-                            clipped with no way to reach them, while the count above
-                            still said eight. Now it scrolls: about three and a half
-                            rows are visible, the half row showing there is more.
+                        {/* No scrollbar: the list is sized to hold every favourite.
+                            The cap is only high enough for the transition to have
+                            something to animate against — at these row heights even
+                            twenty entries sit well inside it.
 
-                            overflow only becomes auto once open; while collapsing it
-                            has to stay hidden or the rows spill out of the shrinking
-                            box instead of being clipped by it. */}
+                            Rows are deliberately tighter and smaller than the main
+                            nav below. They are a shortcut list, not the navigation
+                            itself, and at fifteen entries full-size rows would push
+                            the nav off the bottom of the sidebar. */}
                         <div className={clsx(
-                            "mt-3 space-y-1.5 transition-all duration-300",
-                            favoritesExpanded
-                                ? "max-h-[150px] opacity-100 overflow-y-auto fav-scroll pr-1"
-                                : "max-h-0 opacity-0 overflow-hidden"
+                            "mt-2 space-y-0.5 overflow-hidden transition-all duration-300",
+                            favoritesExpanded ? "max-h-[640px] opacity-100" : "max-h-0 opacity-0"
                         )}>
                             {accessibleFavorites.length > 0 ? (
                                 accessibleFavorites.map((fav) => (
@@ -179,14 +177,14 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         to={fav.path}
                                         onClick={() => onOverlayClose?.()}
                                         className={clsx(
-                                            "flex items-center gap-3 px-3 py-2.5 text-[13px] rounded-xl transition-all group",
+                                            "flex items-center gap-2.5 px-3 py-1.5 rounded-lg transition-all group",
                                             location.pathname === fav.path
                                                 ? "bg-[var(--bg-menu-active)] text-[var(--sidebar-text-active)] font-bold border border-white/10"
                                                 : "text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-white/5"
                                         )}
                                     >
-                                        <div className={clsx("w-2 h-2 rounded-full", location.pathname === fav.path ? "bg-accent shadow-[0_0_8px_rgba(244,180,0,0.5)]" : "bg-white/40 group-hover:bg-accent/60")} />
-                                        <span className="truncate font-bold text-[14px]">{fav.name}</span>
+                                        <div className={clsx("w-1.5 h-1.5 rounded-full shrink-0", location.pathname === fav.path ? "bg-accent shadow-[0_0_6px_rgba(244,180,0,0.5)]" : "bg-white/40 group-hover:bg-accent/60")} />
+                                        <span className="truncate font-semibold text-[12.5px] leading-tight">{fav.name}</span>
                                     </Link>
                                 ))
                             ) : (
