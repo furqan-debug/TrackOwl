@@ -1139,7 +1139,13 @@ function DateRangePicker({ isRep, range, setRange, setOffset, onApply, onCancel 
         <div className={clsx(
             "bg-surface border border-border rounded-2xl flex flex-col lg:flex-row overflow-y-auto",
             isRep
-                ? "shadow-premium p-4 w-[min(740px,calc(100vw-2rem))] max-h-[85vh] gap-4"
+                // 820, not 740. Two 270px months, the 24px gap between them,
+                // this box's 32px of padding, the months container's 16px right
+                // padding, the 16px gap to the presets and their 176px column
+                // come to 804. At 740 the months container — which is min-w-0 —
+                // shrank below its content and the second month ran UNDER the
+                // presets rather than overflowing where it could be seen.
+                ? "shadow-premium p-4 w-[min(820px,calc(100vw-2rem))] max-h-[85vh] gap-4"
                 : "shadow-2xl p-1 w-[min(780px,calc(100vw-2rem))] max-h-[80vh]"
         )}>
             <div className={clsx(
