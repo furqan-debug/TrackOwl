@@ -127,7 +127,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 to="/dashboard"
                 className={clsx(
                     "flex items-center border-b border-white/[0.05] hover:opacity-80 transition-opacity shrink-0",
-                    effectiveCollapsed ? "justify-center px-0 py-6" : "px-6 py-6"
+                    effectiveCollapsed ? "justify-center px-0 py-4" : "px-6 py-4"
                 )}
             >
                 {effectiveCollapsed ? (
@@ -139,10 +139,10 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 )}
             </Link>
 
-            <div className={clsx("flex-1 flex flex-col pt-8", effectiveCollapsed ? "px-2 pb-4" : "px-4 pb-8")}>
+            <div className={clsx("flex-1 flex flex-col pt-4", effectiveCollapsed ? "px-2 pb-4" : "px-4 pb-8")}>
                 {/* Favorites Section */}
                 {!effectiveCollapsed && (
-                    <div className="mb-8 px-2">
+                    <div className="mb-4 px-2">
                         <button
                             type="button"
                             onClick={() => setFavoritesExpanded(!favoritesExpanded)}
