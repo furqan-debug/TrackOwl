@@ -4,6 +4,7 @@ import type { Session, User } from '@supabase/supabase-js';
 
 interface MemberProfile {
     id: string;
+    auth_user_id?: string | null;
     email: string;
     full_name: string;
     avatar_url: string | null;
@@ -322,8 +323,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                         setManagedMemberIds([]);
                     }
                 } else if (member.role === 'User') {
-                    // User (rep) sees only their own data in self-service mode
-                    setManagedMemberIds([member.id]);
+                    // User (rep) sees only their own data in self-service mode (both member.id and auth_user_id)
+                    const selfUserIds = Array.from(new Set([member.id, member.auth_user_id].filter(Boolean) as string[]));
+                    setManagedMemberIds(selfUserIds);
                     const assignedProjectIds = await fetchUserAssignedProjectIds(member.id);
                     setManagedProjectIds(assignedProjectIds);
                 } else {

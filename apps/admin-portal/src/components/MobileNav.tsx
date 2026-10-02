@@ -22,6 +22,16 @@ export function MobileNav({ onClose }: MobileNavProps) {
         return true;
     });
 
+    const accessibleFavorites = favorites.filter(fav => {
+        if (userRole === 'User') {
+            if (fav.path.startsWith('/dashboard/projects')) return false;
+            if (fav.path.startsWith('/dashboard/people')) return false;
+            if (fav.path === '/dashboard/settings' || fav.path.startsWith('/dashboard/settings/billing')) return false;
+            if (fav.path.startsWith('/dashboard/locations') || fav.path.startsWith('/dashboard/schedules')) return false;
+        }
+        return true;
+    });
+
     return (
         <div className="fixed inset-0 z-[100] md:hidden">
             {/* Backdrop */}
@@ -131,7 +141,7 @@ export function MobileNav({ onClose }: MobileNavProps) {
                     ))}
 
                     {/* Favorites */}
-                    {favorites.length > 0 && (
+                    {accessibleFavorites.length > 0 && (
                         <div className="mt-4 space-y-1">
                             <div className="flex items-center gap-2 px-3 pb-1.5">
                                 <Star className="w-3 h-3 text-accent" fill="currentColor" />
@@ -139,7 +149,7 @@ export function MobileNav({ onClose }: MobileNavProps) {
                                     Favorites
                                 </span>
                             </div>
-                            {favorites.map(fav => (
+                            {accessibleFavorites.map(fav => (
                                 <Link
                                     key={fav.path}
                                     to={fav.path}

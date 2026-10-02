@@ -100,8 +100,12 @@ interface DashStats {
     trendProductivity: number;
 }
 export function Dashboard() {
-    const { profile, managedMemberIds, managedProjectIds, isPremium, isRep, displayTimezone, timezoneReady } = useAuth();
+    const { session, profile, managedMemberIds, managedProjectIds, isPremium, isRep, displayTimezone, timezoneReady } = useAuth();
     const organizationId = profile?.organization_id;
+    const selfUserIds = useMemo(() => {
+        if (!profile) return [];
+        return Array.from(new Set([profile.id, profile.auth_user_id, session?.user?.id].filter(Boolean) as string[]));
+    }, [profile, session?.user?.id]);
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -255,15 +259,21 @@ export function Dashboard() {
             const memberIdsFilter = isScoped && managedMemberIds ? (managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000']) : null;
             const projectIdsFilter = isScoped && managedProjectIds ? (managedProjectIds.length > 0 ? managedProjectIds : ['00000000-0000-0000-0000-000000000000']) : null;
 
-            let membersQuery = supabase.from('members').select('id, full_name, avatar_url, status, email, idle_limit').eq('organization_id', organizationId);
-            if (memberIdsFilter) membersQuery = membersQuery.in('id', memberIdsFilter);
+            let membersQuery = supabase.from('members').select('id, auth_user_id, full_name, avatar_url, status, email, idle_limit').eq('organization_id', organizationId);
+            if (isRep && profile?.id) {
+                membersQuery = membersQuery.eq('id', profile.id);
+            } else if (memberIdsFilter) {
+                membersQuery = membersQuery.in('id', memberIdsFilter);
+            }
 
             let projectsQuery = supabase.from('projects').select('id, name, color').eq('organization_id', organizationId);
             if (projectIdsFilter) projectsQuery = projectsQuery.in('id', projectIdsFilter);
 
             let sessionsQuery = supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').eq('organization_id', organizationId).gte('started_at', startIso).lte('started_at', endIso);
-            if (memberIdsFilter && projectIdsFilter) {
-                sessionsQuery = sessionsQuery.or(`user_id.in.(${memberIdsFilter.join(',')}),project_id.in.(${projectIdsFilter.join(',')})`);
+            if (isRep && selfUserIds.length > 0) {
+                sessionsQuery = sessionsQuery.in('user_id', selfUserIds);
+            } else if (memberIdsFilter && projectIdsFilter) {
+                sessionsQuery = sessionsQuery.in('user_id', memberIdsFilter).in('project_id', projectIdsFilter);
             } else if (memberIdsFilter) {
                 sessionsQuery = sessionsQuery.in('user_id', memberIdsFilter);
             } else if (projectIdsFilter) {
@@ -271,8 +281,12 @@ export function Dashboard() {
             }
 
             let liveSessionsQuery = supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').eq('organization_id', organizationId).is('ended_at', null);
-            if (memberIdsFilter) liveSessionsQuery = liveSessionsQuery.in('user_id', memberIdsFilter);
-            if (projectIdsFilter) liveSessionsQuery = liveSessionsQuery.in('project_id', projectIdsFilter);
+            if (isRep && selfUserIds.length > 0) {
+                liveSessionsQuery = liveSessionsQuery.in('user_id', selfUserIds);
+            } else {
+                if (memberIdsFilter) liveSessionsQuery = liveSessionsQuery.in('user_id', memberIdsFilter);
+                if (projectIdsFilter) liveSessionsQuery = liveSessionsQuery.in('project_id', projectIdsFilter);
+            }
 
             const [
                 { data: members },
@@ -294,8 +308,8 @@ export function Dashboard() {
                 p_end_iso: endIso,
                 p_prev_start_iso: prevWeekStartIso,
                 p_prev_end_iso: prevWeekEndIso,
-                p_member_ids: memberIdsFilter,
-                p_project_ids: projectIdsFilter
+                p_member_ids: isRep ? selfUserIds : memberIdsFilter,
+                p_project_ids: isRep ? null : projectIdsFilter
             });
 
             if (rpcErr) throw rpcErr;
@@ -333,10 +347,12 @@ export function Dashboard() {
             const trendProductivity = prevTotalMins > 0 ? Math.round(((totalMins - prevTotalMins) / prevTotalMins) * 100) : (totalMins > 0 ? 100 : 0);
             // Populate user stats
             members.forEach(m => {
-                const uStats = (aggregated.user_stats || {})[m.id] || { mins: 0, activity_sum: 0, cnt: 0 };
+                const uStats = (aggregated.user_stats || {})[m.id] || 
+                               (m.auth_user_id ? (aggregated.user_stats || {})[m.auth_user_id] : null) || 
+                               { mins: 0, activity_sum: 0, cnt: 0 };
                 const userFocus = uStats.cnt > 0 ? Math.round(uStats.activity_sum / uStats.cnt) : 0;
                 const uScreens = (aggregated.screenshots || [])
-                    .filter((s: any) => s.user_id === m.id)
+                    .filter((s: any) => s.user_id === m.id || (m.auth_user_id && s.user_id === m.auth_user_id))
                     .map((s: any) => ({
                         ...s,
                         activityPercent: (s.activityPercent !== undefined && s.activityPercent > 0)
@@ -398,11 +414,13 @@ export function Dashboard() {
 
             const statusRank: Record<string, number> = { working: 0, worked: 0, idle: 1, offline: 2 };
             const online: OnlineMember[] = members.map(m => {
-                const uStats = (aggregated.user_stats || {})[m.id] || { mins: 0, activity_sum: 0, cnt: 0 };
+                const uStats = (aggregated.user_stats || {})[m.id] || 
+                               (m.auth_user_id ? (aggregated.user_stats || {})[m.auth_user_id] : null) || 
+                               { mins: 0, activity_sum: 0, cnt: 0 };
                 // Live status only means something for today. On any other date
                 // the question is who tracked time then, which is what uStats
                 // already holds for the viewed day.
-                const activeSession = isTodayView ? (liveSessions || []).find(s => s.user_id === m.id) : undefined;
+                const activeSession = isTodayView ? (liveSessions || []).find(s => s.user_id === m.id || (m.auth_user_id && s.user_id === m.auth_user_id)) : undefined;
                 let status: 'working' | 'idle' | 'offline' | 'worked' = 'offline';
                 let activeProjectName = 'None';
 
@@ -502,7 +520,7 @@ export function Dashboard() {
                 setRefreshing(false);
             }
         }
-    }, [viewDateStr, displayTimezone, timezoneReady, dateInitialized, isTodayView, organizationId, profile?.id, profile?.role, managedMemberIds, managedProjectIds, isRep]);
+    }, [viewDateStr, displayTimezone, timezoneReady, dateInitialized, isTodayView, organizationId, profile?.id, profile?.role, managedMemberIds, managedProjectIds, isRep, selfUserIds]);
 
     useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
