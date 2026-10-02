@@ -157,9 +157,20 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                             <ChevronDown className={clsx("w-3 h-3 text-[var(--sidebar-text)] transition-transform duration-300", !favoritesExpanded && "-rotate-90")} />
                         </button>
 
+                        {/* The cap used to be 300px with overflow hidden, which fits
+                            about six rows — so a seventh and eighth favourite were
+                            clipped with no way to reach them, while the count above
+                            still said eight. Now it scrolls: about three and a half
+                            rows are visible, the half row showing there is more.
+
+                            overflow only becomes auto once open; while collapsing it
+                            has to stay hidden or the rows spill out of the shrinking
+                            box instead of being clipped by it. */}
                         <div className={clsx(
-                            "mt-3 space-y-1.5 overflow-hidden transition-all duration-300",
-                            favoritesExpanded ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"
+                            "mt-3 space-y-1.5 transition-all duration-300",
+                            favoritesExpanded
+                                ? "max-h-[150px] opacity-100 overflow-y-auto fav-scroll pr-1"
+                                : "max-h-0 opacity-0 overflow-hidden"
                         )}>
                             {accessibleFavorites.length > 0 ? (
                                 accessibleFavorites.map((fav) => (
