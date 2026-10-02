@@ -622,8 +622,13 @@ export function Reports() {
                                 </span>
                             </div>
 
+                            {/* right-0: the trigger sits at the right end of the
+                                toolbar, so anchoring the 780px popup to its LEFT edge
+                                pushed it off the side of the screen — the second month
+                                and the presets ended up past the viewport with no way
+                                to reach them. */}
                             {showRangeDropdown && (
-                                <div className="absolute top-full left-0 lg:-left-11 mt-4 z-50 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="absolute top-full right-0 mt-3 z-50 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 duration-200">
                                     <DateRangePicker
                                         range={range}
                                         setRange={setRange}
@@ -1181,14 +1186,30 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
         // is min-w-0 it shrank below its content and the grid ran under the
         // presets instead of overflowing visibly.
         <div className="flex-1 min-w-[270px] flex flex-col">
-            <div className="p-4 rounded-xl flex items-center justify-between text-white mb-4" style={{ backgroundColor: 'var(--chart-gold)' }}>
-                <button onClick={onPrev} className="p-1.5 rounded-lg transition-all hover:bg-black/20 active:bg-black/30 hover:scale-110 active:scale-95"><ChevronLeft className="w-4 h-4" /></button>
-                <span className="text-[13px] font-black ">{monthName}</span>
-                <button onClick={onNext} className="p-1.5 rounded-lg transition-all hover:bg-black/20 active:bg-black/30 hover:scale-110 active:scale-95"><ChevronRight className="w-4 h-4" /></button>
+            {/* A plain header, like the date picker everywhere else in the app.
+                This was a solid gold bar with white text on it: in dark mode
+                --chart-gold is #FFD700, so white on it is barely legible, and two
+                of them side by side dominated the popup. */}
+            <div className="flex items-center justify-between mb-3 px-1">
+                <button
+                    onClick={onPrev}
+                    className="p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-hover transition-colors"
+                    title="Previous month"
+                >
+                    <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-[13px] font-black text-text-main tracking-tight">{monthName}</span>
+                <button
+                    onClick={onNext}
+                    className="p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-hover transition-colors"
+                    title="Next month"
+                >
+                    <ChevronRight className="w-4 h-4" />
+                </button>
             </div>
             <div className="grid grid-cols-7 gap-1 text-center">
                 {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
-                    <div key={d} className="py-2 text-[10px] font-black opacity-60" style={{ color: 'var(--chart-gold)' }}>{d}</div>
+                    <div key={d} className="py-1.5 text-[10px] font-black text-text-muted uppercase tracking-wider">{d}</div>
                 ))}
                 {days.map((d, i) => {
                     if (!d) return <div key={i} className="py-3" />;
@@ -1201,7 +1222,7 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
                             onClick={() => onDateClick(d)}
                             className={clsx(
                                 "py-3 text-[12px] font-medium transition-all rounded-lg relative z-10",
-                                selected ? "text-white shadow-lg shadow-[var(--chart-gold)]/30" :
+                                selected ? "text-[#001B4D] font-black shadow-lg shadow-[var(--chart-gold)]/30" :
                                     inRange ? "bg-[var(--chart-gold)]/5 hover:bg-primary hover:text-[var(--bg-surface)]" :
                                         "text-text-muted hover:bg-primary hover:text-[var(--bg-surface)]"
                             )}
