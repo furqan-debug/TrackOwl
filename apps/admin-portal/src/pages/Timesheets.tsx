@@ -650,7 +650,12 @@ export function Timesheets() {
                     </div>
 
                     {/* View switcher */}
-                    <div className="flex bg-main/50 p-1 rounded-md border border-border/50 h-12 w-full min-[900px]:w-auto min-w-0">
+                    {/* bg-surface, not bg-main/50. In dark mode --bg-main is #020617 — at
+                        half opacity over a near-black page the track disappeared, and
+                        the border at 3% white went with it. --bg-surface is lighter
+                        than the page in dark and darker than it in light, so the track
+                        reads either way. */}
+                    <div className="flex bg-surface p-1 rounded-md border border-border h-12 w-full min-[900px]:w-auto min-w-0 shadow-shell-sm">
 
                         {(['daily', 'weekly', 'calendar'] as const).map(mode => (
                             <button
@@ -660,7 +665,11 @@ export function Timesheets() {
                                     "flex-1 min-[900px]:flex-none px-2 min-[900px]:px-8 rounded-md text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
                                     viewMode === mode
                                         ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
-                                        : "text-text-muted hover:text-text-main"
+                                        // --text-muted is #CBD5E1 in dark, almost the
+                                        // same as the main text, so an unselected tab
+                                        // looked as loud as the selected one. Dimmed
+                                        // until hovered.
+                                        : "text-text-muted opacity-70 hover:opacity-100 hover:text-text-main"
                                 )}
                             >
                                 {mode.charAt(0).toUpperCase() + mode.slice(1)}
