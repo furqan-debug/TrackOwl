@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useState, useRef, type CSSProperties } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '../lib/supabase';
@@ -94,6 +94,21 @@ export function Reports() {
     const rangeRef = useRef<HTMLDivElement>(null);
     const columnRef = useRef<HTMLDivElement>(null);
     const downloadRef = useRef<HTMLDivElement>(null);
+    /**
+     * Which edge of the date control the popup hangs from.
+     *
+     * Neither edge is right on its own. The control sits on the LEFT of the
+     * toolbar for an admin, with the team and member filters after it, so
+     * there is room to open rightward and left-aligned looks natural. For a
+     * rep those filters are not rendered, so the control is at the far RIGHT
+     * and opening rightward puts the popup off the screen.
+     *
+     * Measured rather than tied to the role: the toolbar can change, the
+     * window can be any width, and the only thing that actually matters is
+     * whether the popup fits.
+     */
+    const [rangeAlign, setRangeAlign] = useState<'left' | 'right'>('left');
+
     const [customStart, setCustomStart] = useState<Date | null>(initialUrlParams.start);
     const [customEnd, setCustomEnd] = useState<Date | null>(initialUrlParams.end);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -122,6 +137,25 @@ export function Reports() {
     );
     const [showColumnDropdown, setShowColumnDropdown] = useState(false);
     const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+
+    // Pick the edge when the popup opens, and keep it right if the window is
+    // resized while it is open. The widths are the two shells' own caps.
+    useLayoutEffect(() => {
+        if (!showRangeDropdown) return;
+
+        const decide = () => {
+            const rect = rangeRef.current?.getBoundingClientRect();
+            if (!rect) return;
+
+            const width = isRep ? 820 : 780;
+            const fitsRightward = rect.left + width <= window.innerWidth - 16;
+            setRangeAlign(fitsRightward ? 'left' : 'right');
+        };
+
+        decide();
+        window.addEventListener('resize', decide);
+        return () => window.removeEventListener('resize', decide);
+    }, [showRangeDropdown, isRep]);
 
     // Close whichever dropdown the click fell outside of. Each listener is only
     // attached while something is open, so nothing runs in the common case.
@@ -637,7 +671,10 @@ export function Reports() {
                             control's real right edge. Anchoring left instead pushed
                             the 780px popup off the side of the screen entirely. */}
                         {showRangeDropdown && (
-                            <div className="absolute top-full right-0 mt-3 z-50 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className={clsx(
+                                "absolute top-full mt-3 z-50 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 duration-200",
+                                rangeAlign === 'left' ? "left-0" : "right-0"
+                            )}>
                                 <DateRangePicker
                                     isRep={isRep}
                                     range={range}
