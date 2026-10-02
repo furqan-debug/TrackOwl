@@ -195,9 +195,9 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 )}
 
                 {/* Main Navigation */}
-                <nav className="space-y-2" aria-label="Primary">
+                <nav className="space-y-1" aria-label="Primary">
                     {!effectiveCollapsed && (
-                        <p className="px-4 text-[11px] font-bold text-white/40 mb-3 text-left uppercase tracking-[0.2em]">Navigation</p>
+                        <p className="px-4 text-[11px] font-bold text-white/40 mb-2 text-left uppercase tracking-[0.2em]">Navigation</p>
                     )}
                     {filteredNav.map((group) => {
                         const hasChildren = group.children && group.children.length > 0;
@@ -213,7 +213,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         onClick={() => toggleGroup(group.name)}
                                         className={clsx(
                                             'group flex items-center rounded-xl text-[14px] font-bold transition-all',
-                                            effectiveCollapsed ? 'justify-center p-3 w-full' : 'justify-between px-3.5 py-3 w-full',
+                                            effectiveCollapsed ? 'justify-center p-2.5 w-full' : 'justify-between px-3.5 py-2.5 w-full',
                                             // Collapsed, the group is the only thing standing in for
                                             // the open page, so it takes the full active pill. Expanded,
                                             // the child itself carries that — the group only needs its
@@ -248,7 +248,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                                         onClick={() => onOverlayClose?.()}
                                         className={clsx(
                                             'group flex items-center justify-between rounded-xl text-[14px] font-bold transition-all relative overflow-hidden',
-                                            effectiveCollapsed ? 'p-3' : 'px-3.5 py-3 gap-3',
+                                            effectiveCollapsed ? 'p-2.5' : 'px-3.5 py-2.5 gap-3',
                                             isDirectlyActive
                                                 ? 'bg-white/10 text-white shadow-lg ring-1 ring-white/10'
                                                 : 'text-[var(--sidebar-text)] hover:text-white hover:bg-white/5'
