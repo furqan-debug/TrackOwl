@@ -524,12 +524,38 @@ export function Dashboard() {
 
     useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
+    /**
+     * The name to greet by.
+     *
+     * The first word of the full name, or the part of an email before the @
+     * when that is all there is. A trailing dot is dropped: a name stored as
+     * "M. Huzaifa" gives "M.", and the sentence adds its own full stop, so the
+     * greeting read "Welcome M..".
+     */
+    const greetingName = (() => {
+        const full = profile?.full_name?.trim();
+        if (!full) return 'there';
+
+        if (full.includes('@')) return full.split('@')[0];
+
+        const first = full.split(' ')[0];
+
+        // A name stored as initials — "M. Huzaifa" — has no first name to take,
+        // so the first word is just "M.". Greeting someone by a single letter
+        // reads worse than greeting them by the whole name, so fall back to the
+        // full one. Anything with a real first word still uses only that.
+        const isInitial = /^[A-Za-z]\.?$/.test(first);
+        const name = isInitial ? full : first;
+
+        return name.replace(/\.+$/, '') || 'there';
+    })();
+
     return (
         <PageLayout
             maxWidth="full"
             eyebrow={isRep ? "PERSONAL ANALYTICS & INSIGHTS" : "WORKSPACE ANALYTICS & INSIGHTS"}
             title={isRep ? "My Overview" : "Team Overview"}
-            description={isRep ? `Welcome back, ${profile?.full_name ? (profile.full_name.includes('@') ? profile.full_name.split('@')[0] : profile.full_name.split(' ')[0]) : 'there'}. Here is your activity and productivity overview.` : "Building the future of global work. Strategic leadership for the modern enterprise."}
+            description={isRep ? `Welcome ${greetingName}. Here is your activity and productivity overview.` : "Building the future of global work. Strategic leadership for the modern enterprise."}
             actions={
                 <div className="flex items-center gap-2 md:gap-4">
                     {/* Same geometry as the Timesheets date control: h-12,

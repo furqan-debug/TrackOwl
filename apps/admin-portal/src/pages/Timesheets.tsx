@@ -650,17 +650,32 @@ export function Timesheets() {
                     </div>
 
                     {/* View switcher */}
-                    <div className="flex bg-main/50 p-1 rounded-md border border-border/50 h-12 w-full min-[900px]:w-auto min-w-0">
+                    {/* bg-surface, not bg-main/50. In dark mode --bg-main is #020617 — at
+                        half opacity over a near-black page the track disappeared, and
+                        the border at 3% white went with it. --bg-surface is lighter
+                        than the page in dark and darker than it in light, so the track
+                        reads either way. */}
+                    <div className="flex bg-surface p-1 rounded-md border border-border h-12 w-full min-[900px]:w-auto min-w-0 shadow-shell-sm">
 
                         {(['daily', 'weekly', 'calendar'] as const).map(mode => (
                             <button
                                 key={mode}
                                 onClick={() => setViewMode(mode)}
                                 className={clsx(
-                                    "flex-1 min-[900px]:flex-none px-2 min-[900px]:px-8 rounded-md text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
+                                    // flex-1 at every width, not just below 900px. With flex-none
+                                    // the three buttons sized to their own text, so any
+                                    // width the track had beyond that sat empty to the
+                                    // right of the last one. Filling it means the last
+                                    // button's edge is the track's edge, whatever the
+                                    // track's width turns out to be.
+                                    "flex-1 px-2 min-[900px]:px-8 rounded-md text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
                                     viewMode === mode
                                         ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
-                                        : "text-text-muted hover:text-text-main"
+                                        // --text-muted is #CBD5E1 in dark, almost the
+                                        // same as the main text, so an unselected tab
+                                        // looked as loud as the selected one. Dimmed
+                                        // until hovered.
+                                        : "text-text-muted opacity-70 hover:opacity-100 hover:text-text-main"
                                 )}
                             >
                                 {mode.charAt(0).toUpperCase() + mode.slice(1)}
@@ -682,7 +697,13 @@ export function Timesheets() {
                         boundary between the date control and the buttons never
                         lined up with the one between the member filter and the
                         timezone. Sharing columns makes those edges meet. */}
-                    <div className="grid grid-cols-1 min-[900px]:grid-cols-[auto_auto] gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0 min-[900px]:justify-end">
+                    {/* One column for a rep. With the buttons and the member filter both
+                        hidden, two columns put the date control and the timezone side
+                        by side on one row; stacked is what this page had before. */}
+                    <div className={clsx(
+                        "grid grid-cols-1 gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0 min-[900px]:justify-end",
+                        !isRep && "min-[900px]:grid-cols-[auto_auto]"
+                    )}>
 
 
                         {/* Date navigation */}
@@ -716,7 +737,16 @@ export function Timesheets() {
 
                         </div>
 
-                        {/* Buttons */}
+                        {/* Filter and Add time, for anyone who manages other people.
+                            Hidden for a rep: Filter exists to filter BY member, which
+                            means nothing on a page showing one person, and Add time
+                            would let someone log their own hours by hand.
+
+                            Hiding them also does the layout: the member filter is
+                            already hidden for a rep, so the grid drops from four
+                            children to two and the date picker and timezone land
+                            beside each other on the top row. */}
+                        {!isRep && (
                         <div className="grid grid-cols-2 gap-3 w-full min-[900px]:w-auto min-[900px]:flex">
 
                             <button
@@ -745,6 +775,7 @@ export function Timesheets() {
                             </button>
 
                         </div>
+                        )}
 
 
                         {/* Member filter — hidden for reps who only view their own timesheets */}

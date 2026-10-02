@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useState, useRef, type CSSProperties } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { supabase } from '../lib/supabase';
@@ -94,6 +94,21 @@ export function Reports() {
     const rangeRef = useRef<HTMLDivElement>(null);
     const columnRef = useRef<HTMLDivElement>(null);
     const downloadRef = useRef<HTMLDivElement>(null);
+    /**
+     * Which edge of the date control the popup hangs from.
+     *
+     * Neither edge is right on its own. The control sits on the LEFT of the
+     * toolbar for an admin, with the team and member filters after it, so
+     * there is room to open rightward and left-aligned looks natural. For a
+     * rep those filters are not rendered, so the control is at the far RIGHT
+     * and opening rightward puts the popup off the screen.
+     *
+     * Measured rather than tied to the role: the toolbar can change, the
+     * window can be any width, and the only thing that actually matters is
+     * whether the popup fits.
+     */
+    const [rangeAlign, setRangeAlign] = useState<'left' | 'right'>('left');
+
     const [customStart, setCustomStart] = useState<Date | null>(initialUrlParams.start);
     const [customEnd, setCustomEnd] = useState<Date | null>(initialUrlParams.end);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -122,6 +137,25 @@ export function Reports() {
     );
     const [showColumnDropdown, setShowColumnDropdown] = useState(false);
     const [showDownloadDropdown, setShowDownloadDropdown] = useState(false);
+
+    // Pick the edge when the popup opens, and keep it right if the window is
+    // resized while it is open. The widths are the two shells' own caps.
+    useLayoutEffect(() => {
+        if (!showRangeDropdown) return;
+
+        const decide = () => {
+            const rect = rangeRef.current?.getBoundingClientRect();
+            if (!rect) return;
+
+            const width = isRep ? 820 : 780;
+            const fitsRightward = rect.left + width <= window.innerWidth - 16;
+            setRangeAlign(fitsRightward ? 'left' : 'right');
+        };
+
+        decide();
+        window.addEventListener('resize', decide);
+        return () => window.removeEventListener('resize', decide);
+    }, [showRangeDropdown, isRep]);
 
     // Close whichever dropdown the click fell outside of. Each listener is only
     // attached while something is open, so nothing runs in the common case.
@@ -594,7 +628,7 @@ export function Reports() {
             description="Detailed activity analytics and time distribution."
             actions={
                 <div className="flex items-center flex-wrap gap-3 w-full">
-                    <div className="flex items-center bg-surface border border-border rounded-xl shadow-shell-sm shrink-0 h-12">
+                    <div ref={rangeRef} className="relative flex items-center bg-surface border border-border rounded-xl shadow-shell-sm shrink-0 h-12">
                         <button
                             onClick={() => shiftRange(-1)}
                             className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all border-r border-border rounded-l-xl h-full"
@@ -605,7 +639,7 @@ export function Reports() {
                         {/* The label sets the control's width — the two arrows either side are
                             fixed. 100px was narrower than the date it holds, so the control
                             sized to the text and changed width as the range changed. */}
-                        <div ref={rangeRef} className="relative group min-w-[214px]">
+                        <div className="group min-w-[214px]">
                             <div
                                 onClick={() => {
                                     setShowRangeDropdown(!showRangeDropdown);
@@ -622,22 +656,6 @@ export function Reports() {
                                 </span>
                             </div>
 
-                            {showRangeDropdown && (
-                                <div className="absolute top-full right-0 mt-3 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    <DateRangePicker
-                                        range={range}
-                                        setRange={setRange}
-                                        setOffset={setOffset}
-                                        onApply={(s: Date, e: Date) => {
-                                            setCustomStart(s);
-                                            setCustomEnd(e);
-                                            setRange('Custom');
-                                            setShowRangeDropdown(false);
-                                        }}
-                                        onCancel={() => setShowRangeDropdown(false)}
-                                    />
-                                </div>
-                            )}
                         </div>
 
                         <button
@@ -646,6 +664,32 @@ export function Reports() {
                         >
                             <ChevronRight className="w-5 h-5" />
                         </button>
+
+                        {/* Anchored on the whole control, not on the label alone.
+                            The label sits between the two arrow buttons, so right-0
+                            against it stopped one arrow's width short of the
+                            control's real right edge. Anchoring left instead pushed
+                            the 780px popup off the side of the screen entirely. */}
+                        {showRangeDropdown && (
+                            <div className={clsx(
+                                "absolute top-full mt-3 z-50 max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-2 duration-200",
+                                rangeAlign === 'left' ? "left-0" : "right-0"
+                            )}>
+                                <DateRangePicker
+                                    isRep={isRep}
+                                    range={range}
+                                    setRange={setRange}
+                                    setOffset={setOffset}
+                                    onApply={(s: Date, e: Date) => {
+                                        setCustomStart(s);
+                                        setCustomEnd(e);
+                                        setRange('Custom');
+                                        setShowRangeDropdown(false);
+                                    }}
+                                    onCancel={() => setShowRangeDropdown(false)}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     {!isRep && (
@@ -684,13 +728,26 @@ export function Reports() {
             ) : (
             <div className="flex flex-col gap-8 pb-20">
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-8 lg:gap-10">
+                {/* Four columns for a rep, six for everyone else. With the two
+                    money cards hidden, six columns would leave their slots empty
+                    rather than letting the remaining four spread into them. */}
+                <div className={clsx(
+                    "grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-10",
+                    isRep ? "lg:grid-cols-4" : "lg:grid-cols-3 xl:grid-cols-6"
+                )}>
                     <StatMetric icon={<Clock className="w-4 h-4" />} label="Time" value={formatDuration(totalMins)} sub="Worked" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     <StatMetric icon={<ActivityIcon className="w-4 h-4" />} label="Activity" value={`${avgActivity}%`} sub="Score" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     <StatMetric icon={<Monitor className="w-4 h-4" />} label="Sessions" value={totalSessions.toString()} sub="Total" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     <StatMetric icon={<Camera className="w-4 h-4" />} label="Captures" value={screenshotCount.toString()} sub="Proofs" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
-                    <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Revenue" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
-                    <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Expenses" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                    {/* Revenue and expenses are the organisation's figures, not a
+                        person's own record of their time, so a rep does not see
+                        them. */}
+                    {!isRep && (
+                        <>
+                            <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Revenue" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                            <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Expenses" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                        </>
+                    )}
                 </div>
 
                 {dailyActivity.length === 0 ? (
@@ -1085,7 +1142,16 @@ function CustomTooltip({ active, payload, label, unit }: any) {
     return null;
 }
 
-function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any) {
+/**
+ * Two looks, by role.
+ *
+ * e27d0d9 redesigned this popup; the redesign was kept for a rep's own
+ * Reports page and undone for anyone who manages other people, so admins,
+ * managers and owners see what they had before. The differences are spacing,
+ * the preset button styling and the footer — the behaviour is one
+ * implementation either way.
+ */
+function DateRangePicker({ isRep, range, setRange, setOffset, onApply, onCancel }: any) {
     const [leftMonth, setLeftMonth] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
     const [selStart, setSelStart] = useState<Date | null>(null);
     const [selEnd, setSelEnd] = useState<Date | null>(null);
@@ -1120,52 +1186,76 @@ function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any)
     };
 
     return (
-        <div className="bg-surface border border-border rounded-2xl shadow-premium flex flex-col lg:flex-row p-4 w-[min(740px,calc(100vw-2rem))] max-h-[85vh] overflow-y-auto gap-4">
-            <div className="flex-1 flex flex-col sm:flex-row border-b lg:border-b-0 lg:border-r border-border/60 pb-4 lg:pb-0 lg:pr-4 gap-6 min-w-0">
-                <MonthView 
-                    month={leftMonth} 
-                    onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} 
-                    onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} 
-                    onDateClick={handleDateClick} 
-                    isSelected={isSelected} 
-                    isInRange={isInRange} 
-                />
-                <MonthView 
-                    month={rightMonth} 
-                    onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} 
-                    onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} 
-                    onDateClick={handleDateClick} 
-                    isSelected={isSelected} 
-                    isInRange={isInRange} 
-                />
+        <div className={clsx(
+            "bg-surface border border-border rounded-2xl flex flex-col lg:flex-row overflow-y-auto",
+            isRep
+                // 820, not 740. Two 270px months, the 24px gap between them,
+                // this box's 32px of padding, the months container's 16px right
+                // padding, the 16px gap to the presets and their 176px column
+                // come to 804. At 740 the months container — which is min-w-0 —
+                // shrank below its content and the second month ran UNDER the
+                // presets rather than overflowing where it could be seen.
+                ? "shadow-premium p-4 w-[min(820px,calc(100vw-2rem))] max-h-[85vh] gap-4"
+                : "shadow-2xl p-1 w-[min(780px,calc(100vw-2rem))] max-h-[80vh]"
+        )}>
+            <div className={clsx(
+                "flex-1 flex flex-col sm:flex-row border-b lg:border-b-0 lg:border-r min-w-0",
+                isRep
+                    ? "border-border/60 pb-4 lg:pb-0 lg:pr-4 gap-6"
+                    : "border-border p-2 gap-4"
+            )}>
+                <MonthView isRep={isRep} month={leftMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
+                <MonthView isRep={isRep} month={rightMonth} onPrev={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))} onNext={() => setLeftMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))} onDateClick={handleDateClick} isSelected={isSelected} isInRange={isInRange} />
             </div>
-            <div className="w-full lg:w-44 shrink-0 flex flex-col gap-1.5 pt-1">
-                <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider px-3 py-1">Presets</span>
+            <div className={clsx(
+                "w-full lg:w-44 shrink-0 flex flex-col",
+                isRep ? "gap-1.5 pt-1" : "p-4 gap-2 bg-surface-hover/30"
+            )}>
+                {isRep && (
+                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider px-3 py-1">Presets</span>
+                )}
                 {RANGES.filter(r => r !== 'Custom').map(r => (
                     <button
                         key={r}
                         onClick={() => { setRange(r); setOffset(0); onCancel(); }}
                         className={clsx(
-                            "w-full text-left px-3 py-2 rounded-xl text-[12px] font-semibold transition-all border",
-                            range === r 
-                                ? "bg-primary/10 border-primary/25 text-primary font-bold shadow-sm" 
+                            "w-full text-left rounded-xl transition-all border",
+                            isRep
+                                ? "px-3 py-2 text-[12px] font-semibold"
+                                : "px-4 py-2.5 text-[11px] font-black",
+                            range === r
+                                ? isRep
+                                    ? "bg-primary/10 border-primary/25 text-primary font-bold shadow-sm"
+                                    : "bg-surface border-border shadow-shell-sm"
                                 : "text-text-muted border-transparent hover:text-text-main hover:bg-surface-hover"
                         )}
+                        style={range === r && !isRep ? { color: 'var(--chart-gold)' } : {}}
                     >
                         {r}
                     </button>
                 ))}
-                <div className="mt-auto pt-3 border-t border-border flex flex-col gap-2">
+                <div className={clsx(
+                    "mt-auto border-t border-border flex flex-col gap-2",
+                    isRep ? "pt-3" : "pt-4"
+                )}>
                     <button
                         disabled={!selStart || !selEnd}
                         onClick={() => selStart && selEnd && onApply(selStart, selEnd)}
-                        className="w-full py-2.5 bg-primary hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed text-white text-[12px] font-bold rounded-xl transition-all shadow-sm"
+                        className={clsx(
+                            "w-full disabled:cursor-not-allowed text-white text-[12px] rounded-xl transition-all",
+                            isRep
+                                ? "py-2.5 bg-primary hover:bg-primary/90 disabled:opacity-40 font-bold shadow-sm"
+                                : "py-3 bg-[#4FC08D] hover:bg-[#3FA07D] disabled:opacity-50 font-black"
+                        )}
                     >
-                        Apply Range
+                        {isRep ? 'Apply Range' : 'Apply'}
                     </button>
                     <button
                         onClick={onCancel}
-                        className="w-full py-2 bg-surface hover:bg-surface-hover border border-border text-text-muted hover:text-text-main text-[12px] font-semibold rounded-xl transition-all"
+                        className={clsx(
+                            "w-full bg-surface border border-border text-text-muted text-[12px] rounded-xl hover:bg-surface-hover transition-all",
+                            isRep ? "py-2 font-semibold hover:text-text-main" : "py-3 font-black"
+                        )}
                     >
                         Cancel
                     </button>
@@ -1175,7 +1265,7 @@ function DateRangePicker({ range, setRange, setOffset, onApply, onCancel }: any)
     );
 }
 
-function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }: any) {
+function MonthView({ isRep, month, onPrev, onNext, onDateClick, isSelected, isInRange }: any) {
     const year = month.getFullYear();
     const monthIdx = month.getMonth();
     const firstDay = new Date(year, monthIdx, 1).getDay();
@@ -1188,58 +1278,66 @@ function MonthView({ month, onPrev, onNext, onDateClick, isSelected, isInRange }
     for (let i = 0; i < adjustedStart; i++) days.push(null);
     for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, monthIdx, i));
 
-    const monthName = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const monthName = month.toLocaleDateString('en-US', { month: isRep ? 'long' : 'short', year: 'numeric' });
 
     return (
-        <div className="flex-1 min-w-[250px] flex flex-col">
-            <div className="flex items-center justify-between pb-3 mb-2 border-b border-border/60">
-                <button 
-                    onClick={onPrev} 
-                    className="p-1.5 rounded-lg hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors"
-                    title="Previous Month"
+        // 270, not 300: two months plus the 16px gap, the container's 16px of
+        // padding, the 176px presets column and the shell's 10px have to fit the
+        // popup's 780px. At 300 that came to 818, and since the months container
+        // is min-w-0 it shrank below its content and the grid ran under the
+        // presets instead of overflowing visibly.
+        <div className="flex-1 min-w-[270px] flex flex-col">
+            {/* A plain header, like the date picker everywhere else in the app.
+                This was a solid gold bar with white text on it: in dark mode
+                --chart-gold is #FFD700, so white on it is barely legible, and two
+                of them side by side dominated the popup. */}
+            <div className="flex items-center justify-between mb-3 px-1">
+                <button
+                    onClick={onPrev}
+                    className="p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-hover transition-colors"
+                    title="Previous month"
                 >
                     <ChevronLeft className="w-4 h-4" />
                 </button>
-                <span className="text-[13px] font-bold text-text-main tracking-tight">{monthName}</span>
-                <button 
-                    onClick={onNext} 
-                    className="p-1.5 rounded-lg hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors"
-                    title="Next Month"
+                <span className="text-[13px] font-black text-text-main tracking-tight">{monthName}</span>
+                <button
+                    onClick={onNext}
+                    className="p-1.5 rounded-lg text-text-muted hover:text-text-main hover:bg-surface-hover transition-colors"
+                    title="Next month"
                 >
                     <ChevronRight className="w-4 h-4" />
                 </button>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center mb-1.5">
-                {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
-                    <div key={d} className="py-1 text-[10px] font-bold text-text-muted uppercase tracking-wider">{d}</div>
-                ))}
-            </div>
             <div className="grid grid-cols-7 gap-1 text-center">
+                {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map(d => (
+                    <div key={d} className="py-1.5 text-[10px] font-black text-text-muted uppercase tracking-wider">{d}</div>
+                ))}
                 {days.map((d, i) => {
-                    if (!d) return <div key={i} className="h-8" />;
+                    if (!d) return <div key={i} className="py-3" />;
                     const selected = isSelected(d);
                     const inRange = isInRange(d);
-                    const isToday = d.toDateString() === new Date().toDateString();
 
                     return (
                         <button
                             key={i}
                             onClick={() => onDateClick(d)}
                             className={clsx(
-                                "h-8 text-[12px] font-semibold transition-all flex items-center justify-center relative",
-                                selected
-                                    ? "bg-primary text-white font-bold rounded-lg shadow-sm shadow-primary/20 scale-105 z-10"
-                                    : inRange
-                                        ? "bg-primary/15 text-primary rounded-none hover:bg-primary/25"
-                                        : isToday
-                                            ? "text-primary font-bold hover:bg-surface-hover rounded-lg ring-1 ring-primary/40"
-                                            : "text-text-main/90 hover:bg-surface-hover hover:text-text-main rounded-lg"
+                                "py-3 text-[12px] font-medium transition-all rounded-lg relative z-10",
+                                selected ? "text-[#001B4D] font-black shadow-lg shadow-[var(--chart-gold)]/30" :
+                                    inRange ? "bg-[var(--chart-gold)]/5 hover:bg-primary hover:text-[var(--bg-surface)]" :
+                                        "text-text-muted hover:bg-primary hover:text-[var(--bg-surface)]"
                             )}
+                            style={selected ? { backgroundColor: 'var(--chart-gold)' } : inRange ? { color: 'var(--chart-gold)' } : {}}
                         >
                             {d.getDate()}
                         </button>
                     );
                 })}
+            </div>
+            <div className="mt-auto pt-4 border-t border-border text-center">
+                <span className="text-[10px] font-bold text-text-muted ">
+                    {month.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                </span>
             </div>
         </div>
     );
