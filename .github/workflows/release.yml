@@ -243,15 +243,18 @@ jobs:
       # Upload macOS Installers (.dmg and updater bundles)
       - name: Upload macOS Installers to Release
         if: matrix.platform == 'macos-latest'
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.version.outputs.NUM) }}
-          draft: true
-          files: |
-            src-tauri/target/*/release/bundle/dmg/*.dmg
-            src-tauri/target/release/bundle/dmg/*.dmg
-            src-tauri/target/*/release/bundle/macos/*.tar.gz*
-            src-tauri/target/release/bundle/macos/*.tar.gz*
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.version.outputs.NUM) }}"
+
+          gh release upload "$TAG" \
+            src-tauri/target/*/release/bundle/dmg/*.dmg \
+            src-tauri/target/release/bundle/dmg/*.dmg \
+            src-tauri/target/*/release/bundle/macos/*.tar.gz* \
+            src-tauri/target/release/bundle/macos/*.tar.gz* \
+            --clobber || true
 
   publish-latest-json:
     needs: publish
