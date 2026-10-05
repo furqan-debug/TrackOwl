@@ -1,7 +1,7 @@
 # TrackOwl
 
 <p align="center">
-  <img src="public/icon.png" alt="TrackOwl Logo" width="100" />
+  <img src="public/logo.png" alt="TrackOwl Logo" width="100" />
 </p>
 
 <p align="center">
