@@ -29,10 +29,23 @@ export function FormSelect({
     const triggerRef = useRef<HTMLDivElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
 
-    /** Roughly how tall the list gets, for deciding up or down. */
+    /** One row: py-3 either side of 13px text. */
+    const ROW_H = 44;
+    /** The panel's own p-2, top and bottom. */
+    const PANEL_PAD = 16;
+    /** The tallest the list is ever allowed to get, before it scrolls. */
     const PANEL_MAX = 260;
+    /** Between the field and the list. */
+    const GAP = 8;
+    /** Kept clear of the window edge. */
+    const MARGIN = 16;
 
-    const [panelPos, setPanelPos] = useState({ top: 0, left: 0, width: 0 });
+    const [panelPos, setPanelPos] = useState({
+        top: 0,
+        left: 0,
+        width: 0,
+        maxHeight: PANEL_MAX,
+    });
 
     /**
      * The list is rendered through a portal on the body, so it is not inside
@@ -44,28 +57,135 @@ export function FormSelect({
     useLayoutEffect(() => {
         if (!isOpen) return;
 
-        const place = () => {
+        /** Where the list belongs, measured from the field. */
+        const compute = () => {
             const rect = triggerRef.current?.getBoundingClientRect();
-            if (!rect) return;
+            if (!rect) return null;
 
-            const below = rect.bottom + 8;
-            const fitsBelow = below + PANEL_MAX <= window.innerHeight - 16;
+            // How tall the list actually is, rather than the cap. The portal
+            // is committed in the same pass as this effect, so the panel is
+            // already in the DOM and can be measured; scrollHeight reports the
+            // full content height even once maxHeight is applied, and ignores
+            // the open animation's transform. The row-count estimate is only a
+            // fallback — relying on it would mean a padding or font change
+            // silently reintroducing a scrollbar.
+            const measured = panelRef.current?.scrollHeight ?? 0;
+            const natural =
+                measured > 0
+                    ? measured
+                    : options.length * ROW_H + PANEL_PAD;
+            const wanted = Math.min(PANEL_MAX, natural);
 
-            setPanelPos({
-                top: fitsBelow ? below : Math.max(16, rect.top - PANEL_MAX - 8),
+            // Downward, always, and never over the field. Room is made for it
+            // on open (see makeRoom) rather than the list flipping above the
+            // field or sliding across it. The cap only bites when the page has
+            // run out of scroll and the room could not be made.
+            const spaceBelow = window.innerHeight - rect.bottom - GAP - MARGIN;
+
+            return {
+                rect,
+                top: rect.bottom + GAP,
                 left: rect.left,
                 width: rect.width,
+                maxHeight: Math.min(wanted, Math.max(0, spaceBelow)),
+            };
+        };
+
+        const place = () => {
+            const p = compute();
+            if (!p) return;
+            setPanelPos({
+                top: p.top,
+                left: p.left,
+                width: p.width,
+                maxHeight: p.maxHeight,
             });
         };
 
+        /**
+         * Make room below the field, instead of moving the list.
+         *
+         * A list that will not fit under its field has to give something up:
+         * flip above it, shrink into a scrollbox, or slide across it. All
+         * three were tried and all three were wrong. Scrolling the page by
+         * the shortfall costs none of them — the field moves up, the room
+         * appears, and the list opens downward at full height.
+         *
+         * Whatever actually scrolls is found by walking up from the field, so
+         * this works inside a scrolling panel as well as on the page itself.
+         */
+        const makeRoom = () => {
+            const p = compute();
+            if (!p) return;
+
+            const natural = Math.min(
+                PANEL_MAX,
+                panelRef.current?.scrollHeight ||
+                    options.length * ROW_H + PANEL_PAD,
+            );
+            const deficit =
+                natural + GAP + MARGIN - (window.innerHeight - p.rect.bottom);
+            if (deficit <= 0) return;
+
+            let box: HTMLElement | null =
+                triggerRef.current?.parentElement ?? null;
+            while (box) {
+                const { overflowY } = getComputedStyle(box);
+                if (
+                    /(auto|scroll|overlay)/.test(overflowY) &&
+                    box.scrollHeight > box.clientHeight
+                ) {
+                    break;
+                }
+                box = box.parentElement;
+            }
+
+            if (box) {
+                box.scrollTop = Math.min(
+                    box.scrollTop + deficit,
+                    box.scrollHeight - box.clientHeight,
+                );
+            } else {
+                window.scrollBy(0, deficit);
+            }
+        };
+
+        makeRoom();
         place();
+
+        /**
+         * The list stays open while the page scrolls, and travels with its
+         * field. Staying open and staying against the field means moving with
+         * it — there is no arrangement where it does neither.
+         *
+         * The position is written straight to the node rather than through
+         * React state, because a state update is committed after the browser
+         * has already painted the field in its new place: the list would
+         * arrive a frame late and lag behind. A direct style write lands in
+         * the same frame, so the two move together.
+         *
+         * Capture, so scrolls in any container in between are caught too. The
+         * list scrolls its own overflow when it is long, and that is not the
+         * page moving, so events from inside it are ignored.
+         */
+        const onScroll = (e: Event) => {
+            const el = panelRef.current;
+            if (!el || el.contains(e.target as Node)) return;
+
+            const p = compute();
+            if (!p) return;
+
+            el.style.top = `${p.top}px`;
+            el.style.left = `${p.left}px`;
+        };
+
         window.addEventListener('resize', place);
-        window.addEventListener('scroll', place, true);
+        window.addEventListener('scroll', onScroll, true);
         return () => {
             window.removeEventListener('resize', place);
-            window.removeEventListener('scroll', place, true);
+            window.removeEventListener('scroll', onScroll, true);
         };
-    }, [isOpen]);
+    }, [isOpen, options.length]);
 
     const activeLabel =
         options.find((o: any) => o.value === value)?.label || value;
@@ -173,9 +293,10 @@ export function FormSelect({
                                     top: panelPos.top,
                                     left: panelPos.left,
                                     width: panelPos.width,
+                                    maxHeight: panelPos.maxHeight,
                                 }}
                                 onMouseDown={(e) => e.stopPropagation()}
-                                className="bg-surface border border-border rounded-2xl shadow-premium z-[200] flex flex-col p-2 max-h-[260px] overflow-y-auto custom-scrollbar"
+                                className="bg-surface border border-border rounded-2xl shadow-premium z-[200] flex flex-col p-2 overflow-y-auto custom-scrollbar"
                             >
                             {options.map((opt: any) => (
                                 <div
