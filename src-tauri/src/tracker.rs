@@ -312,16 +312,17 @@ pub fn get_browser_domain(app_name: &str, title: &str) -> String {
 /// No child processes — calls UIAutomationCore.dll directly inside this process.
 #[cfg(target_os = "windows")]
 fn get_url_via_uiautomation() -> Option<String> {
-    use windows::Win32::System::Com::{CoInitializeEx, COINIT_APARTMENTTHREADED};
+    use windows::Win32::System::Com::{CoInitializeEx, COINIT_MULTITHREADED};
 
-    // Initialize COM as STA once per thread. is_ok() covers both:
-    //   S_OK (0)     = freshly initialized
-    //   S_FALSE (1)  = already STA-initialized on this thread
-    // Errors (e.g. RPC_E_CHANGED_MODE for MTA) leave COM_INIT_DONE = false.
+    // Initialize COM as MTA once per thread. MTA is required because
+    // this runs on a background thread::spawn() with NO Win32 message pump.
+    // STA (COINIT_APARTMENTTHREADED) would deadlock on cross-process
+    // UIAutomation calls into Chrome/Edge without a GetMessage loop.
+    // is_ok() covers both S_OK (fresh init) and S_FALSE (already initialized).
     COM_INIT_DONE.with(|done| {
         if !done.get() {
             unsafe {
-                if CoInitializeEx(None, COINIT_APARTMENTTHREADED).is_ok() {
+                if CoInitializeEx(None, COINIT_MULTITHREADED).is_ok() {
                     done.set(true);
                 }
             }
