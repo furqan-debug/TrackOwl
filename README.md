@@ -1,5 +1,3 @@
-# TrackOwl
-
 <p align="center">
   <img src="public/logo.png" alt="TrackOwl Logo" width="100" />
 </p>
