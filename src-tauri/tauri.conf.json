@@ -1,12 +1,13 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "TrackOwl",
-  "version": "2.0.67",
+  "version": "2.0.68",
   "identifier": "com.digireps.trackowl",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:5174",
     "beforeBuildCommand": "npm run build",
+    "beforeBundleCommand": "node -e \"try { require('./scripts/sign-inner-binary.cjs') } catch { require('../scripts/sign-inner-binary.cjs') }\"",
     "frontendDist": "../dist"
   },
   "app": {
@@ -46,6 +47,9 @@
     "windows": {
       "webviewInstallMode": {
         "type": "downloadBootstrapper"
+      },
+      "nsis": {
+        "installerHooks": "nsis-hooks.nsh"
       }
     },
     "macOS": {

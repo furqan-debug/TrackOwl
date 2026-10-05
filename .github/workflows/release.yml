@@ -70,7 +70,26 @@ jobs:
           ${{ secrets.APPLE_API_KEY_CONTENT }}
           EOF
 
-      # Build & Publish Release via tauri-action (no signCommand — signing done below)
+      # Setup CodeSignTool before build so beforeBundleCommand can sign inner binary
+      - name: Setup CodeSignTool (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          $CST_URL = "https://github.com/SSLcom/CodeSignTool/releases/download/v1.3.0/CodeSignTool-v1.3.0-windows.zip"
+          $CST_ZIP = "${{ runner.temp }}\CodeSignTool.zip"
+          $CST_DIR = "C:\CodeSignTool"
+          Invoke-WebRequest -Uri $CST_URL -OutFile $CST_ZIP
+          Expand-Archive -Path $CST_ZIP -DestinationPath $CST_DIR -Force
+          $CST_BAT = Get-ChildItem -Path $CST_DIR -Recurse -Filter "CodeSignTool.bat" | Select-Object -First 1
+          if ($CST_BAT) {
+            Write-Host "CodeSignTool found at: $($CST_BAT.FullName)"
+            echo "CODESIGNTOOL_DIR=$($CST_BAT.DirectoryName)" >> $env:GITHUB_ENV
+          } else {
+            Write-Error "CodeSignTool.bat not found after extraction"
+            exit 1
+          }
+
+      # Build & Publish Release via tauri-action (inner binary signed by beforeBundleCommand, installers signed below)
       - name: Build & Publish Release
         uses: tauri-apps/tauri-action@v0
         env:
@@ -78,6 +97,13 @@ jobs:
           # Tauri updater signing key config
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+          # SSL.com eSigner credentials for Windows inner binary signing
+          ES_USERNAME: ${{ secrets.ES_USERNAME }}
+          ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+          CREDENTIAL_ID: ${{ secrets.CREDENTIAL_ID }}
+          ES_TOTP_SECRET: ${{ secrets.ES_TOTP_SECRET }}
+          CODESIGNTOOL_DIR: ${{ env.CODESIGNTOOL_DIR }}
 
           # Apple Code Signing & Notarization config (macOS only)
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
@@ -119,13 +145,19 @@ jobs:
           $NSIS_EXE = "${{ github.workspace }}\src-tauri\target\release\bundle\nsis\TrackOwl_${VERSION}_x64-setup.exe"
           $MSI_FILE = "${{ github.workspace }}\src-tauri\target\release\bundle\msi\TrackOwl_${VERSION}_x64_en-US.msi"
 
-          # Download and extract CodeSignTool
-          $CST_URL = "https://github.com/SSLcom/CodeSignTool/releases/download/v1.3.0/CodeSignTool-v1.3.0-windows.zip"
-          $CST_ZIP = "${{ runner.temp }}\CodeSignTool.zip"
-          $CST_DIR = "${{ runner.temp }}\CodeSignTool"
-          Invoke-WebRequest -Uri $CST_URL -OutFile $CST_ZIP
-          Expand-Archive -Path $CST_ZIP -DestinationPath $CST_DIR -Force
-          $CST_BAT = Get-ChildItem -Path $CST_DIR -Recurse -Filter "CodeSignTool.bat" | Select-Object -First 1
+          # Locate CodeSignTool (already set up in Setup step, or fallback)
+          $CST_BAT = $null
+          if (Test-Path "C:\CodeSignTool") {
+            $CST_BAT = Get-ChildItem -Path "C:\CodeSignTool" -Recurse -Filter "CodeSignTool.bat" | Select-Object -First 1
+          }
+          if (-not $CST_BAT) {
+            $CST_URL = "https://github.com/SSLcom/CodeSignTool/releases/download/v1.3.0/CodeSignTool-v1.3.0-windows.zip"
+            $CST_ZIP = "${{ runner.temp }}\CodeSignTool.zip"
+            $CST_DIR = "${{ runner.temp }}\CodeSignTool"
+            Invoke-WebRequest -Uri $CST_URL -OutFile $CST_ZIP
+            Expand-Archive -Path $CST_ZIP -DestinationPath $CST_DIR -Force
+            $CST_BAT = Get-ChildItem -Path $CST_DIR -Recurse -Filter "CodeSignTool.bat" | Select-Object -First 1
+          }
 
           if (-not $CST_BAT) {
             Write-Error "CodeSignTool.bat not found after extraction"
