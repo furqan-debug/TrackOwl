@@ -167,7 +167,7 @@ export function Onboarding() {
                             { icon: Check, text: "Instant report generation", color: "blue" }
                         ].map((feat, i) => (
                             <div key={i} className="flex items-center gap-4 group">
-                                <div className="w-6 h-6 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform">
+                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
                                     <feat.icon className="w-3.5 h-3.5" strokeWidth={3} />
                                 </div>
                                 <span className="text-sm font-semibold text-text-main">{feat.text}</span>
@@ -181,7 +181,7 @@ export function Onboarding() {
                                 <Rocket className="w-6 h-6" />
                             </div>
                             <div>
-                                <p className="text-[10px] font-bold text-blue-600 leading-none mb-1">Freemium</p>
+                                <p className="text-[10px] font-bold text-primary leading-none mb-1">Freemium</p>
                                 <p className="text-sm font-bold text-text-main">Free Forever · Build your workspace</p>
                             </div>
                         </div>
@@ -189,18 +189,18 @@ export function Onboarding() {
                 </div>
 
                 <div className="w-full max-w-[520px] mx-auto">
-                    <Card className="p-8 md:p-12 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] bg-surface border-border rounded-[40px] relative overflow-hidden">
+                    <Card className="p-8 md:p-12 shadow-premium bg-surface border-border rounded-[40px] relative overflow-hidden">
                         
                         <div className="flex items-center gap-4 mb-10 overflow-x-auto pb-1 no-scrollbar">
                             {steps.map((s) => (
                                 <div key={s.id} className="flex items-center gap-2 group transition-all shrink-0">
                                     <div className={clsx(
                                         "w-2 h-2 rounded-full transition-all duration-300",
-                                        step === s.id ? "bg-blue-600 w-6" : step > s.id ? "bg-slate-900" : "bg-slate-200"
+                                        step === s.id ? "bg-primary w-6" : step > s.id ? "bg-text-main" : "bg-border"
                                     )} />
                                     <span className={clsx(
                                         "text-[10px] font-extrabold ",
-                                        step === s.id ? "text-blue-600" : step > s.id ? "text-text-main" : "text-text-muted"
+                                        step === s.id ? "text-primary" : step > s.id ? "text-text-main" : "text-text-muted"
                                     )}>
                                         {s.label}
                                     </span>
@@ -233,7 +233,7 @@ export function Onboarding() {
                                                     required
                                                     value={industry}
                                                     onChange={e => setIndustry(e.target.value)}
-                                                    className="w-full bg-surface-hover/50 border border-border h-14 rounded-2xl px-5 text-text-main text-sm appearance-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all outline-none"
+                                                    className="w-full bg-surface-hover/50 border border-border h-14 rounded-2xl px-5 text-text-main text-sm appearance-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none"
                                                 >
                                                     <option value="">Choose...</option>
                                                     {industries.map(i => <option key={i} value={i}>{i}</option>)}
@@ -248,7 +248,7 @@ export function Onboarding() {
                                                 <select
                                                     value={orgSize}
                                                     onChange={e => setOrgSize(e.target.value)}
-                                                    className="w-full bg-surface-hover/50 border border-border h-14 rounded-2xl px-5 text-text-main text-sm appearance-none focus:ring-2 focus:ring-blue-600/10 focus:border-blue-600 transition-all outline-none"
+                                                    className="w-full bg-surface-hover/50 border border-border h-14 rounded-2xl px-5 text-text-main text-sm appearance-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all outline-none"
                                                 >
                                                     <option value="1-10">1-10</option>
                                                     <option value="11-50">11-50</option>
@@ -264,7 +264,7 @@ export function Onboarding() {
                                 <Button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full py-6 bg-blue-600 hover:bg-black shadow-xl shadow-blue-600/10 rounded-2xl font-bold group text-white border-0 transition-all duration-300"
+                                    className="w-full py-6 hover:bg-primary/90 shadow-shell-md shadow-primary/20 rounded-2xl font-bold group border-0 transition-all duration-300"
                                 >
                                     {loading ? 'Setting up...' : 'Create Workspace'}
                                     {!loading && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />}
@@ -277,8 +277,8 @@ export function Onboarding() {
                         {step === 2 && (
                             <div className="animate-in zoom-in-95 duration-700 text-center py-10">
                                 <div className="relative mb-10 w-fit mx-auto">
-                                    <div className="absolute inset-0 bg-blue-100 blur-3xl rounded-full scale-110" />
-                                    <div className="w-24 h-24 bg-blue-600 rounded-[32px] flex items-center justify-center relative z-10 shadow-2xl rotate-12 transition-transform hover:rotate-0 duration-500">
+                                    <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full scale-110" />
+                                    <div className="w-24 h-24 bg-primary rounded-[32px] flex items-center justify-center relative z-10 shadow-2xl rotate-12 transition-transform hover:rotate-0 duration-500">
                                         <CheckCircle2 className="w-12 h-12 text-white" />
                                     </div>
                                 </div>
@@ -290,7 +290,7 @@ export function Onboarding() {
                                 </p>
 
                                 {syncError && (
-                                    <div className="mb-8 p-4 bg-amber-50 rounded-2xl border border-amber-100 text-amber-500 text-[10px] font-bold animate-in shake duration-500">
+                                    <div className="mb-8 p-4 bg-warning/10 rounded-2xl border border-warning/20 text-warning text-[10px] font-bold animate-in shake duration-500">
                                         Sync delay detected. Please try again in a moment.
                                     </div>
                                 )}
@@ -298,7 +298,7 @@ export function Onboarding() {
                                 <Button
                                     onClick={handleFinalLaunch}
                                     disabled={loading}
-                                    className="w-full py-6 bg-blue-600 hover:bg-black shadow-2xl shadow-blue-600/10 rounded-2xl font-bold group text-white border-0 transition-all duration-300 mb-6"
+                                    className="w-full py-6 hover:bg-primary/90 shadow-shell-md shadow-primary/20 rounded-2xl font-bold group border-0 transition-all duration-300 mb-6"
                                 >
                                     {loading ? 'Verifying Link...' : 'Launch Dashboard'}
                                     {!loading && <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />}
