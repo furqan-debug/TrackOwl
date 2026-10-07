@@ -50,6 +50,7 @@ import { SupportWidget } from './components/SupportWidget';
 import { SupportPage } from './pages/SupportPage';
 import { FavoritesProvider } from './context/FavoritesContext';
 import { AuthProvider } from './context/AuthContext';
+import { OfflineBanner } from './components/ui';
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -112,6 +113,10 @@ function App() {
       <FavoritesProvider>
         <Router>
           <ScrollToTop />
+          {/* Once, at the root, so every page is covered — including sign-in
+              and onboarding, which a visitor can reach before anything else
+              has loaded. */}
+          <OfflineBanner />
           <Routes>
             <Route path="/" element={<><AuthRedirect /><Landing /></>} />
             <Route path="/privacy" element={<Privacy />} />
