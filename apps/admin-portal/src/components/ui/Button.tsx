@@ -1,5 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import clsx from 'clsx';
+import { useOnlineStatus } from '../../hooks/useOnlineStatus';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -46,10 +47,21 @@ export function Button({
     type = 'button',
     ...rest
 }: ButtonProps) {
+    const online = useOnlineStatus();
+
+    /**
+     * A submit with no connection cannot do anything but fail, and it fails
+     * quietly — the form sits there looking as though the button is broken.
+     * Only submits are held back: buttons that open a dialog, switch a tab or
+     * expand a row work perfectly well offline and are left alone.
+     */
+    const offlineSubmit = !online && type === 'submit';
+
     return (
         <button
             type={type}
-            disabled={disabled || loading}
+            title={offlineSubmit ? 'You are offline — this cannot be saved yet' : rest.title}
+            disabled={disabled || loading || offlineSubmit}
             className={clsx(
                 'inline-flex items-center justify-center gap-2 rounded-shell-md font-bold transition-all focus:outline-none focus:ring-4 focus:ring-primary/10 disabled:opacity-50 disabled:pointer-events-none font-sans',
                 variantClasses[variant],

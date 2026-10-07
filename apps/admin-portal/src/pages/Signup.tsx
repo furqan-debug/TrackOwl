@@ -5,8 +5,10 @@ import { Mail, Lock, User, Eye, EyeOff, AlertCircle, ArrowRight } from 'lucide-r
 import { Input } from '../components/ui/Input';
 
 import LogoIcon from '../assets/branding/3.svg';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 export function Signup() {
+    const isOnline = useOnlineStatus();
     const navigate = useNavigate();
 
     const [email, setEmail] = useState('');
@@ -179,7 +181,7 @@ export function Signup() {
 
                                     <button
                                         type="submit"
-                                        disabled={loading}
+                                        disabled={loading || !isOnline}
                                         onMouseMove={(e) => {
                                             // Feeds the blob inside .label::before so it trails the cursor.
                                             const rect = e.currentTarget.getBoundingClientRect();

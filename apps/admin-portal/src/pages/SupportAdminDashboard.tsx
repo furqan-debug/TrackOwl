@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, Inbox, Clock, CheckCircle, Search, Filter, MessageCircle, Send, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 interface Ticket {
   id: string;
@@ -25,6 +26,7 @@ interface Message {
 }
 
 export function SupportAdminDashboard() {
+    const isOnline = useOnlineStatus();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('Open');
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -373,7 +375,7 @@ export function SupportAdminDashboard() {
                   ></textarea>
                   <button 
                     type="submit"
-                    disabled={!replyText.trim() || (selectedTicket.status || '').toLowerCase() === 'resolved'}
+                    disabled={!replyText.trim() || (selectedTicket.status || '').toLowerCase() === 'resolved' || !isOnline}
                     className="absolute bottom-3 right-3 p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
                   >
                     <Send className="w-5 h-5" />

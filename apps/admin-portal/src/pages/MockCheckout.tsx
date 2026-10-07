@@ -3,10 +3,12 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, Sparkles, CreditCard, Lock, ArrowLeft, CheckCircle, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export function MockCheckout() {
+    const isOnline = useOnlineStatus();
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { session, refreshOrganization } = useAuth();
@@ -241,7 +243,7 @@ export function MockCheckout() {
 
                             <button
                                 type="submit"
-                                disabled={isPaying}
+                                disabled={isPaying || !isOnline}
                                 className="w-full bg-accent hover:bg-accent-hover text-[var(--primary)] font-bold py-3 rounded-xl shadow-lg hover:shadow-accent/20 transition-all flex items-center justify-center gap-2 tracking-wide disabled:opacity-50 text-sm mt-6"
                             >
                                 {isPaying ? (

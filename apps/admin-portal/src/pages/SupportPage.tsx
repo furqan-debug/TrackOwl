@@ -13,6 +13,7 @@ import HeaderLogo from '../assets/branding/header-2.svg';
 import { Footer } from '../components/Footer';
 import { ContactModal } from './Landing';
 import '../support.css';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 // Use Vite's glob import to get all markdown files
 const modules = import.meta.glob('../content/*.md', { query: '?raw', eager: true });
@@ -245,6 +246,7 @@ function Layout({ children, search, setSearch }: { children: React.ReactNode; se
 }
 
 function ContactBanner() {
+    const isOnline = useOnlineStatus();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [company, setCompany] = useState('');
@@ -489,7 +491,7 @@ ${message}`
 
                     <button
                         type="submit"
-                        disabled={loading}
+                        disabled={loading || !isOnline}
                         className="support-form-submit-btn"
                     >
                         <span aria-hidden className="goo-fill"><i /></span>
