@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { MessageCircle, X, Send, User } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 const KNOWLEDGE_BASE = [
   { keywords: ['add', 'invit', 'creat', 'new', 'member', 'user', 'peopl', 'manag', 'employe', 'staff', 'team'], answer: "To add a member or manager, go to the 'People' tab in the admin dashboard and click the 'Invite Member' button." },
@@ -59,6 +60,7 @@ function getBotResponse(input: string): string {
 }
 
 export function SupportWidget() {
+    const isOnline = useOnlineStatus();
   const location = useLocation();
   const { organization, profile, user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -326,7 +328,7 @@ export function SupportWidget() {
             />
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() || !isOnline}
               className="absolute right-2 p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-colors"
             >
               <Send className="w-4 h-4" />

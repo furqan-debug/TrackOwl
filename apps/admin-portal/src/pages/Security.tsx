@@ -8,6 +8,7 @@ import { PageLayout, Modal } from '../components/ui';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { createClient } from '@supabase/supabase-js';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 /* ─────────────────────────────────────────
    Tiny copy button helper
@@ -159,6 +160,7 @@ function PasswordStrength({ password }: { password: string }) {
    Main page
 ───────────────────────────────────────── */
 export function SecurityPage() {
+    const isOnline = useOnlineStatus();
     const { refreshAal, session } = useAuth();
 
     // ── 2FA state ──
@@ -545,7 +547,7 @@ export function SecurityPage() {
                             <div className="pt-2">
                                 <button
                                     type="submit"
-                                    disabled={pwLoading || !currentPw || !newPw || !confirmPw}
+                                    disabled={pwLoading || !currentPw || !newPw || !confirmPw || !isOnline}
                                     className="h-11 px-8 rounded-xl bg-primary text-white text-[13px] font-bold
                                                hover:brightness-110 active:scale-[0.98] transition-all
                                                disabled:opacity-40 disabled:cursor-not-allowed
@@ -653,7 +655,7 @@ export function SecurityPage() {
                             </button>
                             <button
                                 type="submit"
-                                disabled={mfaActionLoading || mfaCode.length !== 6 || !enrollData}
+                                disabled={mfaActionLoading || mfaCode.length !== 6 || !enrollData || !isOnline}
                                 className="flex-[2] h-12 rounded-2xl bg-primary text-white font-bold text-[13px] shadow-glow-primary hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                             >
                                 {mfaActionLoading ? (
