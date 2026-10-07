@@ -10,6 +10,7 @@ import { Input } from '../components/ui/Input';
 import { useAuth } from '../context/AuthContext';
 
 import LogoIcon from '../assets/branding/3.svg';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 /* ─────────────────────────────────────────
    Individual digit box for OTP input
@@ -55,6 +56,7 @@ function OtpInput({ value, onChange }: { value: string; onChange: (v: string) =>
 
 
 export function Login() {
+    const isOnline = useOnlineStatus();
     const navigate = useNavigate();
     const { session, loading: authLoading, aalLevel, nextAalLevel, refreshAal, signOut } = useAuth();
     
@@ -276,7 +278,7 @@ export function Login() {
 
                                     <button
                                         type="submit"
-                                        disabled={loading}
+                                        disabled={loading || !isOnline}
                                         onMouseMove={(e) => {
                                             // Feeds the blob inside .label::before so it trails the cursor.
                                             const rect = e.currentTarget.getBoundingClientRect();

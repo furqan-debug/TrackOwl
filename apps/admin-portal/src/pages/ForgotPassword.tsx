@@ -5,10 +5,12 @@ import { Input } from '../components/ui/Input';
 import { useNavigate } from 'react-router-dom';
 
 import LogoIcon from '../assets/branding/3.svg';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 type Step = 'form' | 'sent';
 
 export function ForgotPassword() {
+    const isOnline = useOnlineStatus();
     const navigate = useNavigate();
     const [step, setStep] = useState<Step>('form');
     const [email, setEmail] = useState('');
@@ -109,7 +111,7 @@ export function ForgotPassword() {
 
                                     <button
                                         type="submit"
-                                        disabled={submitting || !email.trim()}
+                                        disabled={submitting || !email.trim() || !isOnline}
                                         className="w-full h-12 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 border-0 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
                                     >
                                         {submitting ? 'Sending link...' : 'Send reset link'}
