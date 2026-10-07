@@ -42,6 +42,7 @@ import HeaderLogo from '../assets/branding/header-2.svg';
 import HeroDashboard from '../assets/branding/hero-dashboard.png';
 import ShowcaseDashboard from '../assets/branding/showcase-dashboard.png';
 import { Footer } from '../components/Footer';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 interface ContactModalProps {
     isOpen: boolean;
@@ -50,6 +51,7 @@ interface ContactModalProps {
 }
 
 export function ContactModal({ isOpen, onClose, initialRequestType }: ContactModalProps) {
+    const isOnline = useOnlineStatus();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [company, setCompany] = useState('');
@@ -317,7 +319,7 @@ ${message}`
 
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || !isOnline}
                             className="w-full py-3.5 bg-[#001338] hover:bg-[#002766] text-white text-base font-bold rounded-xl transition-all shadow-md flex items-center justify-center gap-2 mt-4 disabled:opacity-75"
                         >
                             {loading ? (
