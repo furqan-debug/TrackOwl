@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard/
+Disallow: /support-admin/
+Disallow: /onboarding
+Disallow: /accept-invite
+Disallow: /update-password
+Disallow: /forgot-password
 
-Sitemap: https://www.trackowl.io/sitemap.xml
+Sitemap: https://trackowl.ai/sitemap.xml
