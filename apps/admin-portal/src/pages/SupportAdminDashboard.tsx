@@ -40,12 +40,16 @@ export function SupportAdminDashboard() {
       const { data, error } = await supabase.rpc('admin_get_tickets', { secret });
       if (error) throw error;
       setTickets(data || []);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch tickets:', err);
+      if (err?.message?.includes('Unauthorized') || err?.code === 'P0001') {
+        localStorage.removeItem('support_admin_token');
+        navigate('/support-admin/login');
+      }
     } finally {
       setLoading(false);
     }
-  }, [secret]);
+  }, [secret, navigate]);
 
   const fetchMessages = useCallback(async (ticketId: string) => {
     try {
