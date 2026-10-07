@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabase';
 import { Check, ChevronLeft, CreditCard } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -13,6 +14,7 @@ interface Member {
 }
 
 export function CreatePayments() {
+    const isOnline = useOnlineStatus();
     const { profile } = useAuth();
     const isViewer = profile?.role === 'Viewer';
     const navigate = useNavigate();
@@ -137,7 +139,7 @@ export function CreatePayments() {
                         </Link>
                         <button
                             type="submit"
-                            disabled={loading || fetching || isViewer}
+                            disabled={loading || fetching || isViewer || !isOnline}
                             className={`flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all shadow-shell-sm active:scale-95 ${isViewer ? 'bg-slate-300 text-slate-100 cursor-not-allowed grayscale opacity-60 shadow-none' : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100'}`}
                         >
                             {loading ? 'Processing...' : (isViewer ? 'Read-only' : <><Check className="w-4 h-4" /> Issue Payment</>)}
