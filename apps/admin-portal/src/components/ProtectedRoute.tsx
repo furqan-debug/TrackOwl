@@ -8,7 +8,7 @@ interface ProtectedRouteProps {
 }
 
 export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
-    const { profile, loading, session, aalLevel, nextAalLevel } = useAuth();
+    const { profile, loading, session, aalLevel, nextAalLevel, error } = useAuth();
     const location = useLocation();
 
     if (loading) {
@@ -34,9 +34,43 @@ export function ProtectedRoute({ children, roles }: ProtectedRouteProps) {
         return <Navigate to="/onboarding" replace />;
     }
 
-    // 5. Handle cases where profile is missing/null (Identity failure)
-    // If no profile exists, we assume it's a new signup that needs onboarding.
+    // 5. No profile. There are two quite different reasons for that, and they
+    //    must not be treated alike.
     if (!profile && !loading) {
+        /**
+         * The profile could not be fetched, rather than there being none.
+         * AuthContext sets `error` only when the request itself failed — the
+         * genuine "this email has no member row" path leaves it null — so it
+         * is a reliable way to tell the two apart.
+         *
+         * Sending someone here to onboarding, which is what used to happen,
+         * shows an existing customer a create-your-workspace form the moment
+         * their connection drops. Fill it in and they get a second
+         * organisation, with their real one still sitting there.
+         */
+        if (error) {
+            return (
+                <div className="min-h-screen bg-[#001338] flex items-center justify-center px-6">
+                    <div className="max-w-sm text-center">
+                        <h1 className="text-white text-lg font-bold mb-2">
+                            Could not load your account
+                        </h1>
+                        <p className="text-white/60 text-[13px] mb-6">
+                            We could not reach the server. Check your
+                            connection and try again — nothing has been lost.
+                        </p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="h-11 px-6 rounded-xl bg-[#F7BC00] text-[#001338] text-[13px] font-bold hover:brightness-110 active:scale-[0.98] transition-all"
+                        >
+                            Try again
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+
+        // Genuinely no profile — a new signup that still needs a workspace.
         if (location.pathname === '/onboarding') return <>{children}</>;
         return <Navigate to="/onboarding" replace />;
     }
