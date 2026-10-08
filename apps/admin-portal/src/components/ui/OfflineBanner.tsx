@@ -28,9 +28,17 @@ export function OfflineBanner() {
                     transition={{ duration: 0.25 }}
                     className="fixed top-0 inset-x-0 z-[999] pointer-events-none flex justify-center p-3"
                 >
-                    <div className="pointer-events-auto flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-warning/15 border border-warning/30 shadow-premium backdrop-blur-sm">
-                        <WifiOff className="w-4 h-4 text-warning shrink-0" />
-                        <span className="text-[12px] font-bold text-text-main">
+                    {/* Deliberately not themed. The theme class is applied by
+                        useTheme, which only runs once AppShell, Header or
+                        Sidebar has mounted — and this banner can appear before
+                        any of them, while the page is still loading. Reading
+                        theme tokens then gives the light-mode text colour on
+                        whatever background is already there, which is how it
+                        first appeared: navy on navy. Solid amber and near
+                        black carry their own contrast in every state. */}
+                    <div className="pointer-events-auto flex items-center gap-3 px-4 py-2.5 rounded-2xl bg-[#F59E0B] border border-[#B45309] shadow-premium">
+                        <WifiOff className="w-4 h-4 text-[#1F1A17] shrink-0" />
+                        <span className="text-[12px] font-bold text-[#1F1A17]">
                             You are offline. Nothing will be saved, and the
                             figures on screen may be out of date.
                         </span>
