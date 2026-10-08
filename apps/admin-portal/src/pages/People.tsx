@@ -271,7 +271,7 @@ export function People() {
 
 
     async function handleDeleteMember(id: string) {
-        if (!confirm('Are you sure you want to permanently delete this member? This will destroy all their tracked time, screenshots, and data forever. This action cannot be undone.')) return;
+        if (!confirm('Are you sure you want to delete this member? All their screenshots, activity logs, and apps/websites will be permanently wiped. Their tracked time, Employee ID, and email will be retained for historical reports.')) return;
         setMembers(prev => prev.filter(m => m.id !== id));
         try {
             await memberService.deleteMember(id);

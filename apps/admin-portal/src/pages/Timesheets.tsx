@@ -226,6 +226,7 @@ export function Timesheets() {
         let query = supabase.from('members')
             .select('id, auth_user_id, full_name, timezone, idle_limit')
             .eq('organization_id', organizationId)
+            .neq('status', 'Deleted')
             .order('full_name');
 
         const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;

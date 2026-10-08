@@ -259,7 +259,7 @@ export function Dashboard() {
             const memberIdsFilter = isScoped && managedMemberIds ? (managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000']) : null;
             const projectIdsFilter = isScoped && managedProjectIds ? (managedProjectIds.length > 0 ? managedProjectIds : ['00000000-0000-0000-0000-000000000000']) : null;
 
-            let membersQuery = supabase.from('members').select('id, auth_user_id, full_name, avatar_url, status, email, idle_limit').eq('organization_id', organizationId);
+            let membersQuery = supabase.from('members').select('id, auth_user_id, full_name, avatar_url, status, email, idle_limit').eq('organization_id', organizationId).neq('status', 'Deleted');
             if (isRep && profile?.id) {
                 membersQuery = membersQuery.eq('id', profile.id);
             } else if (memberIdsFilter) {

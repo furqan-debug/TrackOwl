@@ -196,7 +196,8 @@ export function Reports() {
             email?: string;
             dailyMins: Record<string, number>;
             totalMins: number;
-            activityScore: number;
+            activityScore: number | null;
+            isDeleted?: boolean;
         }[];
     }>({ dates: [], rows: [] });
 
@@ -492,11 +493,12 @@ export function Reports() {
             rowData.push(
                 ...tableData.dates.map(date => `"${row.dailyMins[date] ? formatDuration(row.dailyMins[date]) : ''}"`),
                 `"${formatDuration(row.totalMins)}"`,
-                `"${row.activityScore}%"`
+                `"${row.isDeleted || row.activityScore === null ? '' : `${row.activityScore}%`}"`
             );
             csvContent += rowData.join(",") + "\r\n";
         });
 
+        const scoreRows = tableData.rows.filter(r => !r.isDeleted && r.activityScore !== null);
         const totalsRow = [`"Totals"`];
         if (showEmpId) totalsRow.push(`""`);
         if (showEmail) totalsRow.push(`""`);
@@ -506,7 +508,7 @@ export function Reports() {
                 return `"${dayTotal > 0 ? formatDuration(dayTotal) : ''}"`;
             }),
             `"${formatDuration(tableData.rows.reduce((sum, r) => sum + r.totalMins, 0))}"`,
-            `"${tableData.rows.length > 0 ? Math.round(tableData.rows.reduce((sum, r) => sum + r.activityScore, 0) / tableData.rows.length) : 0}%"`
+            `"${scoreRows.length > 0 ? Math.round(scoreRows.reduce((sum, r) => sum + (r.activityScore || 0), 0) / scoreRows.length) : 0}%"`
         );
         csvContent += totalsRow.join(",") + "\r\n\r\n";
         
@@ -582,11 +584,12 @@ export function Reports() {
             rowData.push(
                 ...tableData.dates.map(date => row.dailyMins[date] ? formatDuration(row.dailyMins[date]) : ''),
                 formatDuration(row.totalMins),
-                `${row.activityScore}%`
+                row.isDeleted || row.activityScore === null ? '—' : `${row.activityScore}%`
             );
             return rowData;
         });
 
+        const scoreRows = tableData.rows.filter(r => !r.isDeleted && r.activityScore !== null);
         const footRow = ["Totals"];
         if (showEmpId) footRow.push("");
         if (showEmail) footRow.push("");
@@ -596,7 +599,7 @@ export function Reports() {
                 return dayTotal > 0 ? formatDuration(dayTotal) : '';
             }),
             formatDuration(tableData.rows.reduce((sum, r) => sum + r.totalMins, 0)),
-            `${tableData.rows.length > 0 ? Math.round(tableData.rows.reduce((sum, r) => sum + r.activityScore, 0) / tableData.rows.length) : 0}%`
+            `${scoreRows.length > 0 ? Math.round(scoreRows.reduce((sum, r) => sum + (r.activityScore || 0), 0) / scoreRows.length) : 0}%`
         );
         const foot = [footRow];
 
@@ -1036,7 +1039,14 @@ export function Reports() {
                                                         <div className="w-7 h-7 rounded-lg bg-main flex items-center justify-center text-[10px] font-bold text-text-muted ">
                                                             {row.fullName[0]}
                                                         </div>
-                                                        <span className="text-[13px] font-bold text-text-main tracking-tight">{row.fullName}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[13px] font-bold text-text-main tracking-tight">{row.fullName}</span>
+                                                            {row.isDeleted && (
+                                                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-surface-hover text-text-muted border border-border">
+                                                                    Deleted
+                                                                </span>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </td>
                                                 {showEmpId && (
@@ -1058,12 +1068,16 @@ export function Reports() {
                                                     {formatDuration(row.totalMins)}
                                                 </td>
                                                 <td className="py-4 px-6 text-right">
-                                                    <span className={clsx(
-                                                        "text-[12px] font-bold tabular-nums",
-                                                        row.activityScore > 70 ? "text-emerald-500" : row.activityScore > 40 ? "text-amber-500" : "text-rose-500"
-                                                    )}>
-                                                        {row.activityScore}%
-                                                    </span>
+                                                    {row.isDeleted || row.activityScore === null ? (
+                                                        <span className="text-text-muted font-bold">—</span>
+                                                    ) : (
+                                                        <span className={clsx(
+                                                            "text-[12px] font-bold tabular-nums",
+                                                            row.activityScore > 70 ? "text-emerald-500" : row.activityScore > 40 ? "text-amber-500" : "text-rose-500"
+                                                        )}>
+                                                            {row.activityScore}%
+                                                        </span>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
@@ -1089,9 +1103,14 @@ export function Reports() {
                                                 </span>
                                             </td>
                                             <td className="sticky bottom-0 z-30 bg-surface-hover/90 backdrop-blur-md py-6 px-6 text-right border-t border-border">
-                                                <span className="text-[13px] font-bold tabular-nums" style={{ color: 'var(--chart-gold)' }}>
-                                                    {tableData.rows.length > 0 ? Math.round(tableData.rows.reduce((sum, r) => sum + r.activityScore, 0) / tableData.rows.length) : 0}%
-                                                </span>
+                                                {(() => {
+                                                    const scoreRows = tableData.rows.filter(r => !r.isDeleted && r.activityScore !== null);
+                                                    return (
+                                                        <span className="text-[13px] font-bold tabular-nums" style={{ color: 'var(--chart-gold)' }}>
+                                                            {scoreRows.length > 0 ? Math.round(scoreRows.reduce((sum, r) => sum + (r.activityScore || 0), 0) / scoreRows.length) : 0}%
+                                                        </span>
+                                                    );
+                                                })()}
                                             </td>
                                         </tr>
                                     </tfoot>
