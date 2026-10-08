@@ -6,10 +6,16 @@ import {
     Monitor, Clock,
     RefreshCw,
     ChevronLeft, ChevronRight,
-    Camera
+    Camera, Download, CheckSquare, Square, X, Loader2
 } from 'lucide-react';
+import JSZip from 'jszip';
+import { supabase } from '../lib/supabase';
+import { getCachedUrl, setCachedUrl } from '../lib/urlCache';
 import { PageLayout, StatMetric, FilterSelect, LoadingState, ScreenshotModal, DatePicker, RefreshButton } from '../components/ui';
 import clsx from 'clsx';
+
+const MAX_DOWNLOAD_COUNT = 50;
+const MAX_DOWNLOAD_BYTES = 100 * 1024 * 1024; // 100 MB safe browser limit
 
 import { AppUsageList } from '../components/activity/AppUsageList';
 import { ScreenshotGallery } from '../components/activity/ScreenshotGallery';
@@ -92,32 +98,48 @@ export function Activity() {
     const [hasMoreScreenshots, setHasMoreScreenshots] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
 
+    // Download and selection state
+    const [isSelectionMode, setIsSelectionMode] = useState(false);
+    const [selectedScreenshotIds, setSelectedScreenshotIds] = useState<Set<number>>(new Set());
+    const [isDownloading, setIsDownloading] = useState(false);
+    const [downloadProgress, setDownloadProgress] = useState<{
+        current: number;
+        total: number;
+        percent: number;
+        message: string;
+    } | null>(null);
+    const [downloadToast, setDownloadToast] = useState<string | null>(null);
+
+    // Reset selection mode when changing member or date
+    useEffect(() => {
+        setIsSelectionMode(false);
+        setSelectedScreenshotIds(new Set());
+        setDownloadProgress(null);
+    }, [selectedMemberId, selectedDate]);
 
     useEffect(() => {
-        import('../lib/supabase').then(({ supabase }) => {
-            if (!organizationId) {
-                setMembersLoaded(true);
-                return;
-            }
-            let query = supabase.from('members')
-                .select('id, auth_user_id, full_name, timezone, keep_idle, email, avatar_url, idle_limit')
-                .eq('organization_id', organizationId)
-                .eq('status', 'Active')
-                .order('full_name', { ascending: true });
-                
-            // Reps only load themselves; Managers and Clients see their managed subset
-            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
-            if (isScoped && managedMemberIds) {
-                const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
-                query = query.in('id', memberIdsFilter);
-            }
+        if (!organizationId) {
+            setMembersLoaded(true);
+            return;
+        }
+        let query = supabase.from('members')
+            .select('id, auth_user_id, full_name, timezone, keep_idle, email, avatar_url, idle_limit')
+            .eq('organization_id', organizationId)
+            .eq('status', 'Active')
+            .order('full_name', { ascending: true });
             
-            query.then(({ data }) => {
-                if (data) setMembers(data);
-                setMembersLoaded(true);
-            });
+        // Reps only load themselves; Managers and Clients see their managed subset
+        const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
+        if (isScoped && managedMemberIds) {
+            const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
+            query = query.in('id', memberIdsFilter);
+        }
+        
+        query.then(({ data }) => {
+            if (data) setMembers(data);
+            setMembersLoaded(true);
         });
-    }, [organizationId]);
+    }, [organizationId, isRep, managedMemberIds, profile?.role]);
 
     const fetchData = useCallback(async (isSilent = false, forceRefresh = false, overrideLimit?: number, quiet = false) => {
         const mySeq = ++requestSeqRef.current;
@@ -296,6 +318,174 @@ export function Activity() {
 
     const isToday = selectedDate === new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
 
+    const handleToggleSelectScreenshot = useCallback((ss: Screenshot) => {
+        setSelectedScreenshotIds(prev => {
+            const next = new Set(prev);
+            if (next.has(ss.id)) {
+                next.delete(ss.id);
+            } else {
+                if (next.size >= MAX_DOWNLOAD_COUNT) {
+                    setDownloadToast(`Selection limit of ${MAX_DOWNLOAD_COUNT} captures reached`);
+                    setTimeout(() => setDownloadToast(null), 3500);
+                    return prev;
+                }
+                next.add(ss.id);
+            }
+            return next;
+        });
+    }, []);
+
+    const handleSelectAll = useCallback(() => {
+        const selectableCount = Math.min(screenshots.length, MAX_DOWNLOAD_COUNT);
+        if (selectedScreenshotIds.size === selectableCount) {
+            setSelectedScreenshotIds(new Set());
+        } else {
+            const next = new Set<number>();
+            for (let i = 0; i < selectableCount; i++) {
+                next.add(screenshots[i].id);
+            }
+            setSelectedScreenshotIds(next);
+            if (screenshots.length > MAX_DOWNLOAD_COUNT) {
+                setDownloadToast(`Selected the first ${MAX_DOWNLOAD_COUNT} captures (batch download limit)`);
+                setTimeout(() => setDownloadToast(null), 3500);
+            }
+        }
+    }, [screenshots, selectedScreenshotIds]);
+
+    const handleCancelSelection = useCallback(() => {
+        setIsSelectionMode(false);
+        setSelectedScreenshotIds(new Set());
+        setDownloadProgress(null);
+    }, []);
+
+    const handleDownloadZip = useCallback(async () => {
+        if (selectedScreenshotIds.size === 0 || isDownloading) return;
+
+        const selectedList = screenshots.filter(s => selectedScreenshotIds.has(s.id));
+        if (selectedList.length === 0) return;
+
+        setIsDownloading(true);
+        setDownloadProgress({
+            current: 0,
+            total: selectedList.length,
+            percent: 0,
+            message: `Preparing download of ${selectedList.length} captures...`,
+        });
+
+        const zip = new JSZip();
+        let totalBytes = 0;
+        let successCount = 0;
+
+        const memberName = selectedMember?.full_name ? selectedMember.full_name.replace(/[^a-zA-Z0-9_-]/g, '_') : 'Member';
+
+        try {
+            for (let i = 0; i < selectedList.length; i++) {
+                const ss = selectedList[i];
+                setDownloadProgress({
+                    current: i + 1,
+                    total: selectedList.length,
+                    percent: Math.round(((i) / selectedList.length) * 85),
+                    message: `Downloading capture ${i + 1} of ${selectedList.length}...`,
+                });
+
+                let imgUrl: string | null = null;
+                if (ss.file_url.startsWith('http') && !ss.file_url.includes('.supabase.co/storage/v1/object/')) {
+                    imgUrl = ss.file_url;
+                } else {
+                    const cached = getCachedUrl('screenshots', ss.file_url);
+                    if (cached) {
+                        imgUrl = cached;
+                    } else {
+                        let finalPath = ss.file_url;
+                        if (ss.file_url.includes('.supabase.co/storage/v1/object/')) {
+                            const parts = ss.file_url.split('/screenshots/');
+                            if (parts.length > 1) {
+                                finalPath = parts[1];
+                            }
+                        }
+                        const { data } = await supabase.storage
+                            .from('screenshots')
+                            .createSignedUrl(finalPath, 3600);
+                        if (data?.signedUrl) {
+                            setCachedUrl('screenshots', ss.file_url, data.signedUrl, 3600);
+                            imgUrl = data.signedUrl;
+                        }
+                    }
+                }
+
+                if (!imgUrl) continue;
+
+                try {
+                    const response = await fetch(imgUrl);
+                    if (!response.ok) continue;
+                    const blob = await response.blob();
+                    totalBytes += blob.size;
+
+                    const dt = new Date(ss.recorded_at);
+                    const timeStr = dt.toTimeString().split(' ')[0].replace(/:/g, '-');
+                    const dateStr = dt.toLocaleDateString('en-CA');
+                    const fileIndex = String(i + 1).padStart(2, '0');
+                    const filename = `${fileIndex}_${dateStr}_${timeStr}.png`;
+
+                    zip.file(filename, blob);
+                    successCount++;
+
+                    if (totalBytes >= MAX_DOWNLOAD_BYTES) {
+                        setDownloadToast(`Reached 100 MB download limit (${successCount} captures packaged)`);
+                        break;
+                    }
+                } catch (fetchErr) {
+                    console.error(`Failed to download capture ${ss.id}:`, fetchErr);
+                }
+            }
+
+            if (successCount === 0) {
+                throw new Error('Could not retrieve any captures. Please check your connection.');
+            }
+
+            setDownloadProgress({
+                current: selectedList.length,
+                total: selectedList.length,
+                percent: 90,
+                message: 'Compressing ZIP archive...',
+            });
+
+            const zipBlob = await zip.generateAsync(
+                { type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } },
+                (metadata) => {
+                    const genPercent = 90 + Math.round((metadata.percent / 100) * 10);
+                    setDownloadProgress(prev => prev ? {
+                        ...prev,
+                        percent: Math.min(genPercent, 99),
+                        message: `Packing archive (${Math.round(metadata.percent)}%)...`
+                    } : null);
+                }
+            );
+
+            const zipFileName = `TrackOwl_${memberName}_${selectedDate}_Captures.zip`;
+            const downloadUrl = URL.createObjectURL(zipBlob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = zipFileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            setTimeout(() => URL.revokeObjectURL(downloadUrl), 10000);
+
+            setDownloadToast(`Successfully downloaded ${successCount} captures as ZIP!`);
+            setTimeout(() => setDownloadToast(null), 4000);
+            setIsSelectionMode(false);
+            setSelectedScreenshotIds(new Set());
+        } catch (err: any) {
+            console.error('ZIP generation error:', err);
+            setDownloadToast(err.message || 'Failed to generate ZIP download');
+            setTimeout(() => setDownloadToast(null), 4000);
+        } finally {
+            setIsDownloading(false);
+            setDownloadProgress(null);
+        }
+    }, [selectedScreenshotIds, isDownloading, screenshots, selectedMember, selectedDate]);
+
     return (
         <PageLayout
             maxWidth="full"
@@ -458,7 +648,7 @@ export function Activity() {
                     {/* Screenshots */}
                     <div className="lg:col-span-12">
                         <div className="bg-surface rounded-[24px] shadow-shell-sm border border-border overflow-hidden flex flex-col">
-                            <div className="px-8 py-6 border-b border-border flex items-center bg-surface shrink-0">
+                            <div className="px-8 py-6 border-b border-border flex items-center justify-between gap-4 bg-surface shrink-0 flex-wrap">
                                 <div className="flex items-center gap-5">
                                     <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white shadow-shell-md">
                                         <Camera className="w-5 h-5" />
@@ -468,7 +658,114 @@ export function Activity() {
                                         <p className="text-[13px] font-medium text-text-muted mt-0.5 tracking-[0.1em]">{screenshots.length} automated work captures</p>
                                     </div>
                                 </div>
+
+                                {/* Download & Bulk Selection Controls */}
+                                {selectedMemberId !== 'all' && screenshots.length > 0 && (
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                        {!isSelectionMode ? (
+                                            <button
+                                                onClick={() => setIsSelectionMode(true)}
+                                                className="flex items-center gap-2 px-4 py-2 bg-surface border border-border rounded-xl hover:bg-surface-hover text-text-main hover:text-primary transition-all duration-200 shadow-shell-sm group cursor-pointer"
+                                                title="Select and download captures as ZIP"
+                                            >
+                                                <Download className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
+                                                <span className="text-[12px] font-bold tracking-tight">Download</span>
+                                            </button>
+                                        ) : (
+                                            <div className="flex items-center gap-3 flex-wrap animate-in fade-in duration-200">
+                                                {/* Select All Toggle */}
+                                                <button
+                                                    onClick={handleSelectAll}
+                                                    disabled={isDownloading}
+                                                    className="flex items-center gap-2 px-3 py-2 bg-surface border border-border rounded-xl hover:bg-surface-hover text-text-main text-[12px] font-semibold transition-all shadow-shell-sm cursor-pointer disabled:opacity-50"
+                                                >
+                                                    {selectedScreenshotIds.size === Math.min(screenshots.length, MAX_DOWNLOAD_COUNT) ? (
+                                                        <>
+                                                            <CheckSquare className="w-3.5 h-3.5 text-primary" />
+                                                            <span>Deselect All</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Square className="w-3.5 h-3.5 text-text-muted" />
+                                                            <span>Select All ({Math.min(screenshots.length, MAX_DOWNLOAD_COUNT)})</span>
+                                                        </>
+                                                    )}
+                                                </button>
+
+                                                {/* Selected Counter Badge */}
+                                                <div className="px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary text-[11px] font-bold tracking-wide">
+                                                    {selectedScreenshotIds.size} / {MAX_DOWNLOAD_COUNT} selected
+                                                </div>
+
+                                                {/* Download ZIP Button */}
+                                                <button
+                                                    onClick={handleDownloadZip}
+                                                    disabled={selectedScreenshotIds.size === 0 || isDownloading}
+                                                    className={clsx(
+                                                        "flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] font-bold transition-all shadow-shell-sm cursor-pointer",
+                                                        selectedScreenshotIds.size > 0 && !isDownloading
+                                                            ? "bg-primary text-white hover:bg-primary/90 shadow-primary/20 shadow-md"
+                                                            : "bg-surface-hover text-text-muted border border-border opacity-50 cursor-not-allowed"
+                                                    )}
+                                                >
+                                                    {isDownloading ? (
+                                                        <>
+                                                            <Loader2 className="w-3.5 h-3.5 animate-spin text-white" />
+                                                            <span>Downloading...</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Download className="w-3.5 h-3.5" />
+                                                            <span>Download ZIP ({selectedScreenshotIds.size})</span>
+                                                        </>
+                                                    )}
+                                                </button>
+
+                                                {/* Cancel Button */}
+                                                <button
+                                                    onClick={handleCancelSelection}
+                                                    disabled={isDownloading}
+                                                    className="flex items-center gap-1.5 px-3 py-2 bg-surface hover:bg-surface-hover border border-border rounded-xl text-text-muted hover:text-rose-500 text-[12px] font-semibold transition-all shadow-shell-sm cursor-pointer disabled:opacity-50"
+                                                    title="Cancel selection"
+                                                >
+                                                    <X className="w-3.5 h-3.5" />
+                                                    <span>Cancel</span>
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Download Progress Bar */}
+                            {downloadProgress && (
+                                <div className="w-full bg-surface-hover/80 border-b border-border px-8 py-3 flex items-center justify-between gap-4 animate-in fade-in duration-300">
+                                    <div className="flex items-center gap-2.5 text-[12px] font-semibold text-text-main">
+                                        <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                                        <span>{downloadProgress.message}</span>
+                                    </div>
+                                    <div className="flex items-center gap-3 flex-1 max-w-xs">
+                                        <div className="flex-1 bg-main border border-border h-2 rounded-full overflow-hidden">
+                                            <div
+                                                className="bg-primary h-full transition-all duration-300 rounded-full"
+                                                style={{ width: `${downloadProgress.percent}%` }}
+                                            />
+                                        </div>
+                                        <span className="text-[11px] font-bold text-text-muted tabular-nums">{downloadProgress.percent}%</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Feedback Toast Banner */}
+                            {downloadToast && (
+                                <div className="w-full bg-primary/10 border-b border-primary/20 px-8 py-2.5 flex items-center justify-between text-[12px] font-bold text-primary animate-in fade-in duration-200">
+                                    <span>{downloadToast}</span>
+                                    <button onClick={() => setDownloadToast(null)} className="cursor-pointer text-primary/70 hover:text-primary">
+                                        <X className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            )}
+
                             <div className="p-8">
                                 <ScreenshotGallery
                                     screenshots={screenshots}
@@ -476,6 +773,10 @@ export function Activity() {
                                         const idx = screenshots.findIndex(s => s.id === ss.id);
                                         setEnlargedIndex(idx >= 0 ? idx : 0);
                                     }}
+                                    selectionMode={isSelectionMode}
+                                    selectedIds={selectedScreenshotIds}
+                                    onToggleSelect={handleToggleSelectScreenshot}
+                                    maxLimit={MAX_DOWNLOAD_COUNT}
                                 />
 
                                 {hasMoreScreenshots && (
