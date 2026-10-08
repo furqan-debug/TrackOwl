@@ -419,6 +419,28 @@ export const reportService = {
         }
     });
 
+    // Lookup any members (e.g. Deleted members with historical time) present in stats but not in active members lookup
+    const missingUserIds = new Set<string>();
+    dbUserDailyStats.forEach((row: any) => {
+        if (!membersMap.has(row.user_id)) {
+            missingUserIds.add(row.user_id);
+        }
+    });
+
+    if (missingUserIds.size > 0) {
+        const { data: extraMembers } = await supabase
+            .from('members')
+            .select('id, auth_user_id, email, full_name, pay_rate, bill_rate, timezone, idle_limit, employee_id, status')
+            .in('id', Array.from(missingUserIds));
+
+        if (extraMembers) {
+            extraMembers.forEach((m: any) => {
+                membersMap.set(m.id, m);
+                if (m.auth_user_id) membersMap.set(m.auth_user_id, m);
+            });
+        }
+    }
+
     const dailyMap: Record<string, { activitySum: number; total_samples: number; total_minutes: number }> = {};
     let costs = 0;
     let billed = 0;
@@ -466,6 +488,7 @@ export const reportService = {
             fullName: m.full_name || m.email || 'Unknown',
             email: m.email || '',
             employeeId: m.employee_id || '',
+            isDeleted: m.status === 'Deleted',
             dailyMins: {},
             totalMins: 0,
             activitySum: 0,
@@ -501,6 +524,7 @@ export const reportService = {
         if (dateListSet.has(day)) {
             const member = membersMap.get(uid);
             const canonicalId = member ? member.id : uid;
+            const isDeleted = member?.status === 'Deleted';
 
             if (!memberRows[canonicalId]) {
                 memberRows[canonicalId] = {
@@ -508,6 +532,7 @@ export const reportService = {
                     fullName: member ? (member.full_name || member.email || 'Unknown') : ('Member (' + canonicalId.slice(0, 6) + ')'),
                     email: member?.email || '',
                     employeeId: member?.employee_id || '',
+                    isDeleted: isDeleted,
                     dailyMins: {},
                     totalMins: 0,
                     activitySum: 0,
@@ -516,8 +541,10 @@ export const reportService = {
             }
 
             const r = memberRows[canonicalId];
-            r.activitySum += weightedActSum;
-            r.activitySamples += sampleCount;
+            if (!isDeleted) {
+                r.activitySum += weightedActSum;
+                r.activitySamples += sampleCount;
+            }
             r.dailyMins[day] = (r.dailyMins[day] || 0) + mins;
             r.totalMins += mins;
 
@@ -599,19 +626,6 @@ export const reportService = {
 
     const calculatedTotalMins = Math.round(Object.values(dailyMap).reduce((sum, v) => sum + v.total_minutes, 0));
     
-    let totalActSum = 0;
-    let totalActSamples = 0;
-    dbDailyStats.forEach((r: any) => {
-        if (dateListSet.has(r.date)) {
-            const sampleCount = r.sample_count || 0;
-            const actSum = r.activity_sum || 0;
-            const weightedActSum = (sampleCount > 1 && actSum <= 100) ? (actSum * sampleCount) : actSum;
-            totalActSum += weightedActSum;
-            totalActSamples += sampleCount; // use sample count for activity averaging
-        }
-    });
-    const calculatedAvgActivity = totalActSamples > 0 ? Math.round(totalActSum / totalActSamples) : 0;
-
     const finalRows = Object.values(memberRows)
         .map((row: any) => ({
             memberId: row.memberId,
@@ -620,10 +634,16 @@ export const reportService = {
             employeeId: row.employeeId,
             dailyMins: row.dailyMins,
             totalMins: row.totalMins,
-            activityScore: row.activitySamples > 0 ? Math.round(row.activitySum / row.activitySamples) : 0
+            activityScore: row.isDeleted ? null : (row.activitySamples > 0 ? Math.round(row.activitySum / row.activitySamples) : 0),
+            isDeleted: !!row.isDeleted
         }))
         .filter(row => row.totalMins > 0) 
         .sort((a, b) => b.totalMins - a.totalMins);
+
+    const activeRowsWithScore = finalRows.filter((r: any) => !r.isDeleted && r.activityScore !== null);
+    const calculatedAvgActivity = activeRowsWithScore.length > 0
+        ? Math.round(activeRowsWithScore.reduce((sum: number, r: any) => sum + (r.activityScore || 0), 0) / activeRowsWithScore.length)
+        : 0;
 
     const t5 = performance.now();
     console.log(`[Reports Timing] Frontend Processing took ${(t5 - t4).toFixed(2)}ms`);

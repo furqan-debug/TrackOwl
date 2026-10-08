@@ -29,7 +29,7 @@ export function CreatePayments() {
     useEffect(() => {
         async function fetchMembers() {
             setFetching(true);
-            const { data } = await supabase.from('members').select('id, full_name, pay_rate').order('full_name');
+            const { data } = await supabase.from('members').select('id, full_name, pay_rate').neq('status', 'Deleted').order('full_name');
             if (data) setMembers(data);
             setFetching(false);
         }

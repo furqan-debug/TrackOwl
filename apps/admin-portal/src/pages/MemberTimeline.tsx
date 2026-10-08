@@ -29,7 +29,7 @@ export function MemberTimeline() {
 
     // Initial member load
     useEffect(() => {
-        supabase.from('members').select('id, full_name, email').order('full_name')
+        supabase.from('members').select('id, full_name, email').neq('status', 'Deleted').order('full_name')
             .then(({ data }) => setMembers(data || []));
     }, []);
 
