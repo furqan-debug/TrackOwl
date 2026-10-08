@@ -77,7 +77,7 @@ BEGIN
   IF v_target_member.organization_id IS NOT NULL THEN
     BEGIN
       DELETE FROM storage.objects
-      WHERE bucket_id = 'screenshots'
+      WHERE bucket_id = 'screenshots'0
         AND (
           name LIKE v_target_member.organization_id::text || '/' || p_member_id::text || '/%'
           OR (v_target_member.auth_user_id IS NOT NULL AND name LIKE v_target_member.organization_id::text || '/' || v_target_member.auth_user_id::text || '/%')

@@ -1031,10 +1031,10 @@ export function Reports() {
                                             </th>
                                         </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-slate-100">
+                                    <tbody className="divide-y divide-border">
                                         {tableData.rows.map(row => (
                                             <tr key={row.memberId} className="group hover:bg-surface-hover/50 transition-all">
-                                                <td className="sticky left-0 z-20 bg-surface group-hover:bg-slate-50/50 backdrop-blur-md py-4 px-8 border-r border-border">
+                                                <td className="sticky left-0 z-20 bg-surface group-hover:bg-surface-hover/50 backdrop-blur-md py-4 px-8 border-r border-border">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-7 h-7 rounded-lg bg-main flex items-center justify-center text-[10px] font-bold text-text-muted ">
                                                             {row.fullName[0]}
