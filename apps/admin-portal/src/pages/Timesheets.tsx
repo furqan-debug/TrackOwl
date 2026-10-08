@@ -114,6 +114,7 @@ export function Timesheets() {
     };
 
     const [loading, setLoading] = useState(true);
+
     const [selectedDate, setSelectedDate] = useState(() => {
         const tzDateStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
         return new Date(tzDateStr + 'T12:00:00');
@@ -422,8 +423,25 @@ export function Timesheets() {
                     const overlapStartMs = Math.max(startedAtMs, dayStartUtcMs);
                     const overlapEndMs = Math.min(effectiveEndMs, dayEndUtcMs);
 
+                    /**
+                     * Is this the segment someone is working in right now?
+                     *
+                     * A running session is cut into one segment per day it
+                     * touches, and only the one holding the present moment is
+                     * live — the earlier days of an overnight session are
+                     * finished, whatever the session's own state.
+                     *
+                     * This used to ask whether the segment ran to the end of
+                     * the day. For a live session the segment ends at now, and
+                     * now is not midnight, so it was false every time except
+                     * in the final instant of the day. Nothing was ever shown
+                     * as live.
+                     */
+                    const isLiveSegment =
+                        isTrulyActive && nowMs >= dayStartUtcMs && nowMs < dayEndUtcMs;
+
                     // Check if the session overlaps with this calendar day
-                    if (overlapEndMs > overlapStartMs || (isTrulyActive && overlapEndMs >= overlapStartMs && overlapEndMs === dayEndUtcMs)) {
+                    if (overlapEndMs > overlapStartMs || (isLiveSegment && overlapEndMs >= overlapStartMs)) {
 
                         // Calculate absolute UTC timestamps for the segment
                         const segmentAbsoluteStartMs = overlapStartMs;
@@ -457,7 +475,7 @@ export function Timesheets() {
                             original_started_at: s.started_at,
                             original_ended_at: s.ended_at,
                             started_at: new Date(segmentAbsoluteStartMs).toISOString(),
-                            ended_at: isTrulyActive && overlapEndMs === dayEndUtcMs ? null : new Date(segmentAbsoluteEndMs).toISOString(),
+                            ended_at: isLiveSegment ? null : new Date(segmentAbsoluteEndMs).toISOString(),
                             activity_percent: (isManual || !stats || durationMins === 0) ? 0 : score,
                             idle_percent: (isManual || !stats || durationMins === 0) ? 0 : Math.max(0, 100 - score),
                             manual_percent: isManual ? 100 : 0,
@@ -465,7 +483,7 @@ export function Timesheets() {
                             offline_mins: segmentOfflineMins,
                             user_name: member?.full_name || 'System User',
                             display_timezone: tz,
-                            is_active: isTrulyActive && (overlapEndMs === dayEndUtcMs),
+                            is_active: isLiveSegment,
                             effective_end: isTrulyActive ? undefined : new Date(segmentAbsoluteEndMs).toISOString()
                         });
                     }
@@ -1116,6 +1134,21 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
 
     if (!day) return <div className="flex flex-col items-center justify-center h-64"><EmptyState title="No entries found" /></div>;
 
+    /**
+     * A clock, for the rows that have not finished.
+     *
+     * A session still running has no end time, so its row shows the present
+     * moment instead. Rendering that once would freeze it at whatever time
+     * the page happened to load, which is worse than showing nothing — it
+     * reads as a real end time. Thirty seconds is twice the resolution the
+     * display needs, so the minute never shows as stale.
+     */
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        const id = setInterval(() => setNow(Date.now()), 30_000);
+        return () => clearInterval(id);
+    }, []);
+
     const renderTimeDisplay = (s: any) => {
         const startTime = s.isAggregated ? s.min_start : s.started_at;
         const endTime = s.isAggregated ? s.max_end : (s.effective_end || s.ended_at);
@@ -1125,7 +1158,10 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
         if (s.is_active) {
             return (
                 <span className="inline-flex items-center gap-1.5 text-emerald-400 font-bold">
-                    <span>{start} – ...</span>
+                    {/* The present moment, not an ellipsis: the row is showing
+                        how far this session has run so far, and the pulsing
+                        dot beside it says it is still going. */}
+                    <span>{start} – {new Date(now).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase()}</span>
                     <span className="relative flex h-2 w-2">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
