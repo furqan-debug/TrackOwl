@@ -80,14 +80,3 @@ export function ScreenshotModal({ screenshots, currentIndex, onClose, onNavigate
         </div>
     );
 }
-
-
-/* 
-When a member is deleted from an organization, permanently delete all their data, including screenshots, activity logs, apps/websites, and other tracking details, but *retain their Employee ID, email, and total tracked time for historical reports*.
-
-The deleted member should no longer appear in the Members list or member selection dropdowns.
-
-However, on the *Reports (Time Matrix)* page, when "All Members" is selected, show the deleted member's tracked time only for dates they actually worked. Do not display any other activity details.
-
-Ensure historical reporting remains accurate without affecting existing functionality.
-*/
