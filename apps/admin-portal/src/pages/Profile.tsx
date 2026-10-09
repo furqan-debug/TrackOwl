@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
     User, Mail, Shield,
     Camera, Save, CheckCircle, 
     ShieldAlert, Loader2, Diamond,
-    Smartphone, MapPin
+    Smartphone, MapPin, Clock,
+    Building2, Globe, ExternalLink, KeyRound
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PageLayout } from '../components/ui';
@@ -16,10 +18,11 @@ const capitalizeWords = (str: string) => {
 };
 
 export function ProfilePage() {
-    const { profile, user, refreshProfile } = useAuth();
+    const { profile, user, organization, displayTimezone, refreshProfile } = useAuth();
     const [fullName, setFullName] = useState(profile?.full_name || '');
     const [phone, setPhone] = useState(profile?.phone || '');
     const [location, setLocation] = useState(profile?.location || '');
+    const [detectingLocation, setDetectingLocation] = useState(false);
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -32,41 +35,55 @@ export function ProfilePage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const isFullNameValid = fullName.trim().length > 0;
 
-    
-
-    // 📍 Auto-detect location via IP (Enforced & Exact)
+    // Sync state when profile loads or updates
     useEffect(() => {
-        const detectLocation = async () => {
-            try {
-                // Try ipwho.is first (supports browser CORS natively)
-                const response = await fetch('https://ipwho.is/');
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.success !== false && data.city && data.country) {
-                        const locString = `${data.city}, ${data.country}`;
-                        setLocation(capitalizeWords(locString));
-                        return;
-                    }
-                }
-            } catch {
-                // Ignore network/CORS fallback silently
-            }
+        if (profile) {
+            setFullName(profile.full_name || '');
+            setPhone(profile.phone || '');
+            if (profile.location) setLocation(profile.location);
+        }
+    }, [profile?.id, profile?.full_name, profile?.phone, profile?.location]);
 
-            try {
-                const response = await fetch('https://ipapi.co/json/');
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.city && data.country_name) {
-                        const locString = `${data.city}, ${data.country_name}`;
-                        setLocation(capitalizeWords(locString));
-                    }
+    // Detect location via IP helper
+    const detectLocation = async () => {
+        setDetectingLocation(true);
+        try {
+            // Try ipwho.is first (supports browser CORS natively)
+            const response = await fetch('https://ipwho.is/');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success !== false && data.city && data.country) {
+                    const locString = `${data.city}, ${data.country}`;
+                    setLocation(capitalizeWords(locString));
+                    return;
                 }
-            } catch {
-                // Fail gracefully without spamming console errors
             }
-        };
-        detectLocation();
-    }, []); // Refresh on mount to keep it exact
+        } catch {
+            // Ignore network/CORS fallback silently
+        }
+
+        try {
+            const response = await fetch('https://ipapi.co/json/');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.city && data.country_name) {
+                    const locString = `${data.city}, ${data.country_name}`;
+                    setLocation(capitalizeWords(locString));
+                }
+            }
+        } catch {
+            // Fail gracefully
+        } finally {
+            setDetectingLocation(false);
+        }
+    };
+
+    // Auto-detect on mount only if user doesn't already have a location saved
+    useEffect(() => {
+        if (!profile?.location && !location) {
+            detectLocation();
+        }
+    }, [profile?.location]);
     
 
 
@@ -187,13 +204,12 @@ export function ProfilePage() {
 
     return (
         <PageLayout
-            maxWidth="full"
+            maxWidth="7xl"
             eyebrow="ACCOUNT & IDENTITY"
             title="Profile Settings"
             description="Manage your global workspace identity and track your personal productivity."
-
         >
-            <div className="flex flex-col gap-10 pb-32">
+            <div className="flex flex-col gap-8 pb-24">
                 {error && (
                     <div className="bg-rose-500/5 border border-rose-500/10 rounded-2xl p-5 flex items-start gap-4 text-rose-500 animate-in fade-in slide-in-from-top-4">
                         <ShieldAlert className="w-5 h-5 shrink-0 mt-0.5" />
@@ -204,9 +220,10 @@ export function ProfilePage() {
                     </div>
                 )}
 
-                {/* 🎭 Hero Identity Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-                    <div className="lg:col-span-4 flex flex-col gap-6">
+                {/* 🎭 Hero Identity & Settings Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    {/* Left Column: Identity Summary & Security */}
+                    <div className="lg:col-span-5 xl:col-span-4 flex flex-col gap-6">
                         <div className="bg-surface border border-border shadow-shell-sm p-8 rounded-[24px] flex flex-col items-center text-center relative overflow-hidden group">
                             {/* Decorative Glow */}
                             <div className="absolute -right-10 -top-10 w-40 h-40 bg-primary/10 blur-[60px] rounded-full pointer-events-none" />
@@ -241,7 +258,7 @@ export function ProfilePage() {
                                         ) : (
                                              <button 
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white backdrop-blur-sm"
+                                                className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white backdrop-blur-sm cursor-pointer"
                                             >
                                                 <Camera className="w-8 h-8 mb-2" />
                                                 <span className="text-[11px] font-black tracking-widest uppercase">Update Photo</span>
@@ -254,15 +271,15 @@ export function ProfilePage() {
                                 </div>
                             </div>
 
-                            <div className="relative z-10">
-                                <h2 className="text-2xl font-black text-text-main tracking-tight mb-2">{profile?.full_name || 'Anonymous User'}</h2>
-                                <div className="flex items-center justify-center gap-3 mb-6">
+                            <div className="relative z-10 w-full">
+                                <h2 className="text-2xl font-black text-text-main tracking-tight mb-2 truncate px-2">{profile?.full_name || 'Anonymous User'}</h2>
+                                <div className="flex items-center justify-center gap-3 mb-5">
                                     <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
                                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                                         <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none">Verified Identity</span>
                                     </div>
                                 </div>
-                                <p className="text-[14px] font-medium text-text-muted leading-relaxed opacity-80 px-4">
+                                <p className="text-[13px] font-medium text-text-muted leading-relaxed opacity-80 px-4">
                                     Member since {new Date(profile?.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                                 </p>
                             </div>
@@ -270,51 +287,60 @@ export function ProfilePage() {
 
                         {/* Security Card */}
                         <div className="bg-surface border border-border shadow-shell-sm p-6 rounded-[24px] space-y-5">
-                            <div className="flex items-center gap-4 border-b border-border pb-6">
-                                <div className="w-12 h-12 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shadow-shell-sm">
+                            <div className="flex items-center gap-4 border-b border-border pb-5">
+                                <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-primary shadow-shell-sm">
                                     <Shield className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h3 className="text-[17px] font-bold text-text-main">Security Status</h3>
-                                    <p className="text-[11px] font-bold text-text-muted opacity-60">Authentication & Access</p>
+                                    <h3 className="text-[16px] font-bold text-text-main">Security & Access</h3>
+                                    <p className="text-[11px] font-bold text-text-muted opacity-60">Authentication credentials</p>
                                 </div>
                             </div>
 
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-border">
-                                    <div className="flex items-center gap-3">
-                                        <Mail className="w-4 h-4 text-text-muted" />
-                                        <span className="text-[13px] font-bold text-text-main truncate max-w-[180px]">{user?.email}</span>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between p-3.5 bg-surface rounded-xl border border-border">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <Mail className="w-4 h-4 text-text-muted shrink-0" />
+                                        <span className="text-[12px] font-bold text-text-main truncate">{user?.email}</span>
                                     </div>
-                                    <CheckCircle className="w-4 h-4 text-emerald-500" />
+                                    <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 ml-2" />
                                 </div>
-                                <div className="flex items-center justify-between p-4 bg-surface rounded-2xl border border-border">
+                                <div className="flex items-center justify-between p-3.5 bg-surface rounded-xl border border-border">
                                     <div className="flex items-center gap-3">
-                                        <Shield className="w-4 h-4 text-text-muted" />
-                                        <span className="text-[13px] font-bold text-text-main uppercase tracking-widest">{profile?.role}</span>
+                                        <Shield className="w-4 h-4 text-text-muted shrink-0" />
+                                        <span className="text-[12px] font-bold text-text-main uppercase tracking-widest">{profile?.role || 'User'}</span>
                                     </div>
-                                    <Diamond className="w-4 h-4 text-primary opacity-50" />
+                                    <Diamond className="w-4 h-4 text-primary opacity-50 shrink-0" />
                                 </div>
+                                <Link
+                                    to="/dashboard/settings/security"
+                                    className="flex items-center justify-between p-3.5 bg-surface-hover/40 hover:bg-surface-hover rounded-xl border border-border text-[12px] font-bold text-text-muted hover:text-text-main transition-all group mt-2"
+                                >
+                                    <div className="flex items-center gap-2.5">
+                                        <KeyRound className="w-4 h-4 text-primary" />
+                                        <span>Manage 2FA & Password</span>
+                                    </div>
+                                    <ExternalLink className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100 transition-opacity" />
+                                </Link>
                             </div>
                         </div>
                     </div>
 
-                    <div className="lg:col-span-8 flex flex-col gap-6">
-
-
-                        {/* 📝 Identity Forms */}
-                        <div className="bg-surface border border-border shadow-shell-sm p-8 rounded-[24px] space-y-8">
-                            <div className="flex items-center gap-4 border-b border-border pb-6">
-                                <div className="w-12 h-12 rounded-xl bg-surface-hover border border-border flex items-center justify-center text-primary shadow-shell-sm">
+                    {/* Right Column: Balanced Form Sections */}
+                    <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-6">
+                        {/* 📝 Card 1: Identity & Contact Details */}
+                        <div className="bg-surface border border-border shadow-shell-sm p-6 sm:p-8 rounded-[24px] space-y-6">
+                            <div className="flex items-center gap-4 border-b border-border pb-5">
+                                <div className="w-10 h-10 rounded-xl bg-surface-hover border border-border flex items-center justify-center text-primary shadow-shell-sm">
                                     <User className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h3 className="text-[18px] font-black text-text-main tracking-tight">Identity Information</h3>
-                                    <p className="text-[13px] font-medium text-text-muted mt-1 opacity-70">These details are visible to your administrators and team members.</p>
+                                    <h3 className="text-[16px] font-black text-text-main tracking-tight">Personal Information</h3>
+                                    <p className="text-[12px] font-medium text-text-muted mt-0.5">Primary identity details visible across your workspace.</p>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div className="space-y-2">
                                     <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-1">Legal Full Name</label>
                                     <div className="relative group/field">
@@ -327,9 +353,8 @@ export function ProfilePage() {
                                             className="w-full bg-surface border border-border rounded-xl pl-11 pr-4 h-11 text-[12px] font-bold text-text-main focus:outline-none focus:border-primary transition-all shadow-shell-sm"
                                         />
                                     </div>
-
                                     {!isFullNameValid && (
-                                        <p className="text-[10px] font-bold text-rose-500 ml-1 mt-1">
+                                        <p className="text-[10px] font-bold text-rose-500 ml-1">
                                             Full name is required
                                         </p>
                                     )}
@@ -348,48 +373,115 @@ export function ProfilePage() {
                                         />
                                     </div>
                                 </div>
+                            </div>
+                        </div>
 
-                                <div className="space-y-2 md:col-span-2">
-                                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-1">Current Base Location</label>
+                        {/* 🌍 Card 2: Regional & Location Settings */}
+                        <div className="bg-surface border border-border shadow-shell-sm p-6 sm:p-8 rounded-[24px] space-y-6">
+                            <div className="flex items-center gap-4 border-b border-border pb-5">
+                                <div className="w-10 h-10 rounded-xl bg-surface-hover border border-border flex items-center justify-center text-primary shadow-shell-sm">
+                                    <Globe className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-[16px] font-black text-text-main tracking-tight">Regional & Work Location</h3>
+                                    <p className="text-[12px] font-medium text-text-muted mt-0.5">Helps team members coordinate meetings and aligns attendance reports.</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between ml-1">
+                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Base Location</label>
+                                        <button
+                                            type="button"
+                                            onClick={detectLocation}
+                                            disabled={detectingLocation}
+                                            className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                                        >
+                                            {detectingLocation ? <Loader2 className="w-3 h-3 animate-spin" /> : <MapPin className="w-3 h-3" />}
+                                            <span>{detectingLocation ? 'Detecting...' : 'Auto-detect'}</span>
+                                        </button>
+                                    </div>
                                     <div className="relative group/field">
                                         <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted group-focus-within/field:text-primary transition-colors" />
                                         <input
                                             type="text"
                                             value={location}
-                                            readOnly
-                                            placeholder="Detecting location..."
-                                            className="w-full bg-surface-hover/50 border border-border rounded-xl pl-11 pr-32 h-11 text-[12px] font-bold text-text-muted cursor-not-allowed transition-all shadow-shell-sm"
+                                            onChange={e => setLocation(e.target.value)}
+                                            placeholder="City, Country"
+                                            className="w-full bg-surface border border-border rounded-xl pl-11 pr-4 h-11 text-[12px] font-bold text-text-main focus:outline-none focus:border-primary transition-all shadow-shell-sm"
                                         />
-                                        <div className="absolute right-5 top-1/2 -translate-y-1/2 flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10">
-                                            <Shield className="w-3 h-3 text-primary" />
-                                            <span className="text-[9px] font-black text-primary uppercase tracking-widest">Verified IP</span>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest ml-1">Workspace Timezone</label>
+                                    <div className="relative">
+                                        <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                                        <input
+                                            type="text"
+                                            value={displayTimezone || 'UTC'}
+                                            readOnly
+                                            className="w-full bg-surface-hover/50 border border-border rounded-xl pl-11 pr-24 h-11 text-[12px] font-bold text-text-muted cursor-default shadow-shell-sm"
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 border border-primary/20">
+                                            <span className="text-[9px] font-black text-primary uppercase tracking-widest">Org Active</span>
                                         </div>
                                     </div>
-                                    <p className="text-[11px] font-bold text-text-muted/60 ml-1">Your location helps team members coordinate meetings across timezones.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* 🏢 Card 3: Workspace Membership & Save Action */}
+                        <div className="bg-surface border border-border shadow-shell-sm p-6 sm:p-8 rounded-[24px] space-y-6">
+                            <div className="flex items-center gap-4 border-b border-border pb-5">
+                                <div className="w-10 h-10 rounded-xl bg-surface-hover border border-border flex items-center justify-center text-primary shadow-shell-sm">
+                                    <Building2 className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <h3 className="text-[16px] font-black text-text-main tracking-tight">Organization Workspace</h3>
+                                    <p className="text-[12px] font-medium text-text-muted mt-0.5">Your organization affiliation and workspace membership tier.</p>
                                 </div>
                             </div>
 
-                            <div className="flex justify-end pt-4 border-t border-border">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <div className="p-4 bg-surface rounded-2xl border border-border flex flex-col gap-1">
+                                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Workspace</span>
+                                    <span className="text-[13px] font-bold text-text-main truncate">{organization?.name || profile?.organization_name || 'DigiReps'}</span>
+                                </div>
+                                <div className="p-4 bg-surface rounded-2xl border border-border flex flex-col gap-1">
+                                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Membership</span>
+                                    <div className="flex items-center gap-2 mt-0.5">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                        <span className="text-[12px] font-black text-emerald-500 uppercase tracking-wider">Active</span>
+                                    </div>
+                                </div>
+                                <div className="p-4 bg-surface rounded-2xl border border-border flex flex-col gap-1">
+                                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Workspace Plan</span>
+                                    <span className="text-[13px] font-bold text-primary">{organization?.plan_type || 'Premium'} Plan</span>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-5 border-t border-border">
+                                <p className="text-[11px] font-medium text-text-muted text-center sm:text-left">Ensure your identity and regional details are kept accurate.</p>
                                 <button
                                     onClick={handleSave}
                                     disabled={loading || !isFullNameValid}
                                     className={clsx(
-                                        "h-10 px-8 rounded-xl text-[12px] font-bold transition-all shadow-shell-sm flex items-center gap-2",
+                                        "w-full sm:w-auto h-11 px-8 rounded-xl text-[12px] font-bold transition-all shadow-shell-sm flex items-center justify-center gap-2.5",
                                         !isFullNameValid
-                                            ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+                                            ? "bg-slate-300 dark:bg-slate-800 text-slate-500 cursor-not-allowed"
                                             : success
-                                                ? "bg-emerald-500 text-white" 
-                                                : "bg-primary text-white hover:brightness-110"
+                                                ? "bg-emerald-500 text-white shadow-emerald-500/20 shadow-lg" 
+                                                : "bg-primary text-white hover:brightness-110 active:scale-95 cursor-pointer shadow-primary/20 shadow-md"
                                     )}
                                 >
                                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 
                                     (success ? <CheckCircle className="w-4 h-4" /> : <Save className="w-4 h-4" />)}
-                                    {success ? 'Update Successful' : (loading ? 'Processing...' : 'Save Changes')}
+                                    <span>{success ? 'Update Successful' : (loading ? 'Saving Changes...' : 'Save Changes')}</span>
                                 </button>
                             </div>
                         </div>
-
-
                     </div>
                 </div>
 
