@@ -606,9 +606,12 @@ export function Timesheets() {
         const startLocal = utcToZonedWallClock(start, orgTimezone);
         const endLocal = utcToZonedWallClock(end, orgTimezone);
 
+        const matchedMember = members.find(m => m.id === session.user_id || m.auth_user_id === session.user_id);
+        const resolvedUserId = matchedMember ? matchedMember.id : (session.user_id || '');
+
         setAddTimeData({
             projectId: session.project_id || '',
-            userId: session.user_id || '',
+            userId: resolvedUserId,
             date: startLocal.date,
             startTime: startLocal.time,
             endTime: endLocal.time
@@ -762,10 +765,25 @@ export function Timesheets() {
 
                             <button
                                 onClick={() => {
+                                    const activeMember = (selectedMember && selectedMember !== 'all')
+                                        ? members.find(m => m.id === selectedMember || m.auth_user_id === selectedMember)
+                                        : (isRep ? members.find(m => m.id === profile?.id || m.auth_user_id === profile?.id) : null);
+                                    const prefilledUserId = activeMember ? activeMember.id : '';
+
+                                    const memberProjects = prefilledUserId ? (projectMembersMap[prefilledUserId] || []) : [];
+                                    let prefilledProjectId = '';
+                                    if (filterProjectId && filterProjectId !== 'all' && memberProjects.includes(filterProjectId)) {
+                                        prefilledProjectId = filterProjectId;
+                                    } else if (memberProjects.length === 1) {
+                                        prefilledProjectId = memberProjects[0];
+                                    }
+
+                                    const currentDateStr = getGroupingDateInTz(selectedDate, undefined) || new Date().toISOString().split('T')[0];
+
                                     setAddTimeData({
-                                        projectId: '',
-                                        userId: isRep ? (profile?.id || '') : '',
-                                        date: new Date().toISOString().split('T')[0],
+                                        projectId: prefilledProjectId,
+                                        userId: prefilledUserId,
+                                        date: currentDateStr,
                                         startTime: '09:00',
                                         endTime: '17:00'
                                     });

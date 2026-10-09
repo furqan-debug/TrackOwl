@@ -115,6 +115,7 @@ export function ChangePlan() {
         <PageLayout
             title="Change your plan"
             description="A few clicks to update your subscription."
+            showFavorite={false}
         >
             <div className="max-w-3xl mx-auto space-y-5">
 

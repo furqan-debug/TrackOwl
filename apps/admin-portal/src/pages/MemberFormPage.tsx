@@ -693,7 +693,7 @@ export function MemberFormPage() {
                 </div>
             </div>
 
-            <div className="flex-1 bg-main relative min-h-0 overflow-x-hidden">
+            <div className="">
                 {/* Background glows */}
                 <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-primary/5 blur-[120px] pointer-events-none rounded-full" />
 
@@ -737,12 +737,7 @@ export function MemberFormPage() {
                                 <div className="relative group cursor-pointer">
                                     <motion.div
                                         className="absolute -inset-2 rounded-[1.4rem] border-2 border-dashed border-primary/30"
-                                        animate={{ rotate: 360 }}
-                                        transition={{
-                                            duration: 30,
-                                            repeat: Infinity,
-                                            ease: 'linear',
-                                        }}
+                                        
                                     />
 
                                     <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary text-3xl font-black border border-primary/30 shadow-shell-md overflow-hidden relative z-10 transition-transform group-hover:scale-105">

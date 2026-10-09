@@ -6,7 +6,6 @@ import {
     Camera, TrendingUp, BarChart3,
     Monitor,
     ChevronLeft, ChevronRight,
-    MoreHorizontal,
     ArrowUpRight
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -355,9 +354,13 @@ export function Dashboard() {
                     .filter((s: any) => s.user_id === m.id || (m.auth_user_id && s.user_id === m.auth_user_id))
                     .map((s: any) => ({
                         ...s,
+                        path: s.path || s.file_url,
+                        recordedAt: s.recordedAt || s.recordedat || s.recorded_at,
                         activityPercent: (s.activityPercent !== undefined && s.activityPercent > 0)
                             ? s.activityPercent
-                            : (userFocus > 0 ? userFocus : 0)
+                            : (s.activitypercent !== undefined && s.activitypercent > 0)
+                                ? s.activitypercent
+                                : (userFocus > 0 ? userFocus : 0)
                     }));
                 userRows[m.id] = {
                     userId: m.id,
@@ -870,7 +873,6 @@ export function Dashboard() {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <button className="w-8 h-8 md:w-10 md:h-10 flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface hover:shadow-sm transition-all shrink-0"><MoreHorizontal className="w-4 h-4 md:w-5 md:h-5" /></button>
                                                 </div>
 
                                                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
@@ -887,7 +889,7 @@ export function Dashboard() {
 
                                                                 <div className="absolute bottom-3 right-3 translate-y-1 group-hover/ss:translate-y-0 transition-transform duration-300">
                                                                     <span className="px-3 py-1.5 rounded-lg bg-black/60 text-white text-[9px] font-bold backdrop-blur-md border border-white/10">
-                                                                        {new Date(ss.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                        {ss.recordedAt ? new Date(ss.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: displayTimezone || undefined }) : ''}
                                                                     </span>
                                                                 </div>
                                                                 <div className="absolute top-3 left-3 -translate-y-1 group-hover/ss:translate-y-0 transition-transform duration-300">
