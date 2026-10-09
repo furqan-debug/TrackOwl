@@ -8,6 +8,7 @@ interface Screenshot {
     session_id: string;
     recorded_at: string;
     file_url: string;
+    user_id?: string;
 }
 
 interface ScreenshotGalleryProps {
@@ -17,6 +18,12 @@ interface ScreenshotGalleryProps {
     selectedIds?: Set<number>;
     onToggleSelect?: (screenshot: Screenshot) => void;
     maxLimit?: number;
+    /**
+     * Who a capture belongs to. Only passed when the gallery is showing more
+     * than one person — with a single member selected every tile has the same
+     * owner and naming them on each one is noise.
+     */
+    memberName?: (userId?: string) => string | undefined;
 }
 
 export function ScreenshotGallery({
@@ -26,6 +33,7 @@ export function ScreenshotGallery({
     selectedIds,
     onToggleSelect,
     maxLimit = 50,
+    memberName,
 }: ScreenshotGalleryProps) {
     if (screenshots.length === 0) {
         return (
@@ -77,6 +85,18 @@ export function ScreenshotGallery({
                                 alt="Activity Screenshot"
                                 className="w-full h-full object-cover opacity-95 group-hover:opacity-100 transition-all duration-700 group-hover:scale-110"
                             />
+
+                            {/* Whose capture this is. Held at the bottom of
+                                the tile so it never covers the checkbox, and
+                                only drawn on hover so a wall of captures stays
+                                a wall of captures. */}
+                            {memberName?.(ss.user_id) && (
+                                <div className="absolute inset-x-0 bottom-0 z-10 px-3.5 py-2.5 bg-gradient-to-t from-black/85 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                                    <span className="text-[12px] font-bold text-white drop-shadow truncate block">
+                                        {memberName(ss.user_id)}
+                                    </span>
+                                </div>
+                            )}
 
                             {/* Selection Overlay / Tint */}
                             {selectionMode && isSelected && (
