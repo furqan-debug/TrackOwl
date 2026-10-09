@@ -217,7 +217,7 @@ export const activityService = {
                 { organizationId }
             ),
             supabase.from('screenshots')
-                .select('id, session_id, recorded_at, file_url', { count: 'exact' })
+                .select('id, session_id, recorded_at, file_url, user_id', { count: 'exact' })
                 .eq('organization_id', organizationId)
                 .in('session_id', sessionIds)
                 .gte('recorded_at', start)
@@ -328,7 +328,7 @@ export const activityService = {
                     .order('recorded_at', { ascending: true }),
                 supabase
                     .from('screenshots')
-                    .select('id, session_id, recorded_at, file_url')
+                    .select('id, session_id, recorded_at, file_url, user_id')
                     .eq('session_id', sessionId)
                     .gte('recorded_at', blockStart)
                     .lte('recorded_at', blockEnd)

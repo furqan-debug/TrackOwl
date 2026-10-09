@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { activityService } from '../services/activity.service';
 import {
     Mouse, Keyboard, Activity as ActivityIcon,
@@ -40,6 +40,7 @@ interface Screenshot {
     session_id: string;
     recorded_at: string;
     file_url: string;
+    user_id?: string;
 }
 
 interface MemberInfo {
@@ -83,6 +84,35 @@ export function Activity() {
     // Reps are locked to their own member id; admins start on 'all'
     const [selectedMemberId, setSelectedMemberId] = useState<string>(() =>
         isRep ? (profile?.id ?? 'all') : 'all'
+    );
+    /**
+     * Whose capture this is, for the tiles and the opened image.
+     *
+     * Only answers when every member is on screen. With one person selected
+     * the answer is the same on every tile and the heading above already
+     * says it, so naming each capture would be noise.
+     *
+     * Keyed on both ids a member can be known by: screenshots carry the
+     * member id, but the same column holds the auth id elsewhere in the app,
+     * and a tile with no name is better than a wrong one.
+     */
+    const memberNameById = useMemo(() => {
+        const m = new Map<string, string>();
+        members.forEach(x => {
+            if (x.full_name) {
+                if (x.id) m.set(x.id, x.full_name);
+                if (x.auth_user_id) m.set(x.auth_user_id, x.full_name);
+            }
+        });
+        return m;
+    }, [members]);
+
+    const lookupMemberName = useCallback(
+        (userId?: string) =>
+            selectedMemberId.toLowerCase() === 'all' && userId
+                ? memberNameById.get(userId)
+                : undefined,
+        [selectedMemberId, memberNameById],
     );
     const [sessionMinutes, setSessionMinutes] = useState(0);
 
@@ -769,6 +799,7 @@ export function Activity() {
                             <div className="p-8">
                                 <ScreenshotGallery
                                     screenshots={screenshots}
+                                    memberName={lookupMemberName}
                                     onSelectImage={(ss) => {
                                         const idx = screenshots.findIndex(s => s.id === ss.id);
                                         setEnlargedIndex(idx >= 0 ? idx : 0);
@@ -818,7 +849,8 @@ export function Activity() {
                     screenshots={screenshots.map(ss => ({
                         path: ss.file_url,
                         recordedAt: ss.recorded_at,
-                        activityPercent: samples.find(samp => samp.recorded_at.substring(0, 16) === ss.recorded_at.substring(0, 16))?.activity_percent ?? 50
+                        activityPercent: samples.find(samp => samp.recorded_at.substring(0, 16) === ss.recorded_at.substring(0, 16))?.activity_percent ?? 50,
+                        memberName: lookupMemberName(ss.user_id)
                     }))}
                     currentIndex={enlargedIndex}
                     onClose={() => setEnlargedIndex(null)}

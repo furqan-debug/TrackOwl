@@ -386,10 +386,15 @@ export function SecurityPage() {
                                 Active
                             </span>
                         ) : (
+                            /* Tokens, not white-alpha. The pill was built from
+                               bg-white/5, border-white/10 and a bg-white/30 dot
+                               — white over a white card, so on a light theme
+                               the whole badge disappeared and left the text
+                               floating on its own. */
                             <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full
-                                            bg-white/5 border border-white/10
+                                            bg-surface-hover border border-border
                                             text-text-muted text-[11px] font-bold uppercase tracking-widest shrink-0">
-                                <span className="w-1.5 h-1.5 rounded-full bg-white/30" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-text-muted" />
                                 Disabled
                             </span>
                         )}

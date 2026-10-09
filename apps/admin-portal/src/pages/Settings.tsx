@@ -418,7 +418,14 @@ function ToggleControl({ label, description, value, onChange }: { label: string;
                 onClick={() => onChange(!value)}
                 className={clsx(
                     "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out",
-                    value ? "bg-primary" : "bg-white/10"
+                    /* Off was bg-white/10 with a white knob — white on white,
+                       so on a light page the whole control disappeared and
+                       there was nothing to tell you a switch was there.
+                       slate-500 carries 4.55:1 against the page and 4.76:1
+                       against its own knob, both past the 3:1 a control
+                       boundary needs. The lighter greys all came in under 2.5
+                       and only looked right on the dark theme. */
+                    value ? "bg-primary" : "bg-slate-500 dark:bg-white/20"
                 )}
             >
                 <span
