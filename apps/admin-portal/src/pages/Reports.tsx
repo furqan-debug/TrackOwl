@@ -47,16 +47,10 @@ type Range = typeof RANGES[number];
 
 /**
  * A YYYY-MM-DD from the query string, or null if it is absent or malformed.
- *
- * Midday avoids the date shifting a day either way across timezones. Returning
- * null on nonsense matters more now that these seed the initial state: an
- * Invalid Date is truthy, so it would reach getDateRange and be formatted as
- * the literal string "Invalid Date".
  */
-function parseUrlDate(value: string | null): Date | null {
+function parseUrlDate(value: string | null): string | null {
     if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
-    const d = new Date(value + 'T12:00:00');
-    return isNaN(d.getTime()) ? null : d;
+    return value;
 }
 
 // Module-level cache to prevent re-fetching when switching tabs
@@ -109,8 +103,8 @@ export function Reports() {
      */
     const [rangeAlign, setRangeAlign] = useState<'left' | 'right'>('left');
 
-    const [customStart, setCustomStart] = useState<Date | null>(initialUrlParams.start);
-    const [customEnd, setCustomEnd] = useState<Date | null>(initialUrlParams.end);
+    const [customStart, setCustomStart] = useState<string | null>(initialUrlParams.start);
+    const [customEnd, setCustomEnd] = useState<string | null>(initialUrlParams.end);
     const scrollRef = useRef<HTMLDivElement>(null);
     const [refreshing, setRefreshing] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -263,7 +257,7 @@ export function Reports() {
     useEffect(() => {
         if (!membersLoaded) return;
         fetchReports();
-    }, [range, offset, selectedTeamId, selectedMemberId, members, displayTimezone, membersLoaded]);
+    }, [range, offset, customStart, customEnd, selectedTeamId, selectedMemberId, members, displayTimezone, membersLoaded]);
 
     function shiftRange(direction: number) {
         let days = 0;
@@ -309,8 +303,12 @@ export function Reports() {
 
     function getDateRange(): { start: string; end: string } {
         if (range === 'Custom' && customStart && customEnd) {
-            const sStr = (customStart instanceof Date ? customStart : new Date(customStart)).toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
-            const eStr = (customEnd instanceof Date ? customEnd : new Date(customEnd)).toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+            const sStr = typeof customStart === 'string'
+                ? customStart
+                : `${(customStart as any).getFullYear()}-${String((customStart as any).getMonth() + 1).padStart(2, '0')}-${String((customStart as any).getDate()).padStart(2, '0')}`;
+            const eStr = typeof customEnd === 'string'
+                ? customEnd
+                : `${(customEnd as any).getFullYear()}-${String((customEnd as any).getMonth() + 1).padStart(2, '0')}-${String((customEnd as any).getDate()).padStart(2, '0')}`;
             const s = orgLocalToUtc(sStr, 'start', displayTimezone || 'UTC');
             const e = orgLocalToUtc(eStr, 'end', displayTimezone || 'UTC');
             return { start: s.toISOString(), end: e.toISOString() };
@@ -683,7 +681,9 @@ export function Reports() {
                                     range={range}
                                     setRange={setRange}
                                     setOffset={setOffset}
-                                    onApply={(s: Date, e: Date) => {
+                                    initialStart={customStart}
+                                    initialEnd={customEnd}
+                                    onApply={(s: string, e: string) => {
                                         setCustomStart(s);
                                         setCustomEnd(e);
                                         setRange('Custom');
@@ -1170,38 +1170,43 @@ function CustomTooltip({ active, payload, label, unit }: any) {
  * the preset button styling and the footer — the behaviour is one
  * implementation either way.
  */
-function DateRangePicker({ isRep, range, setRange, setOffset, onApply, onCancel }: any) {
-    const [leftMonth, setLeftMonth] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1));
-    const [selStart, setSelStart] = useState<Date | null>(null);
-    const [selEnd, setSelEnd] = useState<Date | null>(null);
+function DateRangePicker({ isRep, range, setRange, setOffset, initialStart, initialEnd, onApply, onCancel }: any) {
+    const [leftMonth, setLeftMonth] = useState(() => {
+        if (initialStart && typeof initialStart === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(initialStart)) {
+            const [y, m] = initialStart.split('-').map(Number);
+            return new Date(y, m - 1, 1);
+        }
+        return new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+    });
+    const [selStart, setSelStart] = useState<string | null>(initialStart || null);
+    const [selEnd, setSelEnd] = useState<string | null>(initialEnd || null);
 
-    const rightMonth = new Date(leftMonth);
-    rightMonth.setMonth(rightMonth.getMonth() + 1);
+    const rightMonth = new Date(leftMonth.getFullYear(), leftMonth.getMonth() + 1, 1);
 
-    const handleDateClick = (d: Date) => {
+    const handleDateClick = (iso: string) => {
         if (!selStart || (selStart && selEnd)) {
-            setSelStart(d);
+            setSelStart(iso);
             setSelEnd(null);
         } else {
-            if (d < selStart) {
+            if (iso < selStart) {
                 setSelEnd(selStart);
-                setSelStart(d);
+                setSelStart(iso);
             } else {
-                setSelEnd(d);
+                setSelEnd(iso);
             }
         }
     };
 
-    const isSelected = (d: Date) => {
+    const isSelected = (iso: string) => {
         if (!selStart) return false;
-        if (selStart.getTime() === d.getTime()) return true;
-        if (selEnd && selEnd.getTime() === d.getTime()) return true;
+        if (selStart === iso) return true;
+        if (selEnd && selEnd === iso) return true;
         return false;
     };
 
-    const isInRange = (d: Date) => {
+    const isInRange = (iso: string) => {
         if (!selStart || !selEnd) return false;
-        return d > selStart && d < selEnd;
+        return iso > selStart && iso < selEnd;
     };
 
     return (
@@ -1293,9 +1298,12 @@ function MonthView({ isRep, month, onPrev, onNext, onDateClick, isSelected, isIn
     // Adjust for Monday start: (day + 6) % 7
     const adjustedStart = (firstDay + 6) % 7;
 
-    const days = [];
+    const days: ({ dayNum: number; iso: string } | null)[] = [];
     for (let i = 0; i < adjustedStart; i++) days.push(null);
-    for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, monthIdx, i));
+    for (let i = 1; i <= daysInMonth; i++) {
+        const iso = `${year}-${String(monthIdx + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+        days.push({ dayNum: i, iso });
+    }
 
     const monthName = month.toLocaleDateString('en-US', { month: isRep ? 'long' : 'short', year: 'numeric' });
 
@@ -1333,13 +1341,13 @@ function MonthView({ isRep, month, onPrev, onNext, onDateClick, isSelected, isIn
                 ))}
                 {days.map((d, i) => {
                     if (!d) return <div key={i} className="py-3" />;
-                    const selected = isSelected(d);
-                    const inRange = isInRange(d);
+                    const selected = isSelected(d.iso);
+                    const inRange = isInRange(d.iso);
 
                     return (
                         <button
                             key={i}
-                            onClick={() => onDateClick(d)}
+                            onClick={() => onDateClick(d.iso)}
                             className={clsx(
                                 "py-3 text-[12px] font-medium transition-all rounded-lg relative z-10",
                                 selected ? "text-[#001B4D] font-black shadow-lg shadow-[var(--chart-gold)]/30" :
@@ -1348,14 +1356,14 @@ function MonthView({ isRep, month, onPrev, onNext, onDateClick, isSelected, isIn
                             )}
                             style={selected ? { backgroundColor: 'var(--chart-gold)' } : inRange ? { color: 'var(--chart-gold)' } : {}}
                         >
-                            {d.getDate()}
+                            {d.dayNum}
                         </button>
                     );
                 })}
             </div>
             <div className="mt-auto pt-4 border-t border-border text-center">
                 <span className="text-[10px] font-bold text-text-muted ">
-                    {month.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                    {month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </span>
             </div>
         </div>
