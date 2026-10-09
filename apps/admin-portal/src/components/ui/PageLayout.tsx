@@ -18,6 +18,8 @@ export interface PageLayoutProps {
         onClick: () => void | Promise<void>;
         label?: string;
     };
+    /** Whether to show the favorite star next to title (defaults to true) */
+    showFavorite?: boolean;
 }
 
 export function PageLayout({
@@ -28,6 +30,7 @@ export function PageLayout({
     maxWidth = 'wide',
     actions,
     backButton,
+    showFavorite = true,
 }: PageLayoutProps) {
     const { toggleFavorite, isFavorite } = useFavorites();
     const location = useLocation();
@@ -81,16 +84,18 @@ export function PageLayout({
                                         <h1 className="text-3xl md:text-4xl font-bold heading-gradient tracking-tight font-heading">
                                             {title}
                                         </h1>
-                                        <button
-                                            onClick={() => toggleFavorite(title, location.pathname)}
-                                            className={clsx(
-                                                "p-2 rounded-xl transition-all",
-                                                isFav ? "text-[var(--accent)] bg-[var(--accent)]/10" : "text-text-muted hover:text-[var(--accent)] hover:bg-surface-hover"
-                                            )}
-                                            title={isFav ? "Remove from Favorites" : "Add to Favorites"}
-                                        >
-                                            <Star className={clsx("w-5 h-5 transition-colors", isFav && "fill-[var(--accent)]")} strokeWidth={isFav ? 2 : 2.5} />
-                                        </button>
+                                        {showFavorite && (
+                                            <button
+                                                onClick={() => toggleFavorite(title, location.pathname)}
+                                                className={clsx(
+                                                    "p-2 rounded-xl transition-all",
+                                                    isFav ? "text-[var(--accent)] bg-[var(--accent)]/10" : "text-text-muted hover:text-[var(--accent)] hover:bg-surface-hover"
+                                                )}
+                                                title={isFav ? "Remove from Favorites" : "Add to Favorites"}
+                                            >
+                                                <Star className={clsx("w-5 h-5 transition-colors", isFav && "fill-[var(--accent)]")} strokeWidth={isFav ? 2 : 2.5} />
+                                            </button>
+                                        )}
                                     </div>
                                 )}
                                 {description && (

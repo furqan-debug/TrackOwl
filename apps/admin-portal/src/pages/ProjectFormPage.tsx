@@ -207,6 +207,7 @@ export function ProjectFormPage() {
             maxWidth="full"
             title={isEdit ? "Edit Project" : "New Project"}
             description="Configure project settings, budget limits, and team assignments."
+            showFavorite={false}
             actions={
                 <div className="flex items-center gap-4">
                     {error && (
