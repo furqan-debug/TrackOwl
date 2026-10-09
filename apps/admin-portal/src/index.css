@@ -466,6 +466,28 @@
   @apply bg-base-white/10 hover:bg-base-white/20;
 }
 
+/* The glow under a primary action.
+   The class was already on fifteen elements with no rule behind it, so
+   nothing has ever glowed. Mixed from the primary colour rather than a fixed
+   value, so it follows the theme: navy in light, gold in dark. Softened on
+   hover rather than brightened, so the button lifts instead of flashing. */
+.shadow-glow-primary {
+  box-shadow:
+    0 2px 8px -2px color-mix(in srgb, var(--color-primary) 40%, transparent),
+    0 8px 24px -8px color-mix(in srgb, var(--color-primary) 30%, transparent);
+  transition: box-shadow 0.2s ease;
+}
+
+.shadow-glow-primary:hover:not(:disabled) {
+  box-shadow:
+    0 3px 12px -2px color-mix(in srgb, var(--color-primary) 55%, transparent),
+    0 12px 32px -8px color-mix(in srgb, var(--color-primary) 40%, transparent);
+}
+
+.shadow-glow-primary:disabled {
+  box-shadow: none;
+}
+
 /* Refresh button — reloading state.
    The icon alone is 16px of muted grey turning gold; on a dark ground that
    reads as nothing, especially when the fetch returns in under a second. The

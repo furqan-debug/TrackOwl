@@ -6,6 +6,8 @@ interface Screenshot {
     path: string;
     recordedAt: string;
     activityPercent: number;
+    /** Only set when the gallery behind it is showing more than one person. */
+    memberName?: string;
 }
 
 interface ScreenshotModalProps {
@@ -48,9 +50,18 @@ export function ScreenshotModal({ screenshots, currentIndex, onClose, onNavigate
                 <X className="w-5 h-5" />
             </button>
 
-            {/* Counter */}
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 text-white/60 text-[12px] font-bold select-none">
-                {currentIndex + 1} / {screenshots.length}
+            {/* Counter, and whose capture this is when more than one
+                person's are on screen behind it. */}
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 text-[12px] font-bold select-none">
+                {screenshot.memberName && (
+                    <>
+                        <span className="text-white">{screenshot.memberName}</span>
+                        <span className="text-white/25">·</span>
+                    </>
+                )}
+                <span className="text-white/60">
+                    {currentIndex + 1} / {screenshots.length}
+                </span>
             </div>
 
             {/* Left arrow */}
@@ -62,10 +73,15 @@ export function ScreenshotModal({ screenshots, currentIndex, onClose, onNavigate
                 <ChevronLeft className="w-6 h-6" />
             </button>
 
-            {/* Screenshot */}
+            {/* Screenshot.
+                Held in from all four edges rather than filling the viewport:
+                at full size the image ran under the name and counter above it
+                and the arrows either side, so the chrome was reading against
+                whatever happened to be in the capture. The gap is clear
+                backdrop, so it always reads. */}
             <SecureImage
                 path={screenshot.path}
-                className="max-w-full max-h-full object-contain"
+                className="max-w-[90vw] max-h-[82vh] object-contain"
                 onClick={(e) => e.stopPropagation()}
             />
 

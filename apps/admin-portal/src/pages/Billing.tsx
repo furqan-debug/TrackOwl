@@ -473,7 +473,7 @@ export function Billing() {
                                         </h2>
                                         <StatusBadge
                                             variant={organization.subscription_status === 'Active' || organization.subscription_status === 'Trial' ? 'success' : 'warning'}
-                                            className="px-4 py-1 h-auto text-[10px] font-black uppercase tracking-widest animate-pulse"
+                                            className="px-4 py-1 h-auto text-[10px] font-black uppercase tracking-widest"
                                         >
                                             {organization.subscription_status === 'None' ? 'Explore Mode' : organization.subscription_status}
                                         </StatusBadge>
