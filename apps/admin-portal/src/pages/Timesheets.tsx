@@ -394,17 +394,19 @@ export function Timesheets() {
                 const isManual = s.manual === true;
 
                 const nowMs = new Date().getTime();
-                // A session is considered active if ended_at is null, not manual, and has seen heartbeat within 15 mins
+                // A session is considered active if not manual and has seen heartbeat within 15 mins (even if ended_at was prematurely stamped on server)
                 const isRecentlyActive = sampleCount === 0
                     ? (nowMs - startedAtMs < 15 * 60000)
                     : (nowMs - lastSampleTime < 15 * 60000);
-                const isTrulyActive = !isManual && !s.ended_at && isRecentlyActive;
+                const dbEndMs = parseDbTimestamp(s.ended_at);
+                const hasLateSamples = Boolean(dbEndMs && lastSampleTime && lastSampleTime > dbEndMs + 60000);
+                const isTrulyActive = !isManual && (!s.ended_at || hasLateSamples) && isRecentlyActive;
 
                 let effectiveEndMs = nowMs;
-                if (s.ended_at) {
-                    effectiveEndMs = parseDbTimestamp(s.ended_at) || new Date(s.ended_at).getTime();
-                } else if (isTrulyActive) {
+                if (isTrulyActive) {
                     effectiveEndMs = nowMs;
+                } else if (s.ended_at) {
+                    effectiveEndMs = lastSampleTime && dbEndMs ? Math.max(dbEndMs, lastSampleTime) : (dbEndMs || new Date(s.ended_at).getTime());
                 } else if (sampleCount > 0) {
                     effectiveEndMs = Math.max(lastSampleTime, startedAtMs);
                 } else {
