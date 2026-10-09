@@ -173,11 +173,15 @@ export interface HubstaffBlock {
 export function getEffectiveEnd(startedAt: string, endedAt: string | null, lastSampleAt?: string | null) {
     const startMs = new Date(startedAt).getTime();
 
-    // 1. If explicit end exists, use it.
+    // 1. If explicit end exists, check if samples arrived past it or if it is still live
     if (endedAt) {
+        const dbEndMs = new Date(endedAt).getTime();
+        const lastSampleMs = lastSampleAt ? new Date(lastSampleAt).getTime() : 0;
+        const now = Date.now();
+        const isLive = lastSampleMs > dbEndMs && (now - lastSampleMs < STALE_THRESHOLD_MS);
         return {
-            endMs: new Date(endedAt).getTime(),
-            isLive: false,
+            endMs: isLive ? now : Math.max(dbEndMs, lastSampleMs),
+            isLive,
             isStale: false
         };
     }
