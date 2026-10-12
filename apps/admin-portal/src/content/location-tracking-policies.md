@@ -13,7 +13,7 @@ description: Learn how to manage location tracking policies in TrackOwl.
 Understanding how to use the **Location tracking policies** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Who can do this:** Owner, Admin, Manager, Viewer and Client accounts can open job sites. The User role cannot.
+> **Who can do this:** **Owner**, **Admin**, **Manager**, **Viewer** and **Client** accounts can open job sites. The **User** role cannot.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.

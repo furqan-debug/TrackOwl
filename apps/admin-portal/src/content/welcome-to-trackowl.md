@@ -25,7 +25,7 @@ TrackOwl tracks work time and shows what that time went into, without the guessw
 | Settings | Org Settings, Security & 2FA, Billing & Plans |
 
 ## What your role changes
-Whoever creates the workspace is its Owner. Owner and Admin accounts reach organisation settings; billing is Owner-only; the User role sees its own time and activity but not the admin pages. The full table is in **Manage roles**.
+Whoever creates the workspace is its **Owner**. **Owner** and **Admin** accounts reach organisation settings; billing is **Owner**-only; the **User** role sees its own time and activity but not the admin pages. The full table is in **Manage roles**.
 
 > [!TIP]
 > New here? Read the Quick Start Guide next. It takes you from creating the workspace to the first tracked hour.

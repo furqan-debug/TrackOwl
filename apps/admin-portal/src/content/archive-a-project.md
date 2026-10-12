@@ -10,7 +10,7 @@ description: Close a finished project without losing its tracked time.
 Archiving takes a project out of the active list while keeping everything tracked against it. Use it when work finishes but you still want the history. Archiving can be undone — an archived project can be made active again.
 
 > [!IMPORTANT]
-> **Who can do this:** Owner, Admin and Manager accounts can archive a project. Viewer accounts can see projects but not change them.
+> **Who can do this:** **Owner**, **Admin** and **Manager** accounts can archive a project. **Viewer** accounts can see projects but not change them.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.

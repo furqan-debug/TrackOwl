@@ -15,7 +15,7 @@ Every capture on the Screenshots page can be selected. Once you have a selection
 > [!IMPORTANT]
 > **Plan:** This is a Premium feature. On the Basic plan the page redirects to Pricing.
 >
-> **Who can do this:** Every role can open this page. Members see their own captures; Owner, Admin, Manager and Viewer accounts can also see the rest of the team.
+> **Who can do this:** Every role can open this page. Members see their own captures; **Owner**, **Admin**, **Manager** and **Viewer** accounts can also see the rest of the team.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.

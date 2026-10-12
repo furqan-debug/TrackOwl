@@ -13,7 +13,7 @@ description: Learn how to manage tracking settings in TrackOwl.
 Understanding how to use the **Tracking settings** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Who can do this:** Only Owner and Admin accounts can change organisation settings.
+> **Who can do this:** Only **Owner** and **Admin** accounts can change organisation settings.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.

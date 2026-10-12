@@ -13,7 +13,7 @@ description: Learn how to manage time approvals in TrackOwl.
 Understanding how to use the **Time approvals** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Who can do this:** Owner, Admin, Manager, Viewer and Client accounts can open this page. The User role cannot — it sees an "Admin-only area" notice instead.
+> **Who can do this:** **Owner**, **Admin**, **Manager**, **Viewer** and **Client** accounts can open this page. The **User** role cannot — it sees an "Admin-only area" notice instead.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.
@@ -45,4 +45,4 @@ Follow these steps to configure your settings properly:
 A: TrackOwl's idle detection will automatically pause tracking if no keyboard or mouse activity is detected for your configured timeout period.
 
 **Q: Can I edit time entries later?**  
-A: Yes, manual time adjustments can be made from the Timesheets page, subject to Manager approval.
+A: Yes, manual time adjustments can be made from the Timesheets page, subject to **Manager** approval.

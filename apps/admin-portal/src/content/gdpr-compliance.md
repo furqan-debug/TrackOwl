@@ -10,7 +10,7 @@ description: Consent, access and deletion requests.
 TrackOwl is built around consent-based tracking: the desktop app has to be installed and the timer started on the machine being tracked. Nothing is recorded silently in the background without the app running.
 
 > [!IMPORTANT]
-> **Who can do this:** A workspace Owner can request export or deletion for the organisation. Individuals should raise requests through their own organisation first, since the organisation holds the data.
+> **Who can do this:** A workspace **Owner** can request export or deletion for the organisation. Individuals should raise requests through their own organisation first, since the organisation holds the data.
 
 ## Making a request
 1. Email **contact@trackowl.io**, or use the contact form at the bottom of the Help Center.

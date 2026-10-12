@@ -13,7 +13,7 @@ description: Learn how to manage data retention in TrackOwl.
 Understanding how to use the **Data retention** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Who can do this:** Retention is not a setting in the dashboard. Only the Owner can ask for a workspace's data to be deleted or exported.
+> **Who can do this:** Retention is not a setting in the dashboard. Only the **Owner** can ask for a workspace's data to be deleted or exported.
 
 ## Where to find it
 1. Read how long data is kept in the privacy policy at **trackowl.io/privacy**.
