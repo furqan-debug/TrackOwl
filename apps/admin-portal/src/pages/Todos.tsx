@@ -1534,7 +1534,9 @@ function TodoListItem({
                         onClick={onEdit}
                         variant="ghost"
                         size="sm"
-                        className="w-8 h-8 sm:w-9 sm:h-9 p-0 rounded-lg text-text-muted hover:text-primary hover:bg-surface-hover flex items-center justify-center"
+                        title="Edit task"
+                        aria-label="Edit task"
+                        className="w-8 h-8 sm:w-9 sm:h-9 p-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-primary hover:border-primary/40 flex items-center justify-center"
                     >
                         <MoreHorizontal className="w-4 h-4" />
                     </Button>
@@ -1547,7 +1549,12 @@ function TodoListItem({
                         disabled={isViewer}
                         variant="ghost"
                         size="sm"
-                        className="w-8 h-8 sm:w-9 sm:h-9 p-0 rounded-lg text-text-muted hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center"
+                        title="Delete task"
+                        aria-label="Delete task"
+                        /* rose-50 is a light-mode wash; on the dark card it
+                           lit the whole button near-white. The tint works
+                           either way. */
+                        className="w-8 h-8 sm:w-9 sm:h-9 p-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-rose-500 hover:border-rose-500/40 hover:bg-rose-500/10 flex items-center justify-center"
                     >
                         <Trash2 className="w-4 h-4" />
                     </Button>
