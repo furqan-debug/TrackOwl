@@ -518,7 +518,7 @@ function FAQsAccordion() {
   const faqs = [
     {
       q: "Why is the desktop app asking for Screen Recording permission?",
-      a: "TrackOwl uses macOS's built-in screen capture capability to take periodic screenshots during your active tracked sessions. This is a core feature for team transparency and accountability. You can grant this in System Settings → Privacy & Security → Screen Recording."
+      a: "On macOS, TrackOwl uses the system's built-in screen capture to take periodic screenshots during your active tracked sessions, and macOS requires permission for it. Grant it in System Settings → Privacy & Security → Screen Recording. Windows does not ask for this."
     },
     {
       q: "How does offline tracking work?",
@@ -526,15 +526,15 @@ function FAQsAccordion() {
     },
     {
       q: "Is my tracking data secure?",
-      a: "Yes. All data transmitted between the desktop app and our servers is encrypted using TLS 1.3. Data at rest is stored in highly secure, isolated databases with Supabase. We do not track keystrokes (only counts) and screens can be optionally blurred under company settings."
+      a: "Yes. All data transmitted between the desktop app and our servers is encrypted in transit over HTTPS/TLS. Data at rest is stored in secure, isolated databases. We do not track keystrokes (only counts) and screens can be optionally blurred under company settings."
     },
     {
       q: "How do I update the application?",
-      a: "If you installed the application from the Mac App Store, updates are handled directly by the App Store. If you downloaded it from our website, the app will securely notify you and auto-update in the background."
+      a: "TrackOwl updates itself. When a new version is published the app offers it to you in a dialog and installs it once you accept. You can also download the current build again from the Download section of our website."
     },
     {
       q: "How do I cancel my subscription or delete my account?",
-      a: "You can manage or cancel your subscription at any time under Settings → Billing on the TrackOwl web portal. To permanently delete your account and all associated logs, contact support@digireps.io."
+      a: "Open Settings → Billing & Plans in the dashboard. Billing is Owner-only, so if you cannot see it, ask the workspace Owner. To permanently delete your account and all associated logs, email contact@trackowl.io."
     }
   ];
 

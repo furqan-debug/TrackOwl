@@ -1,25 +1,26 @@
 ---
-title: Productivity scores
+title: Activity score
 category: Activity & App Usage
-description: Learn how to manage productivity scores in TrackOwl.
+description: How the activity score on each block is worked out.
 ---
 
-# Productivity scores
+# Activity score
 
 > [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **Productivity scores** feature in the Activity & App Usage section.
+> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers the activity score in TrackOwl.
 
 ## Overview
 Productivity scores provide an automated, high-level metric (from 0 to 100%) indicating how active a user was during their tracked time, based on keyboard and mouse input.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Plan:** This is a Premium feature. On the Basic plan the page redirects to Pricing.
+>
+> **Who can do this:** Every role can open this page. Members see their own data; **Owner**, **Admin**, **Manager** and **Viewer** accounts can also see the rest of the team.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Activity & App Usage** icon in the primary sidebar navigation.
-3. Select **Productivity scores** from the secondary menu.
+1. Open the TrackOwl dashboard and sign in.
+2. In the left sidebar, open **Activity**.
+3. Select **Activity Blocks** (`/dashboard/activity/blocks`).
 
 ---
 
@@ -28,10 +29,10 @@ To access this feature:
 Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
-2. Look at the left-hand menu and click on **Activity & App Usage**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+2. Open **Activity** in the left sidebar, then **Activity Blocks**.
+3. Use the date range and the team or member filters to narrow what is shown.
+4. Open a row to see the detail behind it.
+This is a read-only view — there is nothing to save.
 
 ---
 
@@ -47,4 +48,4 @@ Follow these steps to configure your settings properly:
 A: TrackOwl's idle detection will automatically pause tracking if no keyboard or mouse activity is detected for your configured timeout period.
 
 **Q: Can I edit time entries later?**  
-A: Yes, manual time adjustments can be made from the Timesheets page, subject to Manager approval.
+A: Yes, manual time adjustments can be made from the Timesheets page, subject to **Manager** approval.

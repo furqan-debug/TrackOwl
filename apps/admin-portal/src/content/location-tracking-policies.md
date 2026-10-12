@@ -7,19 +7,19 @@ description: Learn how to manage location tracking policies in TrackOwl.
 # Location tracking policies
 
 > [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **Location tracking policies** feature in the Locations & Job Sites section.
+> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers Location tracking policies in TrackOwl.
 
 ## Overview
 Understanding how to use the **Location tracking policies** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** **Owner**, **Admin**, **Manager**, **Viewer** and **Client** accounts can open job sites. The **User** role cannot.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Locations & Job Sites** icon in the primary sidebar navigation.
-3. Select **Location tracking policies** from the secondary menu.
+1. Open the TrackOwl dashboard and sign in.
+2. Go to `/dashboard/locations/job-sites`. Each job site carries its own radius, which is the area it covers.
+
+There is no separate location policy screen — the radius on each site is the policy.
 
 ---
 
@@ -28,7 +28,7 @@ To access this feature:
 Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
-2. Look at the left-hand menu and click on **Locations & Job Sites**.
+2. Open a job site and set its address and radius.
 3. Find and click on the specific item you want to work on.
 4. Make your desired changes on the screen.
 5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
@@ -37,14 +37,14 @@ Follow these steps to configure your settings properly:
 
 ## Best Practices
 > [!TIP]
-> - Try testing this feature with a single "Test Team" or a fake project first to understand how it works.
+> - Change one thing at a time, then check the result before moving on.
 > - Review your changes carefully before saving to prevent disruption to your team.
-> - Combine this feature with TrackOwl's powerful Reporting tools to get maximum visibility.
+> - Reports pull the same data together across members and dates. Reports needs the Premium plan.
 
 ## Frequently Asked Questions
 
 **Q: Can I undo this action once it is saved?**  
-A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
+A: Most things can be changed back. Archiving a project is reversible. Deleting is not — a deleted project, team or to-do is gone. Screenshots cannot be deleted at all.
 
-**Q: Is this feature available on the mobile app?**  
-A: Administrative configurations are limited to the web dashboard. Standard viewing and tracking are fully supported on mobile devices.
+**Q: Can I do this from the desktop app?**  
+A: The desktop app tracks time, activity and screenshots. Everything else — settings, people, projects, reports and billing — is done in the dashboard in your browser. TrackOwl does not have a mobile app.

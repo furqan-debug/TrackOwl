@@ -7,19 +7,18 @@ description: Learn how to manage view invoices in TrackOwl.
 # View invoices
 
 > [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **View invoices** feature in the Billing & Subscriptions section.
+> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers View invoices in TrackOwl.
 
 ## Overview
 Understanding how to use the **View invoices** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** Billing is **Owner**-only. Other roles do not see Billing & Plans in the sidebar.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Billing & Subscriptions** icon in the primary sidebar navigation.
-3. Select **View invoices** from the secondary menu.
+1. Open the TrackOwl dashboard and sign in.
+2. In the left sidebar, open **Settings**.
+3. Select **Billing & Plans** (`/dashboard/settings/billing`).
 
 ---
 
@@ -28,10 +27,9 @@ To access this feature:
 Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
-2. Look at the left-hand menu and click on **Billing & Subscriptions**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+2. Open **Settings** in the left sidebar, then **Billing & Plans**.
+3. Open an invoice to see its lines.
+4. Invoices are issued by the payment provider; TrackOwl shows them read-only.
 
 ---
 
