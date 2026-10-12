@@ -7,19 +7,18 @@ description: Learn how to manage deactivate users in TrackOwl.
 # Deactivate users
 
 > [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **Deactivate users** feature in the Users & Roles section.
+> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers Deactivate users in TrackOwl.
 
 ## Overview
 Deactivating a user instantly revokes their login access and stops all tracking, but securely preserves all of their historical time, activity, and financial data for your records. This is different from Deleting a user, which permanently removes them.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** **Owner**, **Admin**, **Manager**, **Viewer** and **Client** accounts can open this page. The **User** role cannot — it sees an "Admin-only area" notice instead.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Users & Roles** icon in the primary sidebar navigation.
-3. Select **Deactivate users** from the secondary menu.
+1. Open the TrackOwl dashboard and sign in.
+2. In the left sidebar, open **People**.
+3. Select **Members** (`/dashboard/people`).
 
 ---
 
@@ -28,22 +27,21 @@ To access this feature:
 Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
-2. Look at the left-hand menu and click on **Users & Roles**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+2. Open **People** in the left sidebar, then **Members**.
+3. Open the member's menu and choose **Deactivate Member**. Their status becomes Inactive and tracking stops.
+4. To bring them back, open the menu again and reactivate them. Nothing they tracked is removed.
 
 ---
 
 ## Best Practices
 > [!TIP]
-> - Assign 'Manager' roles sparingly to maintain strict security over your organization.
+> - Assign '**Manager**' roles sparingly to maintain strict security over your organization.
 > - Create specific Teams (e.g., 'Marketing', 'Engineering') to make assigning projects much faster.
 > - Audit your active users quarterly and deactivate anyone no longer working with your company.
 
 ## Frequently Asked Questions
 
-**Q: What is the difference between an Owner and a Manager?**  
+**Q: What is the difference between an **Owner** and a **Manager**?**  
 A: Owners have full access to billing, global settings, and can delete the organization. Managers can manage teams, projects, and approve timesheets, but cannot access billing.
 
 **Q: Can I undo a user deactivation?**  

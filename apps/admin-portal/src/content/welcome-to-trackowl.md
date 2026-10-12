@@ -1,50 +1,31 @@
 ---
 title: Welcome to TrackOwl
 category: Getting Started
-description: Learn how to manage welcome to trackowl in TrackOwl.
+description: What TrackOwl is and how its two halves fit together.
 ---
 
 # Welcome to TrackOwl
 
-> [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **Welcome to TrackOwl** feature in the Getting Started section.
+TrackOwl tracks work time and shows what that time went into, without the guesswork and without silent surveillance.
 
-## Overview
-Understanding how to use the **Welcome to TrackOwl** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+## The two halves
+- **The desktop app** records. It runs the timer and, while a session is tracked, records activity, app and site usage, and takes screenshots. It keeps recording offline and syncs later.
+- **The dashboard**, at trackowl.io/dashboard, is where you read and change everything else.
 
-> [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+## What you will find in the dashboard
+| Section | What it holds |
+| --- | --- |
+| Dashboard | The overview you land on |
+| Timesheets | Tracked time, manual entries, and approvals for admins |
+| Activity | Screenshots, Apps & URLs, Activity Blocks. Premium plan |
+| Projects | Projects, To-Dos and Clients |
+| Calendar | Tracked time laid out by day |
+| Reports | Totals across members and dates. Premium plan |
+| People | Members and Teams |
+| Settings | Org Settings, Security & 2FA, Billing & Plans |
 
-## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Getting Started** icon in the primary sidebar navigation.
-3. Select **Welcome to TrackOwl** from the secondary menu.
+## What your role changes
+Whoever creates the workspace is its **Owner**. **Owner** and **Admin** accounts reach organisation settings; billing is **Owner**-only; the **User** role sees its own time and activity but not the admin pages. The full table is in **Manage roles**.
 
----
-
-## Step-by-Step Instructions
-
-Follow these steps to configure your settings properly:
-
-1. Make sure you are logged into your TrackOwl workspace.
-2. Look at the left-hand menu and click on **Getting Started**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
-
----
-
-## Best Practices
 > [!TIP]
-> - Try testing this feature with a single "Test Team" or a fake project first to understand how it works.
-> - Review your changes carefully before saving to prevent disruption to your team.
-> - Combine this feature with TrackOwl's powerful Reporting tools to get maximum visibility.
-
-## Frequently Asked Questions
-
-**Q: Can I undo this action once it is saved?**  
-A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
-
-**Q: Is this feature available on the mobile app?**  
-A: Administrative configurations are limited to the web dashboard. Standard viewing and tracking are fully supported on mobile devices.
+> New here? Read the Quick Start Guide next. It takes you from creating the workspace to the first tracked hour.
