@@ -1183,6 +1183,10 @@ export function Todos() {
                     }
                     title="Revoke Objective"
                     subtitle="This operation is destructive and irreversible."
+                    /* An icon, a line of text and two buttons. The modal's
+                       default 680px is sized for a form and left most of this
+                       one empty. */
+                    height="h-auto"
                 >
                     <div className="text-center space-y-6 w-full max-w-full min-w-0">
                         <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto border border-rose-100">
