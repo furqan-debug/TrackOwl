@@ -9,7 +9,7 @@ import {
     Calendar,
     LayoutGrid,
     List,
-    MoreHorizontal,
+    Pencil,
     Trash2,
     Tag,
     CheckSquare,
@@ -67,6 +67,12 @@ interface Project {
 /** Shortest time the refresh button stays spinning, so a fast fetch still
     shows that the click registered. Matches Reports and App Usage. */
 const MIN_REFRESH_FEEDBACK_MS = 650;
+
+/**
+ * How many assignees are listed individually before the dialog shows a count
+ * instead. Eight fills about two rows of chips at the dialog's width.
+ */
+const CHIP_SUMMARY_FROM = 8;
 
 export function Todos() {
     const { profile, isRep } = useAuth();
@@ -226,7 +232,12 @@ export function Todos() {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
 
-        if (!formData.project_id || isViewer) {
+        // A project or an assignee — the database carries the same rule as
+        // a check constraint, so the form is not inventing a looser one.
+        const hasOwner =
+            !!formData.project_id || formData.assignee_ids.length > 0;
+
+        if (!hasOwner || isViewer) {
             return;
         }
 
@@ -236,7 +247,9 @@ export function Todos() {
             const payload = {
                 title: formData.title,
                 description: formData.description,
-                project_id: formData.project_id,
+                // null, not '', when nobody picks one: the column is a uuid
+                // and an empty string is not a value it can take.
+                project_id: formData.project_id || null,
                 assignee_id:
                     formData.assignee_ids[0] || null,
                 due_date:
@@ -311,9 +324,22 @@ export function Todos() {
             return;
         }
 
+        /**
+         * Unticking returns a task to In Progress, not Todo.
+         *
+         * The toggle only knows two states, so whatever a task was before it
+         * was finished is not recorded anywhere — unticking has to guess. Todo
+         * was the wrong guess: it asserts no work was ever done on something
+         * that had been completed, and it silently demoted anything that had
+         * been In Progress. In Progress is the weaker claim and the true one
+         * more often.
+         *
+         * The exact fix is a column holding the status a task held before it
+         * was marked done, so unticking restores it rather than guessing.
+         */
         const nextStatus =
             todo.status === 'Done'
-                ? 'Todo'
+                ? 'In Progress'
                 : 'Done';
 
         const {
@@ -807,7 +833,17 @@ export function Todos() {
                         <Button
                             form="objective-form"
                             type="submit"
-                            disabled={saving || !formData.project_id}
+                            disabled={
+                                saving ||
+                                (!formData.project_id &&
+                                    formData.assignee_ids.length === 0)
+                            }
+                            title={
+                                !formData.project_id &&
+                                formData.assignee_ids.length === 0
+                                    ? 'Choose a project or assign someone'
+                                    : undefined
+                            }
                             variant="primary"
                             className="w-full sm:w-auto sm:min-w-[140px]"
                         >
@@ -925,7 +961,23 @@ export function Todos() {
                                 </div>
                             )}
 
-                            {selectedAssignees.length > 0 && (
+                            {/* Past a handful, a count rather than a chip each.
+                                The chips are a flex-wrap with no bound, so Select
+                                all on a full roster grew the block until it ran
+                                past the bottom of the dialog and over the footer.
+                                Unpicking forty people one chip at a time is not
+                                how anyone would do it anyway — the list below
+                                still does that, and Clear all sits directly
+                                above. */}
+                            {selectedAssignees.length > CHIP_SUMMARY_FROM && (
+                                <div className="px-1 py-1.5 text-[11px] font-bold text-text-main">
+                                    {selectedAssignees.length === allMembers.length
+                                        ? `All ${allMembers.length} members assigned`
+                                        : `${selectedAssignees.length} members assigned`}
+                                </div>
+                            )}
+
+                            {selectedAssignees.length > 0 && selectedAssignees.length <= CHIP_SUMMARY_FROM && (
                                 <div className="flex flex-wrap gap-1.5 px-0.5">
                                     {selectedAssignees.map(member => (
                                         <button
@@ -1051,11 +1103,18 @@ export function Todos() {
                                                             }
                                                         );
                                                     }}
+                                                    /* accent-color, not
+                                                       text-*. A native
+                                                       checkbox ignores text
+                                                       colour without the
+                                                       forms plugin, so the
+                                                       browser drew its own
+                                                       blue tick regardless. */
                                                     className="
                                                         w-4 h-4
                                                         rounded
                                                         border-border
-                                                        text-primary
+                                                        accent-primary
                                                         focus:ring-primary
                                                         cursor-pointer
                                                         shrink-0
@@ -1095,7 +1154,7 @@ export function Todos() {
                                         })
                                     }
                                     options={[
-                                        { value: '', label: 'Target...' },
+                                        { value: '', label: 'Select a project…' },
                                         ...projects.map(project => ({
                                             value: project.id,
                                             label: project.name
@@ -1106,7 +1165,7 @@ export function Todos() {
 
                             <div className="space-y-1.5 min-w-0">
                                 <label className="block text-[11px] font-bold text-text-muted tracking-[0.15em] mb-2.5 ml-1">
-                                    Resolution Date
+                                    Deadline Date
                                 </label>
 
                                 <div className="w-full min-w-0 max-w-full">
@@ -1183,6 +1242,10 @@ export function Todos() {
                     }
                     title="Revoke Objective"
                     subtitle="This operation is destructive and irreversible."
+                    /* An icon, a line of text and two buttons. The modal's
+                       default 680px is sized for a form and left most of this
+                       one empty. */
+                    height="h-auto"
                 >
                     <div className="text-center space-y-6 w-full max-w-full min-w-0">
                         <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto border border-rose-100">
@@ -1530,27 +1593,29 @@ function TodoListItem({
 
                 {/* Actions */}
                 <div className="flex items-center gap-0.5 shrink-0">
-                    <Button
+                    <button
+                        type="button"
                         onClick={onEdit}
-                        variant="ghost"
-                        size="sm"
-                        className="w-8 h-8 sm:w-9 sm:h-9 p-0 rounded-lg text-text-muted hover:text-primary hover:bg-surface-hover flex items-center justify-center"
+                        title="Edit task"
+                        aria-label="Edit task"
+                        className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-primary hover:border-primary/40 transition-colors inline-flex items-center justify-center"
                     >
-                        <MoreHorizontal className="w-4 h-4" />
-                    </Button>
+                        <Pencil className="w-4 h-4" strokeWidth={2} />
+                    </button>
 
-                    <Button
-                        onClick={() =>
-                            !isViewer &&
-                            onDelete()
-                        }
+                    <button
+                        type="button"
+                        onClick={() => !isViewer && onDelete()}
                         disabled={isViewer}
-                        variant="ghost"
-                        size="sm"
-                        className="w-8 h-8 sm:w-9 sm:h-9 p-0 rounded-lg text-text-muted hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center"
+                        title="Delete task"
+                        aria-label="Delete task"
+                        /* rose-50 was a light-mode wash that lit the whole
+                           button near-white on the dark card; a tint of the
+                           colour works either way. */
+                        className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-rose-500 hover:border-rose-500/40 hover:bg-rose-500/10 transition-colors inline-flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none"
                     >
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
+                        <Trash2 className="w-4 h-4" strokeWidth={2} />
+                    </button>
                 </div>
             </div>
         </div>
