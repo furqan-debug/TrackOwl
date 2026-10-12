@@ -240,7 +240,7 @@ export function ActivityBlocks() {
     return (
         <PageLayout
             title="Activity Blocks"
-            description="10-minute granular activity windows — clicks, keystrokes, and active movement."
+            description="10-minute granular activity windows - clicks, keystrokes, and active movement."
             actions={
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Member Filter — hidden for reps who see only their own data */}
