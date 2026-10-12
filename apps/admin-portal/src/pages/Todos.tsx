@@ -9,7 +9,7 @@ import {
     Calendar,
     LayoutGrid,
     List,
-    MoreHorizontal,
+    Pencil,
     Trash2,
     Tag,
     CheckSquare,
@@ -1530,34 +1530,29 @@ function TodoListItem({
 
                 {/* Actions */}
                 <div className="flex items-center gap-0.5 shrink-0">
-                    <Button
+                    <button
+                        type="button"
                         onClick={onEdit}
-                        variant="ghost"
-                        size="sm"
                         title="Edit task"
                         aria-label="Edit task"
-                        className="w-8 h-8 sm:w-9 sm:h-9 p-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-primary hover:border-primary/40 flex items-center justify-center"
+                        className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-primary hover:border-primary/40 transition-colors inline-flex items-center justify-center"
                     >
-                        <MoreHorizontal className="w-4 h-4" />
-                    </Button>
+                        <Pencil className="w-4 h-4" strokeWidth={2} />
+                    </button>
 
-                    <Button
-                        onClick={() =>
-                            !isViewer &&
-                            onDelete()
-                        }
+                    <button
+                        type="button"
+                        onClick={() => !isViewer && onDelete()}
                         disabled={isViewer}
-                        variant="ghost"
-                        size="sm"
                         title="Delete task"
                         aria-label="Delete task"
-                        /* rose-50 is a light-mode wash; on the dark card it
-                           lit the whole button near-white. The tint works
-                           either way. */
-                        className="w-8 h-8 sm:w-9 sm:h-9 p-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-rose-500 hover:border-rose-500/40 hover:bg-rose-500/10 flex items-center justify-center"
+                        /* rose-50 was a light-mode wash that lit the whole
+                           button near-white on the dark card; a tint of the
+                           colour works either way. */
+                        className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-rose-500 hover:border-rose-500/40 hover:bg-rose-500/10 transition-colors inline-flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none"
                     >
-                        <Trash2 className="w-4 h-4" />
-                    </Button>
+                        <Trash2 className="w-4 h-4" strokeWidth={2} />
+                    </button>
                 </div>
             </div>
         </div>
