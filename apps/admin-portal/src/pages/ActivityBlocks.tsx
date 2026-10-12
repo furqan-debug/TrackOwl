@@ -29,7 +29,8 @@ interface MemberInfo {
 const MIN_REFRESH_FEEDBACK_MS = 650;
 
 export function ActivityBlocks() {
-    const { profile, managedMemberIds, displayTimezone, isRep } = useAuth();
+    const { profile, managedMemberIds, managedProjectIds, displayTimezone, isRep } = useAuth();
+    const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
     const organizationId = profile?.organization_id;
 
     const [loading, setLoading] = useState(true);
@@ -63,6 +64,8 @@ export function ActivityBlocks() {
 
     // Load active members for the org
     useEffect(() => {
+        if (isScoped && managedMemberIds === null) return;
+
         import('../lib/supabase').then(({ supabase }) => {
             if (!organizationId) {
                 setMembersLoaded(true);
@@ -71,11 +74,10 @@ export function ActivityBlocks() {
             let query = supabase.from('members')
                 .select('id, auth_user_id, full_name, email, avatar_url, role')
                 .eq('organization_id', organizationId)
-                .eq('status', 'Active')
+                .neq('status', 'Deleted')
                 .order('full_name', { ascending: true });
 
             // Reps only load themselves; Managers and Clients see their managed subset
-            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
             if (isScoped && managedMemberIds) {
                 const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
                 query = query.in('id', memberIdsFilter);
@@ -86,11 +88,12 @@ export function ActivityBlocks() {
                 setMembersLoaded(true);
             });
         });
-    }, [organizationId, profile?.role, managedMemberIds]);
+    }, [organizationId, profile?.role, managedMemberIds, isScoped]);
 
     // Fetch block records
     const fetchBlocks = useCallback(async (isSilent = false, forceRefresh = false) => {
         if (!organizationId || !membersLoaded) return;
+        if (isScoped && managedMemberIds === null) return;
         const mySeq = ++requestSeqRef.current;
         const startedAt = Date.now();
 
@@ -108,7 +111,11 @@ export function ActivityBlocks() {
                 organizationId,
                 selectedDate,
                 members,
-                selectedMemberId
+                selectedMemberId,
+                {
+                    isScoped,
+                    managedProjectIds
+                }
             );
 
             if (mySeq === requestSeqRef.current) {
@@ -137,7 +144,7 @@ export function ActivityBlocks() {
                 setRefreshing(false);
             }
         }
-    }, [organizationId, selectedDate, members, selectedMemberId, membersLoaded]);
+    }, [organizationId, selectedDate, members, selectedMemberId, membersLoaded, isScoped, managedProjectIds]);
 
     useEffect(() => {
         if (membersLoaded) {
@@ -244,7 +251,7 @@ export function ActivityBlocks() {
                             value={selectedMemberId}
                             onChange={setSelectedMemberId}
                             options={[
-                                { id: 'all', name: 'All Members' },
+                                { id: 'all', name: isScoped ? 'All Assigned Members' : 'All Members' },
                                 ...members.map(m => ({ id: m.id, name: m.full_name }))
                             ]}
                         />
@@ -329,7 +336,9 @@ export function ActivityBlocks() {
                         <EmptyState
                             icon={<BarChart2 className="w-10 h-10 text-accent" />}
                             title="No activity blocks found"
-                            description={`There are no 10-minute activity windows recorded for ${selectedDate}. Members may not have tracked time that day.`}
+                            description={isScoped
+                                ? `There are no 10-minute activity windows recorded for your assigned project members on ${selectedDate}.`
+                                : `There are no 10-minute activity windows recorded for ${selectedDate}. Members may not have tracked time that day.`}
                         />
                     ) : (
                         <div className="bg-surface border border-border rounded-xl shadow-shell-sm overflow-hidden flex flex-col">

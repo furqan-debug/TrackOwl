@@ -72,16 +72,18 @@ export function AppUsage() {
     }, [displayTimezone]);
 
     useEffect(() => {
+        const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
+        if (isScoped && managedMemberIds === null) return;
+
         import('../lib/supabase').then(({ supabase }) => {
             if (!organizationId) return;
             let query = supabase.from('members')
                 .select('id, auth_user_id, full_name, email, idle_limit')
                 .eq('organization_id', organizationId)
-                .eq('status', 'Active')
+                .neq('status', 'Deleted')
                 .order('full_name', { ascending: true });
 
             // Reps only load themselves; Managers and Clients see their managed subset
-            const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
             if (isScoped && managedMemberIds) {
                 const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
                 query = query.in('id', memberIdsFilter);
