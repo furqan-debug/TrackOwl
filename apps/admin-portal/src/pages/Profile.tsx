@@ -386,7 +386,7 @@ export function ProfilePage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between ml-1">
-                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Base Location</label>
+                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Location</label>
                                         <button
                                             type="button"
                                             onClick={detectLocation}
