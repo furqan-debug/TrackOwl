@@ -266,13 +266,25 @@ export const activityService = {
         organizationId: string,
         dateStr: string,
         members: any[],
-        selectedMemberId: string = 'all'
+        selectedMemberId: string = 'all',
+        options?: {
+            isScoped?: boolean;
+            managedProjectIds?: string[] | null;
+        }
     ): Promise<BlockRecordEntry[]> {
         try {
+            const isScoped = !!options?.isScoped;
             const selectedMember = members.find(m => m.id === selectedMemberId);
             const scopedUserIds = selectedMemberId.toLowerCase() !== 'all'
                 ? Array.from(new Set([selectedMember?.id, selectedMember?.auth_user_id].filter(Boolean) as string[]))
-                : [];
+                : (isScoped
+                    ? Array.from(new Set(members.flatMap(m => [m.id, m.auth_user_id].filter(Boolean) as string[])))
+                    : []);
+
+            // If a scoped user (Client, Manager, Rep) has no assigned members, return empty immediately
+            if (isScoped && scopedUserIds.length === 0) {
+                return [];
+            }
 
             let query = supabase
                 .from('block_records')
@@ -283,6 +295,29 @@ export const activityService = {
 
             if (scopedUserIds.length > 0) {
                 query = query.in('user_id', scopedUserIds);
+            }
+
+            // If client/manager is scoped to specific projects, filter blocks by sessions belonging to those projects for this date
+            if (isScoped && options?.managedProjectIds) {
+                if (options.managedProjectIds.length > 0) {
+                    const startOfDay = new Date(`${dateStr}T00:00:00Z`).toISOString();
+                    const endOfDay = new Date(`${dateStr}T23:59:59.999Z`).toISOString();
+
+                    const { data: projectSessions } = await supabase
+                        .from('sessions')
+                        .select('id')
+                        .eq('organization_id', organizationId)
+                        .in('project_id', options.managedProjectIds)
+                        .in('user_id', scopedUserIds)
+                        .lte('started_at', endOfDay)
+                        .or(`ended_at.is.null,ended_at.gte.${startOfDay}`);
+
+                    const sessionIds = (projectSessions || []).map(s => s.id);
+                    if (sessionIds.length === 0) return [];
+                    query = query.in('session_id', sessionIds);
+                } else {
+                    return [];
+                }
             }
 
             const { data, error } = await query;
@@ -298,11 +333,37 @@ export const activityService = {
                 if (m.auth_user_id) memberMap.set(m.auth_user_id, m);
             });
 
-            return (data || []).map((b: any) => ({
+            // For admins (not scoped), if any block's user_id wasn't in members list (e.g. inactive member),
+            // fetch their details to prevent "Unknown Member"
+            if (!isScoped) {
+                const missingUserIds = (data || [])
+                    .map((b: any) => b.user_id)
+                    .filter((uid: string) => uid && !memberMap.has(uid));
+
+                if (missingUserIds.length > 0) {
+                    const uniqueMissing = Array.from(new Set(missingUserIds));
+                    const [{ data: byId }, { data: byAuthId }] = await Promise.all([
+                        supabase.from('members').select('id, auth_user_id, full_name, email, avatar_url').in('id', uniqueMissing),
+                        supabase.from('members').select('id, auth_user_id, full_name, email, avatar_url').in('auth_user_id', uniqueMissing)
+                    ]);
+
+                    [...(byId || []), ...(byAuthId || [])].forEach(m => {
+                        if (m.id) memberMap.set(m.id, m);
+                        if (m.auth_user_id) memberMap.set(m.auth_user_id, m);
+                    });
+                }
+            }
+
+            // For scoped users, only display blocks matching an allowed member
+            const validBlocks = isScoped
+                ? (data || []).filter((b: any) => memberMap.has(b.user_id))
+                : (data || []);
+
+            return validBlocks.map((b: any) => ({
                 ...b,
                 member: memberMap.get(b.user_id) || {
                     id: b.user_id,
-                    full_name: 'Unknown Member',
+                    full_name: 'Member',
                     email: ''
                 }
             }));
