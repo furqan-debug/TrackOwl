@@ -28,9 +28,8 @@ Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
 2. Open **Settings** in the left sidebar, then **Billing & Plans**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+3. Choose **Manage Subscription**. This opens the payment provider's billing portal in a new page.
+4. Update the card or billing details there. TrackOwl does not hold your card details itself, so there is no Save button here.
 
 ---
 

@@ -1,48 +1,31 @@
 ---
 title: Data encryption
 category: Security & Privacy
-description: Learn how to manage data encryption in TrackOwl.
+description: How TrackOwl protects data in transit and at rest.
 ---
 
 # Data encryption
 
-> [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers Data encryption in TrackOwl.
-
 ## Overview
-Understanding how to use the **Data encryption** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+Everything sent between the desktop app, your browser and TrackOwl travels over HTTPS/TLS. Data held by TrackOwl is stored in secure, isolated databases, and screenshots are stored as private files rather than public links.
 
 > [!IMPORTANT]
-> **Who can do this:** Every role can open Security & 2FA.
+> **Who can do this:** There is nothing to configure here. Your own account security is under **Settings → Security & 2FA**, which every role can open.
 
-## Where to find it
-1. This describes how TrackOwl stores your data; there is no page to open.
-2. Your own security options live under **Settings → Security & 2FA**.
+## What you can control
+| Control | Where |
+| --- | --- |
+| Two-factor authentication on your own account | **Settings → Security & 2FA** |
+| Blurring every screenshot before it is stored | **Settings → Org Settings → Monitoring**, Privacy Masking. Owner and Admin only. |
+| Turning app and URL tracking off | **Settings → Org Settings → Telemetry**. Owner and Admin only. |
 
----
-
-## Step-by-Step Instructions
-
-Follow these steps to configure your settings properly:
-
-1. Make sure you are logged into your TrackOwl workspace.
-2. Open **Settings** in the left sidebar, then **Security & 2FA**, to manage your own account.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
-
----
-
-## Best Practices
-> [!TIP]
-> - Try testing this feature with a single "Test Team" or a fake project first to understand how it works.
-> - Review your changes carefully before saving to prevent disruption to your team.
-> - Combine this feature with TrackOwl's powerful Reporting tools to get maximum visibility.
+## What TrackOwl does not record
+Keystrokes are not recorded. The desktop app counts key presses and mouse clicks to work out an activity score; it does not capture what was typed.
 
 ## Frequently Asked Questions
 
-**Q: Can I undo this action once it is saved?**  
-A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
+**Q: Can I delete data that has been collected?**
+A: Screenshots cannot be deleted from the dashboard. For a workspace's data to be deleted, the Owner should email contact@trackowl.io.
 
-**Q: Can I do this from the desktop app?**  
-A: The desktop app tracks time, activity and screenshots. Everything else — settings, people, projects, reports and billing — is done in the dashboard in your browser. TrackOwl does not have a mobile app.
+**Q: Where can I read the detail?**
+A: The privacy policy is at trackowl.io/privacy and the security overview at trackowl.io/security.

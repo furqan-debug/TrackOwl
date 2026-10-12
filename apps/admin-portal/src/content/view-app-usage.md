@@ -30,9 +30,9 @@ Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
 2. Open **Activity** in the left sidebar, then **Apps & URLs**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+3. Use the date range and the team or member filters to narrow what is shown.
+4. Open a row to see the detail behind it.
+This is a read-only view — there is nothing to save.
 
 ---
 

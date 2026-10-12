@@ -37,9 +37,8 @@ Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
 2. Open **People** in the left sidebar, then **Members**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+3. Open a member and set their role.
+4. Save. Their sidebar changes to match the new role the next time they load the dashboard.
 
 ---
 

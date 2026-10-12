@@ -1,48 +1,38 @@
 ---
 title: Quick Start Guide
 category: Getting Started
-description: Learn how to manage quick start guide in TrackOwl.
+description: From an empty workspace to your first tracked hour.
 ---
 
 # Quick Start Guide
 
-> [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers Quick Start Guide in TrackOwl.
+## 1. Create the workspace
+Sign up at **trackowl.io/signup**. Onboarding asks for your company details and then finishes setup. Whoever creates the workspace becomes its Owner.
 
-## Overview
-Understanding how to use the **Quick Start Guide** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+## 2. Set the organisation timezone
+Open **Settings → Org Settings → Governance** and set the timezone. This decides where your days start and end, so every total and report depends on it. Do this before anyone starts tracking.
 
-> [!IMPORTANT]
-> **Who can do this:** Workspace creation makes you the Owner. Everyone you invite afterwards gets the role you choose for them.
+## 3. Invite your team
+Open **People → Members** and invite people by email, choosing a role for each. Invited people appear as Pending until they accept.
 
-## Where to find it
-1. Create your workspace at **trackowl.io/signup**.
-2. Install the desktop app, then open the TrackOwl dashboard in your browser.
+| Role | Give it to |
+| --- | --- |
+| Admin | People who run the workspace but should not touch billing |
+| Manager | People who run teams, projects and approvals |
+| User | People who track their own time |
+| Viewer | People who need to read admin pages but change nothing |
 
----
+## 4. Install the desktop app
+Everyone who tracks time installs it from the **Download** section of the website: Windows or macOS. On macOS, grant Screen Recording permission so screenshots can be captured.
 
-## Step-by-Step Instructions
+## 5. Decide what is recorded
+Under **Settings → Org Settings → Telemetry**, choose whether app usage, URL tracking and idle detection are on. Under **Monitoring**, turn on Privacy Masking if screenshots should be blurred.
 
-Follow these steps to configure your settings properly:
+## 6. Set up the work
+Create projects under **Projects → Projects**, give them budgets if you bill against them, and add to-dos under **To-Dos**.
 
-1. Make sure you are logged into your TrackOwl workspace.
-2. Work through the sidebar from **Dashboard** down to **Settings**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+## 7. Track, then look
+Start the timer in the desktop app. Time appears under **Timesheets**. Screenshots and app usage appear under **Activity**, and totals under **Reports** — both need the Premium plan.
 
----
-
-## Best Practices
 > [!TIP]
-> - Try testing this feature with a single "Test Team" or a fake project first to understand how it works.
-> - Review your changes carefully before saving to prevent disruption to your team.
-> - Combine this feature with TrackOwl's powerful Reporting tools to get maximum visibility.
-
-## Frequently Asked Questions
-
-**Q: Can I undo this action once it is saved?**  
-A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
-
-**Q: Can I do this from the desktop app?**  
-A: The desktop app tracks time, activity and screenshots. Everything else — settings, people, projects, reports and billing — is done in the dashboard in your browser. TrackOwl does not have a mobile app.
+> Set the timezone before the first tracked day. Changing it later moves where days split, and past totals shift with it.
