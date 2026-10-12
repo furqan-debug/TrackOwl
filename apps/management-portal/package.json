@@ -36,5 +36,8 @@
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12"
+  },
+  "overrides": {
+    "source-map-js": ">=1.2.2"
   }
 }
