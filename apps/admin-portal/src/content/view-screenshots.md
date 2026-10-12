@@ -1,50 +1,59 @@
 ---
 title: View screenshots
 category: Screenshots
-description: Learn how to manage view screenshots in TrackOwl.
+description: Browse captures by member and date, and read what each one shows.
 ---
 
 # View screenshots
 
-> [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **View screenshots** feature in the Screenshots section.
-
 ## Overview
-Understanding how to use the **View screenshots** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+Screenshots are captures taken by the desktop app during a tracked session. The Screenshots page shows them a day at a time, for one member or for everyone.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Plan:** This is a Premium feature. On the Basic plan the page redirects to Pricing.
+>
+> **Who can do this:** Every role can open this page. Members see their own captures; **Owner**, **Admin**, **Manager** and **Viewer** accounts can also see the rest of the team.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Screenshots** icon in the primary sidebar navigation.
-3. Select **View screenshots** from the secondary menu.
+1. Open the TrackOwl dashboard and sign in.
+2. In the left sidebar, open **Activity**.
+3. Select **Screenshots** (`/dashboard/activity`).
+
+---
+
+## What is on the page
+
+| Control | What it does |
+| --- | --- |
+| Member filter | All Members, or one person |
+| Date picker | The day you are looking at |
+| Refresh | Re-reads the day, for a session still in progress |
+
+Above the grid, four figures summarise the day: **Clicks**, **Keys**, **Duration** and **Activity**. Clicks and keys are counts only — TrackOwl never records what was typed.
 
 ---
 
 ## Step-by-Step Instructions
 
-Follow these steps to configure your settings properly:
-
-1. Make sure you are logged into your TrackOwl workspace.
-2. Look at the left-hand menu and click on **Screenshots**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+1. Open **Activity**, then **Screenshots**.
+2. Pick the member, or leave it on All Members.
+3. Pick the date. Days follow the organisation timezone set under **Settings → Org Settings → Governance**, not your own clock.
+4. Click any capture to open it full size.
 
 ---
 
 ## Best Practices
 > [!TIP]
-> - Try testing this feature with a single "Test Team" or a fake project first to understand how it works.
-> - Review your changes carefully before saving to prevent disruption to your team.
-> - Combine this feature with TrackOwl's powerful Reporting tools to get maximum visibility.
+> - If a day looks empty, check the date against the organisation timezone before assuming nothing was tracked.
+> - Captures arrive late when the machine was offline; the desktop app queues them and uploads once it reconnects.
 
 ## Frequently Asked Questions
 
-**Q: Can I undo this action once it is saved?**  
-A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
+**Q: Can I delete a capture?**
+A: No. Screenshots cannot be deleted. If captures should not be readable, an **Owner** or **Admin** can turn on Privacy Masking under **Settings → Org Settings → Monitoring**, which blurs every capture as it is taken.
 
-**Q: Is this feature available on the mobile app?**  
-A: Administrative configurations are limited to the web dashboard. Standard viewing and tracking are fully supported on mobile devices.
+**Q: Why are some captures blurred?**
+A: Privacy Masking is on for your organisation.
+
+**Q: Can I do this from the desktop app?**
+A: No. The desktop app takes the captures; you view them in the dashboard in your browser.

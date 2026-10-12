@@ -1,49 +1,34 @@
 ---
 title: Troubleshooting
 category: Desktop App
-description: Learn how to manage troubleshooting in TrackOwl.
+description: Fixes for the problems that come up most.
 ---
 
 # Troubleshooting
 
-> [!NOTE]
-> The TrackOwl Desktop App is a small, lightweight program you install on your computer. It makes tracking time much easier! This article will guide you through **troubleshooting**.
+## Screenshots are not appearing
+1. On macOS, check **System Settings → Privacy & Security → Screen Recording** and make sure TrackOwl is switched on. Restart the app afterwards.
+2. Check the connection. Captures taken offline are queued and upload later.
+3. Confirm you are looking at the right member and date under **Activity → Screenshots**.
+4. Confirm your workspace is on the Premium plan. On Basic, Activity pages redirect to Pricing.
 
-## Overview
-Understanding how to use the **Troubleshooting** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+## Tracked time is missing from the dashboard
+1. Leave the desktop app open and connected for a few minutes so queued work can sync.
+2. Check the date you are looking at. Days start and end by the organisation timezone set under **Settings → Org Settings → Governance**, which may not match your own clock.
+3. If the time was never tracked, add it by hand under **Timesheets**.
 
-> [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+## A page is missing from the sidebar
+This is usually your role rather than a fault.
+- Billing & Plans is **Owner**-only.
+- Org Settings is for **Owner** and **Admin**.
+- People, Teams, Projects, To-Dos and Clients are hidden from the **User** role.
+- Activity and Reports need the Premium plan.
 
-## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Desktop App** icon in the primary sidebar navigation.
-3. Select **Troubleshooting** from the secondary menu.
+## The session stopped on its own
+**Auto-Terminate Session** under **Settings → Org Settings → Telemetry** ends a session after a period of inactivity, with a grace period before it does. An **Owner** or **Admin** can change or switch it off.
 
----
+## Nothing above helped
+Email contact@trackowl.io or use the contact form at the bottom of the Help Center. Include your operating system and version, what you expected, and what happened instead.
 
-## Step-by-Step Instructions
-
-Follow these steps to configure your settings properly:
-
-1. Navigate to the **Download** section of your profile on the website.
-2. Choose the download for your specific computer (Windows, Mac, or Linux).
-3. Open the downloaded file and follow the simple installation prompts.
-4. Once installed, open the app and sign in with your normal TrackOwl email and password.
-
----
-
-## Best Practices
 > [!TIP]
-> - Try testing this feature with a single "Test Team" or a fake project first to understand how it works.
-> - Review your changes carefully before saving to prevent disruption to your team.
-> - Combine this feature with TrackOwl's powerful Reporting tools to get maximum visibility.
-
-## Frequently Asked Questions
-
-**Q: Can I undo this action once it is saved?**  
-A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
-
-**Q: Is this feature available on the mobile app?**  
-A: Administrative configurations are limited to the web dashboard. Standard viewing and tracking are fully supported on mobile devices.
+> Signing out of the desktop app and back in resolves most sync problems, but do it only after giving a queued sync time to finish.
