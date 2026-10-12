@@ -13,13 +13,11 @@ description: Learn how to manage manual time entry in TrackOwl.
 Understanding how to use the **Manual time entry** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** Every role can open this page. Members see their own data; Owner, Admin, Manager and Viewer accounts can also see the rest of the team.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Time Tracking** icon in the primary sidebar navigation.
-3. Select **Manual time entry** from the secondary menu.
+1. Open the TrackOwl dashboard and sign in.
+2. In the left sidebar, open **Timesheets** (`/dashboard/timesheets`).
 
 ---
 

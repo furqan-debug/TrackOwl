@@ -7,19 +7,17 @@ description: Learn how to manage data encryption in TrackOwl.
 # Data encryption
 
 > [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **Data encryption** feature in the Security & Privacy section.
+> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers Data encryption in TrackOwl.
 
 ## Overview
 Understanding how to use the **Data encryption** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** Every role can open Security & 2FA.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Security & Privacy** icon in the primary sidebar navigation.
-3. Select **Data encryption** from the secondary menu.
+1. This describes how TrackOwl stores your data; there is no page to open.
+2. Your own security options live under **Settings → Security & 2FA**.
 
 ---
 
@@ -28,7 +26,7 @@ To access this feature:
 Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
-2. Look at the left-hand menu and click on **Security & Privacy**.
+2. Open **Settings** in the left sidebar, then **Security & 2FA**, to manage your own account.
 3. Find and click on the specific item you want to work on.
 4. Make your desired changes on the screen.
 5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
@@ -46,5 +44,5 @@ Follow these steps to configure your settings properly:
 **Q: Can I undo this action once it is saved?**  
 A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
 
-**Q: Is this feature available on the mobile app?**  
-A: Administrative configurations are limited to the web dashboard. Standard viewing and tracking are fully supported on mobile devices.
+**Q: Can I do this from the desktop app?**  
+A: The desktop app tracks time, activity and screenshots. Everything else — settings, people, projects, reports and billing — is done in the dashboard in your browser. TrackOwl does not have a mobile app.
