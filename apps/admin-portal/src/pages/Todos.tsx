@@ -68,6 +68,12 @@ interface Project {
     shows that the click registered. Matches Reports and App Usage. */
 const MIN_REFRESH_FEEDBACK_MS = 650;
 
+/**
+ * How many assignees are listed individually before the dialog shows a count
+ * instead. Eight fills about two rows of chips at the dialog's width.
+ */
+const CHIP_SUMMARY_FROM = 8;
+
 export function Todos() {
     const { profile, isRep } = useAuth();
     const isViewer = profile?.role === 'Viewer' || profile?.role === 'Client';
@@ -925,7 +931,23 @@ export function Todos() {
                                 </div>
                             )}
 
-                            {selectedAssignees.length > 0 && (
+                            {/* Past a handful, a count rather than a chip each.
+                                The chips are a flex-wrap with no bound, so Select
+                                all on a full roster grew the block until it ran
+                                past the bottom of the dialog and over the footer.
+                                Unpicking forty people one chip at a time is not
+                                how anyone would do it anyway — the list below
+                                still does that, and Clear all sits directly
+                                above. */}
+                            {selectedAssignees.length > CHIP_SUMMARY_FROM && (
+                                <div className="px-1 py-1.5 text-[11px] font-bold text-text-main">
+                                    {selectedAssignees.length === allMembers.length
+                                        ? `All ${allMembers.length} members assigned`
+                                        : `${selectedAssignees.length} members assigned`}
+                                </div>
+                            )}
+
+                            {selectedAssignees.length > 0 && selectedAssignees.length <= CHIP_SUMMARY_FROM && (
                                 <div className="flex flex-wrap gap-1.5 px-0.5">
                                     {selectedAssignees.map(member => (
                                         <button
