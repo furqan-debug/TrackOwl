@@ -317,9 +317,22 @@ export function Todos() {
             return;
         }
 
+        /**
+         * Unticking returns a task to In Progress, not Todo.
+         *
+         * The toggle only knows two states, so whatever a task was before it
+         * was finished is not recorded anywhere — unticking has to guess. Todo
+         * was the wrong guess: it asserts no work was ever done on something
+         * that had been completed, and it silently demoted anything that had
+         * been In Progress. In Progress is the weaker claim and the true one
+         * more often.
+         *
+         * The exact fix is a column holding the status a task held before it
+         * was marked done, so unticking restores it rather than guessing.
+         */
         const nextStatus =
             todo.status === 'Done'
-                ? 'Todo'
+                ? 'In Progress'
                 : 'Done';
 
         const {
