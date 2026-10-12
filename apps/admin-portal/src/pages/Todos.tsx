@@ -70,7 +70,7 @@ const MIN_REFRESH_FEEDBACK_MS = 650;
 
 export function Todos() {
     const { profile, isRep } = useAuth();
-    const isViewer = profile?.role === 'Viewer';
+    const isViewer = profile?.role === 'Viewer' || profile?.role === 'Client';
 
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('All');

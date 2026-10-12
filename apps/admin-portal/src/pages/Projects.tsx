@@ -52,7 +52,7 @@ interface Project {
 
 export function Projects() {
     const { profile, managedProjectIds, isRep } = useAuth();
-    const isViewer = profile?.role === 'Viewer' || profile?.role === 'User';
+    const isViewer = profile?.role === 'Viewer' || profile?.role === 'User' || profile?.role === 'Client';
     const navigate = useNavigate();
 
     const [projects, setProjects] = useState<Project[]>([]);
@@ -87,7 +87,7 @@ export function Projects() {
                 .eq('status', activeTab)
                 .order('created_at', { ascending: false });
                 
-            const isScoped = (profile?.role === 'Manager' || isRep) && managedProjectIds !== null;
+            const isScoped = (profile?.role === 'Manager' || profile?.role === 'Client' || isRep) && managedProjectIds !== null;
             if (isScoped) {
                 if (managedProjectIds && managedProjectIds.length > 0) {
                     query = query.in('id', managedProjectIds);

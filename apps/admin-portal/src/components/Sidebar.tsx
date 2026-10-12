@@ -61,7 +61,7 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
     // Only show favorites accessible to the user's role
     const accessibleFavorites = useMemo(() => {
         return favorites.filter(fav => {
-            if (userRole === 'User') {
+            if (userRole === 'User' || userRole === 'Client') {
                 if (fav.path.startsWith('/dashboard/projects')) return false;
                 if (fav.path.startsWith('/dashboard/people')) return false;
                 if (fav.path === '/dashboard/settings' || fav.path.startsWith('/dashboard/settings/billing')) return false;

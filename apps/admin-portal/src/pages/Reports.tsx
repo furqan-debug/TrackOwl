@@ -58,7 +58,9 @@ let reportsCache: any = null;
 let reportsCacheKey: string | null = null;
 
 export function Reports() {
-    const { profile, managedMemberIds, displayTimezone, isRep } = useAuth();
+    const { profile, managedMemberIds, managedProjectIds, displayTimezone, isRep } = useAuth();
+    const isClient = profile?.role === 'Client';
+    const isScoped = profile?.role === 'Manager' || isClient || isRep;
     const organizationId = profile?.organization_id;
     const [searchParams] = useSearchParams();
 
@@ -222,9 +224,15 @@ export function Reports() {
         const [membersLoaded, setMembersLoaded] = useState(false);
 
     useEffect(() => {
-        fetchTeams();
+        if (!organizationId) return;
+        // If scoped, wait until managedMemberIds is populated
+        if (isScoped && managedMemberIds === null) return;
+
+        if (!isClient && !isRep) {
+            fetchTeams();
+        }
         fetchMembers();
-    }, []);
+    }, [organizationId, managedMemberIds, profile?.role, isRep]);
 
     // Apply a LATER change to the query string — arriving from Timesheets while
     // already on this page, or using the browser's back button. The first set of
@@ -281,9 +289,10 @@ export function Reports() {
             .eq('status', 'Active')
             .order('full_name', { ascending: true });
             
-        const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
-        if (isScoped && managedMemberIds) {
-            const memberIdsFilter = managedMemberIds.length > 0 ? managedMemberIds : ['00000000-0000-0000-0000-000000000000'];
+        if (isScoped) {
+            const memberIdsFilter = (managedMemberIds && managedMemberIds.length > 0)
+                ? managedMemberIds
+                : ['00000000-0000-0000-0000-000000000000'];
             query = query.in('id', memberIdsFilter);
         }
 
@@ -411,10 +420,12 @@ export function Reports() {
                 start,
                 end,
                 organizationId: organizationId ?? undefined,
-                selectedTeamId,
+                selectedTeamId: isClient ? 'All' : selectedTeamId,
                 selectedMemberId,
                 membersForLookup: members,
-                orgTimezone: displayTimezone || 'UTC'
+                orgTimezone: displayTimezone || 'UTC',
+                isScoped,
+                managedProjectIds
             });
 
             // Superseded while this was in flight: drop it. Painting now would
@@ -695,25 +706,25 @@ export function Reports() {
                         )}
                     </div>
 
+                    {!isRep && !isClient && (
+                        <FilterSelect
+                            label="Team"
+                            icon={<Users className="w-3.5 h-3.5" />}
+                            value={selectedTeamId}
+                            onChange={(val) => { setSelectedTeamId(val); setSelectedMemberId('All'); }}
+                            options={[{ id: 'All', name: 'All Teams' }, ...teams]}
+                            className="h-10"
+                        />
+                    )}
                     {!isRep && (
-                        <>
-                            <FilterSelect
-                                label="Team"
-                                icon={<Users className="w-3.5 h-3.5" />}
-                                value={selectedTeamId}
-                                onChange={(val) => { setSelectedTeamId(val); setSelectedMemberId('All'); }}
-                                options={[{ id: 'All', name: 'All Teams' }, ...teams]}
-                                className="h-10"
-                            />
-                            <FilterSelect
-                                label="Member"
-                                icon={<ActivityIcon className="w-3.5 h-3.5" />}
-                                value={selectedMemberId}
-                                onChange={(val) => { setSelectedMemberId(val); setSelectedTeamId('All'); }}
-                                options={[{ id: 'All', name: 'All Members' }, ...members].map((m: any) => ({ id: m.id, name: m.full_name || m.email || m.name || 'Unknown' }))}
-                                className="h-10"
-                            />
-                        </>
+                        <FilterSelect
+                            label="Member"
+                            icon={<ActivityIcon className="w-3.5 h-3.5" />}
+                            value={selectedMemberId}
+                            onChange={(val) => { setSelectedMemberId(val); if (!isClient) setSelectedTeamId('All'); }}
+                            options={[{ id: 'All', name: 'All Members' }, ...members].map((m: any) => ({ id: m.id, name: m.full_name || m.email || m.name || 'Unknown' }))}
+                            className="h-10"
+                        />
                     )}
 
                     <RefreshButton
@@ -731,25 +742,20 @@ export function Reports() {
             ) : (
             <div className="flex flex-col gap-8 pb-20">
 
-                {/* Four columns for a rep, six for everyone else. With the two
-                    money cards hidden, six columns would leave their slots empty
-                    rather than letting the remaining four spread into them. */}
+                {/* Four columns for a rep, five for a client, six for admin/owner */}
                 <div className={clsx(
                     "grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-10",
-                    isRep ? "lg:grid-cols-4" : "lg:grid-cols-3 xl:grid-cols-6"
+                    isRep ? "lg:grid-cols-4" : isClient ? "lg:grid-cols-5" : "lg:grid-cols-3 xl:grid-cols-6"
                 )}>
                     <StatMetric icon={<Clock className="w-4 h-4" />} label="Time" value={formatDuration(totalMins)} sub="Worked" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     <StatMetric icon={<ActivityIcon className="w-4 h-4" />} label="Activity" value={`${avgActivity}%`} sub="Score" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     <StatMetric icon={<Monitor className="w-4 h-4" />} label="Sessions" value={totalSessions.toString()} sub="Total" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     <StatMetric icon={<Camera className="w-4 h-4" />} label="Captures" value={screenshotCount.toString()} sub="Proofs" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
-                    {/* Revenue and expenses are the organisation's figures, not a
-                        person's own record of their time, so a rep does not see
-                        them. */}
                     {!isRep && (
-                        <>
-                            <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub="Revenue" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
-                            <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Expenses" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
-                        </>
+                        <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub={isClient ? "Billed" : "Revenue"} accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                    )}
+                    {!isRep && !isClient && (
+                        <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Expenses" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     )}
                 </div>
 

@@ -17,7 +17,7 @@ interface Invoice {
 
 export function Invoices() {
     const { profile } = useAuth();
-    const isViewer = profile?.role === 'Viewer';
+    const isViewer = profile?.role === 'Viewer' || profile?.role === 'Client';
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');

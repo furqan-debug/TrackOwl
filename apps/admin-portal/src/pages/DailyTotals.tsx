@@ -12,7 +12,9 @@ let dailyTotalsCache: any = null;
 let dailyTotalsCacheKey: string | null = null;
 
 export function DailyTotals() {
-    const { profile, displayTimezone } = useAuth();
+    const { profile, displayTimezone, managedMemberIds, isRep } = useAuth();
+    const isClient = profile?.role === 'Client';
+    const isScoped = profile?.role === 'Manager' || isClient || isRep;
     const organizationId = profile?.organization_id;
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState<DayTotal[]>([]);
@@ -39,11 +41,14 @@ export function DailyTotals() {
     }, [displayTimezone, weekOffset]);
 
     useEffect(() => {
+        if (isScoped && managedMemberIds === null) return;
         fetchDailyTotals();
-    }, [weekOffset, selectedMemberId]);
+    }, [weekOffset, selectedMemberId, managedMemberIds, isScoped]);
 
     async function fetchDailyTotals(forceRefresh = false) {
-        const cacheKey = `${weekDateStrings[0]}_${weekDateStrings[6]}_${selectedMemberId}_${displayTimezone}`;
+        if (isScoped && managedMemberIds === null) return;
+
+        const cacheKey = `${profile?.id}_${weekDateStrings[0]}_${weekDateStrings[6]}_${selectedMemberId}_${displayTimezone}`;
         if (!forceRefresh && dailyTotalsCache && dailyTotalsCacheKey === cacheKey) {
             setData(dailyTotalsCache.data);
             setAllMembers(dailyTotalsCache.members);
@@ -56,12 +61,17 @@ export function DailyTotals() {
             const start = new Date(orgLocalToUtc(weekDateStrings[0], 'start', displayTimezone));
             const end = new Date(orgLocalToUtc(weekDateStrings[6], 'end', displayTimezone));
 
+            const allowedMemberIds = isScoped
+                ? (isRep ? [profile?.id!] : (managedMemberIds || []))
+                : undefined;
+
             const { data: result, members } = await reportService.fetchDailyTotals({
                 start,
                 end,
                 organizationId: organizationId ?? undefined,
                 selectedMemberId,
                 weekDateStrings,
+                allowedMemberIds,
             });
 
             setData(result);
@@ -94,7 +104,7 @@ export function DailyTotals() {
                             <div className="flex items-center gap-3 bg-surface-solid border border-border rounded-xl px-4 py-2.5 shadow-shell-sm transition-all group-hover/select:border-primary/40 group-hover/select:shadow-md cursor-pointer">
                                 <Users className="w-4 h-4 text-primary" strokeWidth={3} />
                                 <span className="text-[10px] font-bold text-text-primary tracking-[0.2em] font-mono min-w-[120px] truncate">
-                                    {allMembers.find(m => m.id === selectedMemberId)?.full_name || 'Organization'}
+                                    {allMembers.find(m => m.id === selectedMemberId)?.full_name || (isScoped ? 'All Members' : 'Organization')}
                                 </span>
                                 <ChevronLeft className="w-4 h-4 text-text-muted group-hover/select:text-primary transition-all -rotate-90" strokeWidth={3} />
                             </div>
@@ -103,7 +113,7 @@ export function DailyTotals() {
                                 onChange={(e) => setSelectedMemberId(e.target.value)}
                                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                             >
-                                <option value="all">Organization</option>
+                                <option value="all">{isScoped ? 'All Members' : 'Organization'}</option>
                                 {allMembers.map(m => (
                                     <option key={m.id} value={m.id}>{m.full_name}</option>
                                 ))}

@@ -20,7 +20,7 @@ interface Expense {
 
 export function Expenses() {
     const { profile } = useAuth();
-    const isViewer = profile?.role === 'Viewer';
+    const isViewer = profile?.role === 'Viewer' || profile?.role === 'Client';
     const [expenses, setExpenses] = useState<Expense[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');

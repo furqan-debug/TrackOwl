@@ -16,7 +16,7 @@ interface Member {
 export function CreatePayments() {
     const isOnline = useOnlineStatus();
     const { profile } = useAuth();
-    const isViewer = profile?.role === 'Viewer';
+    const isViewer = profile?.role === 'Viewer' || profile?.role === 'Client';
     const navigate = useNavigate();
     const [members, setMembers] = useState<Member[]>([]);
     const [selectedMember, setSelectedMember] = useState<string>('');

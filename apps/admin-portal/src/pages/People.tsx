@@ -70,7 +70,7 @@ interface MemberRow extends DbMember {
 export function People() {
     const { profile, organization, managedMemberIds } = useAuth();
     const navigate = useNavigate();
-    const isViewer = profile?.role === 'Viewer';
+    const isViewer = profile?.role === 'Viewer' || profile?.role === 'Client';
     const [members, setMembers] = useState<MemberRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');

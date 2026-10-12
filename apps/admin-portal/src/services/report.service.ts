@@ -77,8 +77,9 @@ export const reportService = {
     organizationId?: string;
     selectedMemberId: string;
     weekDateStrings?: string[]; // ['2026-09-14', ..., '2026-09-20'] Mon-Sun
+    allowedMemberIds?: string[];
   }): Promise<{ data: DayTotal[]; members: any[] }> {
-    const { start, end, organizationId, selectedMemberId, weekDateStrings } = options;
+    const { start, end, organizationId, selectedMemberId, weekDateStrings, allowedMemberIds } = options;
 
     // Auto-terminate any ghost sessions in database based on Termination Grace Period
     if (organizationId) {
@@ -87,12 +88,24 @@ export const reportService = {
         } catch (_) {}
     }
 
-    const { data: membersData } = await supabase.from('members')
+    let membersQuery = supabase.from('members')
         .select('id, full_name, timezone, idle_limit, auth_user_id')
         .eq('organization_id', organizationId)
         .order('full_name', { ascending: true });
 
+    if (allowedMemberIds) {
+        const filterIds = allowedMemberIds.length > 0
+            ? allowedMemberIds
+            : ['00000000-0000-0000-0000-000000000000'];
+        membersQuery = membersQuery.in('id', filterIds);
+    }
+
+    const { data: membersData } = await membersQuery;
+
     const members = membersData || [];
+    const allowedUserIds = allowedMemberIds
+        ? Array.from(new Set(members.flatMap((m: any) => [m.id, m.auth_user_id].filter(Boolean))))
+        : [];
 
     // Paginate sessions to avoid Supabase's 1000-row PostgREST cap
     const allSessions: any[] = [];
@@ -109,6 +122,8 @@ export const reportService = {
 
         if (selectedMemberId.toLowerCase() !== 'all') {
             sessQuery = sessQuery.eq('user_id', selectedMemberId);
+        } else if (allowedMemberIds) {
+            sessQuery = sessQuery.in('user_id', allowedUserIds.length > 0 ? allowedUserIds : ['00000000-0000-0000-0000-000000000000']);
         }
 
         const { data: batch } = await sessQuery;
@@ -266,6 +281,8 @@ export const reportService = {
     selectedMemberId: string;
     membersForLookup: any[];
     orgTimezone?: string;
+    isScoped?: boolean;
+    managedProjectIds?: string[] | null;
   }): Promise<{
     dailyActivityList: any[];
     appBreakdownList: any[];
@@ -277,7 +294,7 @@ export const reportService = {
     totalBilled: number;
     tableData: any;
   }> {
-    const { start, end, organizationId, selectedTeamId, selectedMemberId, membersForLookup } = options;
+    const { start, end, organizationId, selectedTeamId, selectedMemberId, membersForLookup, isScoped, managedProjectIds } = options;
 
     let filteredSessionUserIds: string[] = [];
 
@@ -285,7 +302,7 @@ export const reportService = {
         const selectedMember = membersForLookup.find(m => m.id === selectedMemberId);
         filteredSessionUserIds = selectedMember
             ? Array.from(new Set([selectedMember.id, selectedMember.auth_user_id].filter(Boolean) as string[]))
-            : [];
+            : ['00000000-0000-0000-0000-000000000000'];
     } else if (selectedTeamId !== 'All') {
         const { data: tm } = await supabase.from('team_members').select('member_id').eq('team_id', selectedTeamId);
         const teamMemberIds = tm?.map(t => t.member_id) || [];
@@ -300,10 +317,20 @@ export const reportService = {
                     })
                 )
             );
+        } else {
+            filteredSessionUserIds = ['00000000-0000-0000-0000-000000000000'];
         }
+    } else if (isScoped) {
+        // Scoped user viewing All Members -> restrict to their assigned members
+        const allowedIds = Array.from(
+            new Set(membersForLookup.flatMap(m => [m.id, m.auth_user_id].filter(Boolean) as string[]))
+        );
+        filteredSessionUserIds = allowedIds.length > 0 ? allowedIds : ['00000000-0000-0000-0000-000000000000'];
     }
 
-    if ((selectedMemberId !== 'All' || selectedTeamId !== 'All') && filteredSessionUserIds.length === 0) {
+    const isFiltered = (selectedMemberId !== 'All' || selectedTeamId !== 'All' || !!isScoped);
+    const scopedUserIds = isFiltered ? filteredSessionUserIds : [];
+    if (isFiltered && scopedUserIds.length === 0) {
         return {
             dailyActivityList: [], appBreakdownList: [], screenshotCount: 0,
             totalSessions: 0, calculatedTotalMins: 0, calculatedAvgActivity: 0,
@@ -318,17 +345,6 @@ export const reportService = {
         } catch (_) {}
     }
 
-
-    const isFiltered = (selectedMemberId !== 'All' || selectedTeamId !== 'All');
-    const scopedUserIds = isFiltered ? filteredSessionUserIds : [];
-    if (isFiltered && scopedUserIds.length === 0) {
-        return {
-            dailyActivityList: [], appBreakdownList: [], screenshotCount: 0,
-            totalSessions: 0, calculatedTotalMins: 0, calculatedAvgActivity: 0,
-            totalCosts: 0, totalBilled: 0, tableData: { dates: [], rows: [] }
-        };
-    }
-
     // Paginate sessions to avoid Supabase's 1000-row PostgREST cap
     const t0 = performance.now();
     const SESS_PAGE = 1000;
@@ -337,7 +353,7 @@ export const reportService = {
     while (true) {
         let sessionsQuery = supabase
             .from('sessions')
-            .select('id, user_id, started_at, ended_at, manual')
+            .select('id, user_id, project_id, started_at, ended_at, manual')
             .lt('started_at', end)
             .or(`ended_at.is.null,ended_at.gt.${start}`)
             .order('id', { ascending: true })
@@ -349,6 +365,11 @@ export const reportService = {
 
         if (scopedUserIds.length > 0) {
             sessionsQuery = sessionsQuery.in('user_id', scopedUserIds);
+        }
+
+        if (isScoped && managedProjectIds) {
+            const projectFilter = managedProjectIds.length > 0 ? managedProjectIds : ['00000000-0000-0000-0000-000000000000'];
+            sessionsQuery = sessionsQuery.in('project_id', projectFilter);
         }
 
         const { data: sessBatch } = await sessionsQuery;
@@ -420,12 +441,15 @@ export const reportService = {
     });
 
     // Lookup any members (e.g. Deleted members with historical time) present in stats but not in active members lookup
+    // Unrestricted roles (Owner, Admin, Viewer) can discover extra org members; scoped roles never see foreign members.
     const missingUserIds = new Set<string>();
-    dbUserDailyStats.forEach((row: any) => {
-        if (!membersMap.has(row.user_id)) {
-            missingUserIds.add(row.user_id);
-        }
-    });
+    if (!isScoped) {
+        dbUserDailyStats.forEach((row: any) => {
+            if (!membersMap.has(row.user_id)) {
+                missingUserIds.add(row.user_id);
+            }
+        });
+    }
 
     if (missingUserIds.size > 0) {
         const { data: extraMembers } = await supabase
@@ -523,10 +547,13 @@ export const reportService = {
 
         if (dateListSet.has(day)) {
             const member = membersMap.get(uid);
+            if (isScoped && !member) return;
+
             const canonicalId = member ? member.id : uid;
             const isDeleted = member?.status === 'Deleted';
 
             if (!memberRows[canonicalId]) {
+                if (isScoped && !member) return;
                 memberRows[canonicalId] = {
                     memberId: canonicalId,
                     fullName: member ? (member.full_name || member.email || 'Unknown') : ('Member (' + canonicalId.slice(0, 6) + ')'),
@@ -560,6 +587,7 @@ export const reportService = {
         if (!sess.manual) return;
         const uid = sess.user_id;
         const member = uid ? membersMap.get(uid) : null;
+        if (isScoped && !member) return;
         
         const stat = sessionStats.find((st: any) => st.session_id === sess.id);
         const lastSampleAt = stat?.last_sample_at || null;

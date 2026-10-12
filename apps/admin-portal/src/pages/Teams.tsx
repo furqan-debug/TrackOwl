@@ -42,7 +42,7 @@ interface Project {
 
 export function Teams() {
     const { profile } = useAuth();
-    const isViewer = profile?.role === 'Viewer';
+    const isViewer = profile?.role === 'Viewer' || profile?.role === 'Client';
 
     const [teams, setTeams] = useState<Team[]>([]);
     const [members, setMembers] = useState<Member[]>([]);
