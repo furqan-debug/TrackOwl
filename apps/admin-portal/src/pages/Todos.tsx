@@ -1078,11 +1078,18 @@ export function Todos() {
                                                             }
                                                         );
                                                     }}
+                                                    /* accent-color, not
+                                                       text-*. A native
+                                                       checkbox ignores text
+                                                       colour without the
+                                                       forms plugin, so the
+                                                       browser drew its own
+                                                       blue tick regardless. */
                                                     className="
                                                         w-4 h-4
                                                         rounded
                                                         border-border
-                                                        text-primary
+                                                        accent-primary
                                                         focus:ring-primary
                                                         cursor-pointer
                                                         shrink-0
@@ -1133,7 +1140,7 @@ export function Todos() {
 
                             <div className="space-y-1.5 min-w-0">
                                 <label className="block text-[11px] font-bold text-text-muted tracking-[0.15em] mb-2.5 ml-1">
-                                    Resolution Date
+                                    Deadline Date
                                 </label>
 
                                 <div className="w-full min-w-0 max-w-full">
