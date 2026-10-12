@@ -467,6 +467,7 @@ export function MemberFormPage() {
     const isRestrictedTarget =
         (currentUserProfile?.role === 'Viewer' && !isSelf) ||
         (currentUserProfile?.role === 'User' && !isSelf) ||
+        currentUserProfile?.role === 'Client' ||
         (currentUserProfile?.role === 'Manager' &&
             (role === 'Owner' || role === 'Admin')) ||
         (currentUserProfile?.role === 'Admin' && role === 'Owner');

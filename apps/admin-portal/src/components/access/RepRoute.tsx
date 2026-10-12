@@ -19,7 +19,10 @@ export function RepRoute({ children }: RepRouteProps) {
     const { profile, isRep } = useAuth();
     const navigate = useNavigate();
 
-    if (!isRep) return <>{children}</>;
+    const isClient = profile?.role === 'Client';
+    const isRestricted = isRep || isClient;
+
+    if (!isRestricted) return <>{children}</>;
 
     // Personalise the message with the member's first name if available
     const firstName = (() => {
@@ -35,18 +38,19 @@ export function RepRoute({ children }: RepRouteProps) {
                     <Shield className="w-6 h-6 text-accent" />
                 </div>
                 <h2 className="text-xl font-bold text-text-main mb-2">
-                    Admin-only area
+                    {isClient ? "Administrator Access Required" : "Admin-only area"}
                 </h2>
                 <p className="text-sm text-text-muted mb-6 leading-relaxed">
-                    Hi {firstName} — this section is for account administrators.
-                    Your personal activity, timesheets, and reports are available
-                    in the navigation on the left.
+                    {isClient
+                        ? `Hi ${firstName} — this administrative section is restricted to organization staff. Your project dashboards, timesheets, and reports are available in the navigation.`
+                        : `Hi ${firstName} — this section is for account administrators. Your personal activity, timesheets, and reports are available in the navigation on the left.`
+                    }
                 </p>
                 <button
                     onClick={() => navigate('/dashboard')}
                     className="w-full px-4 py-2.5 bg-accent hover:bg-accent/90 text-white font-semibold text-sm rounded-xl transition-colors"
                 >
-                    Go to My Dashboard
+                    Go to Dashboard
                 </button>
             </div>
         </div>

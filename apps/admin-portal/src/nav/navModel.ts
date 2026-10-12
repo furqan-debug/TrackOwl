@@ -85,7 +85,7 @@ export const navStructure: NavGroup[] = [
         name: 'Settings',
         icon: Settings,
         path: '/dashboard/settings',
-        allowedRoles: ['Owner', 'Admin', 'Manager', 'User', 'Viewer'],
+        allowedRoles: ['Owner', 'Admin', 'Manager', 'User', 'Viewer', 'Client'],
         children: [
             // Org-level settings — admin/owner only
             { name: 'Org Settings', path: '/dashboard/settings', allowedRoles: ['Owner', 'Admin'] },

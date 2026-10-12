@@ -60,6 +60,7 @@ let timesheetsCacheKey: string | null = null;
 
 export function Timesheets() {
     const { profile, managedMemberIds, managedProjectIds, displayTimezone, timezoneReady, isRep } = useAuth();
+    const isViewer = profile?.role === 'Viewer' || profile?.role === 'Client';
     const organizationId = profile?.organization_id;
     const navigate = useNavigate();
 
@@ -504,6 +505,7 @@ export function Timesheets() {
     }
 
     async function handleManualAddTime() {
+        if (isViewer) return;
         if (!addTimeData.projectId || !addTimeData.userId) {
             alert('Please select both a project and a member.');
             return;
@@ -547,7 +549,7 @@ export function Timesheets() {
     }
 
     async function handleEditSubmit() {
-        if (!editingSession || !addTimeData.projectId || !addTimeData.userId) return;
+        if (isViewer || !editingSession || !addTimeData.projectId || !addTimeData.userId) return;
 
         // orgTimezone is a 'UTC' placeholder until fetchOrgSettings lands, and
         // writing against the placeholder would put the entry hours out.
@@ -583,7 +585,7 @@ export function Timesheets() {
     }
 
     async function handleDeleteSubmit() {
-        if (!deletingSession) return;
+        if (isViewer || !deletingSession) return;
         try {
             const { error } = await supabase.from('sessions').delete().eq('id', deletingSession.id);
             if (error) throw error;
@@ -597,6 +599,7 @@ export function Timesheets() {
     }
 
     const openEditModal = (session: any) => {
+        if (isViewer) return;
         const start = new Date(session.original_started_at || session.started_at);
         const end = (session.original_ended_at || session.ended_at) ? new Date(session.original_ended_at || session.ended_at) : new Date(session.effective_end || new Date());
 
@@ -621,6 +624,7 @@ export function Timesheets() {
     };
 
     const openDeleteModal = (session: Session) => {
+        if (isViewer) return;
         setDeletingSession(session);
         setShowDeleteConfirm(true);
     };
@@ -753,7 +757,7 @@ export function Timesheets() {
                             children to two and the date picker and timezone land
                             beside each other on the top row. */}
                         {!isRep && (
-                        <div className="grid grid-cols-2 gap-3 w-full min-[900px]:w-auto min-[900px]:flex">
+                        <div className={clsx("gap-3 w-full min-[900px]:w-auto min-[900px]:flex", isViewer ? "flex" : "grid grid-cols-2")}>
 
                             <button
                                 onClick={() => setShowFilters(true)}
@@ -763,6 +767,7 @@ export function Timesheets() {
                                 <span>Filter</span>
                             </button>
 
+                            {!isViewer && (
                             <button
                                 onClick={() => {
                                     const activeMember = (selectedMember && selectedMember !== 'all')
@@ -794,6 +799,7 @@ export function Timesheets() {
                                 <Plus className="w-5 h-5 shrink-0" />
                                 <span>Add time</span>
                             </button>
+                            )}
 
                         </div>
                         )}
@@ -868,6 +874,7 @@ export function Timesheets() {
                                 onEditSession={openEditModal}
                                 onDeleteSession={openDeleteModal}
                                 onRowClick={openMemberTimesheet}
+                                isViewer={isViewer}
                             />
                         )}
 
@@ -1061,13 +1068,14 @@ export function Timesheets() {
     );
 }
 
-function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDeleteSession, onRowClick }: {
+function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDeleteSession, onRowClick, isViewer }: {
     entries: DailyEntry[],
     selectedMember: string,
     toProperCase: (s: string) => string,
     onEditSession: (s: any) => void,
     onDeleteSession: (s: any) => void,
-    onRowClick: (userId: string) => void
+    onRowClick: (userId: string) => void,
+    isViewer?: boolean
 }) {
     const day = entries[0];
 
@@ -1260,7 +1268,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                     </div>
                                 </td>
                                 <td className="py-8 px-4 text-center">
-                                    {!s.isAggregated && (
+                                    {!s.isAggregated && !isViewer && (
                                         <div className="relative group/actions inline-block text-left">
                                             <button onClick={(e) => e.stopPropagation()} className="p-2 hover:bg-surface-hover rounded-md text-text-muted hover:text-text-main transition-colors">
                                                 <MoreVertical className="w-5 h-5" />
