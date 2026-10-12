@@ -232,7 +232,12 @@ export function Todos() {
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
 
-        if (!formData.project_id || isViewer) {
+        // A project or an assignee — the database carries the same rule as
+        // a check constraint, so the form is not inventing a looser one.
+        const hasOwner =
+            !!formData.project_id || formData.assignee_ids.length > 0;
+
+        if (!hasOwner || isViewer) {
             return;
         }
 
@@ -242,7 +247,9 @@ export function Todos() {
             const payload = {
                 title: formData.title,
                 description: formData.description,
-                project_id: formData.project_id,
+                // null, not '', when nobody picks one: the column is a uuid
+                // and an empty string is not a value it can take.
+                project_id: formData.project_id || null,
                 assignee_id:
                     formData.assignee_ids[0] || null,
                 due_date:
@@ -826,10 +833,15 @@ export function Todos() {
                         <Button
                             form="objective-form"
                             type="submit"
-                            disabled={saving || !formData.project_id}
+                            disabled={
+                                saving ||
+                                (!formData.project_id &&
+                                    formData.assignee_ids.length === 0)
+                            }
                             title={
-                                !formData.project_id
-                                    ? 'Choose a host project first'
+                                !formData.project_id &&
+                                formData.assignee_ids.length === 0
+                                    ? 'Choose a project or assign someone'
                                     : undefined
                             }
                             variant="primary"
