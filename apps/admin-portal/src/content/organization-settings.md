@@ -13,13 +13,12 @@ description: Learn how to manage organization settings in TrackOwl.
 Understanding how to use the **Organization settings** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** Only **Owner** and **Admin** accounts can change organisation settings.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Organizations** icon in the primary sidebar navigation.
-3. Select **Organization settings** from the secondary menu.
+1. Open the TrackOwl dashboard and sign in.
+2. In the left sidebar, open **Settings**.
+3. Select **Org Settings** (`/dashboard/settings`).
 
 ---
 
@@ -37,13 +36,13 @@ Follow these steps to configure your settings properly:
 
 ## Best Practices
 > [!TIP]
-> - Assign 'Manager' roles sparingly to maintain strict security over your organization.
+> - Assign '**Manager**' roles sparingly to maintain strict security over your organization.
 > - Create specific Teams (e.g., 'Marketing', 'Engineering') to make assigning projects much faster.
 > - Audit your active users quarterly and deactivate anyone no longer working with your company.
 
 ## Frequently Asked Questions
 
-**Q: What is the difference between an Owner and a Manager?**  
+**Q: What is the difference between an **Owner** and a **Manager**?**  
 A: Owners have full access to billing, global settings, and can delete the organization. Managers can manage teams, projects, and approve timesheets, but cannot access billing.
 
 **Q: Can I undo a user deactivation?**  

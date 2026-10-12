@@ -1,49 +1,51 @@
 ---
 title: Download and install
 category: Desktop App
-description: Learn how to manage download and install in TrackOwl.
+description: Get the TrackOwl desktop app onto your computer.
 ---
 
 # Download and install
 
-> [!NOTE]
-> The TrackOwl Desktop App is a small, lightweight program you install on your computer. It makes tracking time much easier! This article will guide you through **download and install**.
-
 ## Overview
-Understanding how to use the **Download and install** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+The desktop app records time, activity and screenshots. You need it on every machine where work is tracked. The dashboard in your browser does not track anything by itself.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** Anyone with a TrackOwl account can install the desktop app. You do not need to be an administrator of the workspace.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Desktop App** icon in the primary sidebar navigation.
-3. Select **Download and install** from the secondary menu.
+1. Open the TrackOwl website and go to the **Download** section.
+2. Pick the build for your machine.
+
+| Your machine | Download |
+| --- | --- |
+| Windows 10 or 11, 64-bit | .exe installer, or .msi for managed rollouts |
+| Mac with Apple Silicon (M1/M2/M3) | Apple Silicon build |
+| Mac with an Intel processor | Intel build |
 
 ---
 
 ## Step-by-Step Instructions
 
-Follow these steps to configure your settings properly:
-
-1. Navigate to the **Download** section of your profile on the website.
-2. Choose the download for your specific computer (Windows, Mac, or Linux).
-3. Open the downloaded file and follow the simple installation prompts.
-4. Once installed, open the app and sign in with your normal TrackOwl email and password.
+1. Download the build that matches your machine.
+2. Open the downloaded file and follow the installer.
+3. Open TrackOwl and sign in with the same email and password you use for the dashboard.
+4. On macOS, grant **Screen Recording** permission when asked, then restart the app.
+5. Start the timer. Tracked time appears under **Timesheets** in the dashboard.
 
 ---
 
 ## Best Practices
 > [!TIP]
-> - Try testing this feature with a single "Test Team" or a fake project first to understand how it works.
-> - Review your changes carefully before saving to prevent disruption to your team.
-> - Combine this feature with TrackOwl's powerful Reporting tools to get maximum visibility.
+> - Use the .msi on Windows if you are rolling TrackOwl out across a team with management tools.
+> - Install before the first day of tracking, so permission prompts do not eat into someone's first session.
 
 ## Frequently Asked Questions
 
-**Q: Can I undo this action once it is saved?**  
-A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
+**Q: Is there a Linux build?**
+A: No. Windows and macOS only.
 
-**Q: Is this feature available on the mobile app?**  
-A: Administrative configurations are limited to the web dashboard. Standard viewing and tracking are fully supported on mobile devices.
+**Q: Is there a mobile app?**
+A: No. Tracking happens on the desktop app; everything else is in the browser.
+
+**Q: How do I update it?**
+A: TrackOwl updates itself. When a new version is published the app offers it to you and installs it once you accept.

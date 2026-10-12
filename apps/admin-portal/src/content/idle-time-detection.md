@@ -13,13 +13,11 @@ description: Learn how to manage idle time detection in TrackOwl.
 Understanding how to use the **Idle time detection** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** Only **Owner** and **Admin** accounts can change organisation settings.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Time Tracking** icon in the primary sidebar navigation.
-3. Select **Idle time detection** from the secondary menu.
+1. Idle detection runs in the desktop app while the timer is on.
+2. **Idle Detection** sits under **Settings → Org Settings → Telemetry**, alongside Auto-Terminate Session.
 
 ---
 
@@ -47,4 +45,4 @@ Follow these steps to configure your settings properly:
 A: TrackOwl's idle detection will automatically pause tracking if no keyboard or mouse activity is detected for your configured timeout period.
 
 **Q: Can I edit time entries later?**  
-A: Yes, manual time adjustments can be made from the Timesheets page, subject to Manager approval.
+A: Yes, manual time adjustments can be made from the Timesheets page, subject to **Manager** approval.

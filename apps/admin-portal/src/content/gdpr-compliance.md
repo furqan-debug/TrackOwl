@@ -1,50 +1,35 @@
 ---
 title: GDPR compliance
 category: Security & Privacy
-description: Learn how to manage gdpr compliance in TrackOwl.
+description: Consent, access and deletion requests.
 ---
 
 # GDPR compliance
 
-> [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **GDPR compliance** feature in the Security & Privacy section.
-
-## Overview
-Understanding how to use the **GDPR compliance** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+## The short version
+TrackOwl is built around consent-based tracking: the desktop app has to be installed and the timer started on the machine being tracked. Nothing is recorded silently in the background without the app running.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** A workspace **Owner** can request export or deletion for the organisation. Individuals should raise requests through their own organisation first, since the organisation holds the data.
 
-## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Security & Privacy** icon in the primary sidebar navigation.
-3. Select **GDPR compliance** from the secondary menu.
+## Making a request
+1. Email **contact@trackowl.io**, or use the contact form at the bottom of the Help Center.
+2. Say what you need: access to data held, export of it, or deletion.
+3. Send it from the email address on the account so the request can be matched to it.
 
----
+Account deletion requests are completed within 30 days, in line with the privacy policy.
 
-## Step-by-Step Instructions
-
-Follow these steps to configure your settings properly:
-
-1. Make sure you are logged into your TrackOwl workspace.
-2. Look at the left-hand menu and click on **Security & Privacy**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
-
----
-
-## Best Practices
-> [!TIP]
-> - Try testing this feature with a single "Test Team" or a fake project first to understand how it works.
-> - Review your changes carefully before saving to prevent disruption to your team.
-> - Combine this feature with TrackOwl's powerful Reporting tools to get maximum visibility.
+## What you can do yourself
+| Need | Where |
+| --- | --- |
+| Blur every screenshot before it is stored | **Settings → Org Settings → Monitoring** |
+| Stop recording app and site usage | **Settings → Org Settings → Telemetry** |
+| Deactivate someone so tracking stops | **People → Members** |
 
 ## Frequently Asked Questions
 
-**Q: Can I undo this action once it is saved?**  
-A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
+**Q: Can I delete individual screenshots?**
+A: No. Screenshots cannot be deleted from the dashboard. Removing them is a data deletion request.
 
-**Q: Is this feature available on the mobile app?**  
-A: Administrative configurations are limited to the web dashboard. Standard viewing and tracking are fully supported on mobile devices.
+**Q: Where is the policy itself?**
+A: trackowl.io/privacy, with the security overview at trackowl.io/security.
