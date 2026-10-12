@@ -15,7 +15,7 @@ Understanding how to use the **Time & Activity reports** feature is essential fo
 > [!IMPORTANT]
 > **Plan:** This is a Premium feature. On the Basic plan the page redirects to Pricing.
 >
-> **Who can do this:** Every role can open this page. Members see their own data; Owner, Admin, Manager and Viewer accounts can also see the rest of the team.
+> **Who can do this:** Every role can open this page. Members see their own data; **Owner**, **Admin**, **Manager** and **Viewer** accounts can also see the rest of the team.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.

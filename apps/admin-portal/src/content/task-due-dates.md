@@ -13,7 +13,7 @@ description: Give a to-do a due date and track what is overdue.
 The due date is how you say when a to-do is expected to be finished. It shows on the to-do and gives you something to filter and sort by when you are looking for what is late.
 
 > [!IMPORTANT]
-> **Who can do this:** Owner, Admin, Manager, Viewer and Client accounts can open To-Dos. The User role cannot — it sees an "Admin-only area" notice instead.
+> **Who can do this:** **Owner**, **Admin**, **Manager**, **Viewer** and **Client** accounts can open To-Dos. The **User** role cannot — it sees an "Admin-only area" notice instead.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.

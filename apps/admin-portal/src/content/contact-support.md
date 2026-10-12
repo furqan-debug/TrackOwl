@@ -30,7 +30,7 @@ On macOS, TrackOwl uses the system's built-in screen capture to take periodic sc
 TrackOwl updates itself. When a new version is published the app offers it to you in a dialog, and installs it once you accept. You can also download the current build again from the **Download** section of the TrackOwl website: Windows (.exe or .msi) and macOS (Apple Silicon or Intel).
 
 ### How do I cancel my subscription?
-Sign in at **trackowl.io/dashboard**, open **Settings → Billing & Plans**, and follow the cancellation steps. Billing is Owner-only, so if you do not see Billing & Plans in the sidebar, ask the workspace Owner. You can also email contact@trackowl.io and we will cancel it for you within one business day.
+Sign in at **trackowl.io/dashboard**, open **Settings → Billing & Plans**, and follow the cancellation steps. Billing is **Owner**-only, so if you do not see Billing & Plans in the sidebar, ask the workspace **Owner**. You can also email contact@trackowl.io and we will cancel it for you within one business day.
 
 ### My screenshots are not uploading. What should I do?
 Make sure you have an active internet connection during tracking. TrackOwl queues screenshots locally and syncs them when the connection is restored. If the problem persists, try signing out and back in, then contact support.

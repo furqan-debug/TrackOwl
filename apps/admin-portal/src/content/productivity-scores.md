@@ -15,7 +15,7 @@ Productivity scores provide an automated, high-level metric (from 0 to 100%) ind
 > [!IMPORTANT]
 > **Plan:** This is a Premium feature. On the Basic plan the page redirects to Pricing.
 >
-> **Who can do this:** Every role can open this page. Members see their own data; Owner, Admin, Manager and Viewer accounts can also see the rest of the team.
+> **Who can do this:** Every role can open this page. Members see their own data; **Owner**, **Admin**, **Manager** and **Viewer** accounts can also see the rest of the team.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.
@@ -48,4 +48,4 @@ This is a read-only view — there is nothing to save.
 A: TrackOwl's idle detection will automatically pause tracking if no keyboard or mouse activity is detected for your configured timeout period.
 
 **Q: Can I edit time entries later?**  
-A: Yes, manual time adjustments can be made from the Timesheets page, subject to Manager approval.
+A: Yes, manual time adjustments can be made from the Timesheets page, subject to **Manager** approval.

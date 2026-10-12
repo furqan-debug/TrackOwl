@@ -13,7 +13,7 @@ description: Learn how to manage upgrade/downgrade in TrackOwl.
 Understanding how to use the **Upgrade/Downgrade** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Who can do this:** Billing is Owner-only. Other roles do not see Billing & Plans in the sidebar.
+> **Who can do this:** Billing is **Owner**-only. Other roles do not see Billing & Plans in the sidebar.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.

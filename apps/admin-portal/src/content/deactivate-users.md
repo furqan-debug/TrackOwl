@@ -13,7 +13,7 @@ description: Learn how to manage deactivate users in TrackOwl.
 Deactivating a user instantly revokes their login access and stops all tracking, but securely preserves all of their historical time, activity, and financial data for your records. This is different from Deleting a user, which permanently removes them.
 
 > [!IMPORTANT]
-> **Who can do this:** Owner, Admin, Manager, Viewer and Client accounts can open this page. The User role cannot — it sees an "Admin-only area" notice instead.
+> **Who can do this:** **Owner**, **Admin**, **Manager**, **Viewer** and **Client** accounts can open this page. The **User** role cannot — it sees an "Admin-only area" notice instead.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.
@@ -35,13 +35,13 @@ Follow these steps to configure your settings properly:
 
 ## Best Practices
 > [!TIP]
-> - Assign 'Manager' roles sparingly to maintain strict security over your organization.
+> - Assign '**Manager**' roles sparingly to maintain strict security over your organization.
 > - Create specific Teams (e.g., 'Marketing', 'Engineering') to make assigning projects much faster.
 > - Audit your active users quarterly and deactivate anyone no longer working with your company.
 
 ## Frequently Asked Questions
 
-**Q: What is the difference between an Owner and a Manager?**  
+**Q: What is the difference between an **Owner** and a **Manager**?**  
 A: Owners have full access to billing, global settings, and can delete the organization. Managers can manage teams, projects, and approve timesheets, but cannot access billing.
 
 **Q: Can I undo a user deactivation?**  

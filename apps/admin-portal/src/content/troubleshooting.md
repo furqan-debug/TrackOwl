@@ -19,13 +19,13 @@ description: Fixes for the problems that come up most.
 
 ## A page is missing from the sidebar
 This is usually your role rather than a fault.
-- Billing & Plans is Owner-only.
-- Org Settings is for Owner and Admin.
-- People, Teams, Projects, To-Dos and Clients are hidden from the User role.
+- Billing & Plans is **Owner**-only.
+- Org Settings is for **Owner** and **Admin**.
+- People, Teams, Projects, To-Dos and Clients are hidden from the **User** role.
 - Activity and Reports need the Premium plan.
 
 ## The session stopped on its own
-**Auto-Terminate Session** under **Settings → Org Settings → Telemetry** ends a session after a period of inactivity, with a grace period before it does. An Owner or Admin can change or switch it off.
+**Auto-Terminate Session** under **Settings → Org Settings → Telemetry** ends a session after a period of inactivity, with a grace period before it does. An **Owner** or **Admin** can change or switch it off.
 
 ## Nothing above helped
 Email contact@trackowl.io or use the contact form at the bottom of the Help Center. Include your operating system and version, what you expected, and what happened instead.

@@ -21,7 +21,7 @@ Keystrokes are not recorded. The desktop app counts key presses and mouse clicks
 Tracking-related information is visible to the administrators of your organisation and to the owner of the account it belongs to. Members always see their own data.
 
 > [!IMPORTANT]
-> **Who can do this:** Nothing here is configurable. Deletion or export of a whole workspace is requested by its Owner, through contact@trackowl.io.
+> **Who can do this:** Nothing here is configurable. Deletion or export of a whole workspace is requested by its **Owner**, through contact@trackowl.io.
 
 ## Frequently Asked Questions
 
@@ -29,4 +29,4 @@ Tracking-related information is visible to the administrators of your organisati
 A: No. Only counts of key presses and mouse clicks, never the content.
 
 **Q: Can screenshots be blurred?**
-A: Yes. An Owner or Admin can turn on Privacy Masking under **Settings → Org Settings → Monitoring**, and every capture is blurred.
+A: Yes. An **Owner** or **Admin** can turn on Privacy Masking under **Settings → Org Settings → Monitoring**, and every capture is blurred.

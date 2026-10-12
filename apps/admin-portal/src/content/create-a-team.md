@@ -13,7 +13,7 @@ description: Learn how to manage create a team in TrackOwl.
 Understanding how to use the **Create a team** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Who can do this:** Owner, Admin, Manager, Viewer and Client accounts can open this page. The User role cannot — it sees an "Admin-only area" notice instead.
+> **Who can do this:** **Owner**, **Admin**, **Manager**, **Viewer** and **Client** accounts can open this page. The **User** role cannot — it sees an "Admin-only area" notice instead.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.
@@ -36,13 +36,13 @@ Follow these steps to configure your settings properly:
 
 ## Best Practices
 > [!TIP]
-> - Assign 'Manager' roles sparingly to maintain strict security over your organization.
+> - Assign '**Manager**' roles sparingly to maintain strict security over your organization.
 > - Create specific Teams (e.g., 'Marketing', 'Engineering') to make assigning projects much faster.
 > - Audit your active users quarterly and deactivate anyone no longer working with your company.
 
 ## Frequently Asked Questions
 
-**Q: What is the difference between an Owner and a Manager?**  
+**Q: What is the difference between an **Owner** and a **Manager**?**  
 A: Owners have full access to billing, global settings, and can delete the organization. Managers can manage teams, projects, and approve timesheets, but cannot access billing.
 
 **Q: Can I undo a user deactivation?**  

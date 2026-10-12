@@ -15,7 +15,7 @@ Understanding how to use the **View URL tracking** feature is essential for maxi
 > [!IMPORTANT]
 > **Plan:** This is a Premium feature. On the Basic plan the page redirects to Pricing.
 >
-> **Who can do this:** Owner, Admin, Manager, Viewer and Client accounts can open this page. The User role cannot — it sees an "Admin-only area" notice instead.
+> **Who can do this:** **Owner**, **Admin**, **Manager**, **Viewer** and **Client** accounts can open this page. The **User** role cannot — it sees an "Admin-only area" notice instead.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.
@@ -47,4 +47,4 @@ This is a read-only view — there is nothing to save.
 A: TrackOwl's idle detection will automatically pause tracking if no keyboard or mouse activity is detected for your configured timeout period.
 
 **Q: Can I edit time entries later?**  
-A: Yes, manual time adjustments can be made from the Timesheets page, subject to Manager approval.
+A: Yes, manual time adjustments can be made from the Timesheets page, subject to **Manager** approval.

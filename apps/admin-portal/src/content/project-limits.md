@@ -13,7 +13,7 @@ description: Learn how to manage project limits in TrackOwl.
 Project limits allow you to cap the total number of hours or budget a team can spend on a specific project, preventing overbilling and keeping tasks on schedule.
 
 > [!IMPORTANT]
-> **Who can do this:** Owner, Admin, Manager, Viewer and Client accounts can open this page. The User role cannot — it sees an "Admin-only area" notice instead.
+> **Who can do this:** **Owner**, **Admin**, **Manager**, **Viewer** and **Client** accounts can open this page. The **User** role cannot — it sees an "Admin-only area" notice instead.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.

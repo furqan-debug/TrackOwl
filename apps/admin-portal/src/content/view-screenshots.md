@@ -1,21 +1,18 @@
 ---
 title: View screenshots
 category: Screenshots
-description: Learn how to manage view screenshots in TrackOwl.
+description: Browse captures by member and date, and read what each one shows.
 ---
 
 # View screenshots
 
-> [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers View screenshots in TrackOwl.
-
 ## Overview
-Understanding how to use the **View screenshots** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+Screenshots are captures taken by the desktop app during a tracked session. The Screenshots page shows them a day at a time, for one member or for everyone.
 
 > [!IMPORTANT]
 > **Plan:** This is a Premium feature. On the Basic plan the page redirects to Pricing.
 >
-> **Who can do this:** Every role can open this page. Members see their own data; Owner, Admin, Manager and Viewer accounts can also see the rest of the team.
+> **Who can do this:** Every role can open this page. Members see their own captures; **Owner**, **Admin**, **Manager** and **Viewer** accounts can also see the rest of the team.
 
 ## Where to find it
 1. Open the TrackOwl dashboard and sign in.
@@ -24,28 +21,39 @@ Understanding how to use the **View screenshots** feature is essential for maxim
 
 ---
 
+## What is on the page
+
+| Control | What it does |
+| --- | --- |
+| Member filter | All Members, or one person |
+| Date picker | The day you are looking at |
+| Refresh | Re-reads the day, for a session still in progress |
+
+Above the grid, four figures summarise the day: **Clicks**, **Keys**, **Duration** and **Activity**. Clicks and keys are counts only — TrackOwl never records what was typed.
+
+---
+
 ## Step-by-Step Instructions
 
-Follow these steps to configure your settings properly:
-
-1. Make sure you are logged into your TrackOwl workspace.
-2. Open **Activity** in the left sidebar, then **Screenshots**.
-3. Use the date range and the team or member filters to narrow what is shown.
-4. Open a row to see the detail behind it.
-This is a read-only view — there is nothing to save.
+1. Open **Activity**, then **Screenshots**.
+2. Pick the member, or leave it on All Members.
+3. Pick the date. Days follow the organisation timezone set under **Settings → Org Settings → Governance**, not your own clock.
+4. Click any capture to open it full size.
 
 ---
 
 ## Best Practices
 > [!TIP]
-> - Change one thing at a time, then check the result before moving on.
-> - Check the date range and the timezone before reading anything into the numbers.
-> - Reports pull the same data together across members and dates. Reports needs the Premium plan.
+> - If a day looks empty, check the date against the organisation timezone before assuming nothing was tracked.
+> - Captures arrive late when the machine was offline; the desktop app queues them and uploads once it reconnects.
 
 ## Frequently Asked Questions
 
-**Q: Can I undo this action once it is saved?**  
-A: Most things can be changed back. Archiving a project is reversible. Deleting is not — a deleted project, team or to-do is gone. Screenshots cannot be deleted at all.
+**Q: Can I delete a capture?**
+A: No. Screenshots cannot be deleted. If captures should not be readable, an **Owner** or **Admin** can turn on Privacy Masking under **Settings → Org Settings → Monitoring**, which blurs every capture as it is taken.
 
-**Q: Can I do this from the desktop app?**  
-A: The desktop app tracks time, activity and screenshots. Everything else — settings, people, projects, reports and billing — is done in the dashboard in your browser. TrackOwl does not have a mobile app.
+**Q: Why are some captures blurred?**
+A: Privacy Masking is on for your organisation.
+
+**Q: Can I do this from the desktop app?**
+A: No. The desktop app takes the captures; you view them in the dashboard in your browser.
