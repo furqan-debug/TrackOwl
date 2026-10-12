@@ -2352,22 +2352,44 @@ export default function App() {
     syncLocation();
   }, [user?.id]);
 
-  async function fetchAndSubscribeTodos(userId: string) {
-    const sb = await getSupabase();
-    const { data } = await sb
+  /**
+   * Every task assigned to this person, by either route.
+   *
+   * A task reaches someone two ways. todos.assignee_id holds one id — the
+   * portal puts the FIRST person there — while todo_assignees holds all of
+   * them. Reading only assignee_id meant the second and third people on a
+   * shared task never saw it, with or without a refresh.
+   */
+  async function loadMyTodos(sb: any, userId: string): Promise<Todo[]> {
+    const { data: links } = await sb
+      .from('todo_assignees')
+      .select('todo_id')
+      .eq('member_id', userId);
+
+    const ids = (links || []).map((l: any) => l.todo_id).filter(Boolean);
+
+    let q = sb
       .from('todos')
       .select('id, title, description, status, due_date, project_id, assignee_id, projects(name, color)')
-      .eq('assignee_id', userId)
       .neq('status', 'Done')
       .order('created_at', { ascending: false });
 
-    if (data) {
-      setTodos(data.map((t: any) => ({
-        ...t,
-        projectName: t.projects?.name,
-        projectColor: t.projects?.color,
-      })));
-    }
+    // or() with an empty in-list is a syntax error, so the plain case stays plain.
+    q = ids.length > 0
+      ? q.or(`assignee_id.eq.${userId},id.in.(${ids.join(',')})`)
+      : q.eq('assignee_id', userId);
+
+    const { data } = await q;
+    return (data || []).map((t: any) => ({
+      ...t,
+      projectName: t.projects?.name,
+      projectColor: t.projects?.color,
+    }));
+  }
+
+  async function fetchAndSubscribeTodos(userId: string) {
+    const sb = await getSupabase();
+    setTodos(await loadMyTodos(sb, userId));
     if (realtimeRef.current) sb.removeChannel(realtimeRef.current);
     realtimeRef.current = sb
       .channel('my-todos-' + userId)
@@ -2419,6 +2441,43 @@ export default function App() {
             const next = [...prev];
             next[at] = enriched;
             return next;
+          });
+
+          if (isNew) {
+            const heading = t.title + (proj?.name ? ` — ${proj.name}` : '');
+            const note = (t.description || '').trim();
+            trackerAPI.showNotification(
+              '📋 New Task Assigned',
+              note ? `${heading}
+${note}` : heading
+            );
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'todo_assignees', filter: `member_id=eq.${userId}` },
+        async (payload: any) => {
+          const { data: t } = await sb
+            .from('todos')
+            .select('id, title, description, status, due_date, project_id, assignee_id, projects(name, color)')
+            .eq('id', payload.new.todo_id)
+            .single();
+
+          if (!t || t.status === 'Done') return;
+
+          // A joined relation comes back as an array from .single(), unlike
+          // the shape the list query yields.
+          const proj: any = Array.isArray(t.projects) ? t.projects[0] : t.projects;
+          const enriched: Todo = { ...t, projectName: proj?.name, projectColor: proj?.color };
+
+          // Someone who is also the row's assignee_id gets an event on both
+          // tables; whichever lands second must not announce it twice.
+          let isNew = false;
+          setTodos(prev => {
+            if (prev.some(x => x.id === t.id)) return prev;
+            isNew = true;
+            return [enriched, ...prev];
           });
 
           if (isNew) {

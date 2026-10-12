@@ -10,17 +10,24 @@
 -- Guarded so it is safe to run more than once: adding a table that is already
 -- in a publication is an error, not a no-op.
 
+-- todo_assignees as well as todos: a task shared with several people reaches
+-- everyone after the first through that table, so without it they would still
+-- be waiting for a refresh.
 do $$
+declare
+    t text;
 begin
-    if not exists (
-        select 1
-        from pg_publication_tables
-        where pubname = 'supabase_realtime'
-          and schemaname = 'public'
-          and tablename = 'todos'
-    ) then
-        alter publication supabase_realtime add table public.todos;
-    end if;
+    foreach t in array array['todos', 'todo_assignees'] loop
+        if not exists (
+            select 1
+            from pg_publication_tables
+            where pubname = 'supabase_realtime'
+              and schemaname = 'public'
+              and tablename = t
+        ) then
+            execute format('alter publication supabase_realtime add table public.%I', t);
+        end if;
+    end loop;
 end
 $$;
 
