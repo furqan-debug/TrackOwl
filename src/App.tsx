@@ -2389,6 +2389,49 @@ export default function App() {
           );
         }
       )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'todos', filter: `assignee_id=eq.${userId}` },
+        async (payload: any) => {
+          const t = payload.new;
+
+          // Finished, or handed to someone else: drop it.
+          if (t.status === 'Done' || t.assignee_id !== userId) {
+            setTodos(prev => prev.filter(x => x.id !== t.id));
+            return;
+          }
+
+          const { data: proj } = await sb.from('projects').select('name, color').eq('id', t.project_id).single();
+          const enriched: Todo = { ...t, projectName: proj?.name, projectColor: proj?.color };
+
+          // An edit to a task already held is a replacement in place. One
+          // arriving for the first time is an assignment — the portal assigns
+          // an existing task by updating it, not by inserting a new row, so
+          // without this branch handing someone a task only reached them on
+          // the next refetch.
+          let isNew = false;
+          setTodos(prev => {
+            const at = prev.findIndex(x => x.id === t.id);
+            if (at === -1) {
+              isNew = true;
+              return [enriched, ...prev];
+            }
+            const next = [...prev];
+            next[at] = enriched;
+            return next;
+          });
+
+          if (isNew) {
+            const heading = t.title + (proj?.name ? ` — ${proj.name}` : '');
+            const note = (t.description || '').trim();
+            trackerAPI.showNotification(
+              '📋 New Task Assigned',
+              note ? `${heading}
+${note}` : heading
+            );
+          }
+        }
+      )
       .subscribe();
   }
 
