@@ -814,6 +814,11 @@ export function Todos() {
                             form="objective-form"
                             type="submit"
                             disabled={saving || !formData.project_id}
+                            title={
+                                !formData.project_id
+                                    ? 'Choose a host project first'
+                                    : undefined
+                            }
                             variant="primary"
                             className="w-full sm:w-auto sm:min-w-[140px]"
                         >
@@ -1117,7 +1122,7 @@ export function Todos() {
                                         })
                                     }
                                     options={[
-                                        { value: '', label: 'Target...' },
+                                        { value: '', label: 'Select a project…' },
                                         ...projects.map(project => ({
                                             value: project.id,
                                             label: project.name
