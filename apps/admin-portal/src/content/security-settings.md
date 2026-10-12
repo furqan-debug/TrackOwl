@@ -28,22 +28,21 @@ Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
 2. Open **Settings** in the left sidebar, then **Security & 2FA**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+3. To turn on two-factor authentication, start the enrolment, scan the code with your authenticator app, and enter the six-digit code to verify it.
+4. Keep that authenticator app; you need it every time you sign in afterwards.
 
 ---
 
 ## Best Practices
 > [!TIP]
-> - Try testing this feature with a single "Test Team" or a fake project first to understand how it works.
+> - Change one thing at a time, then check the result before moving on.
 > - Review your changes carefully before saving to prevent disruption to your team.
-> - Combine this feature with TrackOwl's powerful Reporting tools to get maximum visibility.
+> - Reports pull the same data together across members and dates. Reports needs the Premium plan.
 
 ## Frequently Asked Questions
 
 **Q: Can I undo this action once it is saved?**  
-A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
+A: Most things can be changed back. Archiving a project is reversible. Deleting is not — a deleted project, team or to-do is gone. Screenshots cannot be deleted at all.
 
 **Q: Can I do this from the desktop app?**  
 A: The desktop app tracks time, activity and screenshots. Everything else — settings, people, projects, reports and billing — is done in the dashboard in your browser. TrackOwl does not have a mobile app.

@@ -1,13 +1,13 @@
 ---
-title: Productivity scores
+title: Activity score
 category: Activity & App Usage
-description: Learn how to manage productivity scores in TrackOwl.
+description: How the activity score on each block is worked out.
 ---
 
-# Productivity scores
+# Activity score
 
 > [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers Productivity scores in TrackOwl.
+> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers the activity score in TrackOwl.
 
 ## Overview
 Productivity scores provide an automated, high-level metric (from 0 to 100%) indicating how active a user was during their tracked time, based on keyboard and mouse input.
@@ -30,9 +30,9 @@ Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
 2. Open **Activity** in the left sidebar, then **Activity Blocks**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+3. Use the date range and the team or member filters to narrow what is shown.
+4. Open a row to see the detail behind it.
+This is a read-only view — there is nothing to save.
 
 ---
 

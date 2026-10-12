@@ -28,9 +28,8 @@ Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
 2. Open **People** in the left sidebar, then **Members**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+3. Add the person's email and choose the role they should hold.
+4. Send the invite. They show as Pending until they accept, and the invite can be resent from their menu.
 
 ---
 

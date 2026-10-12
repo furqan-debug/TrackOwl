@@ -28,9 +28,8 @@ Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
 2. Open **Settings** in the left sidebar, then **Billing & Plans**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+3. The current plan, seat count and renewal are shown on the page.
+4. To change plan, use **Change plan**; to change card or billing details, open the billing portal.
 
 ---
 

@@ -28,9 +28,8 @@ Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
 2. Open **People** in the left sidebar, then **Members**.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+3. Open the member's menu and choose **Deactivate Member**. Their status becomes Inactive and tracking stops.
+4. To bring them back, open the menu again and reactivate them. Nothing they tracked is removed.
 
 ---
 

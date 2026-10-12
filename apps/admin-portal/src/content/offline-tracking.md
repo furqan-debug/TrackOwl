@@ -1,47 +1,43 @@
 ---
 title: Offline tracking
 category: Desktop App
-description: Learn how to manage offline tracking in TrackOwl.
+description: What happens to tracked time when the connection drops.
 ---
 
 # Offline tracking
 
-> [!NOTE]
-> The TrackOwl Desktop App is a small, lightweight program you install on your computer. It makes tracking time much easier! This article will guide you through **offline tracking**.
-
 ## Overview
-Understanding how to use the **Offline tracking** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+Losing a connection does not stop tracking. The desktop app keeps recording to a local database on the machine and marks what has not been sent yet. When the connection comes back, it syncs on its own. There is nothing to switch on and nothing to press.
+
+What keeps being recorded while offline:
+- Time against the running session
+- Activity, including keyboard and mouse counts
+- The app and site in use
+- Screenshots, queued locally until they can be uploaded
 
 > [!IMPORTANT]
-> **Who can do this:** Every role tracks time the same way.
-
-## Where to find it
-1. Offline tracking happens in the desktop app — there is nothing to switch on in the dashboard.
-2. Tracked time syncs once the machine is back online.
+> **Who can do this:** Every role tracks the same way. There is no setting for offline behaviour.
 
 ---
 
 ## Step-by-Step Instructions
 
-Follow these steps to configure your settings properly:
-
-1. Open the **Download** section of the TrackOwl website.
-2. Choose the build for your computer: Windows (.exe or .msi), or macOS (Apple Silicon or Intel). There is no Linux build.
-3. Open the downloaded file and follow the simple installation prompts.
-4. Once installed, open the app and sign in with your normal TrackOwl email and password.
+1. Keep the desktop app running and the timer going. Work as normal.
+2. When the machine is back online, leave the app open for a few minutes.
+3. Check **Timesheets** in the dashboard to confirm the time arrived.
+4. For screenshots, check **Activity → Screenshots** for the same dates.
 
 ---
 
 ## Best Practices
 > [!TIP]
-> - Try testing this feature with a single "Test Team" or a fake project first to understand how it works.
-> - Review your changes carefully before saving to prevent disruption to your team.
-> - Combine this feature with TrackOwl's powerful Reporting tools to get maximum visibility.
+> - Do not uninstall or reset the app while work is still waiting to sync; that is where the record lives.
+> - Blocks captured offline are marked as such, so a gap in a report usually means a sync that has not finished.
 
 ## Frequently Asked Questions
 
-**Q: Can I undo this action once it is saved?**  
-A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
+**Q: How long can it stay offline?**
+A: There is no fixed limit. The local database holds the work until it can be sent.
 
-**Q: Can I do this from the desktop app?**  
-A: The desktop app tracks time, activity and screenshots. Everything else — settings, people, projects, reports and billing — is done in the dashboard in your browser. TrackOwl does not have a mobile app.
+**Q: Do I lose screenshots taken offline?**
+A: No. They are queued on the machine and uploaded once the connection returns.

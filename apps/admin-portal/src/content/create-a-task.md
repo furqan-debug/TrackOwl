@@ -36,14 +36,14 @@ Follow these steps to configure your settings properly:
 
 ## Best Practices
 > [!TIP]
-> - Try testing this feature with a single "Test Team" or a fake project first to understand how it works.
+> - Change one thing at a time, then check the result before moving on.
 > - Review your changes carefully before saving to prevent disruption to your team.
-> - Combine this feature with TrackOwl's powerful Reporting tools to get maximum visibility.
+> - Reports pull the same data together across members and dates. Reports needs the Premium plan.
 
 ## Frequently Asked Questions
 
 **Q: Can I undo this action once it is saved?**  
-A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
+A: Most things can be changed back. Archiving a project is reversible. Deleting is not — a deleted project, team or to-do is gone. Screenshots cannot be deleted at all.
 
 **Q: Can I do this from the desktop app?**  
 A: The desktop app tracks time, activity and screenshots. Everything else — settings, people, projects, reports and billing — is done in the dashboard in your browser. TrackOwl does not have a mobile app.

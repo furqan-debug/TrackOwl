@@ -1,48 +1,42 @@
 ---
 title: Create organization
 category: Organizations
-description: Learn how to manage create organization in TrackOwl.
+description: Creating a workspace and finishing onboarding.
 ---
 
 # Create organization
 
-> [!NOTE]
-> Welcome to TrackOwl! Setting up your organization is usually the very first step. This beginner-friendly guide explains how to handle **create organization** securely and easily.
-
 ## Overview
-Understanding how to use the **Create organization** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
+A workspace is created by signing up. There is no "new organisation" button inside the dashboard — one account belongs to one workspace, and whoever signs up becomes its Owner.
 
 > [!IMPORTANT]
-> **Who can do this:** Anyone can create a workspace; whoever creates it becomes the Owner.
+> **Who can do this:** Anyone can create a workspace. The person who creates it is the Owner, and the Owner is the only role that reaches Billing & Plans.
 
 ## Where to find it
 1. Go to **trackowl.io/signup**.
-2. Creating a workspace there makes you its Owner.
+2. Sign up with Google, or with your work email and a password of at least 8 characters.
 
 ---
 
 ## Step-by-Step Instructions
 
-Follow these steps to configure your settings properly:
-
-1. Go to your **Admin Portal** (this is where all the management happens).
-2. Look at the left-hand sidebar and click on **Organizations**.
-3. Click on the action button (like "New" or "Edit") located at the top right.
-4. Fill in the required details step-by-step.
-5. Click the **Save** button to apply your changes instantly.
+1. Complete the sign-up form.
+2. **Company** — give the workspace its details.
+3. **Finalize** — finish setup and land in the dashboard.
+4. Open **Settings → Org Settings → Governance** and set the organisation timezone before anyone tracks time.
+5. Invite your team from **People → Members**.
 
 ---
 
 ## Best Practices
 > [!TIP]
-> - Assign 'Manager' roles sparingly to maintain strict security over your organization.
-> - Create specific Teams (e.g., 'Marketing', 'Engineering') to make assigning projects much faster.
-> - Audit your active users quarterly and deactivate anyone no longer working with your company.
+> - Set the timezone first. It decides where every day starts and ends.
+> - Use a work email you will keep. The Owner account is the one that controls billing.
 
 ## Frequently Asked Questions
 
-**Q: What is the difference between an Owner and a Manager?**  
-A: Owners have full access to billing, global settings, and can delete the organization. Managers can manage teams, projects, and approve timesheets, but cannot access billing.
+**Q: Can I run two organisations from one account?**
+A: No. An account belongs to one workspace.
 
-**Q: Can I undo a user deactivation?**  
-A: Yes, you can reactivate a user at any time from the People page without losing their historical tracking data.
+**Q: Can I hand the workspace to someone else?**
+A: Ownership changes are handled by support. Email contact@trackowl.io.

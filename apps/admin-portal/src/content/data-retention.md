@@ -27,22 +27,22 @@ Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
 2. Send the request from the email address on your TrackOwl account.
-3. Find and click on the specific item you want to work on.
-4. Make your desired changes on the screen.
-5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
+3. State what you need: access to the data held, an export of it, or deletion.
+4. Send it from the email address on your TrackOwl account so the request can be matched to it.
+There is no setting to change — retention is handled by request.
 
 ---
 
 ## Best Practices
 > [!TIP]
-> - Try testing this feature with a single "Test Team" or a fake project first to understand how it works.
+> - Change one thing at a time, then check the result before moving on.
 > - Review your changes carefully before saving to prevent disruption to your team.
-> - Combine this feature with TrackOwl's powerful Reporting tools to get maximum visibility.
+> - Reports pull the same data together across members and dates. Reports needs the Premium plan.
 
 ## Frequently Asked Questions
 
 **Q: Can I undo this action once it is saved?**  
-A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
+A: Most things can be changed back. Archiving a project is reversible. Deleting is not — a deleted project, team or to-do is gone. Screenshots cannot be deleted at all.
 
 **Q: Can I do this from the desktop app?**  
 A: The desktop app tracks time, activity and screenshots. Everything else — settings, people, projects, reports and billing — is done in the dashboard in your browser. TrackOwl does not have a mobile app.
