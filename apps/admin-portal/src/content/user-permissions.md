@@ -7,19 +7,18 @@ description: Learn how to manage user permissions in TrackOwl.
 # User permissions
 
 > [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **User permissions** feature in the Users & Roles section.
+> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers User permissions in TrackOwl.
 
 ## Overview
 Understanding how to use the **User permissions** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** Owner, Admin, Manager, Viewer and Client accounts can open this page. The User role cannot — it sees an "Admin-only area" notice instead.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Users & Roles** icon in the primary sidebar navigation.
-3. Select **User permissions** from the secondary menu.
+1. Open the TrackOwl dashboard and sign in.
+2. In the left sidebar, open **People**.
+3. Select **Members** (`/dashboard/people`).
 
 ---
 
@@ -28,7 +27,7 @@ To access this feature:
 Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
-2. Look at the left-hand menu and click on **Users & Roles**.
+2. Open **People** in the left sidebar, then **Members**.
 3. Find and click on the specific item you want to work on.
 4. Make your desired changes on the screen.
 5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!

@@ -13,13 +13,11 @@ description: Learn how to manage start/stop timer in TrackOwl.
 Understanding how to use the **Start/Stop timer** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** Every role can open this page. Members see their own data; Owner, Admin, Manager and Viewer accounts can also see the rest of the team.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Time Tracking** icon in the primary sidebar navigation.
-3. Select **Start/Stop timer** from the secondary menu.
+1. Start and stop the timer in the TrackOwl desktop app.
+2. Tracked time appears under **Timesheets** in the dashboard.
 
 ---
 

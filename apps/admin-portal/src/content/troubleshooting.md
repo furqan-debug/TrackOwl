@@ -13,13 +13,11 @@ description: Learn how to manage troubleshooting in TrackOwl.
 Understanding how to use the **Troubleshooting** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** Every role can follow these steps. Only Owner and Admin accounts can change the organisation settings some fixes refer to.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Desktop App** icon in the primary sidebar navigation.
-3. Select **Troubleshooting** from the secondary menu.
+1. Most problems are solved from the desktop app itself.
+2. If they are not, the Help Center contact form reaches the support team.
 
 ---
 
@@ -27,8 +25,8 @@ To access this feature:
 
 Follow these steps to configure your settings properly:
 
-1. Navigate to the **Download** section of your profile on the website.
-2. Choose the download for your specific computer (Windows, Mac, or Linux).
+1. Open the **Download** section of the TrackOwl website.
+2. Choose the build for your computer: Windows (.exe or .msi), or macOS (Apple Silicon or Intel). There is no Linux build.
 3. Open the downloaded file and follow the simple installation prompts.
 4. Once installed, open the app and sign in with your normal TrackOwl email and password.
 
@@ -45,5 +43,5 @@ Follow these steps to configure your settings properly:
 **Q: Can I undo this action once it is saved?**  
 A: Most actions in TrackOwl are reversible, but destructive actions like Archiving or Deletion may be permanent.
 
-**Q: Is this feature available on the mobile app?**  
-A: Administrative configurations are limited to the web dashboard. Standard viewing and tracking are fully supported on mobile devices.
+**Q: Can I do this from the desktop app?**  
+A: The desktop app tracks time, activity and screenshots. Everything else — settings, people, projects, reports and billing — is done in the dashboard in your browser. TrackOwl does not have a mobile app.

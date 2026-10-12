@@ -13,13 +13,11 @@ description: Learn how to manage create organization in TrackOwl.
 Understanding how to use the **Create organization** feature is essential for maximizing operational visibility and team productivity. This tool has been engineered to provide detailed insights while remaining incredibly user-friendly.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Who can do this:** Anyone can create a workspace; whoever creates it becomes the Owner.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Organizations** icon in the primary sidebar navigation.
-3. Select **Create organization** from the secondary menu.
+1. Go to **trackowl.io/signup**.
+2. Creating a workspace there makes you its Owner.
 
 ---
 

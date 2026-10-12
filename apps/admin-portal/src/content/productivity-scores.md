@@ -7,19 +7,20 @@ description: Learn how to manage productivity scores in TrackOwl.
 # Productivity scores
 
 > [!NOTE]
-> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers how to use the **Productivity scores** feature in the Activity & App Usage section.
+> Hello and welcome! If you are a beginner, don't worry. TrackOwl is designed to be very intuitive. This step-by-step guide covers Productivity scores in TrackOwl.
 
 ## Overview
 Productivity scores provide an automated, high-level metric (from 0 to 100%) indicating how active a user was during their tracked time, based on keyboard and mouse input.
 
 > [!IMPORTANT]
-> **Required Permissions:** You must be an `Owner` or `Manager` to modify these settings. Standard users have read-only access.
+> **Plan:** This is a Premium feature. On the Basic plan the page redirects to Pricing.
+>
+> **Who can do this:** Every role can open this page. Members see their own data; Owner, Admin, Manager and Viewer accounts can also see the rest of the team.
 
 ## Where to find it
-To access this feature:
-1. Open the main **TrackOwl Dashboard**.
-2. Look for the **Activity & App Usage** icon in the primary sidebar navigation.
-3. Select **Productivity scores** from the secondary menu.
+1. Open the TrackOwl dashboard and sign in.
+2. In the left sidebar, open **Activity**.
+3. Select **Activity Blocks** (`/dashboard/activity/blocks`).
 
 ---
 
@@ -28,7 +29,7 @@ To access this feature:
 Follow these steps to configure your settings properly:
 
 1. Make sure you are logged into your TrackOwl workspace.
-2. Look at the left-hand menu and click on **Activity & App Usage**.
+2. Open **Activity** in the left sidebar, then **Activity Blocks**.
 3. Find and click on the specific item you want to work on.
 4. Make your desired changes on the screen.
 5. Always remember to click **Save** or **Update** at the bottom so you don't lose your work!
