@@ -15,7 +15,7 @@
 
 ---
 
-## 📖 Overview
+## Overview
 
 **TrackOwl** is an enterprise-grade time tracking and team productivity ecosystem designed with a focus on high performance, minimal resource consumption, and rock-solid privacy.
 
@@ -28,9 +28,9 @@ Built natively on **Tauri v2 + Rust** to replace legacy Electron trackers, Track
 
 ---
 
-## ⚡ Key Features
+## Key Features
 
-### 🖥️ Native Desktop Tracker (Tauri v2 + Rust)
+### Native Desktop Tracker (Tauri v2 + Rust)
 * **Lightweight Footprint:** Instant startup, <10 MB binary installer, and <40 MB RAM footprint.
 * **10-Minute Block Accumulation:** Hubstaff-grade time chunking that groups activity samples, mouse/keyboard movements, active windows, and URLs into unified 10-minute intervals.
 * **Native Browser URL Tracking:** Zero-overhead Windows UIAutomation COM (`IUIAutomation`) integration. Inspects active tab URLs directly through OS accessibility interfaces without spawning PowerShell processes or triggering antivirus false positives.
@@ -41,7 +41,7 @@ Built natively on **Tauri v2 + Rust** to replace legacy Electron trackers, Track
   * **Windows:** Authenticode signed using Digify Global LLC's SSL.com eSigner Cloud HSM certificate (`.exe` NSIS installer and `.msi`).
   * **macOS:** Signed with Apple Developer ID and fully notarized with Apple Ticket Stapling (`.dmg` and universal `.app`).
 
-### 📊 Admin Portal & Reporting
+### Admin Portal & Reporting
 * **Live Activity & Timeline:** Real-time visibility into who is currently tracking, active projects, and chronological screenshot timelines.
 * **Timesheets & Audit Trails:** Granular day/week/month breakdowns with company timezone normalization, daily limit warnings, and time-off tracking.
 * **App & URL Tracking Breakdown:** Insight into time spent across software applications and websites.
@@ -50,7 +50,7 @@ Built natively on **Tauri v2 + Rust** to replace legacy Electron trackers, Track
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```text
 .
@@ -94,7 +94,7 @@ Built natively on **Tauri v2 + Rust** to replace legacy Electron trackers, Track
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Domain | Technologies |
 | :--- | :--- |
@@ -106,7 +106,7 @@ Built natively on **Tauri v2 + Rust** to replace legacy Electron trackers, Track
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -162,7 +162,7 @@ VITE_SUPABASE_ANON_KEY=your-supabase-anon-key
 
 ---
 
-## 🔒 Security & Antivirus Compliance
+## Security & Antivirus Compliance
 
 TrackOwl is designed from the ground up for strict enterprise security compliance:
 
@@ -180,7 +180,7 @@ TrackOwl is designed from the ground up for strict enterprise security complianc
 
 ---
 
-## 📦 Releases & Versioning
+## Releases & Versioning
 
 Official pre-built installers for Windows and macOS are published under [GitHub Releases](https://github.com/furqan-debug/TrackOwl/releases).
 
