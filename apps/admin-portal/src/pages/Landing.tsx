@@ -771,7 +771,6 @@ export function Landing() {
                                     transition={{ duration: 0.8, delay: 0.4 }}
                                 >
                     
-
                                     {/* Mockup Content (Simulated Dashboard) */}
                                     <img src={HeroDashboard} alt="Dashboard Preview" />
                                 </motion.div>
