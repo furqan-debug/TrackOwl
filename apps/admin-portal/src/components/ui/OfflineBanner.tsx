@@ -1,13 +1,27 @@
 import { WifiOff } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
+
+/**
+ * Pages where the warning has nothing to say.
+ *
+ * The marketing and policy pages save nothing and show no live figures, so
+ * "nothing will be saved, and the figures on screen may be out of date" is
+ * noise there — it reads as a fault in a page that is working perfectly well.
+ * Everywhere else keeps it: signing in, accepting an invite and resetting a
+ * password all need the network, and the dashboard shows figures that do go
+ * stale.
+ */
+const PUBLIC_PATHS = ['/', '/privacy', '/terms', '/security', '/about'];
 
 /**
  * Says so when the connection has gone.
  *
- * Mounted once, at the root, so it covers every page including sign-in and
- * onboarding — a page that loaded before the connection dropped carries on
- * looking perfectly healthy otherwise.
+ * Mounted once, at the root, so it covers every page that can act on the
+ * network — sign-in, onboarding and the whole dashboard. A page that loaded
+ * before the connection dropped carries on looking perfectly healthy
+ * otherwise. The marketing pages are excluded; see PUBLIC_PATHS.
  *
  * Fixed to the top and above everything, but it does not take the pointer:
  * reading a page while offline is fine, and the banner should not be in the
@@ -15,10 +29,13 @@ import { useOnlineStatus } from '../../hooks/useOnlineStatus';
  */
 export function OfflineBanner() {
     const online = useOnlineStatus();
+    const { pathname } = useLocation();
+
+    const onPublicPage = PUBLIC_PATHS.includes(pathname);
 
     return (
         <AnimatePresence>
-            {!online && (
+            {!online && !onPublicPage && (
                 <motion.div
                     role="status"
                     aria-live="polite"
