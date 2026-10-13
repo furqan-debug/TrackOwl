@@ -526,7 +526,7 @@ function FAQsAccordion() {
     },
     {
       q: "Is my tracking data secure?",
-      a: "Yes. All data transmitted between the desktop app and our servers is encrypted in transit over HTTPS/TLS. Data at rest is stored in secure, isolated databases. We do not track keystrokes (only counts) and screens can be optionally blurred under company settings."
+      a: "Yes. All data transmitted between the desktop app and our servers is encrypted in transit over HTTPS/TLS. Data at rest is stored in secure, isolated databases. We do not track keystrokes (only counts)."
     },
     {
       q: "How do I update the application?",
