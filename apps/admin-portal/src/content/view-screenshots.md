@@ -50,10 +50,7 @@ Above the grid, four figures summarise the day: **Clicks**, **Keys**, **Duration
 ## Frequently Asked Questions
 
 **Q: Can I delete a capture?**
-A: No. Screenshots cannot be deleted. If captures should not be readable, an **Owner** or **Admin** can turn on Privacy Masking under **Settings → Org Settings → Monitoring**, which blurs every capture as it is taken.
-
-**Q: Why are some captures blurred?**
-A: Privacy Masking is on for your organisation.
+A: No. Screenshots cannot be deleted from the dashboard.
 
 **Q: Can I do this from the desktop app?**
 A: No. The desktop app takes the captures; you view them in the dashboard in your browser.

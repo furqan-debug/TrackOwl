@@ -43,8 +43,5 @@ Every capture on the Screenshots page can be selected. Once you have a selection
 **Q: Can I delete a screenshot?**
 A: No. Screenshots are a permanent part of the tracked session record. If you need captures removed entirely, that is a data deletion request: email contact@trackowl.io.
 
-**Q: Can I stop screenshots being readable instead?**
-A: Yes. Turn on **Privacy Masking** under **Settings → Org Settings → Monitoring** and every capture is blurred.
-
 **Q: Can I do this from the desktop app?**
 A: No. The desktop app takes the captures; viewing and downloading them is done in the dashboard in your browser.
