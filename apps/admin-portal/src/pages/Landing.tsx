@@ -856,9 +856,17 @@ export function Landing() {
                 <section id="showcase" className="py-24 lg:py-32 bg-white overflow-hidden">
                     <div className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
                         <div className="lg:col-span-7 relative">
+                            {/* The owl, laptop and plant are one flattened image,
+                                so there is no owl to move on its own. Growing
+                                from the bottom edge instead of the centre gets
+                                the same read: the laptop's feet stay planted and
+                                everything above travels, so the owl at the top
+                                rises furthest and appears to lift out of the
+                                frame. No second asset, and nothing can clip. */}
                             <motion.div
-                                whileHover={{ scale: 1.02 }}
+                                whileHover={{ scale: 1.035, y: -6 }}
                                 transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+                                className="origin-bottom will-change-transform"
                             >
                                 <img src={ShowcaseDashboard} alt="Platform Showcase" className="w-full h-auto object-contain block" />
                             </motion.div>
