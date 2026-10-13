@@ -769,19 +769,11 @@ export function Landing() {
                                     initial={{ opacity: 0, y: 40, rotateY: 8 }}
                                     animate={{ opacity: 1, y: 0, rotateY: 0 }}
                                     transition={{ duration: 0.8, delay: 0.4 }}
-                                    className="relative rounded-2xl sm:rounded-3xl lg:rounded-[2rem] border-[4px] sm:border-[6px] border-slate-800/90 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.7)] lg:shadow-[0_35px_80px_-20px_rgba(0,10,35,0.85)] bg-slate-900 overflow-hidden w-full"
                                 >
-                                    {/* Browser-like Header */}
-                                    <div className="h-9 sm:h-11 bg-slate-800/90 flex items-center px-4 gap-2 border-b border-white/5">
-                                        <div className="flex gap-1.5">
-                                            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-                                            <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-                                        </div>
-                                    </div>
+                    
 
                                     {/* Mockup Content (Simulated Dashboard) */}
-                                    <img src={HeroDashboard} alt="Dashboard Preview" className="w-full h-auto object-contain block border-t border-white/10" />
+                                    <img src={HeroDashboard} alt="Dashboard Preview" />
                                 </motion.div>
                             </motion.div>
                         </div>
