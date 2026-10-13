@@ -872,7 +872,7 @@ export function Landing() {
                                     aria-hidden="true"
                                     variants={{ rest: { y: 0 }, lift: { y: -34 } }}
                                     transition={{ type: 'spring', stiffness: 220, damping: 20 }}
-                                    className="absolute left-[25%] top-[3%] w-[32%] h-auto z-0 will-change-transform pointer-events-none"
+                                    className="absolute left-[24%] top-[11%] w-[34%] h-auto z-0 will-change-transform pointer-events-none"
                                 />
                                 <motion.img
                                     src={ShowcaseLaptop}
