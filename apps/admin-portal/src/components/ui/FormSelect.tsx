@@ -244,7 +244,11 @@ export function FormSelect({
                         </div>
                     )}
 
-                    <span className="truncate">
+                    {/* A placeholder is the empty option, whose value is
+                        falsy. Drawn in the same weight as a real choice it
+                        reads as one, which is how a required field came to
+                        look already filled in. */}
+                    <span className={clsx('truncate', !value && 'text-text-muted font-medium')}>
                         {activeLabel}
                     </span>
 
