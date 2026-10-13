@@ -671,7 +671,7 @@ export function Landing() {
 
             <main className="relative z-10">
                 {/* HERO SECTION - DARK NAVY */}
-                <section className="bg-[#001338] relative pt-28 sm:pt-32 lg:pt-36 xl:pt-40 pb-20 sm:pb-24 lg:pb-32 overflow-hidden">
+                <section className="bg-[#001338] relative pt-28 sm:pt-32 lg:pt-36 xl:pt-18 pb-20 sm:pb-24 lg:pb-32 overflow-hidden">
                     {/* Background glowing effects */}
                     <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#002766] blur-[150px] rounded-full pointer-events-none" />
                     <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[150px] rounded-full pointer-events-none" />
@@ -758,7 +758,7 @@ export function Landing() {
                         </div>
 
                         {/* Hero Dashboard Mockup Container */}
-                        <div className="col-span-1 lg:col-span-7 xl:col-span-7 relative z-20 mt-8 lg:mt-0 w-full min-w-0 flex justify-center lg:justify-end">
+                        <div className="col-span-1 lg:col-span-7 xl:col-span-7 relative z-20 mt-8 lg:mt-5 w-full min-w-0 flex justify-center lg:justify-end">
                             {/* Hover scale lives on its own wrapper so it never inherits the entrance delay. */}
                             <motion.div
                                 whileHover={{ scale: 1.02 }}
@@ -859,7 +859,6 @@ export function Landing() {
                             <motion.div
                                 whileHover={{ scale: 1.02 }}
                                 transition={{ type: 'spring', stiffness: 220, damping: 22 }}
-                                className="will-change-transform rounded-2xl lg:rounded-[2rem] border border-slate-200 bg-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.12)] overflow-hidden flex"
                             >
                                 <img src={ShowcaseDashboard} alt="Platform Showcase" className="w-full h-auto object-contain block" />
                             </motion.div>
