@@ -40,7 +40,8 @@ import { twMerge } from 'tailwind-merge';
 
 import HeaderLogo from '../assets/branding/header-2.svg';
 import HeroDashboard from '../assets/branding/hero-dashboard.png';
-import ShowcaseDashboard from '../assets/branding/showcase-dashboard.png';
+import ShowcaseLaptop from '../assets/branding/showcase-laptop.png';
+import ShowcaseOwl from '../assets/branding/icon.png';
 import { Footer } from '../components/Footer';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
 
@@ -856,19 +857,28 @@ export function Landing() {
                 <section id="showcase" className="py-24 lg:py-32 bg-white overflow-hidden">
                     <div className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
                         <div className="lg:col-span-7 relative">
-                            {/* The owl, laptop and plant are one flattened image,
-                                so there is no owl to move on its own. Growing
-                                from the bottom edge instead of the centre gets
-                                the same read: the laptop's feet stay planted and
-                                everything above travels, so the owl at the top
-                                rises furthest and appears to lift out of the
-                                frame. No second asset, and nothing can clip. */}
-                            <motion.div
-                                whileHover={{ scale: 1.035, y: -6 }}
-                                transition={{ type: 'spring', stiffness: 220, damping: 22 }}
-                                className="origin-bottom will-change-transform"
-                            >
-                                <img src={ShowcaseDashboard} alt="Platform Showcase" className="w-full h-auto object-contain block" />
+                            {/* The owl is its own layer now. It used to be baked
+                                into the showcase image with the laptop and the
+                                plant, so nothing could move it on its own — the
+                                owl has been cleared out of that image and is
+                                drawn here instead, behind the laptop so its lower
+                                body stays tucked out of sight. Only the owl
+                                responds to hover; the laptop and plant do not
+                                move. */}
+                            <motion.div initial="rest" whileHover="lift" animate="rest" className="relative">
+                                <motion.img
+                                    src={ShowcaseOwl}
+                                    alt=""
+                                    aria-hidden="true"
+                                    variants={{ rest: { y: 0 }, lift: { y: -26 } }}
+                                    transition={{ type: 'spring', stiffness: 220, damping: 20 }}
+                                    className="absolute left-[25%] top-[3%] w-[32%] h-auto z-0 will-change-transform pointer-events-none"
+                                />
+                                <img
+                                    src={ShowcaseLaptop}
+                                    alt="Platform Showcase"
+                                    className="relative z-10 w-full h-auto object-contain block"
+                                />
                             </motion.div>
                         </div>
 
