@@ -856,9 +856,15 @@ export function Landing() {
                 <section id="showcase" className="py-24 lg:py-32 bg-white overflow-hidden">
                     <div className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
                         <div className="lg:col-span-7 relative">
+                            {/* The owl is part of the showcase image, so lifting
+                                it means lifting the whole composite. The scale
+                                is untouched; the same spring carries both, so
+                                the rise and the grow land together rather than
+                                reading as two effects. */}
                             <motion.div
-                                whileHover={{ scale: 1.02 }}
+                                whileHover={{ scale: 1.02, y: -14 }}
                                 transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+                                className="will-change-transform"
                             >
                                 <img src={ShowcaseDashboard} alt="Platform Showcase" className="w-full h-auto object-contain block" />
                             </motion.div>
