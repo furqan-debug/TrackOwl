@@ -870,14 +870,16 @@ export function Landing() {
                                     src={ShowcaseOwl}
                                     alt=""
                                     aria-hidden="true"
-                                    variants={{ rest: { y: 0 }, lift: { y: -26 } }}
+                                    variants={{ rest: { y: 0 }, lift: { y: -34 } }}
                                     transition={{ type: 'spring', stiffness: 220, damping: 20 }}
                                     className="absolute left-[25%] top-[3%] w-[32%] h-auto z-0 will-change-transform pointer-events-none"
                                 />
-                                <img
+                                <motion.img
                                     src={ShowcaseLaptop}
                                     alt="Platform Showcase"
-                                    className="relative z-10 w-full h-auto object-contain block"
+                                    variants={{ rest: { scale: 1 }, lift: { scale: 1.02 } }}
+                                    transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+                                    className="relative z-10 w-full h-auto object-contain block origin-bottom will-change-transform"
                                 />
                             </motion.div>
                         </div>
