@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import {
-    Save, CheckCircle, Database, Activity,
+    Save, CheckCircle, Database,
     ShieldCheck, Mail, HardDrive, Loader2, ChevronDown, Check
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -17,7 +17,6 @@ interface AppSettings {
     screenshotIntervalMin: number;
     screenshotIntervalMax: number;
     idleThresholdSeconds: number;
-    screenshotBlur: boolean;
     trackUrls: boolean;
     trackApps: boolean;
     notifyIdle: boolean;
@@ -31,7 +30,6 @@ const DEFAULTS: AppSettings = {
     screenshotIntervalMin: 3,
     screenshotIntervalMax: 10,
     idleThresholdSeconds: 300,
-    screenshotBlur: false,
     trackUrls: true,
     trackApps: true,
     notifyIdle: true,
@@ -41,7 +39,7 @@ const DEFAULTS: AppSettings = {
     orgTimezone: 'UTC',
 };
 
-type SettingCategory = 'governance' | 'monitoring' | 'telemetry' | 'notifications' | 'system';
+type SettingCategory = 'governance' | 'telemetry' | 'notifications' | 'system';
 
 export function SettingsPage() {
     const { profile } = useAuth();
@@ -153,7 +151,6 @@ export function SettingsPage() {
 
     const categories: { id: SettingCategory; label: string; icon: any }[] = [
         { id: 'governance', label: 'Governance', icon: ShieldCheck },
-        { id: 'monitoring', label: 'Monitoring', icon: Activity },
         { id: 'telemetry', label: 'Telemetry', icon: Database },
         { id: 'notifications', label: 'Notifications', icon: Mail },
         { id: 'system', label: 'System', icon: HardDrive },
@@ -279,22 +276,6 @@ export function SettingsPage() {
                                     ]}
                                     onChange={v => update('orgTimezone', v)}
                                 />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Monitoring Section */}
-                    {activeCategory === 'monitoring' && (
-                        <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2">
-                            <SectionHeading title="Visual Monitoring" subtitle="Settings for automated proof-of-work captures." />
-                            <div className="space-y-8">
-                                <ToggleControl
-                                    label="Privacy Masking"
-                                    description="Apply Gaussian blur to all captured screenshots by default."
-                                    value={settings.screenshotBlur}
-                                    onChange={v => update('screenshotBlur', v)}
-                                />
-
                             </div>
                         </div>
                     )}

@@ -626,41 +626,41 @@ export function Landing() {
                     ? "bg-[#001338]/95 backdrop-blur-xl border-b border-white/10 py-2 sm:py-3 shadow-2xl"
                     : "bg-transparent border-transparent py-3 sm:py-5"
             )}>
-                <nav className="mx-auto flex max-w-[1400px] h-14 sm:h-20 items-center justify-between px-4 sm:px-6 lg:px-8 relative">
+                <nav className="mx-auto flex max-w-[1560px] 2xl:max-w-[1680px] h-16 sm:h-20 items-center justify-between px-6 sm:px-8 lg:px-12 xl:px-16 relative">
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         className="flex items-center gap-3 cursor-pointer group"
                         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                     >
-                        <img src={HeaderLogo} alt="TrackOwl" className="h-8 sm:h-12 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] group-hover:scale-105 transition-transform" />
+                        <img src={HeaderLogo} alt="TrackOwl" className="h-9 sm:h-11 xl:h-12 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] group-hover:scale-105 transition-transform" />
                     </motion.div>
 
-                    <div className="hidden xl:flex items-center gap-8">
-                        <a href="#features" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">Features</a>
-                        <a href="#showcase" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">Solutions</a>
-                        <a href="#industries" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">Industries</a>
-                        <a href="#how-it-works" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">How it works</a>
-                        <a href="#pricing" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">Pricing</a>
-                        <a href="#faq" className="text-sm font-medium text-slate-300 hover:text-white hover:scale-102 tracking-wide transition-all">FAQs</a>
+                    <div className="hidden xl:flex items-center gap-8 2xl:gap-10">
+                        <a href="#features" className="text-[15px] 2xl:text-base font-semibold text-slate-200 hover:text-white hover:scale-102 tracking-wide transition-all">Features</a>
+                        <a href="#showcase" className="text-[15px] 2xl:text-base font-semibold text-slate-200 hover:text-white hover:scale-102 tracking-wide transition-all">Solutions</a>
+                        <a href="#industries" className="text-[15px] 2xl:text-base font-semibold text-slate-200 hover:text-white hover:scale-102 tracking-wide transition-all">Industries</a>
+                        <a href="#how-it-works" className="text-[15px] 2xl:text-base font-semibold text-slate-200 hover:text-white hover:scale-102 tracking-wide transition-all">How it works</a>
+                        <a href="#pricing" className="text-[15px] 2xl:text-base font-semibold text-slate-200 hover:text-white hover:scale-102 tracking-wide transition-all">Pricing</a>
+                        <a href="#faq" className="text-[15px] 2xl:text-base font-semibold text-slate-200 hover:text-white hover:scale-102 tracking-wide transition-all">FAQs</a>
                     </div>
 
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6 sm:gap-7">
                         <a
                             href="#download"
-                            className="hidden lg:flex items-center gap-2 text-sm font-semibold text-slate-300 hover:text-white transition-colors"
+                            className="hidden lg:flex items-center gap-2 text-[15px] font-semibold text-slate-200 hover:text-white transition-colors"
                         >
                             <Download className="w-4 h-4" /> Download
                         </a>
                         <button
                             onClick={() => navigate('/login')}
-                            className="text-sm font-semibold text-slate-300 hover:text-white cursor-pointer transition-colors"
+                            className="text-[15px] font-semibold text-slate-200 hover:text-white cursor-pointer transition-colors"
                         >
                             Log in
                         </button>
                         <button
                             onClick={() => navigate('/signup')}
-                            className="group relative overflow-hidden px-5 sm:px-6 py-2 sm:py-2.5 bg-[#facc15] text-[#001338] text-sm sm:text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] cursor-pointer transition-all hover:scale-105 active:scale-95"
+                            className="group relative overflow-hidden px-6 sm:px-7 py-2.5 sm:py-3 bg-[#facc15] text-[#001338] text-[15px] sm:text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.4)] cursor-pointer transition-all hover:scale-105 active:scale-95"
                         >
                             <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
                             <span className="relative z-10 transition-colors duration-300 delay-700">Start free trial</span>
@@ -671,19 +671,19 @@ export function Landing() {
 
             <main className="relative z-10">
                 {/* HERO SECTION - DARK NAVY */}
-                <section className="bg-[#001338] relative pt-36 lg:pt-48 pb-32 lg:pb-56 overflow-hidden">
+                <section className="bg-[#001338] relative pt-28 sm:pt-32 lg:pt-36 xl:pt-18 pb-20 sm:pb-24 lg:pb-32 overflow-hidden">
                     {/* Background glowing effects */}
                     <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#002766] blur-[150px] rounded-full pointer-events-none" />
                     <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[150px] rounded-full pointer-events-none" />
 
-                    <div className="mx-auto max-w-[1400px] px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center relative z-10 w-full">
+                    <div className="mx-auto max-w-[1560px] 2xl:max-w-[1680px] px-6 sm:px-8 lg:px-12 xl:px-16 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-10 xl:gap-14 items-center relative z-10 w-full">
 
                         {/* Hero Text Content */}
-                        <div className="col-span-1 lg:col-span-5 flex flex-col items-start text-left w-full min-w-0">
+                        <div className="col-span-1 lg:col-span-5 xl:col-span-5 flex flex-col items-start text-left w-full min-w-0">
                             <motion.div
                                 initial={{ opacity: 0, y: -20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#facc15]/10 border border-[#facc15]/20 text-sm font-bold text-[#facc15] mb-6"
+                                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#facc15]/10 border border-[#facc15]/20 text-xs sm:text-sm font-bold text-[#facc15] mb-5 tracking-wide"
                             >
                                 #1 workforce analytics platform
                             </motion.div>
@@ -692,10 +692,10 @@ export function Landing() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="text-4xl sm:text-5xl lg:text-[64px] font-extrabold tracking-normal leading-[1.15] text-white mb-6"
+                                className="text-4xl sm:text-5xl lg:text-[56px] xl:text-[68px] 2xl:text-[76px] font-extrabold tracking-tight leading-[1.08] text-white mb-6"
                             >
                                 Time tracking<br />built for<br />
-                                <span className="text-[#facc15] block mt-2 min-h-[75px] sm:min-h-[85px] lg:min-h-[110px]">
+                                <span className="text-[#facc15] block mt-1.5 sm:mt-2 min-h-[52px] sm:min-h-[64px] lg:min-h-[74px] xl:min-h-[88px] 2xl:min-h-[98px]">
                                     <AnimatePresence mode="wait">
                                         <motion.span
                                             key={currentSlide}
@@ -715,7 +715,7 @@ export function Landing() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.2 }}
-                                className="text-base sm:text-lg text-slate-300/90 leading-relaxed mb-8 max-w-lg font-normal tracking-wide"
+                                className="text-base sm:text-lg xl:text-[19px] text-slate-300/90 leading-relaxed mb-8 max-w-xl font-normal tracking-wide"
                             >
                                 TrackOwl™ helps businesses monitor productivity, track work hours, and gain real-time workforce visibility, without micromanagement.<br /><br />
                                 Built for remote, hybrid, and distributed teams that need operational clarity at scale.
@@ -729,7 +729,7 @@ export function Landing() {
                             >
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="group relative overflow-hidden w-full sm:w-auto px-8 py-3.5 bg-[#facc15] text-[#001338] text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                                    className="group relative overflow-hidden w-full sm:w-auto px-8 sm:px-9 py-3.5 sm:py-4 bg-[#facc15] text-[#001338] text-base font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                                 >
                                     <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
                                     <span className="relative z-10 transition-colors duration-300 delay-700">Start free trial</span>
@@ -737,7 +737,7 @@ export function Landing() {
                                 </button>
                                 <button
                                     onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
-                                    className="group relative overflow-hidden w-full sm:w-auto px-8 py-3.5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-base font-bold rounded-full transition-all active:scale-95 flex items-center justify-center">
+                                    className="group relative overflow-hidden w-full sm:w-auto px-8 sm:px-9 py-3.5 sm:py-4 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-base font-bold rounded-full transition-all active:scale-95 flex items-center justify-center cursor-pointer">
                                     <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: 'rgba(255,255,255,0.16)' }}><i /></span>
                                     <span className="relative z-10">Book a demo</span>
                                 </button>
@@ -758,30 +758,21 @@ export function Landing() {
                         </div>
 
                         {/* Hero Dashboard Mockup Container */}
-                        <div className="col-span-1 lg:col-span-7 relative lg:-mr-32 xl:-mr-48 z-20 mt-12 lg:mt-0 w-full min-w-0">
+                        <div className="col-span-1 lg:col-span-7 xl:col-span-7 relative z-20 mt-8 lg:mt-5 w-full min-w-0 flex justify-center lg:justify-end">
                             {/* Hover scale lives on its own wrapper so it never inherits the entrance delay. */}
                             <motion.div
-                                whileHover={{ scale: 1.03 }}
+                                whileHover={{ scale: 1.02 }}
                                 transition={{ type: 'spring', stiffness: 220, damping: 22 }}
-                                className="will-change-transform"
+                                className="will-change-transform w-full"
                             >
                                 <motion.div
-                                    initial={{ opacity: 0, y: 40, rotateY: 10 }}
+                                    initial={{ opacity: 0, y: 40, rotateY: 8 }}
                                     animate={{ opacity: 1, y: 0, rotateY: 0 }}
                                     transition={{ duration: 0.8, delay: 0.4 }}
-                                    className="relative rounded-[1.5rem] border-[6px] border-slate-800/80 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.6)] bg-white overflow-hidden"
                                 >
-                                    {/* Browser-like Header */}
-                                    <div className="h-10 bg-slate-800/80 flex items-center px-4 gap-2 border-b border-white/5">
-                                        <div className="flex gap-1.5">
-                                            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                                            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-                                            <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-                                        </div>
-                                    </div>
-
+                    
                                     {/* Mockup Content (Simulated Dashboard) */}
-                                    <img src={HeroDashboard} alt="Dashboard Preview" className="w-full h-auto object-cover border-t border-white/10" />
+                                    <img src={HeroDashboard} alt="Dashboard Preview" />
                                 </motion.div>
                             </motion.div>
                         </div>
@@ -789,8 +780,8 @@ export function Landing() {
                 </section>
 
                 {/* HERO METRICS OVERLAP */}
-                <div ref={metricsRef} className="relative z-30 mx-auto max-w-[1200px] px-4 -mt-12 md:-mt-14 mb-16">
-                    <div className="bg-white rounded-[2rem] md:rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.08)] py-6 md:py-8 px-6 md:px-8 flex flex-col md:flex-row items-center justify-between border border-slate-100">
+                <div ref={metricsRef} className="relative z-30 mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12 -mt-10 sm:-mt-12 lg:-mt-14 mb-16 lg:mb-24">
+                    <div className="bg-white rounded-3xl md:rounded-full shadow-[0_12px_40px_rgba(0,0,0,0.08)] py-6 md:py-7 px-8 md:px-12 flex flex-col md:flex-row items-center justify-between border border-slate-100">
                         {metrics.map((m, i) => {
                             const Icon = m.icon;
                             const appear = 0.15 + i * 0.35;
@@ -800,9 +791,9 @@ export function Landing() {
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: metricsInView ? 1 : 0 }}
                                     transition={{ duration: 0.5, delay: appear, ease: 'easeOut' }}
-                                    className="flex items-center gap-3 w-full md:w-auto justify-center md:justify-start py-3 md:py-0 border-b md:border-b-0 md:border-r border-slate-100 last:border-0 px-4"
+                                    className="flex items-center gap-3.5 w-full md:w-auto justify-center md:justify-start py-3.5 md:py-0 border-b md:border-b-0 md:border-r border-slate-100 last:border-0 px-4 xl:px-6"
                                 >
-                                    <div className={`p-2 rounded-lg bg-slate-50 ${m.color}`}>
+                                    <div className={`p-2.5 rounded-xl bg-slate-50 ${m.color}`}>
                                         {m.countTo !== undefined
                                             ? <TrendLine className="w-6 h-6" start={metricsInView} delay={appear + 0.2} />
                                             : <Icon
@@ -812,12 +803,12 @@ export function Landing() {
                                             />}
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-base font-black text-slate-900 leading-tight tabular-nums">
+                                        <span className="text-lg xl:text-xl font-black text-slate-900 leading-tight tabular-nums">
                                             {m.countTo !== undefined
                                                 ? <CountUp to={m.countTo} start={metricsInView} suffix="%" delay={appear + 0.2} duration={1.7} />
                                                 : m.title}
                                         </span>
-                                        <span className="text-xs font-semibold text-slate-500 leading-tight">{m.subtitle}</span>
+                                        <span className="text-xs sm:text-sm font-semibold text-slate-500 leading-tight">{m.subtitle}</span>
                                     </div>
                                 </motion.div>
                             );
@@ -826,19 +817,17 @@ export function Landing() {
                 </div>
 
                 {/* FEATURES SECTION */}
-                <section id="features" className="py-16 bg-slate-50">
-                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
-                        <div className="text-center max-w-3xl mx-auto mb-16">
-                            <h2 className="text-[#facc15] text-base font-black mb-3">Powerful features</h2>
-                            <h3 className="text-3xl md:text-5xl font-extrabold tracking-tight text-[#001b4d] mb-4">Powerful workforce intelligence</h3>
-                            <p className="text-lg font-medium text-slate-500">Everything you need to track, monitor, and optimize your team performance.</p>
+                <section id="features" className="py-20 lg:py-28 bg-slate-50">
+                    <div className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12">
+                        <div className="text-center max-w-3xl mx-auto mb-16 lg:mb-20">
+                            <h2 className="text-[#facc15] text-sm sm:text-base font-black tracking-wider uppercase mb-3">Powerful features</h2>
+                            <h3 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#001b4d] mb-4">Powerful workforce intelligence</h3>
+                            <p className="text-lg sm:text-xl font-medium text-slate-500">Everything you need to track, monitor, and optimize your team performance.</p>
                         </div>
 
-                        <div ref={featuresRef} className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                        <div ref={featuresRef} className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 w-full">
                             {features.map((f, i) => {
                                 const Icon = f.icon;
-                                // Row by row: both cards in a row come in together, sliding
-                                // in from their own side of the grid.
                                 const row = Math.floor(i / 2);
                                 const fromX = i % 2 === 0 ? -24 : 24;
                                 return (
@@ -847,14 +836,14 @@ export function Landing() {
                                         initial={{ opacity: 0, x: fromX }}
                                         animate={featuresInView ? { opacity: 1, x: 0 } : { opacity: 0, x: fromX }}
                                         transition={{ duration: 0.9, delay: row * 0.18, ease: [0.22, 1, 0.36, 1] }}
-                                        className="group p-6 rounded-[1.5rem] bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-[#facc15]/40 transition-[box-shadow,border-color] duration-300 flex gap-5 items-start"
+                                        className="group p-7 sm:p-8 lg:p-9 rounded-[1.75rem] bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-[#facc15]/40 transition-[box-shadow,border-color] duration-300 flex gap-6 items-start"
                                     >
-                                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 bg-[#001b4d] text-[#facc15] ring-1 ring-[#001b4d]/10 shadow-[0_6px_16px_-6px_rgba(0,27,77,0.6)] group-hover:bg-[#facc15] group-hover:text-[#001b4d] group-hover:shadow-[0_6px_18px_-6px_rgba(250,204,21,0.8)] transition-colors duration-300">
-                                            <Icon className="w-6 h-6" strokeWidth={2} />
+                                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-[#001b4d] text-[#facc15] ring-1 ring-[#001b4d]/10 shadow-[0_6px_16px_-6px_rgba(0,27,77,0.6)] group-hover:bg-[#facc15] group-hover:text-[#001b4d] group-hover:shadow-[0_6px_18px_-6px_rgba(250,204,21,0.8)] transition-colors duration-300">
+                                            <Icon className="w-7 h-7" strokeWidth={2} />
                                         </div>
                                         <div>
-                                            <h4 className="text-xl font-bold text-slate-900 mb-2">{f.title}</h4>
-                                            <p className="text-base font-medium text-slate-500 leading-relaxed text-justify">{f.desc}</p>
+                                            <h4 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">{f.title}</h4>
+                                            <p className="text-base sm:text-lg font-medium text-slate-500 leading-relaxed">{f.desc}</p>
                                         </div>
                                     </motion.div>
                                 );
@@ -864,23 +853,20 @@ export function Landing() {
                 </section>
 
                 {/* PLATFORM SHOWCASE SECTION */}
-                <section id="showcase" className="py-24 bg-white overflow-hidden">
-                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-                        {/* Reaches 40px into the column gap so the shot gains width on its right edge. */}
-                        <div className="relative lg:-mr-10">
-                            {/* The card is sized by the screenshot itself: no crop, no padding around it. */}
+                <section id="showcase" className="py-24 lg:py-32 bg-white overflow-hidden">
+                    <div className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+                        <div className="lg:col-span-7 relative">
                             <motion.div
-                                whileHover={{ scale: 1.03 }}
+                                whileHover={{ scale: 1.02 }}
                                 transition={{ type: 'spring', stiffness: 220, damping: 22 }}
-                                className="will-change-transform rounded-[1.5rem] border border-slate-200 bg-white shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] overflow-hidden flex"
                             >
-                                <img src={ShowcaseDashboard} alt="Platform Showcase" className="w-full h-auto" />
+                                <img src={ShowcaseDashboard} alt="Platform Showcase" className="w-full h-auto object-contain block" />
                             </motion.div>
                         </div>
 
-                        <div>
-                            <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-[#001b4d] mb-6 leading-tight">One platform.<br />Complete operational visibility.</h2>
-                            <p className="text-lg text-slate-500 mb-8 leading-relaxed max-w-md text-left font-normal">
+                        <div className="lg:col-span-5">
+                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#001b4d] mb-6 leading-tight">One platform.<br />Complete operational visibility.</h2>
+                            <p className="text-lg sm:text-xl text-slate-500 mb-8 leading-relaxed max-w-lg text-left font-normal">
                                 TrackOwl™ centralizes time tracking, team monitoring, analytics, screenshots, attendance, app usage, and reporting into a unified operational dashboard.
                             </p>
 
@@ -897,7 +883,7 @@ export function Landing() {
                                         <div className="w-5 h-5 rounded-full bg-[#facc15] flex items-center justify-center shrink-0 mt-0.5">
                                             <Check className="w-3.5 h-3.5 text-[#001b4d]" strokeWidth={3.5} />
                                         </div>
-                                        <span className="text-sm sm:text-base font-semibold text-slate-700 leading-tight">{hl}</span>
+                                        <span className="text-base font-semibold text-slate-700 leading-tight">{hl}</span>
                                     </div>
                                 ))}
                             </div>
@@ -906,10 +892,10 @@ export function Landing() {
                 </section>
 
                 {/* INDUSTRIES SECTION */}
-                <section id="industries" className="py-16 bg-slate-50">
-                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center">
-                        <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d] mb-20">Built for modern businesses</h2>
-                        <div ref={industriesRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-8 gap-y-12 max-w-5xl mx-auto justify-items-center">
+                <section id="industries" className="py-20 lg:py-28 bg-slate-50">
+                    <div className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12 text-center">
+                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#001b4d] mb-16 lg:mb-20">Built for modern businesses</h2>
+                        <div ref={industriesRef} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-x-6 sm:gap-x-8 gap-y-10 sm:gap-y-12 max-w-6xl mx-auto justify-items-center">
                             {industries.map((ind, i) => {
                                 const Icon = ind.icon;
                                 return (
@@ -918,12 +904,12 @@ export function Landing() {
                                         initial={{ opacity: 0, y: 16 }}
                                         animate={industriesInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 }}
                                         transition={{ duration: 0.75, delay: i * 0.08, ease: [0.22, 1, 0.36, 1] }}
-                                        className="group flex flex-col items-center gap-3"
+                                        className="group flex flex-col items-center gap-3.5"
                                     >
-                                        <div className="w-14 h-14 rounded-2xl flex items-center justify-center bg-white text-[#18315e] ring-1 ring-[#18315e]/15 shadow-[0_4px_14px_-6px_rgba(24,49,94,0.35)] group-hover:bg-[#18315e] group-hover:text-white group-hover:ring-[#18315e] group-hover:shadow-[0_8px_20px_-6px_rgba(24,49,94,0.55)] group-hover:-translate-y-1 transition-[background-color,color,box-shadow,transform] duration-300">
-                                            <Icon className="w-6 h-6" strokeWidth={1.75} />
+                                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-white text-[#18315e] ring-1 ring-[#18315e]/15 shadow-[0_4px_14px_-6px_rgba(24,49,94,0.35)] group-hover:bg-[#18315e] group-hover:text-white group-hover:ring-[#18315e] group-hover:shadow-[0_8px_20px_-6px_rgba(24,49,94,0.55)] group-hover:-translate-y-1 transition-[background-color,color,box-shadow,transform] duration-300">
+                                            <Icon className="w-7 h-7" strokeWidth={1.75} />
                                         </div>
-                                        <span className="text-sm font-bold text-[#18315e] transition-colors duration-300">{ind.name}</span>
+                                        <span className="text-sm sm:text-base font-bold text-[#18315e] transition-colors duration-300">{ind.name}</span>
                                     </motion.div>
                                 );
                             })}
@@ -932,13 +918,13 @@ export function Landing() {
                 </section>
 
                 {/* HOW IT WORKS */}
-                <section id="how-it-works" className="py-24 bg-[#001b4d]">
-                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
-                        <div className="text-center mb-16">
-                            <h2 className="text-3xl font-extrabold tracking-tight text-white">Simple setup. <span className="text-[#facc15]">Powerful insights.</span></h2>
+                <section id="how-it-works" className="py-24 lg:py-32 bg-[#001b4d]">
+                    <div className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12">
+                        <div className="text-center mb-16 lg:mb-20">
+                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-white">Simple setup. <span className="text-[#facc15]">Powerful insights.</span></h2>
                         </div>
 
-                        <div ref={stepsRef} className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+                        <div ref={stepsRef} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                             {steps.map((s, i) => {
                                 const Icon = s.icon;
                                 return (
@@ -947,7 +933,7 @@ export function Landing() {
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={stepsInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                                         transition={{ duration: 0.8, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
-                                        className="group relative flex h-full flex-col overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white p-7 shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#18315e]/25 hover:shadow-[0_18px_40px_-24px_rgba(24,49,94,0.45)] transition-[box-shadow,border-color] duration-300"
+                                        className="group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white p-8 lg:p-9 shadow-[0_1px_2px_rgba(16,24,40,0.04)] hover:border-[#18315e]/25 hover:shadow-[0_18px_40px_-24px_rgba(24,49,94,0.45)] transition-[box-shadow,border-color] duration-300"
                                     >
                                         {/* Oversized step numeral, sitting behind the content as a watermark. */}
                                         <span className="pointer-events-none absolute -right-2 -top-6 text-[7rem] font-black leading-none text-[#18315e]/[0.05] select-none">
@@ -955,16 +941,16 @@ export function Landing() {
                                         </span>
 
                                         <div className="relative flex items-center gap-4">
-                                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#18315e] text-[#facc15] shadow-[0_8px_18px_-8px_rgba(24,49,94,0.7)] group-hover:scale-105 transition-transform duration-300">
-                                                <Icon className="h-5 w-5" strokeWidth={2} />
+                                            <div className="flex h-13 w-13 shrink-0 items-center justify-center rounded-2xl bg-[#18315e] text-[#facc15] shadow-[0_8px_18px_-8px_rgba(24,49,94,0.7)] group-hover:scale-105 transition-transform duration-300">
+                                                <Icon className="h-6 w-6" strokeWidth={2} />
                                             </div>
                                             <div>
-                                                <span className="block text-[11px] font-black uppercase tracking-[0.18em] text-[#18315e]/45">Step {s.num}</span>
-                                                <h3 className="text-lg font-bold leading-snug text-[#18315e]">{s.title}</h3>
+                                                <span className="block text-xs font-black uppercase tracking-[0.18em] text-[#18315e]/45">Step {s.num}</span>
+                                                <h3 className="text-lg sm:text-xl font-bold leading-snug text-[#18315e]">{s.title}</h3>
                                             </div>
                                         </div>
 
-                                        <p className="relative mt-4 text-[15px] font-medium leading-relaxed text-slate-500">{s.desc}</p>
+                                        <p className="relative mt-4 text-base font-medium leading-relaxed text-slate-500">{s.desc}</p>
 
                                         {/* Progress rail: fills to this step's share of the six. */}
                                         {/* mt-auto pins every rail to the same baseline across the row. */}
@@ -981,25 +967,25 @@ export function Landing() {
                 </section>
 
                 {/* TESTIMONIALS */}
-                <section className="py-20 bg-slate-50">
+                <section className="py-24 lg:py-32 bg-slate-50">
                     <div
                         ref={quotesRef}
-                        className="mx-auto max-w-[1200px] px-6 lg:px-8"
+                        className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12"
                         onMouseEnter={() => setQuotesPaused(true)}
                         onMouseLeave={() => setQuotesPaused(false)}
                     >
-                        <div className="text-center mb-12">
+                        <div className="text-center mb-16">
                             <span className="text-[#facc15] text-sm font-black uppercase tracking-[0.2em]">Customer stories</span>
-                            <h2 className="mt-3 text-3xl font-extrabold tracking-tight text-[#001b4d]">What teams are saying</h2>
+                            <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#001b4d]">What teams are saying</h2>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
                             {/* Featured quote */}
                             <motion.div
                                 initial={{ opacity: 0, y: 24 }}
                                 animate={quotesInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 24 }}
                                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                                className="lg:col-span-7 relative flex flex-col overflow-hidden rounded-[2rem] bg-[#001b4d] p-8 md:p-12 text-white shadow-[0_30px_60px_-30px_rgba(0,27,77,0.7)]"
+                                className="lg:col-span-7 relative flex flex-col overflow-hidden rounded-[2rem] bg-[#001b4d] p-8 sm:p-12 lg:p-14 text-white shadow-[0_30px_60px_-30px_rgba(0,27,77,0.7)]"
                             >
                                 {/* Oversized gold quote mark behind the words. */}
                                 <span className="pointer-events-none absolute -top-16 right-2 select-none font-serif text-[16rem] leading-none text-[#facc15]/10">&rdquo;</span>
@@ -1021,10 +1007,10 @@ export function Landing() {
                                                     isActive ? "" : "pointer-events-none"
                                                 )}
                                             >
-                                                <span className="text-[11px] font-black uppercase tracking-[0.22em] text-[#facc15]">
+                                                <span className="text-xs font-black uppercase tracking-[0.22em] text-[#facc15]">
                                                     {t.highlight}
                                                 </span>
-                                                <p className="mt-5 text-xl md:text-[1.75rem] font-semibold leading-snug text-white">
+                                                <p className="mt-6 text-xl sm:text-2xl lg:text-[1.85rem] font-semibold leading-snug text-white">
                                                     {t.quote}
                                                 </p>
                                                 <div className="mt-auto flex items-center gap-4 pt-10">
@@ -1035,7 +1021,7 @@ export function Landing() {
                                                         className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-[#facc15] ring-offset-2 ring-offset-[#001b4d]"
                                                     />
                                                     <div>
-                                                        <div className="text-base font-bold text-white">{t.author}</div>
+                                                        <div className="text-base sm:text-lg font-bold text-white">{t.author}</div>
                                                         <div className="text-sm font-semibold text-white/55">{t.role}</div>
                                                     </div>
                                                 </div>
@@ -1070,7 +1056,7 @@ export function Landing() {
                                             animate={quotesInView ? { opacity: 1, x: 0 } : { opacity: 0, x: 24 }}
                                             transition={{ duration: 0.7, delay: 0.15 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
                                             className={twMerge(
-                                                "group relative flex flex-1 items-center gap-4 overflow-hidden rounded-[1.25rem] border p-5 text-left transition-[background-color,border-color,box-shadow] duration-300",
+                                                "group relative flex flex-1 items-center gap-4 overflow-hidden rounded-[1.5rem] border p-5 sm:p-6 text-left transition-[background-color,border-color,box-shadow] duration-300 cursor-pointer",
                                                 isActive
                                                     ? "border-[#18315e] bg-[#18315e] shadow-[0_16px_34px_-22px_rgba(24,49,94,0.9)]"
                                                     : "border-slate-200/80 bg-white hover:border-[#18315e]/30"
@@ -1089,19 +1075,19 @@ export function Landing() {
                                                 alt=""
                                                 loading="lazy"
                                                 className={twMerge(
-                                                    "relative z-10 h-11 w-11 shrink-0 rounded-full object-cover ring-2 transition-[box-shadow,filter] duration-300",
+                                                    "relative z-10 h-12 w-12 shrink-0 rounded-full object-cover ring-2 transition-[box-shadow,filter] duration-300",
                                                     isActive ? "ring-[#facc15]" : "ring-[#18315e]/15 grayscale group-hover:grayscale-0"
                                                 )}
                                             />
                                             <div className="relative z-10 min-w-0">
-                                                <div className={twMerge("text-sm font-bold transition-colors duration-300", isActive ? "text-white" : "text-[#18315e] group-hover:text-white")}>
+                                                <div className={twMerge("text-base font-bold transition-colors duration-300", isActive ? "text-white" : "text-[#18315e] group-hover:text-white")}>
                                                     {t.author}
                                                 </div>
-                                                <div className={twMerge("text-xs font-semibold transition-colors duration-300", isActive ? "text-white/55" : "text-slate-500 group-hover:text-white/55")}>
+                                                <div className={twMerge("text-xs sm:text-sm font-semibold transition-colors duration-300", isActive ? "text-white/55" : "text-slate-500 group-hover:text-white/55")}>
                                                     {t.role}
                                                 </div>
                                                 <p className={twMerge(
-                                                    "mt-1 truncate text-xs font-medium transition-colors duration-300",
+                                                    "mt-1 truncate text-xs sm:text-sm font-medium transition-colors duration-300",
                                                     isActive ? "text-[#facc15]" : "text-slate-400 group-hover:text-[#facc15]"
                                                 )}>
                                                     {t.highlight}
@@ -1116,22 +1102,22 @@ export function Landing() {
                 </section>
 
                 {/* SECURITY & PRIVACY SECTION */}
-                <section id="security" className="py-24 bg-white">
-                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
-                        <div className="text-center mb-10">
-                            <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d]">Security &amp; privacy</h2>
+                <section id="security" className="py-24 lg:py-32 bg-white">
+                    <div className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12">
+                        <div className="text-center mb-12 lg:mb-16">
+                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#001b4d]">Security &amp; privacy</h2>
                         </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8">
 
                             {/* Security Card - Dark */}
-                            <div className="col-span-3 rounded-[2rem] bg-[#001338] p-6 md:p-10 flex flex-col justify-center relative overflow-hidden text-white shadow-xl">
+                            <div className="col-span-1 lg:col-span-3 rounded-[2rem] bg-[#001338] p-8 sm:p-12 lg:p-14 flex flex-col justify-center relative overflow-hidden text-white shadow-xl">
                                 <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/4 opacity-20 pointer-events-none">
-                                    <Shield className="w-64 h-64 text-[#facc15]" strokeWidth={1} />
+                                    <Shield className="w-72 h-72 text-[#facc15]" strokeWidth={1} />
                                 </div>
 
-                                <h3 className="text-3xl font-extrabold tracking-tight mb-4 relative z-10">Enterprise-grade security & privacy</h3>
-                                <p className="text-lg text-slate-300 mb-8 max-w-md relative z-10 text-justify">
+                                <h3 className="text-3xl sm:text-4xl font-extrabold tracking-tight mb-4 relative z-10">Enterprise-grade security & privacy</h3>
+                                <p className="text-lg sm:text-xl text-slate-300 mb-8 max-w-lg relative z-10">
                                     TrackOwl™ is built with security, transparency, and ethical monitoring at its core.
                                 </p>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 relative z-10">
@@ -1140,7 +1126,7 @@ export function Landing() {
                                         'Secure cloud infrastructure', 'Secure data storage',
                                         'Role-based access control', 'Continuous security monitoring'
                                     ].map((s, i) => (
-                                        <div key={i} className="flex items-center gap-2">
+                                        <div key={i} className="flex items-center gap-2.5">
                                             <Check className="w-6 h-6 text-[#facc15] shrink-0" strokeWidth={3} />
                                             <span className="text-base font-bold text-slate-200">{s}</span>
                                         </div>
@@ -1149,7 +1135,7 @@ export function Landing() {
                             </div>
 
                             {/* Privacy Card - Light */}
-                            <div className="col-span-2 rounded-[2rem] bg-blue-50 border border-blue-100 p-6 md:p-10 flex flex-col justify-center relative">
+                            <div className="col-span-1 lg:col-span-2 rounded-[2rem] bg-blue-50 border border-blue-100 p-8 sm:p-12 lg:p-14 flex flex-col justify-center relative">
                                 <div className="absolute top-10 right-10 w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg">
                                     <Users className="w-10 h-10 text-blue-600" />
                                     <div className="absolute bottom-0 right-0 w-8 h-8 bg-green-500 rounded-full border-4 border-white flex items-center justify-center">
@@ -1157,8 +1143,8 @@ export function Landing() {
                                     </div>
                                 </div>
 
-                                <h3 className="text-2xl font-bold text-[#001b4d] mb-4 mt-16 lg:mt-0 max-w-[200px]">Privacy commitment</h3>
-                                <p className="text-lg text-slate-600 font-medium leading-relaxed max-w-[300px] text-justify">
+                                <h3 className="text-2xl sm:text-3xl font-bold text-[#001b4d] mb-4 mt-16 lg:mt-0 max-w-[240px]">Privacy commitment</h3>
+                                <p className="text-lg text-slate-600 font-medium leading-relaxed max-w-[340px]">
                                     Tracking-related information is visible only to authorized administrators and the associated user account owner.
                                 </p>
                             </div>
@@ -1168,64 +1154,64 @@ export function Landing() {
                 </section>
 
                 {/* PRICING SECTION */}
-                <section id="pricing" className="py-16 bg-slate-50">
-                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
-                        <div className="text-center mb-12">
-                            <h2 className="text-3xl font-extrabold tracking-tight text-[#001b4d]">Flexible plans for every team</h2>
+                <section id="pricing" className="py-20 lg:py-28 bg-slate-50">
+                    <div className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12">
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#001b4d]">Flexible plans for every team</h2>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
 
                             {/* Basic */}
-                            <div className="p-8 rounded-[1.5rem] bg-white border border-slate-200 flex flex-col h-full">
+                            <div className="p-8 lg:p-10 rounded-[1.75rem] bg-white border border-slate-200 flex flex-col h-full shadow-sm">
                                 <div className="flex-1 mb-8">
-                                    <h3 className="text-2xl font-bold text-slate-900 mb-3">Basic</h3>
+                                    <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Basic</h3>
                                     <p className="text-base font-medium text-slate-500 leading-relaxed">For small teams getting started with time tracking.</p>
                                 </div>
                                 <div className="mb-6">
-                                    <span className="text-4xl font-extrabold text-slate-900">$2.99</span>
+                                    <span className="text-4xl sm:text-5xl font-extrabold text-slate-900">$2.99</span>
                                     <span className="text-base font-bold text-slate-500"> /user</span>
                                 </div>
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-[#f8fafc] text-[#18315e] text-lg font-bold cursor-pointer border border-[#18315e]/20 hover:border-[#18315e] transition-colors shadow-sm mt-auto">
+                                    className="group relative overflow-hidden w-full py-4 rounded-xl bg-[#f8fafc] text-[#18315e] text-lg font-bold cursor-pointer border border-[#18315e]/20 hover:border-[#18315e] transition-colors shadow-sm mt-auto">
                                     <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#e2e8f0' }}><i /></span>
                                     <span className="relative z-10">Get started</span>
                                 </button>
                             </div>
 
                             {/* Premium (Most Popular) */}
-                            <div className="p-8 rounded-[1.5rem] bg-white border-2 border-blue-600 flex flex-col relative shadow-[0_10px_30px_rgba(37,99,235,0.15)] transform md:-translate-y-2 h-full mt-8 md:mt-0">
+                            <div className="p-8 lg:p-10 rounded-[1.75rem] bg-white border-2 border-blue-600 flex flex-col relative shadow-[0_15px_35px_rgba(37,99,235,0.18)] transform md:-translate-y-2 h-full mt-8 md:mt-0">
                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-[#facc15] text-[#001b4d] text-sm font-bold rounded-full tracking-wider shadow-sm border-2 border-white">
                                     Most popular
                                 </div>
                                 <div className="flex-1 mb-8 pt-2">
-                                    <h3 className="text-2xl font-bold text-slate-900 mb-3">Premium</h3>
+                                    <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Premium</h3>
                                     <p className="text-base font-medium text-slate-500 leading-relaxed pr-4">Advanced analytics and operational reporting for scaling businesses.</p>
                                 </div>
                                 <div className="mb-6">
-                                    <span className="text-4xl font-extrabold text-slate-900">$4.99</span>
+                                    <span className="text-4xl sm:text-5xl font-extrabold text-slate-900">$4.99</span>
                                     <span className="text-base font-bold text-slate-500"> /user</span>
                                 </div>
                                 <button
                                     onClick={() => navigate('/signup')}
-                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-[#facc15] text-[#001b4d] text-lg font-bold cursor-pointer transition-colors shadow-[0_10px_24px_-12px_rgba(234,179,8,0.9)] mt-auto">
+                                    className="group relative overflow-hidden w-full py-4 rounded-xl bg-[#facc15] text-[#001b4d] text-lg font-bold cursor-pointer transition-colors shadow-[0_10px_24px_-12px_rgba(234,179,8,0.9)] mt-auto">
                                     <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
                                     <span className="relative z-10">Start free trial</span>
                                 </button>
                             </div>
 
                             {/* Enterprise */}
-                            <div className="p-8 rounded-[1.5rem] bg-white border border-slate-200 flex flex-col h-full">
+                            <div className="p-8 lg:p-10 rounded-[1.75rem] bg-white border border-slate-200 flex flex-col h-full shadow-sm">
                                 <div className="flex-1 mb-8">
-                                    <h3 className="text-2xl font-bold text-slate-900 mb-3">Enterprise</h3>
+                                    <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Enterprise</h3>
                                     <p className="text-base font-medium text-slate-500 leading-relaxed">Custom infrastructure, enterprise onboarding, and large-scale workforce management solutions.</p>
                                 </div>
                                 <div className="mb-6 flex items-center h-[48px]">
-                                    <span className="text-3xl font-extrabold text-slate-900">Custom</span>
+                                    <span className="text-3xl sm:text-4xl font-extrabold text-slate-900">Custom</span>
                                 </div>
                                 <button
                                     onClick={() => { setContactType('sales'); setIsContactOpen(true); }}
-                                    className="group relative overflow-hidden w-full py-4 rounded-lg bg-[#18315e] text-white text-lg font-bold cursor-pointer transition-colors shadow-[0_10px_24px_-12px_rgba(24,49,94,0.9)] mt-auto">
+                                    className="group relative overflow-hidden w-full py-4 rounded-xl bg-[#18315e] text-white text-lg font-bold cursor-pointer transition-colors shadow-[0_10px_24px_-12px_rgba(24,49,94,0.9)] mt-auto">
                                     <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#001b4d' }}><i /></span>
                                     <span className="relative z-10">Talk to sales</span>
                                 </button>
@@ -1235,12 +1221,12 @@ export function Landing() {
                 </section>
 
                 {/* FAQ SECTION */}
-                <section id="faq" className="py-24 bg-white">
-                    <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
-                        <div className="text-center mb-12">
-                            <h2 className="text-2xl font-black text-[#001b4d]">Frequently asked questions</h2>
+                <section id="faq" className="py-24 lg:py-32 bg-white">
+                    <div className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12">
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#001b4d]">Frequently asked questions</h2>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 lg:gap-x-12 gap-y-4">
                             {/* Left Column */}
                             <div className="space-y-4">
                                 {faqs.map((_, i) => i).filter((i) => i % 2 === 0).map((i) => (
@@ -1303,7 +1289,7 @@ export function Landing() {
                 </section>
 
                 {/* DOWNLOAD SECTION */}
-                <section id="download" className="py-24 bg-[linear-gradient(165deg,#fde047_0%,#facc15_28%,#eab308_62%,#ca9a04_100%)] relative overflow-hidden">
+                <section id="download" className="py-24 lg:py-32 bg-[linear-gradient(165deg,#fde047_0%,#facc15_28%,#eab308_62%,#ca9a04_100%)] relative overflow-hidden">
                     {/* Curved top edge: the white section above sweeps down into the band. */}
                     <div aria-hidden className="pointer-events-none absolute inset-x-[-15%] -top-28 h-44 rounded-[100%] bg-white" />
 
@@ -1311,17 +1297,17 @@ export function Landing() {
                     <div className="absolute top-0 right-0 w-96 h-96 bg-white/20 rounded-full blur-3xl opacity-30 translate-x-1/3 -translate-y-1/3 pointer-events-none" />
                     <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#001b4d]/25 rounded-full blur-3xl opacity-30 -translate-x-1/3 translate-y-1/3 pointer-events-none" />
 
-                    <div className="mx-auto w-full max-w-[1400px] px-6 lg:px-8 relative z-10">
-                        <div className="text-center mb-12">
-                            <h2 className="text-4xl font-black text-[#001B4D] mb-6">Download the TrackOwl™ desktop app</h2>
-                            <p className="text-xl text-[#001B4D]/80 font-medium max-w-2xl mx-auto">
+                    <div className="mx-auto w-full max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12 relative z-10">
+                        <div className="text-center mb-16">
+                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#001B4D] mb-6">Download the TrackOwl™ desktop app</h2>
+                            <p className="text-lg sm:text-xl text-[#001B4D]/80 font-medium max-w-2xl mx-auto">
                                 The lightweight, secure desktop client your team needs to log time, capture activity, and stay productive.
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-6xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 w-full max-w-5xl mx-auto">
                             {/* Windows */}
-                            <div className="w-full bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
+                            <div className="w-full bg-white rounded-2xl p-8 lg:p-10 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
 
                                 <div className="w-16 h-16 bg-[#F5E6CA] rounded-2xl flex items-center justify-center text-[#B8860B] mb-6">
                                     <Monitor className="w-8 h-8" />
@@ -1354,7 +1340,7 @@ export function Landing() {
                             </div>
 
                             {/* Mac */}
-                            <div className="w-full bg-white rounded-2xl p-8 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
+                            <div className="w-full bg-white rounded-2xl p-8 lg:p-10 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
 
                                 <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-800 mb-6">
                                     <Monitor className="w-8 h-8" />
@@ -1393,33 +1379,33 @@ export function Landing() {
             </main>
 
             {/* FINAL CTA SECTION */}
-            <section className="bg-[#001338] py-16 md:py-24 relative z-10 border-b border-white/10 overflow-hidden">
+            <section className="bg-[#001338] py-20 lg:py-32 relative z-10 border-b border-white/10 overflow-hidden">
                 {/* Background glowing effects, same pair the hero uses */}
                 <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#002766] blur-[150px] rounded-full pointer-events-none" />
                 <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[150px] rounded-full pointer-events-none" />
 
-                <div className="mx-auto max-w-[1200px] px-6 lg:px-8 text-center flex flex-col items-center relative z-10">
-                    <img src={HeaderLogo} className="h-16 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] mb-6" alt="TrackOwl" />
-                    <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white mb-6">Gain complete workforce visibility</h2>
-                    <p className="text-2xl text-slate-300 font-medium mb-10 max-w-3xl leading-relaxed">
+                <div className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12 text-center flex flex-col items-center relative z-10">
+                    <img src={HeaderLogo} className="h-14 sm:h-16 object-contain drop-shadow-[0_0_15px_rgba(250,204,21,0.5)] mb-6" alt="TrackOwl" />
+                    <h2 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold tracking-tight text-white mb-6">Gain complete workforce visibility</h2>
+                    <p className="text-xl sm:text-2xl text-slate-300 font-medium mb-10 max-w-3xl leading-relaxed">
                         Track productivity, improve accountability, and operate with confidence using TrackOwl™.
                     </p>
 
                     <div className="flex flex-col sm:flex-row items-center gap-4 mb-8">
                         <button
                             onClick={() => navigate('/signup')}
-                            className="group relative overflow-hidden w-full sm:w-auto px-12 py-5 bg-[#facc15] text-[#001338] text-lg font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] cursor-pointer transition-all hover:scale-105 active:scale-95">
+                            className="group relative overflow-hidden w-full sm:w-auto px-10 sm:px-12 py-4 sm:py-5 bg-[#facc15] text-[#001338] text-lg font-bold rounded-full shadow-[0_4px_14px_rgba(250,204,21,0.25)] cursor-pointer transition-all hover:scale-105 active:scale-95">
                             <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#eab308' }}><i /></span>
                             <span className="relative z-10 transition-colors duration-300 delay-700">Start free trial</span>
                         </button>
                         <button
                             onClick={() => { setContactType('demo'); setIsContactOpen(true); }}
-                            className="group relative overflow-hidden w-full sm:w-auto px-12 py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold cursor-pointer rounded-full transition-all active:scale-95">
+                            className="group relative overflow-hidden w-full sm:w-auto px-10 sm:px-12 py-4 sm:py-5 bg-transparent border-2 border-white/20 hover:border-white/40 text-white text-lg font-bold cursor-pointer rounded-full transition-all active:scale-95">
                             <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: 'rgba(255,255,255,0.16)' }}><i /></span>
                             <span className="relative z-10">Schedule a demo</span>
                         </button>
                     </div>
-                    <p className="text-lg font-medium text-slate-400">Built for modern businesses managing remote teams at scale.</p>
+                    <p className="text-base sm:text-lg font-medium text-slate-400">Built for modern businesses managing remote teams at scale.</p>
                 </div>
             </section>
 

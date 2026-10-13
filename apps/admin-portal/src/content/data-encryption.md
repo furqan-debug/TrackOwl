@@ -16,7 +16,6 @@ Everything sent between the desktop app, your browser and TrackOwl travels over 
 | Control | Where |
 | --- | --- |
 | Two-factor authentication on your own account | **Settings → Security & 2FA** |
-| Blurring every screenshot before it is stored | **Settings → Org Settings → Monitoring**, Privacy Masking. **Owner** and **Admin** only. |
 | Turning app and URL tracking off | **Settings → Org Settings → Telemetry**. **Owner** and **Admin** only. |
 
 ## What TrackOwl does not record
