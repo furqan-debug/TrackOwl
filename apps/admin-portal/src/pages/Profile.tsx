@@ -258,7 +258,7 @@ export function ProfilePage() {
                                         ) : (
                                              <button 
                                                 onClick={() => fileInputRef.current?.click()}
-                                                className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/avatar:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center text-white backdrop-blur-sm cursor-pointer"
+                                                className="absolute inset-0 flex cursor-pointer flex-col items-center justify-center bg-black/60 text-white opacity-0 transition-opacity duration-200 group-hover/avatar:opacity-100"
                                             >
                                                 <Camera className="w-8 h-8 mb-2" />
                                                 <span className="text-[11px] font-black tracking-widest uppercase">Update Photo</span>
@@ -266,18 +266,13 @@ export function ProfilePage() {
                                         )}
                                     </div>
                                 </div>
-                                <div className="absolute -bottom-1 -right-1 w-10 h-10 bg-surface border border-border rounded-xl flex items-center justify-center shadow-shell-sm transition-transform duration-500">
-                                    <Diamond className="w-4 h-4 text-primary" />
-                                </div>
+                                
                             </div>
 
                             <div className="relative z-10 w-full">
                                 <h2 className="text-2xl font-black text-text-main tracking-tight mb-2 truncate px-2">{profile?.full_name || 'Anonymous User'}</h2>
-                                <div className="flex items-center justify-center gap-3 mb-5">
-                                    <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-none">Verified Identity</span>
-                                    </div>
+                                <div className="flex items-center justify-center gap-2 mb-2">
+                                    
                                 </div>
                                 <p className="text-[13px] font-medium text-text-muted leading-relaxed opacity-80 px-4">
                                     Member since {new Date(profile?.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
@@ -391,7 +386,7 @@ export function ProfilePage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between ml-1">
-                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Base Location</label>
+                                        <label className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Location</label>
                                         <button
                                             type="button"
                                             onClick={detectLocation}

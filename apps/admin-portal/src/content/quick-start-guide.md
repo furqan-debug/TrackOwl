@@ -26,7 +26,7 @@ Open **People → Members** and invite people by email, choosing a role for each
 Everyone who tracks time installs it from the **Download** section of the website: Windows or macOS. On macOS, grant Screen Recording permission so screenshots can be captured.
 
 ## 5. Decide what is recorded
-Under **Settings → Org Settings → Telemetry**, choose whether app usage, URL tracking and idle detection are on. Under **Monitoring**, turn on Privacy Masking if screenshots should be blurred.
+Under **Settings → Org Settings → Telemetry**, choose whether app usage, URL tracking and idle detection are on.
 
 ## 6. Set up the work
 Create projects under **Projects → Projects**, give them budgets if you bill against them, and add to-dos under **To-Dos**.

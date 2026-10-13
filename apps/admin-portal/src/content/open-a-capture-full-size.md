@@ -42,4 +42,4 @@ Along the top you get the member's name, the activity score for that capture, an
 A: Downloading is done from the grid, where you select the captures you want and download them together as a ZIP.
 
 **Q: Can I edit or hide part of a capture?**
-A: No. The only option is Privacy Masking, which blurs every capture for the whole organisation.
+A: No. Screenshots cannot be edited or modified after capture.

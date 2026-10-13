@@ -22,7 +22,6 @@ Account deletion requests are completed within 30 days, in line with the privacy
 ## What you can do yourself
 | Need | Where |
 | --- | --- |
-| Blur every screenshot before it is stored | **Settings → Org Settings → Monitoring** |
 | Stop recording app and site usage | **Settings → Org Settings → Telemetry** |
 | Deactivate someone so tracking stops | **People → Members** |
 

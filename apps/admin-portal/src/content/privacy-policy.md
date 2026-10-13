@@ -29,4 +29,4 @@ Tracking-related information is visible to the administrators of your organisati
 A: No. Only counts of key presses and mouse clicks, never the content.
 
 **Q: Can screenshots be blurred?**
-A: Yes. An **Owner** or **Admin** can turn on Privacy Masking under **Settings → Org Settings → Monitoring**, and every capture is blurred.
+A: No. Screenshots are captured directly as they appear on screen during active tracking.

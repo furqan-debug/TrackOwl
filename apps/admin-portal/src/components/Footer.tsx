@@ -24,7 +24,7 @@ export function Footer() {
 
     return (
         <footer className="bg-[#001338] pt-20 pb-10 relative z-10">
-            <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+            <div className="mx-auto max-w-[1440px] xl:max-w-[1520px] px-6 lg:px-12">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-16">
                     <div>
                         <h4 className="text-white font-bold mb-6 tracking-wide">Product</h4>
