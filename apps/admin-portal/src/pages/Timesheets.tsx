@@ -9,7 +9,7 @@ import {
     MoreVertical, Edit2, Trash2,
     Star, X, RotateCcw
 } from 'lucide-react';
-import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker, TimeField } from '../components/ui';
+import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker, TimeField, RefreshButton } from '../components/ui';
 import clsx from 'clsx';
 import { getGroupingDateInTz, formatDuration, manualEntryInterval, utcToZonedWallClock, zonedWallClockToUtc } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
@@ -115,6 +115,7 @@ export function Timesheets() {
     };
 
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [selectedDate, setSelectedDate] = useState(() => {
         const tzDateStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
         return new Date(tzDateStr + 'T12:00:00');
@@ -267,6 +268,19 @@ export function Timesheets() {
         });
         setProjectMembersMap(map);
     }
+
+    const handleRefresh = async () => {
+        setRefreshing(true);
+        try {
+            await Promise.all([
+                fetchMembers(),
+                fetchProjects(),
+                fetchTimesheets(true)
+            ]);
+        } finally {
+            setRefreshing(false);
+        }
+    };
 
     async function fetchTimesheets(forceRefresh = false) {
         // orgTimezone is part of the key: with activeTimezone 'Org Local' the same
@@ -673,9 +687,9 @@ export function Timesheets() {
 
     return (
         <div className="flex flex-col min-h-screen bg-main font-sans text-text-main">
-            <header className="px-4 pt-4 pb-2 md:px-10 md:pt-10 md:pb-2 flex flex-col gap-4 shrink-0">
-                {/* Row 1: Heading & Subtitle on left, Date navigation on right */}
-                <div className="flex flex-col min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between gap-4">
+            <header className="px-4 pt-4 pb-2 md:px-10 md:pt-10 md:pb-2 flex flex-col min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-between gap-4 shrink-0">
+                {/* Left side: Heading & View switcher */}
+                <div className="flex flex-col gap-4 min-w-0">
                     <div className="space-y-1">
                         <div className="flex items-center gap-4">
                             <h1 className="text-3xl md:text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
@@ -695,8 +709,98 @@ export function Timesheets() {
                         </p>
                     </div>
 
-                    {/* Date navigation */}
-                    <div className="flex items-center justify-start min-[900px]:justify-end">
+                    {/* View switcher */}
+                    <div className="flex bg-surface p-1 rounded-xl border border-border h-12 w-full min-[900px]:w-auto min-w-0 shadow-shell-sm">
+                        {(['daily', 'weekly', 'calendar'] as const).map(mode => (
+                            <button
+                                key={mode}
+                                onClick={() => setViewMode(mode)}
+                                className={clsx(
+                                    "flex-1 px-4 min-[900px]:px-8 rounded-lg text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
+                                    viewMode === mode
+                                        ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
+                                        : "text-text-muted opacity-70 hover:opacity-100 hover:text-text-main"
+                                )}
+                            >
+                                {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Right side: Action buttons & Date navigation */}
+                <div className="flex flex-col gap-3 min-w-0 w-full min-[900px]:w-auto items-stretch min-[900px]:items-end">
+                    {/* Top row: Filter & Add time on the left, Refresh on the right */}
+                    <div className="flex items-center justify-between gap-3 w-full">
+                        <div className="flex items-center gap-2.5">
+                            {/* Filter button */}
+                            <button
+                                onClick={() => setShowFilters(true)}
+                                className={clsx(
+                                    "flex items-center justify-center gap-2 h-12 rounded-xl text-[13px] font-bold shadow-shell-sm transition-all whitespace-nowrap border",
+                                    !isRep && !isViewer ? "w-[120px] px-3" : "px-4",
+                                    hasActiveFilters
+                                        ? "bg-primary/10 border-primary text-primary"
+                                        : "bg-surface border-border text-text-muted hover:bg-surface-hover hover:text-text-main"
+                                )}
+                                title="Filter timesheets"
+                            >
+                                <Filter className="w-4 h-4 shrink-0" />
+                                <span>Filter</span>
+                                {activeFiltersCount > 0 && (
+                                    <span className="flex items-center justify-center min-w-[1px] h-2 px-0.5 text-[11px] font-bold rounded-full bg-primary text-primary-contrast ml-0.5">
+                                        {activeFiltersCount}
+                                    </span>
+                                )}
+                            </button>
+
+                            {/* Add time, for non-reps and non-viewers */}
+                            {!isRep && !isViewer && (
+                                <button
+                                    onClick={() => {
+                                        const activeMember = (selectedMember && selectedMember !== 'all')
+                                            ? members.find(m => m.id === selectedMember || m.auth_user_id === selectedMember)
+                                            : (isRep ? members.find(m => m.id === profile?.id || m.auth_user_id === profile?.id) : null);
+                                        const prefilledUserId = activeMember ? activeMember.id : '';
+
+                                        const memberProjects = prefilledUserId ? (projectMembersMap[prefilledUserId] || []) : [];
+                                        let prefilledProjectId = '';
+                                        if (filterProjectId && filterProjectId !== 'all' && memberProjects.includes(filterProjectId)) {
+                                            prefilledProjectId = filterProjectId;
+                                        } else if (memberProjects.length === 1) {
+                                            prefilledProjectId = memberProjects[0];
+                                        }
+
+                                        const currentDateStr = getGroupingDateInTz(selectedDate, undefined) || new Date().toISOString().split('T')[0];
+
+                                        setAddTimeData({
+                                            projectId: prefilledProjectId,
+                                            userId: prefilledUserId,
+                                            date: currentDateStr,
+                                            startTime: '09:00',
+                                            endTime: '17:00'
+                                        });
+                                        setShowAddTime(true);
+                                    }}
+                                    className="w-[120px] flex items-center justify-center gap-2 px-3 h-12 bg-primary text-white rounded-xl text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all whitespace-nowrap"
+                                >
+                                    <Plus className="w-4 h-4 shrink-0" />
+                                    <span>Add time</span>
+                                </button>
+                            )}
+                        </div>
+
+                        {/* Refresh button on the right */}
+                        <RefreshButton
+                            onClick={handleRefresh}
+                            refreshing={refreshing}
+                            label="Refresh timesheets"
+                            className="refresh-btn--lg !cursor-pointer hover:text-text-main hover:bg-surface-hover shadow-shell-sm"
+                        />
+                    </div>
+
+                    {/* Bottom row: Date navigation (centered) */}
+                    <div className="flex items-center justify-center w-full">
                         <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-12 w-full sm:w-auto min-w-[240px]">
                             <button
                                 onClick={() => navigateDate(-1)}
@@ -726,85 +830,6 @@ export function Timesheets() {
                                 <ChevronRight className="w-5 h-5" />
                             </button>
                         </div>
-                    </div>
-                </div>
-
-                {/* Row 2: View modes on left, Filter & Add time buttons on right */}
-                <div className="flex flex-col min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between gap-4">
-                    {/* View switcher */}
-                    <div className="flex bg-surface p-1 rounded-xl border border-border h-12 w-full min-[900px]:w-auto min-w-0 shadow-shell-sm">
-                        {(['daily', 'weekly', 'calendar'] as const).map(mode => (
-                            <button
-                                key={mode}
-                                onClick={() => setViewMode(mode)}
-                                className={clsx(
-                                    "flex-1 px-4 min-[900px]:px-8 rounded-lg text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
-                                    viewMode === mode
-                                        ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
-                                        : "text-text-muted opacity-70 hover:opacity-100 hover:text-text-main"
-                                )}
-                            >
-                                {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* Filter & Add time buttons */}
-                    <div className="w-full min-[900px]:w-auto min-w-0 flex items-center gap-3 justify-start min-[900px]:justify-end">
-                        {/* Filter button */}
-                        <button
-                            onClick={() => setShowFilters(true)}
-                            className={clsx(
-                                "flex items-center justify-center gap-2 px-4 min-[900px]:px-6 h-12 rounded-xl text-[13px] font-bold shadow-shell-sm transition-all whitespace-nowrap min-w-0 border",
-                                hasActiveFilters
-                                    ? "bg-primary/10 border-primary text-primary"
-                                    : "bg-surface border-border text-text-muted hover:bg-surface-hover hover:text-text-main"
-                            )}
-                            title="Filter timesheets"
-                        >
-                            <Filter className="w-4 h-4 shrink-0" />
-                            <span>Filter</span>
-                            {activeFiltersCount > 0 && (
-                                <span className="flex items-center justify-center min-w-[1px] h-2 px-0.5 text-[11px] font-bold rounded-full bg-primary text-primary-contrast ml-0.5">
-                                    {activeFiltersCount}
-                                </span>
-                            )}
-                        </button>
-
-                        {/* Add time, for non-reps and non-viewers */}
-                        {!isRep && !isViewer && (
-                            <button
-                                onClick={() => {
-                                    const activeMember = (selectedMember && selectedMember !== 'all')
-                                        ? members.find(m => m.id === selectedMember || m.auth_user_id === selectedMember)
-                                        : (isRep ? members.find(m => m.id === profile?.id || m.auth_user_id === profile?.id) : null);
-                                    const prefilledUserId = activeMember ? activeMember.id : '';
-
-                                    const memberProjects = prefilledUserId ? (projectMembersMap[prefilledUserId] || []) : [];
-                                    let prefilledProjectId = '';
-                                    if (filterProjectId && filterProjectId !== 'all' && memberProjects.includes(filterProjectId)) {
-                                        prefilledProjectId = filterProjectId;
-                                    } else if (memberProjects.length === 1) {
-                                        prefilledProjectId = memberProjects[0];
-                                    }
-
-                                    const currentDateStr = getGroupingDateInTz(selectedDate, undefined) || new Date().toISOString().split('T')[0];
-
-                                    setAddTimeData({
-                                        projectId: prefilledProjectId,
-                                        userId: prefilledUserId,
-                                        date: currentDateStr,
-                                        startTime: '09:00',
-                                        endTime: '17:00'
-                                    });
-                                    setShowAddTime(true);
-                                }}
-                                className="flex items-center justify-center gap-2 px-4 min-[900px]:px-6 h-12 bg-primary text-white rounded-xl text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all whitespace-nowrap min-w-0"
-                            >
-                                <Plus className="w-5 h-5 shrink-0" />
-                                <span>Add time</span>
-                            </button>
-                        )}
                     </div>
                 </div>
             </header>
@@ -983,7 +1008,7 @@ export function Timesheets() {
 
                     {/* Time / Range Selector */}
                     <div className="space-y-1.5">
-                        <label className="text-[12px] font-bold text-text-muted">Time / Range Selector</label>
+                        <label className="text-[12px] font-bold text-text-muted">Calendar</label>
                         <div className="flex items-center gap-2">
                             <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-11 flex-1 min-w-0">
                                 <button
