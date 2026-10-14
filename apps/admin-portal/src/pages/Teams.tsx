@@ -243,11 +243,11 @@ export function Teams() {
             description="Manage organizational groups, assign members, and set lead permissions."
             actions={
                 <div className="flex items-center gap-2 sm:gap-4">
-                    <div className="flex bg-surface-hover p-1 rounded-lg border border-border shrink-0">
+                    <div className="flex bg-surface-hover p-1 rounded-xl border border-border shrink-0">
                         <button
                             onClick={() => setViewMode('grid')}
                             className={clsx(
-                                'p-2 rounded-md transition-all',
+                                'p-2 rounded-lg transition-all',
                                 viewMode === 'grid'
                                     ? 'bg-surface shadow-shell-sm text-primary'
                                     : 'text-text-muted hover:text-text-primary'
@@ -260,7 +260,7 @@ export function Teams() {
                         <button
                             onClick={() => setViewMode('list')}
                             className={clsx(
-                                'p-2 rounded-md transition-all',
+                                'p-2 rounded-lg transition-all',
                                 viewMode === 'list'
                                     ? 'bg-surface shadow-shell-sm text-primary'
                                     : 'text-text-muted hover:text-text-primary'

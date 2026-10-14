@@ -716,7 +716,7 @@ export function Timesheets() {
                                 key={mode}
                                 onClick={() => setViewMode(mode)}
                                 className={clsx(
-                                    "flex-1 px-4 min-[900px]:px-8 rounded-lg text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
+                                    "flex-1 px-4 min-[900px]:px-8 rounded-xl text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
                                     viewMode === mode
                                         ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
                                         : "text-text-muted opacity-70 hover:opacity-100 hover:text-text-main"
@@ -1119,7 +1119,7 @@ export function Timesheets() {
                         </div>
                     </div>
                     <div className="flex justify-end pt-2">
-                        <button onClick={handleManualAddTime} disabled={submittingEntry} className="px-8 h-11 bg-primary text-white rounded-md text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Submit Entry'}</button>
+                        <button onClick={handleManualAddTime} disabled={submittingEntry} className="px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Submit Entry'}</button>
                     </div>
                 </div>
             </Modal>
@@ -1187,7 +1187,7 @@ export function Timesheets() {
                         </div>
                     </div>
                     <div className="flex justify-end pt-2">
-                        <button onClick={handleEditSubmit} disabled={submittingEntry} className="px-8 h-11 bg-primary text-white rounded-md text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Save Changes'}</button>
+                        <button onClick={handleEditSubmit} disabled={submittingEntry} className="px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Save Changes'}</button>
                     </div>
                 </div>
             </Modal>
@@ -1196,8 +1196,8 @@ export function Timesheets() {
                 <div className="space-y-6 py-4">
                     <p className="text-[14px] text-text-muted">Are you sure you want to delete this time entry? This action cannot be undone.</p>
                     <div className="flex justify-end gap-3 pt-2">
-                        <button onClick={() => setShowDeleteConfirm(false)} className="px-6 h-11 bg-surface-hover border border-border text-text-muted rounded-md text-[11px] font-bold shadow-shell-sm hover:text-text-main transition-all">Cancel</button>
-                        <button onClick={handleDeleteSubmit} className="px-8 h-11 bg-red-500 text-white rounded-md text-[11px] font-bold shadow-shell-sm hover:bg-red-600 transition-all">Delete Entry</button>
+                        <button onClick={() => setShowDeleteConfirm(false)} className="px-6 h-11 bg-surface-hover border border-border text-text-muted rounded-xl text-[11px] font-bold shadow-shell-sm hover:text-text-main transition-all">Cancel</button>
+                        <button onClick={handleDeleteSubmit} className="px-8 h-11 bg-red-500 text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-red-600 transition-all">Delete Entry</button>
                     </div>
                 </div>
             </Modal>

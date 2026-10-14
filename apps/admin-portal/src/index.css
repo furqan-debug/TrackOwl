@@ -409,16 +409,16 @@
 
   .btn-primary {
     background: var(--gradient-navy-btn);
-    @apply hover:brightness-110 text-white px-5 py-2.5 rounded-md font-medium transition-all duration-200 shadow-md active:scale-95;
+    @apply hover:brightness-110 text-white px-5 py-2.5 rounded-xl font-medium transition-all duration-200 shadow-md active:scale-95;
   }
 
   .btn-gold {
     background: var(--gradient-gold-btn);
-    @apply hover:brightness-110 text-[#001B4D] px-5 py-2.5 rounded-md font-bold transition-all duration-200 shadow-md active:scale-95;
+    @apply hover:brightness-110 text-[#001B4D] px-5 py-2.5 rounded-xl font-bold transition-all duration-200 shadow-md active:scale-95;
   }
 
   .btn-ghost {
-    @apply hover:bg-primary/5 text-primary px-4 py-2 rounded-md font-medium transition-all duration-200;
+    @apply hover:bg-primary/5 text-primary px-4 py-2 rounded-xl font-medium transition-all duration-200;
   }
 
   .glass-panel {
@@ -508,7 +508,7 @@
   justify-content: center;
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: 12px;
   color: var(--text-muted);
   cursor: default;
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
