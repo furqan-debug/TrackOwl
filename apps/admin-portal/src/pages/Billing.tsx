@@ -486,7 +486,7 @@ export function Billing() {
                                             onClick={() => navigate('/dashboard/settings/billing/change-plan')}
                                             disabled={saving || !!organization.settings?.pending_downgrade}
                                             title={organization.settings?.pending_downgrade ? "Plan downgrade already scheduled" : "Upgrade or downgrade your plan"}
-                                            className="px-5 h-11 bg-surface border border-border/30 text-text-main hover:border-primary/55 font-black rounded-md text-[10px] uppercase tracking-wider shadow-sm active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="px-5 h-11 bg-surface dark:bg-surface-hover border border-border/30 dark:border-border/60 text-text-main hover:border-primary/55 font-black rounded-md text-[10px] uppercase tracking-wider shadow-sm active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             <Zap className="w-4 h-4 text-primary" />
                                             Change Plan
@@ -523,7 +523,7 @@ export function Billing() {
                                 </div>
                             </div>
 
-                            <div className="grid md:grid-cols-3 gap-6 p-6 bg-main/40 rounded-2xl border border-border/15">
+                            <div className="grid md:grid-cols-3 gap-6 p-6 bg-main/70 dark:bg-main/40 rounded-2xl border border-border/30 dark:border-border/15">
                                 <div className="space-y-1 text-center md:text-left md:border-r border-border/20 pr-4 last:border-r-0">
                                     <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest flex items-center justify-center md:justify-start gap-2">
                                         <Users className="w-3.5 h-3.5 text-primary/75" /> Seats Used
