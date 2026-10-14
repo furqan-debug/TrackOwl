@@ -16,6 +16,8 @@ export interface FilterSelectProps {
     label?: string;
     enableSearch?: boolean;
     sortOptions?: boolean;
+    dropdownDirection?: 'auto' | 'up' | 'down';
+    maxHeight?: string;
 }
 
 export function FilterSelect({ 
@@ -26,10 +28,13 @@ export function FilterSelect({
     className, 
     label,
     enableSearch = true,
-    sortOptions = true
+    sortOptions = true,
+    dropdownDirection = 'auto',
+    maxHeight
 }: FilterSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
+    const [placement, setPlacement] = useState<'up' | 'down'>('down');
     const containerRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -54,6 +59,29 @@ export function FilterSelect({
         }
     }, [isOpen, enableSearch]);
 
+    // Placement calculation: flip up if close to bottom of window
+    useEffect(() => {
+        if (!isOpen) return;
+        if (dropdownDirection === 'up') {
+            setPlacement('up');
+            return;
+        }
+        if (dropdownDirection === 'down') {
+            setPlacement('down');
+            return;
+        }
+        if (containerRef.current) {
+            const rect = containerRef.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            if (spaceBelow < 260 && spaceAbove > spaceBelow) {
+                setPlacement('up');
+            } else {
+                setPlacement('down');
+            }
+        }
+    }, [isOpen, dropdownDirection]);
+
     const allOption = useMemo(() => options.find(o => o.id.toLowerCase() === 'all'), [options]);
     const otherOptions = useMemo(() => options.filter(o => o.id.toLowerCase() !== 'all'), [options]);
 
@@ -75,7 +103,7 @@ export function FilterSelect({
     }, [otherOptions, searchTerm, sortOptions]);
 
     return (
-        <div ref={containerRef} className={clsx("relative", className)}>
+        <div ref={containerRef} className={clsx("relative", className, isOpen && "z-50")}>
             <div 
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
@@ -107,12 +135,15 @@ export function FilterSelect({
                 />
             </div>
             
-            {/* The panel is exactly the trigger's width — w-full with no minimum.
-                min-w-[220px] made it wider than most triggers, so it spilled past one
-                edge or the other depending on which side it was anchored to. Long
-                names truncate instead, which the rows already handle. */}
+            {/* The panel is exactly the trigger's width — w-full with no minimum. */}
             {isOpen && (
-                <div className="absolute top-[calc(100%+8px)] right-0 w-full max-h-[400px] bg-surface border border-border rounded-xl shadow-premium z-[100] flex flex-col p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className={clsx(
+                    "absolute right-0 w-full bg-surface border border-border rounded-xl shadow-premium z-[100] flex flex-col p-1.5 animate-in fade-in duration-200",
+                    maxHeight || "max-h-[240px]",
+                    placement === 'up'
+                        ? "bottom-[calc(100%+8px)] slide-in-from-bottom-2"
+                        : "top-[calc(100%+8px)] slide-in-from-top-2"
+                )}>
                     {enableSearch && (
                         <div className="relative mb-1.5 px-1">
                             <Search className="w-3 h-3 absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
