@@ -563,11 +563,11 @@ export function Billing() {
                         <div>
                             {/* Handle Pending Seat Downgrades */}
                             {organization.settings?.keep_seats_until && organization.settings?.target_seats && (
-                                <div className="mb-6 bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
-                                    <p className="text-xs text-amber-800 font-bold">
+                                <div className="mb-6 bg-red-500/10 border border-red-500/20 rounded-lg p-4">
+                                    <p className="text-xs text-red-500 font-bold">
                                         Pending downgrade to {organization.settings.target_seats} seat(s) on {new Date(organization.settings.keep_seats_until * 1000).toLocaleDateString()}.
                                     </p>
-                                    <p className="text-[10px] text-amber-900/80 mt-1">
+                                    <p className="text-[10px] text-gray-400 mt-1">
                                         You can still use {organization.seats_purchased} seats until the current period expires. To cancel this downgrade, increase the seats below back to {organization.seats_purchased} and click Update.
                                     </p>
                                 </div>
