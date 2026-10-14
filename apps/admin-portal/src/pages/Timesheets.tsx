@@ -7,7 +7,7 @@ import {
     Plus, Filter,
     Clock, FolderOpen,
     MoreVertical, Edit2, Trash2,
-    Star
+    Star, X, RotateCcw
 } from 'lucide-react';
 import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker, TimeField } from '../components/ui';
 import clsx from 'clsx';
@@ -636,11 +636,47 @@ export function Timesheets() {
         setSelectedDate(next);
     };
 
+    const timezoneOptions = useMemo(() => [
+        { id: 'Admin Local', name: 'Admin Local (Browser)' },
+        { id: 'Org Local', name: 'Organization Timezone' },
+        { id: 'User Local', name: 'User Local (Auto)' },
+        { id: 'UTC', name: 'UTC (Universal)' },
+        ...Array.from(
+            new Set(
+                members
+                    .map(m => m.timezone)
+                    .filter(tz => tz && tz !== 'UTC')
+            )
+        )
+            .sort()
+            .map(tz => ({
+                id: tz as string,
+                name: tz as string
+            }))
+    ], [members]);
+
+    const projectOptions = useMemo(() => [
+        { id: 'all', name: 'All Projects' },
+        ...projects.map(p => ({ id: p.id, name: p.name }))
+    ], [projects]);
+
+    const memberOptions = useMemo(() => [
+        { id: 'all', name: 'All Members' },
+        ...members.map((m: MemberInfo) => ({
+            id: m.id,
+            name: m.full_name
+        }))
+    ], [members]);
+
+    const hasActiveFilters = filterProjectId !== 'all' || (!isRep && selectedMember !== 'all') || activeTimezone !== 'Org Local';
+    const activeFiltersCount = (filterProjectId !== 'all' ? 1 : 0) + (!isRep && selectedMember !== 'all' ? 1 : 0) + (activeTimezone !== 'Org Local' ? 1 : 0);
+
     return (
         <div className="flex flex-col min-h-screen bg-main font-sans text-text-main">
-            <header className="px-4 pt-4 pb-1 md:px-10 md:pt-12 md:pb-1 flex flex-col min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-between gap-3 min-[900px]:gap-4 shrink-0">
-                <div className="flex flex-col gap-4 min-w-0">
-                    <div className="space-y-2">
+            <header className="px-4 pt-4 pb-2 md:px-10 md:pt-10 md:pb-2 flex flex-col gap-4 shrink-0">
+                {/* Row 1: Heading & Subtitle on left, Date navigation on right */}
+                <div className="flex flex-col min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between gap-4">
+                    <div className="space-y-1">
                         <div className="flex items-center gap-4">
                             <h1 className="text-3xl md:text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
                             <button
@@ -659,69 +695,13 @@ export function Timesheets() {
                         </p>
                     </div>
 
-                    {/* View switcher */}
-                    {/* bg-surface, not bg-main/50. In dark mode --bg-main is #020617 — at
-                        half opacity over a near-black page the track disappeared, and
-                        the border at 3% white went with it. --bg-surface is lighter
-                        than the page in dark and darker than it in light, so the track
-                        reads either way. */}
-                    <div className="flex bg-surface p-1 rounded-md border border-border h-12 w-full min-[900px]:w-auto min-w-0 shadow-shell-sm">
-
-                        {(['daily', 'weekly', 'calendar'] as const).map(mode => (
-                            <button
-                                key={mode}
-                                onClick={() => setViewMode(mode)}
-                                className={clsx(
-                                    // flex-1 at every width, not just below 900px. With flex-none
-                                    // the three buttons sized to their own text, so any
-                                    // width the track had beyond that sat empty to the
-                                    // right of the last one. Filling it means the last
-                                    // button's edge is the track's edge, whatever the
-                                    // track's width turns out to be.
-                                    "flex-1 px-2 min-[900px]:px-8 rounded-md text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
-                                    viewMode === mode
-                                        ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
-                                        // --text-muted is #CBD5E1 in dark, almost the
-                                        // same as the main text, so an unselected tab
-                                        // looked as loud as the selected one. Dimmed
-                                        // until hovered.
-                                        : "text-text-muted opacity-70 hover:opacity-100 hover:text-text-main"
-                                )}
-                            >
-                                {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                            </button>
-                        ))}
-
-                    </div>
-
-
-                    {/* Everything else, stacked, on the right. The switcher was on this
-                        side and these were on the left. */}
-                </div>
-
-                {/* Nudged below the heading's top edge rather than flush against
-                    it, which read as slightly too high. */}
-                <div className="min-[900px]:mt-3 w-full min-[900px]:w-auto min-w-0">
-                    {/* A two-column grid, not two independently right-aligned
-                        rows. Each row sized itself, with different gaps, so the
-                        boundary between the date control and the buttons never
-                        lined up with the one between the member filter and the
-                        timezone. Sharing columns makes those edges meet. */}
-                    {/* One column for a rep. With the buttons and the member filter both
-                        hidden, two columns put the date control and the timezone side
-                        by side on one row; stacked is what this page had before. */}
-                    <div className={clsx(
-                        "grid grid-cols-1 gap-3 min-[900px]:gap-4 w-full min-[900px]:w-auto min-w-0 min-[900px]:justify-end",
-                        !isRep && "min-[900px]:grid-cols-[auto_auto]"
-                    )}>
-
-
-                        {/* Date navigation */}
-                        <div className="flex items-center bg-surface border border-border rounded-md p-1 shadow-shell-sm h-12 w-full min-w-0">
-
+                    {/* Date navigation */}
+                    <div className="flex items-center justify-start min-[900px]:justify-end">
+                        <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-12 w-full sm:w-auto min-w-[240px]">
                             <button
                                 onClick={() => navigateDate(-1)}
-                                className="p-3 shrink-0 hover:bg-surface-hover rounded-md transition-all text-text-muted hover:text-primary"
+                                className="p-3 shrink-0 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary"
+                                title="Previous period"
                             >
                                 <ChevronLeft className="w-5 h-5" />
                             </button>
@@ -740,34 +720,59 @@ export function Timesheets() {
 
                             <button
                                 onClick={() => navigateDate(1)}
-                                className="p-3 shrink-0 hover:bg-surface-hover rounded-md transition-all text-text-muted hover:text-primary"
+                                className="p-3 shrink-0 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary"
+                                title="Next period"
                             >
                                 <ChevronRight className="w-5 h-5" />
                             </button>
-
                         </div>
+                    </div>
+                </div>
 
-                        {/* Filter and Add time, for anyone who manages other people.
-                            Hidden for a rep: Filter exists to filter BY member, which
-                            means nothing on a page showing one person, and Add time
-                            would let someone log their own hours by hand.
-
-                            Hiding them also does the layout: the member filter is
-                            already hidden for a rep, so the grid drops from four
-                            children to two and the date picker and timezone land
-                            beside each other on the top row. */}
-                        {!isRep && (
-                        <div className={clsx("gap-3 w-full min-[900px]:w-auto min-[900px]:flex", isViewer ? "flex" : "grid grid-cols-2")}>
-
+                {/* Row 2: View modes on left, Filter & Add time buttons on right */}
+                <div className="flex flex-col min-[900px]:flex-row min-[900px]:items-center min-[900px]:justify-between gap-4">
+                    {/* View switcher */}
+                    <div className="flex bg-surface p-1 rounded-xl border border-border h-12 w-full min-[900px]:w-auto min-w-0 shadow-shell-sm">
+                        {(['daily', 'weekly', 'calendar'] as const).map(mode => (
                             <button
-                                onClick={() => setShowFilters(true)}
-                                className="flex items-center justify-center gap-2 px-4 min-[900px]:px-6 h-12 bg-surface border border-border text-text-muted rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-surface-hover transition-all whitespace-nowrap min-w-0"
+                                key={mode}
+                                onClick={() => setViewMode(mode)}
+                                className={clsx(
+                                    "flex-1 px-4 min-[900px]:px-8 rounded-lg text-[11px] min-[900px]:text-[12px] font-bold transition-all h-full whitespace-nowrap",
+                                    viewMode === mode
+                                        ? "bg-[#F2CB00] text-[#001B4D] shadow-shell-sm"
+                                        : "text-text-muted opacity-70 hover:opacity-100 hover:text-text-main"
+                                )}
                             >
-                                <Filter className="w-4 h-4 shrink-0" />
-                                <span>Filter</span>
+                                {mode.charAt(0).toUpperCase() + mode.slice(1)}
                             </button>
+                        ))}
+                    </div>
 
-                            {!isViewer && (
+                    {/* Filter & Add time buttons */}
+                    <div className="w-full min-[900px]:w-auto min-w-0 flex items-center gap-3 justify-start min-[900px]:justify-end">
+                        {/* Filter button */}
+                        <button
+                            onClick={() => setShowFilters(true)}
+                            className={clsx(
+                                "flex items-center justify-center gap-2 px-4 min-[900px]:px-6 h-12 rounded-xl text-[13px] font-bold shadow-shell-sm transition-all whitespace-nowrap min-w-0 border",
+                                hasActiveFilters
+                                    ? "bg-primary/10 border-primary text-primary"
+                                    : "bg-surface border-border text-text-muted hover:bg-surface-hover hover:text-text-main"
+                            )}
+                            title="Filter timesheets"
+                        >
+                            <Filter className="w-4 h-4 shrink-0" />
+                            <span>Filter</span>
+                            {activeFiltersCount > 0 && (
+                                <span className="flex items-center justify-center min-w-[1px] h-2 px-0.5 text-[11px] font-bold rounded-full bg-primary text-primary-contrast ml-0.5">
+                                    {activeFiltersCount}
+                                </span>
+                            )}
+                        </button>
+
+                        {/* Add time, for non-reps and non-viewers */}
+                        {!isRep && !isViewer && (
                             <button
                                 onClick={() => {
                                     const activeMember = (selectedMember && selectedMember !== 'all')
@@ -794,72 +799,76 @@ export function Timesheets() {
                                     });
                                     setShowAddTime(true);
                                 }}
-                                className="flex items-center justify-center gap-2 px-4 min-[900px]:px-8 h-12 bg-primary text-white rounded-md text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all whitespace-nowrap min-w-0"
+                                className="flex items-center justify-center gap-2 px-4 min-[900px]:px-6 h-12 bg-primary text-white rounded-xl text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all whitespace-nowrap min-w-0"
                             >
                                 <Plus className="w-5 h-5 shrink-0" />
                                 <span>Add time</span>
                             </button>
-                            )}
-
-                        </div>
                         )}
-
-
-                        {/* Member filter — hidden for reps who only view their own timesheets */}
-                        {!isRep && (
-                            <div className="h-16 w-full min-[900px]:w-auto min-[900px]:ml-auto min-[900px]:min-w-[220px] min-w-0">
-                                <FilterSelect
-                                    icon={<Users className="w-4 h-4 shrink-0" />}
-                                    value={selectedMember}
-                                    onChange={setSelectedMember}
-                                    options={[
-                                        { id: 'all', name: 'All Members' },
-                                        ...members.map((m: MemberInfo) => ({
-                                            id: m.id,
-                                            name: m.full_name
-                                        }))
-                                    ]}
-                                />
-                            </div>
-                        )}
-
-                        {/* Timezone */}
-                        <div className={clsx(
-                            "h-16 w-full min-[900px]:w-auto min-[900px]:min-w-[240px] min-w-0",
-                            isRep && "min-[900px]:ml-auto"
-                        )}>
-                            <FilterSelect
-                                icon={<Clock className="w-4 h-4 shrink-0" />}
-                                value={activeTimezone}
-                                onChange={setActiveTimezone}
-                                options={[
-                                    { id: 'Admin Local', name: 'Admin Local (Browser)' },
-                                    { id: 'Org Local', name: 'Organization Timezone' },
-                                    { id: 'User Local', name: 'User Local (Auto)' },
-                                    { id: 'UTC', name: 'UTC (Universal)' },
-                                    ...Array.from(
-                                        new Set(
-                                            members
-                                                .map(m => m.timezone)
-                                                .filter(tz => tz && tz !== 'UTC')
-                                        )
-                                    )
-                                        .sort()
-                                        .map(tz => ({
-                                            id: tz as string,
-                                            name: tz as string
-                                        }))
-                                ]}
-                            />
-                        </div>
-
                     </div>
-
                 </div>
             </header>
 
 
             <main className="flex-1 min-h-0 overflow-y-auto px-4 py-5 min-[900px]:px-10 min-[900px]:py-10 custom-scrollbar min-w-0">
+                {hasActiveFilters && (
+                    <div className="w-full max-w-[1600px] mx-auto mb-5 flex flex-wrap items-center gap-2 animate-in fade-in duration-200">
+                        <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider mr-1">Active Filters:</span>
+                        {filterProjectId !== 'all' && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-text-main shadow-shell-sm">
+                                <FolderOpen className="w-3.5 h-3.5 text-text-muted" />
+                                <span>Project: {projects.find(p => p.id === filterProjectId)?.name || filterProjectId}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setFilterProjectId('all')}
+                                    className="p-0.5 hover:bg-surface-hover rounded text-text-muted hover:text-text-main transition-colors ml-0.5"
+                                    title="Remove project filter"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </span>
+                        )}
+                        {!isRep && selectedMember !== 'all' && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-text-main shadow-shell-sm">
+                                <Users className="w-3.5 h-3.5 text-text-muted" />
+                                <span>Member: {members.find(m => m.id === selectedMember)?.full_name || selectedMember}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedMember('all')}
+                                    className="p-0.5 hover:bg-surface-hover rounded text-text-muted hover:text-text-main transition-colors ml-0.5"
+                                    title="Remove member filter"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </span>
+                        )}
+                        {activeTimezone !== 'Org Local' && (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-text-main shadow-shell-sm">
+                                <Clock className="w-3.5 h-3.5 text-text-muted" />
+                                <span>Timezone: {activeTimezone}</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setActiveTimezone('Org Local')}
+                                    className="p-0.5 hover:bg-surface-hover rounded text-text-muted hover:text-text-main transition-colors ml-0.5"
+                                    title="Reset timezone"
+                                >
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </span>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setFilterProjectId('all');
+                                if (!isRep) setSelectedMember('all');
+                                setActiveTimezone('Org Local');
+                            }}
+                            className="text-[11px] font-bold text-primary hover:underline ml-2 transition-colors cursor-pointer"
+                        >
+                            Clear all
+                        </button>
+                    </div>
+                )}
                 {loading ? (
                     <div className="flex items-center justify-center min-h-[420px]">
                         <LoadingState />
@@ -896,20 +905,123 @@ export function Timesheets() {
             </main>
 
 
-            <Modal isOpen={showFilters} onClose={() => setShowFilters(false)} title="Filters" allowOverflow={true}>
-                <div className="space-y-6 py-4">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-bold text-text-muted ">Project Scope</label>
+            <Modal
+                isOpen={showFilters}
+                onClose={() => setShowFilters(false)}
+                title="Filters"
+                height="h-auto"
+                maxWidth="max-w-lg"
+                allowOverflow={true}
+                footer={
+                    <div className="flex items-center justify-between w-full gap-3">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setFilterProjectId('all');
+                                if (!isRep) setSelectedMember('all');
+                                setActiveTimezone('Org Local');
+                            }}
+                            className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-text-muted hover:text-text-main hover:bg-surface-hover transition-colors"
+                        >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            <span>Reset Filters</span>
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setShowFilters(false)}
+                            className="px-5 py-2 rounded-xl text-xs font-bold bg-primary text-white hover:bg-primary/90 transition-all shadow-shell-sm"
+                        >
+                            Done
+                        </button>
+                    </div>
+                }
+            >
+                <div className="space-y-7 py-4">
+                    {/* Project Scope */}
+                    <div className="space-y-1.5">
+                        <label className="text-[12px] font-bold text-text-muted">Project Scope</label>
                         <div className="h-11">
                             <FilterSelect
                                 icon={<FolderOpen className="w-3.5 h-3.5" />}
                                 value={filterProjectId}
                                 onChange={setFilterProjectId}
-                                options={[
-                                    { id: 'all', name: 'All Projects' },
-                                    ...projects.map(p => ({ id: p.id, name: p.name }))
-                                ]}
+                                options={projectOptions}
+                                dropdownDirection="down"
                             />
+                        </div>
+                    </div>
+
+                    {/* Member Scope (for managers/admins) */}
+                    {!isRep && (
+                        <div className="space-y-1.5">
+                            <label className="text-[12px] font-bold text-text-muted">Member Scope</label>
+                            <div className="h-11">
+                                <FilterSelect
+                                    icon={<Users className="w-3.5 h-3.5" />}
+                                    value={selectedMember}
+                                    onChange={setSelectedMember}
+                                    options={memberOptions}
+                                    dropdownDirection="auto"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Timezone Changer */}
+                    <div className="space-y-1.5">
+                        <label className="text-[12px] font-bold text-text-muted">Timezone Changer</label>
+                        <div className="h-11">
+                            <FilterSelect
+                                icon={<Clock className="w-3.5 h-3.5" />}
+                                value={activeTimezone}
+                                onChange={setActiveTimezone}
+                                options={timezoneOptions}
+                                dropdownDirection="down"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Time / Range Selector */}
+                    <div className="space-y-1.5">
+                        <label className="text-[12px] font-bold text-text-muted">Time / Range Selector</label>
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-11 flex-1 min-w-0">
+                                <button
+                                    type="button"
+                                    onClick={() => navigateDate(-1)}
+                                    className="p-2 shrink-0 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary"
+                                    title="Previous period"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                    <DatePicker
+                                        value={getGroupingDateInTz(selectedDate, undefined)}
+                                        onChange={(val) => {
+                                            if (val) {
+                                                setSelectedDate(new Date(val + 'T12:00:00'));
+                                            }
+                                        }}
+                                        direction="down"
+                                        className="w-full min-w-0"
+                                    />
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => navigateDate(1)}
+                                    className="p-2 shrink-0 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary"
+                                    title="Next period"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedDate(new Date())}
+                                className="px-3.5 h-11 rounded-xl text-xs font-semibold bg-surface border border-border hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors shrink-0 shadow-shell-sm"
+                            >
+                                Today
+                            </button>
                         </div>
                     </div>
                 </div>

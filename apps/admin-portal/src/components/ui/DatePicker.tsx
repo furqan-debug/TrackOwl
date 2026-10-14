@@ -32,6 +32,7 @@ interface DatePickerProps {
     displayValue?: string;
     displayTimezone?: string;
     maxDate?: string; // YYYY-MM-DD
+    direction?: 'auto' | 'up' | 'down';
 }
 
 /**
@@ -62,7 +63,8 @@ export function DatePicker({
     triggerClassName,
     displayValue,
     displayTimezone,
-    maxDate
+    maxDate,
+    direction = 'auto'
 }: DatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -106,10 +108,10 @@ export function DatePicker({
             if (left + width > window.innerWidth - 16) left = window.innerWidth - width - 16;
             if (left < 16) left = 16;
 
-            // Downward, unless the window itself has no room for it there.
+            // Downward, unless direction === 'up' or the window itself has no room for it there.
             const below = rect.bottom + 8;
-            const fitsBelow = below + PANEL_HEIGHT <= window.innerHeight - 16;
-            const top = fitsBelow ? below : Math.max(16, rect.top - PANEL_HEIGHT - 8);
+            const fitsBelow = direction !== 'up' && (below + PANEL_HEIGHT <= window.innerHeight - 16);
+            const top = (direction === 'up' || !fitsBelow) ? Math.max(16, rect.top - PANEL_HEIGHT - 8) : below;
 
             setPanelPos({ top, left, width });
         };
@@ -122,7 +124,7 @@ export function DatePicker({
             window.removeEventListener('resize', place);
             window.removeEventListener('scroll', place, true);
         };
-    }, [isOpen, panelAlign]);
+    }, [isOpen, panelAlign, direction]);
 
     // Dismiss on a click anywhere else. Without this the calendar only closed
     // by picking a date or clicking the trigger again, so clicking elsewhere on
