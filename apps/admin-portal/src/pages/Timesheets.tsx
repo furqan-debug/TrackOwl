@@ -748,7 +748,7 @@ export function Timesheets() {
                                 <Filter className="w-4 h-4 shrink-0" />
                                 <span>Filter</span>
                                 {activeFiltersCount > 0 && (
-                                    <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full bg-primary text-primary-contrast ml-0.5">
+                                    <span className="flex items-center justify-center min-w-[1px] h-2 px-0.5 text-[11px] font-bold rounded-full bg-primary text-primary-contrast ml-0.5">
                                         {activeFiltersCount}
                                     </span>
                                 )}
@@ -1008,7 +1008,7 @@ export function Timesheets() {
 
                     {/* Time / Range Selector */}
                     <div className="space-y-1.5">
-                        <label className="text-[12px] font-bold text-text-muted">Time / Range Selector</label>
+                        <label className="text-[12px] font-bold text-text-muted">Calendar</label>
                         <div className="flex items-center gap-2">
                             <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-11 flex-1 min-w-0">
                                 <button
