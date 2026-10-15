@@ -308,6 +308,7 @@ export function ProjectFormPage() {
 
                                 <FormSelect
                                     label="Status"
+                                    hideScrollbar
                                     value={status}
                                     onChange={(val: string) => setStatus(val as any)}
                                     icon={<CircleDot className="w-4 h-4" />}

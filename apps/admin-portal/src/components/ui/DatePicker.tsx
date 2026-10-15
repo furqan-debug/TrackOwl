@@ -111,7 +111,7 @@ export function DatePicker({
             // Downward, unless direction === 'up' or the window itself has no room for it there.
             const below = rect.bottom + 8;
             const fitsBelow = direction !== 'up' && (below + PANEL_HEIGHT <= window.innerHeight - 16);
-            const top = (direction === 'up' || !fitsBelow) ? Math.max(16, rect.top - PANEL_HEIGHT - 8) : below;
+            const top = direction === 'down' ? Math.max(16, below) : (direction === 'up' || !fitsBelow) ? Math.max(16, rect.top - PANEL_HEIGHT - 8) : below;
 
             setPanelPos({ top, left, width });
         };

@@ -796,6 +796,8 @@ function InviteModal({ onClose, onInvite, form, isViewer, currentUserRole }: any
             title="Invite Member"
             subtitle="Send an invitation to join the team."
             maxWidth="max-w-2xl"
+            height="h-auto"
+            allowOverflow
             footer={
                 <div className="flex gap-3 justify-end w-full">
                     <button onClick={onClose} className="px-6 h-11 border border-border text-text-muted rounded-xl text-[10px] font-bold hover:bg-surface-hover transition-all">
