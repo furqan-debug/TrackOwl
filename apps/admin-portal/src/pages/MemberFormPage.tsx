@@ -1024,6 +1024,7 @@ export function MemberFormPage() {
 
                                                     <FormSelect
                                                         label="Role"
+                                                        hideScrollbar
                                                         value={role}
                                                         onChange={(
                                                             v: Role
@@ -1130,6 +1131,7 @@ export function MemberFormPage() {
 
                                                     <FormSelect
                                                         label="Employment Type"
+                                                        hideScrollbar
                                                         value={employeeType}
                                                         onChange={
                                                             setEmployeeType

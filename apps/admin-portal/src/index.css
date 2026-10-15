@@ -466,6 +466,16 @@
   @apply bg-base-white/10 hover:bg-base-white/20;
 }
 
+.no-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* The glow under a primary action.
    The class was already on fifteen elements with no rule behind it, so
    nothing has ever glowed. Mixed from the primary colour rather than a fixed

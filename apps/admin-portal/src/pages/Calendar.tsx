@@ -504,6 +504,7 @@ export function Calendar() {
                 onClose={() => setShowHolidayModal(false)}
                 title="Add Holiday"
                 subtitle="Corporate non-working day for this organization"
+                height="h-auto"
                 allowOverflow
             >
                 <form onSubmit={handleSaveHoliday} className="space-y-6">
@@ -519,6 +520,7 @@ export function Calendar() {
                         value={holidayForm.date}
                         onChange={date => setHolidayForm({ ...holidayForm, date })}
                         displayTimezone={orgTz}
+                        direction="down"
                     />
                     <label className="flex items-center gap-3 cursor-pointer select-none">
                         <input
@@ -567,11 +569,13 @@ export function Calendar() {
                 onClose={() => { setNotesModalDate(null); setNewNoteText(''); }}
                 title={notesModalDate ? new Date(notesModalDate + 'T12:00:00Z').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: orgTz }) : 'Notes'}
                 subtitle="Visible to everyone in your organization"
+                height="h-auto"
+                allowOverflow
             >
-                <div className="space-y-6">
+                <div className="space-y-4">
                     <div className="space-y-3 max-h-[280px] overflow-y-auto custom-scrollbar pr-1">
                         {notesForModalDate.length === 0 ? (
-                            <p className="text-[12px] text-text-muted font-bold italic text-center py-6">No notes for this day yet.</p>
+                            <p className="text-[12px] text-text-muted font-bold italic text-center py-2">No notes for this day yet.</p>
                         ) : (
                             notesForModalDate.map(n => (
                                 <div key={n.id} className="flex items-start justify-between gap-3 bg-amber-50 border border-amber-100 rounded-xl p-4">
