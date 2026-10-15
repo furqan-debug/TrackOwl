@@ -504,6 +504,7 @@ export function Calendar() {
                 onClose={() => setShowHolidayModal(false)}
                 title="Add Holiday"
                 subtitle="Corporate non-working day for this organization"
+                height="h-auto"
                 allowOverflow
             >
                 <form onSubmit={handleSaveHoliday} className="space-y-6">
@@ -519,6 +520,7 @@ export function Calendar() {
                         value={holidayForm.date}
                         onChange={date => setHolidayForm({ ...holidayForm, date })}
                         displayTimezone={orgTz}
+                        direction="down"
                     />
                     <label className="flex items-center gap-3 cursor-pointer select-none">
                         <input

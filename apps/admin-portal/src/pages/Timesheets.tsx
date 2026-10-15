@@ -9,7 +9,7 @@ import {
     MoreVertical, Edit2, Trash2,
     Star, X, RotateCcw
 } from 'lucide-react';
-import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker, TimeField, RefreshButton } from '../components/ui';
+import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker, TimeField, RefreshButton, Button } from '../components/ui';
 import clsx from 'clsx';
 import { getGroupingDateInTz, formatDuration, manualEntryInterval, utcToZonedWallClock, zonedWallClockToUtc } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
@@ -1124,7 +1124,7 @@ export function Timesheets() {
                 </div>
             </Modal>
 
-            <Modal isOpen={showEditTimeModal} onClose={() => setShowEditTimeModal(false)} title="Edit Time Entry">
+            <Modal isOpen={showEditTimeModal} onClose={() => setShowEditTimeModal(false)} title="Edit Time Entry" allowOverflow>
                 <div className="space-y-5 py-4">
                     {!isRep && (
                         <div className="space-y-2">
@@ -1192,12 +1192,32 @@ export function Timesheets() {
                 </div>
             </Modal>
 
-            <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Delete Time Entry">
-                <div className="space-y-6 py-4">
-                    <p className="text-[14px] text-text-muted">Are you sure you want to delete this time entry? This action cannot be undone.</p>
-                    <div className="flex justify-end gap-3 pt-2">
-                        <button onClick={() => setShowDeleteConfirm(false)} className="px-6 h-11 bg-surface-hover border border-border text-text-muted rounded-md text-[11px] font-bold shadow-shell-sm hover:text-text-main transition-all">Cancel</button>
-                        <button onClick={handleDeleteSubmit} className="px-8 h-11 bg-red-500 text-white rounded-md text-[11px] font-bold shadow-shell-sm hover:bg-red-600 transition-all">Delete Entry</button>
+            <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Delete Time Entry" subtitle="This operation is destructive and irreversible." height="h-auto" allowOverflow>
+                <div className="text-center space-y-6 w-full max-w-full min-w-0">
+                    <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto border border-rose-100">
+                        <Trash2 className="w-8 h-8" />
+                    </div>
+
+                    <p className="text-sm font-medium text-text-muted break-words">
+                        Permanently remove this time entry? This action cannot be undone.
+                    </p>
+
+                    <div className="flex flex-col sm:flex-row gap-3 pt-4 w-full">
+                        <Button
+                            onClick={() => setShowDeleteConfirm(false)}
+                            variant="secondary"
+                            className="w-full sm:flex-1"
+                        >
+                            Cancel
+                        </Button>
+
+                        <Button
+                            onClick={handleDeleteSubmit}
+                            variant="danger"
+                            className="w-full sm:flex-1"
+                        >
+                            Confirm Deletion
+                        </Button>
                     </div>
                 </div>
             </Modal>
