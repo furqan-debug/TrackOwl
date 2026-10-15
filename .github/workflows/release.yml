@@ -124,6 +124,7 @@ jobs:
             - **macOS**: `.dmg` Disk Image and `.app` bundles (including signature files for the auto-updater).
           releaseDraft: true
           prerelease: false
+          includeUpdaterJson: false
           args: ${{ matrix.args }}
 
       # Extract version number from src-tauri/tauri.conf.json
