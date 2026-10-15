@@ -60,7 +60,7 @@ jobs:
         run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
 
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: npm ci --fetch-retries=5 --fetch-retry-factor=2 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
 
       - name: Setup Apple API Key (macOS Notarization)
         if: matrix.platform == 'macos-latest'
@@ -295,7 +295,7 @@ jobs:
           rustup target add x86_64-apple-darwin
         
       - name: Install Frontend Dependencies
-        run: npm ci
+        run: npm ci --fetch-retries=5 --fetch-retry-factor=2 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
         
       - name: Install Apple Certificates & Profile
         env:
