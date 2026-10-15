@@ -569,6 +569,8 @@ export function Calendar() {
                 onClose={() => { setNotesModalDate(null); setNewNoteText(''); }}
                 title={notesModalDate ? new Date(notesModalDate + 'T12:00:00Z').toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: orgTz }) : 'Notes'}
                 subtitle="Visible to everyone in your organization"
+                height="h-auto"
+                allowOverflow
             >
                 <div className="space-y-6">
                     <div className="space-y-3 max-h-[280px] overflow-y-auto custom-scrollbar pr-1">
