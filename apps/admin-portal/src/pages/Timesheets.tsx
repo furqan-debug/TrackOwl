@@ -686,13 +686,14 @@ export function Timesheets() {
     const activeFiltersCount = (filterProjectId !== 'all' ? 1 : 0) + (!isRep && selectedMember !== 'all' ? 1 : 0) + (activeTimezone !== 'Org Local' ? 1 : 0);
 
     return (
-        <div className="flex flex-col min-h-screen bg-main font-sans text-text-main">
-            <header className="px-4 pt-4 pb-2 md:px-10 md:pt-10 md:pb-2 flex flex-col min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-between gap-4 shrink-0">
+        <div className="w-full space-y-6 md:space-y-8 animate-in fade-in duration-300">
+            {/* Header & Controls */}
+            <div className="flex flex-col min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-between gap-6 min-w-0">
                 {/* Left side: Heading & View switcher */}
-                <div className="flex flex-col gap-4 min-w-0">
+                <div className="flex flex-col justify-between gap-4 min-w-0">
                     <div className="space-y-1">
-                        <div className="flex items-center gap-4">
-                            <h1 className="text-3xl md:text-4xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-3xl md:text-4xl font-bold heading-gradient tracking-tight font-heading leading-tight">Timesheets</h1>
                             <button
                                 onClick={() => toggleFavorite('Timesheets', location.pathname)}
                                 className={clsx(
@@ -709,8 +710,8 @@ export function Timesheets() {
                         </p>
                     </div>
 
-                    {/* View switcher */}
-                    <div className="flex bg-surface p-1 rounded-xl border border-border h-12 w-full min-[900px]:w-auto min-w-0 shadow-shell-sm">
+                    {/* View switcher tabs */}
+                    <div className="flex bg-surface p-1 rounded-xl border border-border h-12 w-full sm:w-auto self-start min-w-0 shadow-shell-sm">
                         {(['daily', 'weekly', 'calendar'] as const).map(mode => (
                             <button
                                 key={mode}
@@ -729,68 +730,64 @@ export function Timesheets() {
                 </div>
 
                 {/* Right side: Action buttons & Date navigation */}
-                <div className="flex flex-col gap-3 min-w-0 w-full min-[900px]:w-auto items-stretch min-[900px]:items-end">
-                    {/* Top row: Filter & Add time on the left, Refresh on the right */}
-                    <div className="flex items-center justify-between gap-3 w-full">
-                        <div className="flex items-center gap-2.5">
-                            {/* Filter button */}
-                            <button
-                                onClick={() => setShowFilters(true)}
-                                className={clsx(
-                                    "flex items-center justify-center gap-2 h-12 rounded-xl text-[13px] font-bold shadow-shell-sm transition-all whitespace-nowrap border",
-                                    !isRep && !isViewer ? "w-[120px] px-3" : "px-4",
-                                    hasActiveFilters
-                                        ? "bg-primary/10 border-primary text-primary"
-                                        : "bg-surface border-border text-text-muted hover:bg-surface-hover hover:text-text-main"
-                                )}
-                                title="Filter timesheets"
-                            >
-                                <Filter className="w-4 h-4 shrink-0" />
-                                <span>Filter</span>
-                                {activeFiltersCount > 0 && (
-                                    <span className="flex items-center justify-center min-w-[1px] h-2 px-0.5 text-[11px] font-bold rounded-full bg-primary text-primary-contrast ml-0.5">
-                                        {activeFiltersCount}
-                                    </span>
-                                )}
-                            </button>
-
-                            {/* Add time, for non-reps and non-viewers */}
-                            {!isRep && !isViewer && (
-                                <button
-                                    onClick={() => {
-                                        const activeMember = (selectedMember && selectedMember !== 'all')
-                                            ? members.find(m => m.id === selectedMember || m.auth_user_id === selectedMember)
-                                            : (isRep ? members.find(m => m.id === profile?.id || m.auth_user_id === profile?.id) : null);
-                                        const prefilledUserId = activeMember ? activeMember.id : '';
-
-                                        const memberProjects = prefilledUserId ? (projectMembersMap[prefilledUserId] || []) : [];
-                                        let prefilledProjectId = '';
-                                        if (filterProjectId && filterProjectId !== 'all' && memberProjects.includes(filterProjectId)) {
-                                            prefilledProjectId = filterProjectId;
-                                        } else if (memberProjects.length === 1) {
-                                            prefilledProjectId = memberProjects[0];
-                                        }
-
-                                        const currentDateStr = getGroupingDateInTz(selectedDate, undefined) || new Date().toISOString().split('T')[0];
-
-                                        setAddTimeData({
-                                            projectId: prefilledProjectId,
-                                            userId: prefilledUserId,
-                                            date: currentDateStr,
-                                            startTime: '09:00',
-                                            endTime: '17:00'
-                                        });
-                                        setShowAddTime(true);
-                                    }}
-                                    className="w-[120px] flex items-center justify-center gap-2 px-3 h-12 bg-primary text-white rounded-xl text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all whitespace-nowrap"
-                                >
-                                    <Plus className="w-4 h-4 shrink-0" />
-                                    <span>Add time</span>
-                                </button>
+                <div className="flex flex-col gap-3 min-w-0 w-full min-[900px]:w-auto items-stretch min-[900px]:items-end shrink-0">
+                    {/* Top row: Filter & Add time & Refresh */}
+                    <div className="flex items-center gap-2.5 justify-end w-full sm:w-auto">
+                        {/* Filter button */}
+                        <button
+                            onClick={() => setShowFilters(true)}
+                            className={clsx(
+                                "flex items-center justify-center gap-2 h-12 rounded-xl text-[13px] font-bold shadow-shell-sm transition-all whitespace-nowrap border",
+                                !isRep && !isViewer ? "w-[120px] px-3" : "px-4",
+                                hasActiveFilters
+                                    ? "bg-primary/10 border-primary text-primary"
+                                    : "bg-surface border-border text-text-muted hover:bg-surface-hover hover:text-text-main"
                             )}
-                        </div>
+                            title={hasActiveFilters ? `Filter timesheets (${activeFiltersCount} active)` : "Filter timesheets"}
+                        >
+                            <Filter className="w-4 h-4 shrink-0" />
+                            <span>Filter</span>
+                            {hasActiveFilters && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
+                            )}
+                        </button>
 
-                        {/* Refresh button on the right */}
+                        {/* Add time, for non-reps and non-viewers */}
+                        {!isRep && !isViewer && (
+                            <button
+                                onClick={() => {
+                                    const activeMember = (selectedMember && selectedMember !== 'all')
+                                        ? members.find(m => m.id === selectedMember || m.auth_user_id === selectedMember)
+                                        : (isRep ? members.find(m => m.id === profile?.id || m.auth_user_id === profile?.id) : null);
+                                    const prefilledUserId = activeMember ? activeMember.id : '';
+
+                                    const memberProjects = prefilledUserId ? (projectMembersMap[prefilledUserId] || []) : [];
+                                    let prefilledProjectId = '';
+                                    if (filterProjectId && filterProjectId !== 'all' && memberProjects.includes(filterProjectId)) {
+                                        prefilledProjectId = filterProjectId;
+                                    } else if (memberProjects.length === 1) {
+                                        prefilledProjectId = memberProjects[0];
+                                    }
+
+                                    const currentDateStr = getGroupingDateInTz(selectedDate, undefined) || new Date().toISOString().split('T')[0];
+
+                                    setAddTimeData({
+                                        projectId: prefilledProjectId,
+                                        userId: prefilledUserId,
+                                        date: currentDateStr,
+                                        startTime: '09:00',
+                                        endTime: '17:00'
+                                    });
+                                    setShowAddTime(true);
+                                }}
+                                className="w-[120px] flex items-center justify-center gap-2 px-3 h-12 bg-primary text-white rounded-xl text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all whitespace-nowrap"
+                            >
+                                <Plus className="w-4 h-4 shrink-0" />
+                                <span>Add time</span>
+                            </button>
+                        )}
+
+                        {/* Refresh button */}
                         <RefreshButton
                             onClick={handleRefresh}
                             refreshing={refreshing}
@@ -799,9 +796,9 @@ export function Timesheets() {
                         />
                     </div>
 
-                    {/* Bottom row: Date navigation (centered) */}
-                    <div className="flex items-center justify-center w-full">
-                        <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-12 w-full sm:w-auto min-w-[240px]">
+                    {/* Bottom row: Date navigation */}
+                    <div className="flex items-center justify-end w-full sm:w-auto">
+                        <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-12 w-full min-w-[260px]">
                             <button
                                 onClick={() => navigateDate(-1)}
                                 className="p-3 shrink-0 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary"
@@ -832,102 +829,102 @@ export function Timesheets() {
                         </div>
                     </div>
                 </div>
-            </header>
+            </div>
 
+            {/* Active Filters */}
+            {hasActiveFilters && (
+                <div className="w-full flex flex-wrap items-center gap-2 animate-in fade-in duration-200">
+                    <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider mr-1">Active Filters:</span>
+                    {filterProjectId !== 'all' && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-text-main shadow-shell-sm">
+                            <FolderOpen className="w-3.5 h-3.5 text-text-muted" />
+                            <span>Project: {projects.find(p => p.id === filterProjectId)?.name || filterProjectId}</span>
+                            <button
+                                type="button"
+                                onClick={() => setFilterProjectId('all')}
+                                className="p-0.5 hover:bg-surface-hover rounded text-text-muted hover:text-text-main transition-colors ml-0.5"
+                                title="Remove project filter"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                        </span>
+                    )}
+                    {!isRep && selectedMember !== 'all' && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-text-main shadow-shell-sm">
+                            <Users className="w-3.5 h-3.5 text-text-muted" />
+                            <span>Member: {members.find(m => m.id === selectedMember)?.full_name || selectedMember}</span>
+                            <button
+                                type="button"
+                                onClick={() => setSelectedMember('all')}
+                                className="p-0.5 hover:bg-surface-hover rounded text-text-muted hover:text-text-main transition-colors ml-0.5"
+                                title="Remove member filter"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                        </span>
+                    )}
+                    {activeTimezone !== 'Org Local' && (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-text-main shadow-shell-sm">
+                            <Clock className="w-3.5 h-3.5 text-text-muted" />
+                            <span>Timezone: {activeTimezone}</span>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTimezone('Org Local')}
+                                className="p-0.5 hover:bg-surface-hover rounded text-text-muted hover:text-text-main transition-colors ml-0.5"
+                                title="Reset timezone"
+                            >
+                                <X className="w-3 h-3" />
+                            </button>
+                        </span>
+                    )}
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setFilterProjectId('all');
+                            if (!isRep) setSelectedMember('all');
+                            setActiveTimezone('Org Local');
+                        }}
+                        className="text-[11px] font-bold text-primary hover:underline ml-2 transition-colors cursor-pointer"
+                    >
+                        Clear all
+                    </button>
+                </div>
+            )}
 
-            <main className="flex-1 min-h-0 overflow-y-auto px-4 py-5 min-[900px]:px-10 min-[900px]:py-10 custom-scrollbar min-w-0">
-                {hasActiveFilters && (
-                    <div className="w-full max-w-[1600px] mx-auto mb-5 flex flex-wrap items-center gap-2 animate-in fade-in duration-200">
-                        <span className="text-[11px] font-bold text-text-muted uppercase tracking-wider mr-1">Active Filters:</span>
-                        {filterProjectId !== 'all' && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-text-main shadow-shell-sm">
-                                <FolderOpen className="w-3.5 h-3.5 text-text-muted" />
-                                <span>Project: {projects.find(p => p.id === filterProjectId)?.name || filterProjectId}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => setFilterProjectId('all')}
-                                    className="p-0.5 hover:bg-surface-hover rounded text-text-muted hover:text-text-main transition-colors ml-0.5"
-                                    title="Remove project filter"
-                                >
-                                    <X className="w-3 h-3" />
-                                </button>
-                            </span>
-                        )}
-                        {!isRep && selectedMember !== 'all' && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-text-main shadow-shell-sm">
-                                <Users className="w-3.5 h-3.5 text-text-muted" />
-                                <span>Member: {members.find(m => m.id === selectedMember)?.full_name || selectedMember}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedMember('all')}
-                                    className="p-0.5 hover:bg-surface-hover rounded text-text-muted hover:text-text-main transition-colors ml-0.5"
-                                    title="Remove member filter"
-                                >
-                                    <X className="w-3 h-3" />
-                                </button>
-                            </span>
-                        )}
-                        {activeTimezone !== 'Org Local' && (
-                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-surface border border-border text-text-main shadow-shell-sm">
-                                <Clock className="w-3.5 h-3.5 text-text-muted" />
-                                <span>Timezone: {activeTimezone}</span>
-                                <button
-                                    type="button"
-                                    onClick={() => setActiveTimezone('Org Local')}
-                                    className="p-0.5 hover:bg-surface-hover rounded text-text-muted hover:text-text-main transition-colors ml-0.5"
-                                    title="Reset timezone"
-                                >
-                                    <X className="w-3 h-3" />
-                                </button>
-                            </span>
-                        )}
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setFilterProjectId('all');
-                                if (!isRep) setSelectedMember('all');
-                                setActiveTimezone('Org Local');
-                            }}
-                            className="text-[11px] font-bold text-primary hover:underline ml-2 transition-colors cursor-pointer"
-                        >
-                            Clear all
-                        </button>
-                    </div>
-                )}
-                {loading ? (
-                    <div className="flex items-center justify-center min-h-[420px]">
-                        <LoadingState />
-                    </div>
-                ) : (
-                    <div className="w-full max-w-[1600px] mx-auto min-w-0 animate-in fade-in slide-in-from-bottom-1 duration-400">
-                        {viewMode === 'daily' && (
-                            <DailyView
-                                entries={entries}
-                                selectedMember={selectedMember}
-                                toProperCase={toProperCase}
-                                onEditSession={openEditModal}
-                                onDeleteSession={openDeleteModal}
-                                onRowClick={openMemberTimesheet}
-                                isViewer={isViewer}
-                            />
-                        )}
+            {/* Content View */}
+            {loading ? (
+                <div className="flex items-center justify-center min-h-[420px]">
+                    <LoadingState />
+                </div>
+            ) : (
+                <div className="w-full min-w-0 animate-in fade-in slide-in-from-bottom-1 duration-400">
+                    {viewMode === 'daily' && (
+                        <DailyView
+                            entries={entries}
+                            selectedMember={selectedMember}
+                            toProperCase={toProperCase}
+                            onEditSession={openEditModal}
+                            onDeleteSession={openDeleteModal}
+                            onRowClick={openMemberTimesheet}
+                            isViewer={isViewer}
+                        />
+                    )}
 
-                        {viewMode === 'weekly' && (
-                            <WeeklyView
-                                entries={entries}
-                                onDayClick={(d: string) => navigate(`/dashboard/reports?start=${d}&end=${d}`)}
-                            />
-                        )}
+                    {viewMode === 'weekly' && (
+                        <WeeklyView
+                            entries={entries}
+                            onDayClick={(d: string) => navigate(`/dashboard/reports?start=${d}&end=${d}`)}
+                        />
+                    )}
 
-                        {viewMode === 'calendar' && (
-                            <CalendarView
-                                entries={entries}
-                                onDayClick={(d: string) => navigate(`/dashboard/reports?start=${d}&end=${d}`)}
-                            />
-                        )}
-                    </div>
-                )}
-            </main>
+                    {viewMode === 'calendar' && (
+                        <CalendarView
+                            entries={entries}
+                            onDayClick={(d: string) => navigate(`/dashboard/reports?start=${d}&end=${d}`)}
+                        />
+                    )}
+                </div>
+            )}
 
 
             <Modal
@@ -1307,18 +1304,18 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
     };
 
     return (
-        <div className="space-y-8 pb-20">
+        <div className="space-y-6 md:space-y-8 pb-16">
             <div className="flex items-center justify-between">
                 <div className="flex items-baseline gap-4">
-                    <span className="text-5xl font-bold text-text-main tabular-nums tracking-tight">{formatDuration(day.totalMinutes)}</span>
-                    <span className="text-[13px] font-bold text-text-muted tracking-wide uppercase opacity-60">Total tracked today</span>
+                    <span className="text-4xl md:text-5xl font-bold text-text-main tabular-nums tracking-tight">{formatDuration(day.totalMinutes)}</span>
+                    <span className="text-[12px] md:text-[13px] font-bold text-text-muted tracking-wide uppercase opacity-60">Total tracked today</span>
                 </div>
             </div>
 
             {/* 3% black is invisible on the light ground (#F8FAFC). The track and
                 its quarter-day ticks are drawn from the border token instead, so
                 each theme gets a value chosen for its own background. */}
-            <div className="relative h-2.5 bg-surface-hover dark:bg-white/[0.05] rounded-full my-12 overflow-hidden ring-1 ring-border">
+            <div className="relative h-2.5 bg-surface-hover dark:bg-white/[0.05] rounded-full my-6 md:my-8 overflow-hidden ring-1 ring-border">
                 <div className="absolute inset-0 z-0 pointer-events-none">
                     <span className="absolute w-px h-full bg-border left-1/4" />
                     <span className="absolute w-px h-full bg-border left-1/2" />
@@ -1336,7 +1333,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                 })}
             </div>
 
-            <div className="bg-surface rounded-md border border-border shadow-shell-sm overflow-visible">
+            <div className="bg-surface rounded-xl border border-border shadow-shell-sm overflow-x-auto custom-scrollbar">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
                         <tr className="bg-surface-hover/30">
