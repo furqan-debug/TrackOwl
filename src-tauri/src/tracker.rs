@@ -204,7 +204,10 @@ pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
         }
 
         loop {
-            thread::sleep(Duration::from_millis(100)); // Poll every 100ms
+            // Poll at 250ms instead of 100ms — reduces CoreGraphics syscalls from
+            // 60/sec to 24/sec (60% reduction). Responsiveness is unaffected since
+            // the sample loop only reads counts every 60 seconds.
+            thread::sleep(Duration::from_millis(250));
             
             let mut is_active = false;
 
@@ -582,36 +585,36 @@ pub fn start_sample_loop_inner(
             // Emit to React UI (live 60s tick — provisional display only)
             let _ = app.emit("tracking-sample", &sample);
 
-            // ── 1. Write raw sample to activity_samples (for screenshot correlation) ──
-            let mut db_exists = false;
+            // ── 1. Write raw sample to SQLite cache (for screenshot correlation) ─
+            // NOTE: Do NOT call sync_from_arc here. The always-on 30s sync loop
+            // (started in set_auth_token) continuously uploads to Supabase.
+            // Calling it here on every 60s tick was making a full HTTPS POST on
+            // the tracker thread every minute, blocking the DB mutex for up to
+            // 10s and stalling the entire app.
             {
                 let db_guard = db.lock().unwrap();
                 if let Some(conn) = db_guard.as_ref() {
-                    db_exists = true;
                     if let Err(e) = crate::cache::cache_sample(conn, &sample) {
                         eprintln!("[tracker] cache write error: {}", e);
                     }
+                } else {
+                    // No local DB (rare: DB init failed at startup) — upload directly
+                    let body = serde_json::json!([{
+                        "session_id":       sample.session_id,
+                        "recorded_at":      sample.recorded_at,
+                        "mouse_clicks":     sample.mouse_clicks,
+                        "key_presses":      sample.key_presses,
+                        "app_name":         sample.app_name,
+                        "window_title":     sample.window_title,
+                        "domain":           sample.domain,
+                        "idle":             sample.idle,
+                        "activity_percent": sample.activity_percent,
+                        "active_seconds":   sample.active_seconds,
+                        "is_offline":       sample.is_offline,
+                    }]).to_string();
+                    let token = auth_token.lock().unwrap().clone();
+                    let _ = crate::supabase_post(&cfg, "activity_samples", &body, token.as_deref(), Some("resolution=ignore-duplicates"));
                 }
-            }
-
-            if db_exists {
-                crate::cache::sync_from_arc(&db, &cfg, &auth_token);
-            } else {
-                let body = serde_json::json!([{
-                    "session_id":      sample.session_id,
-                    "recorded_at":     sample.recorded_at,
-                    "mouse_clicks":    sample.mouse_clicks,
-                    "key_presses":     sample.key_presses,
-                    "app_name":        sample.app_name,
-                    "window_title":    sample.window_title,
-                    "domain":          sample.domain,
-                    "idle":            sample.idle,
-                    "activity_percent": sample.activity_percent,
-                    "active_seconds":  sample.active_seconds,
-                    "is_offline":      sample.is_offline,
-                }]).to_string();
-                let token = auth_token.lock().unwrap().clone();
-                let _ = crate::supabase_post(&cfg, "activity_samples", &body, token.as_deref(), Some("resolution=ignore-duplicates"));
             }
 
             // ── 2. Feed sample into 10-minute block accumulator ───────────────
@@ -689,22 +692,35 @@ pub fn start_sample_loop_inner(
 }
 
 /// Persist a completed/partial BlockRecord to local SQLite and sync to Supabase.
+///
+/// IMPORTANT: The DB mutex is held ONLY for the SQLite write, then released
+/// BEFORE the Supabase HTTP call. Previously the mutex was held across the
+/// network request, blocking every other DB user for up to 10s every 10 minutes.
 fn flush_block_record(
     block: &crate::block_accumulator::BlockRecord,
     db: &Arc<Mutex<Option<rusqlite::Connection>>>,
     cfg: &crate::SupabaseConfig,
     auth_token: &Arc<Mutex<Option<String>>>,
 ) {
-    let db_guard = db.lock().unwrap();
-    if let Some(conn) = db_guard.as_ref() {
-        if let Err(e) = crate::block_accumulator::cache_block(conn, block) {
-            eprintln!("[tracker] block cache error: {}", e);
+    let db_has_conn = {
+        // Scope the DB lock: write to SQLite, then DROP the mutex before HTTP.
+        let db_guard = db.lock().unwrap();
+        if let Some(conn) = db_guard.as_ref() {
+            if let Err(e) = crate::block_accumulator::cache_block(conn, block) {
+                eprintln!("[tracker] block cache error: {}", e);
+            }
+            true
         } else {
-            let token = auth_token.lock().unwrap().clone().unwrap_or_default();
-            crate::block_accumulator::sync_blocks(conn, cfg, &token);
+            false
         }
+        // db_guard (and the mutex lock) is dropped here ─────────────────────
+    };
+
+    if db_has_conn {
+        // DB mutex is now FREE. Network call won't block any other thread.
+        crate::block_accumulator::sync_blocks_from_arc(db, cfg, auth_token);
     } else {
-        // No local DB — upload directly
+        // No local DB — upload the block directly
         let body = serde_json::json!([{
             "session_id":       block.session_id,
             "block_start":      block.block_start,
@@ -832,6 +848,12 @@ pub fn start_screenshot_loop(
             eprintln!("[tracker] ⚠️ Screenshot loop: could not open SQLite DB — rate limiting disabled.");
         }
 
+        // Prune stale screenshot_log entries once at session start (not after every capture).
+        // This keeps the table lean without adding a DELETE query on every upload.
+        if let Some(conn) = db_conn.as_ref() {
+            crate::cache::prune_screenshot_log(conn);
+        }
+
         // ── Mandatory START screenshot (always captured, counts vs. rolling window) ──
         take_mandatory_screenshot(
             &app,
@@ -916,8 +938,8 @@ pub fn start_screenshot_loop(
                                 if let Err(e) = crate::cache::log_screenshot_time(conn, captured_ms) {
                                     eprintln!("[tracker] ⚠️ Failed to log screenshot timestamp: {}", e);
                                 }
-                                // Prune stale entries (> 24 h) to keep DB lean
-                                crate::cache::prune_screenshot_log(conn);
+                                // NOTE: prune_screenshot_log removed from here — now runs once
+                                // at session start to avoid a DELETE query on every capture.
                             }
 
                             // Record metadata in screenshots table

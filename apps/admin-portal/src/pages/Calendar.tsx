@@ -274,10 +274,10 @@ export function Calendar() {
             description="Operational schedule of approved leave, holidays, and corporate milestones."
             actions={
                 <div className="flex items-center gap-4">
-                    <div className="p-1 rounded-md flex items-center shadow-shell-sm border border-[var(--border-color)] overflow-hidden bg-[var(--bg-surface)]">
+                    <div className="p-1 rounded-xl flex items-center shadow-shell-sm border border-[var(--border-color)] overflow-hidden bg-[var(--bg-surface)]">
                         <button
                             onClick={prevMonth}
-                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-md"
+                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -288,7 +288,7 @@ export function Calendar() {
                         </div>
                         <button
                             onClick={nextMonth}
-                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-md"
+                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
                         >
                             <ChevronRight className="w-4 h-4" />
                         </button>

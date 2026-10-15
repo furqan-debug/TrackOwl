@@ -33,6 +33,7 @@ interface DatePickerProps {
     displayTimezone?: string;
     maxDate?: string; // YYYY-MM-DD
     direction?: 'auto' | 'up' | 'down';
+    panelClassName?: string;
 }
 
 /**
@@ -64,7 +65,8 @@ export function DatePicker({
     displayValue,
     displayTimezone,
     maxDate,
-    direction = 'auto'
+    direction = 'auto',
+    panelClassName,
 }: DatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -326,7 +328,10 @@ export function DatePicker({
                                 width: panelPos.width,
                             }}
                             onMouseDown={(e) => e.stopPropagation()}
-                            className="bg-surface border border-border rounded-2xl shadow-premium z-[200] p-3 overflow-hidden"
+                            className={clsx(
+                                "bg-surface border border-border rounded-xl shadow-premium z-[200] p-3 overflow-hidden",
+                                panelClassName
+                            )}
                         >
                         {/* Header */}
                         <div className="flex items-center justify-between mb-2">
