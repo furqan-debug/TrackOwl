@@ -572,10 +572,10 @@ export function Calendar() {
                 height="h-auto"
                 allowOverflow
             >
-                <div className="space-y-6">
+                <div className="space-y-4">
                     <div className="space-y-3 max-h-[280px] overflow-y-auto custom-scrollbar pr-1">
                         {notesForModalDate.length === 0 ? (
-                            <p className="text-[12px] text-text-muted font-bold italic text-center py-6">No notes for this day yet.</p>
+                            <p className="text-[12px] text-text-muted font-bold italic text-center py-2">No notes for this day yet.</p>
                         ) : (
                             notesForModalDate.map(n => (
                                 <div key={n.id} className="flex items-start justify-between gap-3 bg-amber-50 border border-amber-100 rounded-xl p-4">
