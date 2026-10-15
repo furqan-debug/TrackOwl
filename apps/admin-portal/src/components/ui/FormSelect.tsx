@@ -22,6 +22,7 @@ export function FormSelect({
     disabled,
     icon,
     description,
+    hideScrollbar,
 }: any) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -300,7 +301,7 @@ export function FormSelect({
                                     maxHeight: panelPos.maxHeight,
                                 }}
                                 onMouseDown={(e) => e.stopPropagation()}
-                                className="bg-surface border border-border rounded-2xl shadow-premium z-[200] flex flex-col p-2 overflow-y-auto custom-scrollbar"
+                                className={clsx("bg-surface border border-border rounded-2xl shadow-premium z-[200] flex flex-col p-2 custom-scrollbar", !hideScrollbar && "overflow-y-auto", hideScrollbar && "overflow-hidden no-scrollbar")}
                             >
                             {options.map((opt: any) => (
                                 <div

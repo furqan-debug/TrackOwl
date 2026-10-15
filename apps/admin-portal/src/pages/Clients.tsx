@@ -794,6 +794,8 @@ export function Clients() {
                         ? 'Update client details and information'
                         : 'Create a new client record'
                 }
+                height="h-auto"
+                allowOverflow
             >
                 <form
                     onSubmit={handleSubmit}
