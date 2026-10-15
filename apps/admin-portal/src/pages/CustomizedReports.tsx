@@ -59,7 +59,7 @@ export function CustomizedReports() {
                     <p className="text-text-muted mt-2 font-medium">Manage and run your saved report configurations.</p>
                 </div>
 
-                <button className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl text-sm font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
+                <button className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-xl text-sm font-bold hover:bg-slate-800 transition-all shadow-xl shadow-slate-200">
                     <Plus className="w-5 h-5" />
                     Create New Report
                 </button>

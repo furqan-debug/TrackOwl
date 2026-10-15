@@ -132,13 +132,13 @@ export function UrlTracking() {
                         options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
                     />
 
-                    <div className="flex bg-surface-subtle p-1 rounded-lg border border-border shrink-0">
+                    <div className="flex bg-surface-subtle p-1 rounded-xl border border-border shrink-0">
                         {RANGES.map(r => (
                             <button 
                                 key={r} 
                                 onClick={() => setRange(r)}
                                 className={clsx(
-                                    "px-4 py-1.5 rounded-md text-xs font-semibold transition-all",
+                                    "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all",
                                     range === r ? "bg-surface text-[var(--chart-gold)] shadow-shell-sm" : "text-text-muted hover:text-text-primary"
                                 )}
                             >

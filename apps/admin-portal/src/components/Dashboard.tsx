@@ -565,10 +565,10 @@ export function Dashboard() {
                         rounded-md, p-1, with p-3 chevrons around a label-less
                         picker. The "Viewing Date" label was what made this one
                         taller - a two-line pill next to a one-line one. */}
-                    <div className="flex items-center h-12 glass-panel p-1 rounded-md shadow-premium border border-border flex-1 md:flex-none">
+                    <div className="flex items-center h-12 glass-panel p-1 rounded-xl shadow-premium border border-border flex-1 md:flex-none">
                         <button
                             onClick={() => navigateDate('prev')}
-                            className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-md"
+                            className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-lg"
                         >
                             <ChevronLeft className="w-5 h-5" />
                         </button>
@@ -581,7 +581,7 @@ export function Dashboard() {
                         />
                         <button
                             onClick={() => navigateDate('next')}
-                            className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-md disabled:opacity-30 disabled:hover:bg-transparent"
+                            className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-lg disabled:opacity-30 disabled:hover:bg-transparent"
                             disabled={isTodayView || viewDateStr >= todayOrgStr}
                         >
                             <ChevronRight className="w-5 h-5" />
@@ -599,9 +599,7 @@ export function Dashboard() {
                         onClick={() => fetchDashboardData(true, true)}
                         refreshing={refreshing}
                         label="Refresh dashboard"
-                        // This page's date control is 48px at md, unlike the
-                        // 40px filter pills every other page uses.
-                        className="refresh-btn--lg"
+                        className="refresh-btn--lg shadow-premium !cursor-pointer hover:text-text-main hover:bg-surface-hover transition-all"
                     />
                 </div>
             }

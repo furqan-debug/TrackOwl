@@ -95,6 +95,20 @@ pub struct TrackingResult {
     pub error: Option<String>,
 }
 
+// ─── Shared HTTP agent (connection pool reuse) ────────────────────────────────
+// Creating a new ureq::Agent per call opens a fresh TLS connection each time
+// (~200ms overhead). A shared Agent reuses TCP connections across calls to the
+// same Supabase host, eliminating the TLS handshake on subsequent requests.
+static HTTP_AGENT: std::sync::OnceLock<ureq::Agent> = std::sync::OnceLock::new();
+
+fn http_agent() -> &'static ureq::Agent {
+    HTTP_AGENT.get_or_init(|| {
+        ureq::AgentBuilder::new()
+            .timeout(std::time::Duration::from_secs(10))
+            .build()
+    })
+}
+
 // ─── Supabase REST helpers ─────────────────────────────────────────────────────
 
 pub fn supabase_post(
@@ -106,11 +120,7 @@ pub fn supabase_post(
 ) -> Result<String, String> {
     let url = format!("{}/rest/v1/{}", cfg.url, table);
 
-    let agent = ureq::AgentBuilder::new()
-        .timeout(std::time::Duration::from_secs(10))
-        .build();
-
-    let mut req = agent.post(&url)
+    let mut req = http_agent().post(&url)
         .set("apikey", &cfg.anon_key)
         .set("Content-Type", "application/json");
 
@@ -147,11 +157,7 @@ pub fn supabase_patch(
 ) -> Result<String, String> {
     let url = format!("{}/rest/v1/{}?{}", cfg.url, table, filter);
 
-    let agent = ureq::AgentBuilder::new()
-        .timeout(std::time::Duration::from_secs(10))
-        .build();
-
-    let mut req = agent.patch(&url)
+    let mut req = http_agent().patch(&url)
         .set("apikey", &cfg.anon_key)
         .set("Content-Type", "application/json");
 
@@ -175,29 +181,93 @@ pub fn supabase_patch(
 }
 
 /// Robust stop and sync logic used on exit or manual stop.
+///
+/// Fix (2026-10): Previously this function did not wait for the tracker thread to finish
+/// flushing its final partial block before syncing, causing 10–15 minutes of tracked time
+/// to be lost when the user closed the app after reaching the daily limit or manually stopping.
+///
+/// Now mirrors the correct behavior of `stop_tracking`:
+///   1. Waits up to 5s for `tracker_done` so the partial block is written to SQLite first.
+///   2. Uses `rpc_stop_session_v2` with an accurate `p_ended_at` timestamp.
+///   3. Caches the session stop locally if offline (retried on next launch by `sync_from_arc`).
+///   4. Calls `sync_blocks_from_arc` so flushed block_records are uploaded to Supabase.
 fn stop_and_sync_internal(state_handle: &Mutex<AppState>) {
-    let (cfg, token, session_id, running, sync_running, db_arc, auth_token_arc) = {
+    // Capture the stop wall-clock BEFORE signalling the thread to stop, so the
+    // ended_at we send to Supabase is as accurate as possible.
+    let stop_time = chrono::Utc::now();
+
+    let (cfg, session_id, running, tracker_done, sync_running, db_arc, auth_token_arc) = {
         let mut s = state_handle.lock().unwrap();
-        let token = s.auth_token.lock().unwrap().clone();
-        let cfg = SupabaseConfig { 
-            url: s.supabase_url.clone(), 
-            anon_key: s.supabase_anon_key.clone() 
+        let cfg = SupabaseConfig {
+            url: s.supabase_url.clone(),
+            anon_key: s.supabase_anon_key.clone(),
         };
         let sid = s.active_session_id.take();
-        (cfg, token, sid, Arc::clone(&s.tracking_running), Arc::clone(&s.sync_running), Arc::clone(&s.db), Arc::clone(&s.auth_token))
+        (
+            cfg,
+            sid,
+            Arc::clone(&s.tracking_running),
+            Arc::clone(&s.tracker_done),
+            Arc::clone(&s.sync_running),
+            Arc::clone(&s.db),
+            Arc::clone(&s.auth_token),
+        )
     };
-    
+
+    // Signal the tracker loop to stop.
     *running.lock().unwrap() = false;
-    // Stop the always-on sync loop on app exit (not on stop_tracking)
+    // Stop the always-on sync loop on app exit (not on stop_tracking).
     *sync_running.lock().unwrap() = false;
-    if let Some(sid) = session_id {
-        println!("[lib] 🛑 Stopping session via RPC: {}", sid);
-        let body = serde_json::json!({ "p_session_id": sid }).to_string();
-        let _ = supabase_post(&cfg, "rpc/rpc_stop_session", &body, token.as_deref(), None);
+
+    // ── Wait for tracker thread to finish flushing its partial block ─────────────
+    // The tracker sets tracker_done = true after flush_block_record() returns.
+    // Without this wait, sync_from_arc / sync_blocks_from_arc run before the final
+    // block_records row exists in SQLite, losing up to 10 minutes of tracked time.
+    {
+        let mut waited_ms = 0u64;
+        loop {
+            if *tracker_done.lock().unwrap() {
+                println!("[lib] ✅ Tracker thread finished flushing (waited {}ms)", waited_ms);
+                break;
+            }
+            if waited_ms >= 5_000 {
+                eprintln!("[lib] ⚠️  Tracker flush timeout after 5s — syncing anyway");
+                break;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(100));
+            waited_ms += 100;
+        }
     }
 
+    // ── Stop the session on the server with an accurate ended_at ─────────────────
+    if let Some(ref sid) = session_id {
+        println!("[lib] 🛑 Stopping session via RPC v2: {}", sid);
+        let ended_at = stop_time.to_rfc3339();
+        let body = serde_json::json!({
+            "p_session_id": sid,
+            "p_ended_at":   ended_at,
+        })
+        .to_string();
+        let token = auth_token_arc.lock().unwrap().clone();
+        match supabase_post(&cfg, "rpc/rpc_stop_session_v2", &body, token.as_deref(), None) {
+            Ok(_) => println!("[lib] ✅ Session stopped on server"),
+            Err(e) => {
+                eprintln!("[lib] ⚠️  rpc_stop_session_v2 failed ({}); caching stop locally", e);
+                // Cache the stop locally so the next sync_from_arc call retries it.
+                let db_lock = db_arc.lock().unwrap();
+                if let Some(conn) = db_lock.as_ref() {
+                    let _ = cache::cache_session_stop(conn, sid, &stop_time.to_rfc3339());
+                }
+            }
+        }
+    }
+
+    // ── Sync all pending activity_samples and block_records to Supabase ──────────
     println!("[lib] 🔄 Final sync of cached samples...");
     cache::sync_from_arc(&db_arc, &cfg, &auth_token_arc);
+
+    println!("[lib] 🔄 Final sync of cached block records...");
+    crate::block_accumulator::sync_blocks_from_arc(&db_arc, &cfg, &auth_token_arc);
 }
 
 /// GET from a Supabase PostgREST endpoint.
@@ -209,11 +279,7 @@ pub fn supabase_get(
 ) -> Result<String, String> {
     let url = format!("{}/rest/v1/{}?{}", cfg.url, table, filter);
 
-    let agent = ureq::AgentBuilder::new()
-        .timeout(std::time::Duration::from_secs(10))
-        .build();
-
-    let mut req = agent.get(&url)
+    let mut req = http_agent().get(&url)
         .set("apikey", &cfg.anon_key);
 
     if let Some(token) = auth_token {
@@ -513,8 +579,12 @@ fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>
         let cfg2      = cfg.clone();
         let auth2     = Arc::clone(&auth_arc);
         let org2      = org_id.clone();
+        let db2       = Arc::clone(&db_arc);
         thread::spawn(move || {
-            let db_conn = cache::init_db().ok();
+            // Reuse the existing shared DB connection instead of opening a new
+            // SQLite connection (+ running migrations) on every stop.
+            let db_guard = db2.lock().unwrap();
+            let db_conn_ref = db_guard.as_ref();
             tracker::take_mandatory_screenshot(
                 &app2,
                 &sid,
@@ -523,7 +593,7 @@ fn stop_tracking(app: tauri::AppHandle, state: tauri::State<'_, Mutex<AppState>>
                 org2.as_deref(),
                 &uid,
                 "STOP",
-                db_conn.as_ref(),
+                db_conn_ref,
                 offset_secs,
             );
         });
@@ -819,7 +889,9 @@ fn stop_idle_monitoring(state: tauri::State<'_, Mutex<AppState>>) {
     *s.is_idle_monitoring.lock().unwrap() = false;
 }
 
-/// invoke('get_location')
+/// invoke('sync_now')
+/// Triggers an immediate sync of the local SQLite cache to Supabase.
+/// Returns immediately — sync runs on a background thread to avoid blocking the UI.
 #[tauri::command]
 fn sync_now(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, String> {
     let s = state.lock().unwrap();
@@ -827,8 +899,15 @@ fn sync_now(state: tauri::State<'_, Mutex<AppState>>) -> Result<String, String> 
         url: s.supabase_url.clone(),
         anon_key: s.supabase_anon_key.clone(),
     };
-    cache::sync_from_arc(&s.db, &cfg, &s.auth_token);
-    crate::block_accumulator::sync_blocks_from_arc(&s.db, &cfg, &s.auth_token);
+    let db_arc = Arc::clone(&s.db);
+    let auth_arc = Arc::clone(&s.auth_token);
+    // Spawn off-thread so the IPC call returns immediately and doesn't block the UI.
+    // Previously this ran sync_from_arc + sync_blocks_from_arc directly on the IPC
+    // thread, which could freeze the UI for up to 20s on a slow connection.
+    thread::spawn(move || {
+        cache::sync_from_arc(&db_arc, &cfg, &auth_arc);
+        crate::block_accumulator::sync_blocks_from_arc(&db_arc, &cfg, &auth_arc);
+    });
     Ok("Sync triggered".to_string())
 }
 
@@ -941,21 +1020,21 @@ pub fn run() {
                     std::thread::sleep(std::time::Duration::from_millis(1000));
                     
                     let state = app_handle_watcher.state::<Mutex<AppState>>();
-                    let (monitoring, _limit) = {
+                    // Acquire state only once per iteration (was two separate locks before)
+                    let (monitoring, active) = {
                         let s = state.lock().unwrap();
                         let monitoring = *s.is_idle_monitoring.lock().unwrap();
-                        let limit = *s.last_idle_limit.lock().unwrap();
-                        (monitoring, limit)
-                    };
-
-                    if monitoring {
-                        let active = {
-                            let s = state.lock().unwrap();
+                        let active = if monitoring {
                             let mouse = s.counts.mouse_count.swap(0, std::sync::atomic::Ordering::Relaxed);
                             let keyboard = s.counts.keyboard_count.swap(0, std::sync::atomic::Ordering::Relaxed);
                             mouse > 0 || keyboard > 0
+                        } else {
+                            false
                         };
+                        (monitoring, active)
+                    };
 
+                    if monitoring {
                         if active {
                             {
                                 let s = state.lock().unwrap();

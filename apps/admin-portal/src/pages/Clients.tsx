@@ -7,7 +7,7 @@ import {
     Plus,
     Globe,
     Trash2,
-    Edit,
+    Pencil,
     Activity
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -692,72 +692,31 @@ export function Clients() {
 
                                             {/* ACTIONS */}
                                             <td className="pr-5 sm:pr-8 py-4 sm:py-5 text-right">
-                                                <div
-                                                    className="
-                                                        h-12 sm:h-14
-                                                        flex items-center
-                                                        justify-end
-                                                        gap-1.5 sm:gap-2
-                                                        opacity-100
-                                                        lg:opacity-0
-                                                        lg:group-hover:opacity-100
-                                                        transition-all
-                                                    "
-                                                >
-                                                    <Button
-                                                        onClick={() =>
-                                                            handleOpenEdit(
-                                                                client
-                                                            )
-                                                        }
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="
-                                                            w-8 h-8
-                                                            sm:w-9 sm:h-9
-                                                            p-0
-                                                            rounded-lg
-                                                            text-text-muted
-                                                            hover:text-primary
-                                                            hover:bg-surface-hover
-                                                            hover:border
-                                                            hover:border-slate-200
-                                                            flex
-                                                            items-center
-                                                            justify-center
-                                                            transition-all
-                                                        "
+                                                <div className="flex items-center justify-end gap-0.5 shrink-0">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleOpenEdit(client)}
+                                                        title="Edit client"
+                                                        aria-label="Edit client"
+                                                        className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-primary hover:border-primary/40 transition-colors inline-flex items-center justify-center"
                                                     >
-                                                        <Edit className="w-4 h-4" />
-                                                    </Button>
+                                                        <Pencil className="w-4 h-4" strokeWidth={2} />
+                                                    </button>
 
-                                                    <Button
+                                                    <button
+                                                        type="button"
                                                         onClick={() => {
                                                             if (!isViewer) {
-                                                                setDeletingClient(
-                                                                    client
-                                                                );
+                                                                setDeletingClient(client);
                                                             }
                                                         }}
                                                         disabled={isViewer}
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="
-                                                            w-8 h-8
-                                                            sm:w-9 sm:h-9
-                                                            p-0
-                                                            rounded-lg
-                                                            text-text-muted
-                                                            hover:text-rose-600
-                                                            hover:bg-rose-50
-                                                            flex
-                                                            items-center
-                                                            justify-center
-                                                            transition-all
-                                                        "
+                                                        title="Delete client"
+                                                        aria-label="Delete client"
+                                                        className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-rose-500 hover:border-rose-500/40 hover:bg-rose-500/10 transition-colors inline-flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none"
                                                     >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
+                                                        <Trash2 className="w-4 h-4" strokeWidth={2} />
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -943,58 +902,27 @@ export function Clients() {
                     isOpen={!!deletingClient}
                     onClose={() => setDeletingClient(null)}
                     title="Delete Client"
-                    subtitle="Are you sure you want to remove this client?"
-                    maxWidth="max-w-md"
+                    subtitle="This operation is destructive and irreversible."
+                    height="h-auto"
                 >
-                    <div className="w-full min-w-0 text-center space-y-5 sm:space-y-6">
-                        <div
-                            className="
-                                w-14 h-14
-                                sm:w-16 sm:h-16
-                                bg-rose-50
-                                text-rose-500
-                                rounded-2xl
-                                flex items-center justify-center
-                                mx-auto
-                                border border-rose-100
-                            "
-                        >
-                            <Trash2 className="w-7 h-7 sm:w-8 sm:h-8" />
+                    <div className="text-center space-y-6 w-full max-w-full min-w-0">
+                        <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto border border-rose-100">
+                            <Trash2 className="w-8 h-8" />
                         </div>
 
-                        <div className="space-y-2">
-                            <p
-                                className="
-                                    text-[13px]
-                                    sm:text-sm
-                                    text-text-secondary
-                                    leading-relaxed
-                                    break-words
-                                "
-                            >
-                                This will permanently remove{' '}
-                                <span className="font-bold text-text-primary break-words">
-                                    "{deletingClient.name}"
-                                </span>
-                                . This action cannot be undone.
-                            </p>
-                        </div>
+                        <p className="text-sm font-medium text-text-muted break-words">
+                            Permanently remove{' '}
+                            <span className="font-black text-text-main tracking-tight break-all">
+                                "{deletingClient.name}"
+                            </span>{' '}
+                            ? This action cannot be undone.
+                        </p>
 
-                        <div
-                            className="
-                                flex
-                                flex-col-reverse
-                                sm:flex-row
-                                gap-2.5 sm:gap-3
-                                pt-3 sm:pt-4
-                            "
-                        >
+                        <div className="flex flex-col sm:flex-row gap-3 pt-4 w-full">
                             <Button
-                                onClick={() =>
-                                    setDeletingClient(null)
-                                }
+                                onClick={() => setDeletingClient(null)}
                                 variant="secondary"
-                                className="flex-1 min-w-0 h-11"
+                                className="w-full sm:flex-1"
                             >
                                 Cancel
                             </Button>
@@ -1002,15 +930,9 @@ export function Clients() {
                             <Button
                                 onClick={handleDelete}
                                 variant="danger"
-                                className="
-                                    flex-1
-                                    min-w-0
-                                    h-11
-                                    shadow-shell-sm
-                                    shadow-rose-100
-                                "
+                                className="w-full sm:flex-1"
                             >
-                                Delete Client
+                                Confirm Deletion
                             </Button>
                         </div>
                     </div>

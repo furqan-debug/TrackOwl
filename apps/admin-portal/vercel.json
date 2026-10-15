@@ -25,7 +25,6 @@
     }
   ],
   "rewrites": [
-    { "source": "/support/(.*)", "destination": "/support/index.html" },
     { "source": "/((?!assets/|robots\\.txt|sitemap\\.xml|.*\\.[a-zA-Z0-9]+$).*)", "destination": "/index.html" }
   ]
 }
