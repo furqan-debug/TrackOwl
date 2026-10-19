@@ -56,9 +56,11 @@ interface MemberInfo {
 
 
 
-// Module-level cache
-let activityCache: any = null;
-let activityCacheKey: string | null = null;
+import { MemoryCache } from '../lib/cacheUtils';
+
+// Multi-key cache with 3-minute TTL and LRU eviction (holds up to 20 date/member/limit snapshots)
+const activityDataCache = new MemoryCache<any>(3 * 60 * 1000, 20);
+
 
 /** Screenshots per page. 12 divides by the 4-, 2- and 1-column grids, so a
     full page always fills its last row. */
@@ -178,22 +180,23 @@ export function Activity() {
         const currentLimit = overrideLimit ?? screenshotLimitRef.current;
         const cacheKey = `${profile?.id}_${selectedDate}_${selectedMemberId}_${currentLimit}`;
 
-        if (!forceRefresh && activityCache && activityCacheKey === cacheKey) {
-            setSamples(activityCache.samples);
-            setScreenshots(activityCache.screenshots);
-            setSessionMinutes(activityCache.sessionMinutes);
-            setHasMoreScreenshots(activityCache.hasMoreScreenshots);
-            // Clear BOTH spinners. Leaving `refreshing` alone here is how the
-            // button got stuck pulsing with nothing running: a superseded request
-            // cannot clear it (the sequence guard stops it), and the newer one
-            // that supersedes it returns from this cache path without clearing
-            // it either.
-            if (mySeq === requestSeqRef.current) {
-                setLoading(false);
-                setRefreshing(false);
+        if (!forceRefresh) {
+            const cached = activityDataCache.get(cacheKey);
+            if (cached) {
+                setSamples(cached.samples);
+                setScreenshots(cached.screenshots);
+                setSessionMinutes(cached.sessionMinutes);
+                setHasMoreScreenshots(cached.hasMoreScreenshots);
+                if (mySeq === requestSeqRef.current) {
+                    setLoading(false);
+                    setRefreshing(false);
+                }
+                return;
             }
-            return;
+        } else {
+            activityDataCache.clear();
         }
+
 
         // quiet drives neither spinner: the caller is showing its own.
         if (quiet) { /* no-op */ }
@@ -231,13 +234,13 @@ export function Activity() {
             setHasMoreScreenshots(data.hasMoreScreenshots);
 
             // Update cache
-            activityCache = {
+            activityDataCache.set(cacheKey, {
                 samples: data.samples,
                 screenshots: data.screenshots,
                 sessionMinutes: data.sessionMinutes,
                 hasMoreScreenshots: data.hasMoreScreenshots
-            };
-            activityCacheKey = cacheKey;
+            });
+
         } catch (error) {
             console.error('Activity fetch error:', error);
         } finally {
