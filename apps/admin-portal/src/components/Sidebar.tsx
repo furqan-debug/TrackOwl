@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
 import { SecureImage } from '../components/ui/SecureImage';
 import logoDark from '../assets/branding/4.svg';
+import sidebarIcon from '../assets/branding/icon.png';
 import { initialOf } from '../lib/initials';
 
 const SIDEBAR_WIDTH_EXPANDED = 240;
@@ -127,13 +128,15 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
                 to="/dashboard"
                 className={clsx(
                     "flex items-center border-b border-white/[0.05] hover:opacity-80 transition-opacity shrink-0",
-                    effectiveCollapsed ? "justify-center px-0 py-4" : "px-6 py-4"
+                    effectiveCollapsed ? "justify-center px-0 py-5" : "px-6 py-4"
                 )}
             >
                 {effectiveCollapsed ? (
-                    <div className="w-10 h-10 flex items-center justify-center shrink-0">
-                        <img src={logoDark} alt="" className="w-full h-full object-contain" />
-                    </div>
+                    <img
+                        src={sidebarIcon}
+                        alt="TrackOwl"
+                        className="w-9 h-9 object-contain rounded-lg"
+                    />
                 ) : (
                     <img src={logoDark} alt="TrackOwl" className="h-16 w-auto object-contain" />
                 )}
