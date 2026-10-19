@@ -218,7 +218,7 @@ function Layout({ children, search, setSearch }: { children: React.ReactNode; se
       </section>
 
       {/* FOOTER */}
-      <Footer />
+      <Footer onContactClick={() => { setContactType('general'); setIsContactOpen(true); }} />
 
       {/* Scroll to Top Button, same as the other public pages */}
       <AnimatePresence>
