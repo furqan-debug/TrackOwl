@@ -18,3 +18,4 @@ export { ScreenshotModal } from './ScreenshotModal';
 export { DatePicker } from './DatePicker';
 export { PieShareTooltip } from './PieShareTooltip';
 export { OfflineBanner } from './OfflineBanner';
+export { ErrorBoundary } from './ErrorBoundary';
