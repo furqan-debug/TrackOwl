@@ -39,9 +39,11 @@ const COLORS = [
 
 
 
-// Module-level cache
-let appUsageCache: any = null;
-let appUsageCacheKey: string | null = null;
+import { MemoryCache } from '../lib/cacheUtils';
+
+// Multi-key cache with 3-minute TTL and LRU eviction (holds up to 20 date/member snapshots)
+const appUsageDataCache = new MemoryCache<any>(3 * 60 * 1000, 20);
+
 
 export function AppUsage() {
     const { profile, managedMemberIds, displayTimezone, isRep } = useAuth();
@@ -98,19 +100,20 @@ export function AppUsage() {
     const fetchData = useCallback(async (isSilent = false, forceRefresh = false) => {
         const mySeq = ++requestSeqRef.current;
         const cacheKey = `${profile?.id}_${selectedDate}_${selectedMemberId}`;
-        if (!forceRefresh && appUsageCache && appUsageCacheKey === cacheKey) {
-            setApps(appUsageCache.apps);
-            // Clear BOTH spinners. Leaving `refreshing` alone here is how the
-            // button got stuck pulsing with nothing running: a superseded request
-            // cannot clear it (the sequence guard stops it), and the newer one
-            // that supersedes it returns from this cache path without clearing
-            // it either.
-            if (mySeq === requestSeqRef.current) {
-                setLoading(false);
-                setRefreshing(false);
+        if (!forceRefresh) {
+            const cached = appUsageDataCache.get(cacheKey);
+            if (cached) {
+                setApps(cached.apps);
+                if (mySeq === requestSeqRef.current) {
+                    setLoading(false);
+                    setRefreshing(false);
+                }
+                return;
             }
-            return;
+        } else {
+            appUsageDataCache.clear();
         }
+
 
         if (!isSilent) setLoading(true);
         else setRefreshing(true);
@@ -137,8 +140,8 @@ export function AppUsage() {
             setApps(appArray);
 
             // Update cache
-            appUsageCache = { apps: appArray };
-            appUsageCacheKey = cacheKey;
+            appUsageDataCache.set(cacheKey, { apps: appArray });
+
         } catch (err) {
             console.error(err);
         } finally {
