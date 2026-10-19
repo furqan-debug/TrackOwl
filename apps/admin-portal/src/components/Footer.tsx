@@ -1,7 +1,12 @@
 import { useNavigate, Link } from 'react-router-dom';
 import HeaderLogo from '../assets/branding/header-2.svg';
 
-export function Footer() {
+interface FooterProps {
+    /** Opens the page's contact dialog. Without it, Contact stays a mailto link. */
+    onContactClick?: () => void;
+}
+
+export function Footer({ onContactClick }: FooterProps = {}) {
     const navigate = useNavigate();
 
     const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
@@ -40,7 +45,19 @@ export function Footer() {
                         <h4 className="text-white font-bold mb-6 tracking-wide">Company</h4>
                         <ul className="space-y-4 text-sm text-slate-400">
                             <li><a href="#" onClick={(e) => { e.preventDefault(); navigate('/about'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="hover:text-white transition-colors">About us</a></li>
-                            <li><a href="mailto:contact@trackowl.io" className="hover:text-white transition-colors">Contact</a></li>
+                            <li>
+                                {onContactClick ? (
+                                    <button
+                                        type="button"
+                                        onClick={onContactClick}
+                                        className="hover:text-white transition-colors cursor-pointer"
+                                    >
+                                        Contact
+                                    </button>
+                                ) : (
+                                    <a href="mailto:contact@trackowl.io" className="hover:text-white transition-colors">Contact</a>
+                                )}
+                            </li>
                         </ul>
                     </div>
 

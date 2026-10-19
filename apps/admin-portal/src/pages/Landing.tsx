@@ -83,6 +83,29 @@ export function ContactModal({ isOpen, onClose, initialRequestType }: ContactMod
         setRequestType(initialRequestType);
     }, [initialRequestType]);
 
+    // Hold the page still while the dialog is up. Without this the wheel keeps
+    // scrolling the landing page behind the form.
+    useEffect(() => {
+        if (!isOpen) return;
+        const { body, documentElement: html } = document;
+        const previousBodyOverflow = body.style.overflow;
+        const previousHtmlOverflow = html.style.overflow;
+        const previousPadding = body.style.paddingRight;
+        // Swap the scrollbar for padding of the same width, or the page shifts
+        // sideways the moment it disappears.
+        const scrollbarWidth = window.innerWidth - html.clientWidth;
+        // html is the scrolling element here, so hiding body's overflow alone
+        // leaves the page scrollable.
+        html.style.overflow = 'hidden';
+        body.style.overflow = 'hidden';
+        if (scrollbarWidth > 0) body.style.paddingRight = `${scrollbarWidth}px`;
+        return () => {
+            html.style.overflow = previousHtmlOverflow;
+            body.style.overflow = previousBodyOverflow;
+            body.style.paddingRight = previousPadding;
+        };
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -837,7 +860,10 @@ export function Landing() {
                                         initial={{ opacity: 0, x: fromX }}
                                         animate={featuresInView ? { opacity: 1, x: 0 } : { opacity: 0, x: fromX }}
                                         transition={{ duration: 0.9, delay: row * 0.18, ease: [0.22, 1, 0.36, 1] }}
-                                        className="group p-7 sm:p-8 lg:p-9 rounded-[1.75rem] bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-[#facc15]/40 transition-[box-shadow,border-color] duration-300 flex gap-6 items-start"
+                                        // The lift goes through framer, not a Tailwind hover: the entrance animates
+                                        // `x` on this same element, and a CSS transform would fight it.
+                                        whileHover={{ y: -4 }}
+                                        className="group p-7 sm:p-8 lg:p-9 rounded-[1.75rem] bg-white border border-slate-100 shadow-sm hover:shadow-[0_16px_34px_-20px_rgba(0,27,77,0.55)] hover:border-[#facc15]/40 transition-[box-shadow,border-color] duration-300 flex gap-6 items-start"
                                     >
                                         <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 bg-[#001b4d] text-[#facc15] ring-1 ring-[#001b4d]/10 shadow-[0_6px_16px_-6px_rgba(0,27,77,0.6)] group-hover:bg-[#facc15] group-hover:text-[#001b4d] group-hover:shadow-[0_6px_18px_-6px_rgba(250,204,21,0.8)] transition-colors duration-300">
                                             <Icon className="w-7 h-7" strokeWidth={2} />
@@ -1430,7 +1456,7 @@ export function Landing() {
             </section>
 
             {/* FOOTER */}
-            <Footer />
+            <Footer onContactClick={() => { setContactType('general'); setIsContactOpen(true); }} />
 
             <ContactModal
                 isOpen={isContactOpen}

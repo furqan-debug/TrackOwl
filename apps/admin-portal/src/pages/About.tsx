@@ -185,7 +185,7 @@ export function About() {
                 </div>
             </section>
 
-            <Footer />
+            <Footer onContactClick={() => { setContactType('general'); setIsContactOpen(true); }} />
 
             {/* Scroll to Top Button */}
             <AnimatePresence>
