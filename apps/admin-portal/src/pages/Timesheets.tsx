@@ -54,9 +54,11 @@ interface MemberInfo {
 
 const DAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-// Module-level cache (cleared on unmount)
-let timesheetsCache: any = null;
-let timesheetsCacheKey: string | null = null;
+import { MemoryCache } from '../lib/cacheUtils';
+
+// Multi-key cache with 3-minute TTL and LRU eviction (holds up to 20 range/filter snapshots)
+const timesheetsDataCache = new MemoryCache<DailyEntry[]>(3 * 60 * 1000, 20);
+
 
 export function Timesheets() {
     const { profile, managedMemberIds, managedProjectIds, displayTimezone, timezoneReady, isRep } = useAuth();
@@ -192,13 +194,6 @@ export function Timesheets() {
         }
     }, [organizationId]);
 
-    // Clear cache on unmount so stale data doesn't bleed across navigation
-    useEffect(() => {
-        return () => {
-            timesheetsCache = null;
-            timesheetsCacheKey = null;
-        };
-    }, []);
 
     useEffect(() => {
         // Wait until members have been fetched before running the query.
@@ -289,11 +284,17 @@ export function Timesheets() {
         const cacheKey = `${range.start.toISOString()}_${range.end.toISOString()}_${selectedMember}_${filterProjectId}_${activeTimezone}_${orgTimezone}_${viewMode}`;
         const mySeq = ++fetchSeqRef.current;
 
-        if (!forceRefresh && timesheetsCache && timesheetsCacheKey === cacheKey) {
-            setEntries(timesheetsCache.entries);
-            setLoading(false);
-            return;
+        if (forceRefresh) {
+            timesheetsDataCache.clear();
+        } else {
+            const cached = timesheetsDataCache.get(cacheKey);
+            if (cached) {
+                setEntries(cached);
+                setLoading(false);
+                return;
+            }
         }
+
 
         setLoading(true);
         try {
@@ -505,10 +506,8 @@ export function Timesheets() {
             if (mySeq !== fetchSeqRef.current) return;
 
             setEntries(result);
+            timesheetsDataCache.set(cacheKey, result);
 
-            // Update cache
-            timesheetsCache = { entries: result };
-            timesheetsCacheKey = cacheKey;
         } catch (error) {
             console.error('Error fetching timesheets:', error);
             if (mySeq === fetchSeqRef.current) setEntries([]);

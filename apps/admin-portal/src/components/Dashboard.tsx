@@ -73,20 +73,17 @@ interface AppUsage {
     percent: number;
 }
 
-// Module-level cache to prevent re-fetching when switching sidebar tabs
-let dashboardCache: any = null;
-let dashboardCacheWeek: string | null = null;
-let dashboardCacheUser: string | null = null;
+import { MemoryCache } from '../lib/cacheUtils';
+
+// Multi-key cache with 3-minute TTL and LRU eviction (holds up to 20 date snapshots)
+const dashboardDataCache = new MemoryCache<any>(3 * 60 * 1000, 20);
 
 // The donut is coloured from the projects table and those colours are cached
-// here. The key is date plus user, and editing a project changes neither, so
-// saving a new colour left the ring painting the old one until the page was
-// reloaded. Clear it whenever a project changes.
+// here. Clear the cache whenever any project changes.
 onProjectsChanged(() => {
-    dashboardCache = null;
-    dashboardCacheWeek = null;
-    dashboardCacheUser = null;
+    dashboardDataCache.clear();
 });
+
 
 
 interface DashStats {
@@ -218,13 +215,16 @@ export function Dashboard() {
         const startIso = startUtc.toISOString();
         const endIso = endUtc.toISOString();
 
-        if (!forceRefresh && dashboardCache && dashboardCacheWeek === startIso && dashboardCacheUser === profile?.id) {
-            setStats(dashboardCache.stats);
-            setUserActivity(dashboardCache.userActivity);
-            setOnlineMembers(dashboardCache.onlineMembers);
-            setProjectActivity(dashboardCache.projectActivity);
-            setAppUsage(dashboardCache.appUsage);
-            setChartData(dashboardCache.chartData);
+        const cacheKey = `${profile?.id || 'anon'}_${startIso}`;
+        const cached = !forceRefresh ? dashboardDataCache.get(cacheKey) : null;
+
+        if (cached) {
+            setStats(cached.stats);
+            setUserActivity(cached.userActivity);
+            setOnlineMembers(cached.onlineMembers);
+            setProjectActivity(cached.projectActivity);
+            setAppUsage(cached.appUsage);
+            setChartData(cached.chartData);
             // Clear BOTH spinners. Leaving `refreshing` alone here is how the
             // button got stuck pulsing with nothing running: a superseded request
             // cannot clear it (the sequence guard stops it), and the newer one
@@ -236,6 +236,7 @@ export function Dashboard() {
             }
             return;
         }
+
 
         try {
             // A manual refresh shows BOTH: the button pulses AND the content
@@ -501,17 +502,15 @@ export function Dashboard() {
             setChartData(cData);
 
             // Update Cache
-            const newCache = {
+            dashboardDataCache.set(cacheKey, {
                 stats: finalStats,
                 userActivity: finalUserActivity,
                 onlineMembers: online,
                 projectActivity: finalProjectActivity,
                 appUsage: finalAppUsage,
                 chartData: cData
-            };
-            dashboardCache = newCache;
-            dashboardCacheWeek = startIso;
-            dashboardCacheUser = profile?.id || null;
+            });
+
 
         } catch (error) {
             console.error('Dashboard error:', error);
