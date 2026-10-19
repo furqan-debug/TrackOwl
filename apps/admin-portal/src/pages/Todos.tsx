@@ -741,7 +741,12 @@ export function Todos() {
 
                         {/* Content */}
                         <div className="p-3 sm:p-5 lg:p-8 min-w-0 max-w-full">
-                            {filteredTodos.length === 0 ? (
+                            {/* A refresh swaps the list for the sync loader, leaving the
+                                toolbar above it in place, so the reload is visible without
+                                the whole page going away. */}
+                            {refreshing ? (
+                                <LoadingState message="Assembling operational data..." className="min-h-[24rem]" />
+                            ) : filteredTodos.length === 0 ? (
                                 <EmptyState
                                     icon={
                                         <CheckCircle2 />
