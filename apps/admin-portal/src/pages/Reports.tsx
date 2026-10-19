@@ -53,9 +53,11 @@ function parseUrlDate(value: string | null): string | null {
     return value;
 }
 
-// Module-level cache to prevent re-fetching when switching tabs
-let reportsCache: any = null;
-let reportsCacheKey: string | null = null;
+import { MemoryCache } from '../lib/cacheUtils';
+
+// Multi-key cache with 3-minute TTL and LRU eviction (holds up to 20 range/member snapshots)
+const reportsDataCache = new MemoryCache<any>(3 * 60 * 1000, 20);
+
 
 export function Reports() {
     const { profile, managedMemberIds, managedProjectIds, displayTimezone, isRep } = useAuth();
@@ -390,26 +392,27 @@ export function Reports() {
         const { start, end } = getDateRange();
         const cacheKey = `${profile?.id}_${start}_${end}_${selectedTeamId}_${selectedMemberId}_${members.length}`;
 
-        if (!forceRefresh && reportsCache && reportsCacheKey === cacheKey) {
-            if (!isCurrent()) return;
-            setDailyActivity(reportsCache.dailyActivity);
-            setAppBreakdown(reportsCache.appBreakdown);
-            setScreenshotCount(reportsCache.screenshotCount);
-            setTotalSessions(reportsCache.totalSessions);
-            setTotalMins(reportsCache.totalMins);
-            setAvgActivity(reportsCache.avgActivity);
-            setTotalCosts(reportsCache.totalCosts);
-            setTotalBilled(reportsCache.totalBilled);
-            setTableData(reportsCache.tableData);
-            // Clear BOTH spinners. Leaving `refreshing` alone here is how the
-            // button got stuck pulsing with nothing running: a superseded request
-            // cannot clear it (the sequence guard stops it), and the newer one
-            // that supersedes it returns from this cache path without clearing
-            // it either.
-            setLoading(false);
-            setRefreshing(false);
-            return;
+        if (!forceRefresh) {
+            const cached = reportsDataCache.get(cacheKey);
+            if (cached) {
+                if (!isCurrent()) return;
+                setDailyActivity(cached.dailyActivity);
+                setAppBreakdown(cached.appBreakdown);
+                setScreenshotCount(cached.screenshotCount);
+                setTotalSessions(cached.totalSessions);
+                setTotalMins(cached.totalMins);
+                setAvgActivity(cached.avgActivity);
+                setTotalCosts(cached.totalCosts);
+                setTotalBilled(cached.totalBilled);
+                setTableData(cached.tableData);
+                setLoading(false);
+                setRefreshing(false);
+                return;
+            }
+        } else {
+            reportsDataCache.clear();
         }
+
 
             setLoading(true);
         if (forceRefresh) setRefreshing(true);
@@ -444,7 +447,7 @@ export function Reports() {
             setTableData(data.tableData);
 
             // Update cache
-            reportsCache = {
+            reportsDataCache.set(cacheKey, {
                 dailyActivity: data.dailyActivityList,
                 appBreakdown: data.appBreakdownList,
                 screenshotCount: data.screenshotCount,
@@ -454,8 +457,8 @@ export function Reports() {
                 totalCosts: data.totalCosts,
                 totalBilled: data.totalBilled,
                 tableData: data.tableData
-            };
-            reportsCacheKey = cacheKey;
+            });
+
 
         } catch (err) {
             console.error("fetchReports error:", err);
