@@ -1801,13 +1801,38 @@ export default function App() {
         }
       });
 
+      // Listen for Rust notification if background requests fail with 401/400
+      let unlistenAuthRefresh: (() => void) | undefined;
+      trackerAPI.onAuthRefreshNeeded(async () => {
+        console.warn('[App] ⚠️ Received auth-refresh-needed from Rust background worker. Refreshing session...');
+        try {
+          const refreshed = await sb.auth.refreshSession();
+          const refreshedToken = refreshed?.data?.session?.access_token;
+          if (refreshedToken) {
+            await trackerAPI.setAuthToken(refreshedToken, SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('[App] ✅ Fresh token pushed to Rust successfully after 401 recovery');
+          } else {
+            await pushLatestToken();
+          }
+        } catch (err) {
+          console.warn('[App] Failed to refresh session on auth-refresh-needed:', err);
+        }
+      })?.then((unsub: any) => {
+        unlistenAuthRefresh = unsub;
+      });
+
       // Keep Rust token fresh even if minimized or closed to system tray.
       timer = setInterval(() => {
         pushLatestToken();
       }, 5 * 60_000);
       document.addEventListener('visibilitychange', visibilityHandler);
 
-      cleanup = () => subscription?.unsubscribe();
+      cleanup = () => {
+        subscription?.unsubscribe();
+        if (typeof unlistenAuthRefresh === 'function') {
+          unlistenAuthRefresh();
+        }
+      };
     });
 
     return () => {

@@ -97,6 +97,15 @@ export const trackerAPI = {
     return Promise.resolve(() => {});
   },
   
+  onAuthRefreshNeeded: (cb: () => void) => {
+    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+      return (window as any).__TAURI__.event.listen('auth-refresh-needed', () => {
+        cb();
+      });
+    }
+    return Promise.resolve(() => {});
+  },
+
   onScreenshotCaptured: (cb: () => void) => {
     if (typeof window !== 'undefined' && (window as any).__TAURI__) {
       return (window as any).__TAURI__.event.listen('screenshot-captured', () => {
