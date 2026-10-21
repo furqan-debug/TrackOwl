@@ -819,6 +819,11 @@ pub fn take_mandatory_screenshot(
             let _ = crate::supabase_post(cfg, "screenshots", &body, s_token.as_deref(), None);
         }
         Err(e) => {
+            if let ureq::Error::Status(code, _) = &e {
+                if *code == 401 || *code == 400 {
+                    crate::notify_auth_error_if_needed();
+                }
+            }
             eprintln!("[tracker] ❌ Mandatory {} screenshot UPLOAD FAILED: {}", label, e);
         }
     }
@@ -951,6 +956,11 @@ pub fn start_screenshot_loop(
                             let _ = crate::supabase_post(&cfg, "screenshots", &body, s_token.as_deref(), None);
                         }
                         Err(e) => {
+                            if let ureq::Error::Status(code, _) = &e {
+                                if *code == 401 || *code == 400 {
+                                    crate::notify_auth_error_if_needed();
+                                }
+                            }
                             eprintln!("[tracker] ❌ Screenshot UPLOAD FAILED for {}: {}", filename, e);
                             // Do NOT log timestamp — failed upload shouldn't count against the limit
                         }

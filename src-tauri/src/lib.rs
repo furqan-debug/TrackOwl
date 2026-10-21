@@ -109,6 +109,39 @@ fn http_agent() -> &'static ureq::Agent {
     })
 }
 
+// ─── Token Refresh Notification & Debounce ──────────────────────────────────
+static APP_HANDLE: std::sync::OnceLock<tauri::AppHandle> = std::sync::OnceLock::new();
+static LAST_AUTH_ERROR_EMIT: Mutex<Option<std::time::Instant>> = Mutex::new(None);
+
+/// Called when Supabase returns 401 Unauthorized or 400 Bad Request (token expired).
+/// Debounces emission to frontend to at most once per 60 seconds to prevent event spam.
+pub fn notify_auth_error_if_needed() {
+    let should_emit = match LAST_AUTH_ERROR_EMIT.lock() {
+        Ok(mut last) => {
+            let now = std::time::Instant::now();
+            if let Some(prev) = *last {
+                if now.duration_since(prev) < std::time::Duration::from_secs(60) {
+                    false
+                } else {
+                    *last = Some(now);
+                    true
+                }
+            } else {
+                *last = Some(now);
+                true
+            }
+        }
+        Err(_) => false,
+    };
+
+    if should_emit {
+        if let Some(app) = APP_HANDLE.get() {
+            eprintln!("[lib] ⚠️ Supabase returned 401/400 (auth error) — notifying frontend to refresh token");
+            let _ = app.emit("auth-refresh-needed", ());
+        }
+    }
+}
+
 // ─── Supabase REST helpers ─────────────────────────────────────────────────────
 
 pub fn supabase_post(
@@ -133,8 +166,11 @@ pub fn supabase_post(
 
     match req.send_string(body) {
         Ok(resp) => resp.into_string().map_err(|e| e.to_string()),
-        Err(ureq::Error::Status(_code, resp)) => {
+        Err(ureq::Error::Status(code, resp)) => {
             let body = resp.into_string().unwrap_or_else(|_| "Unknown error body".to_string());
+            if code == 401 || (code == 400 && (body.contains("JWT") || body.contains("token") || body.contains("expir"))) {
+                notify_auth_error_if_needed();
+            }
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body) {
                 if let Some(msg) = json.get("message").and_then(|m| m.as_str()) {
                     return Err(msg.to_string());
@@ -167,8 +203,11 @@ pub fn supabase_patch(
 
     match req.send_string(body) {
         Ok(resp) => resp.into_string().map_err(|e| e.to_string()),
-        Err(ureq::Error::Status(_code, resp)) => {
+        Err(ureq::Error::Status(code, resp)) => {
             let body = resp.into_string().unwrap_or_else(|_| "Unknown error body".to_string());
+            if code == 401 || (code == 400 && (body.contains("JWT") || body.contains("token") || body.contains("expir"))) {
+                notify_auth_error_if_needed();
+            }
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body) {
                 if let Some(msg) = json.get("message").and_then(|m| m.as_str()) {
                     return Err(msg.to_string());
@@ -288,8 +327,11 @@ pub fn supabase_get(
 
     match req.call() {
         Ok(resp) => resp.into_string().map_err(|e| e.to_string()),
-        Err(ureq::Error::Status(_code, resp)) => {
+        Err(ureq::Error::Status(code, resp)) => {
             let body = resp.into_string().unwrap_or_else(|_| "Unknown error body".to_string());
+            if code == 401 || (code == 400 && (body.contains("JWT") || body.contains("token") || body.contains("expir"))) {
+                notify_auth_error_if_needed();
+            }
             if let Ok(json) = serde_json::from_str::<serde_json::Value>(&body) {
                 if let Some(msg) = json.get("message").and_then(|m| m.as_str()) {
                     return Err(msg.to_string());
@@ -981,6 +1023,7 @@ pub fn run() {
         .setup(move |app: &mut tauri::App| {
             #[allow(unused_variables)]
             let app_handle = app.handle().clone();
+            let _ = APP_HANDLE.set(app.handle().clone());
             
             // --- System Tray ---
             let quit_i = tauri::menu::MenuItem::with_id(app, "quit", "Quit TrackOwl", true, None::<&str>)?;
