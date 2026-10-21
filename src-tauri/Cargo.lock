@@ -1097,7 +1097,7 @@ dependencies = [
 
 [[package]]
 name = "digireps-tracker"
-version = "2.0.69"
+version = "2.0.70"
 dependencies = [
  "active-win-pos-rs",
  "base64 0.22.1",
