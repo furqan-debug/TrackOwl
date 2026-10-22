@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from './types';
 import { createClient } from '@supabase/supabase-js';
 
 // Requires SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY env vars in Vercel
