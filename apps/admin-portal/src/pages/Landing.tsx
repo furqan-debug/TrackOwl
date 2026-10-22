@@ -36,6 +36,7 @@ import {
     HeartHandshake,
     type LucideIcon
 } from 'lucide-react';
+import { WindowsLogo, AppleLogo } from '../components/ui/BrandLogos';
 import { twMerge } from 'tailwind-merge';
 
 import HeaderLogo from '../assets/branding/header-2.svg';
@@ -1356,7 +1357,7 @@ export function Landing() {
                             <div className="w-full bg-white rounded-2xl p-8 lg:p-10 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
 
                                 <div className="w-16 h-16 bg-[#F5E6CA] rounded-2xl flex items-center justify-center text-[#B8860B] mb-6">
-                                    <Monitor className="w-8 h-8" />
+                                    <WindowsLogo className="w-8 h-8" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Windows</h3>
                                 <p className="text-slate-500 font-medium mb-6">Windows 10 and 11 (64-bit)</p>
@@ -1389,7 +1390,7 @@ export function Landing() {
                             <div className="w-full bg-white rounded-2xl p-8 lg:p-10 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
 
                                 <div className="w-16 h-16 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-800 mb-6">
-                                    <Monitor className="w-8 h-8" />
+                                    <AppleLogo className="w-8 h-8" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-slate-900 mb-2">macOS</h3>
                                 <p className="text-slate-500 font-medium mb-6">macOS 11.0 (Big Sur) or later</p>

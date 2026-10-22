@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { User, Phone, Lock, Eye, EyeOff, AlertCircle, Rocket, Download, LayoutDashboard, ArrowRight, Apple, Monitor, CheckCircle2 } from 'lucide-react';
+import { User, Phone, Lock, Eye, EyeOff, AlertCircle, Rocket, Download, LayoutDashboard, ArrowRight, Monitor, CheckCircle2 } from 'lucide-react';
+import { WindowsLogo, AppleLogo } from '../components/ui/BrandLogos';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Card } from '../components/ui/Card';
@@ -203,14 +204,14 @@ export function AcceptInvite() {
                                                  <div className="grid grid-cols-2 gap-3">
                                                     <Button 
                                                         className="w-full py-4 text-sm font-semibold bg-gradient-to-b from-[#0078D7] to-[#005a9e] hover:from-[#006abc] hover:to-[#004d8c] text-white border-none shadow-lg shadow-[#0078D7]/20"
-                                                        leftIcon={<Monitor className="w-5 h-5" />}
+                                                        leftIcon={<WindowsLogo className="w-5 h-5" />}
                                                         onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.70/TrackOwl_2.0.70_x64-setup.exe'}
                                                     >
                                                         Windows
                                                     </Button>
                                                     <Button 
                                                         className="w-full py-4 text-sm font-semibold bg-gradient-to-b from-[#2d2d2d] to-[#111111] hover:from-[#1f1f1f] hover:to-[#000000] text-white border-none shadow-lg shadow-black/20"
-                                                        leftIcon={<Apple className="w-5 h-5" />}
+                                                        leftIcon={<AppleLogo className="w-5 h-5" />}
                                                         onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.70/TrackOwl_2.0.70_aarch64.dmg'}
                                                     >
                                                         macOS
