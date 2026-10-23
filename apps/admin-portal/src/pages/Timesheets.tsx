@@ -22,7 +22,8 @@ import { useFavorites } from '../context/FavoritesContext';
  * These three used window.alert, which is the browser's own box: its own grey
  * chrome, its own OK button, the page frozen behind it and the address bar
  * announcing "localhost:5173 says". It belongs to no theme and looks nothing
- * like the rest of the app. This is the banner the member form already uses.
+ * like the rest of the app. This is the banner the member form already uses,
+ * a shade tighter so it sits flush with the h-11 button beside it.
  */
 function EntryError({ message, onDismiss }: { message: string | null; onDismiss: () => void }) {
     return (
@@ -32,10 +33,10 @@ function EntryError({ message, onDismiss }: { message: string | null; onDismiss:
                     initial={{ opacity: 0, y: -20, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                    className="flex items-center gap-3 px-5 py-4 bg-rose-500/8 border border-rose-500/20 rounded-2xl shadow-sm text-left"
+                    className="flex items-center gap-3 px-4 py-3 bg-rose-500/8 border border-rose-500/20 rounded-2xl shadow-sm text-left"
                 >
                     <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                    <p className="text-[13px] font-bold text-rose-400">{message}</p>
+                    <p className="text-[12px] font-bold text-rose-400 min-w-0">{message}</p>
                     <button
                         type="button"
                         onClick={onDismiss}
@@ -1093,7 +1094,6 @@ export function Timesheets() {
                 for a scrollbar down the side of a form that visibly fits. */}
             <Modal isOpen={showAddTime} onClose={() => setShowAddTime(false)} title="Manual Time Entry" height="h-auto">
                 <div className="space-y-5 py-4">
-                    <EntryError message={entryError} onDismiss={() => setEntryError(null)} />
                     {!isRep && (
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-muted ">Team Member</label>
@@ -1154,15 +1154,17 @@ export function Timesheets() {
                             />
                         </div>
                     </div>
-                    <div className="flex justify-end pt-2">
-                        <button onClick={handleManualAddTime} disabled={submittingEntry} className="px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Submit Entry'}</button>
+                    <div className="flex items-center gap-3 pt-2">
+                        <div className="flex-1 min-w-0">
+                            <EntryError message={entryError} onDismiss={() => setEntryError(null)} />
+                        </div>
+                        <button onClick={handleManualAddTime} disabled={submittingEntry} className="shrink-0 px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Submit Entry'}</button>
                     </div>
                 </div>
             </Modal>
 
             <Modal isOpen={showEditTimeModal} onClose={() => setShowEditTimeModal(false)} title="Edit Time Entry" allowOverflow>
                 <div className="space-y-5 py-4">
-                    <EntryError message={entryError} onDismiss={() => setEntryError(null)} />
                     {!isRep && (
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-muted ">Team Member</label>
@@ -1223,15 +1225,17 @@ export function Timesheets() {
                             />
                         </div>
                     </div>
-                    <div className="flex justify-end pt-2">
-                        <button onClick={handleEditSubmit} disabled={submittingEntry} className="px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Save Changes'}</button>
+                    <div className="flex items-center gap-3 pt-2">
+                        <div className="flex-1 min-w-0">
+                            <EntryError message={entryError} onDismiss={() => setEntryError(null)} />
+                        </div>
+                        <button onClick={handleEditSubmit} disabled={submittingEntry} className="shrink-0 px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Save Changes'}</button>
                     </div>
                 </div>
             </Modal>
 
             <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Delete Time Entry" subtitle="This operation is destructive and irreversible." height="h-auto" allowOverflow>
                 <div className="text-center space-y-6 w-full max-w-full min-w-0">
-                    <EntryError message={entryError} onDismiss={() => setEntryError(null)} />
                     <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto border border-rose-100">
                         <Trash2 className="w-8 h-8" />
                     </div>
@@ -1239,6 +1243,8 @@ export function Timesheets() {
                     <p className="text-sm font-medium text-text-muted break-words">
                         Permanently remove this time entry? This action cannot be undone.
                     </p>
+
+                    <EntryError message={entryError} onDismiss={() => setEntryError(null)} />
 
                     <div className="flex flex-col sm:flex-row gap-3 pt-4 w-full">
                         <Button
