@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
     Search,
@@ -33,6 +33,7 @@ interface Member {
     id: string;
     full_name: string;
     email: string;
+    role?: string;
 }
 
 interface Project {
@@ -77,6 +78,28 @@ export function Teams() {
     const [managerDropdownOpen, setManagerDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
+    const eligibleManagers = useMemo(() => {
+        return members
+            .filter(
+                (m) =>
+                    m.role === 'Manager' ||
+                    m.role === 'Admin' ||
+                    m.role === 'Owner' ||
+                    m.id === managerId
+            )
+            .sort((a, b) => {
+                const roleOrder: Record<string, number> = {
+                    Manager: 1,
+                    Admin: 2,
+                    Owner: 3
+                };
+                const orderA = roleOrder[a.role || ''] || 99;
+                const orderB = roleOrder[b.role || ''] || 99;
+                if (orderA !== orderB) return orderA - orderB;
+                return (a.full_name || '').localeCompare(b.full_name || '');
+            });
+    }, [members, managerId]);
+
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (
@@ -110,7 +133,7 @@ export function Teams() {
                 teamService.fetchTeams(),
                 supabase
                     .from('members')
-                    .select('id, full_name, email')
+                    .select('id, full_name, email, role')
                     .eq('status', 'Active'),
                 supabase
                     .from('projects')
@@ -572,17 +595,24 @@ export function Teams() {
                                             </div>
 
                                             <div className="flex flex-col min-w-0">
-                                                <span className="text-[13px] font-bold text-text-primary leading-none mb-0.5 truncate">
-                                                    {
-                                                        members.find(
-                                                            (m) =>
-                                                                m.id ===
-                                                                managerId
-                                                        )?.full_name
-                                                    }
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-[13px] font-bold text-text-primary leading-none truncate">
+                                                        {
+                                                            members.find(
+                                                                (m) =>
+                                                                    m.id ===
+                                                                    managerId
+                                                            )?.full_name
+                                                        }
+                                                    </span>
+                                                    {members.find((m) => m.id === managerId)?.role && (
+                                                        <span className="text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded tracking-wide bg-primary/10 text-primary shrink-0">
+                                                            {members.find((m) => m.id === managerId)?.role}
+                                                        </span>
+                                                    )}
+                                                </div>
 
-                                                <span className="text-[10px] font-bold text-text-muted truncate">
+                                                <span className="text-[10px] font-bold text-text-muted truncate mt-0.5">
                                                     {
                                                         members.find(
                                                             (m) =>
@@ -610,58 +640,114 @@ export function Teams() {
 
                                 {managerDropdownOpen && (
                                     <div className="absolute top-[100%] left-0 w-full mt-2 bg-surface border border-border rounded-2xl shadow-2xl z-[100] max-h-[260px] overflow-y-auto custom-scrollbar p-2 animate-in fade-in zoom-in-95 duration-200">
-                                        {members.map((m) => (
-                                            <button
-                                                key={m.id}
-                                                onClick={() => {
-                                                    setManagerId(m.id);
-                                                    setManagerDropdownOpen(
-                                                        false
-                                                    );
-                                                }}
-                                                className={clsx(
-                                                    'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left group min-w-0',
-                                                    managerId === m.id
-                                                        ? 'bg-primary/10'
-                                                        : 'hover:bg-surface-hover'
-                                                )}
-                                            >
-                                                <div
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setManagerId('');
+                                                setManagerDropdownOpen(false);
+                                            }}
+                                            className={clsx(
+                                                'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left group min-w-0 mb-1',
+                                                !managerId
+                                                    ? 'bg-primary/10'
+                                                    : 'hover:bg-surface-hover'
+                                            )}
+                                        >
+                                            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center text-[12px] font-bold bg-surface-solid border border-border text-text-muted shrink-0">
+                                                —
+                                            </div>
+                                            <div className="flex flex-col flex-1 min-w-0">
+                                                <span className="text-[13px] font-bold text-text-primary">
+                                                    None (No Designated Manager)
+                                                </span>
+                                                <span className="text-[10px] text-text-muted">
+                                                    Leave team without a designated manager
+                                                </span>
+                                            </div>
+                                            {!managerId && (
+                                                <Check
+                                                    className="w-4 h-4 text-primary shrink-0"
+                                                    strokeWidth={3}
+                                                />
+                                            )}
+                                        </button>
+
+                                        {eligibleManagers.length === 0 ? (
+                                            <div className="px-3 py-4 text-center text-xs text-text-muted">
+                                                No eligible managers found. Assign the Manager role to a member in People first.
+                                            </div>
+                                        ) : (
+                                            eligibleManagers.map((m) => (
+                                                <button
+                                                    key={m.id}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setManagerId(m.id);
+                                                        setManagerDropdownOpen(
+                                                            false
+                                                        );
+                                                    }}
                                                     className={clsx(
-                                                        'w-9 h-9 rounded-[10px] flex items-center justify-center text-[12px] font-bold transition-all shadow-sm shrink-0',
+                                                        'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left group min-w-0',
                                                         managerId === m.id
-                                                            ? 'bg-primary text-white shadow-primary/30'
-                                                            : 'bg-surface-solid border border-border text-text-muted group-hover:bg-primary/5 group-hover:text-primary group-hover:border-primary/20'
+                                                            ? 'bg-primary/10'
+                                                            : 'hover:bg-surface-hover'
                                                     )}
                                                 >
-                                                    {m.full_name[0].toUpperCase()}
-                                                </div>
-
-                                                <div className="flex flex-col flex-1 min-w-0">
-                                                    <span
+                                                    <div
                                                         className={clsx(
-                                                            'text-[13px] font-bold leading-none mb-1 truncate transition-colors',
+                                                            'w-9 h-9 rounded-[10px] flex items-center justify-center text-[12px] font-bold transition-all shadow-sm shrink-0',
                                                             managerId === m.id
-                                                                ? 'text-primary'
-                                                                : 'text-text-primary group-hover:text-primary'
+                                                                ? 'bg-primary text-white shadow-primary/30'
+                                                                : 'bg-surface-solid border border-border text-text-muted group-hover:bg-primary/5 group-hover:text-primary group-hover:border-primary/20'
                                                         )}
                                                     >
-                                                        {m.full_name}
-                                                    </span>
+                                                        {m.full_name?.[0]?.toUpperCase() || '?'}
+                                                    </div>
 
-                                                    <span className="text-[10px] font-bold text-text-muted truncate opacity-80">
-                                                        {m.email}
-                                                    </span>
-                                                </div>
+                                                    <div className="flex flex-col flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 min-w-0">
+                                                            <span
+                                                                className={clsx(
+                                                                    'text-[13px] font-bold leading-none truncate transition-colors',
+                                                                    managerId === m.id
+                                                                        ? 'text-primary'
+                                                                        : 'text-text-primary group-hover:text-primary'
+                                                                )}
+                                                            >
+                                                                {m.full_name}
+                                                            </span>
 
-                                                {managerId === m.id && (
-                                                    <Check
-                                                        className="w-4 h-4 text-primary shrink-0"
-                                                        strokeWidth={3}
-                                                    />
-                                                )}
-                                            </button>
-                                        ))}
+                                                            {m.role && (
+                                                                <span
+                                                                    className={clsx(
+                                                                        'text-[9px] uppercase font-extrabold px-1.5 py-0.5 rounded tracking-wide shrink-0',
+                                                                        m.role === 'Owner'
+                                                                            ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
+                                                                            : m.role === 'Admin'
+                                                                            ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                                                                            : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20'
+                                                                    )}
+                                                                >
+                                                                    {m.role}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <span className="text-[10px] font-bold text-text-muted truncate opacity-80 mt-1">
+                                                            {m.email}
+                                                        </span>
+                                                    </div>
+
+                                                    {managerId === m.id && (
+                                                        <Check
+                                                            className="w-4 h-4 text-primary shrink-0"
+                                                            strokeWidth={3}
+                                                        />
+                                                    )}
+                                                </button>
+                                            ))
+                                        )}
                                     </div>
                                 )}
                             </div>
