@@ -25,25 +25,18 @@ import { useFavorites } from '../context/FavoritesContext';
  * like the rest of the app. This is the banner the member form already uses,
  * a shade tighter so it sits flush with the h-11 button beside it.
  */
-function EntryError({ message, onDismiss }: { message: string | null; onDismiss: () => void }) {
+function EntryError({ message }: { message: string | null }) {
     return (
         <AnimatePresence>
             {message && (
                 <motion.div
-                    initial={{ opacity: 0, y: -20, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
-                    className="flex items-center gap-3 px-4 py-3 bg-rose-500/8 border border-rose-500/20 rounded-2xl shadow-sm text-left"
+                    initial={{ opacity: 0, scale: 0.97 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
+                    className="h-full flex items-center gap-3 px-4 bg-rose-500/8 border border-rose-500/20 rounded-2xl shadow-sm text-left"
                 >
                     <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
-                    <p className="text-[12px] font-bold text-rose-400 min-w-0">{message}</p>
-                    <button
-                        type="button"
-                        onClick={onDismiss}
-                        className="ml-auto text-rose-400/60 hover:text-rose-400 p-1 hover:bg-rose-500/10 rounded-md transition-colors"
-                    >
-                        <X className="w-4 h-4" />
-                    </button>
+                    <p className="text-[12px] font-bold text-rose-400 min-w-0 line-clamp-2">{message}</p>
                 </motion.div>
             )}
         </AnimatePresence>
@@ -1155,8 +1148,8 @@ export function Timesheets() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3 pt-2">
-                        <div className="flex-1 min-w-0">
-                            <EntryError message={entryError} onDismiss={() => setEntryError(null)} />
+                        <div className="flex-1 min-w-0 h-14">
+                            <EntryError message={entryError} />
                         </div>
                         <button onClick={handleManualAddTime} disabled={submittingEntry} className="shrink-0 px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Submit Entry'}</button>
                     </div>
@@ -1226,8 +1219,8 @@ export function Timesheets() {
                         </div>
                     </div>
                     <div className="flex items-center gap-3 pt-2">
-                        <div className="flex-1 min-w-0">
-                            <EntryError message={entryError} onDismiss={() => setEntryError(null)} />
+                        <div className="flex-1 min-w-0 h-14">
+                            <EntryError message={entryError} />
                         </div>
                         <button onClick={handleEditSubmit} disabled={submittingEntry} className="shrink-0 px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Save Changes'}</button>
                     </div>
@@ -1244,7 +1237,7 @@ export function Timesheets() {
                         Permanently remove this time entry? This action cannot be undone.
                     </p>
 
-                    <EntryError message={entryError} onDismiss={() => setEntryError(null)} />
+                    <EntryError message={entryError} />
 
                     <div className="flex flex-col sm:flex-row gap-3 pt-4 w-full">
                         <Button
