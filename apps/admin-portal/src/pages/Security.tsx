@@ -104,20 +104,21 @@ function OtpInput({ value, onChange }: { value: string; onChange: (v: string) =>
                 onChange={(e) => onChange(e.target.value.replace(/\D/g, ''))}
                 className="absolute opacity-0 w-0 h-0"
                 autoComplete="one-time-code"
+                autoFocus
             />
             {digits.map((d, i) => (
                 <div
                     key={i}
-                    className={`w-11 h-14 rounded-xl border-2 flex items-center justify-center
-                                text-2xl font-bold font-mono transition-all
+                    className={`w-10 h-13 sm:w-11 sm:h-14 rounded-xl border flex items-center justify-center
+                                text-xl sm:text-2xl font-bold font-mono transition-all select-none
                                 ${value.length === i
-                                    ? 'border-primary bg-primary/5 shadow-[0_0_0_3px] shadow-primary/20'
+                                    ? 'border-primary bg-primary/10 shadow-[0_0_0_3px] shadow-primary/25 text-primary'
                                     : d
-                                        ? 'border-border bg-surface text-text-main'
-                                        : 'border-border/60 bg-surface/40 text-transparent'
+                                        ? 'border-primary/40 bg-surface-solid text-text-primary shadow-sm'
+                                        : 'border-border bg-surface text-text-muted/30'
                                 }`}
                 >
-                    {d || (value.length === i ? <span className="w-0.5 h-6 bg-primary animate-pulse rounded-full" /> : '')}
+                    {d || (value.length === i ? <span className="w-0.5 h-5 bg-primary animate-pulse rounded-full" /> : '·')}
                 </div>
             ))}
         </div>
@@ -576,100 +577,128 @@ export function SecurityPage() {
             <Modal
                 isOpen={mfaModalOpen}
                 onClose={() => !mfaActionLoading && setMfaModalOpen(false)}
-                title="Secure Your Account"
-                maxWidth="max-w-md"
+                title="Two-Factor Authentication (2FA)"
+                subtitle="Protect your account with Google Authenticator, Authy, or 1Password"
+                maxWidth="max-w-2xl"
                 height="h-auto max-h-[92vh]"
+                footer={
+                    <div className="flex items-center justify-end gap-3 w-full sm:w-auto">
+                        <button
+                            type="button"
+                            disabled={mfaActionLoading}
+                            onClick={() => setMfaModalOpen(false)}
+                            className="h-10 px-5 rounded-xl border border-border bg-surface-hover text-text-main font-bold text-[13px] hover:bg-surface-solid active:scale-[0.98] transition-all cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            form="mfa-form"
+                            type="submit"
+                            disabled={mfaActionLoading || mfaCode.length !== 6 || !enrollData || !isOnline}
+                            className="h-10 px-6 rounded-xl bg-primary text-white font-bold text-[13px] shadow-glow-primary hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                        >
+                            {mfaActionLoading ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                                <ShieldCheck className="w-4 h-4" />
+                            )}
+                            Verify & Enable 2FA
+                        </button>
+                    </div>
+                }
             >
-                <form onSubmit={handleVerifyEnrollment}>
-                    <div className="space-y-4">
-                        {mfaError && (
-                            <div className="flex items-center gap-3 p-3 rounded-xl
-                                            bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[12px] font-medium shadow-sm">
-                                <AlertTriangle className="w-4 h-4 shrink-0" />
-                                <span>{mfaError}</span>
-                            </div>
-                        )}
+                <form id="mfa-form" onSubmit={handleVerifyEnrollment}>
+                    {mfaError && (
+                        <div className="flex items-center gap-3 p-3.5 mb-5 rounded-xl
+                                        bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[13px] font-medium shadow-sm">
+                            <AlertTriangle className="w-5 h-5 shrink-0" />
+                            <span>{mfaError}</span>
+                        </div>
+                    )}
 
-                        {enrollData ? (
-                            <div className="flex flex-col items-center gap-3">
-                                <div className="text-center space-y-1">
-                                    <h3 className="text-base font-bold text-text-main">Set Up Authenticator App</h3>
-                                    <p className="text-[12px] text-text-muted leading-relaxed max-w-xs mx-auto">
-                                        Scan this QR code with <strong className="text-text-main font-semibold">Google Authenticator</strong>, Authy, or any TOTP app.
+                    {enrollData ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+                            {/* Step 1: Scan QR Code */}
+                            <div className="flex flex-col bg-surface-subtle border border-border rounded-2xl p-5 justify-between">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[11px] font-black flex items-center justify-center border border-primary/20">
+                                            1
+                                        </span>
+                                        <h4 className="text-[13px] font-bold text-text-primary uppercase tracking-wide">
+                                            Scan QR Code
+                                        </h4>
+                                    </div>
+                                    <p className="text-[12px] text-text-muted leading-relaxed mb-4">
+                                        Open <strong className="text-text-primary">Google Authenticator</strong> or any TOTP app and scan this barcode.
                                     </p>
-                                </div>
-                                
-                                <div className="relative group my-1">
-                                    <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full opacity-40 group-hover:opacity-70 transition-opacity" />
-                                    <div className="relative p-3 bg-white rounded-2xl shadow-premium border-2 border-slate-100">
-                                        <img src={enrollData.totp.qr_code} alt="2FA QR Code" className="w-36 h-36 block rounded-lg" />
+
+                                    <div className="flex justify-center mb-4">
+                                        <div className="p-3 bg-white rounded-2xl shadow-sm border border-slate-200">
+                                            <img src={enrollData.totp.qr_code} alt="2FA QR Code" className="w-36 h-36 block rounded-lg" />
+                                        </div>
                                     </div>
                                 </div>
-                                
-                                <div className="w-full rounded-xl border border-border bg-surface-solid/70 p-2.5 flex items-center justify-between gap-2 shadow-shell-sm">
-                                    <div className="flex flex-col min-w-0 flex-1">
-                                        <span className="text-[9px] font-bold text-text-muted uppercase tracking-wider flex items-center gap-1.5 mb-0.5">
-                                            <ShieldCheck className="w-3 h-3 text-primary" />
+
+                                {/* Manual Setup Key */}
+                                <div className="border border-border bg-surface-solid rounded-xl p-2.5">
+                                    <div className="flex items-center justify-between text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1 px-0.5">
+                                        <span className="flex items-center gap-1">
+                                            <Key className="w-3 h-3 text-primary" />
                                             Manual Setup Key
                                         </span>
-                                        <code className="text-[11px] font-mono text-text-main font-semibold tracking-wider truncate select-all">
-                                            {enrollData.totp.secret}
-                                        </code>
+                                        <CopyButton text={enrollData.totp.secret} />
                                     </div>
-                                    <CopyButton text={enrollData.totp.secret} />
+                                    <code className="block text-[11px] font-mono text-text-primary font-semibold tracking-wider bg-surface px-2 py-1.5 rounded-lg border border-border/60 select-all truncate text-center">
+                                        {enrollData.totp.secret}
+                                    </code>
                                 </div>
                             </div>
-                        ) : (
-                            <div className="flex flex-col items-center justify-center gap-3 py-10">
-                                <div className="relative">
-                                    <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
-                                    <Loader2 className="w-8 h-8 text-primary animate-spin relative" />
-                                </div>
-                                <span className="text-[11px] font-bold tracking-widest text-text-muted uppercase">
-                                    Generating Secure Key…
-                                </span>
-                            </div>
-                        )}
 
-                        <div className="relative flex items-center justify-center py-0.5">
-                            <span className="absolute w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                            <span className="relative bg-surface px-3 text-[10px] font-black tracking-widest text-text-muted uppercase rounded-full border border-border shadow-sm py-0.5">
-                                Verification Code
+                            {/* Step 2: Verification Code */}
+                            <div className="flex flex-col bg-surface-subtle border border-border rounded-2xl p-5 justify-between">
+                                <div>
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <span className="w-5 h-5 rounded-full bg-primary/10 text-primary text-[11px] font-black flex items-center justify-center border border-primary/20">
+                                            2
+                                        </span>
+                                        <h4 className="text-[13px] font-bold text-text-primary uppercase tracking-wide">
+                                            Enter 6-Digit Code
+                                        </h4>
+                                    </div>
+                                    <p className="text-[12px] text-text-muted leading-relaxed mb-6">
+                                        Enter the 6-digit confirmation code generated by your authenticator app to complete setup.
+                                    </p>
+
+                                    <div className="space-y-4 my-2">
+                                        <div className="flex justify-center">
+                                            <OtpInput value={mfaCode} onChange={setMfaCode} />
+                                        </div>
+                                        <p className="text-[11px] text-text-muted text-center max-w-xs mx-auto">
+                                            Codes rotate automatically every 30 seconds
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="bg-primary/5 border border-primary/15 rounded-xl p-3 flex items-start gap-2.5 mt-4">
+                                    <ShieldCheck className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                                    <p className="text-[11px] text-text-muted leading-normal">
+                                        Once verified, this extra security layer protects your account on every sign-in.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center gap-3 py-16">
+                            <div className="relative">
+                                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full animate-pulse" />
+                                <Loader2 className="w-8 h-8 text-primary animate-spin relative" />
+                            </div>
+                            <span className="text-[11px] font-bold tracking-widest text-text-muted uppercase">
+                                Generating Secure Key…
                             </span>
                         </div>
-
-                        <div className="space-y-1.5">
-                            <div className="flex justify-center">
-                                <OtpInput value={mfaCode} onChange={setMfaCode} />
-                            </div>
-                            <p className="text-[11px] text-text-muted text-center max-w-xs mx-auto">
-                                Enter the 6-digit code shown in your authenticator app
-                            </p>
-                        </div>
-
-                        <div className="flex gap-2.5 pt-1">
-                            <button
-                                type="button"
-                                disabled={mfaActionLoading}
-                                onClick={() => setMfaModalOpen(false)}
-                                className="flex-1 h-11 rounded-xl border border-border bg-surface-hover text-text-main font-bold text-[13px] hover:bg-surface-solid active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                disabled={mfaActionLoading || mfaCode.length !== 6 || !enrollData || !isOnline}
-                                className="flex-[2] h-11 rounded-xl bg-primary text-white font-bold text-[13px] shadow-glow-primary hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
-                            >
-                                {mfaActionLoading ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <ShieldCheck className="w-4 h-4" />
-                                )}
-                                Verify & Enable 2FA
-                            </button>
-                        </div>
-                    </div>
+                    )}
                 </form>
             </Modal>
 
