@@ -1017,7 +1017,7 @@ export function Dashboard() {
                                 <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-5 md:p-10">
+                        <div className="flex-1 overflow-y-auto no-scrollbar p-5 md:p-10">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
                                 {projectActivity.length === 0 ? (
                                     <div className="col-span-2 py-10 opacity-50"><EmptyState icon={<Camera />} title="Awaiting distribution data" /></div>
@@ -1071,7 +1071,7 @@ export function Dashboard() {
                                     description="Upgrade to Premium to see exactly which tools and applications your team is using."
                                 />
                             )}
-                            <div className="h-full overflow-y-auto divide-y divide-border">
+                            <div className="h-full overflow-y-auto no-scrollbar divide-y divide-border">
                                 {appUsage.length === 0 ? (
                                     <EmptyState icon={<Monitor />} title="Awaiting application data" className="py-12" />
                                 ) : (
