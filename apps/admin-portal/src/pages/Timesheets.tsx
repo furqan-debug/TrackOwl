@@ -988,20 +988,6 @@ export function Timesheets() {
                         </div>
                     )}
 
-                    {/* Timezone Changer */}
-                    <div className="space-y-1.5">
-                        <label className="text-[12px] font-bold text-text-muted">Timezone Changer</label>
-                        <div className="h-11">
-                            <FilterSelect
-                                icon={<Clock className="w-3.5 h-3.5" />}
-                                value={activeTimezone}
-                                onChange={setActiveTimezone}
-                                options={timezoneOptions}
-                                dropdownDirection="down"
-                            />
-                        </div>
-                    </div>
-
                     {/* Time / Range Selector */}
                     <div className="space-y-1.5">
                         <label className="text-[12px] font-bold text-text-muted">Calendar</label>
@@ -1023,7 +1009,7 @@ export function Timesheets() {
                                                 setSelectedDate(new Date(val + 'T12:00:00'));
                                             }
                                         }}
-                                        direction="down"
+                                        direction="auto"
                                         className="w-full min-w-0"
                                     />
                                 </div>
@@ -1043,6 +1029,20 @@ export function Timesheets() {
                             >
                                 Today
                             </button>
+                        </div>
+                    </div>
+                    {/* Timezone Changer */}
+                    <div className="space-y-1.5">
+                        <label className="text-[12px] font-bold text-text-muted">Timezone Changer</label>
+                        <div className="h-11">
+                            <FilterSelect
+                                icon={<Clock className="w-3.5 h-3.5" />}
+                                value={activeTimezone}
+                                onChange={setActiveTimezone}
+                                options={timezoneOptions}
+                                dropdownDirection="down"
+                                maxHeight="max-h-[174px]"
+                            />
                         </div>
                     </div>
                 </div>
