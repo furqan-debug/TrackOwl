@@ -7,13 +7,47 @@ import {
     Plus, Filter,
     Clock, FolderOpen,
     MoreVertical, Edit2, Trash2,
-    Star, X, RotateCcw
+    Star, X, RotateCcw, AlertCircle
 } from 'lucide-react';
 import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker, TimeField, RefreshButton, Button } from '../components/ui';
 import clsx from 'clsx';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getGroupingDateInTz, formatDuration, manualEntryInterval, utcToZonedWallClock, zonedWallClockToUtc } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../context/FavoritesContext';
+
+/**
+ * The dialogs' way of saying something went wrong.
+ *
+ * These three used window.alert, which is the browser's own box: its own grey
+ * chrome, its own OK button, the page frozen behind it and the address bar
+ * announcing "localhost:5173 says". It belongs to no theme and looks nothing
+ * like the rest of the app. This is the banner the member form already uses.
+ */
+function EntryError({ message, onDismiss }: { message: string | null; onDismiss: () => void }) {
+    return (
+        <AnimatePresence>
+            {message && (
+                <motion.div
+                    initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                    className="flex items-center gap-3 px-5 py-4 bg-rose-500/8 border border-rose-500/20 rounded-2xl shadow-sm text-left"
+                >
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <p className="text-[13px] font-bold text-rose-400">{message}</p>
+                    <button
+                        type="button"
+                        onClick={onDismiss}
+                        className="ml-auto text-rose-400/60 hover:text-rose-400 p-1 hover:bg-rose-500/10 rounded-md transition-colors"
+                    >
+                        <X className="w-4 h-4" />
+                    </button>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+}
 
 interface Session {
     id: string;
@@ -157,6 +191,8 @@ export function Timesheets() {
     const [showEditTimeModal, setShowEditTimeModal] = useState(false);
     const [editingSession, setEditingSession] = useState<Session | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    /** Shown inside whichever dialog is open; cleared whenever one opens. */
+    const [entryError, setEntryError] = useState<string | null>(null);
     const [deletingSession, setDeletingSession] = useState<Session | null>(null);
 
     const range = useMemo(() => {
@@ -520,13 +556,13 @@ export function Timesheets() {
     async function handleManualAddTime() {
         if (isViewer) return;
         if (!addTimeData.projectId || !addTimeData.userId) {
-            alert('Please select both a project and a member.');
+            setEntryError('Please select both a project and a member.');
             return;
         }
         // orgTimezone is a 'UTC' placeholder until fetchOrgSettings lands, and
         // writing against the placeholder would put the entry hours out.
         if (!orgSettingsLoaded) {
-            alert('Still loading organization settings — try again in a moment.');
+            setEntryError('Still loading organization settings — try again in a moment.');
             return;
         }
         // Entered in the ORG timezone, which is what the rows are keyed to and
@@ -535,7 +571,7 @@ export function Timesheets() {
         // adding 11:00 for an org on LA time wrote 11:00 PM the previous LA day.
         const interval = manualEntryInterval(addTimeData.date, addTimeData.startTime, addTimeData.endTime, orgTimezone);
         if ('error' in interval) {
-            alert(interval.error);
+            setEntryError(interval.error);
             return;
         }
         const { startedAt, endedAt } = interval;
@@ -555,7 +591,7 @@ export function Timesheets() {
             fetchTimesheets(true);
         } catch (err) {
             console.error('Failed to add manual time:', err);
-            alert('Error adding manual time entry.');
+            setEntryError('Error adding manual time entry.');
         } finally {
             setSubmittingEntry(false);
         }
@@ -567,12 +603,12 @@ export function Timesheets() {
         // orgTimezone is a 'UTC' placeholder until fetchOrgSettings lands, and
         // writing against the placeholder would put the entry hours out.
         if (!orgSettingsLoaded) {
-            alert('Still loading organization settings — try again in a moment.');
+            setEntryError('Still loading organization settings — try again in a moment.');
             return;
         }
         const interval = manualEntryInterval(addTimeData.date, addTimeData.startTime, addTimeData.endTime, orgTimezone);
         if ('error' in interval) {
-            alert(interval.error);
+            setEntryError(interval.error);
             return;
         }
         const { startedAt, endedAt } = interval;
@@ -591,7 +627,7 @@ export function Timesheets() {
             fetchTimesheets(true);
         } catch (err) {
             console.error('Failed to edit manual time:', err);
-            alert('Error editing time entry.');
+            setEntryError('Error editing time entry.');
         } finally {
             setSubmittingEntry(false);
         }
@@ -607,7 +643,7 @@ export function Timesheets() {
             fetchTimesheets(true);
         } catch (err) {
             console.error('Failed to delete time:', err);
-            alert('Error deleting time entry.');
+            setEntryError('Error deleting time entry.');
         }
     }
 
@@ -633,12 +669,14 @@ export function Timesheets() {
             endTime: endLocal.time
         });
         setEditingSession(session);
+        setEntryError(null);
         setShowEditTimeModal(true);
     };
 
     const openDeleteModal = (session: Session) => {
         if (isViewer) return;
         setDeletingSession(session);
+        setEntryError(null);
         setShowDeleteConfirm(true);
     };
 
@@ -777,6 +815,7 @@ export function Timesheets() {
                                         startTime: '09:00',
                                         endTime: '17:00'
                                     });
+                                    setEntryError(null);
                                     setShowAddTime(true);
                                 }}
                                 className="w-[120px] flex items-center justify-center gap-2 px-3 h-12 bg-primary text-white rounded-xl text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all whitespace-nowrap"
@@ -1054,6 +1093,7 @@ export function Timesheets() {
                 for a scrollbar down the side of a form that visibly fits. */}
             <Modal isOpen={showAddTime} onClose={() => setShowAddTime(false)} title="Manual Time Entry" height="h-auto">
                 <div className="space-y-5 py-4">
+                    <EntryError message={entryError} onDismiss={() => setEntryError(null)} />
                     {!isRep && (
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-muted ">Team Member</label>
@@ -1122,6 +1162,7 @@ export function Timesheets() {
 
             <Modal isOpen={showEditTimeModal} onClose={() => setShowEditTimeModal(false)} title="Edit Time Entry" allowOverflow>
                 <div className="space-y-5 py-4">
+                    <EntryError message={entryError} onDismiss={() => setEntryError(null)} />
                     {!isRep && (
                         <div className="space-y-2">
                             <label className="text-[10px] font-bold text-text-muted ">Team Member</label>
@@ -1190,6 +1231,7 @@ export function Timesheets() {
 
             <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Delete Time Entry" subtitle="This operation is destructive and irreversible." height="h-auto" allowOverflow>
                 <div className="text-center space-y-6 w-full max-w-full min-w-0">
+                    <EntryError message={entryError} onDismiss={() => setEntryError(null)} />
                     <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center mx-auto border border-rose-100">
                         <Trash2 className="w-8 h-8" />
                     </div>
