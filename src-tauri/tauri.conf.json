@@ -16,10 +16,10 @@
       {
         "label": "main",
         "title": "TrackOwl",
-        "width": 440,
-        "height": 700,
-        "minWidth": 360,
-        "minHeight": 560,
+        "width": 380,
+        "height": 620,
+        "minWidth": 340,
+        "minHeight": 520,
         "resizable": true,
         "center": true
       }
