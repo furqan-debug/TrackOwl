@@ -335,7 +335,7 @@ function LocalClock({ orgTimezone }: { orgTimezone?: string }) {
   const tzMismatch = orgTimezone && deviceTz && deviceTz !== orgTimezone;
 
   return (
-    <div className="local-context" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '0.875rem', margin: '0 0.875rem' }}>
+    <div className="local-context" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '0.625rem', margin: '0 0.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#fff', fontWeight: 700, fontSize: '0.875rem' }}>
         <span>{timeStr}</span>
         <span style={{ fontSize: '0.6875rem', opacity: 0.6, fontWeight: 400 }}>{dateStr}</span>
@@ -4524,7 +4524,7 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
             </div>
           </div>
 
-          <div className="timer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '1.25rem 0 1.25rem 0' }}>
+          <div className="timer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', margin: '0.625rem 0 0.875rem 0' }}>
             <span style={{ fontSize: '0.6875rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#666', marginBottom: '0.375rem' }}>
               Active Time
             </span>
@@ -4533,7 +4533,7 @@ function TrackerScreen({ user, project, idlePaused = false, onResumeFromIdle, li
             </div>
           </div>
 
-          <div style={{ width: '100%', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '12px', padding: '0.75rem 1rem', marginBottom: '1.25rem' }}>
+          <div style={{ width: '100%', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: '10px', padding: '0.625rem 0.875rem', marginBottom: '0.875rem' }}>
             <BlockProgressBar elapsedSeconds={localElapsed || 0} />
           </div>
 
