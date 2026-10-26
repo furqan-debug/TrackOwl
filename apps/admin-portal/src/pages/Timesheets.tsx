@@ -7,13 +7,41 @@ import {
     Plus, Filter,
     Clock, FolderOpen,
     MoreVertical, Edit2, Trash2,
-    Star, X, RotateCcw
+    Star, X, RotateCcw, AlertCircle
 } from 'lucide-react';
 import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker, TimeField, RefreshButton, Button } from '../components/ui';
 import clsx from 'clsx';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getGroupingDateInTz, formatDuration, manualEntryInterval, utcToZonedWallClock, zonedWallClockToUtc } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../context/FavoritesContext';
+
+/**
+ * The dialogs' way of saying something went wrong.
+ *
+ * These three used window.alert, which is the browser's own box: its own grey
+ * chrome, its own OK button, the page frozen behind it and the address bar
+ * announcing "localhost:5173 says". It belongs to no theme and looks nothing
+ * like the rest of the app. This is the banner the member form already uses,
+ * a shade tighter so it sits flush with the h-11 button beside it.
+ */
+function EntryError({ message }: { message: string | null }) {
+    return (
+        <AnimatePresence>
+            {message && (
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.97 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.97 }}
+                    className="h-full flex items-center gap-3 px-4 bg-rose-500/8 border border-rose-500/20 rounded-2xl shadow-sm text-left"
+                >
+                    <AlertCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                    <p className="text-[12px] font-bold text-rose-400 min-w-0 line-clamp-2">{message}</p>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
+}
 
 interface Session {
     id: string;
@@ -157,6 +185,8 @@ export function Timesheets() {
     const [showEditTimeModal, setShowEditTimeModal] = useState(false);
     const [editingSession, setEditingSession] = useState<Session | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+    /** Shown inside whichever dialog is open; cleared whenever one opens. */
+    const [entryError, setEntryError] = useState<string | null>(null);
     const [deletingSession, setDeletingSession] = useState<Session | null>(null);
 
     const range = useMemo(() => {
@@ -520,13 +550,13 @@ export function Timesheets() {
     async function handleManualAddTime() {
         if (isViewer) return;
         if (!addTimeData.projectId || !addTimeData.userId) {
-            alert('Please select both a project and a member.');
+            setEntryError('Please select both a project and a member.');
             return;
         }
         // orgTimezone is a 'UTC' placeholder until fetchOrgSettings lands, and
         // writing against the placeholder would put the entry hours out.
         if (!orgSettingsLoaded) {
-            alert('Still loading organization settings — try again in a moment.');
+            setEntryError('Still loading organization settings — try again in a moment.');
             return;
         }
         // Entered in the ORG timezone, which is what the rows are keyed to and
@@ -535,7 +565,7 @@ export function Timesheets() {
         // adding 11:00 for an org on LA time wrote 11:00 PM the previous LA day.
         const interval = manualEntryInterval(addTimeData.date, addTimeData.startTime, addTimeData.endTime, orgTimezone);
         if ('error' in interval) {
-            alert(interval.error);
+            setEntryError(interval.error);
             return;
         }
         const { startedAt, endedAt } = interval;
@@ -555,7 +585,7 @@ export function Timesheets() {
             fetchTimesheets(true);
         } catch (err) {
             console.error('Failed to add manual time:', err);
-            alert('Error adding manual time entry.');
+            setEntryError('Error adding manual time entry.');
         } finally {
             setSubmittingEntry(false);
         }
@@ -567,12 +597,12 @@ export function Timesheets() {
         // orgTimezone is a 'UTC' placeholder until fetchOrgSettings lands, and
         // writing against the placeholder would put the entry hours out.
         if (!orgSettingsLoaded) {
-            alert('Still loading organization settings — try again in a moment.');
+            setEntryError('Still loading organization settings — try again in a moment.');
             return;
         }
         const interval = manualEntryInterval(addTimeData.date, addTimeData.startTime, addTimeData.endTime, orgTimezone);
         if ('error' in interval) {
-            alert(interval.error);
+            setEntryError(interval.error);
             return;
         }
         const { startedAt, endedAt } = interval;
@@ -591,7 +621,7 @@ export function Timesheets() {
             fetchTimesheets(true);
         } catch (err) {
             console.error('Failed to edit manual time:', err);
-            alert('Error editing time entry.');
+            setEntryError('Error editing time entry.');
         } finally {
             setSubmittingEntry(false);
         }
@@ -607,7 +637,7 @@ export function Timesheets() {
             fetchTimesheets(true);
         } catch (err) {
             console.error('Failed to delete time:', err);
-            alert('Error deleting time entry.');
+            setEntryError('Error deleting time entry.');
         }
     }
 
@@ -633,12 +663,14 @@ export function Timesheets() {
             endTime: endLocal.time
         });
         setEditingSession(session);
+        setEntryError(null);
         setShowEditTimeModal(true);
     };
 
     const openDeleteModal = (session: Session) => {
         if (isViewer) return;
         setDeletingSession(session);
+        setEntryError(null);
         setShowDeleteConfirm(true);
     };
 
@@ -777,6 +809,7 @@ export function Timesheets() {
                                         startTime: '09:00',
                                         endTime: '17:00'
                                     });
+                                    setEntryError(null);
                                     setShowAddTime(true);
                                 }}
                                 className="w-[120px] flex items-center justify-center gap-2 px-3 h-12 bg-primary text-white rounded-xl text-[13px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all whitespace-nowrap"
@@ -988,20 +1021,6 @@ export function Timesheets() {
                         </div>
                     )}
 
-                    {/* Timezone Changer */}
-                    <div className="space-y-1.5">
-                        <label className="text-[12px] font-bold text-text-muted">Timezone Changer</label>
-                        <div className="h-11">
-                            <FilterSelect
-                                icon={<Clock className="w-3.5 h-3.5" />}
-                                value={activeTimezone}
-                                onChange={setActiveTimezone}
-                                options={timezoneOptions}
-                                dropdownDirection="down"
-                            />
-                        </div>
-                    </div>
-
                     {/* Time / Range Selector */}
                     <div className="space-y-1.5">
                         <label className="text-[12px] font-bold text-text-muted">Calendar</label>
@@ -1023,7 +1042,7 @@ export function Timesheets() {
                                                 setSelectedDate(new Date(val + 'T12:00:00'));
                                             }
                                         }}
-                                        direction="down"
+                                        direction="auto"
                                         className="w-full min-w-0"
                                     />
                                 </div>
@@ -1043,6 +1062,20 @@ export function Timesheets() {
                             >
                                 Today
                             </button>
+                        </div>
+                    </div>
+                    {/* Timezone Changer */}
+                    <div className="space-y-1.5">
+                        <label className="text-[12px] font-bold text-text-muted">Timezone Changer</label>
+                        <div className="h-11">
+                            <FilterSelect
+                                icon={<Clock className="w-3.5 h-3.5" />}
+                                value={activeTimezone}
+                                onChange={setActiveTimezone}
+                                options={timezoneOptions}
+                                dropdownDirection="down"
+                                maxHeight="max-h-[174px]"
+                            />
                         </div>
                     </div>
                 </div>
@@ -1114,8 +1147,11 @@ export function Timesheets() {
                             />
                         </div>
                     </div>
-                    <div className="flex justify-end pt-2">
-                        <button onClick={handleManualAddTime} disabled={submittingEntry} className="px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Submit Entry'}</button>
+                    <div className="flex items-center gap-3 pt-2">
+                        <div className="flex-1 min-w-0 h-14">
+                            <EntryError message={entryError} />
+                        </div>
+                        <button onClick={handleManualAddTime} disabled={submittingEntry} className="shrink-0 px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Submit Entry'}</button>
                     </div>
                 </div>
             </Modal>
@@ -1182,8 +1218,11 @@ export function Timesheets() {
                             />
                         </div>
                     </div>
-                    <div className="flex justify-end pt-2">
-                        <button onClick={handleEditSubmit} disabled={submittingEntry} className="px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Save Changes'}</button>
+                    <div className="flex items-center gap-3 pt-2">
+                        <div className="flex-1 min-w-0 h-14">
+                            <EntryError message={entryError} />
+                        </div>
+                        <button onClick={handleEditSubmit} disabled={submittingEntry} className="shrink-0 px-8 h-11 bg-primary text-white rounded-xl text-[11px] font-bold shadow-shell-sm hover:bg-primary/90 transition-all disabled:opacity-50">{submittingEntry ? 'Saving…' : 'Save Changes'}</button>
                     </div>
                 </div>
             </Modal>
@@ -1197,6 +1236,8 @@ export function Timesheets() {
                     <p className="text-sm font-medium text-text-muted break-words">
                         Permanently remove this time entry? This action cannot be undone.
                     </p>
+
+                    <EntryError message={entryError} />
 
                     <div className="flex flex-col sm:flex-row gap-3 pt-4 w-full">
                         <Button

@@ -110,10 +110,20 @@ export function DatePicker({
             if (left + width > window.innerWidth - 16) left = window.innerWidth - width - 16;
             if (left < 16) left = 16;
 
+            // How tall the panel really is, rather than the estimate. The
+            // portal is committed in the same pass as this effect, so it is
+            // already in the DOM and can be measured; scrollHeight ignores the
+            // open animation's transform. PANEL_HEIGHT is only the first-paint
+            // fallback — a five-row month is nearer 295px than 320, and
+            // guessing 25px too tall was enough to send a panel that fits
+            // flipping above its field instead.
+            const measured = panelRef.current?.scrollHeight ?? 0;
+            const height = measured > 0 ? measured : PANEL_HEIGHT;
+
             // Downward, unless direction === 'up' or the window itself has no room for it there.
             const below = rect.bottom + 8;
-            const fitsBelow = direction !== 'up' && (below + PANEL_HEIGHT <= window.innerHeight - 16);
-            const top = direction === 'down' ? Math.max(16, below) : (direction === 'up' || !fitsBelow) ? Math.max(16, rect.top - PANEL_HEIGHT - 8) : below;
+            const fitsBelow = direction !== 'up' && (below + height <= window.innerHeight - 16);
+            const top = direction === 'down' ? Math.max(16, below) : (direction === 'up' || !fitsBelow) ? Math.max(16, rect.top - height - 8) : below;
 
             setPanelPos({ top, left, width });
         };
