@@ -1010,7 +1010,7 @@ export function Reports() {
                                 </div>
                             </div>
 
-                             <div ref={scrollRef} className="overflow-x-auto overflow-y-auto max-h-[720px] custom-scrollbar">
+                             <div ref={scrollRef} className="overflow-x-auto overflow-y-auto max-h-[720px] no-scrollbar">
                                 <table className="w-full border-collapse min-w-max">
                                     <thead>
                                         <tr className="bg-surface-hover/50">
