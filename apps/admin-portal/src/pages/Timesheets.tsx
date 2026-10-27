@@ -1485,7 +1485,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                             >
                                                 <MoreVertical className="w-4 h-4" strokeWidth={2} />
                                             </button>
-                                            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 w-36 bg-surface border border-border rounded-lg shadow-shell-md opacity-0 invisible group-hover/actions:opacity-100 group-hover/actions:visible transition-all z-50 overflow-hidden">
+                                            <div className="absolute right-full top-0 mr-2 w-36 bg-surface border border-border rounded-lg shadow-shell-md opacity-0 invisible group-hover/actions:opacity-100 group-hover/actions:visible transition-all z-50 overflow-hidden">
                                                 <button onClick={(e) => { e.stopPropagation(); onEditSession(s); }} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2">
                                                     <Edit2 className="w-4 h-4 text-text-muted" /> Edit Time
                                                 </button>
