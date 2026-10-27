@@ -19,7 +19,8 @@ import {
     EmptyState,
     Modal,
     Input,
-    StatMetric
+    StatMetric,
+    RowMenu
 } from '../components/ui';
 import clsx from 'clsx';
 
@@ -692,31 +693,23 @@ export function Clients() {
 
                                             {/* ACTIONS */}
                                             <td className="pr-5 sm:pr-8 py-4 sm:py-5 text-right">
-                                                <div className="flex items-center justify-end gap-0.5 shrink-0">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleOpenEdit(client)}
-                                                        title="Edit client"
-                                                        aria-label="Edit client"
-                                                        className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-primary hover:border-primary/40 transition-colors inline-flex items-center justify-center"
-                                                    >
-                                                        <Pencil className="w-4 h-4" strokeWidth={2} />
-                                                    </button>
-
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            if (!isViewer) {
-                                                                setDeletingClient(client);
-                                                            }
-                                                        }}
-                                                        disabled={isViewer}
-                                                        title="Delete client"
-                                                        aria-label="Delete client"
-                                                        className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-rose-500 hover:border-rose-500/40 hover:bg-rose-500/10 transition-colors inline-flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" strokeWidth={2} />
-                                                    </button>
+                                                <div className="flex items-center justify-end shrink-0">
+                                                    <RowMenu
+                                                        items={[
+                                                            {
+                                                                label: 'Edit Client',
+                                                                icon: <Pencil className="w-4 h-4 text-text-muted" />,
+                                                                onClick: () => handleOpenEdit(client),
+                                                            },
+                                                            {
+                                                                label: 'Delete Client',
+                                                                icon: <Trash2 className="w-4 h-4" />,
+                                                                onClick: () => setDeletingClient(client),
+                                                                danger: true,
+                                                                disabled: isViewer,
+                                                            },
+                                                        ]}
+                                                    />
                                                 </div>
                                             </td>
                                         </tr>

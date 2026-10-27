@@ -1393,16 +1393,28 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                 })}
             </div>
 
-            <div className="bg-surface rounded-xl border border-border shadow-shell-sm overflow-x-auto custom-scrollbar">
+            <div className="bg-surface rounded-xl border border-border shadow-shell-sm overflow-x-auto no-scrollbar">
                 <table className="w-full text-left border-collapse min-w-[800px]">
                     <thead>
                         <tr className="bg-surface-hover/30">
-                            <th className="py-6 px-10 text-[11px] font-bold text-text-muted border-b border-border uppercase tracking-widest w-1/3">Scope & Member</th>
+                            <th className={clsx(
+                                "py-6 px-10 text-[11px] font-bold text-text-muted border-b border-border uppercase tracking-widest",
+                                // The member list keeps the layout it always had.
+                                // Only the drilled-in session list takes the
+                                // narrower column and the centred Window beside it.
+                                isAggregatedView ? "w-1/3" : "w-[31%]"
+                            )}>Scope & Member</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Active</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Idle</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Duration</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-40">Timezone</th>
-                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-right uppercase tracking-widest">Window</th>
+                            <th className={clsx(
+                                "py-6 text-[11px] font-bold text-text-muted border-b border-border uppercase tracking-widest",
+                                // The extra right padding shortens the content
+                                // box, which carries the centred text further
+                                // left without moving the column itself.
+                                isAggregatedView ? "pl-6 pr-16 text-right" : "pl-6 pr-24 text-center"
+                            )}>Window</th>
                             <th className="py-6 px-4 border-b border-border w-12"></th>
                         </tr>
                     </thead>
@@ -1449,8 +1461,8 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                         {s.display_timezone || 'UTC'}
                                     </span>
                                 </td>
-                                <td className="py-8 px-6 text-right">
-                                    <div className="flex flex-col items-end gap-1">
+                                <td className={clsx("py-8", isAggregatedView ? "pl-6 pr-16 text-right" : "pl-6 pr-24 text-center")}>
+                                    <div className={clsx("flex flex-col gap-1", isAggregatedView ? "items-end" : "items-center")}>
                                         <span className="text-[14px] font-bold text-text-muted tabular-nums">
                                             {renderTimeDisplay(s)}
                                         </span>
@@ -1464,10 +1476,16 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                 <td className="py-8 px-4 text-center">
                                     {!s.isAggregated && !isViewer && (
                                         <div className="relative group/actions inline-block text-left">
-                                            <button onClick={(e) => e.stopPropagation()} className="p-2 hover:bg-surface-hover rounded-md text-text-muted hover:text-text-main transition-colors">
-                                                <MoreVertical className="w-5 h-5" />
+                                            <button
+                                                type="button"
+                                                onClick={(e) => e.stopPropagation()}
+                                                title="Row actions"
+                                                aria-label="Row actions"
+                                                className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-muted hover:text-text-main hover:border-[var(--border-hover)] transition-colors inline-flex items-center justify-center"
+                                            >
+                                                <MoreVertical className="w-4 h-4" strokeWidth={2} />
                                             </button>
-                                            <div className="absolute right-0 top-full mt-1 w-36 bg-surface border border-border rounded-lg shadow-shell-md opacity-0 invisible group-hover/actions:opacity-100 group-hover/actions:visible transition-all z-50 overflow-hidden">
+                                            <div className="absolute right-full top-0 mr-2 w-36 bg-surface border border-border rounded-lg shadow-shell-md opacity-0 invisible group-hover/actions:opacity-100 group-hover/actions:visible transition-all z-50 overflow-hidden">
                                                 <button onClick={(e) => { e.stopPropagation(); onEditSession(s); }} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2">
                                                     <Edit2 className="w-4 h-4 text-text-muted" /> Edit Time
                                                 </button>

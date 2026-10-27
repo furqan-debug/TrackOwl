@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
-    Search, Plus, MoreHorizontal,
+    Search, Plus,
     Check, Users,
     Trash2, Archive,
     Building2, Briefcase, Layers,
@@ -13,7 +13,8 @@ import {
     PageLayout,
     EmptyState,
     LoadingState,
-    StatMetric
+    StatMetric,
+    RowMenu
 } from '../components/ui';
 import { useNavigate } from 'react-router-dom';
 import { readProjectsCache, writeProjectsCache, invalidateProjectsCache } from '../lib/projectsCache';
@@ -305,9 +306,9 @@ export function Projects() {
                                                 {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 && <Check className="w-3 h-3 stroke-[3]" />}
                                             </button>
                                         </th>
-                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Project</th>
-                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Tracking</th>
-                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-center">Team</th>
+                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] w-[30%]">Project</th>
+                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] w-[16%]">Tracking</th>
+                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-center w-[9%]">Team</th>
                                         <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Budget & Configuration</th>
                                         <th className="pr-8 py-4 w-12"></th>
                                     </tr>
@@ -346,14 +347,6 @@ export function Projects() {
 }
 
 function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer }: { project: Project; isSelected: boolean; onSelect: () => void; onEdit: () => void; onRefresh: () => void; isViewer: boolean }) {
-    const [showMenu, setShowMenu] = useState(false);
-    const dropRef = useRef<HTMLTableCellElement>(null);
-
-    useEffect(() => {
-        function h(e: MouseEvent) { if (dropRef.current && !dropRef.current.contains(e.target as Node)) setShowMenu(false); }
-        document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h);
-    }, []);
-
     async function handleArchive() {
         try {
             const newStatus = project.status === 'Active' ? 'Archived' : 'Active';
@@ -477,42 +470,29 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                     )}
                 </div>
             </td>
-            <td className="pr-8 py-5 text-right relative" ref={dropRef} onClick={(e) => e.stopPropagation()}>
-                <button
-                    onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-text-main hover:bg-surface-hover hover:border hover:border-slate-200 transition-all"
-                >
-                    <MoreHorizontal className="w-4 h-4" />
-                </button>
-                {showMenu && (
-                    <div className="absolute right-8 top-12 w-48 bg-surface shadow-xl z-50 py-2 rounded-xl overflow-hidden border border-border text-left">
-                        <button
-                            onClick={() => { setShowMenu(false); onEdit(); }}
-                            className="w-full px-4 py-2 text-[11px] font-bold text-text-muted hover:bg-surface-hover hover:text-primary flex items-center gap-3 transition-all"
-                        >
-                            <ArrowUpRight className="w-3.5 h-3.5" /> Edit Project
-                        </button>
-                        <button
-                            onClick={() => { if (!isViewer) { setShowMenu(false); handleArchive(); } }}
-                            className={clsx(
-                                "w-full px-4 py-2 text-[11px] font-bold flex items-center gap-3 transition-all",
-                                isViewer ? "opacity-30 cursor-not-allowed" : "text-text-muted hover:bg-surface-hover"
-                            )}
-                        >
-                            <Archive className="w-3.5 h-3.5" /> {project.status === 'Active' ? 'Archive' : 'Restore'}
-                        </button>
-                        <div className="h-px bg-main my-1 mx-2" />
-                        <button
-                            onClick={() => { if (!isViewer) { setShowMenu(false); handleDelete(); } }}
-                            className={clsx(
-                                "w-full px-4 py-2 text-[11px] font-bold flex items-center gap-3 transition-all text-rose-500 hover:bg-rose-50",
-                                isViewer ? "opacity-30 cursor-not-allowed" : ""
-                            )}
-                        >
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                        </button>
-                    </div>
-                )}
+            <td className="pr-8 py-5 text-right" onClick={(e) => e.stopPropagation()}>
+                <RowMenu
+                    items={[
+                        {
+                            label: 'Edit Project',
+                            icon: <ArrowUpRight className="w-4 h-4 text-text-muted" />,
+                            onClick: onEdit,
+                        },
+                        {
+                            label: project.status === 'Active' ? 'Archive' : 'Restore',
+                            icon: <Archive className="w-4 h-4 text-text-muted" />,
+                            onClick: handleArchive,
+                            disabled: isViewer,
+                        },
+                        {
+                            label: 'Delete',
+                            icon: <Trash2 className="w-4 h-4" />,
+                            onClick: handleDelete,
+                            danger: true,
+                            disabled: isViewer,
+                        },
+                    ]}
+                />
             </td>
         </tr>
     );

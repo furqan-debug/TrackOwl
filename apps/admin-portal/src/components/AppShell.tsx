@@ -78,7 +78,7 @@ export function AppShell({ children }: AppShellProps) {
                         <MobileNav onClose={() => setMobileMenuOpen(false)} />
                     )}
 
-                    <main className="flex-1 overflow-y-auto shell-scrollbar">
+                    <main className="flex-1 overflow-y-auto no-scrollbar">
                         <div className="max-w-[1600px] mx-auto w-full min-h-full py-6 px-4 md:py-10 md:px-6 lg:px-10">
                             {children}
                         </div>
