@@ -1402,7 +1402,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Idle</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Duration</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-40">Timezone</th>
-                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-right uppercase tracking-widest">Window</th>
+                            <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest">Window</th>
                             <th className="py-6 px-4 border-b border-border w-12"></th>
                         </tr>
                     </thead>
@@ -1449,8 +1449,8 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                         {s.display_timezone || 'UTC'}
                                     </span>
                                 </td>
-                                <td className="py-8 px-6 text-right">
-                                    <div className="flex flex-col items-end gap-1">
+                                <td className="py-8 px-6 text-center">
+                                    <div className="flex flex-col items-center gap-1">
                                         <span className="text-[14px] font-bold text-text-muted tabular-nums">
                                             {renderTimeDisplay(s)}
                                         </span>
