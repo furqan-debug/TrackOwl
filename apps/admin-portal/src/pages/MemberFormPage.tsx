@@ -1812,7 +1812,7 @@ export function MemberFormPage() {
                                                         {showProjectDropdown &&
                                                             unassignedProjects.length >
                                                             0 && (
-                                                                <div className="absolute top-full left-0 right-0 mt-1.5 bg-surface border border-border rounded-2xl shadow-2xl z-50 overflow-hidden max-h-64 overflow-y-auto custom-scrollbar">
+                                                                <div className="absolute top-full left-0 right-0 mt-1.5 bg-surface border border-border rounded-2xl shadow-2xl z-50 overflow-hidden max-h-64 overflow-y-auto no-scrollbar">
                                                                     {unassignedProjects.map(
                                                                         (p) => (
                                                                             <button
