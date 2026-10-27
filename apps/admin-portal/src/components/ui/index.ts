@@ -8,6 +8,7 @@ export { LoadingState } from './LoadingState';
 export { RefreshButton } from './RefreshButton';
 export { FilterSelect } from './FilterSelect';
 export { FormSelect } from './FormSelect';
+export { RowMenu } from './RowMenu';
 export { TimeField } from './TimeField';
 export { AppIcon } from './AppIcon';
 export { PageHeader } from './PageHeader';

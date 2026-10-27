@@ -1,8 +1,8 @@
-import { useEffect, useLayoutEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
-    Search, Plus, MoreVertical,
+    Search, Plus,
     Check, Users,
     Trash2, Archive,
     Building2, Briefcase, Layers,
@@ -13,7 +13,8 @@ import {
     PageLayout,
     EmptyState,
     LoadingState,
-    StatMetric
+    StatMetric,
+    RowMenu
 } from '../components/ui';
 import { useNavigate } from 'react-router-dom';
 import { readProjectsCache, writeProjectsCache, invalidateProjectsCache } from '../lib/projectsCache';
@@ -346,45 +347,6 @@ export function Projects() {
 }
 
 function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer }: { project: Project; isSelected: boolean; onSelect: () => void; onEdit: () => void; onRefresh: () => void; isViewer: boolean }) {
-    const [showMenu, setShowMenu] = useState(false);
-    const dropRef = useRef<HTMLTableCellElement>(null);
-    const anchorRef = useRef<HTMLDivElement>(null);
-    const menuRef = useRef<HTMLDivElement>(null);
-    const [dropUp, setDropUp] = useState(false);
-
-    /**
-     * Hang the menu upward on the rows near the bottom.
-     *
-     * It lives inside the table's horizontal scroller, and anything an
-     * absolutely positioned child leaves below the last row counts as that
-     * box's overflow — so opening the menu on the final project grew a
-     * vertical scrollbar on a table that had no reason to scroll. Measured
-     * rather than counting rows, so a short list and a long one both behave.
-     */
-    useLayoutEffect(() => {
-        if (!showMenu) return;
-        const anchor = anchorRef.current;
-        const menu = menuRef.current;
-        if (!anchor || !menu) return;
-
-        let box: HTMLElement | null = anchor.parentElement;
-        while (box) {
-            const { overflowX, overflowY } = getComputedStyle(box);
-            if (/(auto|scroll)/.test(overflowX + overflowY)) break;
-            box = box.parentElement;
-        }
-
-        const limit = box
-            ? box.getBoundingClientRect().bottom
-            : window.innerHeight - 16;
-        setDropUp(anchor.getBoundingClientRect().top + menu.offsetHeight > limit);
-    }, [showMenu]);
-
-    useEffect(() => {
-        function h(e: MouseEvent) { if (dropRef.current && !dropRef.current.contains(e.target as Node)) setShowMenu(false); }
-        document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h);
-    }, []);
-
     async function handleArchive() {
         try {
             const newStatus = project.status === 'Active' ? 'Archived' : 'Active';
@@ -508,52 +470,29 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                     )}
                 </div>
             </td>
-            <td className="pr-8 py-5 text-right relative" ref={dropRef} onClick={(e) => e.stopPropagation()}>
-                <div className="relative inline-block" ref={anchorRef}>
-                <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
-                    title="Row actions"
-                    aria-label="Row actions"
-                    className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-muted hover:text-text-main hover:border-[var(--border-hover)] transition-colors inline-flex items-center justify-center"
-                >
-                    <MoreVertical className="w-4 h-4" strokeWidth={2} />
-                </button>
-                {showMenu && (
-                    <div
-                        ref={menuRef}
-                        className={clsx(
-                            "absolute right-full mr-2 w-36 bg-surface border border-border rounded-lg shadow-shell-md z-50 overflow-hidden text-left",
-                            dropUp ? "bottom-0" : "top-0"
-                        )}
-                    >
-                        <button
-                            onClick={() => { setShowMenu(false); onEdit(); }}
-                            className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2 transition-colors"
-                        >
-                            <ArrowUpRight className="w-4 h-4" /> Edit Project
-                        </button>
-                        <button
-                            onClick={() => { if (!isViewer) { setShowMenu(false); handleArchive(); } }}
-                            className={clsx(
-                                "w-full text-left px-4 py-2.5 text-xs font-semibold flex items-center gap-2 transition-colors border-t border-border/50",
-                                isViewer ? "opacity-30 cursor-not-allowed" : "text-text-main hover:bg-surface-hover"
-                            )}
-                        >
-                            <Archive className="w-4 h-4" /> {project.status === 'Active' ? 'Archive' : 'Restore'}
-                        </button>
-                        <button
-                            onClick={() => { if (!isViewer) { setShowMenu(false); handleDelete(); } }}
-                            className={clsx(
-                                "w-full text-left px-4 py-2.5 text-xs font-semibold flex items-center gap-2 transition-colors border-t border-border/50 text-red-500 hover:bg-red-500/10",
-                                isViewer ? "opacity-30 cursor-not-allowed" : ""
-                            )}
-                        >
-                            <Trash2 className="w-4 h-4" /> Delete
-                        </button>
-                    </div>
-                )}
-                </div>
+            <td className="pr-8 py-5 text-right" onClick={(e) => e.stopPropagation()}>
+                <RowMenu
+                    items={[
+                        {
+                            label: 'Edit Project',
+                            icon: <ArrowUpRight className="w-4 h-4 text-text-muted" />,
+                            onClick: onEdit,
+                        },
+                        {
+                            label: project.status === 'Active' ? 'Archive' : 'Restore',
+                            icon: <Archive className="w-4 h-4 text-text-muted" />,
+                            onClick: handleArchive,
+                            disabled: isViewer,
+                        },
+                        {
+                            label: 'Delete',
+                            icon: <Trash2 className="w-4 h-4" />,
+                            onClick: handleDelete,
+                            danger: true,
+                            disabled: isViewer,
+                        },
+                    ]}
+                />
             </td>
         </tr>
     );
