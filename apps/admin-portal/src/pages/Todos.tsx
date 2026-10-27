@@ -823,7 +823,8 @@ export function Todos() {
                 }
                 subtitle="Specify deliverables and resource allocation."
                 maxWidth="max-w-5xl"
-                height="h-[660px]"
+                height="h-[680px]"
+                hideScrollbar
                 footer={
                     <>
                         <Button
@@ -1026,7 +1027,7 @@ export function Todos() {
                                     rounded-xl
                                     p-2 sm:p-3
                                     bg-surface-hover
-                                    max-h-[186px]
+                                    max-h-[175px]
                                     overflow-y-auto
                                     overflow-x-hidden
                                     custom-scrollbar
@@ -1199,7 +1200,7 @@ export function Todos() {
                             </label>
 
                             <textarea
-                                rows={7}
+                                rows={5}
                                 value={formData.description}
                                 onChange={e =>
                                     setFormData({
