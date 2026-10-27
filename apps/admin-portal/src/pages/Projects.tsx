@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { useEffect, useLayoutEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -306,8 +306,8 @@ export function Projects() {
                                             </button>
                                         </th>
                                         <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] w-[30%]">Project</th>
-                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Tracking</th>
-                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-center">Team</th>
+                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] w-[16%]">Tracking</th>
+                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-center w-[9%]">Team</th>
                                         <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Budget & Configuration</th>
                                         <th className="pr-8 py-4 w-12"></th>
                                     </tr>
@@ -348,6 +348,37 @@ export function Projects() {
 function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer }: { project: Project; isSelected: boolean; onSelect: () => void; onEdit: () => void; onRefresh: () => void; isViewer: boolean }) {
     const [showMenu, setShowMenu] = useState(false);
     const dropRef = useRef<HTMLTableCellElement>(null);
+    const anchorRef = useRef<HTMLDivElement>(null);
+    const menuRef = useRef<HTMLDivElement>(null);
+    const [dropUp, setDropUp] = useState(false);
+
+    /**
+     * Hang the menu upward on the rows near the bottom.
+     *
+     * It lives inside the table's horizontal scroller, and anything an
+     * absolutely positioned child leaves below the last row counts as that
+     * box's overflow — so opening the menu on the final project grew a
+     * vertical scrollbar on a table that had no reason to scroll. Measured
+     * rather than counting rows, so a short list and a long one both behave.
+     */
+    useLayoutEffect(() => {
+        if (!showMenu) return;
+        const anchor = anchorRef.current;
+        const menu = menuRef.current;
+        if (!anchor || !menu) return;
+
+        let box: HTMLElement | null = anchor.parentElement;
+        while (box) {
+            const { overflowX, overflowY } = getComputedStyle(box);
+            if (/(auto|scroll)/.test(overflowX + overflowY)) break;
+            box = box.parentElement;
+        }
+
+        const limit = box
+            ? box.getBoundingClientRect().bottom
+            : window.innerHeight - 16;
+        setDropUp(anchor.getBoundingClientRect().top + menu.offsetHeight > limit);
+    }, [showMenu]);
 
     useEffect(() => {
         function h(e: MouseEvent) { if (dropRef.current && !dropRef.current.contains(e.target as Node)) setShowMenu(false); }
@@ -478,7 +509,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                 </div>
             </td>
             <td className="pr-8 py-5 text-right relative" ref={dropRef} onClick={(e) => e.stopPropagation()}>
-                <div className="relative inline-block">
+                <div className="relative inline-block" ref={anchorRef}>
                 <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
@@ -489,7 +520,13 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                     <MoreVertical className="w-4 h-4" strokeWidth={2} />
                 </button>
                 {showMenu && (
-                    <div className="absolute right-full top-0 mr-2 w-36 bg-surface border border-border rounded-lg shadow-shell-md z-50 overflow-hidden text-left">
+                    <div
+                        ref={menuRef}
+                        className={clsx(
+                            "absolute right-full mr-2 w-36 bg-surface border border-border rounded-lg shadow-shell-md z-50 overflow-hidden text-left",
+                            dropUp ? "bottom-0" : "top-0"
+                        )}
+                    >
                         <button
                             onClick={() => { setShowMenu(false); onEdit(); }}
                             className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2 transition-colors"
