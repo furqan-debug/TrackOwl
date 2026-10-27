@@ -17,6 +17,7 @@ export interface ModalProps {
      */
     height?: string;
     allowOverflow?: boolean;
+    hideScrollbar?: boolean;
 }
 
 export function Modal({
@@ -29,6 +30,7 @@ export function Modal({
     maxWidth = 'max-w-lg',
     height = 'h-[680px]',
     allowOverflow = false,
+    hideScrollbar = false,
 }: ModalProps) {
     useEffect(() => {
         if (isOpen) {
@@ -154,8 +156,10 @@ export function Modal({
                         min-w-0
                         px-4 py-5
                         sm:px-8 sm:py-8
-                        custom-scrollbar
                         `,
+                        hideScrollbar
+                            ? "no-scrollbar"
+                            : "custom-scrollbar",
                         allowOverflow
                             ? "overflow-visible"
                             : "overflow-y-auto"
