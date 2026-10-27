@@ -73,8 +73,8 @@ export function FormSelect({
             const measured = panelRef.current?.scrollHeight ?? 0;
             const natural =
                 measured > 0
-                    ? measured
-                    : options.length * ROW_H + PANEL_PAD;
+                    ? measured + 4
+                    : options.length * ROW_H + PANEL_PAD + 4;
             const wanted = Math.min(PANEL_MAX, natural);
 
             // Downward, always, and never over the field. Room is made for it
@@ -121,8 +121,8 @@ export function FormSelect({
 
             const natural = Math.min(
                 PANEL_MAX,
-                panelRef.current?.scrollHeight ||
-                    options.length * ROW_H + PANEL_PAD,
+                (panelRef.current?.scrollHeight ||
+                    options.length * ROW_H + PANEL_PAD) + 4,
             );
             const deficit =
                 natural + GAP + MARGIN - (window.innerHeight - p.rect.bottom);
@@ -301,7 +301,7 @@ export function FormSelect({
                                     maxHeight: panelPos.maxHeight,
                                 }}
                                 onMouseDown={(e) => e.stopPropagation()}
-                                className={clsx("bg-surface border border-border rounded-2xl shadow-premium z-[200] flex flex-col p-2 custom-scrollbar", !hideScrollbar && "overflow-y-auto", hideScrollbar && "overflow-hidden no-scrollbar")}
+                                className={clsx("bg-surface border border-border rounded-2xl shadow-premium z-[200] flex flex-col p-2 overflow-y-auto no-scrollbar", hideScrollbar && "overflow-hidden")}
                             >
                             {options.map((opt: any) => (
                                 <div

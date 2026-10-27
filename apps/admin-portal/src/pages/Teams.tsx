@@ -639,7 +639,7 @@ export function Teams() {
                                 </div>
 
                                 {managerDropdownOpen && (
-                                    <div className="absolute top-[100%] left-0 w-full mt-2 bg-surface border border-border rounded-2xl shadow-2xl z-[100] max-h-[260px] overflow-y-auto custom-scrollbar p-2 animate-in fade-in zoom-in-95 duration-200">
+                                    <div className="absolute top-[100%] left-0 w-full mt-2 bg-surface border border-border rounded-2xl shadow-2xl z-[100] max-h-[260px] overflow-y-auto no-scrollbar p-2 animate-in fade-in zoom-in-95 duration-200">
                                         <button
                                             type="button"
                                             onClick={() => {

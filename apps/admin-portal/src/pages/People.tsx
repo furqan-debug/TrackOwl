@@ -920,7 +920,7 @@ function FormSelect({ label, value, onChange, options, disabled, icon, descripti
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute top-[calc(100%+8px)] left-0 w-full bg-surface border border-border rounded-2xl shadow-premium z-[100] flex flex-col p-2 max-h-[260px] overflow-y-auto custom-scrollbar"
+                            className="absolute top-[calc(100%+8px)] left-0 w-full bg-surface border border-border rounded-2xl shadow-premium z-[100] flex flex-col p-2 max-h-[260px] overflow-y-auto no-scrollbar"
                         >
                             {options.map((opt: any) => (
                                 <div key={opt.value} onClick={() => { onChange(opt.value); setIsOpen(false); }}
