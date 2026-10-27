@@ -1413,7 +1413,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                 // The extra right padding shortens the content
                                 // box, which carries the centred text further
                                 // left without moving the column itself.
-                                isAggregatedView ? "px-6 text-right" : "pl-6 pr-24 text-center"
+                                isAggregatedView ? "pl-6 pr-16 text-right" : "pl-6 pr-24 text-center"
                             )}>Window</th>
                             <th className="py-6 px-4 border-b border-border w-12"></th>
                         </tr>
@@ -1461,7 +1461,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                         {s.display_timezone || 'UTC'}
                                     </span>
                                 </td>
-                                <td className={clsx("py-8", isAggregatedView ? "px-6 text-right" : "pl-6 pr-24 text-center")}>
+                                <td className={clsx("py-8", isAggregatedView ? "pl-6 pr-16 text-right" : "pl-6 pr-24 text-center")}>
                                     <div className={clsx("flex flex-col gap-1", isAggregatedView ? "items-end" : "items-center")}>
                                         <span className="text-[14px] font-bold text-text-muted tabular-nums">
                                             {renderTimeDisplay(s)}
