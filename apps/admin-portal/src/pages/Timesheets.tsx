@@ -6,7 +6,7 @@ import {
     Users,
     Plus, Filter,
     Clock, FolderOpen,
-    MoreVertical, Edit2, Trash2,
+    Edit2, Trash2,
     Star, X, RotateCcw, AlertCircle
 } from 'lucide-react';
 import { LoadingState, Modal, EmptyState, FilterSelect, DatePicker, TimeField, RefreshButton, Button } from '../components/ui';
@@ -1463,18 +1463,25 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                 </td>
                                 <td className="py-8 px-4 text-center">
                                     {!s.isAggregated && !isViewer && (
-                                        <div className="relative group/actions inline-block text-left">
-                                            <button onClick={(e) => e.stopPropagation()} className="p-2 hover:bg-surface-hover rounded-md text-text-muted hover:text-text-main transition-colors">
-                                                <MoreVertical className="w-5 h-5" />
+                                        <div className="flex items-center justify-center gap-0.5">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); onEditSession(s); }}
+                                                title="Edit time"
+                                                aria-label="Edit time"
+                                                className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-primary hover:border-primary/40 transition-colors inline-flex items-center justify-center"
+                                            >
+                                                <Edit2 className="w-4 h-4" strokeWidth={2} />
                                             </button>
-                                            <div className="absolute right-0 top-full mt-1 w-36 bg-surface border border-border rounded-lg shadow-shell-md opacity-0 invisible group-hover/actions:opacity-100 group-hover/actions:visible transition-all z-50 overflow-hidden">
-                                                <button onClick={(e) => { e.stopPropagation(); onEditSession(s); }} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2">
-                                                    <Edit2 className="w-4 h-4 text-text-muted" /> Edit Time
-                                                </button>
-                                                <button onClick={(e) => { e.stopPropagation(); onDeleteSession(s); }} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 flex items-center gap-2 border-t border-border/50">
-                                                    <Trash2 className="w-4 h-4" /> Delete Time
-                                                </button>
-                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={(e) => { e.stopPropagation(); onDeleteSession(s); }}
+                                                title="Delete time"
+                                                aria-label="Delete time"
+                                                className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-rose-500 hover:border-rose-500/40 hover:bg-rose-500/10 transition-colors inline-flex items-center justify-center"
+                                            >
+                                                <Trash2 className="w-4 h-4" strokeWidth={2} />
+                                            </button>
                                         </div>
                                     )}
                                 </td>
