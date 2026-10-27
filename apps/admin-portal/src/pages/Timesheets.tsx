@@ -1409,8 +1409,11 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-32">Duration</th>
                             <th className="py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border text-center uppercase tracking-widest w-40">Timezone</th>
                             <th className={clsx(
-                                "py-6 px-6 text-[11px] font-bold text-text-muted border-b border-border uppercase tracking-widest",
-                                isAggregatedView ? "text-right" : "text-center"
+                                "py-6 text-[11px] font-bold text-text-muted border-b border-border uppercase tracking-widest",
+                                // The extra right padding shortens the content
+                                // box, which carries the centred text further
+                                // left without moving the column itself.
+                                isAggregatedView ? "px-6 text-right" : "pl-6 pr-24 text-center"
                             )}>Window</th>
                             <th className="py-6 px-4 border-b border-border w-12"></th>
                         </tr>
@@ -1458,7 +1461,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                         {s.display_timezone || 'UTC'}
                                     </span>
                                 </td>
-                                <td className={clsx("py-8 px-6", isAggregatedView ? "text-right" : "text-center")}>
+                                <td className={clsx("py-8", isAggregatedView ? "px-6 text-right" : "pl-6 pr-24 text-center")}>
                                     <div className={clsx("flex flex-col gap-1", isAggregatedView ? "items-end" : "items-center")}>
                                         <span className="text-[14px] font-bold text-text-muted tabular-nums">
                                             {renderTimeDisplay(s)}
@@ -1482,7 +1485,7 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                                             >
                                                 <MoreVertical className="w-4 h-4" strokeWidth={2} />
                                             </button>
-                                            <div className="absolute right-0 top-full mt-1 w-36 bg-surface border border-border rounded-lg shadow-shell-md opacity-0 invisible group-hover/actions:opacity-100 group-hover/actions:visible transition-all z-50 overflow-hidden">
+                                            <div className="absolute right-full top-1/2 -translate-y-1/2 mr-2 w-36 bg-surface border border-border rounded-lg shadow-shell-md opacity-0 invisible group-hover/actions:opacity-100 group-hover/actions:visible transition-all z-50 overflow-hidden">
                                                 <button onClick={(e) => { e.stopPropagation(); onEditSession(s); }} className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2">
                                                     <Edit2 className="w-4 h-4 text-text-muted" /> Edit Time
                                                 </button>
