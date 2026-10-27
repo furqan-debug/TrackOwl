@@ -478,6 +478,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                 </div>
             </td>
             <td className="pr-8 py-5 text-right relative" ref={dropRef} onClick={(e) => e.stopPropagation()}>
+                <div className="relative inline-block">
                 <button
                     onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}
                     className="w-8 h-8 flex items-center justify-center rounded-lg text-text-muted hover:text-text-main hover:bg-surface-hover hover:border hover:border-slate-200 transition-all"
@@ -485,7 +486,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                     <MoreHorizontal className="w-4 h-4" />
                 </button>
                 {showMenu && (
-                    <div className="absolute right-8 top-12 w-48 bg-surface shadow-xl z-50 py-2 rounded-xl overflow-hidden border border-border text-left">
+                    <div className="absolute right-full top-0 mr-2 w-48 bg-surface shadow-xl z-50 py-2 rounded-xl overflow-hidden border border-border text-left">
                         <button
                             onClick={() => { setShowMenu(false); onEdit(); }}
                             className="w-full px-4 py-2 text-[11px] font-bold text-text-muted hover:bg-surface-hover hover:text-primary flex items-center gap-3 transition-all"
@@ -513,6 +514,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                         </button>
                     </div>
                 )}
+                </div>
             </td>
         </tr>
     );
