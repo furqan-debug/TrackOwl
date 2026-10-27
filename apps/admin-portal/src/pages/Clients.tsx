@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 import {
     Search,
@@ -8,6 +8,7 @@ import {
     Globe,
     Trash2,
     Pencil,
+    MoreVertical,
     Activity
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -44,6 +45,43 @@ export function Clients() {
     // Modal state
     const [showModal, setShowModal] = useState(false);
     const [editClient, setEditClient] = useState<Client | null>(null);
+    /** Only one row's menu is open at a time, so one ref pair serves them all. */
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [menuDropUp, setMenuDropUp] = useState(false);
+    const menuAnchorRef = useRef<HTMLDivElement>(null);
+    const menuPanelRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!openMenuId) return;
+        const close = (e: MouseEvent) => {
+            if (!menuAnchorRef.current?.contains(e.target as Node)) setOpenMenuId(null);
+        };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, [openMenuId]);
+
+    /**
+     * Hang the menu upward on the rows near the bottom.
+     *
+     * It sits inside the table's own scroll box, and whatever an absolutely
+     * positioned child leaves below the last row counts as that box's
+     * overflow — which is how a table with nothing to scroll grows a
+     * scrollbar. Measured, so a list of one and a list of fifty both behave.
+     */
+    useLayoutEffect(() => {
+        if (!openMenuId) return;
+        const a = menuAnchorRef.current, m = menuPanelRef.current;
+        if (!a || !m) return;
+        let box: HTMLElement | null = a.parentElement;
+        while (box) {
+            const { overflowX, overflowY } = getComputedStyle(box);
+            if (/(auto|scroll)/.test(overflowX + overflowY)) break;
+            box = box.parentElement;
+        }
+        const limit = box ? box.getBoundingClientRect().bottom : window.innerHeight - 16;
+        setMenuDropUp(a.getBoundingClientRect().top + m.offsetHeight > limit);
+    }, [openMenuId]);
+
     const [deletingClient, setDeletingClient] = useState<Client | null>(null);
     const [saving, setSaving] = useState(false);
 
@@ -692,31 +730,44 @@ export function Clients() {
 
                                             {/* ACTIONS */}
                                             <td className="pr-5 sm:pr-8 py-4 sm:py-5 text-right">
-                                                <div className="flex items-center justify-end gap-0.5 shrink-0">
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => handleOpenEdit(client)}
-                                                        title="Edit client"
-                                                        aria-label="Edit client"
-                                                        className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-primary hover:border-primary/40 transition-colors inline-flex items-center justify-center"
-                                                    >
-                                                        <Pencil className="w-4 h-4" strokeWidth={2} />
-                                                    </button>
+                                                <div className="flex items-center justify-end shrink-0">
+                                                    <div className="relative inline-block" ref={openMenuId === client.id ? menuAnchorRef : undefined}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setOpenMenuId(openMenuId === client.id ? null : client.id)}
+                                                            title="Row actions"
+                                                            aria-label="Row actions"
+                                                            className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-muted hover:text-text-main hover:border-[var(--border-hover)] transition-colors inline-flex items-center justify-center"
+                                                        >
+                                                            <MoreVertical className="w-4 h-4" strokeWidth={2} />
+                                                        </button>
 
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => {
-                                                            if (!isViewer) {
-                                                                setDeletingClient(client);
-                                                            }
-                                                        }}
-                                                        disabled={isViewer}
-                                                        title="Delete client"
-                                                        aria-label="Delete client"
-                                                        className="w-9 h-9 shrink-0 rounded-lg bg-surface-hover border border-border text-text-main hover:text-rose-500 hover:border-rose-500/40 hover:bg-rose-500/10 transition-colors inline-flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" strokeWidth={2} />
-                                                    </button>
+                                                        {openMenuId === client.id && (
+                                                            <div
+                                                                ref={menuPanelRef}
+                                                                className={clsx(
+                                                                    "absolute right-full mr-2 w-36 bg-surface border border-border rounded-lg shadow-shell-md z-50 overflow-hidden text-left",
+                                                                    menuDropUp ? "bottom-0" : "top-0"
+                                                                )}
+                                                            >
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => { setOpenMenuId(null); handleOpenEdit(client); }}
+                                                                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-text-main hover:bg-surface-hover flex items-center gap-2 transition-colors"
+                                                                >
+                                                                    <Pencil className="w-4 h-4 text-text-muted" /> Edit Client
+                                                                </button>
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => { if (!isViewer) { setOpenMenuId(null); setDeletingClient(client); } }}
+                                                                    disabled={isViewer}
+                                                                    className="w-full text-left px-4 py-2.5 text-xs font-semibold text-red-500 hover:bg-red-500/10 flex items-center gap-2 transition-colors border-t border-border/50 disabled:opacity-40 disabled:pointer-events-none"
+                                                                >
+                                                                    <Trash2 className="w-4 h-4" /> Delete Client
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </td>
                                         </tr>
