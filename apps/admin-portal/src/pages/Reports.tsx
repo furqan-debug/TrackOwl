@@ -1,6 +1,4 @@
 import { useEffect, useLayoutEffect, useState, useRef, type CSSProperties } from 'react';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { supabase } from '../lib/supabase';
 import { reportService } from '../services/report.service';
 import {
@@ -540,6 +538,10 @@ export function Reports() {
     };
 
     const downloadPDF = async () => {
+        const [{ jsPDF }, { default: autoTable }] = await Promise.all([
+            import('jspdf'),
+            import('jspdf-autotable')
+        ]);
         const doc = new jsPDF('landscape');
         
         let titleX = 14;
