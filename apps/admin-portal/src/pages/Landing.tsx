@@ -797,7 +797,7 @@ export function Landing() {
                                 >
                     
                                     {/* Mockup Content (Simulated Dashboard) */}
-                                    <img src={HeroDashboard} alt="Dashboard Preview" />
+                                    <img src={HeroDashboard} alt="Dashboard Preview" loading="lazy" decoding="async" />
                                 </motion.div>
                             </motion.div>
                         </div>
@@ -904,6 +904,8 @@ export function Landing() {
                                 <motion.img
                                     src={ShowcaseLaptop}
                                     alt="Platform Showcase"
+                                    loading="lazy"
+                                    decoding="async"
                                     variants={{ rest: { scale: 1 }, lift: { scale: 1.02 } }}
                                     transition={{ type: 'spring', stiffness: 220, damping: 22 }}
                                     className="relative z-10 w-full h-auto object-contain block origin-bottom will-change-transform"
