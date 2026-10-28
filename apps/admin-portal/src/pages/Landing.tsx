@@ -40,8 +40,8 @@ import { WindowsLogo, AppleLogo } from '../components/ui/BrandLogos';
 import { twMerge } from 'tailwind-merge';
 
 import HeaderLogo from '../assets/branding/header-2.svg';
-import HeroDashboard from '../assets/branding/hero-dashboard.png';
-import ShowcaseLaptop from '../assets/branding/showcase-laptop.png';
+import HeroDashboard from '../assets/branding/hero-dashboard.webp';
+import ShowcaseLaptop from '../assets/branding/showcase-laptop.webp';
 import ShowcaseOwl from '../assets/branding/icon.png';
 import { Footer } from '../components/Footer';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
