@@ -806,9 +806,13 @@ pub fn take_mandatory_screenshot(
             );
             let _ = app.emit("screenshot-captured", {});
 
-            // Log timestamp so the rolling window accounts for this capture
+            // Log timestamp so the rolling window accounts for this capture (use local device monotonic time)
             if let Some(conn) = db_conn {
-                let _ = crate::cache::log_screenshot_time(conn, captured_ms);
+                let local_now_ms = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis() as i64;
+                let _ = crate::cache::log_screenshot_time(conn, local_now_ms);
             }
 
             let body = serde_json::json!({
@@ -938,9 +942,13 @@ pub fn start_screenshot_loop(
                             );
                             let _ = app.emit("screenshot-captured", {});
 
-                            // Persist timestamp ONLY on successful upload
+                            // Persist timestamp ONLY on successful upload (use local device monotonic time)
                             if let Some(conn) = db_conn.as_ref() {
-                                if let Err(e) = crate::cache::log_screenshot_time(conn, captured_ms) {
+                                let local_now_ms = std::time::SystemTime::now()
+                                    .duration_since(std::time::UNIX_EPOCH)
+                                    .unwrap_or_default()
+                                    .as_millis() as i64;
+                                if let Err(e) = crate::cache::log_screenshot_time(conn, local_now_ms) {
                                     eprintln!("[tracker] ⚠️ Failed to log screenshot timestamp: {}", e);
                                 }
                                 // NOTE: prune_screenshot_log removed from here — now runs once
