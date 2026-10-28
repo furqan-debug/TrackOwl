@@ -156,14 +156,15 @@ pub fn count_screenshots_since(conn: &Connection, since_ms: i64) -> rusqlite::Re
 /// Delete screenshot_log rows older than 24 hours to keep the table lean.
 pub fn prune_screenshot_log(conn: &Connection) {
     use std::time::{SystemTime, UNIX_EPOCH};
-    let cutoff = SystemTime::now()
+    let now_ms = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
-        .as_millis() as i64
-        - (24 * 60 * 60 * 1000);
+        .as_millis() as i64;
+    let cutoff = now_ms - (24 * 60 * 60 * 1000);
+    let future_cutoff = now_ms + (60 * 1000);
     let _ = conn.execute(
-        "DELETE FROM screenshot_log WHERE captured_at < ?1",
-        params![cutoff],
+        "DELETE FROM screenshot_log WHERE captured_at < ?1 OR captured_at > ?2",
+        params![cutoff, future_cutoff],
     );
 }
 
