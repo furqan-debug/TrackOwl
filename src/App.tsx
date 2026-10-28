@@ -9,7 +9,7 @@ import {
    LifeBuoy, MessageSquare, Send, ArrowLeft,
    Bell, ShieldCheck, Smartphone, Trash2
 } from 'lucide-react';
-import { trackerAPI, isWindowsOS } from './tauri-ipc';
+import { trackerAPI } from './tauri-ipc';
 import { 
   syncServerTime, 
   getTrueServerNow, 
@@ -382,7 +382,7 @@ function AppFooter({ lastSyncTime, isSyncing, onSync, isOnline }: {
       } catch {
         // Fallback if not running in Tauri window
       }
-      setVersion((import.meta.env as any).VITE_APP_VERSION || '2.0.60');
+      setVersion((import.meta.env as any).VITE_APP_VERSION || '2.0.71');
     };
     fetchVersion();
 
@@ -3273,21 +3273,13 @@ ${note}` : heading
     // Listen for update available
     const unlistenAvailable = trackerAPI.onUpdateAvailable((info: any) => {
       if (info.available && info.version) {
-        const isWin = info.platform ? info.platform === 'windows' : isWindowsOS();
         setUpdateVersion(info.version);
-        setIsForcedUpdate(isWin);
-
-        if (isWin) {
-          // Forced update ONLY on Windows: immediately lock and install
-          setUpdateInstalling(true);
-          trackerAPI.installUpdate().catch((e) => {
-            console.error('Auto update failed:', e);
-            setUpdateInstalling(false);
-          });
-        } else {
-          // macOS / other: NOT forced. User can choose to update or dismiss.
+        setIsForcedUpdate(true);
+        setUpdateInstalling(true);
+        trackerAPI.installUpdate().catch((e) => {
+          console.error('Auto update failed:', e);
           setUpdateInstalling(false);
-        }
+        });
       }
     });
 
