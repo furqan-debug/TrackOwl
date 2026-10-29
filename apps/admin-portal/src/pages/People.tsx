@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Users, Search, Filter, Download, UserPlus, Trash2,
     MoreHorizontal, Pencil, RotateCcw,
     AlertCircle, CheckCircle, MapPin, Globe2,
-    Check, ChevronLeft
+    Check, ChevronLeft, ChevronRight
 } from 'lucide-react';
 import clsx from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -321,14 +321,6 @@ export function People() {
         });
     };
 
-    function toggleSelectAll() {
-        if (selectedIds.size === filtered.length) {
-            setSelectedIds(new Set<string>());
-        } else {
-            setSelectedIds(new Set<string>(filtered.map(m => m.id)));
-        }
-    }
-
     function resetAddForm() {
         setAddEmail(''); setAddRole('User');
         setAddPayRate(''); setAddBillRate(''); setAddWeekly('40'); setAddDaily('8');
@@ -337,16 +329,90 @@ export function People() {
 
     const [roleFilter, setRoleFilter] = useState<string>('All');
     const [statusFilter, setStatusFilter] = useState<string>('All');
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [pageSize, setPageSize] = useState<number>(20);
 
-    const filtered = members.filter(m => {
-        const matchesSearch = m.full_name.toLowerCase().includes(search.toLowerCase()) ||
-            m.email.toLowerCase().includes(search.toLowerCase());
-        const isInvite = m.status === 'Pending';
-        const matchesTab = activeTab === 'Invites' ? isInvite : !isInvite;
-        const matchesRole = roleFilter === 'All' || m.role === roleFilter;
-        const matchesStatus = statusFilter === 'All' || m.status === statusFilter;
-        return matchesSearch && matchesTab && matchesRole && matchesStatus;
-    });
+    const scrollToPageTop = () => {
+        const mainEl = document.querySelector('main');
+        if (mainEl) {
+            mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handlePageChange = (newPage: number) => {
+        if (newPage === currentPage) return;
+        setCurrentPage(newPage);
+        scrollToPageTop();
+    };
+
+    const handlePageSizeChange = (newSize: number) => {
+        if (newSize === pageSize) return;
+        setPageSize(newSize);
+        setCurrentPage(1);
+        scrollToPageTop();
+    };
+
+    const filtered = useMemo(() => {
+        return members.filter(m => {
+            const matchesSearch = m.full_name.toLowerCase().includes(search.toLowerCase()) ||
+                m.email.toLowerCase().includes(search.toLowerCase());
+            const isInvite = m.status === 'Pending';
+            const matchesTab = activeTab === 'Invites' ? isInvite : !isInvite;
+            const matchesRole = roleFilter === 'All' || m.role === roleFilter;
+            const matchesStatus = statusFilter === 'All' || m.status === statusFilter;
+            return matchesSearch && matchesTab && matchesRole && matchesStatus;
+        });
+    }, [members, search, activeTab, roleFilter, statusFilter]);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [search, activeTab, roleFilter, statusFilter, pageSize]);
+
+    useEffect(() => {
+        if (currentPage > totalPages) {
+            setCurrentPage(totalPages);
+        }
+    }, [currentPage, totalPages]);
+
+    const paginatedMembers = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return filtered.slice(start, start + pageSize);
+    }, [filtered, currentPage, pageSize]);
+
+    const pageNumbers = useMemo(() => {
+        if (totalPages <= 5) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1);
+        }
+        const pages: (number | string)[] = [1];
+        if (currentPage > 3) pages.push('...');
+        const start = Math.max(2, currentPage - 1);
+        const end = Math.min(totalPages - 1, currentPage + 1);
+        for (let i = start; i <= end; i++) pages.push(i);
+        if (currentPage < totalPages - 2) pages.push('...');
+        pages.push(totalPages);
+        return pages;
+    }, [totalPages, currentPage]);
+
+    const isAllOnPageSelected = paginatedMembers.length > 0 && paginatedMembers.every(m => selectedIds.has(m.id));
+
+    function toggleSelectAll() {
+        if (isAllOnPageSelected) {
+            setSelectedIds(prev => {
+                const next = new Set(prev);
+                paginatedMembers.forEach(m => next.delete(m.id));
+                return next;
+            });
+        } else {
+            setSelectedIds(prev => {
+                const next = new Set(prev);
+                paginatedMembers.forEach(m => next.add(m.id));
+                return next;
+            });
+        }
+    }
 
     const membersCount = members.filter(m => m.status !== 'Pending').length;
     const invitesCount = members.filter(m => m.status === 'Pending').length;
@@ -514,75 +580,154 @@ export function People() {
             )}
 
 
-            <Card noPadding className="border border-border rounded-[24px] overflow-hidden shadow-shell-sm">
-                <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full text-left border-collapse min-w-[1000px]">
-                        <thead>
-                            <tr className="bg-surface-hover/50">
-                                <th className="pl-8 py-4 w-12 border-b border-border">
-                                    <input
-                                        type="checkbox"
-                                        checked={selectedIds.size === filtered.length && filtered.length > 0}
-                                        onChange={toggleSelectAll}
-                                        className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer transition-all"
-                                    />
-                                </th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Member</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Role</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Engagement</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Rates</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Limits</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Geography</th>
-                                <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Status</th>
-                                <th className="pr-8 py-4 text-right text-[10px] font-bold text-text-muted border-b border-border">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={10} className="py-24">
-                                        <LoadingState />
-                                    </td>
+            <Card noPadding className="border border-border rounded-[24px] overflow-hidden shadow-shell-sm min-h-[500px]">
+                    <div className="overflow-x-auto custom-scrollbar">
+                        <table className="w-full text-left border-collapse min-w-[1000px]">
+                            <thead>
+                                <tr className="bg-surface-hover/50">
+                                    <th className="pl-8 py-4 w-12 border-b border-border">
+                                        <input
+                                            type="checkbox"
+                                            checked={isAllOnPageSelected}
+                                            onChange={toggleSelectAll}
+                                            className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer transition-all"
+                                        />
+                                    </th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Member</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Role</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Engagement</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Rates</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Limits</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Geography</th>
+                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Status</th>
+                                    <th className="pr-8 py-4 text-right text-[10px] font-bold text-text-muted border-b border-border">Actions</th>
                                 </tr>
-                            ) : filtered.length === 0 ? (
-                                <tr>
-                                    <td colSpan={10} className="py-24 text-center">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <Users className="w-10 h-10 text-text-muted" />
-                                            <span className="text-[11px] font-bold text-text-muted ">No matching results</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ) : (
-                                filtered.map((m: any) => (
-                                    <MemberRowItem
-                                        key={m.id}
-                                        m={m}
-                                        isSelected={selectedIds.has(m.id)}
-                                        onToggle={() => toggleSelection(m.id)}
-                                        onEdit={(tab?: string) => navigate(`/dashboard/people/${m.id}/edit${tab ? `?tab=${tab}` : ''}`)}
-                                        onResendInvite={() => handleResendInvite(m.email)}
-                                        onDelete={() => handleDeleteMember(m.id)}
-                                        onReactivate={() => handleReactivate(m.id)}
-                                        isViewer={isViewer}
-                                        currentUserRole={profile?.role}
-                                    />
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </Card>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={10} className="py-24">
+                                            <LoadingState />
+                                        </td>
+                                    </tr>
+                                ) : filtered.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={10} className="py-24 text-center">
+                                            <div className="flex flex-col items-center gap-3">
+                                                <Users className="w-10 h-10 text-text-muted" />
+                                                <span className="text-[11px] font-bold text-text-muted ">No matching results</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    paginatedMembers.map((m: any) => (
+                                        <MemberRowItem
+                                            key={m.id}
+                                            m={m}
+                                            isSelected={selectedIds.has(m.id)}
+                                            onToggle={() => toggleSelection(m.id)}
+                                            onEdit={(tab?: string) => navigate(`/dashboard/people/${m.id}/edit${tab ? `?tab=${tab}` : ''}`)}
+                                            onResendInvite={() => handleResendInvite(m.email)}
+                                            onDelete={() => handleDeleteMember(m.id)}
+                                            onReactivate={() => handleReactivate(m.id)}
+                                            isViewer={isViewer}
+                                            currentUserRole={profile?.role}
+                                        />
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </Card>
 
-            <div className="mt-8 flex items-center justify-between px-4 pb-20">
-                <div className="text-[10px] font-bold text-text-muted ">
-                    Showing {filtered.length} of {membersCount + invitesCount} results
+            {filtered.length > 0 && (
+                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-2 pb-16">
+                    {/* Left: Summary & Segmented Page Size Control */}
+                    <div className="flex flex-wrap items-center gap-4 text-[12px] text-text-muted">
+                        <span>
+                            Showing{' '}
+                            <strong className="text-text-main font-semibold tabular-nums">
+                                {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filtered.length)}
+                            </strong>{' '}
+                            of{' '}
+                            <strong className="text-text-main font-semibold tabular-nums">{filtered.length}</strong>{' '}
+                            {activeTab.toLowerCase()}
+                        </span>
+
+                        {filtered.length > 10 && (
+                            <div className="flex items-center gap-2 pl-3 border-l border-border/80">
+                                <span className="text-[11px] font-medium text-text-muted">Rows:</span>
+                                <div className="inline-flex items-center bg-surface border border-border rounded-xl p-0.5 shadow-shell-sm">
+                                    {[10, 20, 50].map(sz => (
+                                        <button
+                                            key={sz}
+                                            type="button"
+                                            onClick={() => handlePageSizeChange(sz)}
+                                            className={clsx(
+                                                "px-2.5 py-1 rounded-lg text-[11px] font-bold tabular-nums transition-all cursor-pointer",
+                                                pageSize === sz
+                                                    ? "bg-primary text-white shadow-shell-sm"
+                                                    : "text-text-muted hover:text-text-main hover:bg-surface-hover"
+                                            )}
+                                        >
+                                            {sz}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right: Prev, Page Numbers, Next */}
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            type="button"
+                            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                            disabled={currentPage === 1}
+                            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl border border-border bg-surface text-[12px] font-bold text-text-muted hover:bg-surface-hover hover:text-text-main hover:border-border/80 disabled:opacity-30 disabled:pointer-events-none transition-all shadow-shell-sm cursor-pointer"
+                        >
+                            <ChevronLeft className="w-3.5 h-3.5" />
+                            <span>Prev</span>
+                        </button>
+
+                        {totalPages > 1 && (
+                            <div className="flex items-center gap-1">
+                                {pageNumbers.map((pg, idx) =>
+                                    pg === '...' ? (
+                                        <span key={`ellipsis-${idx}`} className="w-7 text-center text-xs font-bold text-text-muted select-none">
+                                            …
+                                        </span>
+                                    ) : (
+                                        <button
+                                            key={pg}
+                                            type="button"
+                                            onClick={() => handlePageChange(pg as number)}
+                                            className={clsx(
+                                                "w-9 h-9 rounded-xl text-[12px] font-bold tabular-nums transition-all flex items-center justify-center cursor-pointer shadow-shell-sm",
+                                                currentPage === pg
+                                                    ? "bg-primary text-white font-black shadow-md"
+                                                    : "bg-surface border border-border text-text-muted hover:bg-surface-hover hover:text-text-main hover:border-border/80"
+                                            )}
+                                        >
+                                            {pg}
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                            disabled={currentPage === totalPages}
+                            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl border border-border bg-surface text-[12px] font-bold text-text-muted hover:bg-surface-hover hover:text-text-main hover:border-border/80 disabled:opacity-30 disabled:pointer-events-none transition-all shadow-shell-sm cursor-pointer"
+                        >
+                            <span>Next</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button disabled className="px-4 h-9 border border-border rounded-lg text-[10px] font-bold text-text-muted disabled:opacity-30">Prev</button>
-                    <button disabled className="px-4 h-9 border border-border rounded-lg text-[10px] font-bold text-text-muted disabled:opacity-30">Next</button>
-                </div>
-            </div>
+            )}
 
             {showAddModal && <InviteModal onClose={() => setShowAddModal(false)} onInvite={handleAddMember} form={{ addEmail, setAddEmail, addRole, setAddRole, addPayRate, setAddPayRate, addBillRate, setAddBillRate, addWeekly, addDaily, addWorkingDays, onAddWeeklyChange, onAddDailyChange, onAddWorkingDaysChange, adding, addError }} isViewer={isViewer} currentUserRole={profile?.role} />}
             {inviteSentTo && <InviteSentPopup email={inviteSentTo} onClose={() => setInviteSentTo(null)} />}

@@ -717,7 +717,7 @@ export function Timesheets() {
     const activeFiltersCount = (filterProjectId !== 'all' ? 1 : 0) + (!isRep && selectedMember !== 'all' ? 1 : 0) + (activeTimezone !== 'Org Local' ? 1 : 0);
 
     return (
-        <div className="w-full space-y-6 md:space-y-8 animate-in fade-in duration-300">
+        <div className="w-full p-4 md:px-10 md:py-12 space-y-6 md:space-y-8 animate-in fade-in duration-300">
             {/* Header & Controls */}
             <div className="flex flex-col min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-between gap-6 min-w-0">
                 {/* Left side: Heading & View switcher */}
