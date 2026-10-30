@@ -10,20 +10,77 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
     hasError: boolean;
     error: Error | null;
+    recovering: boolean;
+}
+
+// Errors that mean "the code this tab is holding is stale", not "the code is
+// wrong". A deploy replaces the hashed chunk files, so a tab left open asks
+// for a chunk that no longer exists. A dev-server restart or a branch switch
+// leaves the module graph half-swapped, which surfaces as React's internal
+// dispatcher being null — hence the `useContext` of null. In every one of
+// these cases the page is one reload away from being correct.
+const RECOVERABLE = [
+    /failed to fetch dynamically imported module/i,
+    /error loading dynamically imported module/i,
+    /importing a module script failed/i,
+    /chunkloaderror/i,
+    /loading chunk \S+ failed/i,
+    /loading css chunk/i,
+    // React's dispatcher is null, so any hook call blows up on the same shape.
+    /cannot read propert(y|ies) of null \(reading '(use[A-Z]\w*|__\w+)'\)/i,
+    /null is not an object \(evaluating '\w*\.use[A-Z]/i,
+    // A chunk URL that now resolves to index.html instead of JavaScript.
+    /unexpected token '<'/i,
+];
+
+// One automatic reload, then stop. If the page comes straight back with
+// another error the reload plainly did not help, so it is a real bug and the
+// user gets the card instead of an endless refresh loop.
+const RELOAD_MARK = 'errorBoundary:autoReloadedAt';
+const RELOAD_COOLDOWN_MS = 15_000;
+
+function isRecoverable(error: Error): boolean {
+    const text = `${error.name}: ${error.message}`;
+    return RECOVERABLE.some((pattern) => pattern.test(text));
+}
+
+function reloadedRecently(): boolean {
+    try {
+        const at = Number(sessionStorage.getItem(RELOAD_MARK) ?? 0);
+        return at > 0 && Date.now() - at < RELOAD_COOLDOWN_MS;
+    } catch {
+        // Private mode or blocked storage. Without a marker we cannot tell a
+        // first failure from a loop, so we never auto-reload.
+        return true;
+    }
 }
 
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     public state: ErrorBoundaryState = {
         hasError: false,
         error: null,
+        recovering: false,
     };
 
-    public static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    public static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
         return { hasError: true, error };
     }
 
     public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
         console.error('Unhandled application error:', error, errorInfo);
+
+        if (!isRecoverable(error) || reloadedRecently()) return;
+
+        try {
+            sessionStorage.setItem(RELOAD_MARK, String(Date.now()));
+        } catch {
+            return;
+        }
+
+        // Reload rather than route away, so the user lands back on the same
+        // page with the data refetched from scratch.
+        this.setState({ recovering: true });
+        window.location.reload();
     }
 
     private handleReload = () => {
@@ -31,10 +88,21 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     };
 
     private handleReset = () => {
-        this.setState({ hasError: false, error: null });
+        this.setState({ hasError: false, error: null, recovering: false });
     };
 
     public render() {
+        if (this.state.recovering) {
+            return (
+                <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] flex items-center justify-center p-6">
+                    <div className="flex items-center gap-3 text-sm text-[var(--text-muted)]">
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        Refreshing this page…
+                    </div>
+                </div>
+            );
+        }
+
         if (this.state.hasError) {
             if (this.props.fallback) {
                 return this.props.fallback;
