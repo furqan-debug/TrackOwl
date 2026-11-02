@@ -670,7 +670,7 @@ export function Landing() {
                         <a href="#faq" className="text-[15px] 2xl:text-base font-semibold text-slate-200 hover:text-white hover:scale-102 tracking-wide transition-all">FAQs</a>
                     </div>
 
-                    <div className="flex items-center gap-6 sm:gap-7">
+                    <div className="flex items-center gap-3 sm:gap-7">
                         <a
                             href="#download"
                             className="hidden lg:flex items-center gap-2 text-[15px] font-semibold text-slate-200 hover:text-white transition-colors"
@@ -679,7 +679,7 @@ export function Landing() {
                         </a>
                         <button
                             onClick={() => navigate('/login')}
-                            className="text-[15px] font-semibold text-slate-200 hover:text-white cursor-pointer transition-colors"
+                            className="shrink-0 whitespace-nowrap rounded-full border border-white/20 px-4 py-2 text-[14px] sm:text-[15px] font-semibold text-slate-200 hover:text-white hover:border-white/40 cursor-pointer transition-colors sm:border-0 sm:px-0 sm:py-0"
                         >
                             Log in
                         </button>
@@ -816,7 +816,7 @@ export function Landing() {
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: metricsInView ? 1 : 0 }}
                                     transition={{ duration: 0.5, delay: appear, ease: 'easeOut' }}
-                                    className="flex items-center gap-3.5 w-full md:w-auto justify-center md:justify-start py-3.5 md:py-0 border-b md:border-b-0 md:border-r border-slate-100 last:border-0 px-4 xl:px-6"
+                                    className="flex items-center gap-3.5 w-full md:w-auto justify-start py-3.5 md:py-0 border-b md:border-b-0 md:border-r border-slate-100 last:border-0 px-4 xl:px-6"
                                 >
                                     <div className={`p-2.5 rounded-xl bg-slate-50 ${m.color}`}>
                                         {m.countTo !== undefined
