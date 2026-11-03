@@ -19,6 +19,13 @@ Understanding how to use the **Start/Stop timer** feature is essential for maxim
 1. Start and stop the timer in the TrackOwl desktop app.
 2. Tracked time appears under **Timesheets** in the dashboard.
 
+
+![Pick the project you are working on in the desktop app.](/support/desktop-pick-project.png)
+*Pick the project you are working on in the desktop app.*
+
+![While a session runs you get the active time, the current ten-minute block, and Stop Sessi](/support/desktop-stop-session.png)
+*While a session runs you get the active time, the current ten-minute block, and **Stop Session**.*
+
 ---
 
 ## Step-by-Step Instructions

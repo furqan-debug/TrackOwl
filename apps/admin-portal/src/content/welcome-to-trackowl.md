@@ -29,3 +29,6 @@ Whoever creates the workspace is its **Owner**. **Owner** and **Admin** accounts
 
 > [!TIP]
 > New here? Read the Quick Start Guide next. It takes you from creating the workspace to the first tracked hour.
+
+![The sidebar: Dashboard, Timesheets, Activity, Projects, Calendar, Reports, People and Sett](/support/dashboard-sidebar.png)
+*The sidebar: Dashboard, Timesheets, Activity, Projects, Calendar, Reports, People and Settings.*

@@ -20,6 +20,13 @@ Understanding how to use the **Create a task** feature is essential for maximizi
 2. In the left sidebar, open **Projects**.
 3. Select **To-Dos** (`/dashboard/projects/todos`).
 
+
+![Projects to To-Dos, then Add Task.](/support/todos-add-task-button.png)
+***Projects → To-Dos**, then **Add Task**.*
+
+![The new to-do: a title, the project it belongs to, a deadline, assignees and any detail.](/support/todos-new-objective.png)
+*The new to-do: a title, the project it belongs to, a deadline, assignees and any detail.*
+
 ---
 
 ## Step-by-Step Instructions

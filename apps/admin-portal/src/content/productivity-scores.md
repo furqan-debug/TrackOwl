@@ -22,6 +22,10 @@ Productivity scores provide an automated, high-level metric (from 0 to 100%) ind
 2. In the left sidebar, open **Activity**.
 3. Select **Activity Blocks** (`/dashboard/activity/blocks`).
 
+
+![The same score totalled across a date range on Reports, beside the hours worked.](/support/activity-score-reports.png)
+*The same score totalled across a date range on **Reports**, beside the hours worked.*
+
 ---
 
 ## Step-by-Step Instructions

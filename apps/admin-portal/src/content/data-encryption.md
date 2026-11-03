@@ -21,6 +21,13 @@ Everything sent between the desktop app, your browser and TrackOwl travels over 
 ## What TrackOwl does not record
 Keystrokes are not recorded. The desktop app counts key presses and mouse clicks to work out an activity score; it does not capture what was typed.
 
+
+![Settings to Security & 2FA covers your own account: two-factor authentication and your pas](/support/security-2fa.png)
+***Settings → Security & 2FA** covers your own account: two-factor authentication and your password.*
+
+![Settings to Org Settings to Telemetry decides what is recorded at all. Owner and Admin onl](/support/org-settings-telemetry.png)
+***Settings → Org Settings → Telemetry** decides what is recorded at all. **Owner** and **Admin** only.*
+
 ## Frequently Asked Questions
 
 **Q: Can I delete data that has been collected?**

@@ -17,6 +17,10 @@ Archiving takes a project out of the active list while keeping everything tracke
 2. In the left sidebar, open **Projects**.
 3. Select **Projects** (`/dashboard/projects`).
 
+
+![The Active / Archived switch on Projects.](/support/projects-active-archived.png)
+*The **Active / Archived** switch on **Projects**.*
+
 ---
 
 ## Step-by-Step Instructions
