@@ -19,6 +19,10 @@ The daily totals view breaks tracked time down day by day, rather than as one fi
 2. In the left sidebar, open **Reports**.
 3. The daily totals view sits at `/dashboard/reports/daily`.
 
+
+![The date range on Reports, with the usual shortcuts. Team and member filters sit beside it](/support/reports-date-range.png)
+*The date range on **Reports**, with the usual shortcuts. Team and member filters sit beside it.*
+
 ---
 
 ## Step-by-Step Instructions

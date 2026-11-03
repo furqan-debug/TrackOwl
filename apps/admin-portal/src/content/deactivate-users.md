@@ -20,6 +20,10 @@ Deactivating a user instantly revokes their login access and stops all tracking,
 2. In the left sidebar, open **People**.
 3. Select **Members** (`/dashboard/people`).
 
+
+![The Status filter on Team Members, open on Active and Inactive](/support/members-status-filter.png)
+*The **Status** filter on **People → Members**. Switch it to **Inactive** to find people who have been deactivated. Member names are blurred here; you will see your own team.*
+
 ---
 
 ## Step-by-Step Instructions

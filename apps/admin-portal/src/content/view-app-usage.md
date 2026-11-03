@@ -22,6 +22,10 @@ Understanding how to use the **View app usage** feature is essential for maximiz
 2. In the left sidebar, open **Activity**.
 3. Select **Apps & URLs** (`/dashboard/activity/apps`).
 
+
+![The App Usage panel on Activity to Screenshots: the tools used most that day, with a sampl](/support/screenshots-app-usage-panel.png)
+*The **App Usage** panel on **Activity → Screenshots**: the tools used most that day, with a sample count and share each.*
+
 ---
 
 ## Step-by-Step Instructions

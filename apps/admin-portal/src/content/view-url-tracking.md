@@ -21,6 +21,10 @@ Understanding how to use the **View URL tracking** feature is essential for maxi
 1. Open the TrackOwl dashboard and sign in.
 2. URL tracking lives at `/dashboard/url-tracking`.
 
+
+![Activity to Apps & URLs. The distribution lists sites alongside apps — domains only, never](/support/apps-and-urls-distribution.png)
+***Activity → Apps & URLs**. The distribution lists sites alongside apps — domains only, never full addresses.*
+
 ---
 
 ## Step-by-Step Instructions

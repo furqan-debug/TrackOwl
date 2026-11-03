@@ -22,6 +22,11 @@ The desktop app records time, activity and screenshots. You need it on every mac
 | Mac with Apple Silicon (M1/M2/M3) | Apple Silicon build |
 | Mac with an Intel processor | Intel build |
 
+
+<video src="/support/download-and-install.mp4" controls controlsList="nodownload noplaybackrate" disablePictureInPicture preload="metadata" playsinline width="100%"></video>
+
+*Downloading the installer and signing in, start to finish.*
+
 ---
 
 ## Step-by-Step Instructions

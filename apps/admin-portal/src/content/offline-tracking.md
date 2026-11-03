@@ -34,6 +34,10 @@ What keeps being recorded while offline:
 > - Do not uninstall or reset the app while work is still waiting to sync; that is where the record lives.
 > - Blocks captured offline are marked as such, so a gap in a report usually means a sync that has not finished.
 
+
+![The desktop app keeps counting while offline. The footer reads Offline — Waiting for conne](/support/desktop-app-offline.png)
+*The desktop app keeps counting while offline. The footer reads **Offline — Waiting for connection** until it can sync.*
+
 ## Frequently Asked Questions
 
 **Q: How long can it stay offline?**

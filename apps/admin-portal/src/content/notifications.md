@@ -20,6 +20,10 @@ Understanding how to use the **Notifications** feature is essential for maximizi
 2. In the left sidebar, open **Settings**.
 3. Select **Org Settings** (`/dashboard/settings`), then the **Notifications** tab: Inactivity Alerts and Cap Threshold Alerts.
 
+
+![Notifications under Org Settings: inactivity alerts and cap threshold alerts.](/support/org-settings-notifications.png)
+***Notifications** under Org Settings: inactivity alerts and cap threshold alerts.*
+
 ---
 
 ## Step-by-Step Instructions

@@ -20,6 +20,10 @@ Understanding how to use the **Tracking settings** feature is essential for maxi
 2. In the left sidebar, open **Settings**, then **Org Settings**.
 3. Open the **Telemetry** tab: App Usage Tracking, URL Tracking, Idle Detection, Auto-Terminate Session and its grace period.
 
+
+![The Telemetry tab: app usage, URL tracking, idle detection and auto-terminate, with its gr](/support/org-settings-tracking.png)
+*The **Telemetry** tab: app usage, URL tracking, idle detection and auto-terminate, with its grace period.*
+
 ---
 
 ## Step-by-Step Instructions

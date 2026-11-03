@@ -20,6 +20,10 @@ Understanding how to use the **View current plan** feature is essential for maxi
 2. In the left sidebar, open **Settings**.
 3. Select **Billing & Plans** (`/dashboard/settings/billing`).
 
+
+![Your plan, seats used, renewal date and billing cycle, at the top of Billing & Plans.](/support/billing-current-plan.png)
+*Your plan, seats used, renewal date and billing cycle, at the top of **Billing & Plans**.*
+
 ---
 
 ## Step-by-Step Instructions

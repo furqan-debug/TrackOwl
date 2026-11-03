@@ -19,6 +19,14 @@ Understanding how to use the **Manual time entry** feature is essential for maxi
 1. Open the TrackOwl dashboard and sign in.
 2. In the left sidebar, open **Timesheets** (`/dashboard/timesheets`).
 
+
+![Add time on the Timesheets page](/support/timesheets-add-time.png)
+***Timesheets**, then **Add time**. Member names are blurred here; you will see your own team.*
+
+
+![Adding time by hand: the member, the project, the date and the start and end times.](/support/manual-time-entry-dialog.png)
+*Adding time by hand: the member, the project, the date and the start and end times.*
+
 ---
 
 ## Step-by-Step Instructions
