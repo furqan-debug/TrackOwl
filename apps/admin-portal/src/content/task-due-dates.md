@@ -20,6 +20,13 @@ The due date is how you say when a to-do is expected to be finished. It shows on
 2. In the left sidebar, open **Projects**.
 3. Select **To-Dos** (`/dashboard/projects/todos`).
 
+
+![Projects to To-Dos, then Add Task.](/support/todos-add-task-for-due-date.png)
+***Projects → To-Dos**, then **Add Task**.*
+
+![The Deadline Date picker on a new to-do](/support/todos-deadline-date.png)
+*Set **Deadline Date** on the to-do. The member list is blurred here; it shows your own team.*
+
 ---
 
 ## Step-by-Step Instructions

@@ -20,6 +20,10 @@ Understanding how to use the **Organization settings** feature is essential for 
 2. In the left sidebar, open **Settings**.
 3. Select **Org Settings** (`/dashboard/settings`).
 
+
+![Settings to Org Settings, with its five tabs down the left and the organisation timezone o](/support/org-settings-timezone.png)
+***Settings → Org Settings**, with its five tabs down the left and the organisation timezone open.*
+
 ---
 
 ## Step-by-Step Instructions

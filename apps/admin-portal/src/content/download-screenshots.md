@@ -22,6 +22,10 @@ Every capture on the Screenshots page can be selected. Once you have a selection
 2. In the left sidebar, open **Activity**.
 3. Select **Screenshots** (`/dashboard/activity`).
 
+
+![The day’s captures, with Download above them. Select the ones you want, then download them](/support/captures-download.png)
+*The day’s captures, with **Download** above them. Select the ones you want, then download them together as a ZIP.*
+
 ---
 
 ## Step-by-Step Instructions

@@ -20,6 +20,10 @@ Understanding how to use the **View invoices** feature is essential for maximizi
 2. In the left sidebar, open **Settings**.
 3. Select **Billing & Plans** (`/dashboard/settings/billing`).
 
+
+![Billing History at the foot of the page. Each invoice can be downloaded.](/support/billing-history.png)
+***Billing History** at the foot of the page. Each invoice can be downloaded.*
+
 ---
 
 ## Step-by-Step Instructions

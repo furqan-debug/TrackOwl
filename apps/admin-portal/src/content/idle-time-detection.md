@@ -19,6 +19,10 @@ Understanding how to use the **Idle time detection** feature is essential for ma
 1. Idle detection runs in the desktop app while the timer is on.
 2. **Idle Detection** sits under **Settings → Org Settings → Telemetry**, alongside Auto-Terminate Session.
 
+
+![Idle Detection under Telemetry: the seconds of inactivity before time is flagged as idle.](/support/org-settings-idle-detection.png)
+***Idle Detection** under **Telemetry**: the seconds of inactivity before time is flagged as idle.*
+
 ---
 
 ## Step-by-Step Instructions

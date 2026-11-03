@@ -34,6 +34,13 @@ TrackOwl has two halves, and knowing which half does what saves a lot of hunting
 > - Leave the desktop app running while you work; it is the only thing that records.
 > - If a page is missing from your sidebar, it is almost always your role rather than a fault.
 
+
+![The desktop app: today’s total, the week so far, and the projects you can track against.](/support/desktop-app-window.png)
+*The desktop app: today’s total, the week so far, and the projects you can track against.*
+
+![The dashboard in your browser, where everything else lives.](/support/dashboard-team-overview.png)
+*The dashboard in your browser, where everything else lives.*
+
 ## Frequently Asked Questions
 
 **Q: Can I change settings from the desktop app?**

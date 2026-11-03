@@ -20,6 +20,13 @@ Understanding how to use the **Assign tasks** feature is essential for maximizin
 2. In the left sidebar, open **Projects**.
 3. Select **To-Dos** (`/dashboard/projects/todos`).
 
+
+![Projects to To-Dos, then Add Task.](/support/todos-add-task.png)
+***Projects → To-Dos**, then **Add Task**.*
+
+![Search the member list and tick everyone the to-do belongs to, or use Select all.](/support/todos-assignees.png)
+*Search the member list and tick everyone the to-do belongs to, or use **Select all**.*
+
 ---
 
 ## Step-by-Step Instructions

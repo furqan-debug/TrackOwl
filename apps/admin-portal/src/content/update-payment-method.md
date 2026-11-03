@@ -20,6 +20,10 @@ Understanding how to use the **Update payment method** feature is essential for 
 2. In the left sidebar, open **Settings**.
 3. Select **Billing & Plans** (`/dashboard/settings/billing`).
 
+
+![The card on file, and Update payment method, which opens the payment provider’s own portal](/support/billing-payment-method.png)
+*The card on file, and **Update payment method**, which opens the payment provider’s own portal.*
+
 ---
 
 ## Step-by-Step Instructions

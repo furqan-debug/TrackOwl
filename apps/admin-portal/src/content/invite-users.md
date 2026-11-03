@@ -20,6 +20,13 @@ Understanding how to use the **Invite users** feature is essential for maximizin
 2. In the left sidebar, open **People**.
 3. Select **Members** (`/dashboard/people`).
 
+
+![Invite Member on the Team Members page](/support/members-invite-button.png)
+***People → Members**, then **Invite Member**. Member names are blurred here; you will see your own team.*
+
+![The invite: an email address, the role they should hold, and their rates and limits.](/support/invite-member-dialog.png)
+*The invite: an email address, the role they should hold, and their rates and limits.*
+
 ---
 
 ## Step-by-Step Instructions

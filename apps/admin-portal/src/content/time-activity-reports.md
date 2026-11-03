@@ -21,6 +21,10 @@ Understanding how to use the **Time & Activity reports** feature is essential fo
 1. Open the TrackOwl dashboard and sign in.
 2. In the left sidebar, open **Reports** (`/dashboard/reports`).
 
+
+![Hours worked and the activity score on Reports, with sessions, captures and billable total](/support/reports-time-and-activity.png)
+*Hours worked and the activity score on **Reports**, with sessions, captures and billable totals beside them.*
+
 ---
 
 ## Step-by-Step Instructions

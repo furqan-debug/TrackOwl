@@ -20,6 +20,10 @@ Understanding how to use the **Create a project** feature is essential for maxim
 2. In the left sidebar, open **Projects**.
 3. Select **Projects** (`/dashboard/projects`).
 
+
+![Projects to Projects, then New Project.](/support/projects-new-project.png)
+***Projects → Projects**, then **New Project**.*
+
 ---
 
 ## Step-by-Step Instructions
