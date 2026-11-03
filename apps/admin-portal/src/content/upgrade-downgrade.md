@@ -19,6 +19,13 @@ Understanding how to use the **Upgrade/Downgrade** feature is essential for maxi
 1. Open the TrackOwl dashboard and sign in.
 2. Open **Settings → Billing & Plans**, then **Change plan** (`/dashboard/settings/billing/change-plan`).
 
+
+![Change plan on Settings to Billing & Plans.](/support/billing-change-plan.png)
+***Change plan** on **Settings → Billing & Plans**.*
+
+![Basic or Premium, monthly or yearly. The plan you are on is marked Current.](/support/change-plan-dialog.png)
+*Basic or Premium, monthly or yearly. The plan you are on is marked **Current**.*
+
 ---
 
 ## Step-by-Step Instructions

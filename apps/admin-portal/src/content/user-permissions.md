@@ -20,6 +20,13 @@ Understanding how to use the **User permissions** feature is essential for maxim
 2. In the left sidebar, open **People**.
 3. Select **Members** (`/dashboard/people`).
 
+
+![A member row on Team Members, with its actions menu](/support/members-row-actions.png)
+*Find the person on **People → Members** and open their row. Member names are blurred here; you will see your own team.*
+
+![The Role dropdown on a member, offering User, Viewer and Manager](/support/member-role-dropdown.png)
+*The **Role** field on the member, with the roles you can assign.*
+
 ---
 
 ## Step-by-Step Instructions

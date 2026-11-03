@@ -439,6 +439,48 @@
 .article-content ul, .article-content ol { margin-bottom: 1.25rem; padding-left: 1.5rem; }
 .article-content li { margin-bottom: 0.5rem; }
 
+/* Screenshots inside an article, with the italic line under one acting as its
+   caption. */
+.article-content video {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 1.5rem 0 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 14px 30px -24px rgba(24, 49, 94, 0.8);
+  background: #000;
+}
+
+.article-content video + em,
+.article-content p > video + em {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted, #64748b);
+  font-style: normal;
+  margin-bottom: 2rem;
+}
+
+.article-content img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 1.5rem 0 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 14px 30px -24px rgba(24, 49, 94, 0.8);
+}
+
+.article-content p > img + em,
+.article-content img + em,
+.article-content p:has(> img) + p > em:only-child {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted, #64748b);
+  font-style: normal;
+  margin-bottom: 2rem;
+}
+
 .article-content table {
   width: 100%;
   border-collapse: collapse;

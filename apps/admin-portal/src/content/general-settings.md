@@ -20,6 +20,10 @@ Understanding how to use the **General settings** feature is essential for maxim
 2. In the left sidebar, open **Settings**.
 3. Select **Org Settings** (`/dashboard/settings`). The **Governance** tab holds the organisation timezone, which sets where your days start and end.
 
+
+![Governance holds the organisation timezone, which decides where your days start and end.](/support/org-settings-governance.png)
+***Governance** holds the organisation timezone, which decides where your days start and end.*
+
 ---
 
 ## Step-by-Step Instructions

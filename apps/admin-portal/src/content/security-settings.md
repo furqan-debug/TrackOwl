@@ -20,6 +20,10 @@ Understanding how to use the **Security settings** feature is essential for maxi
 2. In the left sidebar, open **Settings**.
 3. Select **Security & 2FA** (`/dashboard/settings/security`).
 
+
+![Settings to Security & 2FA: two-factor authentication and a password change, for your own ](/support/security-settings-page.png)
+***Settings → Security & 2FA**: two-factor authentication and a password change, for your own account.*
+
 ---
 
 ## Step-by-Step Instructions

@@ -19,6 +19,10 @@ Clicking a capture opens it full size over the page. The viewer is for reading a
 2. In the left sidebar, open **Activity**, then **Screenshots**.
 3. Click any capture in the grid.
 
+
+![Clicking a capture in the grid on Activity then Screenshots](/support/captures-open-a-capture.png)
+*Click any capture in the grid to open it full size.*
+
 ---
 
 ## What the viewer shows

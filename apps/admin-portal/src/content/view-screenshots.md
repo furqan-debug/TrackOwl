@@ -19,6 +19,10 @@ Screenshots are captures taken by the desktop app during a tracked session. The 
 2. In the left sidebar, open **Activity**.
 3. Select **Screenshots** (`/dashboard/activity`).
 
+
+![The day’s captures on Activity then Screenshots](/support/captures-grid.png)
+*A day’s captures on **Activity → Screenshots**, each stamped with the time it was taken.*
+
 ---
 
 ## What is on the page

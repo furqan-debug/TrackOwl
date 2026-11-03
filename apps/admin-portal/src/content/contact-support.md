@@ -15,6 +15,13 @@ For account issues, billing questions, technical problems, or any other inquirie
 
 You can also use the contact form at the bottom of the Help Center. Average response time is under 2 hours on business days.
 
+
+![Contact in the footer of any TrackOwl page](/support/footer-contact-link.png)
+***Contact** sits under Company in the footer of every page.*
+
+![The contact form that opens](/support/contact-form.png)
+*The form that opens: pick a request type, add your details and send it.*
+
 ## Frequently Asked Questions
 
 ### Why is the desktop app asking for Screen Recording permission?

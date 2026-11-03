@@ -22,6 +22,10 @@ Understanding how to use the **Activity levels (Keyboard/Mouse)** feature is ess
 2. In the left sidebar, open **Activity**.
 3. Select **Activity Blocks** (`/dashboard/activity/blocks`).
 
+
+![Clicks and Keys for the selected day, on Activity to Screenshots. These are counts of mous](/support/activity-levels-clicks-keys.png)
+*Clicks and Keys for the selected day, on **Activity → Screenshots**. These are counts of mouse and keyboard events, never what was typed.*
+
 ---
 
 ## Step-by-Step Instructions
