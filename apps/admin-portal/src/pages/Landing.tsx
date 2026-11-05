@@ -1185,14 +1185,14 @@ export function Landing() {
 
                             {/* Privacy Card - Light */}
                             <div className="col-span-1 lg:col-span-2 rounded-[2rem] bg-blue-50 border border-blue-100 p-8 sm:p-12 lg:p-14 flex flex-col justify-center relative">
-                                <div className="absolute top-10 right-10 w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg">
+                                <div className="relative mb-8 w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg lg:absolute lg:top-10 lg:right-10 lg:mb-0">
                                     <Users className="w-10 h-10 text-blue-600" />
                                     <div className="absolute bottom-0 right-0 w-8 h-8 bg-green-500 rounded-full border-4 border-white flex items-center justify-center">
                                         <Check className="w-4 h-4 text-white" strokeWidth={4} />
                                     </div>
                                 </div>
 
-                                <h3 className="text-2xl sm:text-3xl font-bold text-[#001b4d] mb-4 mt-16 lg:mt-0 max-w-[240px]">Privacy commitment</h3>
+                                <h3 className="text-2xl sm:text-3xl font-bold text-[#001b4d] mb-4 max-w-[240px]">Privacy commitment</h3>
                                 <p className="text-lg text-slate-600 font-medium leading-relaxed max-w-[340px]">
                                     Tracking-related information is visible only to authorized administrators and the associated user account owner.
                                 </p>
@@ -1208,7 +1208,7 @@ export function Landing() {
                         <div className="text-center mb-16">
                             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-[#001b4d]">Flexible plans for every team</h2>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-6 lg:gap-8 items-stretch">
 
                             {/* Basic */}
                             <div className="p-8 lg:p-10 rounded-[1.75rem] bg-white border border-slate-200 flex flex-col h-full shadow-sm">
@@ -1229,7 +1229,7 @@ export function Landing() {
                             </div>
 
                             {/* Premium (Most Popular) */}
-                            <div className="p-8 lg:p-10 rounded-[1.75rem] bg-white border-2 border-blue-600 flex flex-col relative shadow-[0_15px_35px_rgba(37,99,235,0.18)] transform md:-translate-y-2 h-full mt-8 md:mt-0">
+                            <div className="p-8 lg:p-10 rounded-[1.75rem] bg-white border-2 border-blue-600 flex flex-col relative shadow-[0_15px_35px_rgba(37,99,235,0.18)] transform md:-translate-y-2 md:h-full">
                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-5 py-1.5 bg-[#facc15] text-[#001b4d] text-sm font-bold rounded-full tracking-wider shadow-sm border-2 border-white">
                                     Most popular
                                 </div>
