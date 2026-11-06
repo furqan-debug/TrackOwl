@@ -35,10 +35,33 @@ pub struct CachedSample {
 
 // ─── DB path ───────────────────────────────────────────────────────────────────
 fn db_path() -> std::path::PathBuf {
-    let base = std::env::var("APPDATA")
-        .map(std::path::PathBuf::from)
-        .unwrap_or_else(|_| std::env::temp_dir());
-    base.join("TrackOwl").join("tracker_cache.sqlite")
+    #[cfg(target_os = "windows")]
+    {
+        let base = std::env::var("APPDATA")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|_| std::env::temp_dir());
+        base.join("TrackOwl").join("tracker_cache.sqlite")
+    }
+    #[cfg(target_os = "macos")]
+    {
+        let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".into());
+        std::path::PathBuf::from(home)
+            .join("Library")
+            .join("Application Support")
+            .join("TrackOwl")
+            .join("tracker_cache.sqlite")
+    }
+    #[cfg(target_os = "linux")]
+    {
+        // Follow XDG Base Directory spec: $XDG_DATA_HOME or ~/.local/share
+        let base = std::env::var("XDG_DATA_HOME")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|_| {
+                let home = std::env::var("HOME").unwrap_or_else(|_| "/tmp".into());
+                std::path::PathBuf::from(home).join(".local").join("share")
+            });
+        base.join("TrackOwl").join("tracker_cache.sqlite")
+    }
 }
 
 // ─── Initialize DB ────────────────────────────────────────────────────────────

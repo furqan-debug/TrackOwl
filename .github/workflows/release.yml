@@ -15,6 +15,7 @@ on:
           - all
           - windows
           - macos
+          - linux
 
 jobs:
   setup-matrix:
@@ -25,11 +26,13 @@ jobs:
       - id: set-matrix
         run: |
           if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event.inputs.platform }}" == "all" ]; then
-            echo 'matrix=[{"platform":"macos-latest","args":"--target aarch64-apple-darwin"},{"platform":"macos-latest","args":"--target x86_64-apple-darwin"},{"platform":"windows-latest","args":""}]' >> $GITHUB_OUTPUT
+            echo 'matrix=[{"platform":"macos-latest","args":"--target aarch64-apple-darwin"},{"platform":"macos-latest","args":"--target x86_64-apple-darwin"},{"platform":"windows-latest","args":""},{"platform":"ubuntu-22.04","args":""}]' >> $GITHUB_OUTPUT
           elif [ "${{ github.event.inputs.platform }}" == "windows" ]; then
             echo 'matrix=[{"platform":"windows-latest","args":""}]' >> $GITHUB_OUTPUT
           elif [ "${{ github.event.inputs.platform }}" == "macos" ]; then
             echo 'matrix=[{"platform":"macos-latest","args":"--target aarch64-apple-darwin"},{"platform":"macos-latest","args":"--target x86_64-apple-darwin"}]' >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.platform }}" == "linux" ]; then
+            echo 'matrix=[{"platform":"ubuntu-22.04","args":""}]' >> $GITHUB_OUTPUT
           fi
 
   publish:
@@ -58,6 +61,24 @@ jobs:
       - name: Add Rust Targets (macOS Universal)
         if: matrix.platform == 'macos-latest'
         run: rustup target add x86_64-apple-darwin aarch64-apple-darwin
+
+      - name: Install Linux System Dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            libssl-dev \
+            libx11-dev \
+            libxtst-dev \
+            libxi-dev \
+            libxcb1-dev \
+            libxcb-render0-dev \
+            libxcb-shape0-dev \
+            libxcb-xfixes0-dev
 
       - name: Install Frontend Dependencies
         run: npm ci --fetch-retries=5 --fetch-retry-factor=2 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
@@ -119,9 +140,10 @@ jobs:
           releaseBody: |
             TrackOwl v__VERSION__ — Desktop App Release.
             
-            This release packages TrackOwl for both Windows and macOS platforms.
+            This release packages TrackOwl for Windows, macOS, and Linux.
             - **Windows**: `.exe` and `.msi` installers.
             - **macOS**: `.dmg` Disk Image and `.app` bundles (including signature files for the auto-updater).
+            - **Linux**: `.AppImage` (portable, no install needed) and `.deb` package (Debian/Ubuntu). Requires an **Xorg/X11 session** (not Wayland).
           releaseDraft: true
           prerelease: false
           includeUpdaterJson: false
@@ -255,6 +277,22 @@ jobs:
             src-tauri/target/release/bundle/dmg/*.dmg \
             src-tauri/target/*/release/bundle/macos/*.tar.gz* \
             src-tauri/target/release/bundle/macos/*.tar.gz* \
+            --clobber || true
+
+      # Upload Linux AppImage and .deb bundles
+      - name: Upload Linux Bundles to Release
+        if: matrix.platform == 'ubuntu-22.04'
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.version.outputs.NUM) }}"
+
+          gh release upload "$TAG" \
+            src-tauri/target/release/bundle/appimage/*.AppImage \
+            src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz \
+            src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig \
+            src-tauri/target/release/bundle/deb/*.deb \
             --clobber || true
 
   publish-latest-json:
