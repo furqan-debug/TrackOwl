@@ -36,7 +36,7 @@ import {
     HeartHandshake,
     type LucideIcon
 } from 'lucide-react';
-import { WindowsLogo, AppleLogo } from '../components/ui/BrandLogos';
+import { WindowsLogo, AppleLogo, LinuxLogo } from '../components/ui/BrandLogos';
 import { twMerge } from 'tailwind-merge';
 
 import HeaderLogo from '../assets/branding/header-2.svg';
@@ -417,7 +417,7 @@ export function Landing() {
     const navigate = useNavigate();
     const [isScrolled, setIsScrolled] = useState(false);
     const [activeFaq, setActiveFaq] = useState<number | null>(null);
-    const [recommendedOS, setRecommendedOS] = useState<'windows' | 'mac-silicon' | 'mac-intel' | null>(null);
+    const [recommendedOS, setRecommendedOS] = useState<'windows' | 'mac-silicon' | 'mac-intel' | 'linux' | null>(null);
     const [showScrollTop, setShowScrollTop] = useState(false);
     const [isContactOpen, setIsContactOpen] = useState(false);
     const [contactType, setContactType] = useState<'sales' | 'demo' | 'general'>('sales');
@@ -428,6 +428,8 @@ export function Landing() {
                 const ua = navigator.userAgent.toLowerCase();
                 if (ua.includes('win')) {
                     setRecommendedOS('windows');
+                } else if (ua.includes('linux') || ua.includes('x11')) {
+                    setRecommendedOS('linux');
                 } else if (ua.includes('mac')) {
                     if ('userAgentData' in navigator && typeof (navigator as any).userAgentData.getHighEntropyValues === 'function') {
                         const values = await (navigator as any).userAgentData.getHighEntropyValues(['architecture']);
@@ -1354,7 +1356,7 @@ export function Landing() {
                             </p>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 w-full max-w-5xl mx-auto">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 w-full max-w-6xl mx-auto">
                             {/* Windows */}
                             <div className="w-full bg-white rounded-2xl p-8 lg:p-10 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
 
@@ -1418,6 +1420,39 @@ export function Landing() {
                                             </span>
                                         </a>
                                         {recommendedOS === 'mac-intel' && <span className="absolute -top-3 -right-2 z-20 bg-amber-400 text-amber-900 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full shadow-md pointer-events-none">⭐ Recommended</span>}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Linux */}
+                            <div className="w-full bg-white rounded-2xl p-8 lg:p-10 flex flex-col items-center text-center shadow-xl hover:-translate-y-2 transition-transform duration-300">
+
+                                <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 mb-6">
+                                    <LinuxLogo className="w-8 h-8" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-slate-900 mb-2">Linux</h3>
+                                <p className="text-slate-500 font-medium mb-6">Ubuntu, Debian & AppImage (64-bit)</p>
+                                <div className="w-full flex flex-col gap-3 mt-auto">
+                                    <div className="relative w-full">
+                                        <a
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.71/TrackOwl_2.0.71_amd64.deb"
+                                            className="group relative overflow-hidden w-full py-3 px-4 bg-amber-700 text-white text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
+                                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#78350f' }}><i /></span>
+                                            <span className="relative z-10 flex items-center justify-center gap-2">
+                                                <Download className="w-4 h-4" /> Download .deb
+                                            </span>
+                                        </a>
+                                        {recommendedOS === 'linux' && <span className="absolute -top-3 -right-2 z-20 bg-amber-400 text-amber-900 text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded-full shadow-md pointer-events-none">⭐ Recommended</span>}
+                                    </div>
+                                    <div className="relative w-full">
+                                        <a
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.71/TrackOwl_2.0.71_amd64.AppImage"
+                                            className="group relative overflow-hidden w-full py-3 px-4 bg-amber-50 text-amber-900 border border-amber-200 text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
+                                            <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#fde68a' }}><i /></span>
+                                            <span className="relative z-10 flex items-center justify-center gap-2">
+                                                <Download className="w-4 h-4" /> Download .AppImage
+                                            </span>
+                                        </a>
                                     </div>
                                 </div>
                             </div>
