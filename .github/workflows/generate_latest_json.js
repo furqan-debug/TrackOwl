@@ -61,6 +61,9 @@ async function run() {
           platforms['windows-x86_64-nsis'] = { signature: sigClean, url: finalUrl };
         } else if (asset.name.endsWith('x64_en-US.msi')) {
           platforms['windows-x86_64-msi'] = { signature: sigClean, url: finalUrl };
+        } else if (asset.name.endsWith('.AppImage.tar.gz')) {
+          // Linux AppImage bundle — used by the Tauri auto-updater on linux-x86_64
+          platforms['linux-x86_64'] = { signature: sigClean, url: finalUrl };
         }
       }
     }
