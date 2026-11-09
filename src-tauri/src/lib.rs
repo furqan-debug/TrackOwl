@@ -529,7 +529,7 @@ fn start_tracking(
                     counts.active_seconds.store(0, std::sync::atomic::Ordering::Relaxed);
 
                     // Spawn the input listener since we are starting tracking and permissions are verified!
-                    tracker::spawn_input_listener(Arc::clone(&counts), app.clone());
+                    tracker::spawn_input_listener(Arc::clone(&counts));
 
                     // Start native trackers
                     tracker::start_sample_loop_inner(
