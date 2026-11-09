@@ -34,6 +34,9 @@
     "typescript": "^5.9.3"
   },
   "overrides": {
-    "proxy-addr": ">=2.0.8"
+    "proxy-addr": ">=2.0.8",
+    "nodemon": {
+      "minimatch": "^11.0.1"
+    }
   }
 }

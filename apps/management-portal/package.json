@@ -38,6 +38,7 @@
     "vite": "^8.0.12"
   },
   "overrides": {
-    "source-map-js": ">=1.2.2"
+    "source-map-js": ">=1.2.2",
+    "minimatch": "^11.0.1"
   }
 }
