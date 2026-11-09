@@ -160,6 +160,35 @@ export const trackerAPI = {
     return Promise.resolve(() => {});
   },
 
+  /**
+   * Linux only: fired when rdev fails to open /dev/input/* nodes because
+   * the user is not in the `input` group. Activity tracking (clicks, keys)
+   * will be zero for the session. The user must run:
+   *   sudo usermod -aG input $USER
+   * and log out/in to fix it.
+   */
+  onInputPermissionError: (cb: (err: string) => void) => {
+    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+      return (window as any).__TAURI__.event.listen('tracking-input-permission-error', (ev: any) => {
+        cb(ev.payload as string);
+      });
+    }
+    return Promise.resolve(() => {});
+  },
+
+  /**
+   * Linux only: fired when TrackOwl is running inside a Wayland session.
+   * Wayland blocks global key/mouse listeners across windows.
+   */
+  onWaylandDetected: (cb: () => void) => {
+    if (typeof window !== 'undefined' && (window as any).__TAURI__) {
+      return (window as any).__TAURI__.event.listen('tracking-wayland-detected', () => {
+        cb();
+      });
+    }
+    return Promise.resolve(() => {});
+  },
+
   /** Install the pending auto-update (downloads + restarts app) */
   installUpdate: async () => {
     const invoke = getInvoke();
