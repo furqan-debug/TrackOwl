@@ -119,8 +119,21 @@ pub fn check_macos_screen_recording() -> bool {
 
 /// Spawns rdev listener in a background thread.
 /// All mouse/keyboard events are counted in `counts`.
-pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
+/// On Linux, `app` is used to emit a `tracking-input-permission-error` event if
+/// rdev fails to open `/dev/input/*` (the user is not in the `input` group).
+pub fn spawn_input_listener(counts: Arc<TrackerCounts>, app: AppHandle) {
     println!("[tracker-diag] spawn_input_listener called.");
+
+    #[cfg(target_os = "linux")]
+    {
+        let is_wayland = std::env::var("XDG_SESSION_TYPE").map(|s| s.to_lowercase() == "wayland").unwrap_or(false)
+            || std::env::var("WAYLAND_DISPLAY").is_ok();
+        if is_wayland {
+            eprintln!("[tracker] ⚠️ Running under Wayland. Global input tracking requires an X11/Xorg session.");
+            let _ = app.emit("tracking-wayland-detected", ());
+        }
+    }
+
     if IS_LISTENER_SPAWNED.swap(true, Ordering::SeqCst) {
         println!("[tracker-diag] IS_LISTENER_SPAWNED was true, returning early.");
         return; // Already spawned!
@@ -170,6 +183,16 @@ pub fn spawn_input_listener(counts: Arc<TrackerCounts>) {
         }) {
             eprintln!("[tracker] rdev listen error: {:?}", e);
             IS_LISTENER_SPAWNED.store(false, Ordering::SeqCst);
+
+            // On Linux, rdev fails with a permission error when the process cannot
+            // open /dev/input/* event nodes (user not in the `input` group).
+            // Emit an event so the React frontend can display an actionable banner.
+            #[cfg(target_os = "linux")]
+            {
+                let msg = format!("{:?}", e);
+                eprintln!("[tracker] Linux input permission error — user likely not in `input` group. error={}", msg);
+                let _ = app.emit("tracking-input-permission-error", msg);
+            }
         }
     });
 

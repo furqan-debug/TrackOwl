@@ -31,6 +31,16 @@ async function run() {
 
   const platforms = {};
 
+  // Preserve existing platforms from local latest.json (e.g. Windows/macOS when building Linux-only)
+  try {
+    if (fs.existsSync('latest.json')) {
+      const prev = JSON.parse(fs.readFileSync('latest.json', 'utf8'));
+      if (prev.platforms) Object.assign(platforms, prev.platforms);
+    }
+  } catch (e) {
+    console.warn('Could not read existing latest.json:', e);
+  }
+
   // Helper to fetch signature content
   const getSig = async (assetUrl) => {
     const res = await fetch(assetUrl, {

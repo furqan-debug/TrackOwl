@@ -1435,7 +1435,7 @@ export function Landing() {
                                 <div className="w-full flex flex-col gap-3 mt-auto">
                                     <div className="relative w-full">
                                         <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.71/TrackOwl_2.0.71_amd64.deb"
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.72/TrackOwl_2.0.72_amd64.deb"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-amber-700 text-white text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
                                             <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#78350f' }}><i /></span>
                                             <span className="relative z-10 flex items-center justify-center gap-2">
@@ -1446,7 +1446,7 @@ export function Landing() {
                                     </div>
                                     <div className="relative w-full">
                                         <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.71/TrackOwl_2.0.71_amd64.AppImage"
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.72/TrackOwl_2.0.72_amd64.AppImage"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-amber-50 text-amber-900 border border-amber-200 text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
                                             <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#fde68a' }}><i /></span>
                                             <span className="relative z-10 flex items-center justify-center gap-2">
