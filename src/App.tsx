@@ -382,7 +382,7 @@ function AppFooter({ lastSyncTime, isSyncing, onSync, isOnline }: {
       } catch {
         // Fallback if not running in Tauri window
       }
-      setVersion((import.meta.env as any).VITE_APP_VERSION || '2.0.72');
+      setVersion((import.meta.env as any).VITE_APP_VERSION || '2.0.71');
     };
     fetchVersion();
 
@@ -1092,9 +1092,6 @@ export default function App() {
   });
   const [isSyncing, setIsSyncing] = useState(false);
   const [orgTimezone, setOrgTimezone] = useState<string>('UTC');
-  // Linux: set when rdev fails to open /dev/input/* (user not in `input` group)
-  const [linuxInputError, setLinuxInputError] = useState(false);
-  const [linuxWaylandWarning, setLinuxWaylandWarning] = useState(false);
   // Last successfully resolved org timezone. Held in a ref (not state) so
   // fetchDashboardStats can read it without a stale-closure problem, and kept
   // null until genuinely known so "unresolved" is distinguishable from "UTC".
@@ -1686,32 +1683,6 @@ export default function App() {
         );
         await handleStop();
         setTrackingError('Tracking was automatically stopped because your computer entered sleep or hibernation mode.');
-      })?.then((u: any) => { unlisten = u; });
-    }
-    return () => { if (unlisten) unlisten(); };
-  }, []);
-
-  // ── Linux: Listen for rdev input permission error ────────────────────────────
-  // rdev fails silently when the user is not in the `input` group.
-  // We surface this as a dismissible warning banner while tracking is active.
-  useEffect(() => {
-    let unlisten: (() => void) | null = null;
-    if (trackerAPI.onInputPermissionError) {
-      trackerAPI.onInputPermissionError((err: string) => {
-        console.error('[App] Linux input permission error:', err);
-        setLinuxInputError(true);
-      })?.then((u: any) => { unlisten = u; });
-    }
-    return () => { if (unlisten) unlisten(); };
-  }, []);
-
-  // ── Linux: Listen for Wayland session detection ──────────────────────────────
-  useEffect(() => {
-    let unlisten: (() => void) | null = null;
-    if (trackerAPI.onWaylandDetected) {
-      trackerAPI.onWaylandDetected(() => {
-        console.warn('[App] Linux Wayland session detected. Clicks and keys require X11/Xorg.');
-        setLinuxWaylandWarning(true);
       })?.then((u: any) => { unlisten = u; });
     }
     return () => { if (unlisten) unlisten(); };
@@ -3609,54 +3580,6 @@ ${note}` : heading
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Linux input permission warning banner */}
-      {linuxInputError && (
-        <div style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
-          background: '#7c3aed', color: '#fff',
-          padding: '10px 16px', fontSize: '0.78rem', lineHeight: '1.5',
-          display: 'flex', alignItems: 'flex-start', gap: '10px',
-        }}>
-          <ShieldAlert size={16} style={{ flexShrink: 0, marginTop: 2 }} />
-          <span>
-            <strong>Activity tracking limited on Linux.</strong>{' '}
-            TrackOwl cannot read keyboard/mouse events because your user is not in the{' '}
-            <code style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 3, padding: '0 4px' }}>input</code> group.
-            Screenshots are still captured.{' '}
-            To fix, run in a terminal:{' '}
-            <code style={{ background: 'rgba(255,255,255,0.15)', borderRadius: 3, padding: '0 4px' }}>sudo usermod -aG input $USER</code>
-            {' '}then log out and back in.
-          </span>
-          <button
-            onClick={() => setLinuxInputError(false)}
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#fff', cursor: 'pointer', flexShrink: 0, fontSize: '1rem', lineHeight: 1 }}
-            aria-label="Dismiss"
-          >✕</button>
-        </div>
-      )}
-
-      {/* Linux Wayland session warning banner */}
-      {linuxWaylandWarning && !linuxInputError && (
-        <div style={{
-          position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 9999,
-          background: '#b45309', color: '#fff',
-          padding: '10px 16px', fontSize: '0.78rem', lineHeight: '1.5',
-          display: 'flex', alignItems: 'flex-start', gap: '10px',
-        }}>
-          <ShieldAlert size={16} style={{ flexShrink: 0, marginTop: 2 }} />
-          <span>
-            <strong>Wayland session detected.</strong>{' '}
-            Wayland blocks apps from monitoring global keystrokes and clicks across other windows.
-            To track activity, please switch to an <strong>X11 / Xorg</strong> session.
-          </span>
-          <button
-            onClick={() => setLinuxWaylandWarning(false)}
-            style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#fff', cursor: 'pointer', flexShrink: 0, fontSize: '1rem', lineHeight: 1 }}
-            aria-label="Dismiss"
-          >✕</button>
-        </div>
-      )}
 
       <AnimatePresence mode="wait">
         {screen === 'login' && (

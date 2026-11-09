@@ -25,13 +25,13 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          if [ "${{ github.event.inputs.platform }}" == "windows" ]; then
+          if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event.inputs.platform }}" == "all" ]; then
+            echo 'matrix=[{"platform":"macos-latest","args":"--target aarch64-apple-darwin"},{"platform":"macos-latest","args":"--target x86_64-apple-darwin"},{"platform":"windows-latest","args":""},{"platform":"ubuntu-22.04","args":""}]' >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.inputs.platform }}" == "windows" ]; then
             echo 'matrix=[{"platform":"windows-latest","args":""}]' >> $GITHUB_OUTPUT
           elif [ "${{ github.event.inputs.platform }}" == "macos" ]; then
             echo 'matrix=[{"platform":"macos-latest","args":"--target aarch64-apple-darwin"},{"platform":"macos-latest","args":"--target x86_64-apple-darwin"}]' >> $GITHUB_OUTPUT
-          elif [ "${{ github.event.inputs.platform }}" == "all" ]; then
-            echo 'matrix=[{"platform":"macos-latest","args":"--target aarch64-apple-darwin"},{"platform":"macos-latest","args":"--target x86_64-apple-darwin"},{"platform":"windows-latest","args":""},{"platform":"ubuntu-22.04","args":""}]' >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event.inputs.platform }}" == "linux" ]; then
+          elif [ "${{ github.event.inputs.platform }}" == "linux" ]; then
             echo 'matrix=[{"platform":"ubuntu-22.04","args":""}]' >> $GITHUB_OUTPUT
           fi
 
@@ -295,11 +295,6 @@ jobs:
             src-tauri/target/release/bundle/deb/*.deb \
             --clobber || true
 
-          # Copy over existing Windows & Mac assets from v2.0.71 so release has all downloads
-          mkdir -p /tmp/prev_assets
-          gh release download v2.0.71 -D /tmp/prev_assets -p "*.exe*" -p "*.msi*" -p "*.dmg*" -p "*.app.tar.gz*" || true
-          gh release upload "$TAG" /tmp/prev_assets/* --clobber || true
-
   publish-latest-json:
     needs: publish
     runs-on: ubuntu-latest
@@ -318,7 +313,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   publish-appstore:
-    if: github.event.inputs.platform == 'all' || github.event.inputs.platform == 'macos'
+    if: github.event_name == 'push' || github.event.inputs.platform == 'all' || github.event.inputs.platform == 'macos'
     runs-on: macos-latest
     steps:
       - name: Checkout Repository
