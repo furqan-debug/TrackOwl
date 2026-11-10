@@ -656,13 +656,13 @@ export function Dashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
                     {/* Line Chart: Time Tracked */}
                     <div className="lg:col-span-8 bg-surface rounded-2xl shadow-premium border border-border overflow-hidden flex flex-col min-h-[300px] md:min-h-[420px]">
-                        <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border flex items-center justify-between">
+                        <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between min-h-[77px] md:min-h-[85px]">
                             <div>
                                 <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Tracked</h3>
                                 <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Daily productivity for selected date</p>
                             </div>
                         </div>
-                        <div className="flex-1 p-4 md:p-8 pt-2 md:pt-4 relative">
+                        <div className="flex-1 p-6 md:p-8 relative">
                             {chartData.every(d => d.hours === 0) ? (
                                 <div className="absolute inset-0 flex items-center justify-center">
                                     <EmptyState
@@ -673,7 +673,7 @@ export function Dashboard() {
                                 </div>
                             ) : (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={chartData}>
+                                    <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                                         <defs>
                                             <linearGradient id="chartGold" x1="0" y1="0" x2="0" y2="1">
                                                 <stop offset="5%" stopColor="var(--chart-gold)" stopOpacity={0.1} />
@@ -715,11 +715,13 @@ export function Dashboard() {
 
                     {/* Donut Chart: Time Distribution */}
                     <div className="lg:col-span-4 bg-surface rounded-2xl shadow-premium border border-border overflow-hidden flex flex-col min-h-[300px] md:min-h-[420px]">
-                        <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border">
-                            <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Distribution</h3>
-                            <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Breakdown by project</p>
+                        <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between min-h-[77px] md:min-h-[85px]">
+                            <div>
+                                <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Distribution</h3>
+                                <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Breakdown by project</p>
+                            </div>
                         </div>
-                        <div className="flex-1 flex flex-col p-4 md:p-8 items-center justify-center relative min-h-[240px] md:min-h-[300px]">
+                        <div className="flex-1 flex flex-col p-6 md:p-8 items-center justify-between relative min-h-[240px] md:min-h-[300px]">
                             {projectActivity.length === 0 ? (
                                 <EmptyState
                                     icon={<FolderOpen className="w-8 h-8 text-text-muted/20" />}
@@ -818,10 +820,10 @@ export function Dashboard() {
                     {/* 🖥️ Left Content: Activity Stream (70%) */}
                     <div className="lg:col-span-7 flex flex-col min-h-[400px] lg:h-[780px]">
                         <div className="bg-surface rounded-2xl overflow-hidden flex flex-col h-full shadow-premium border border-border">
-                            <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 gap-3">
+                            <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 gap-3 min-h-[77px] md:min-h-[85px]">
                                 <div className="min-w-0">
-                                    <h3 className="text-[16px] md:text-[22px] font-bold mb-1 md:mb-2 tracking-[0.05em] truncate" style={{ color: 'var(--chart-gold)' }}>Visual Activity Stream</h3>
-                                    <p className="text-[11px] md:text-[14px] font-medium text-text-muted tracking-[0.1em]">{isRep ? "Recent activity snapshots" : "Top 4 most active members"}</p>
+                                    <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em] truncate">Visual Activity Stream</h3>
+                                    <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">{isRep ? "Recent activity snapshots" : "Top 4 most active members"}</p>
                                 </div>
                                 <button
                                     onClick={() => navigate('/dashboard/activity')}
@@ -889,10 +891,10 @@ export function Dashboard() {
                                                                         {ss.recordedAt ? new Date(ss.recordedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', timeZone: displayTimezone || undefined }) : ''}
                                                                     </span>
                                                                 </div>
-                                                                <div className="absolute top-3 left-3 -translate-y-1 group-hover/ss:translate-y-0 transition-transform duration-300">
+                                                                <div className="absolute top-2.5 left-2.5 -translate-y-0.5 group-hover/ss:translate-y-0 transition-transform duration-300">
                                                                     <span className={clsx(
-                                                                        "px-4 py-2 rounded-lg text-white text-[11px] font-bold backdrop-blur-md border border-white/10 shadow-lg",
-                                                                        ss.activityPercent > 70 ? "bg-success/80" : ss.activityPercent > 30 ? "bg-warning/80" : "bg-error/80"
+                                                                        "px-2 py-0.5 md:px-2.5 md:py-1 rounded-md text-white text-[10px] font-bold backdrop-blur-md border border-white/15 shadow-sm",
+                                                                        ss.activityPercent > 70 ? "bg-success/60" : ss.activityPercent > 30 ? "bg-warning/60" : "bg-error/60"
                                                                     )}>
                                                                         {ss.activityPercent}%
                                                                     </span>
@@ -921,10 +923,10 @@ export function Dashboard() {
                     {/* 👥 Right Content: Who's Online (30%) */}
                     <div className="lg:col-span-5 flex flex-col min-h-[400px] lg:h-[780px]">
                         <div className="bg-surface rounded-2xl shadow-premium overflow-hidden flex flex-col h-full border border-border">
-                            <div className="px-4 py-4 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0">
+                            <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 min-h-[77px] md:min-h-[85px]">
                                 <div>
-                                    <h3 className="text-[15px] md:text-[18px] font-bold tracking-tight mb-1 md:mb-2" style={{ color: 'var(--chart-gold)' }}>{isRep ? 'My Presence' : (isTodayView ? 'Live Directory' : 'Team Directory')}</h3>
-                                    <p className="text-[11px] md:text-[13px] font-bold text-text-muted tracking-[0.1em]">{isRep ? 'Current status and tracked time' : (isTodayView ? 'Real-time status updates' : 'Status for the selected date')}</p>
+                                    <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">{isRep ? 'My Presence' : (isTodayView ? 'Live Directory' : 'Team Directory')}</h3>
+                                    <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">{isRep ? 'Current status and tracked time' : (isTodayView ? 'Real-time status updates' : 'Status for the selected date')}</p>
                                 </div>
                                 {isTodayView && (
                                     <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-success/10 border border-success/20">
@@ -945,7 +947,7 @@ export function Dashboard() {
                                     <tbody className="divide-y divide-border">
                                         {onlineMembers.map((member) => (
                                             <tr key={member.id} className="hover:bg-surface-hover/50 transition-all duration-300 group">
-                                                <td className="px-8 py-5">
+                                                <td className="px-8 py-6 md:py-7">
                                                     <div className="flex items-center gap-4">
                                                         <div className="relative shrink-0">
                                                             <div className="w-11 h-11 rounded-2xl bg-surface border border-border flex items-center justify-center text-[12px] font-bold text-text-muted shadow-sm group-hover:border-primary/30 transition-all duration-500 overflow-hidden ring-4 ring-transparent group-hover:ring-primary/5">
@@ -973,7 +975,7 @@ export function Dashboard() {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-8 py-5 text-right">
+                                                <td className="px-8 py-6 md:py-7 text-right">
                                                     <div className="flex flex-col items-end">
                                                         <span className="text-[15px] font-bold text-text-main tabular-nums leading-none tracking-tight">
                                                             {formatDuration(member.timeWorkedToday)}
@@ -1007,17 +1009,17 @@ export function Dashboard() {
                 {/* 📊 Secondary Metrics Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Project Velocity Chart */}
-                    <div className="glass-panel rounded-[12px] shadow-premium overflow-hidden flex flex-col border border-border h-[450px]">
-                        <div className="px-5 py-5 md:px-10 md:py-8 border-b border-border bg-surface/50 flex items-center justify-between shrink-0">
+                    <div className="glass-panel rounded-2xl shadow-premium overflow-hidden flex flex-col border border-border h-[450px]">
+                        <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border bg-surface/50 flex items-center justify-between shrink-0 min-h-[77px] md:min-h-[85px]">
                             <div>
-                                <h3 className="text-[13px] md:text-[14px] font-bold tracking-tight mb-1" style={{ color: 'var(--chart-gold)' }}>Time Distribution</h3>
-                                <p className="text-[10px] font-bold text-text-muted tracking-[0.1em]">Active hours per project</p>
+                                <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Distribution</h3>
+                                <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Active hours per project</p>
                             </div>
-                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-main flex items-center justify-center text-text-muted border border-border shrink-0">
+                            <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-main flex items-center justify-center text-text-muted border border-border shrink-0">
                                 <BarChart3 className="w-4 h-4 md:w-5 md:h-5" />
                             </div>
                         </div>
-                        <div className="flex-1 overflow-y-auto no-scrollbar p-5 md:p-10">
+                        <div className="flex-1 overflow-y-auto no-scrollbar p-6 md:p-8">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
                                 {projectActivity.length === 0 ? (
                                     <div className="col-span-2 py-10 opacity-50"><EmptyState icon={<Camera />} title="Awaiting distribution data" /></div>
@@ -1053,13 +1055,13 @@ export function Dashboard() {
                     </div>
 
                     {/* App ecosystem Ledger */}
-                    <div className="glass-panel rounded-[12px] shadow-premium overflow-hidden flex flex-col border border-border h-[450px]">
-                        <div className="px-5 py-5 md:px-10 md:py-8 border-b border-border bg-surface/50 flex items-center justify-between shrink-0">
+                    <div className="glass-panel rounded-2xl shadow-premium overflow-hidden flex flex-col border border-border h-[450px]">
+                        <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border bg-surface/50 flex items-center justify-between shrink-0 min-h-[77px] md:min-h-[85px]">
                             <div>
-                                <h3 className="text-[13px] md:text-[14px] font-bold tracking-tight mb-1" style={{ color: 'var(--chart-gold)' }}>Application Ecosystem</h3>
-                                <p className="text-[10px] font-bold text-text-muted tracking-[0.1em]">Most utilized tools and platforms</p>
+                                <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Application Ecosystem</h3>
+                                <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Most utilized tools and platforms</p>
                             </div>
-                            <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-main flex items-center justify-center text-text-muted border border-border shrink-0">
+                            <div className="w-10 h-10 md:w-11 md:h-11 rounded-2xl bg-main flex items-center justify-center text-text-muted border border-border shrink-0">
                                 <Monitor className="w-5 h-5" />
                             </div>
                         </div>

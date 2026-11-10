@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 /* Tailwind v4 ignores tailwind.config.js unless it is pulled in with @config,
    so the `darkMode: 'class'` sitting in that file has no effect and every
@@ -6,7 +7,6 @@
    theme toggle. Whenever the two disagreed those utilities were simply
    backwards. This points them at the .dark class the app actually sets. */
 @custom-variant dark (&:where(.dark, .dark *));
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 @theme {
   /* Brand Colors - TrackOwl Official Palette */
@@ -425,14 +425,14 @@
     background: rgba(255, 255, 255, 0.7);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(226, 232, 240, 0.3);
-    box-shadow: 0 8px 32px 0 rgba(0, 27, 77, 0.05);
+    border: 1px solid rgba(226, 232, 240, 0.4);
+    box-shadow: 0 1px 3px 0 rgba(0, 27, 77, 0.02), 0 4px 12px -2px rgba(0, 27, 77, 0.04);
   }
 
   .dark .glass-panel {
     background: rgba(15, 23, 42, 0.8);
     border-color: rgba(255, 255, 255, 0.05);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.2), 0 4px 12px -2px rgba(0, 0, 0, 0.3);
   }
 
   /* Dropdown Styling */
