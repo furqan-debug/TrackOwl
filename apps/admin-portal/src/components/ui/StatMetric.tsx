@@ -16,11 +16,12 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
 
     return (
         <div className={clsx(
-            "glass-panel rounded-[12px] p-6 transition-all duration-500 group relative overflow-hidden flex flex-col justify-between min-h-[180px]",
+            "glass-panel rounded-[14px] p-6 transition-all duration-300 group relative overflow-hidden flex flex-col justify-between min-h-[180px]",
+            "shadow-[0_1px_3px_0_rgba(0,0,0,0.02),0_4px_12px_-2px_rgba(0,27,77,0.04)] dark:shadow-[0_1px_3px_0_rgba(0,0,0,0.2),0_4px_12px_-2px_rgba(0,0,0,0.3)]",
             isBrandGradient
-                ? "bg-gradient-to-br from-[var(--primary)]/5 via-transparent to-[var(--accent)]/5 border-primary/20 hover:border-accent/40 shadow-premium"
-                : "hover:shadow-elevated hover:border-primary/20",
-            "hover:-translate-y-1",
+                ? "bg-gradient-to-br from-[var(--primary)]/5 via-transparent to-[var(--accent)]/5 border-primary/20 hover:border-accent/40"
+                : "border-border/60 hover:border-primary/20",
+            "hover:shadow-[0_4px_16px_-2px_rgba(0,27,77,0.07)] dark:hover:shadow-[0_4px_16px_-2px_rgba(0,0,0,0.45)] hover:-translate-y-0.5",
             className
         )}>
             {/* Background Glow Effect */}

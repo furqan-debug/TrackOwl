@@ -698,7 +698,7 @@ export function Landing() {
 
             <main className="relative z-10">
                 {/* HERO SECTION - DARK NAVY */}
-                <section className="bg-[#001338] relative pt-28 sm:pt-32 lg:pt-36 xl:pt-18 pb-20 sm:pb-24 lg:pb-32 overflow-hidden">
+                <section className="bg-[#001338] relative pt-28 sm:pt-32 lg:pt-36 xl:pt-36 pb-20 sm:pb-24 lg:pb-32 overflow-hidden">
                     {/* Background glowing effects */}
                     <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-[#002766] blur-[150px] rounded-full pointer-events-none" />
                     <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/20 blur-[150px] rounded-full pointer-events-none" />
@@ -708,18 +708,19 @@ export function Landing() {
                         {/* Hero Text Content */}
                         <div className="col-span-1 lg:col-span-5 xl:col-span-5 flex flex-col items-start text-left w-full min-w-0">
                             <motion.div
-                                initial={{ opacity: 0, y: -20 }}
+                                initial={{ opacity: 0, y: -10 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#facc15]/10 border border-[#facc15]/20 text-xs sm:text-sm font-bold text-[#facc15] mb-5 tracking-wide"
+                                className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-[#facc15]/10 border border-[#facc15]/25 text-xs sm:text-[13px] font-semibold text-[#facc15] mb-6 shadow-[0_0_15px_rgba(250,204,21,0.08)] backdrop-blur-sm tracking-wide"
                             >
-                                #1 workforce analytics platform
+                                
+                                <span>#1 Workforce Analytics Platform</span>
                             </motion.div>
 
                             <motion.h1
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.1 }}
-                                className="text-4xl sm:text-5xl lg:text-[56px] xl:text-[68px] 2xl:text-[76px] font-extrabold tracking-tight leading-[1.08] text-white mb-6"
+                                className="text-4xl sm:text-5xl lg:text-[56px] xl:text-[68px] 2xl:text-[76px] font-extrabold tracking-tight leading-[1.08] text-white mb-8 sm:mb-10"
                             >
                                 Time tracking<br />built for<br />
                                 <span className="text-[#facc15] block mt-1.5 sm:mt-2 min-h-[52px] sm:min-h-[64px] lg:min-h-[74px] xl:min-h-[88px] 2xl:min-h-[98px]">
