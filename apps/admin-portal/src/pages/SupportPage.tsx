@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Routes, Route, Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { 
   Search, ChevronRight, BookOpen, Clock, ArrowUp,
@@ -14,6 +14,7 @@ import { Footer } from '../components/Footer';
 import { ContactModal } from './Landing';
 import '../support.css';
 import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { useOfflineBannerClaim } from '../components/ui/offlineBannerScope';
 
 // Use Vite's glob import to get all markdown files
 const modules = import.meta.glob('../content/*.md', { query: '?raw', eager: true });
@@ -104,6 +105,10 @@ function Layout({ children, search, setSearch }: { children: React.ReactNode; se
   const navigate = useNavigate();
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [contactType, setContactType] = useState<'sales' | 'demo' | 'general'>('demo');
+
+  // The contact dialog is the other thing on the help centre that needs the
+  // network, so it claims the offline warning too for as long as it is open.
+  useOfflineBannerClaim(isContactOpen);
 
   // Scroll to top on route change
   useEffect(() => {
@@ -247,6 +252,33 @@ function Layout({ children, search, setSearch }: { children: React.ReactNode; se
 
 function ContactBanner() {
     const isOnline = useOnlineStatus();
+    const formRef = useRef<HTMLDivElement | null>(null);
+    const [formInView, setFormInView] = useState(false);
+
+    /**
+     * The offline warning is held back on the help centre until this form is
+     * actually in front of someone. Reading an article does not need the
+     * network, so the warning at the top of the page only looks like a fault;
+     * writing a message that cannot be sent is worth a word of warning before
+     * it is typed rather than after.
+     *
+     * Watched rather than tied to focus so the warning is up while the form is
+     * being read, not only once a field has been clicked.
+     */
+    useEffect(() => {
+        const node = formRef.current;
+        if (!node || typeof IntersectionObserver === 'undefined') return;
+
+        const observer = new IntersectionObserver(
+            ([entry]) => setFormInView(entry.isIntersecting),
+            { threshold: 0.2 },
+        );
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, []);
+
+    useOfflineBannerClaim(formInView);
+
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [company, setCompany] = useState('');
@@ -328,7 +360,7 @@ ${message}`
     };
 
     return (
-        <div className="support-form-container">
+        <div className="support-form-container" ref={formRef}>
             <div className="support-form-header">
                 <div>
                     <h3 className="support-form-title" style={{ color: '#ffffff' }}>Contact TrackOwl</h3>

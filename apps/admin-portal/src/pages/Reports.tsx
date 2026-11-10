@@ -1361,7 +1361,12 @@ function MonthView({ isRep, month, onPrev, onNext, onDateClick, isSelected, isIn
                             onClick={() => onDateClick(d.iso)}
                             className={clsx(
                                 "py-3 text-[12px] font-medium transition-all rounded-lg relative z-10",
-                                selected ? "text-[#001B4D] font-black shadow-lg shadow-[var(--chart-gold)]/30" :
+                                // The selected day is filled with --chart-gold, which is
+                                // navy in the light theme and gold in the dark one. A fixed
+                                // navy label disappears against the light-theme fill, so take
+                                // the surface colour, which is the opposite of the fill in
+                                // both themes — the same pairing the hover states below use.
+                                selected ? "text-[var(--bg-surface)] font-black shadow-lg shadow-[var(--chart-gold)]/30" :
                                     inRange ? "bg-[var(--chart-gold)]/5 hover:bg-primary hover:text-[var(--bg-surface)]" :
                                         "text-text-muted hover:bg-primary hover:text-[var(--bg-surface)]"
                             )}
