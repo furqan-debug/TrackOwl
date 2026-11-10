@@ -1,7 +1,12 @@
+import { useSyncExternalStore } from 'react';
 import { WifiOff } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { useOnlineStatus } from '../../hooks/useOnlineStatus';
+import {
+    hasOfflineBannerClaim,
+    subscribeToOfflineBannerClaims,
+} from './offlineBannerScope';
 
 /**
  * Pages where the warning has nothing to say.
@@ -14,6 +19,20 @@ import { useOnlineStatus } from '../../hooks/useOnlineStatus';
  * stale.
  */
 const PUBLIC_PATHS = ['/', '/privacy', '/terms', '/security', '/about'];
+
+/**
+ * The help centre, which is quiet in the same way but earns the warning back.
+ *
+ * Its articles are already on the page and never go stale, so the warning is
+ * wrong at the top of it. Its contact form genuinely needs the network, so
+ * the form claims the banner while it is on screen; see offlineBannerScope.
+ * Matched by prefix because the help centre is a nested router (/support/...),
+ * and written with the trailing slash so that /support-admin, which is a real
+ * dashboard, is not swept up with it.
+ */
+function isHelpCentre(pathname: string): boolean {
+    return pathname === '/support' || pathname.startsWith('/support/');
+}
 
 /**
  * Says so when the connection has gone.
@@ -30,12 +49,17 @@ const PUBLIC_PATHS = ['/', '/privacy', '/terms', '/security', '/about'];
 export function OfflineBanner() {
     const online = useOnlineStatus();
     const { pathname } = useLocation();
+    const claimed = useSyncExternalStore(
+        subscribeToOfflineBannerClaims,
+        hasOfflineBannerClaim,
+        hasOfflineBannerClaim,
+    );
 
-    const onPublicPage = PUBLIC_PATHS.includes(pathname);
+    const quiet = PUBLIC_PATHS.includes(pathname) || isHelpCentre(pathname);
 
     return (
         <AnimatePresence>
-            {!online && !onPublicPage && (
+            {!online && (!quiet || claimed) && (
                 <motion.div
                     role="status"
                     aria-live="polite"
