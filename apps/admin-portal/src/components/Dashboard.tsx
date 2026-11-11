@@ -564,7 +564,7 @@ export function Dashboard() {
                         rounded-md, p-1, with p-3 chevrons around a label-less
                         picker. The "Viewing Date" label was what made this one
                         taller - a two-line pill next to a one-line one. */}
-                    <div className="flex items-center h-12 glass-panel p-1 rounded-xl shadow-premium border border-border flex-1 md:flex-none">
+                    <div className="flex items-center h-12 bg-surface p-1 rounded-xl shadow-shell-sm border border-border flex-1 md:flex-none">
                         <button
                             onClick={() => navigateDate('prev')}
                             className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-lg"
@@ -598,7 +598,7 @@ export function Dashboard() {
                         onClick={() => fetchDashboardData(true, true)}
                         refreshing={refreshing}
                         label="Refresh dashboard"
-                        className="refresh-btn--lg shadow-premium !cursor-pointer hover:text-text-main hover:bg-surface-hover transition-all"
+                        className="refresh-btn--lg shadow-shell-sm !cursor-pointer hover:text-text-main hover:bg-surface-hover transition-all"
                     />
                 </div>
             }
@@ -849,26 +849,26 @@ export function Dashboard() {
                                             <div key={user.userId} className="p-4 md:p-8 space-y-4 md:space-y-6 hover:bg-surface-hover transition-all group">
                                                 <div className="flex items-center justify-between gap-2">
                                                     <div className="flex items-center gap-3 min-w-0">
-                                                        <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-main border border-border shadow-sm flex items-center justify-center text-[14px] font-bold text-text-muted overflow-hidden shrink-0 group-hover:border-primary/30 transition-all duration-500">
+                                                        <div className="w-10 h-10 rounded-xl bg-main border border-border shadow-sm flex items-center justify-center text-[13px] font-bold text-text-muted overflow-hidden shrink-0 group-hover:border-primary/30 transition-all duration-500">
                                                             {user.avatarUrl ? (
                                                                 <SecureImage path={user.avatarUrl} bucket="avatars" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                             ) : user.fullName.charAt(0)}
                                                         </div>
-                                                        <div className="space-y-1.5 min-w-0">
-                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                        <div className="space-y-1 min-w-0">
+                                                            <div className="flex items-center gap-2.5 flex-wrap">
                                                                 <p className={clsx(
-                                                                    "text-[14px] md:text-[18px] font-bold text-text-main tracking-tight truncate",
+                                                                    "text-[14px] font-bold text-text-main tracking-tight truncate",
                                                                     user.fullName.includes('@') && "lowercase opacity-80"
                                                                 )}>
                                                                     {user.fullName.includes('@') ? user.fullName.toLowerCase() : toProperCase(user.fullName)}
                                                                 </p>
-                                                                <div className="px-2 py-0.5 md:px-3 md:py-1 bg-primary/5 text-primary text-[10px] md:text-[12px] font-bold rounded-lg border border-primary/10 shrink-0">
+                                                                <div className="px-2.5 py-0.5 bg-primary/5 text-primary text-[11px] font-bold rounded-lg border border-primary/10 shrink-0">
                                                                     {formatDuration(user.totalMinutes)}
                                                                 </div>
                                                             </div>
                                                             <div className="flex items-center gap-2">
                                                                 <div className="w-2 h-2 rounded-full bg-success shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                                                                <span className="text-[11px] md:text-[13px] font-bold text-success">{user.activityScore}% Focus Level</span>
+                                                                <span className="text-[12px] font-medium text-text-muted">{user.activityScore}% Focus Level</span>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -929,7 +929,7 @@ export function Dashboard() {
                                     <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">{isRep ? 'Current status and tracked time' : (isTodayView ? 'Real-time status updates' : 'Status for the selected date')}</p>
                                 </div>
                                 {isTodayView && (
-                                    <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-success/10 border border-success/20">
+                                    <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-success/0 border border-success/15">
                                         <div className="w-2 h-2 rounded-full bg-success animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                                         <span className="text-[11px] font-bold text-success tracking-[0.1em]">Live Now</span>
                                     </div>
@@ -950,25 +950,25 @@ export function Dashboard() {
                                                 <td className="px-8 py-6 md:py-7">
                                                     <div className="flex items-center gap-4">
                                                         <div className="relative shrink-0">
-                                                            <div className="w-11 h-11 rounded-2xl bg-surface border border-border flex items-center justify-center text-[12px] font-bold text-text-muted shadow-sm group-hover:border-primary/30 transition-all duration-500 overflow-hidden ring-4 ring-transparent group-hover:ring-primary/5">
+                                                            <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-[13px] font-bold text-text-muted shadow-sm group-hover:border-primary/30 transition-all duration-500 overflow-hidden ring-4 ring-transparent group-hover:ring-primary/5">
                                                                 {member.avatarUrl ? (
                                                                     <SecureImage path={member.avatarUrl} bucket="avatars" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                                 ) : member.fullName.charAt(0)}
                                                             </div>
                                                             <div className={clsx(
-                                                                "absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-[3px] border-surface shadow-md",
+                                                                "absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full border-[2.5px] border-surface shadow-md",
                                                                 member.status === 'working' || member.status === 'worked' ? "bg-success shadow-success/20" : member.status === 'idle' ? "bg-warning shadow-warning/20" : "bg-text-muted"
                                                             )} />
                                                         </div>
                                                         <div className="flex flex-col min-w-0">
                                                             <span className={clsx(
-                                                                "text-[15px] font-bold text-text-main leading-none tracking-tight truncate group-hover:text-primary transition-colors tracking-[0.05em]",
+                                                                "text-[14px] font-bold text-text-main leading-none tracking-tight truncate group-hover:text-primary transition-colors",
                                                                 (!member.fullName || member.fullName.includes('@')) && "lowercase opacity-80"
                                                             )}>
                                                                 {member.fullName ? toProperCase(member.fullName) : toEmailCase(member.email || '')}
                                                             </span>
                                                             {member.projectName && (
-                                                                <span className="text-[12px] text-text-muted font-bold tracking-tight mt-2 truncate max-w-[140px] opacity-70 tracking-[0.1em]">
+                                                                <span className="text-[12px] text-text-muted font-medium tracking-tight mt-1.5 truncate max-w-[140px]">
                                                                     {member.projectName}
                                                                 </span>
                                                             )}
@@ -977,12 +977,12 @@ export function Dashboard() {
                                                 </td>
                                                 <td className="px-8 py-6 md:py-7 text-right">
                                                     <div className="flex flex-col items-end">
-                                                        <span className="text-[15px] font-bold text-text-main tabular-nums leading-none tracking-tight">
+                                                        <span className="text-[13px] font-bold text-text-main tabular-nums leading-none tracking-tight">
                                                             {formatDuration(member.timeWorkedToday)}
                                                         </span>
                                                         <span className={clsx(
-                                                            "text-[11px] font-bold tracking-[0.15em] mt-2.5 px-3 py-1 rounded-lg",
-                                                            member.status === 'working' || member.status === 'worked' ? "text-success bg-success/10" : member.status === 'idle' ? "text-warning bg-warning/10" : "text-text-muted bg-surface-hover"
+                                                            "text-[11px] font-bold tracking-[0.1em] mt-2 px-2.5 py-1 rounded-lg",
+                                                            member.status === 'working' || member.status === 'worked' ? "text-success bg-success/10 border border-success/20" : member.status === 'idle' ? "text-warning bg-warning/10 border border-warning/20" : "text-text-muted bg-surface-hover border border-border"
                                                         )}>
                                                             {member.status}
                                                         </span>
@@ -1027,8 +1027,8 @@ export function Dashboard() {
                                     projectActivity.map((proj) => (
                                         <div key={proj.id} className="space-y-4 group/bar">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-[12px] font-bold text-text-main tracking-tight group-hover:text-primary transition-colors">{proj.name}</span>
-                                                <span className="text-[10px] font-bold text-success ">{proj.activityScore}% Focus</span>
+                                                <span className="text-[14px] font-bold text-text-main tracking-tight group-hover:text-primary transition-colors">{proj.name}</span>
+                                                <span className="text-[12px] font-medium text-text-muted">{proj.activityScore}% Focus</span>
                                             </div>
                                             <div className="h-2 bg-main/80 border border-border rounded-full overflow-hidden shadow-inner">
                                                 <motion.div
@@ -1042,8 +1042,8 @@ export function Dashboard() {
                                                 </motion.div>
                                             </div>
                                             <div className="flex justify-between items-center">
-                                                <span className="text-[11px] font-bold text-text-muted tracking-tight">{formatDuration(proj.minutes)} tracked</span>
-                                                <div className="px-2 py-1 rounded-lg bg-success/10 text-[10px] font-bold text-success border border-success/20">
+                                                <span className="text-[13px] font-bold text-text-main tabular-nums">{formatDuration(proj.minutes)} <span className="text-text-muted font-normal text-[12px]">tracked</span></span>
+                                                <div className="px-2.5 py-1 rounded-lg bg-success/10 text-[11px] font-bold text-success border border-success/20">
                                                     {Math.round((proj.minutes / (stats.totalProductiveMinutes || 1)) * 100)}%
                                                 </div>
                                             </div>
@@ -1078,17 +1078,17 @@ export function Dashboard() {
                                     <EmptyState icon={<Monitor />} title="Awaiting application data" className="py-12" />
                                 ) : (
                                     appUsage.map((app, i) => (
-                                        <div key={i} className="flex items-center justify-between px-5 py-4 md:px-10 md:py-5 hover:bg-surface-hover/50 transition-all duration-300 group">
+                                        <div key={i} className="flex items-center justify-between px-6 py-4.5 hover:bg-surface-hover/50 transition-all duration-300 group">
                                             <div className="flex items-center gap-4 min-w-0">
                                                 <AppIcon name={app.name} className="w-10 h-10 shadow-sm" />
                                                 <div className="flex flex-col min-w-0">
-                                                    <span className="text-[13px] font-bold text-text-main tracking-tight truncate group-hover:text-primary transition-colors">{app.name}</span>
-                                                    <span className="text-[9px] text-text-muted font-bold mt-1 opacity-60">System Process</span>
+                                                    <span className="text-[14px] font-bold text-text-main tracking-tight truncate group-hover:text-primary transition-colors">{app.name}</span>
+                                                    <span className="text-[12px] text-text-muted font-medium mt-0.5">System Process</span>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-6">
-                                                <span className="text-[11px] text-text-muted font-bold tracking-tight">{formatDuration(app.minutes)}</span>
-                                                <div className="text-[12px] font-bold text-success w-12 h-9 flex items-center justify-center bg-success/10 border border-success/20 rounded-xl group-hover:bg-success/20 transition-all tabular-nums">
+                                            <div className="flex items-center gap-5">
+                                                <span className="text-[13px] font-bold text-text-main tabular-nums">{formatDuration(app.minutes)}</span>
+                                                <div className="px-2.5 py-1 rounded-lg bg-success/10 text-[11px] font-bold text-success border border-success/20 tabular-nums">
                                                     {Math.round(app.percent)}%
                                                 </div>
                                             </div>

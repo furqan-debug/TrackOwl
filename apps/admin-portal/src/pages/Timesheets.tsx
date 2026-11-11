@@ -1363,6 +1363,17 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
         return `${start} – ${end}`;
     };
 
+    const getSessionTooltip = (s: any) => {
+        const startTime = s.isAggregated ? s.min_start : s.started_at;
+        const endTime = s.isAggregated ? s.max_end : (s.effective_end || s.ended_at);
+        const start = new Date(startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase();
+        const end = s.is_active ? 'Present (Live)' : endTime ? new Date(endTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', timeZone: s.display_timezone }).toLowerCase() : '...';
+        const project = s.project_name ? `${s.project_name} • ` : '';
+        const duration = formatDuration(s.duration_mins || 0);
+        const manualTag = s.manual ? ' [Manual Entry]' : '';
+        return `${project}${start} – ${end} (${duration})${manualTag}`;
+    };
+
     return (
         <div className="space-y-6 md:space-y-8 pb-16">
             <div className="flex items-center justify-between">
@@ -1372,25 +1383,53 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                 </div>
             </div>
 
-            {/* 3% black is invisible on the light ground (#F8FAFC). The track and
-                its quarter-day ticks are drawn from the border token instead, so
-                each theme gets a value chosen for its own background. */}
-            <div className="relative h-2.5 bg-surface-hover dark:bg-white/[0.05] rounded-full my-6 md:my-8 overflow-hidden ring-1 ring-border">
-                <div className="absolute inset-0 z-0 pointer-events-none">
-                    <span className="absolute w-px h-full bg-border left-1/4" />
-                    <span className="absolute w-px h-full bg-border left-1/2" />
-                    <span className="absolute w-px h-full bg-border left-3/4" />
+            {/* 24-Hour Visual Time Bar */}
+            <div className="my-6 md:my-8 space-y-2">
+                <div className="relative h-3 bg-surface-hover dark:bg-white/[0.05] rounded-full overflow-hidden ring-1 ring-border">
+                    <div className="absolute inset-0 z-0 pointer-events-none">
+                        <span className="absolute w-px h-full bg-border left-1/4" />
+                        <span className="absolute w-px h-full bg-border left-1/2" />
+                        <span className="absolute w-px h-full bg-border left-3/4" />
+                    </div>
+                    {day.sessions.map((s, i) => {
+                        const d = new Date(s.started_at);
+                        const formattedDate = new Date(d.toLocaleString('en-US', { timeZone: s.display_timezone }));
+                        const left = ((formattedDate.getHours() * 60 + formattedDate.getMinutes()) / 1440) * 100;
+                        const duration = s.duration_mins || 0;
+                        const width = (duration / 1440) * 100;
+
+                        // Color-coding: manual time in warning amber, live active in emerald accent, standard in brand gold
+                        const sessionGradient = s.manual
+                            ? 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)'
+                            : s.is_active
+                            ? 'linear-gradient(90deg, #10b981 0%, #059669 100%)'
+                            : 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--gold-vibrant) 100%)';
+
+                        return (
+                            <div
+                                key={i}
+                                title={getSessionTooltip(s)}
+                                className={clsx(
+                                    "absolute inset-y-0 rounded-full z-10 shadow-sm transition-all hover:brightness-125 cursor-pointer",
+                                    s.is_active && "animate-pulse"
+                                )}
+                                style={{
+                                    left: `${left}%`,
+                                    width: `${Math.max(width, 0.6)}%`,
+                                    background: sessionGradient
+                                }}
+                            />
+                        );
+                    })}
                 </div>
-                {day.sessions.map((s, i) => {
-                    const d = new Date(s.started_at);
-                    const formattedDate = new Date(d.toLocaleString('en-US', { timeZone: s.display_timezone }));
-                    const left = ((formattedDate.getHours() * 60 + formattedDate.getMinutes()) / 1440) * 100;
-                    const duration = s.duration_mins || 0;
-                    const width = (duration / 1440) * 100;
-                    return (
-                        <div key={i} className="absolute inset-y-0 rounded-full z-10 shadow-sm transition-all" style={{ left: `${left}%`, width: `${Math.max(width, 0.5)}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--gold-vibrant) 100%)' }} />
-                    );
-                })}
+                {/* 24-hour day axis markers aligned to ticks */}
+                <div className="relative text-[10px] font-semibold text-text-muted/60 h-4 select-none">
+                    <span className="absolute left-0">12 AM</span>
+                    <span className="absolute left-1/4 -translate-x-1/2">6 AM</span>
+                    <span className="absolute left-1/2 -translate-x-1/2">12 PM</span>
+                    <span className="absolute left-3/4 -translate-x-1/2">6 PM</span>
+                    <span className="absolute right-0">12 AM</span>
+                </div>
             </div>
 
             <div className="bg-surface rounded-xl border border-border shadow-shell-sm overflow-x-auto no-scrollbar">
