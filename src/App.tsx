@@ -994,6 +994,21 @@ export default function App() {
   }, [isPaused]);
   const [liveElapsed, setLiveElapsed] = useState<number>(0);
   const sessionElapsedRef = useRef<number>(0);
+  /**
+   * When the tracker last proved it was still recording.
+   *
+   * The live counter is a plain wall-clock timer: left to itself it has no idea
+   * whether anything is reaching the cache or the server. When sampling stalls —
+   * a machine that has gone to sleep, a sampler thread that has died, a session
+   * closed underneath the UI — it used to carry on inventing time that nothing
+   * would ever account for. A member accrued nearly five hours overnight that
+   * way and was then stopped by his daily limit on half a day of real work.
+   * Samples arrive once a minute, so anything past a few of those is a stall.
+   */
+  const lastSampleAtRef = useRef<number>(0);
+  /** Samples arrive once a minute; five minutes of silence is a stall. */
+  const SAMPLE_STALL_MS = 5 * 60_000;
+  const stallLoggedRef = useRef<boolean>(false);
   const sessionStartTodaySecsRef = useRef<number | null>(null);
 
   const [sessionId, _setSessionId] = useState<string | null>(null);
@@ -1884,9 +1899,17 @@ export default function App() {
         console.warn('[App] discardIdleTime ABORTED: Missing user or activeSessionId', { user: !!user, activeSessionId });
         return;
       }
-      const sb = await getSupabase();
+      let sb: any = null;
+      try {
+        sb = await getSupabase();
+      } catch (err) {
+        // Offline, or the client could not be built. The local correction below
+        // still has to happen, so carry on without a server connection.
+        console.error('[App] discardIdleTime: no Supabase client; correcting the local counter only:', err);
+      }
 
-      // 1. Delete idle samples from Supabase (via RPC + direct delete) AND the local SQLite cache.
+      // 1. Work out the cutoff. Deleting the rows happens at step 3, once the
+      //    counter in front of the member has already been put right.
       //    Block-aligned callers pass an explicit cutoff — the end of the last block
       //    that had activity — so a partially-worked block is never clipped. Callers
       //    without one fall back to a rolling window, with a 15s buffer for clock skew.
@@ -1898,23 +1921,6 @@ export default function App() {
         startTime = sessionStartIso;
       }
       console.log('[App] Executing idle sample discard from cutoff:', startTime, 'for session:', activeSessionId);
-
-      await Promise.all([
-        Promise.resolve(sb.rpc('rpc_discard_idle_samples', {
-          p_session_id: activeSessionId,
-          p_start_time: startTime,
-        })).then((res: any) => console.log('[App] rpc_discard_idle_samples response:', res))
-          .catch((err: any) => console.error('[App] rpc_discard_idle_samples error:', err)),
-        sb.from('activity_samples')
-          .delete()
-          .eq('session_id', activeSessionId)
-          .gte('recorded_at', startTime),
-        sb.from('block_records')
-          .update({ credited: false })
-          .eq('session_id', activeSessionId)
-          .gte('block_start', startTime),
-        trackerAPI.discardIdleCache(activeSessionId, startTime),
-      ]);
 
       // 2. Adjust local timer — subtract the discarded idle time from display.
       //    CRITICAL SAFETY BOUND: A session can ONLY discard time that was tracked
@@ -1948,6 +1954,37 @@ export default function App() {
       setLiveElapsed((prev: number) => Math.max(0, prev - safeDiscardSecs));
       // Reset live idle display to 0 — idle time is fully discarded, not carried forward
       setLiveIdleSeconds(0);
+
+      // 3. Clear the same time on the server.
+      //
+      // This runs AFTER the local correction, and its failure is logged rather
+      // than thrown. It used to run first and throw: a member whose machine lost
+      // the network overnight therefore kept every idle second on his on-screen
+      // clock, and the callers waiting on this promise — the idle pause and the
+      // org's inactivity auto-stop — never got to run at all. Deleting rows needs
+      // the network; correcting the counter in front of the member does not, and
+      // must not be held hostage to it.
+      if (!sb) return;
+      try {
+        await Promise.all([
+          Promise.resolve(sb.rpc('rpc_discard_idle_samples', {
+            p_session_id: activeSessionId,
+            p_start_time: startTime,
+          })).then((res: any) => console.log('[App] rpc_discard_idle_samples response:', res))
+            .catch((err: any) => console.error('[App] rpc_discard_idle_samples error:', err)),
+          sb.from('activity_samples')
+            .delete()
+            .eq('session_id', activeSessionId)
+            .gte('recorded_at', startTime),
+          sb.from('block_records')
+            .update({ credited: false })
+            .eq('session_id', activeSessionId)
+            .gte('block_start', startTime),
+          trackerAPI.discardIdleCache(activeSessionId, startTime),
+        ]);
+      } catch (err) {
+        console.error('[App] Server-side idle discard failed; the local counter has been corrected regardless:', err);
+      }
 
       if (shouldResume) {
         resumeFromIdle();
@@ -2043,6 +2080,33 @@ export default function App() {
 
   (window as any).discardIdleTime = discardIdleFromLastBlock;
   (window as any).reassignIdleTime = reassignIdleTime;
+
+  // ─── Proof of life for the live counter ──────────────────────────────────────
+  // Attached for the whole of every session, with no regard to idle settings or
+  // org options, because the counter it protects runs for every member. See
+  // lastSampleAtRef for what goes wrong without it.
+  useEffect(() => {
+    if (!isTracking) {
+      lastSampleAtRef.current = 0;
+      stallLoggedRef.current = false;
+      return;
+    }
+
+    // Count from now: the first sample of a session is a minute away.
+    lastSampleAtRef.current = Date.now();
+    stallLoggedRef.current = false;
+
+    let unlistenHeartbeat: (() => void) | null = null;
+    trackerAPI.onTrackingSample(() => {
+      lastSampleAtRef.current = Date.now();
+      if (stallLoggedRef.current) {
+        console.log('[tracker] Sampling resumed — the live counter is running again.');
+        stallLoggedRef.current = false;
+      }
+    }).then((un: any) => { unlistenHeartbeat = un; });
+
+    return () => { unlistenHeartbeat?.(); };
+  }, [isTracking]);
 
   useEffect(() => {
     if (!isTracking || (user && user.idle_enabled === false)) return;
@@ -2148,10 +2212,27 @@ export default function App() {
 
         if (mode === 'never') {
           setIdlePaused(true);
-          // Discard the idle block first, then close the session at the boundary.
-          discardIdleTime(idleMins, false, sample.session_id, cutoffIso)
-            .then(() => closeSessionForIdle(cutoffIso, sample.session_id))
-            .finally(() => { isHandlingIdleRef.current = false; });
+          // Discard the idle block, then close the session at the boundary.
+          //
+          // Closing is what actually pauses the clock — setIsPaused lives inside
+          // closeSessionForIdle. Hanging that off .then() meant a failed discard
+          // skipped it entirely: the session stayed open, tracking was never
+          // paused, and the counter carried on through the night. The close now
+          // runs whether the discard worked or not.
+          (async () => {
+            try {
+              await discardIdleTime(idleMins, false, sample.session_id, cutoffIso);
+            } catch (err) {
+              console.error('[idle] Could not discard the idle time; closing the session anyway:', err);
+            }
+            try {
+              await closeSessionForIdle(cutoffIso, sample.session_id);
+            } catch (err) {
+              // Last resort: whatever else failed, the clock must stop.
+              console.error('[idle] Closing the session failed; pausing the counter regardless:', err);
+              setIsPaused(true);
+            }
+          })().finally(() => { isHandlingIdleRef.current = false; });
           (trackerAPI as any).startIdleMonitoring(limit);
           return;
         }
@@ -2347,11 +2428,31 @@ export default function App() {
 
             console.log(`[abs-autostop] Org limit reached (${minsElapsed} min). Force-stopping session...`);
 
-            // Discard the trailing idle block before stopping so payroll is not inflated.
-            // We pass the accumulated idle minutes so the correct number of samples get purged.
-            await discardIdleTime(minsElapsed, false, sample.session_id);
+            // Stopping is the part that matters and the guard above has already
+            // been set, so nothing in here may be allowed to throw past it. It
+            // used to: the discard went first, threw when the network was gone,
+            // and left the guard set — which meant this safety net switched
+            // itself off for the rest of the session and never fired again. A
+            // member slept through a night on a clock that kept running.
+            //
+            // So: discard what we can, stop regardless, and if even the stop
+            // fails, release the guard and let the next idle minute try again.
+            try {
+              // Discard the trailing idle block before stopping so payroll is not inflated.
+              // We pass the accumulated idle minutes so the correct number of samples get purged.
+              await discardIdleTime(minsElapsed, false, sample.session_id);
+            } catch (err) {
+              console.error('[abs-autostop] Could not discard the idle time; stopping anyway:', err);
+            }
 
-            await handleStop();
+            try {
+              await handleStop();
+            } catch (err) {
+              console.error('[abs-autostop] Force-stop failed — re-arming so the next idle sample retries:', err);
+              isAutoTerminatingRef.current = false;
+              absoluteIdleRef.current = minsElapsed;
+              return;
+            }
 
             trackerAPI.showNotification(
               'Session Auto-Stopped',
@@ -2596,6 +2697,21 @@ ${note}` : heading
   useEffect(() => {
     if (isTracking && !isPaused) {
       timerRef.current = setInterval(() => {
+        // Only count a second if the tracker has recently proved it is still
+        // recording. Samples land once a minute, so five minutes of silence is
+        // a stall, not a gap — and time counted through a stall is time no one
+        // can ever account for. Holding the counter still is the honest answer:
+        // it stops the member's clock drifting away from the recorded day, and
+        // it stops a limit firing on hours that were never worked.
+        const lastSampleAt = lastSampleAtRef.current;
+        if (lastSampleAt > 0 && Date.now() - lastSampleAt > SAMPLE_STALL_MS) {
+          if (!stallLoggedRef.current) {
+            stallLoggedRef.current = true;
+            console.warn(`[tracker] No sample for over ${Math.round(SAMPLE_STALL_MS / 60000)} minutes — holding the live counter until recording resumes.`);
+          }
+          return;
+        }
+
         sessionElapsedRef.current += 1;
         setLiveElapsed(sessionElapsedRef.current);
 
