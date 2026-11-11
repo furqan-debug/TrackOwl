@@ -79,7 +79,7 @@ export function AppShell({ children }: AppShellProps) {
                     )}
 
                     <main className="flex-1 overflow-y-auto no-scrollbar">
-                        <div className="max-w-[1600px] mx-auto w-full min-h-full py-6 px-4 md:py-10 md:px-6 lg:px-10">
+                        <div className="max-w-[1600px] mx-auto w-full min-h-full py-4 px-3 md:py-6 md:px-4 lg:px-6">
                             {children}
                         </div>
                     </main>

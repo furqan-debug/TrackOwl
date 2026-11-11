@@ -50,10 +50,10 @@ export function PageLayout({
                     : 'max-w-none w-full';
 
     return (
-        <div className={clsx("p-4 md:px-10 md:py-12 w-full animate-in fade-in slide-in-from-top-4 duration-1000", maxClass)}>
+        <div className={clsx("p-4 md:px-6 md:py-6 w-full animate-in fade-in slide-in-from-top-4 duration-1000", maxClass)}>
             {(title || actions) && (
-                <div className="mb-6 md:mb-16 relative z-20">
-                    <div className="flex flex-col gap-4 md:gap-8 lg:flex-row lg:items-end lg:justify-between">
+                <div className="mb-4 md:mb-8 relative z-20">
+                    <div className="flex flex-col gap-3 md:gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div className="space-y-4">
                             {backButton && (
                                 <button
@@ -81,7 +81,7 @@ export function PageLayout({
                                 )}
                                 {title && (
                                     <div className="flex items-center gap-4">
-                                        <h1 className="text-3xl md:text-4xl font-bold heading-gradient tracking-tight font-heading">
+                                        <h1 className="text-2xl md:text-3xl font-bold heading-gradient tracking-tight font-heading">
                                             {title}
                                         </h1>
                                         {showFavorite && (

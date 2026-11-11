@@ -612,10 +612,10 @@ export function Dashboard() {
                     <LoadingState />
                 </div>
             ) : (
-            <div className="flex flex-col gap-12 pb-32">
+            <div className="flex flex-col gap-6 md:gap-8 pb-12">
 
                 {/* 📊 KPI Architecture */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-8 lg:gap-12">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 lg:gap-6">
                     <StatMetric
                         icon={<TrendingUp className="w-5 h-5" />}
                         label={isRep ? "Focus Score" : "Team Focus"}
@@ -653,9 +653,9 @@ export function Dashboard() {
                 </div>
 
                 {/* 📈 Analytics Row (Line & Donut Charts) */}
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6">
                     {/* Line Chart: Time Tracked */}
-                    <div className="lg:col-span-8 bg-surface rounded-2xl shadow-premium border border-border overflow-hidden flex flex-col min-h-[300px] md:min-h-[420px]">
+                    <div className="lg:col-span-8 bg-surface rounded-2xl shadow-premium border border-border overflow-hidden flex flex-col min-h-[220px] md:min-h-[320px]">
                         <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between min-h-20 md:min-h-21">
                             <div>
                                 <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Tracked</h3>
@@ -714,14 +714,14 @@ export function Dashboard() {
                     </div>
 
                     {/* Donut Chart: Time Distribution */}
-                    <div className="lg:col-span-4 bg-surface rounded-2xl shadow-premium border border-border overflow-hidden flex flex-col min-h-[300px] md:min-h-[420px]">
+                    <div className="lg:col-span-4 bg-surface rounded-2xl shadow-premium border border-border overflow-hidden flex flex-col min-h-[220px] md:min-h-[320px]">
                         <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between min-h-20 md:min-h-21">
                             <div>
                                 <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Distribution</h3>
                                 <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Breakdown by project</p>
                             </div>
                         </div>
-                        <div className="flex-1 flex flex-col p-6 md:p-8 items-center justify-between relative min-h-[240px] md:min-h-[300px]">
+                        <div className="flex-1 flex flex-col p-6 md:p-8 items-center justify-between relative min-h-[180px] md:min-h-[240px]">
                             {projectActivity.length === 0 ? (
                                 <EmptyState
                                     icon={<FolderOpen className="w-8 h-8 text-text-muted/20" />}
@@ -815,10 +815,10 @@ export function Dashboard() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
                     {/* 🖥️ Left Content: Activity Stream (70%) */}
-                    <div className="lg:col-span-7 flex flex-col min-h-[400px] lg:h-[780px]">
+                    <div className="lg:col-span-7 flex flex-col min-h-[400px] lg:max-h-[65vh]">
                         <div className="bg-surface rounded-2xl overflow-hidden flex flex-col h-full shadow-premium border border-border">
                             <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 gap-3 min-h-20 md:min-h-21">
                                 <div className="min-w-0">
@@ -921,7 +921,7 @@ export function Dashboard() {
                     </div>
 
                     {/* 👥 Right Content: Who's Online (30%) */}
-                    <div className="lg:col-span-5 flex flex-col min-h-[400px] lg:h-[780px]">
+                    <div className="lg:col-span-5 flex flex-col min-h-[400px] lg:max-h-[65vh]">
                         <div className="bg-surface rounded-2xl shadow-premium overflow-hidden flex flex-col h-full border border-border">
                             <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 min-h-20 md:min-h-21">
                                 <div>
@@ -1007,9 +1007,9 @@ export function Dashboard() {
                 </div>
 
                 {/* 📊 Secondary Metrics Row */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     {/* Project Velocity Chart */}
-                    <div className="glass-panel rounded-2xl shadow-premium overflow-hidden flex flex-col border border-border h-[450px]">
+                    <div className="glass-panel rounded-2xl shadow-premium overflow-hidden flex flex-col border border-border min-h-[320px] max-h-[55vh]">
                         <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border bg-surface/50 flex items-center justify-between shrink-0 min-h-20 md:min-h-21">
                             <div>
                                 <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Distribution</h3>
@@ -1055,7 +1055,7 @@ export function Dashboard() {
                     </div>
 
                     {/* App ecosystem Ledger */}
-                    <div className="glass-panel rounded-2xl shadow-premium overflow-hidden flex flex-col border border-border h-[450px]">
+                    <div className="glass-panel rounded-2xl shadow-premium overflow-hidden flex flex-col border border-border min-h-[320px] max-h-[55vh]">
                         <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border bg-surface/50 flex items-center justify-between shrink-0 min-h-20 md:min-h-21">
                             <div>
                                 <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Application Ecosystem</h3>
