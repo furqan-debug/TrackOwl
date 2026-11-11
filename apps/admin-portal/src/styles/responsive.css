@@ -1,0 +1,17 @@
+/* responsive.css – fluid spacing helpers */
+.pt-responsive {
+  padding-top: clamp(0.5rem, 2vw, 2rem);
+}
+.pb-responsive {
+  padding-bottom: clamp(0.5rem, 2vw, 2rem);
+}
+.px-responsive {
+  padding-left: clamp(0.5rem, 2vw, 2rem);
+  padding-right: clamp(0.5rem, 2vw, 2rem);
+}
+.mt-responsive {
+  margin-top: clamp(0.25rem, 1.5vw, 1.5rem);
+}
+.mb-responsive {
+  margin-bottom: clamp(0.25rem, 1.5vw, 1.5rem);
+}
