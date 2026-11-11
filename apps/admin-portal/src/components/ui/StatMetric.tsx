@@ -16,7 +16,7 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
 
     return (
         <div className={clsx(
-            "glass-panel rounded-[14px] p-6 transition-all duration-300 group relative overflow-hidden flex flex-col justify-between min-h-[180px]",
+            "glass-panel rounded-[14px] p-4 md:p-5 transition-all duration-300 group relative overflow-hidden flex flex-col justify-between min-h-[130px] md:min-h-[150px]",
             "shadow-[0_1px_3px_0_rgba(0,0,0,0.02),0_4px_12px_-2px_rgba(0,27,77,0.04)] dark:shadow-[0_1px_3px_0_rgba(0,0,0,0.2),0_4px_12px_-2px_rgba(0,0,0,0.3)]",
             isBrandGradient
                 ? "bg-gradient-to-br from-[var(--primary)]/5 via-transparent to-[var(--accent)]/5 border-primary/20 hover:border-accent/40"
@@ -37,9 +37,9 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
                 <div className="absolute -right-4 -top-4 w-32 h-32 blur-[50px] opacity-20 bg-gradient-to-br from-primary to-accent transition-opacity group-hover:opacity-40 pointer-events-none" />
             )}
 
-            <div className="flex items-center justify-between mb-5 relative z-10">
+            <div className="flex items-center justify-between mb-3 relative z-10">
                 <div className={clsx(
-                    "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-shell-sm",
+                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 shadow-shell-sm",
                     accent === 'emerald' && "bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20",
                     accent === 'amber' && "bg-amber-500/10 text-amber-500 group-hover:bg-amber-500/20",
                     accent === 'rose' && "bg-rose-500/10 text-rose-500 group-hover:bg-rose-500/20",
