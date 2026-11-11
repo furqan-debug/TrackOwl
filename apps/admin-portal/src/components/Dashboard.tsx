@@ -818,7 +818,7 @@ export function Dashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
 
                     {/* 🖥️ Left Content: Activity Stream (70%) */}
-                    <div className="lg:col-span-7 flex flex-col min-h-[400px] lg:max-h-[65vh]">
+                    <div className="lg:col-span-7 flex flex-col min-h-[400px] lg:h-[65vh]">
                         <div className="bg-surface rounded-2xl overflow-hidden flex flex-col h-full shadow-premium border border-border">
                             <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 gap-3 min-h-20 md:min-h-21">
                                 <div className="min-w-0">
@@ -921,7 +921,7 @@ export function Dashboard() {
                     </div>
 
                     {/* 👥 Right Content: Who's Online (30%) */}
-                    <div className="lg:col-span-5 flex flex-col min-h-[400px] lg:max-h-[65vh]">
+                    <div className="lg:col-span-5 flex flex-col min-h-[400px] lg:h-[65vh]">
                         <div className="bg-surface rounded-2xl shadow-premium overflow-hidden flex flex-col h-full border border-border">
                             <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 min-h-20 md:min-h-21">
                                 <div>
@@ -1009,7 +1009,7 @@ export function Dashboard() {
                 {/* 📊 Secondary Metrics Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
                     {/* Project Velocity Chart */}
-                    <div className="glass-panel rounded-2xl shadow-premium overflow-hidden flex flex-col border border-border min-h-[320px] max-h-[55vh]">
+                    <div className="glass-panel rounded-2xl shadow-premium overflow-hidden flex flex-col border border-border h-[55vh] min-h-[320px]">
                         <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border bg-surface/50 flex items-center justify-between shrink-0 min-h-20 md:min-h-21">
                             <div>
                                 <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Distribution</h3>
@@ -1055,7 +1055,7 @@ export function Dashboard() {
                     </div>
 
                     {/* App ecosystem Ledger */}
-                    <div className="glass-panel rounded-2xl shadow-premium overflow-hidden flex flex-col border border-border min-h-[320px] max-h-[55vh]">
+                    <div className="glass-panel rounded-2xl shadow-premium overflow-hidden flex flex-col border border-border h-[55vh] min-h-[320px]">
                         <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border bg-surface/50 flex items-center justify-between shrink-0 min-h-20 md:min-h-21">
                             <div>
                                 <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Application Ecosystem</h3>
