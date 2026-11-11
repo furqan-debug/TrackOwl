@@ -656,7 +656,7 @@ export function Dashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10">
                     {/* Line Chart: Time Tracked */}
                     <div className="lg:col-span-8 bg-surface rounded-2xl shadow-premium border border-border overflow-hidden flex flex-col min-h-[300px] md:min-h-[420px]">
-                        <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between min-h-[77px] md:min-h-[85px]">
+                        <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between min-h-20 md:min-h-21">
                             <div>
                                 <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Tracked</h3>
                                 <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Daily productivity for selected date</p>
@@ -715,7 +715,7 @@ export function Dashboard() {
 
                     {/* Donut Chart: Time Distribution */}
                     <div className="lg:col-span-4 bg-surface rounded-2xl shadow-premium border border-border overflow-hidden flex flex-col min-h-[300px] md:min-h-[420px]">
-                        <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between min-h-[77px] md:min-h-[85px]">
+                        <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between min-h-20 md:min-h-21">
                             <div>
                                 <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Distribution</h3>
                                 <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Breakdown by project</p>
@@ -820,7 +820,7 @@ export function Dashboard() {
                     {/* 🖥️ Left Content: Activity Stream (70%) */}
                     <div className="lg:col-span-7 flex flex-col min-h-[400px] lg:h-[780px]">
                         <div className="bg-surface rounded-2xl overflow-hidden flex flex-col h-full shadow-premium border border-border">
-                            <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 gap-3 min-h-[77px] md:min-h-[85px]">
+                            <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 gap-3 min-h-20 md:min-h-21">
                                 <div className="min-w-0">
                                     <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em] truncate">Visual Activity Stream</h3>
                                     <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">{isRep ? "Recent activity snapshots" : "Top 4 most active members"}</p>
@@ -923,7 +923,7 @@ export function Dashboard() {
                     {/* 👥 Right Content: Who's Online (30%) */}
                     <div className="lg:col-span-5 flex flex-col min-h-[400px] lg:h-[780px]">
                         <div className="bg-surface rounded-2xl shadow-premium overflow-hidden flex flex-col h-full border border-border">
-                            <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 min-h-[77px] md:min-h-[85px]">
+                            <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 min-h-20 md:min-h-21">
                                 <div>
                                     <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">{isRep ? 'My Presence' : (isTodayView ? 'Live Directory' : 'Team Directory')}</h3>
                                     <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">{isRep ? 'Current status and tracked time' : (isTodayView ? 'Real-time status updates' : 'Status for the selected date')}</p>
@@ -1010,7 +1010,7 @@ export function Dashboard() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Project Velocity Chart */}
                     <div className="glass-panel rounded-2xl shadow-premium overflow-hidden flex flex-col border border-border h-[450px]">
-                        <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border bg-surface/50 flex items-center justify-between shrink-0 min-h-[77px] md:min-h-[85px]">
+                        <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border bg-surface/50 flex items-center justify-between shrink-0 min-h-20 md:min-h-21">
                             <div>
                                 <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Distribution</h3>
                                 <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Active hours per project</p>
@@ -1056,7 +1056,7 @@ export function Dashboard() {
 
                     {/* App ecosystem Ledger */}
                     <div className="glass-panel rounded-2xl shadow-premium overflow-hidden flex flex-col border border-border h-[450px]">
-                        <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border bg-surface/50 flex items-center justify-between shrink-0 min-h-[77px] md:min-h-[85px]">
+                        <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border bg-surface/50 flex items-center justify-between shrink-0 min-h-20 md:min-h-21">
                             <div>
                                 <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Application Ecosystem</h3>
                                 <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Most utilized tools and platforms</p>
