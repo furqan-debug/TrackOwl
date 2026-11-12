@@ -940,8 +940,8 @@ export function Dashboard() {
                                 <table className="w-full text-left">
                                     <thead className="sticky top-0 bg-surface/90 backdrop-blur-md z-10">
                                         <tr className="border-b border-border">
-                                            <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">{isRep ? 'Member' : 'Team Member'}</th>
-                                            <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-right">Performance</th>
+                                            <th className="px-8 py-6 text-[11px] font-semibold text-gray-600 tracking-[0.2em]">{isRep ? 'Member' : 'Team Member'}</th>
+                                            <th className="px-8 py-6 text-[11px] font-semibold text-gray-600 tracking-[0.2em] text-right">Performance</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border">
