@@ -292,10 +292,10 @@ export function Projects() {
                                                 {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 && <Check className="w-3 h-3 stroke-[3]" />}
                                             </button>
                                         </th>
-                                        <th className="px-8 py-6 text-[11px] font-semibold text-slate-600 tracking-[0.2em] w-[30%]">Project</th>
-                                        <th className="px-8 py-6 text-[11px] font-semibold text-slate-600 tracking-[0.2em] w-[16%]">Tracking</th>
-                                        <th className="px-8 py-6 text-[11px] font-semibold text-slate-600 tracking-[0.2em] text-center w-[9%]">Team</th>
-                                        <th className="px-8 py-6 text-[11px] font-semibold text-slate-600 tracking-[0.2em]">Budget & Configuration</th>
+                                        <th className="px-6 py-6 text-[11px] font-semibold text-slate-600 tracking-[0.2em] w-[30%]">Project</th>
+                                        <th className="px-6 py-6 text-[11px] font-semibold text-slate-600 tracking-[0.2em] w-[16%]">Tracking</th>
+                                        <th className="px-6 py-6 text-[11px] font-semibold text-slate-600 tracking-[0.2em] text-center w-[9%]">Team</th>
+                                        <th className="px-6 py-6 text-[11px] font-semibold text-slate-600 tracking-[0.2em]">Budget & Configuration</th>
                                         <th className="pr-8 py-4 w-12"></th>
                                     </tr>
                                 </thead>
