@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import {
     Search, Plus,
-    Check, Users,
+    Check,
     Trash2, Archive,
     Building2, Briefcase, Layers,
     ArrowUpRight
@@ -351,6 +351,24 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
 
     const limit = project.budget_limit || 0;
 
+    // Generate a consistent avatar color from a UUID seed
+    const avatarColors = [
+        { bg: 'bg-violet-100', text: 'text-violet-700', border: 'border-violet-200' },
+        { bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-200'   },
+        { bg: 'bg-emerald-100',text: 'text-emerald-700',border: 'border-emerald-200'},
+        { bg: 'bg-amber-100',  text: 'text-amber-700',  border: 'border-amber-200'  },
+        { bg: 'bg-rose-100',   text: 'text-rose-700',   border: 'border-rose-200'   },
+        { bg: 'bg-cyan-100',   text: 'text-cyan-700',   border: 'border-cyan-200'   },
+        { bg: 'bg-fuchsia-100',text: 'text-fuchsia-700',border: 'border-fuchsia-200'},
+        { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
+    ];
+    const getAvatarColor = (id: string) => {
+        const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        return avatarColors[hash % avatarColors.length];
+    };
+    // Derive a short label from the UUID (first 2 chars, uppercased)
+    const getInitials = (id: string) => id.replace(/-/g, '').slice(0, 2).toUpperCase();
+
     return (
         <tr 
             onClick={onEdit}
@@ -419,23 +437,34 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                 </div>
             </td>
             <td className="px-6 py-3 text-center">
-                <div className="h-10 flex items-center justify-center -space-x-2">
+                <div className="h-10 flex items-center justify-center">
                     {(project.memberCount || 0) > 0 ? (
-                        <>
-                            {[0, 1, 2].slice(0, project.memberCount || 0).map((_, i) => (
-                                <div
-                                    key={i}
-                                    className="w-8 h-8 rounded-lg border-2 border-white bg-main flex items-center justify-center text-text-muted shadow-shell-sm"
-                                >
-                                    <Users className="w-3 h-3" />
-                                </div>
-                            ))}
-                            {(project.memberCount || 0) > 3 && (
-                                <div className="w-8 h-8 rounded-lg border-2 border-white bg-slate-900 flex items-center justify-center text-[9px] font-bold text-white shadow-shell-sm">
-                                    +{(project.memberCount || 0) - 3}
-                                </div>
+                        <div className="flex items-center gap-2">
+                            {/* Overlapping avatar stack — up to 3 */}
+                            <div className="flex -space-x-2">
+                                {project.memberIds.slice(0, 3).map((id) => {
+                                    const c = getAvatarColor(id);
+                                    return (
+                                        <div
+                                            key={id}
+                                            title={id}
+                                            className={clsx(
+                                                "w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold shadow-sm ring-1 ring-black/5",
+                                                c.bg, c.text
+                                            )}
+                                        >
+                                            {getInitials(id)}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            {/* +N overflow pill */}
+                            {project.memberCount > 3 && (
+                                <span className="text-[11px] font-bold text-slate-500">
+                                    +{project.memberCount - 3}
+                                </span>
                             )}
-                        </>
+                        </div>
                     ) : (
                         <div className="text-[11px] font-bold text-slate-500 italic">Unassigned</div>
                     )}
