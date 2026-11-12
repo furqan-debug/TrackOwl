@@ -276,10 +276,10 @@ export function Projects() {
                         </div>
 
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left border-collapse">
+                            <table className="w-full text-left border-collapse min-w-[720px]">
                                 <thead>
                                     <tr className="bg-surface-hover/50 border-b border-border">
-                                        <th className="pl-8 py-3 w-12">
+                                        <th className="pl-8 py-3 w-10">
                                             <button
                                                 onClick={toggleSelectAll}
                                                 className={clsx(
@@ -292,10 +292,10 @@ export function Projects() {
                                                 {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 && <Check className="w-3 h-3 stroke-[3]" />}
                                             </button>
                                         </th>
-                                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-600 tracking-[0.2em] w-[30%]">Project</th>
-                                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-600 tracking-[0.2em] w-[16%]">Tracking</th>
-                                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-600 tracking-[0.2em] text-center w-[9%]">Team</th>
-                                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-600 tracking-[0.2em]">Budget & Configuration</th>
+                                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-600 tracking-[0.2em] min-w-[220px]">Project</th>
+                                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-600 tracking-[0.2em] whitespace-nowrap min-w-[160px]">Tracking</th>
+                                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-600 tracking-[0.2em] text-center whitespace-nowrap min-w-[80px]">Team</th>
+                                        <th className="px-6 py-4 text-[11px] font-semibold text-slate-600 tracking-[0.2em] whitespace-nowrap min-w-[200px]">Budget & Configuration</th>
                                         <th className="pr-8 py-3 w-12"></th>
                                     </tr>
                                 </thead>
@@ -405,7 +405,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                 </div>
             </td>
             <td className="px-6 py-3">
-                <div className="h-10 flex flex-col justify-center gap-1.5">
+                <div className="h-10 flex flex-col justify-center gap-1.5 whitespace-nowrap">
                     <div className="flex items-start gap-2">
                         {project.allow_tracking ? (
                             <span className="text-[12px] font-bold text-emerald-500 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-md tracking-tight">Tracking Enabled</span>
@@ -442,7 +442,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                 </div>
             </td>
             <td className="px-6 py-3 min-w-[200px]">
-                <div className="h-10 flex flex-col justify-center gap-1">
+                <div className="h-10 flex flex-col justify-center gap-1 whitespace-nowrap">
                     <span className="text-[13px] font-bold text-text-main">
                         {project.budget_type && project.budget_type !== 'No budget' ? project.budget_type : 'No budget limits'}
                     </span>
