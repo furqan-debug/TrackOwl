@@ -16,11 +16,18 @@ import {
     StatMetric,
     RowMenu
 } from '../components/ui';
+import { SecureImage } from '../components/ui/SecureImage';
 import { useNavigate } from 'react-router-dom';
 import { readProjectsCache, writeProjectsCache, invalidateProjectsCache } from '../lib/projectsCache';
 
 type ProjectStatus = 'Active' | 'Archived';
 type BudgetType = 'No budget' | 'Total hours' | 'Total amount' | 'Monthly hours' | 'Monthly amount';
+
+export interface ProjectMemberInfo {
+    id: string;
+    fullName?: string;
+    avatarUrl?: string | null;
+}
 
 interface Project {
     id: string;
@@ -42,6 +49,7 @@ interface Project {
     teamCount: number;
     todoCount: number;
     memberIds: string[];
+    members?: ProjectMemberInfo[];
     teamIds: string[];
     created_at: string;
     tracked_seconds?: number;
@@ -81,7 +89,10 @@ export function Projects() {
                 .select(`
                     *,
                     clients (name),
-                    project_members (member_id),
+                    project_members (
+                        member_id,
+                        members (id, full_name, avatar_url)
+                    ),
                     project_teams (team_id),
                     todos (id)
                 `)
@@ -101,15 +112,26 @@ export function Projects() {
 
             if (error) throw error;
 
-            const formatted = (data || []).map((p: any) => ({
-                ...p,
-                client_name: p.clients?.name,
-                memberCount: p.project_members?.length || 0,
-                teamCount: p.project_teams?.length || 0,
-                todoCount: p.todos?.length || 0,
-                memberIds: p.project_members?.map((m: any) => m.member_id) || [],
-                teamIds: p.project_teams?.map((t: any) => t.team_id) || []
-            }));
+            const formatted = (data || []).map((p: any) => {
+                const members: ProjectMemberInfo[] = (p.project_members || [])
+                    .map((pm: any) => ({
+                        id: pm.member_id || pm.members?.id,
+                        fullName: pm.members?.full_name,
+                        avatarUrl: pm.members?.avatar_url
+                    }))
+                    .filter((m: any) => Boolean(m.id));
+
+                return {
+                    ...p,
+                    client_name: p.clients?.name,
+                    memberCount: Math.max(p.project_members?.length || 0, members.length),
+                    teamCount: p.project_teams?.length || 0,
+                    todoCount: p.todos?.length || 0,
+                    memberIds: members.map((m: any) => m.id),
+                    members,
+                    teamIds: p.project_teams?.map((t: any) => t.team_id) || []
+                };
+            });
 
             setProjects(formatted);
 
@@ -332,6 +354,60 @@ export function Projects() {
     );
 }
 
+const avatarColors = [
+    { bg: 'bg-violet-100', text: 'text-violet-700' },
+    { bg: 'bg-blue-100',   text: 'text-blue-700'   },
+    { bg: 'bg-emerald-100',text: 'text-emerald-700'},
+    { bg: 'bg-amber-100',  text: 'text-amber-700'  },
+    { bg: 'bg-rose-100',   text: 'text-rose-700'   },
+    { bg: 'bg-cyan-100',   text: 'text-cyan-700'   },
+    { bg: 'bg-fuchsia-100',text: 'text-fuchsia-700'},
+    { bg: 'bg-orange-100', text: 'text-orange-700' },
+];
+
+function getAvatarColor(seed: string) {
+    const hash = (seed || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    return avatarColors[hash % avatarColors.length];
+}
+
+function getInitials(nameOrEmail?: string) {
+    if (!nameOrEmail) return '?';
+    const clean = nameOrEmail.includes('@') ? nameOrEmail.split('@')[0] : nameOrEmail;
+    const parts = clean.trim().split(/[\s._-]+/).filter(Boolean);
+    if (parts.length >= 2) {
+        return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+    return clean.slice(0, 2).toUpperCase();
+}
+
+function MemberAvatarItem({ member }: { member: ProjectMemberInfo }) {
+    const c = getAvatarColor(member.fullName || member.id);
+    const initials = getInitials(member.fullName || member.id);
+
+    return (
+        <div
+            key={member.id}
+            title={member.fullName || undefined}
+            className={clsx(
+                "w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold shadow-sm ring-1 ring-black/5 overflow-hidden shrink-0",
+                c.bg, c.text
+            )}
+        >
+            {member.avatarUrl ? (
+                <SecureImage
+                    path={member.avatarUrl}
+                    bucket="avatars"
+                    alt={member.fullName || 'Member'}
+                    className="w-full h-full object-cover"
+                    fallback={<span>{initials}</span>}
+                />
+            ) : (
+                <span>{initials}</span>
+            )}
+        </div>
+    );
+}
+
 function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer }: { project: Project; isSelected: boolean; onSelect: () => void; onEdit: () => void; onRefresh: () => void; isViewer: boolean }) {
     async function handleArchive() {
         try {
@@ -350,24 +426,6 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
     }
 
     const limit = project.budget_limit || 0;
-
-    // Generate a consistent avatar color from a UUID seed
-    const avatarColors = [
-        { bg: 'bg-violet-100', text: 'text-violet-700', border: 'border-violet-200' },
-        { bg: 'bg-blue-100',   text: 'text-blue-700',   border: 'border-blue-200'   },
-        { bg: 'bg-emerald-100',text: 'text-emerald-700',border: 'border-emerald-200'},
-        { bg: 'bg-amber-100',  text: 'text-amber-700',  border: 'border-amber-200'  },
-        { bg: 'bg-rose-100',   text: 'text-rose-700',   border: 'border-rose-200'   },
-        { bg: 'bg-cyan-100',   text: 'text-cyan-700',   border: 'border-cyan-200'   },
-        { bg: 'bg-fuchsia-100',text: 'text-fuchsia-700',border: 'border-fuchsia-200'},
-        { bg: 'bg-orange-100', text: 'text-orange-700', border: 'border-orange-200' },
-    ];
-    const getAvatarColor = (id: string) => {
-        const hash = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-        return avatarColors[hash % avatarColors.length];
-    };
-    // Derive a short label from the UUID (first 2 chars, uppercased)
-    const getInitials = (id: string) => id.replace(/-/g, '').slice(0, 2).toUpperCase();
 
     return (
         <tr 
@@ -442,21 +500,12 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                         <div className="flex items-center gap-2">
                             {/* Overlapping avatar stack — up to 3 */}
                             <div className="flex -space-x-2">
-                                {project.memberIds.slice(0, 3).map((id) => {
-                                    const c = getAvatarColor(id);
-                                    return (
-                                        <div
-                                            key={id}
-                                            title={id}
-                                            className={clsx(
-                                                "w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold shadow-sm ring-1 ring-black/5",
-                                                c.bg, c.text
-                                            )}
-                                        >
-                                            {getInitials(id)}
-                                        </div>
-                                    );
-                                })}
+                                {((project.members && project.members.length > 0)
+                                    ? project.members
+                                    : project.memberIds.map(id => ({ id }))
+                                ).slice(0, 3).map((m) => (
+                                    <MemberAvatarItem key={m.id} member={m} />
+                                ))}
                             </div>
                             {/* +N overflow pill */}
                             {project.memberCount > 3 && (

@@ -6,11 +6,12 @@ import { getCachedUrl, setCachedUrl } from '../../lib/urlCache';
 interface SecureImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
     path: string;
     bucket?: string;
+    fallback?: React.ReactNode;
 }
 
 const EXPIRY_SECONDS = 86400; // 24 hours
 
-export function SecureImage({ path, bucket = 'screenshots', className, ...props }: SecureImageProps) {
+export function SecureImage({ path, bucket = 'screenshots', className, fallback, ...props }: SecureImageProps) {
     const [url, setUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
@@ -80,6 +81,9 @@ export function SecureImage({ path, bucket = 'screenshots', className, ...props 
     }, [path, bucket]);
 
     if (loading) {
+        if (fallback) {
+            return <>{fallback}</>;
+        }
         return (
             <div className={`flex items-center justify-center bg-surface-hover/50 ${className}`}>
                 <Loader2 className="w-5 h-5 animate-spin text-blue-600/20" />
@@ -88,6 +92,9 @@ export function SecureImage({ path, bucket = 'screenshots', className, ...props 
     }
 
     if (error || !url) {
+        if (fallback) {
+            return <>{fallback}</>;
+        }
         return (
             <div className={`flex items-center justify-center bg-main text-text-muted ${className}`}>
                 <ImageOff className="w-5 h-5" />
