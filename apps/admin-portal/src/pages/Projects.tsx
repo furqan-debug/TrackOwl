@@ -393,7 +393,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                                 {project.name}
                             </button>
                             <div className="flex items-center gap-3">
-                                <span className="text-[13px] font-bold text-text-muted ">
+                                <span className="text-[13px] font-bold text-slate-500 ">
                                     {project.client_name || 'Internal'}
                                 </span>
                                 {project.billable && (
@@ -414,7 +414,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                         )}
                     </div>
                     {project.allow_tracking && !project.disable_idle_time && (
-                        <span className="text-[11px] font-bold text-text-muted tracking-tight">Idle tracking active</span>
+                        <span className="text-[12px] font-bold text-slate-500 tracking-tight">Idle tracking active</span>
                     )}
                 </div>
             </td>
@@ -437,7 +437,7 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                             )}
                         </>
                     ) : (
-                        <div className="text-[10px] font-bold text-text-muted italic">Unassigned</div>
+                        <div className="text-[11px] font-bold text-slate-500 italic">Unassigned</div>
                     )}
                 </div>
             </td>
@@ -447,12 +447,12 @@ function ProjectRow({ project, isSelected, onSelect, onEdit, onRefresh, isViewer
                         {project.budget_type && project.budget_type !== 'No budget' ? project.budget_type : 'No budget limits'}
                     </span>
                     {limit > 0 && project.budget_type && project.budget_type !== 'No budget' && (
-                        <span className="text-[11px] font-bold text-text-muted tracking-tight">
+                        <span className="text-[12px] font-bold text-slate-500 tracking-tight">
                             Limit: <span className="text-primary">{limit}</span> {project.budget_type.includes('hours') ? 'hrs' : project.budget_type.includes('amount') ? 'USD' : ''}
                         </span>
                     )}
                     {project.budget_notifications && (
-                        <span className="text-[10px] font-bold text-[var(--chart-gold)] tracking-tight">Alerts enabled</span>
+                        <span className="text-[11px] font-bold text-[var(--chart-gold)] tracking-tight">Alerts enabled</span>
                     )}
                 </div>
             </td>
