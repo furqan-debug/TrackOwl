@@ -271,21 +271,7 @@ export function Projects() {
                                         {activeTab === 'Active' ? 'Archive' : 'Restore'} ({selectedIds.size})
                                     </button>
                                 )}
-                                <div className={clsx(
-                                    "flex items-center gap-4 px-6 py-2.5 rounded-full border",
-                                    activeTab === 'Active'
-                                        ? "bg-emerald-500/10 border-emerald-500/20"
-                                        : "bg-text-muted/10 border-text-muted/20"
-                                )}>
-                                    <div className={clsx(
-                                        "w-2 h-2 rounded-full",
-                                        activeTab === 'Active' ? "bg-emerald-500 animate-pulse" : "bg-text-muted"
-                                    )} />
-                                    <span className={clsx(
-                                        "text-[12px] font-bold",
-                                        activeTab === 'Active' ? "text-emerald-500" : "text-text-muted"
-                                    )}>{activeTab === 'Active' ? 'Online Now' : 'Paused'}</span>
-                                </div>
+                                
                             </div>
                         </div>
 
@@ -306,10 +292,10 @@ export function Projects() {
                                                 {selectedIds.size === filteredProjects.length && filteredProjects.length > 0 && <Check className="w-3 h-3 stroke-[3]" />}
                                             </button>
                                         </th>
-                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] w-[30%]">Project</th>
-                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] w-[16%]">Tracking</th>
-                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-center w-[9%]">Team</th>
-                                        <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">Budget & Configuration</th>
+                                        <th className="px-8 py-6 text-[11px] font-semibold text-slate-600 tracking-[0.2em] w-[30%]">Project</th>
+                                        <th className="px-8 py-6 text-[11px] font-semibold text-slate-600 tracking-[0.2em] w-[16%]">Tracking</th>
+                                        <th className="px-8 py-6 text-[11px] font-semibold text-slate-600 tracking-[0.2em] text-center w-[9%]">Team</th>
+                                        <th className="px-8 py-6 text-[11px] font-semibold text-slate-600 tracking-[0.2em]">Budget & Configuration</th>
                                         <th className="pr-8 py-4 w-12"></th>
                                     </tr>
                                 </thead>
