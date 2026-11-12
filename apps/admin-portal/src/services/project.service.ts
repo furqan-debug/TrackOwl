@@ -8,7 +8,10 @@ export const projectService = {
         .select(`
             *,
             clients (name),
-            project_members (member_id),
+            project_members (
+                member_id,
+                members (id, full_name, avatar_url)
+            ),
             project_teams (team_id),
             todos (id)
         `)
@@ -17,15 +20,26 @@ export const projectService = {
 
     if (error) throw error;
 
-    return (data || []).map((p: any) => ({
-        ...p,
-        client_name: p.clients?.name,
-        memberCount: p.project_members?.length || 0,
-        teamCount: p.project_teams?.length || 0,
-        todoCount: p.todos?.length || 0,
-        memberIds: p.project_members?.map((m: any) => m.member_id) || [],
-        teamIds: p.project_teams?.map((t: any) => t.team_id) || []
-    }));
+    return (data || []).map((p: any) => {
+        const members = (p.project_members || [])
+            .map((pm: any) => ({
+                id: pm.member_id || pm.members?.id,
+                fullName: pm.members?.full_name,
+                avatarUrl: pm.members?.avatar_url
+            }))
+            .filter((m: any) => Boolean(m.id));
+
+        return {
+            ...p,
+            client_name: p.clients?.name,
+            memberCount: Math.max(p.project_members?.length || 0, members.length),
+            teamCount: p.project_teams?.length || 0,
+            todoCount: p.todos?.length || 0,
+            memberIds: members.map((m: any) => m.id),
+            members,
+            teamIds: p.project_teams?.map((t: any) => t.team_id) || []
+        };
+    });
   },
 
   async updateProjectStatus(id: string, status: ProjectStatus): Promise<void> {

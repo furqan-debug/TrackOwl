@@ -54,6 +54,12 @@ export interface Organization {
 export type ProjectStatus = 'Active' | 'Archived';
 export type BudgetType = 'No budget' | 'Total hours' | 'Total amount' | 'Monthly hours' | 'Monthly amount';
 
+export interface ProjectMemberInfo {
+    id: string;
+    fullName?: string;
+    avatarUrl?: string | null;
+}
+
 export interface Project {
     id: string;
     organization_id: string;
@@ -75,6 +81,7 @@ export interface Project {
     teamCount?: number;
     todoCount?: number;
     memberIds?: string[];
+    members?: ProjectMemberInfo[];
     teamIds?: string[];
     created_at?: string;
     tracked_seconds?: number;
