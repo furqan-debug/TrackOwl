@@ -16,6 +16,12 @@ A workspace is created by signing up. There is no "new organisation" button insi
 1. Go to **trackowl.io/signup**.
 2. Sign up with Google, or with your work email and a password of at least 8 characters.
 
+![Settings to Org Settings in the sidebar, once the workspace exists.](/support/org-settings-nav.png)
+*Settings to **Org Settings** in the sidebar, once the workspace exists.*
+
+![Governance holds the organisation timezone. Set this before anyone tracks time.](/support/signup-set-org-timezone.png)
+*Governance holds the organisation timezone. Set this before anyone tracks time.*
+
 ---
 
 ## Step-by-Step Instructions
