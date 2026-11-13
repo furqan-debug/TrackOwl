@@ -56,7 +56,9 @@ jobs:
           cache: 'npm'
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.83.0
 
       - name: Add Rust Targets (macOS Universal)
         if: matrix.platform == 'macos-latest'
@@ -114,6 +116,7 @@ jobs:
       - name: Build & Publish Release
         uses: tauri-apps/tauri-action@v0
         env:
+          RUSTFLAGS: "--cap-lints warn"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Tauri updater signing key config
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -326,7 +329,9 @@ jobs:
           cache: 'npm'
           
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.83.0
         
       - name: Add Rust Target
         run: |
