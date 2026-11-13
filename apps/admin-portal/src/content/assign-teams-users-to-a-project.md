@@ -20,6 +20,12 @@ Understanding how to use the **Assign teams/users to a project** feature is esse
 2. In the left sidebar, open **Projects**.
 3. Select **Projects** (`/dashboard/projects`).
 
+![Projects to Projects in the sidebar, then New Project.](/support/projects-assign-nav.png)
+*Projects to Projects in the sidebar, then **New Project**.*
+
+![The Members panel beside the project form: search the team and tick everyone who should be on it.](/support/project-members-panel.png)
+*The **Members** panel beside the project form: search the team and tick everyone who should be on it.*
+
 ---
 
 ## Step-by-Step Instructions

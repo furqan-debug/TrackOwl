@@ -20,6 +20,9 @@ Understanding how to use the **Project budgets** feature is essential for maximi
 2. In the left sidebar, open **Projects**.
 3. Select **Projects** (`/dashboard/projects`).
 
+![Budget & Constraints on a project, with Budget Type open on its five options.](/support/project-budget-type.png)
+***Budget & Constraints** on a project, with **Budget Type** open on its five options.*
+
 ---
 
 ## Step-by-Step Instructions

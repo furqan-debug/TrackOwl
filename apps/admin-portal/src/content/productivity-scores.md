@@ -23,8 +23,8 @@ Productivity scores provide an automated, high-level metric (from 0 to 100%) ind
 3. Select **Activity Blocks** (`/dashboard/activity/blocks`).
 
 
-![The same score totalled across a date range on Reports, beside the hours worked.](/support/activity-score-reports.png)
-*The same score totalled across a date range on **Reports**, beside the hours worked.*
+![Activity Blocks: the ten-minute windows behind the score, with clicks, keystrokes and the app in use.](/support/activity-blocks-scores.png)
+*Activity Blocks: the ten-minute windows behind the score, with clicks, keystrokes and the app in use.*
 
 ---
 
