@@ -382,7 +382,7 @@ function AppFooter({ lastSyncTime, isSyncing, onSync, isOnline }: {
       } catch {
         // Fallback if not running in Tauri window
       }
-      setVersion((import.meta.env as any).VITE_APP_VERSION || '2.0.71');
+      setVersion((import.meta.env as any).VITE_APP_VERSION || '2.0.72');
     };
     fetchVersion();
 
