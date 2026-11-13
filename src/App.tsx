@@ -1266,21 +1266,23 @@ export default function App() {
           const endMs = b.block_end ? new Date(b.block_end).getTime() : startMs + 600000;
           const blockDurationSecs = Math.max(0, Math.min(600, Math.round((endMs - startMs) / 1000)));
 
-          const blockDate = b.business_date || (b.block_start
+          const blockStartStr = b.block_start
             ? new Date(b.block_start).toLocaleDateString('en-CA', { timeZone: orgTimezone })
-            : todayStr);
+            : null;
+          // Block belongs to today only if its block_start is today in org timezone
+          const isToday = blockStartStr ? (blockStartStr === todayStr) : (b.business_date === todayStr);
 
           if (b.credited) {
             statsMap[pid].weeklySeconds += blockDurationSecs;
             statsMap[pid].totalActivity += (b.activity_percent ?? 0);
             statsMap[pid].sampleCount++;
 
-            if (b.business_date === todayStr || blockDate === todayStr) {
+            if (isToday) {
               statsMap[pid].todaySeconds += blockDurationSecs;
             }
           } else {
             statsMap[pid].weeklyIdleSeconds += blockDurationSecs;
-            if (b.business_date === todayStr || blockDate === todayStr) {
+            if (isToday) {
               statsMap[pid].keptIdleSeconds += blockDurationSecs;
             }
           }

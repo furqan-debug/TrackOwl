@@ -84,7 +84,9 @@ impl BlockAccumulator {
         if self.samples.is_empty() {
             return None;
         }
-        Some(self.flush())
+        let block = self.flush();
+        self.block_start = None;
+        Some(block)
     }
 
     /// Force-flush a partial block with an explicit block_end timestamp.
@@ -94,12 +96,19 @@ impl BlockAccumulator {
             return None;
         }
         let mut block = self.flush();
-        // Override block_end with the actual stop timestamp, guaranteed >= block_start
+        self.block_start = None;
+
+        // Override block_end with the actual stop timestamp, strictly bounded to max 600s
         let b_start = chrono::DateTime::parse_from_rfc3339(&block.block_start)
             .ok()
             .map(|dt| dt.with_timezone(&chrono::Utc))
             .unwrap_or(stop_time);
-        let effective_stop = if stop_time >= b_start { stop_time } else { b_start };
+        let max_block_end = b_start + chrono::Duration::seconds(600);
+        let effective_stop = if stop_time >= b_start {
+            if stop_time > max_block_end { max_block_end } else { stop_time }
+        } else {
+            max_block_end
+        };
         block.block_end = effective_stop.to_rfc3339();
 
         // Recompute duration-based activity percent for this partial window
@@ -107,8 +116,8 @@ impl BlockAccumulator {
         let active_secs = block.active_seconds as f32;
         block.activity_percent = ((active_secs / window_secs.min(BLOCK_WINDOW_SECS)) * 100.0).min(100.0) as i32;
 
-        // Recompute business_date based on the real stop time
-        block.business_date = compute_business_date(&effective_stop, &self.org_timezone);
+        // Anchor business_date to the block start in org timezone
+        block.business_date = compute_business_date(&b_start, &self.org_timezone);
         Some(block)
     }
 
@@ -177,8 +186,8 @@ impl BlockAccumulator {
         let is_offline = samples.iter().any(|s| s.is_offline);
         let session_id = samples.first().map(|s| s.session_id.clone()).unwrap_or_default();
 
-        // Compute business_date in org timezone
-        let business_date = compute_business_date(&block_end, &self.org_timezone);
+        // Compute business_date in org timezone anchored to the block start
+        let business_date = compute_business_date(&block_start, &self.org_timezone);
 
         BlockRecord {
             session_id,
@@ -313,7 +322,17 @@ pub fn sync_blocks(
     if pending.is_empty() { return; }
 
     let ids: Vec<i64> = pending.iter().map(|(id, _)| *id).collect();
-    let payload: Vec<serde_json::Value> = pending.into_iter().map(|(_, b)| {
+    let payload: Vec<serde_json::Value> = pending.into_iter().map(|(_, mut b)| {
+        // Defensively clamp any stale block in local SQLite cache to max 600 seconds
+        let b_start = chrono::DateTime::parse_from_rfc3339(&b.block_start).ok();
+        let b_end   = chrono::DateTime::parse_from_rfc3339(&b.block_end).ok();
+        if let (Some(s), Some(e)) = (b_start, b_end) {
+            let max_end = s + chrono::Duration::seconds(600);
+            if e > max_end || e < s {
+                b.block_end = max_end.to_rfc3339();
+            }
+        }
+
         serde_json::json!({
             "session_id":       b.session_id,
             "block_start":      b.block_start,
