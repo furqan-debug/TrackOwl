@@ -452,7 +452,9 @@ export function Timesheets() {
                 if (isTrulyActive) {
                     effectiveEndMs = nowMs;
                 } else if (s.ended_at) {
-                    effectiveEndMs = lastSampleTime && dbEndMs ? Math.max(dbEndMs, lastSampleTime) : (dbEndMs || new Date(s.ended_at).getTime());
+                    const candidateEnd = lastSampleTime && dbEndMs ? Math.max(dbEndMs, lastSampleTime) : (dbEndMs || new Date(s.ended_at).getTime());
+                    // Defensive cap: last sample can never extend ended_at by more than 30 minutes
+                    effectiveEndMs = dbEndMs ? Math.min(candidateEnd, dbEndMs + 30 * 60000) : candidateEnd;
                 } else if (sampleCount > 0) {
                     effectiveEndMs = Math.max(lastSampleTime, startedAtMs);
                 } else {
