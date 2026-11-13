@@ -26,6 +26,9 @@ Understanding how to use the **View app usage** feature is essential for maximiz
 ![The App Usage panel on Activity to Screenshots: the tools used most that day, with a sampl](/support/screenshots-app-usage-panel.png)
 *The **App Usage** panel on **Activity → Screenshots**: the tools used most that day, with a sample count and share each.*
 
+![Activity to Apps & URLs: total apps, usage time, and the share of time each one took.](/support/apps-and-urls-distribution.png)
+***Activity → Apps & URLs**: total apps, usage time, and the share of time each one took.*
+
 ---
 
 ## Step-by-Step Instructions

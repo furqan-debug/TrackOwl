@@ -24,6 +24,9 @@ Understanding how to use the **Create a project** feature is essential for maxim
 ![Projects to Projects, then New Project.](/support/projects-new-project.png)
 ***Projects → Projects**, then **New Project**.*
 
+![The project form. Fill it in, then Create Project.](/support/new-project-create-button.png)
+*The project form. Fill it in, then **Create Project**.*
+
 ---
 
 ## Step-by-Step Instructions
