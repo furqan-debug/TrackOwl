@@ -23,6 +23,9 @@ Every capture on the Screenshots page can be selected. Once you have a selection
 3. Select **Screenshots** (`/dashboard/activity`).
 
 
+![Activity to Screenshots, then pick the member and the day.](/support/screenshots-member-picker.png)
+*Activity to **Screenshots**, then pick the member and the day.*
+
 ![The day’s captures, with Download above them. Select the ones you want, then download them](/support/captures-download.png)
 *The day’s captures, with **Download** above them. Select the ones you want, then download them together as a ZIP.*
 
