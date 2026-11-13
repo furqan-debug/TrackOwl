@@ -20,9 +20,6 @@ Project limits allow you to cap the total number of hours or budget a team can s
 2. In the left sidebar, open **Projects**.
 3. Select **Projects** (`/dashboard/projects`).
 
-![Budget Type: total hours or amount, or the same capped per month.](/support/project-limits-budget-type.png)
-***Budget Type**: total hours or amount, or the same capped per month.*
-
 ---
 
 ## Step-by-Step Instructions
