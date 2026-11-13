@@ -205,29 +205,29 @@ export function AcceptInvite() {
                                                     <Button 
                                                         className="w-full py-4 text-xs sm:text-sm font-semibold bg-gradient-to-b from-[#0078D7] to-[#005a9e] hover:from-[#006abc] hover:to-[#004d8c] text-white border-none shadow-lg shadow-[#0078D7]/20"
                                                         leftIcon={<WindowsLogo className="w-4 h-4" />}
-                                                        onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.71/TrackOwl_2.0.71_x64-setup.exe'}
+                                                        onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.72/TrackOwl_2.0.72_x64-setup.exe'}
                                                     >
                                                         Windows
                                                     </Button>
                                                     <Button 
                                                         className="w-full py-4 text-xs sm:text-sm font-semibold bg-gradient-to-b from-[#2d2d2d] to-[#111111] hover:from-[#1f1f1f] hover:to-[#000000] text-white border-none shadow-lg shadow-black/20"
                                                         leftIcon={<AppleLogo className="w-4 h-4" />}
-                                                        onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.71/TrackOwl_2.0.71_aarch64.dmg'}
+                                                        onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.72/TrackOwl_2.0.72_aarch64.dmg'}
                                                     >
                                                         macOS
                                                     </Button>
                                                     <Button 
                                                         className="w-full py-4 text-xs sm:text-sm font-semibold bg-gradient-to-b from-[#d97706] to-[#b45309] hover:from-[#b45309] hover:to-[#92400e] text-white border-none shadow-lg shadow-amber-600/20"
                                                         leftIcon={<LinuxLogo className="w-4 h-4" />}
-                                                        onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.71/TrackOwl_2.0.71_amd64.deb'}
+                                                        onClick={() => window.location.href = 'https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.72/TrackOwl_2.0.72_amd64.deb'}
                                                     >
                                                         Linux
                                                     </Button>
                                                 </div>
                                                 <p className="text-center text-[11px] font-medium text-text-muted mt-3">
-                                                    Older Intel Mac? <a href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.71/TrackOwl_2.0.71_x64.dmg" className="text-indigo-500 hover:text-indigo-400 hover:underline transition-colors">Download Intel</a>
+                                                    Older Intel Mac? <a href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.72/TrackOwl_2.0.72_x64.dmg" className="text-indigo-500 hover:text-indigo-400 hover:underline transition-colors">Download Intel</a>
                                                     {' • '}
-                                                    <a href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.71/TrackOwl_2.0.71_amd64.AppImage" className="text-indigo-500 hover:text-indigo-400 hover:underline transition-colors">Linux .AppImage</a>
+                                                    <a href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.72/TrackOwl_2.0.72_amd64.AppImage" className="text-indigo-500 hover:text-indigo-400 hover:underline transition-colors">Linux .AppImage</a>
                                                 </p>
                                             </div>
                                         </div>
