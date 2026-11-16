@@ -582,10 +582,10 @@ export function People() {
 
             <Card noPadding className="border border-border rounded-[24px] overflow-hidden shadow-shell-sm min-h-[500px]">
                     <div className="overflow-x-auto custom-scrollbar">
-                        <table className="w-full text-left border-collapse min-w-[1000px]">
+                        <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-surface-hover/50">
-                                    <th className="pl-8 py-4 w-12 border-b border-border">
+                                    <th className="pl-5 py-4 w-10 border-b border-border">
                                         <input
                                             type="checkbox"
                                             checked={isAllOnPageSelected}
@@ -593,14 +593,14 @@ export function People() {
                                             className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer transition-all"
                                         />
                                     </th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Member</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Role</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Engagement</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Rates</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Limits</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Geography</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Status</th>
-                                    <th className="pr-8 py-4 text-right text-[10px] font-bold text-text-muted border-b border-border">Actions</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border">Member</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border">Role</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Engagement</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Rates</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Limits</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border">Geography</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border">Status</th>
+                                    <th className="pr-5 py-4 text-right text-[10px] font-bold text-text-muted border-b border-border">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -757,7 +757,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                 "group/row transition-all cursor-pointer",
                 isSelected ? "bg-primary/5" : "hover:bg-surface-hover/50"
             )}>
-            <td className="pl-8 py-5">
+            <td className="pl-5 py-5">
                 <input
                     type="checkbox"
                     checked={isSelected}
@@ -766,7 +766,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer transition-all"
                 />
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-main border border-border flex items-center justify-center text-text-muted text-[11px] font-bold shadow-shell-sm group-hover/row:scale-105 transition-transform duration-300 overflow-hidden">
                         {m.avatar_url ? (
@@ -789,7 +789,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 <StatusBadge
                     variant={m.role === 'Owner' ? 'success' : m.role === 'Admin' ? 'success' : m.role === 'Manager' ? 'warning' : 'default'}
                     className="text-[9px] h-6 px-2.5 font-bold "
@@ -797,62 +797,62 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     {m.role.toUpperCase()}
                 </StatusBadge>
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 <div className="text-[11px] font-bold text-text-muted space-y-0.5 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-12 text-right">SESS:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">SESS:</span>
                         <span className="text-text-main tabular-nums">{m.sessionCount || 0}</span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-12 text-right">PROJ:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">PROJ:</span>
                         <span className="text-text-main tabular-nums">{m.projectsCount || 0}</span>
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 <div className="text-[11px] font-bold text-text-muted space-y-0.5 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-10 text-right">PAY:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">PAY:</span>
                         <span className="text-primary tabular-nums">${m.pay_rate || 0}/h</span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-10 text-right">BILL:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">BILL:</span>
                         <span className="text-purple-600 tabular-nums">${m.bill_rate || 0}/h</span>
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 <div className="text-[11px] font-bold text-text-muted space-y-0.5 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-12 text-right">WEEK:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">WEEK:</span>
                         <span className="text-text-main tabular-nums">{m.weekly_limit}h</span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-12 text-right">DAY:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">DAY:</span>
                         <span className="text-text-main tabular-nums">{m.daily_limit}h</span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-12 text-right">DAYS/WK:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">DAYS/WK:</span>
                         <span className="text-text-main tabular-nums">{m.working_days ?? 5}</span>
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 {m.location ? (
-                    <div className="flex items-center gap-2 text-[11px] font-bold text-text-muted whitespace-nowrap">
-                        <MapPin className="w-3 h-3 text-primary/60" />
-                        {m.location}
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-muted min-w-0" title={m.location}>
+                        <MapPin className="w-3 h-3 text-primary/60 shrink-0" />
+                        <span className="truncate">{m.location}</span>
                     </div>
                 ) : m.timezone ? (
-                    <div className="flex items-center gap-2 text-[11px] font-bold text-text-muted whitespace-nowrap opacity-60">
-                        <Globe2 className="w-3 h-3" />
-                        {m.timezone}
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-muted min-w-0 opacity-60" title={m.timezone}>
+                        <Globe2 className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{m.timezone}</span>
                     </div>
                 ) : (
                     <span className="text-[10px] font-bold text-text-muted italic">—</span>
                 )}
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 <StatusBadge
                     variant={m.status === 'Active' ? 'success' : m.status === 'Pending' ? 'warning' : 'default'}
                     className="text-[9px] h-6 px-2.5 font-bold "
@@ -860,7 +860,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     {m.status.toUpperCase()}
                 </StatusBadge>
             </td>
-            <td className="pr-8 py-5 text-right relative" ref={dropRef} onClick={(e) => e.stopPropagation()}>
+            <td className="pr-5 py-5 text-right relative" ref={dropRef} onClick={(e) => e.stopPropagation()}>
                 <button
                     onClick={() => setOpen(!open)}
                     className="p-2.5 bg-surface border border-border rounded-xl text-text-muted hover:text-primary hover:border-primary/30 transition-all shadow-shell-sm group/btn"
@@ -868,11 +868,13 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     <MoreHorizontal className={clsx("w-4 h-4 transition-transform duration-300", open && "rotate-90")} />
                 </button>
                 {open && (
-                    <div className="absolute right-8 top-16 bg-surface border border-border shadow-xl rounded-2xl z-50 py-2 w-56 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="px-5 py-3 border-b border-border mb-1">
-                            <p className="text-[9px] font-bold text-text-muted mb-0.5">Quick Actions</p>
-                            <p className="text-[12px] font-bold text-text-main truncate">{displayName}</p>
-                        </div>
+                    // No "Quick Actions" heading and no name: the row the menu
+                    // belongs to is directly behind it, with the same name on it.
+                    // Repeating it cost two lines of height and set the width of
+                    // the whole menu, so the menu covered the rows either side of
+                    // its own. Anchored under the button rather than at a fixed
+                    // offset, so it opens where it was asked for.
+                    <div className="absolute right-8 top-[calc(100%-0.5rem)] bg-surface border border-border shadow-xl rounded-xl z-50 py-1.5 w-44 animate-in fade-in zoom-in-95 duration-200">
                         <DropItem
                             icon={<Pencil className="w-3.5 h-3.5" />}
                             label={isRestricted ? 'View Profile' : 'Edit Member'}
@@ -887,7 +889,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                             />
                         )}
 
-                        <div className="my-1 border-t border-border" />
+                        <div className="my-1 border-t border-border/60" />
                         {m.status === 'Inactive' ? (
                             <DropItem
                                 icon={<CheckCircle className="w-3.5 h-3.5" />}
@@ -918,7 +920,7 @@ function DropItem({ icon, label, onClick, danger, disabled }: any) {
             onClick={onClick}
             disabled={disabled}
             className={clsx(
-                "w-full flex items-center gap-3 px-5 py-2.5 text-[11px] font-bold transition-all text-left group",
+                "w-full flex items-center gap-2.5 px-3.5 py-2 text-[11px] font-bold transition-all text-left group",
                 danger ? "text-rose-500 hover:bg-rose-50" : "text-text-muted hover:text-primary hover:bg-surface-hover",
                 disabled && "opacity-30 cursor-not-allowed"
             )}
