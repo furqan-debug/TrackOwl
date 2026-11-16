@@ -33,9 +33,9 @@ export function TimelineGrid({ samples, targetTz }: TimelineGridProps) {
             <div className="grid grid-cols-1 gap-12">
                 {hourGroups.map(([hour, hourBlocks]) => (
                     <div key={hour} className="group relative">
-                        <div className="flex items-start gap-10">
+                        <div className="flex items-start gap-4 sm:gap-5">
                             {/* Time Pillar */}
-                            <div className="w-24 pt-2 border-r border-border flex flex-col items-end pr-10 shrink-0">
+                            <div className="w-16 pt-2 flex flex-col items-end shrink-0">
                                 <span className="text-[18px] font-bold tabular-nums leading-none tracking-tight" style={{ color: 'var(--chart-gold)' }}>
                                     {hour.toString().padStart(2, '0')}:00
                                 </span>

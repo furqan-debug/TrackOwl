@@ -16,26 +16,10 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
 
     return (
         <div className={clsx(
-            "glass-panel rounded-[14px] p-4 md:p-5 transition-all duration-300 group relative overflow-hidden flex flex-col justify-between min-h-[130px] md:min-h-[150px]",
-            "shadow-[0_1px_3px_0_rgba(0,0,0,0.02),0_4px_12px_-2px_rgba(0,27,77,0.04)] dark:shadow-[0_1px_3px_0_rgba(0,0,0,0.2),0_4px_12px_-2px_rgba(0,0,0,0.3)]",
-            isBrandGradient
-                ? "bg-gradient-to-br from-[var(--primary)]/5 via-transparent to-[var(--accent)]/5 border-primary/20 hover:border-accent/40"
-                : "border-border/60 hover:border-primary/20",
-            "hover:shadow-[0_4px_16px_-2px_rgba(0,27,77,0.07)] dark:hover:shadow-[0_4px_16px_-2px_rgba(0,0,0,0.45)] hover:-translate-y-0.5",
+            "bg-surface rounded-[16px] p-4 md:p-5 transition-all duration-200 group relative overflow-hidden flex flex-col justify-between min-h-[130px] md:min-h-[150px]",
+            "border border-gray-200 dark:border-slate-800 shadow-sm hover:shadow transition-shadow",
             className
         )}>
-            {/* Background Glow Effect */}
-            <div className={clsx(
-                "absolute -right-4 -top-4 w-24 h-24 blur-[40px] opacity-10 transition-opacity group-hover:opacity-20",
-                accent === 'emerald' && "bg-emerald-500",
-                accent === 'amber' && "bg-amber-500",
-                accent === 'rose' && "bg-rose-500",
-                (accent === 'primary' || !accent) && "bg-primary"
-            )} />
-
-            {isBrandGradient && (
-                <div className="absolute -right-4 -top-4 w-32 h-32 blur-[50px] opacity-20 bg-gradient-to-br from-primary to-accent transition-opacity group-hover:opacity-40 pointer-events-none" />
-            )}
 
             <div className="flex items-center justify-between mb-3 relative z-10">
                 <div className={clsx(

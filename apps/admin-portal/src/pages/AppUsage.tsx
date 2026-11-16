@@ -444,8 +444,15 @@ export function AppUsage() {
                                         <td className="px-10 py-5 text-right font-black text-text-main text-sm">{formatTime(app.count)}</td>
                                         <td className="px-10 py-5 text-right">
                                             <div className="flex items-center justify-end gap-6">
-                                                <div className="w-24 h-1.5 bg-main rounded-full overflow-hidden border border-border flex-shrink-0">
-                                                    <div className="h-full transition-all duration-1000" style={{ width: `${app.percent}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--chart-gold) 0%)' }} />
+                                                <div className="w-24 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200/80 dark:border-slate-700/80 flex-shrink-0">
+                                                    <div
+                                                        className="h-full rounded-full transition-all duration-500"
+                                                        style={{
+                                                            width: `${app.percent}%`,
+                                                            minWidth: app.percent > 0 ? '6px' : '0px',
+                                                            background: 'var(--chart-gold, #001B4D)'
+                                                        }}
+                                                    />
                                                 </div>
                                                 <span className="text-sm font-black text-text-main tabular-nums w-12 text-right">
                                                     {app.percent.toFixed(1)}%
