@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Users, Search, Filter, Download, UserPlus, Trash2,
-    MoreHorizontal, Pencil, RotateCcw,
+    Pencil, RotateCcw,
     AlertCircle, CheckCircle, MapPin, Globe2,
     Check, ChevronLeft, ChevronRight
 } from 'lucide-react';
@@ -15,7 +15,8 @@ import {
     Modal,
     StatusBadge,
     LoadingState,
-    FilterSelect
+    FilterSelect,
+    RowMenu
 } from '../components/ui';
 import { SecureImage } from '../components/ui/SecureImage';
 import { supabase } from '../lib/supabase';
@@ -580,7 +581,7 @@ export function People() {
             )}
 
 
-            <Card noPadding className="border border-border rounded-[24px] overflow-hidden shadow-shell-sm min-h-[500px]">
+            <Card noPadding className="border border-border rounded-[24px] overflow-hidden shadow-shell-sm">
                     <div className="overflow-x-auto custom-scrollbar">
                         <table className="w-full text-left border-collapse">
                             <thead>
@@ -739,16 +740,8 @@ export function People() {
 
 function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDelete, onReactivate, isViewer, currentUserRole }: any) {
     const isRestricted = isViewer || (currentUserRole === 'Manager' && (m.role === 'Owner' || m.role === 'Admin')) || (currentUserRole === 'Admin' && m.role === 'Owner');
-    const [open, setOpen] = useState(false);
-    const dropRef = useRef<HTMLTableDataCellElement>(null);
-
     const displayName = m.full_name?.trim() || "Unknown Member";
     const initials = m.full_name?.trim() ? m.full_name.trim().split(/\s+/).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() : '';
-
-    useEffect(() => {
-        function h(e: MouseEvent) { if (dropRef.current && !dropRef.current.contains(e.target as Node)) setOpen(false); }
-        document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h);
-    }, []);
 
     return (
         <tr
@@ -860,74 +853,37 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     {m.status.toUpperCase()}
                 </StatusBadge>
             </td>
-            <td className="pr-5 py-5 text-right relative" ref={dropRef} onClick={(e) => e.stopPropagation()}>
-                <button
-                    onClick={() => setOpen(!open)}
-                    className="p-2.5 bg-surface border border-border rounded-xl text-text-muted hover:text-primary hover:border-primary/30 transition-all shadow-shell-sm group/btn"
-                >
-                    <MoreHorizontal className={clsx("w-4 h-4 transition-transform duration-300", open && "rotate-90")} />
-                </button>
-                {open && (
-                    // No "Quick Actions" heading and no name: the row the menu
-                    // belongs to is directly behind it, with the same name on it.
-                    // Repeating it cost two lines of height and set the width of
-                    // the whole menu, so the menu covered the rows either side of
-                    // its own. Anchored under the button rather than at a fixed
-                    // offset, so it opens where it was asked for.
-                    <div className="absolute right-8 top-[calc(100%-0.5rem)] bg-surface border border-border shadow-xl rounded-xl z-50 py-1.5 w-44 animate-in fade-in zoom-in-95 duration-200">
-                        <DropItem
-                            icon={<Pencil className="w-3.5 h-3.5" />}
-                            label={isRestricted ? 'View Profile' : 'Edit Member'}
-                            onClick={() => { onEdit(); setOpen(false); }}
-                        />
-                        {m.status === 'Pending' && (
-                            <DropItem
-                                icon={<RotateCcw className="w-3.5 h-3.5" />}
-                                label="Resend Invite"
-                                disabled={isRestricted}
-                                onClick={() => { if (!isRestricted) { onResendInvite(); setOpen(false); } }}
-                            />
-                        )}
-
-                        <div className="my-1 border-t border-border/60" />
-                        {m.status === 'Inactive' ? (
-                            <DropItem
-                                icon={<CheckCircle className="w-3.5 h-3.5" />}
-                                label="Reactivate Member"
-                                disabled={isRestricted}
-                                onClick={() => { if (!isRestricted) { setOpen(false); onReactivate(); } }}
-                                danger={false}
-                            />
-                        ) : (
-                            <DropItem
-                                icon={<Trash2 className="w-3.5 h-3.5" />}
-                                label="Deactivate Member"
-                                disabled={isRestricted}
-                                onClick={() => { if (!isRestricted) { setOpen(false); onDelete(); } }}
-                                danger
-                            />
-                        )}
-                    </div>
-                )}
+            <td className="pr-5 py-5 text-right" onClick={(e) => e.stopPropagation()}>
+                <RowMenu
+                    label={`Actions for ${displayName}`}
+                    items={[
+                        {
+                            label: isRestricted ? 'View Profile' : 'Edit Member',
+                            icon: <Pencil className="w-3.5 h-3.5" />,
+                            onClick: onEdit,
+                        },
+                        ...(m.status === 'Pending' ? [{
+                            label: 'Resend Invite',
+                            icon: <RotateCcw className="w-3.5 h-3.5" />,
+                            disabled: isRestricted,
+                            onClick: onResendInvite,
+                        }] : []),
+                        m.status === 'Inactive' ? {
+                            label: 'Reactivate Member',
+                            icon: <CheckCircle className="w-3.5 h-3.5" />,
+                            disabled: isRestricted,
+                            onClick: onReactivate,
+                        } : {
+                            label: 'Deactivate Member',
+                            icon: <Trash2 className="w-3.5 h-3.5" />,
+                            disabled: isRestricted,
+                            danger: true,
+                            onClick: onDelete,
+                        },
+                    ]}
+                />
             </td>
         </tr>
-    );
-}
-
-function DropItem({ icon, label, onClick, danger, disabled }: any) {
-    return (
-        <button
-            onClick={onClick}
-            disabled={disabled}
-            className={clsx(
-                "w-full flex items-center gap-2.5 px-3.5 py-2 text-[11px] font-bold transition-all text-left group",
-                danger ? "text-rose-500 hover:bg-rose-50" : "text-text-muted hover:text-primary hover:bg-surface-hover",
-                disabled && "opacity-30 cursor-not-allowed"
-            )}
-        >
-            <span className={clsx("transition-transform", !disabled && "group-hover:scale-110")}>{icon}</span>
-            <span className="">{label}</span>
-        </button>
     );
 }
 
