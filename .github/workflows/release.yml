@@ -56,9 +56,7 @@ jobs:
           cache: 'npm'
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.83.0
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Add Rust Targets (macOS Universal)
         if: matrix.platform == 'macos-latest'
@@ -116,7 +114,7 @@ jobs:
       - name: Build & Publish Release
         uses: tauri-apps/tauri-action@v0
         env:
-          RUSTFLAGS: "--cap-lints warn"
+          RUSTFLAGS: "--cap-lints warn -A dependency-on-unit-never-type-fallback -A never-type-fallback-flowing-into-unsafe"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Tauri updater signing key config
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
@@ -329,9 +327,7 @@ jobs:
           cache: 'npm'
           
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: 1.83.0
+        uses: dtolnay/rust-toolchain@stable
         
       - name: Add Rust Target
         run: |
@@ -403,6 +399,7 @@ jobs:
 
       - name: Build App Store App Bundle
         env:
+          RUSTFLAGS: "--cap-lints warn -A dependency-on-unit-never-type-fallback -A never-type-fallback-flowing-into-unsafe"
           # VITE_APP_STORE=true tells the frontend to disable the updater UI
           # (Apple Guideline 2.4.5 vii — no self-updating in MAS apps)
           VITE_APP_STORE: "true"
