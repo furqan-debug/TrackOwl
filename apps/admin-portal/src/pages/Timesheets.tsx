@@ -719,14 +719,14 @@ export function Timesheets() {
     const activeFiltersCount = (filterProjectId !== 'all' ? 1 : 0) + (!isRep && selectedMember !== 'all' ? 1 : 0) + (activeTimezone !== 'Org Local' ? 1 : 0);
 
     return (
-        <div className="w-full p-4 md:px-10 md:py-12 space-y-6 md:space-y-8 animate-in fade-in duration-300">
+        <div className="w-full p-4 md:px-6 md:py-6 space-y-6 md:space-y-8 animate-in fade-in duration-300">
             {/* Header & Controls */}
             <div className="flex flex-col min-[900px]:flex-row min-[900px]:items-start min-[900px]:justify-between gap-6 min-w-0">
                 {/* Left side: Heading & View switcher */}
                 <div className="flex flex-col justify-between gap-4 min-w-0">
                     <div className="space-y-1">
-                        <div className="flex items-center gap-3">
-                            <h1 className="text-3xl md:text-4xl font-bold heading-gradient tracking-tight font-heading leading-tight">Timesheets</h1>
+                        <div className="flex items-center gap-4">
+                            <h1 className="text-2xl md:text-3xl font-bold heading-gradient tracking-tight font-heading">Timesheets</h1>
                             <button
                                 onClick={() => toggleFavorite('Timesheets', location.pathname)}
                                 className={clsx(
