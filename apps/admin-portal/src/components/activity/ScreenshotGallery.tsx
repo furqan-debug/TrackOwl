@@ -1,4 +1,4 @@
-import { Camera, ShieldCheck, Check } from 'lucide-react';
+import { Camera, Check } from 'lucide-react';
 import { EmptyState } from '../ui';
 import { SecureImage } from '../ui/SecureImage';
 import clsx from 'clsx';
@@ -137,32 +137,18 @@ export function ScreenshotGallery({
                         </div>
 
                         {/* Meta Info: Proper Alignment */}
-                        <div className="mt-5 flex items-center justify-between px-2">
-                            <div className="flex flex-col gap-1.5">
-                                <div className="flex items-center gap-2">
-                                    <div
-                                        className={clsx(
-                                            "w-1.5 h-1.5 rounded-full shadow-glow-primary transition-colors",
-                                            isSelected ? "bg-primary" : "bg-primary"
-                                        )}
-                                    />
-                                    <span
-                                        className={clsx(
-                                            "text-[14px] font-bold tracking-tight leading-none transition-colors",
-                                            isSelected ? "text-primary" : "text-text-main group-hover:text-primary"
-                                        )}
-                                    >
-                                        {new Date(ss.recorded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                    </span>
-                                </div>
-                                <span className="text-[10px] font-bold text-text-muted ml-3.5 opacity-70">
-                                    {new Date(ss.recorded_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2 px-3 py-1.5 bg-surface-hover border border-border rounded-xl group-hover:bg-primary/5 group-hover:border-primary/10 transition-colors">
-                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                                <span className="text-[9px] font-bold text-text-muted tracking-[0.1em] group-hover:text-primary/70">Secure</span>
-                            </div>
+                        <div className="mt-4 flex flex-col gap-1 px-1">
+                            <span
+                                className={clsx(
+                                    "text-[13px] md:text-[14px] font-semibold tracking-tight leading-none transition-colors",
+                                    isSelected ? "text-primary" : "text-text-main group-hover:text-primary"
+                                )}
+                            >
+                                {new Date(ss.recorded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                            <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400 leading-none">
+                                {new Date(ss.recorded_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                            </span>
                         </div>
                     </div>
                 );

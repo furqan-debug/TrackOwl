@@ -6,7 +6,7 @@ import {
     Monitor, Clock,
     RefreshCw,
     ChevronLeft, ChevronRight,
-    Camera, Download, CheckSquare, Square, X, Loader2
+    Camera, Download, CheckSquare, Square, X, Loader2, ShieldCheck
 } from 'lucide-react';
 import JSZip from 'jszip';
 import { supabase } from '../lib/supabase';
@@ -690,7 +690,14 @@ export function Activity() {
                                     </div>
                                     <div>
                                         <h3 className="text-[18px] font-bold text-text-main">Captures</h3>
-                                        <p className="text-[13px] font-medium text-text-muted mt-0.5 tracking-[0.1em]">{screenshots.length} automated work captures</p>
+                                        <div className="flex items-center gap-2.5 mt-0.5 flex-wrap">
+                                            <p className="text-[13px] font-medium text-text-muted tracking-[0.1em]">{screenshots.length} automated work captures</p>
+                                            <span className="w-1 h-1 rounded-full bg-border" />
+                                            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                                                <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                                                <span>Securely stored</span>
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -821,21 +828,17 @@ export function Activity() {
                                             onClick={loadMoreScreenshots}
                                             disabled={loadingMore}
                                             className={clsx(
-                                                "flex items-center gap-3 px-6 py-3 bg-surface border border-border rounded-xl hover:bg-surface-hover transition-all shadow-shell-sm",
-                                                // Same accent pulse as the refresh button. The spinner alone
-                                                // used text-primary, which is bright gold in dark mode but
-                                                // navy on a white button in light mode — visible, but flat,
-                                                // with nothing that reads as "working". --accent is gold in
-                                                // both themes.
+                                                "flex items-center gap-2.5 px-6 py-2.5 bg-gray-50 hover:bg-gray-100 active:bg-gray-200/90 dark:bg-slate-800 dark:hover:bg-slate-700 border border-gray-200 hover:border-gray-300 dark:border-slate-700 rounded-xl shadow-sm hover:shadow transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed group active:scale-[0.98]",
+                                                // Same accent pulse as the refresh button.
                                                 loadingMore && "is-refreshing"
                                             )}
                                         >
                                             {loadingMore ? (
                                                 <RefreshCw className="w-4 h-4 animate-spin text-accent" />
                                             ) : (
-                                                <Camera className="w-4 h-4 text-text-muted" />
+                                                <Camera className="w-4 h-4 text-slate-500 dark:text-slate-400 group-hover:text-text-main transition-colors" />
                                             )}
-                                            <span className="text-[11px] font-bold text-text-main ">
+                                            <span className="text-[12px] md:text-[13px] font-semibold text-text-main">
                                                 Load More Captures
                                             </span>
                                         </button>

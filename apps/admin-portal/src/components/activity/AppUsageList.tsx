@@ -20,9 +20,9 @@ export function AppUsageList({ samples }: AppUsageListProps) {
     return (
         <div className="divide-y divide-border h-full overflow-auto no-scrollbar">
             {list.map(({ app, count, percent }, i) => (
-                <div key={i} className="flex items-center justify-between px-8 py-5 hover:bg-surface-hover transition-all duration-200 group">
-                    <div className="flex items-center gap-4">
-                        <AppIcon name={app} className="w-10 h-10 shadow-shell-sm" />
+                <div key={i} className="flex items-center justify-between px-8 py-6 hover:bg-surface-hover transition-all duration-200 group">
+                    <div className="flex items-center gap-4 min-w-0">
+                        <AppIcon name={app} className="w-10 h-10 shadow-shell-sm shrink-0" />
                         <div className="flex flex-col min-w-0">
                             <span className="text-sm font-black text-text-main leading-none truncate max-w-[180px] tracking-tight">
                                 {app}
@@ -38,14 +38,18 @@ export function AppUsageList({ samples }: AppUsageListProps) {
                             </div>
                         </div>
                     </div>
-                    <div className="flex flex-col items-end gap-1.5">
-                        <span className="text-xs font-black text-success leading-none">
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        <span className="text-xs font-black text-success leading-none tabular-nums">
                             {percent}%
                         </span>
-                        <div className="w-12 h-1 bg-border rounded-full overflow-hidden">
+                        <div className="w-16 sm:w-20 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200/80 dark:border-slate-700/80">
                             <div
-                                className="h-full transition-all duration-1000"
-                                style={{ width: `${percent}%`, background: 'linear-gradient(90deg, var(--chart-gold-secondary) 0%, var(--chart-gold) 0%)' }}
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{
+                                    width: `${percent}%`,
+                                    minWidth: percent > 0 ? '6px' : '0px',
+                                    background: 'var(--chart-gold, #001B4D)'
+                                }}
                             />
                         </div>
                     </div>
