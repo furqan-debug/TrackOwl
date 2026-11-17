@@ -1,0 +1,81 @@
+# Release Windows Only Workflow
+# Triggered on tag pushes (v*) and manual dispatch for Windows builds.
+# This workflow builds the Tauri Windows binaries, signs them with SSL.com eSigner via CodeSignTool,
+# and publishes a draft release containing the signed installers.
+
+name: Release Windows TrackOwl
+
+on:
+  push:
+    tags:
+      - 'v*'   # any version tag
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'Platform to build (must be windows)'
+        required: true
+        default: 'windows'
+        type: choice
+        options:
+          - windows
+
+jobs:
+  windows-release:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.87.0
+
+      - name: Install Tauri CLI (locked)
+        run: cargo install tauri-cli --version 2.12.5 --locked
+
+      # Setup CodeSignTool (SSL.com) for Windows signing
+      - name: Setup CodeSignTool (Windows)
+        shell: pwsh
+        run: |
+          $CST_URL = "https://github.com/SSLcom/CodeSignTool/releases/download/v1.3.0/CodeSignTool-v1.3.0-windows.zip"
+          $CST_ZIP = "${{ runner.temp }}\\CodeSignTool.zip"
+          $CST_DIR = "C:\\CodeSignTool"
+          Invoke-WebRequest -Uri $CST_URL -OutFile $CST_ZIP
+          Expand-Archive -Path $CST_ZIP -DestinationPath $CST_DIR -Force
+          $CST_BAT = Get-ChildItem -Path $CST_DIR -Recurse -Filter "CodeSignTool.bat" | Select-Object -First 1
+          if ($CST_BAT) {
+            Write-Host "CodeSignTool found at: $($CST_BAT.FullName)"
+            echo "CODESIGNTOOL_DIR=$($CST_BAT.DirectoryName)" >> $env:GITHUB_ENV
+          } else {
+            Write-Error "CodeSignTool.bat not found after extraction"
+            exit 1
+          }
+
+      - name: Build Windows Release via tauri-action
+        uses: tauri-apps/tauri-action@v0
+        env:
+          RUSTFLAGS: "--cap-lints warn -A dependency-on-unit-never-type-fallback -A never-type-fallback-flowing-into-unsafe"
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # SSL.com eSigner credentials
+          ES_USERNAME: ${{ secrets.ES_USERNAME }}
+          ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+          CREDENTIAL_ID: ${{ secrets.CREDENTIAL_ID }}
+          ES_TOTP_SECRET: ${{ secrets.ES_TOTP_SECRET }}
+          CODESIGNTOOL_DIR: ${{ env.CODESIGNTOOL_DIR }}
+        with:
+          tagName: v__VERSION__
+          releaseName: 'TrackOwl v__VERSION__ (Windows)'
+          releaseBody: |
+            Windows build of TrackOwl v__VERSION__.
+            Includes signed .exe and .msi installers.
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: false
+          args: ""
