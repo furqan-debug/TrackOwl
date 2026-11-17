@@ -527,18 +527,18 @@ export function Activity() {
             title="Screenshots"
             description="Visual audit and activity timeline for workspace members."
             actions={
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center gap-3 md:gap-4">
                     {/* Member filter — hidden for reps who see only their own data */}
                     {!isRep && (
                     <FilterSelect
-                        icon={<Users className="w-3.5 h-3.5 text-text-muted" />}
+                        icon={<Users className="w-4 h-4 md:w-3.5 md:h-3.5 text-text-muted" />}
                         value={selectedMemberId}
                         onChange={setSelectedMemberId}
                         options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
                         // Wider than its content needs. The dropdown is w-full, so the
                         // trigger's width is also the list's, and at content width the
                         // longer member names were truncating.
-                        className="h-10 min-w-[240px]"
+                        className="h-10 w-48 md:w-auto md:min-w-[240px]"
                     />
                     )}
 
@@ -550,7 +550,7 @@ export function Activity() {
                                 dateObj.setDate(dateObj.getDate() - 1);
                                 setSelectedDate(dateObj.toLocaleDateString('en-CA'));
                             }}
-                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
+                            className="p-2 md:p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
@@ -562,7 +562,7 @@ export function Activity() {
                         <DatePicker 
                             value={selectedDate}
                             onChange={(val) => setSelectedDate(val)}
-                            className="min-w-[180px]"
+                            className="min-w-[170px] md:min-w-[180px]"
                         />
                         <button
                             onClick={() => {
@@ -571,7 +571,7 @@ export function Activity() {
                                 dateObj.setDate(dateObj.getDate() + 1);
                                 setSelectedDate(dateObj.toLocaleDateString('en-CA'));
                             }}
-                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg disabled:opacity-20"
+                            className="p-2 md:p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg disabled:opacity-20"
                             disabled={isToday}
                         >
                             <ChevronRight className="w-4 h-4" />
