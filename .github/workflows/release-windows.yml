@@ -19,6 +19,9 @@ on:
         options:
           - windows
 
+permissions:
+  contents: write
+
 jobs:
   windows-release:
     runs-on: windows-latest
