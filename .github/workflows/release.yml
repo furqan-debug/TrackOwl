@@ -55,9 +55,10 @@ jobs:
           cache: 'npm'
 
       - name: Setup Rust
-        uses: actions-rs/setup-rust@v2
+        uses: dtolnay/rust-toolchain@v1
         with:
-          rust-version: 1.90.0
+          toolchain: 1.90.0
+          components: cargo
 
       - name: Add Rust Targets (macOS Universal)
         if: matrix.platform == 'macos-latest'
@@ -328,9 +329,10 @@ jobs:
           cache: 'npm'
           
       - name: Setup Rust
-        uses: actions-rs/setup-rust@v2
+        uses: dtolnay/rust-toolchain@v1
         with:
-          rust-version: 1.90.0
+          toolchain: 1.90.0
+          components: cargo
         
       - name: Add Rust Target
         run: |
