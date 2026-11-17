@@ -36,6 +36,7 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.90.0
+          components: cargo
 
       - name: Install Frontend Dependencies
         run: npm ci --fetch-retries=5 --fetch-retry-factor=2 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
