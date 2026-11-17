@@ -234,7 +234,7 @@ export function Projects() {
             ) : (
                 <div className="flex flex-col gap-8 pb-20">
 
-                    {/* 📊 KPI Row: Operational Metrics */}
+                    {/* KPI Row: Operational Metrics */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-10">
                         <StatMetric
                             icon={<Briefcase className="w-5 h-5" />}
