@@ -55,10 +55,9 @@ jobs:
           cache: 'npm'
 
       - name: Setup Rust
-        uses: actions/setup-rust@v1
+        uses: actions-rs/setup-rust@v2
         with:
           rust-version: 1.90.0
-          profile: minimal
 
       - name: Add Rust Targets (macOS Universal)
         if: matrix.platform == 'macos-latest'
@@ -329,10 +328,9 @@ jobs:
           cache: 'npm'
           
       - name: Setup Rust
-        uses: actions/setup-rust@v1
+        uses: actions-rs/setup-rust@v2
         with:
           rust-version: 1.90.0
-          profile: minimal
         
       - name: Add Rust Target
         run: |
