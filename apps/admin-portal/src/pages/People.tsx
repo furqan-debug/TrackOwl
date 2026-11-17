@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Users, Search, Filter, Download, UserPlus, Trash2,
-    MoreHorizontal, Pencil, RotateCcw,
+    Pencil, RotateCcw,
     AlertCircle, CheckCircle, MapPin, Globe2,
     Check, ChevronLeft, ChevronRight
 } from 'lucide-react';
@@ -15,7 +15,8 @@ import {
     Modal,
     StatusBadge,
     LoadingState,
-    FilterSelect
+    FilterSelect,
+    RowMenu
 } from '../components/ui';
 import { SecureImage } from '../components/ui/SecureImage';
 import { supabase } from '../lib/supabase';
@@ -580,12 +581,12 @@ export function People() {
             )}
 
 
-            <Card noPadding className="border border-border rounded-[24px] overflow-hidden shadow-shell-sm min-h-[500px]">
+            <Card noPadding className="border border-border rounded-[24px] overflow-hidden shadow-shell-sm">
                     <div className="overflow-x-auto custom-scrollbar">
-                        <table className="w-full text-left border-collapse min-w-[1000px]">
+                        <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="bg-surface-hover/50">
-                                    <th className="pl-8 py-4 w-12 border-b border-border">
+                                    <th className="pl-5 py-4 w-10 border-b border-border">
                                         <input
                                             type="checkbox"
                                             checked={isAllOnPageSelected}
@@ -593,14 +594,14 @@ export function People() {
                                             className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer transition-all"
                                         />
                                     </th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Member</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Role</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Engagement</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Rates</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Limits</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Geography</th>
-                                    <th className="px-6 py-4 text-[10px] font-bold text-text-muted border-b border-border">Status</th>
-                                    <th className="pr-8 py-4 text-right text-[10px] font-bold text-text-muted border-b border-border">Actions</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border">Member</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border">Role</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Engagement</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Rates</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border text-center">Limits</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border">Geography</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-text-muted border-b border-border">Status</th>
+                                    <th className="pr-5 py-4 text-right text-[10px] font-bold text-text-muted border-b border-border">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -739,16 +740,8 @@ export function People() {
 
 function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDelete, onReactivate, isViewer, currentUserRole }: any) {
     const isRestricted = isViewer || (currentUserRole === 'Manager' && (m.role === 'Owner' || m.role === 'Admin')) || (currentUserRole === 'Admin' && m.role === 'Owner');
-    const [open, setOpen] = useState(false);
-    const dropRef = useRef<HTMLTableDataCellElement>(null);
-
     const displayName = m.full_name?.trim() || "Unknown Member";
     const initials = m.full_name?.trim() ? m.full_name.trim().split(/\s+/).map((w: string) => w[0]).join('').slice(0, 2).toUpperCase() : '';
-
-    useEffect(() => {
-        function h(e: MouseEvent) { if (dropRef.current && !dropRef.current.contains(e.target as Node)) setOpen(false); }
-        document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h);
-    }, []);
 
     return (
         <tr
@@ -757,7 +750,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                 "group/row transition-all cursor-pointer",
                 isSelected ? "bg-primary/5" : "hover:bg-surface-hover/50"
             )}>
-            <td className="pl-8 py-5">
+            <td className="pl-5 py-5">
                 <input
                     type="checkbox"
                     checked={isSelected}
@@ -766,7 +759,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer transition-all"
                 />
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-xl bg-main border border-border flex items-center justify-center text-text-muted text-[11px] font-bold shadow-shell-sm group-hover/row:scale-105 transition-transform duration-300 overflow-hidden">
                         {m.avatar_url ? (
@@ -789,7 +782,7 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 <StatusBadge
                     variant={m.role === 'Owner' ? 'success' : m.role === 'Admin' ? 'success' : m.role === 'Manager' ? 'warning' : 'default'}
                     className="text-[9px] h-6 px-2.5 font-bold "
@@ -797,62 +790,62 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     {m.role.toUpperCase()}
                 </StatusBadge>
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 <div className="text-[11px] font-bold text-text-muted space-y-0.5 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-12 text-right">SESS:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">SESS:</span>
                         <span className="text-text-main tabular-nums">{m.sessionCount || 0}</span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-12 text-right">PROJ:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">PROJ:</span>
                         <span className="text-text-main tabular-nums">{m.projectsCount || 0}</span>
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 <div className="text-[11px] font-bold text-text-muted space-y-0.5 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-10 text-right">PAY:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">PAY:</span>
                         <span className="text-primary tabular-nums">${m.pay_rate || 0}/h</span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-10 text-right">BILL:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">BILL:</span>
                         <span className="text-purple-600 tabular-nums">${m.bill_rate || 0}/h</span>
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 <div className="text-[11px] font-bold text-text-muted space-y-0.5 whitespace-nowrap text-center">
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-12 text-right">WEEK:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">WEEK:</span>
                         <span className="text-text-main tabular-nums">{m.weekly_limit}h</span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-12 text-right">DAY:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">DAY:</span>
                         <span className="text-text-main tabular-nums">{m.daily_limit}h</span>
                     </div>
                     <div className="flex items-center justify-center gap-2">
-                        <span className="opacity-60 text-[9px] w-12 text-right">DAYS/WK:</span>
+                        <span className="opacity-60 text-[9px] text-right shrink-0">DAYS/WK:</span>
                         <span className="text-text-main tabular-nums">{m.working_days ?? 5}</span>
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 {m.location ? (
-                    <div className="flex items-center gap-2 text-[11px] font-bold text-text-muted whitespace-nowrap">
-                        <MapPin className="w-3 h-3 text-primary/60" />
-                        {m.location}
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-muted min-w-0" title={m.location}>
+                        <MapPin className="w-3 h-3 text-primary/60 shrink-0" />
+                        <span className="truncate">{m.location}</span>
                     </div>
                 ) : m.timezone ? (
-                    <div className="flex items-center gap-2 text-[11px] font-bold text-text-muted whitespace-nowrap opacity-60">
-                        <Globe2 className="w-3 h-3" />
-                        {m.timezone}
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-text-muted min-w-0 opacity-60" title={m.timezone}>
+                        <Globe2 className="w-3 h-3 shrink-0" />
+                        <span className="truncate">{m.timezone}</span>
                     </div>
                 ) : (
                     <span className="text-[10px] font-bold text-text-muted italic">—</span>
                 )}
             </td>
-            <td className="px-6 py-5">
+            <td className="px-4 py-5">
                 <StatusBadge
                     variant={m.status === 'Active' ? 'success' : m.status === 'Pending' ? 'warning' : 'default'}
                     className="text-[9px] h-6 px-2.5 font-bold "
@@ -860,72 +853,37 @@ function MemberRowItem({ m, isSelected, onToggle, onEdit, onResendInvite, onDele
                     {m.status.toUpperCase()}
                 </StatusBadge>
             </td>
-            <td className="pr-8 py-5 text-right relative" ref={dropRef} onClick={(e) => e.stopPropagation()}>
-                <button
-                    onClick={() => setOpen(!open)}
-                    className="p-2.5 bg-surface border border-border rounded-xl text-text-muted hover:text-primary hover:border-primary/30 transition-all shadow-shell-sm group/btn"
-                >
-                    <MoreHorizontal className={clsx("w-4 h-4 transition-transform duration-300", open && "rotate-90")} />
-                </button>
-                {open && (
-                    <div className="absolute right-8 top-16 bg-surface border border-border shadow-xl rounded-2xl z-50 py-2 w-56 animate-in fade-in zoom-in-95 duration-200">
-                        <div className="px-5 py-3 border-b border-border mb-1">
-                            <p className="text-[9px] font-bold text-text-muted mb-0.5">Quick Actions</p>
-                            <p className="text-[12px] font-bold text-text-main truncate">{displayName}</p>
-                        </div>
-                        <DropItem
-                            icon={<Pencil className="w-3.5 h-3.5" />}
-                            label={isRestricted ? 'View Profile' : 'Edit Member'}
-                            onClick={() => { onEdit(); setOpen(false); }}
-                        />
-                        {m.status === 'Pending' && (
-                            <DropItem
-                                icon={<RotateCcw className="w-3.5 h-3.5" />}
-                                label="Resend Invite"
-                                disabled={isRestricted}
-                                onClick={() => { if (!isRestricted) { onResendInvite(); setOpen(false); } }}
-                            />
-                        )}
-
-                        <div className="my-1 border-t border-border" />
-                        {m.status === 'Inactive' ? (
-                            <DropItem
-                                icon={<CheckCircle className="w-3.5 h-3.5" />}
-                                label="Reactivate Member"
-                                disabled={isRestricted}
-                                onClick={() => { if (!isRestricted) { setOpen(false); onReactivate(); } }}
-                                danger={false}
-                            />
-                        ) : (
-                            <DropItem
-                                icon={<Trash2 className="w-3.5 h-3.5" />}
-                                label="Deactivate Member"
-                                disabled={isRestricted}
-                                onClick={() => { if (!isRestricted) { setOpen(false); onDelete(); } }}
-                                danger
-                            />
-                        )}
-                    </div>
-                )}
+            <td className="pr-5 py-5 text-right" onClick={(e) => e.stopPropagation()}>
+                <RowMenu
+                    label={`Actions for ${displayName}`}
+                    items={[
+                        {
+                            label: isRestricted ? 'View Profile' : 'Edit Member',
+                            icon: <Pencil className="w-3.5 h-3.5" />,
+                            onClick: onEdit,
+                        },
+                        ...(m.status === 'Pending' ? [{
+                            label: 'Resend Invite',
+                            icon: <RotateCcw className="w-3.5 h-3.5" />,
+                            disabled: isRestricted,
+                            onClick: onResendInvite,
+                        }] : []),
+                        m.status === 'Inactive' ? {
+                            label: 'Reactivate Member',
+                            icon: <CheckCircle className="w-3.5 h-3.5" />,
+                            disabled: isRestricted,
+                            onClick: onReactivate,
+                        } : {
+                            label: 'Deactivate Member',
+                            icon: <Trash2 className="w-3.5 h-3.5" />,
+                            disabled: isRestricted,
+                            danger: true,
+                            onClick: onDelete,
+                        },
+                    ]}
+                />
             </td>
         </tr>
-    );
-}
-
-function DropItem({ icon, label, onClick, danger, disabled }: any) {
-    return (
-        <button
-            onClick={onClick}
-            disabled={disabled}
-            className={clsx(
-                "w-full flex items-center gap-3 px-5 py-2.5 text-[11px] font-bold transition-all text-left group",
-                danger ? "text-rose-500 hover:bg-rose-50" : "text-text-muted hover:text-primary hover:bg-surface-hover",
-                disabled && "opacity-30 cursor-not-allowed"
-            )}
-        >
-            <span className={clsx("transition-transform", !disabled && "group-hover:scale-110")}>{icon}</span>
-            <span className="">{label}</span>
-        </button>
     );
 }
 
