@@ -33,10 +33,10 @@ jobs:
           cache: 'npm'
 
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@master
+        uses: actions/setup-rust@v1
         with:
-          toolchain: 1.90.0
-          components: cargo
+          rust-version: 1.90.0
+          profile: minimal
 
       - name: Install Frontend Dependencies
         run: npm ci --fetch-retries=5 --fetch-retry-factor=2 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
