@@ -58,6 +58,7 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.90.0
+          components: cargo
 
       - name: Add Rust Targets (macOS Universal)
         if: matrix.platform == 'macos-latest'
@@ -331,6 +332,7 @@ jobs:
         uses: dtolnay/rust-toolchain@master
         with:
           toolchain: 1.90.0
+          components: cargo
         
       - name: Add Rust Target
         run: |
