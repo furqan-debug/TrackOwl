@@ -1,9 +1,8 @@
 name: Release TrackOwl
 
 on:
-  push:
-    tags:
-      - 'v*' # Triggers when you push a version tag like v1.2.7 or v1.3.0
+  # Tag pushes are now handled by release-windows.yml (Windows-only, signed).
+  # This workflow is kept for manual multi-platform builds only.
   workflow_dispatch:
     inputs:
       platform:
