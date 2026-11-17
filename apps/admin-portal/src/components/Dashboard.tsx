@@ -921,7 +921,7 @@ export function Dashboard() {
                     </div>
 
                     {/* 👥 Right Content: Who's Online (30%) */}
-                    <div className="lg:col-span-5 flex flex-col min-h-[400px] lg:h-[65vh]">
+                    <div className="lg:col-span-5 flex flex-col h-[60vh] min-h-[360px] lg:h-[65vh]">
                         <div className="bg-surface rounded-2xl shadow-premium overflow-hidden flex flex-col h-full border border-border">
                             <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between shrink-0 min-h-20 md:min-h-21">
                                 <div>
@@ -940,14 +940,14 @@ export function Dashboard() {
                                 <table className="w-full text-left">
                                     <thead className="sticky top-0 bg-surface/90 backdrop-blur-md z-10">
                                         <tr className="border-b border-border">
-                                            <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">{isRep ? 'Member' : 'Team Member'}</th>
-                                            <th className="px-8 py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-right">Performance</th>
+                                            <th className="px-5 py-4 md:px-8 md:py-6 text-[11px] font-bold text-text-muted tracking-[0.2em]">{isRep ? 'Member' : 'Team Member'}</th>
+                                            <th className="px-5 py-4 md:px-8 md:py-6 text-[11px] font-bold text-text-muted tracking-[0.2em] text-right">Performance</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-border">
                                         {onlineMembers.map((member) => (
                                             <tr key={member.id} className="hover:bg-surface-hover/50 transition-all duration-300 group">
-                                                <td className="px-8 py-6 md:py-7">
+                                                <td className="px-5 py-3.5 md:px-8 md:py-7">
                                                     <div className="flex items-center gap-4">
                                                         <div className="relative shrink-0">
                                                             <div className="w-10 h-10 rounded-xl bg-surface border border-border flex items-center justify-center text-[13px] font-bold text-text-muted shadow-sm group-hover:border-primary/30 transition-all duration-500 overflow-hidden ring-4 ring-transparent group-hover:ring-primary/5">
@@ -975,7 +975,7 @@ export function Dashboard() {
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-8 py-6 md:py-7 text-right">
+                                                <td className="px-5 py-3.5 md:px-8 md:py-7 text-right">
                                                     <div className="flex flex-col items-end">
                                                         <span className="text-[13px] font-bold text-text-main tabular-nums leading-none tracking-tight">
                                                             {formatDuration(member.timeWorkedToday)}
@@ -994,10 +994,10 @@ export function Dashboard() {
                                 </table>
                             </div>
 
-                            <div className="p-8 bg-main/30 border-t border-border shrink-0">
+                            <div className="p-4 md:p-8 bg-main/30 border-t border-border shrink-0">
                                 <button
                                     onClick={() => navigate('/dashboard/people')}
-                                    className="w-full py-4 bg-surface border border-border rounded-2xl text-[11px] font-bold text-text-muted hover:bg-primary hover:text-white hover:border-primary hover:shadow-glow-primary transition-all duration-300 shadow-sm"
+                                    className="w-full py-3 md:py-4 bg-surface border border-border rounded-xl md:rounded-2xl text-[11px] font-bold text-text-muted hover:bg-primary hover:text-white hover:border-primary hover:shadow-glow-primary transition-all duration-300 shadow-sm"
                                 >
                                     Manage Workspace Team
                                 </button>
