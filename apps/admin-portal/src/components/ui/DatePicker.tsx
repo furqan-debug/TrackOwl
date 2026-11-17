@@ -78,6 +78,8 @@ export function DatePicker({
     const rootRef = useRef<HTMLDivElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
     const [panelPos, setPanelPos] = useState({ top: 0, left: 0, width: MIN_PANEL_WIDTH });
+    /** True only inside a dialog; see where it is set. */
+    const [aboveHeader, setAboveHeader] = useState(false);
 
     /**
      * Where to put the panel, in viewport coordinates.
@@ -129,6 +131,23 @@ export function DatePicker({
         };
 
         place();
+        // Which layer the panel belongs on.
+        //
+        // On a page it goes UNDER the app header, so that following its field
+        // up the screen simply slips it beneath the header the way the rest of
+        // the page does — rather than riding over the logo, which is what a
+        // panel above the header looked like. Inside a dialog there is no page
+        // header to slip under and the dialog is itself above one, so there the
+        // panel has to clear everything.
+        let el: HTMLElement | null = triggerRef.current;
+        let overlay = false;
+        while (el && !overlay) {
+            const cs = getComputedStyle(el);
+            if (cs.position === 'fixed' && Number(cs.zIndex) >= 100) overlay = true;
+            el = el.parentElement;
+        }
+        setAboveHeader(overlay);
+
         // Fixed coordinates go stale as soon as anything moves underneath.
         window.addEventListener('resize', place);
         window.addEventListener('scroll', place, true);
@@ -339,7 +358,8 @@ export function DatePicker({
                             }}
                             onMouseDown={(e) => e.stopPropagation()}
                             className={clsx(
-                                "bg-surface border border-border rounded-xl shadow-premium z-[200] p-3 overflow-hidden",
+                                "bg-surface border border-border rounded-xl shadow-premium p-3 overflow-hidden",
+                                aboveHeader ? "z-[200]" : "z-[50] md:z-[200]",
                                 panelClassName
                             )}
                         >
