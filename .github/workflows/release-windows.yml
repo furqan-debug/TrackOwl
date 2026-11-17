@@ -83,7 +83,7 @@ jobs:
           releaseBody: |
             Windows build of TrackOwl v__VERSION__.
             Includes signed .exe and .msi installers.
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
-          includeUpdaterJson: false
+          includeUpdaterJson: true
           args: ""
