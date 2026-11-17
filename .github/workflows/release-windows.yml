@@ -35,10 +35,10 @@ jobs:
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@master
         with:
-          toolchain: 1.87.0
+          toolchain: 1.90.0
 
-      - name: Install Tauri CLI (locked)
-        run: cargo install tauri-cli --version 2.12.5 --locked
+      - name: Install Frontend Dependencies
+        run: npm ci --fetch-retries=5 --fetch-retry-factor=2 --fetch-retry-mintimeout=20000 --fetch-retry-maxtimeout=120000
 
       # Setup CodeSignTool (SSL.com) for Windows signing
       - name: Setup CodeSignTool (Windows)
