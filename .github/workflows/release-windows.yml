@@ -33,9 +33,10 @@ jobs:
           cache: 'npm'
 
       - name: Setup Rust
-        uses: actions-rs/setup-rust@v2
+        uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
           rust-version: 1.90.0
+          components: cargo
           profile: minimal
 
       - name: Install Frontend Dependencies
