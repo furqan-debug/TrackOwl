@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
@@ -43,7 +43,14 @@ export function Modal({
         }
     }, [isOpen]);
 
-    if (!isOpen) return null;
+    const modalRef = useRef<HTMLDivElement>(null);
+
+    // Scroll to top when modal opens
+    useEffect(() => {
+        if (isOpen) {
+            modalRef.current?.scrollTo(0, 0);
+        }
+    }, [isOpen]);
 
     return createPortal(
         <div
