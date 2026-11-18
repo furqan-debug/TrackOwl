@@ -153,7 +153,6 @@ export function DatePicker({
         );
     }, [value, isOpen]);
 
-
     const daysInMonth = useMemo(() => {
         const year = viewDate.getFullYear();
         const month = viewDate.getMonth();
