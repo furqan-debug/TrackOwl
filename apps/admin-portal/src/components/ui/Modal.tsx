@@ -52,6 +52,8 @@ export function Modal({
         }
     }, [isOpen]);
 
+    if (!isOpen) return null;
+
     return createPortal(
         <div
             className="
