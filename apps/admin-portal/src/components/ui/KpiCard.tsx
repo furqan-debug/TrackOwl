@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 export interface KpiCardProps {
     icon: ReactNode;
@@ -33,10 +34,10 @@ export function KpiCard({
     const effectiveVariant = variant || (trend === undefined ? 'neutral' : isPositive ? 'positive' : 'negative');
     
     const trendClass = effectiveVariant === 'positive'
-        ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/10'
+        ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40'
         : effectiveVariant === 'negative' 
-            ? 'bg-rose-500/10 text-rose-500 border-rose-500/10' 
-            : 'bg-black/5 text-text-muted border-black/5';
+            ? 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40' 
+            : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-slate-700/50';
 
     return (
         <div className={clsx("bg-surface border border-border shadow-shell-sm rounded-[1.5rem] p-6 flex flex-col relative overflow-visible group transition-all duration-500 hover:shadow-xl hover:-translate-y-1", className)}>
@@ -52,12 +53,19 @@ export function KpiCard({
                 {trend !== undefined && (
                     <span
                         className={clsx(
-                            'text-[10px] font-bold px-2.5 py-1.5 rounded-xl border transition-all duration-500 flex items-center gap-1 shadow-shell-sm',
+                            'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold shadow-shell-sm transition-all duration-300',
                             trendClass,
                             'group-hover:scale-105'
                         )}
                     >
-                        {isPositive ? '↑' : '↓'} {Math.abs(trend).toFixed(1)}%
+                        {isPositive ? (
+                            <TrendingUp className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                        ) : trend < 0 ? (
+                            <TrendingDown className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                        ) : (
+                            <Minus className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                        )}
+                        <span>{Math.abs(trend).toFixed(1)}%</span>
                     </span>
                 )}
             </div>
