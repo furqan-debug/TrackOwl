@@ -9,25 +9,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface DatePickerProps {
     value: string; // YYYY-MM-DD
+    endDate?: string; // YYYY-MM-DD for range selection
     onChange: (date: string) => void;
+    onRangeChange?: (startDate: string, endDate: string) => void;
+    enableRange?: boolean;
     label?: string;
     placeholder?: string;
     className?: string;
-    /**
-     * Pin the panel to one edge of the trigger instead of working it out from
-     * the window.
-     *
-     * The automatic choice only knows about the window, so inside a dialog it
-     * stays centred and overhangs the dialog's edge, where the scroll box
-     * clips it — on the objective form that cut the Sunday column off the
-     * left of the calendar.
-     */
     panelAlign?: 'auto' | 'left' | 'right';
-    /**
-     * Extra classes for the trigger, so a date field can be given the same
-     * height as the select beside it. `className` lands on the wrapper, which
-     * cannot do that.
-     */
     triggerClassName?: string;
     displayValue?: string;
     displayTimezone?: string;
@@ -36,27 +25,16 @@ interface DatePickerProps {
     panelClassName?: string;
 }
 
-/**
- * The calendar takes its width from the control it hangs off, so it lines up
- * with it instead of overhanging on both sides — the Screenshots date pill is
- * ~254px against a panel hard-coded to 320px, and no amount of re-centring
- * hides a panel wider than its trigger.
- *
- * The floor stops a short trigger squashing the day grid: seven columns plus
- * the panel's own padding need roughly this much to stay square and legible.
- */
 const MIN_PANEL_WIDTH = 288;
-
-/**
- * Roughly how tall the panel is, used only to decide up or down. Measuring the
- * real thing would mean rendering it first and moving it after, which shows as
- * a jump.
- */
+const RANGE_PANEL_WIDTH = 320;
 const PANEL_HEIGHT = 320;
 
 export function DatePicker({
     value, 
+    endDate,
     onChange, 
+    onRangeChange,
+    enableRange = false,
     label, 
     placeholder = "Select date",
     className,
@@ -70,27 +48,31 @@ export function DatePicker({
 }: DatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
 
-    // Measured from the trigger on open: the panel takes its width, and only
-    // shifts off centre when that would carry it past a window edge. The old
-    // fixed 320px anchored to the trigger's LEFT edge pushed the panel off
-    // screen on every page whose date control sits in the top-right corner.
+    const [pickerMode, setPickerMode] = useState<'single' | 'range'>(() => {
+        return (enableRange && endDate && endDate !== value) ? 'range' : 'single';
+    });
+
+    const [rangeStart, setRangeStart] = useState<string | null>(value || null);
+    const [rangeEnd, setRangeEnd] = useState<string | null>(endDate || null);
+
     const triggerRef = useRef<HTMLDivElement>(null);
     const rootRef = useRef<HTMLDivElement>(null);
     const panelRef = useRef<HTMLDivElement>(null);
-    const [panelPos, setPanelPos] = useState({ top: 0, left: 0, width: MIN_PANEL_WIDTH });
-    /** True only inside a dialog; see where it is set. */
+    const minWidth = enableRange ? RANGE_PANEL_WIDTH : MIN_PANEL_WIDTH;
+    const [panelPos, setPanelPos] = useState({ top: 0, left: 0, width: minWidth });
     const [aboveHeader, setAboveHeader] = useState(false);
 
-    /**
-     * Where to put the panel, in viewport coordinates.
-     *
-     * It is rendered through a portal on the body rather than inside the
-     * field. Inside, it is part of whatever is scrolling: on the objective
-     * dialog its height counted toward the content the dialog thought it had
-     * to scroll, so opening the calendar grew a scrollbar even with room on
-     * screen to show it. Out of the dialog it takes part in no layout at all
-     * and simply overlays.
-     */
+    // Sync state when popup opens or props change
+    useEffect(() => {
+        if (isOpen) {
+            setRangeStart(value || null);
+            setRangeEnd(endDate || null);
+            if (enableRange && endDate && endDate !== value) {
+                setPickerMode('range');
+            }
+        }
+    }, [isOpen, value, endDate, enableRange]);
+
     useLayoutEffect(() => {
         if (!isOpen) return;
 
@@ -98,76 +80,45 @@ export function DatePicker({
             const rect = triggerRef.current?.getBoundingClientRect();
             if (!rect) return;
 
-            const width = Math.max(rect.width, MIN_PANEL_WIDTH);
+            const inDialog = Boolean(triggerRef.current?.closest('[role="dialog"]'));
+            setAboveHeader(inDialog);
 
-            // Which edge to hang from. 'auto' keeps it under the trigger.
-            let left =
-                panelAlign === 'right'
-                    ? rect.right - width
-                    : panelAlign === 'left'
-                        ? rect.left
-                        : rect.left + rect.width / 2 - width / 2;
+            const width = Math.max(minWidth, rect.width);
+            const margin = 8;
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
 
-            // Never off the edge of the window.
-            if (left + width > window.innerWidth - 16) left = window.innerWidth - width - 16;
-            if (left < 16) left = 16;
+            let left = rect.left;
+            if (panelAlign === 'right') {
+                left = rect.right - width;
+            } else if (panelAlign === 'auto') {
+                if (left + width > vw - margin) {
+                    left = Math.max(margin, vw - margin - width);
+                }
+            }
+            left = Math.max(margin, left);
 
-            // How tall the panel really is, rather than the estimate. The
-            // portal is committed in the same pass as this effect, so it is
-            // already in the DOM and can be measured; scrollHeight ignores the
-            // open animation's transform. PANEL_HEIGHT is only the first-paint
-            // fallback — a five-row month is nearer 295px than 320, and
-            // guessing 25px too tall was enough to send a panel that fits
-            // flipping above its field instead.
-            const measured = panelRef.current?.scrollHeight ?? 0;
-            const height = measured > 0 ? measured : PANEL_HEIGHT;
-
-            // Downward, unless direction === 'up' or the window itself has no room for it there.
-            const below = rect.bottom + 8;
-            const fitsBelow = direction !== 'up' && (below + height <= window.innerHeight - 16);
-            const top = direction === 'down' ? Math.max(16, below) : (direction === 'up' || !fitsBelow) ? Math.max(16, rect.top - height - 8) : below;
+            let top = rect.bottom + margin;
+            if (direction === 'up' || (direction === 'auto' && top + PANEL_HEIGHT > vh && rect.top > PANEL_HEIGHT)) {
+                top = Math.max(margin, rect.top - PANEL_HEIGHT - margin);
+            }
 
             setPanelPos({ top, left, width });
         };
 
         place();
-        // Which layer the panel belongs on.
-        //
-        // On a page it goes UNDER the app header, so that following its field
-        // up the screen simply slips it beneath the header the way the rest of
-        // the page does — rather than riding over the logo, which is what a
-        // panel above the header looked like. Inside a dialog there is no page
-        // header to slip under and the dialog is itself above one, so there the
-        // panel has to clear everything.
-        let el: HTMLElement | null = triggerRef.current;
-        let overlay = false;
-        while (el && !overlay) {
-            const cs = getComputedStyle(el);
-            if (cs.position === 'fixed' && Number(cs.zIndex) >= 100) overlay = true;
-            el = el.parentElement;
-        }
-        setAboveHeader(overlay);
-
-        // Fixed coordinates go stale as soon as anything moves underneath.
         window.addEventListener('resize', place);
         window.addEventListener('scroll', place, true);
         return () => {
             window.removeEventListener('resize', place);
             window.removeEventListener('scroll', place, true);
         };
-    }, [isOpen, panelAlign, direction]);
+    }, [isOpen, panelAlign, direction, minWidth]);
 
-    // Dismiss on a click anywhere else. Without this the calendar only closed
-    // by picking a date or clicking the trigger again, so clicking elsewhere on
-    // the page left it hanging open over the content. FilterSelect has always
-    // done this; this component never did.
     useEffect(() => {
         if (!isOpen) return;
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Node;
-            // The panel is outside this component's DOM now, so a click in it
-            // is not inside rootRef — without the second check, using a month
-            // arrow would count as clicking away and close the calendar.
             if (!rootRef.current?.contains(target) && !panelRef.current?.contains(target)) {
                 setIsOpen(false);
             }
@@ -191,13 +142,6 @@ export function DatePicker({
         return new Date();
     });
 
-    // viewDate was set once at mount and moved only by the arrows, so it never
-    // followed the selection. Picking 31 August from the grey leading row of a
-    // September grid set the value but left the grid on September — reopening
-    // showed the wrong month with the selected day sitting outside it.
-    //
-    // Keyed on isOpen too, so opening after paging around without choosing
-    // anything returns to the month the value is actually in.
     useEffect(() => {
         if (!value) return;
         const [y, m, d] = value.split('-').map(Number);
@@ -221,10 +165,6 @@ export function DatePicker({
         const firstDay = new Date(year, month, 1).getDay();
         const days = new Date(year, month + 1, 0).getDate();
         
-        // The neighbouring months carry their own year. month - 1 and month + 1
-        // with this year attached gave "2026-00-28" for December 2025 and
-        // "2026-13-01" for January 2027, and the click handler wrote them
-        // straight out. Let Date normalise the rollover instead.
         const prevMonth = new Date(year, month - 1, 1);
         const nextMonth = new Date(year, month + 1, 1);
 
@@ -244,11 +184,6 @@ export function DatePicker({
             currentDays.push({ day: i, month, year, current: true });
         }
 
-        // Pad to whole weeks, not to a fixed six rows. 42 cells always produced
-        // six, so a month that fits in five — September 2026 starts on a Tuesday
-        // and ends on the 30th — got a trailing row made up entirely of the next
-        // month, adding height that showed nothing belonging to the month on
-        // screen.
         const nextDays = [];
         const filled = prevDays.length + currentDays.length;
         const remaining = Math.ceil(filled / 7) * 7 - filled;
@@ -278,11 +213,28 @@ export function DatePicker({
         setViewDate(d);
     };
 
-    const handleDateSelect = (day: number, month: number, year: number) => {
-        const iso = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const handleDateClick = (iso: string) => {
         if (maxDate && iso > maxDate) return;
-        onChange(iso);
-        setIsOpen(false);
+
+        if (!enableRange || pickerMode === 'single') {
+            onChange(iso);
+            onRangeChange?.(iso, iso);
+            setIsOpen(false);
+            return;
+        }
+
+        // Date Range selection mode
+        if (!rangeStart || (rangeStart && rangeEnd)) {
+            setRangeStart(iso);
+            setRangeEnd(null);
+        } else {
+            if (iso < rangeStart) {
+                setRangeEnd(rangeStart);
+                setRangeStart(iso);
+            } else {
+                setRangeEnd(iso);
+            }
+        }
     };
 
     const isFuture = (day: number, month: number, year: number) => {
@@ -301,17 +253,94 @@ export function DatePicker({
         return today.getDate() === day && today.getMonth() === month && today.getFullYear() === year;
     };
 
-    const isSelected = (day: number, month: number, year: number) => {
-        return selectedDate?.getDate() === day && selectedDate?.getMonth() === month && selectedDate?.getFullYear() === year;
+    const isSelected = (iso: string) => {
+        if (enableRange && pickerMode === 'range') {
+            return rangeStart === iso || rangeEnd === iso;
+        }
+        return value === iso;
+    };
+
+    const isInRange = (iso: string) => {
+        if (!enableRange || pickerMode !== 'range' || !rangeStart || !rangeEnd) return false;
+        return iso > rangeStart && iso < rangeEnd;
     };
 
     const formatDisplayDate = (val: string) => {
-        if (displayValue) return displayValue;
         if (!val) return placeholder;
         const [year, month, day] = val.split('-').map(Number);
         const d = new Date(year, month - 1, day);
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     };
+
+    const formatDisplay = () => {
+        if (displayValue) return displayValue;
+        if (enableRange && endDate && endDate !== value) {
+            const [y1, m1, d1] = value.split('-').map(Number);
+            const [y2, m2, d2] = endDate.split('-').map(Number);
+            const date1 = new Date(y1, m1 - 1, d1);
+            const date2 = new Date(y2, m2 - 1, d2);
+            const f1 = date1.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const f2 = date2.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            return `${f1} – ${f2}`;
+        }
+        return formatDisplayDate(value);
+    };
+
+    const presets = useMemo(() => {
+        if (!enableRange) return [];
+        const today = displayTimezone
+            ? new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone })
+            : new Date().toISOString().split('T')[0];
+
+        const [ty, tm, td] = today.split('-').map(Number);
+        const dToday = new Date(Date.UTC(ty, tm - 1, td, 12, 0, 0));
+
+        const getIso = (daysAgo: number) => {
+            const d = new Date(dToday.getTime() - daysAgo * 24 * 60 * 60 * 1000);
+            return d.toLocaleDateString('en-CA', { timeZone: 'UTC' });
+        };
+
+        const firstOfMonth = `${ty}-${String(tm).padStart(2, '0')}-01`;
+
+        return [
+            {
+                label: 'Today',
+                apply: () => {
+                    setPickerMode('single');
+                    onChange(today);
+                    onRangeChange?.(today, today);
+                    setIsOpen(false);
+                }
+            },
+            {
+                label: 'Yesterday',
+                apply: () => {
+                    const yest = getIso(1);
+                    setPickerMode('single');
+                    onChange(yest);
+                    onRangeChange?.(yest, yest);
+                    setIsOpen(false);
+                }
+            },
+            {
+                label: 'Last 7 Days',
+                apply: () => {
+                    const s = getIso(6);
+                    setPickerMode('range');
+                    onRangeChange?.(s, today);
+                    setIsOpen(false);
+                }
+            },
+            {
+                label: 'This Month',
+                apply: () => {
+                    setPickerMode('range');
+                    onRangeChange?.(firstOfMonth, today);
+                    setIsOpen(false);
+                }
+            }
+        ];
+    }, [enableRange, displayTimezone, onChange, onRangeChange]);
 
     return (
         <div ref={rootRef} className={clsx("relative", className)}>
@@ -320,28 +349,24 @@ export function DatePicker({
                 ref={triggerRef}
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
-                    "flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-all rounded-xl select-none border",
+                    "flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-all rounded-xl select-none border min-w-0",
                     triggerClassName,
                     isOpen 
                         ? "bg-surface-hover border-primary/30 shadow-inner" 
                         : "bg-surface hover:bg-surface-hover hover:border-primary/20 border-border shadow-shell-sm"
                 )}
             >
-                <CalendarIcon className={clsx("w-4 h-4 transition-colors", isOpen ? "text-primary" : "text-text-muted")} />
-                <div className="flex flex-col min-w-[120px]">
+                <CalendarIcon className={clsx("w-4 h-4 shrink-0 transition-colors", isOpen ? "text-primary" : "text-text-muted")} />
+                <div className="flex flex-col min-w-[110px] truncate">
                     {label && <span className="text-[9px] font-black text-text-muted uppercase tracking-widest leading-none mb-1">{label}</span>}
-                    <span className={clsx("text-[12px] font-bold leading-none", (!value && !displayValue) ? "text-text-muted" : "text-text-main")}>
-                        {formatDisplayDate(value)}
+                    <span className={clsx("text-[12px] font-bold leading-none truncate", (!value && !displayValue) ? "text-text-muted" : "text-text-main")}>
+                        {formatDisplay()}
                     </span>
                 </div>
-                <ChevronDown className={clsx("w-3.5 h-3.5 transition-transform duration-300 ml-auto", isOpen ? "text-primary rotate-180" : "text-text-muted")} />
+                <ChevronDown className={clsx("w-3.5 h-3.5 shrink-0 transition-transform duration-300 ml-auto", isOpen ? "text-primary rotate-180" : "text-text-muted")} />
             </div>
 
             {/* Calendar Dropdown */}
-            {/* Portal, so the panel is not part of anything that scrolls.
-                AnimatePresence goes INSIDE it: it animates the children it is
-                handed, and a portal is not one of those — wrapping the portal
-                in it means it tracks nothing and renders nothing. */}
             {createPortal(
                 <AnimatePresence>
                     {isOpen && (
@@ -363,9 +388,54 @@ export function DatePicker({
                                 panelClassName
                             )}
                         >
-                        {/* Header */}
+                        {/* Range Mode Switcher */}
+                        {enableRange && (
+                            <div className="flex bg-surface-hover/80 p-0.5 rounded-lg mb-2 border border-border/50 text-[11px] font-bold">
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setPickerMode('single'); }}
+                                    className={clsx(
+                                        "flex-1 py-1 rounded-md transition-all text-center",
+                                        pickerMode === 'single' ? "bg-surface text-primary shadow-shell-sm" : "text-text-muted hover:text-text-main"
+                                    )}
+                                >
+                                    Single Date
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setPickerMode('range'); }}
+                                    className={clsx(
+                                        "flex-1 py-1 rounded-md transition-all text-center",
+                                        pickerMode === 'range' ? "bg-surface text-primary shadow-shell-sm" : "text-text-muted hover:text-text-main"
+                                    )}
+                                >
+                                    Date Range
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Presets */}
+                        {enableRange && presets.length > 0 && (
+                            <div className="flex items-center gap-1 mb-2.5 overflow-x-auto no-scrollbar">
+                                {presets.map(p => (
+                                    <button
+                                        key={p.label}
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            p.apply();
+                                        }}
+                                        className="text-[10px] font-bold px-2 py-1 rounded-md bg-surface-hover hover:bg-primary/10 hover:text-primary text-text-muted transition-colors whitespace-nowrap"
+                                    >
+                                        {p.label}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Month Header */}
                         <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-[14px] font-black text-text-main tracking-tight">
+                            <h4 className="text-[13px] font-black text-text-main tracking-tight">
                                 {viewDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                             </h4>
                             <div className="flex items-center gap-1">
@@ -400,34 +470,77 @@ export function DatePicker({
                         {/* Day Grid */}
                         <div className="grid grid-cols-7 gap-1">
                             {daysInMonth.map((d, i) => {
+                                const iso = `${d.year}-${String(d.month + 1).padStart(2, '0')}-${String(d.day).padStart(2, '0')}`;
                                 const future = isFuture(d.day, d.month, d.year);
+                                const selected = isSelected(iso);
+                                const inRange = isInRange(iso);
+                                const isStart = rangeStart === iso;
+                                const isEnd = rangeEnd === iso;
+
                                 return (
                                     <div 
                                         key={i}
-                                        onClick={future ? undefined : (e) => { e.stopPropagation(); handleDateSelect(d.day, d.month, d.year); }}
+                                        onClick={future ? undefined : (e) => { e.stopPropagation(); handleDateClick(iso); }}
                                         className={clsx(
-                                            "h-8 flex items-center justify-center text-[12px] font-bold rounded-lg transition-all relative group",
+                                            "h-8 flex items-center justify-center text-[12px] font-bold transition-all relative group",
                                             future 
                                                 ? "opacity-20 cursor-not-allowed pointer-events-none text-text-muted" 
                                                 : "cursor-pointer",
                                             !d.current && !future && "opacity-20",
-                                            isSelected(d.day, d.month, d.year)
-                                                ? "bg-primary text-white shadow-glow-primary scale-110 z-10"
-                                                : future
-                                                    ? ""
-                                                    : d.current 
-                                                        ? "text-text-main hover:bg-primary hover:text-[var(--bg-surface)]" 
-                                                        : "text-text-muted hover:bg-surface-hover",
+                                            selected
+                                                ? clsx(
+                                                    "bg-primary text-white shadow-glow-primary z-10",
+                                                    enableRange && pickerMode === 'range' && isStart && rangeEnd && rangeEnd !== rangeStart ? "rounded-l-lg rounded-r-none" : "",
+                                                    enableRange && pickerMode === 'range' && isEnd && rangeStart && rangeEnd !== rangeStart ? "rounded-r-lg rounded-l-none" : "",
+                                                    (!rangeEnd || isStart === isEnd || pickerMode === 'single') ? "rounded-lg" : ""
+                                                  )
+                                                : inRange
+                                                    ? "bg-primary/15 text-primary rounded-none hover:bg-primary/25"
+                                                    : future
+                                                        ? ""
+                                                        : d.current 
+                                                            ? "text-text-main hover:bg-primary hover:text-[var(--bg-surface)] rounded-lg" 
+                                                            : "text-text-muted hover:bg-surface-hover rounded-lg",
                                         )}
                                     >
                                         {d.day}
-                                        {isToday(d.day, d.month, d.year) && !isSelected(d.day, d.month, d.year) && (
+                                        {isToday(d.day, d.month, d.year) && !selected && !inRange && (
                                             <div className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-accent" />
                                         )}
                                     </div>
                                 );
                             })}
                         </div>
+
+                        {/* Range Mode Action Buttons */}
+                        {enableRange && pickerMode === 'range' && (
+                            <div className="mt-3 pt-2.5 border-t border-border flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    disabled={!rangeStart || !rangeEnd}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (rangeStart && rangeEnd) {
+                                            onRangeChange?.(rangeStart, rangeEnd);
+                                            setIsOpen(false);
+                                        }
+                                    }}
+                                    className="flex-1 py-1.5 text-center text-xs font-bold rounded-lg bg-primary text-white hover:bg-primary/90 disabled:opacity-40 transition-colors shadow-sm cursor-pointer disabled:cursor-not-allowed"
+                                >
+                                    Apply Range
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsOpen(false);
+                                    }}
+                                    className="px-3 py-1.5 text-center text-xs font-bold rounded-lg border border-border text-text-muted hover:bg-surface-hover transition-colors cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
                         </motion.div>
                     )}
                 </AnimatePresence>,

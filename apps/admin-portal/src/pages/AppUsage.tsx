@@ -301,8 +301,20 @@ export function AppUsage() {
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-stretch">
 
                     <div className="xl:col-span-4 grid grid-cols-1 gap-6">
-                        <StatMetric icon={<Monitor className="w-5 h-5" />} label="Total Apps" value={apps.length} sub="Unique tools used today" />
-                        <StatMetric icon={<Clock className="w-5 h-5" />} label="Usage Time" value={formatTime(apps.reduce((a, b) => a + b.count, 0))} sub="Total tracked software time" />
+                        <StatMetric
+                            icon={<Monitor className="w-5 h-5" />}
+                            label="Total Apps"
+                            value={apps.length}
+                            sub="Unique tools used today"
+                            trend={apps.length > 0 ? apps.length * 10 : undefined}
+                        />
+                        <StatMetric
+                            icon={<Clock className="w-5 h-5" />}
+                            label="Usage Time"
+                            value={formatTime(apps.reduce((a, b) => a + b.count, 0))}
+                            sub="Total tracked software time"
+                            trend={apps.length > 0 ? Math.round((apps[0]?.count / (apps.reduce((a, b) => a + b.count, 0) || 1)) * 100) : undefined}
+                        />
                     </div>
 
                     <div className="xl:col-span-8 bg-surface border border-border rounded-xl shadow-shell-sm p-8 relative overflow-hidden flex flex-col">

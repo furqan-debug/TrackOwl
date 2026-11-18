@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import {
     Search,
@@ -240,6 +240,33 @@ export function Clients() {
         return matchesSearch && matchesStatus;
     });
 
+    const { activeCount, recentCount, clientGrowthTrend, activeRate, recentGrowthTrend } = useMemo(() => {
+        const now = Date.now();
+        const thirtyDaysAgo = now - 30 * 86400000;
+        const sixtyDaysAgo = now - 60 * 86400000;
+
+        const active = clients.filter(c => c.status === 'Active').length;
+        const recent = clients.filter(c => new Date(c.created_at).getTime() > thirtyDaysAgo).length;
+        const priorRecent = clients.filter(c => {
+            const t = new Date(c.created_at).getTime();
+            return t <= thirtyDaysAgo && t > sixtyDaysAgo;
+        }).length;
+
+        const growth = priorRecent > 0 
+            ? Math.round(((recent - priorRecent) / priorRecent) * 100)
+            : (recent > 0 ? 100 : 0);
+
+        const rate = clients.length > 0 ? Math.round((active / clients.length) * 100) : 0;
+
+        return {
+            activeCount: active,
+            recentCount: recent,
+            clientGrowthTrend: growth,
+            activeRate: rate,
+            recentGrowthTrend: growth
+        };
+    }, [clients]);
+
     return (
         <PageLayout
             title="Clients"
@@ -292,37 +319,25 @@ export function Clients() {
                         label="Total Clients"
                         value={clients.length}
                         sub="Registered clients"
+                        trend={clientGrowthTrend}
                         accent="brand-gradient"
                     />
 
                     <StatMetric
                         icon={<Activity className="w-5 h-5" />}
                         label="Active"
-                        value={
-                            clients.filter(
-                                client => client.status === 'Active'
-                            ).length
-                        }
+                        value={activeCount}
                         sub="Currently active"
+                        trend={activeRate}
                         accent="brand-gradient"
                     />
 
                     <StatMetric
                         icon={<Globe className="w-5 h-5" />}
                         label="Recent"
-                        value={
-                            clients.filter(client => {
-                                const created =
-                                    new Date(client.created_at).getTime();
-
-                                const thirtyDaysAgo =
-                                    Date.now() -
-                                    30 * 24 * 60 * 60 * 1000;
-
-                                return created > thirtyDaysAgo;
-                            }).length
-                        }
+                        value={recentCount}
                         sub="Last 30 days"
+                        trend={recentGrowthTrend}
                         accent="brand-gradient"
                     />
                 </div>

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState, useRef, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useState, useRef, useMemo, type CSSProperties } from 'react';
 import { supabase } from '../lib/supabase';
 import { reportService } from '../services/report.service';
 import {
@@ -638,6 +638,44 @@ export function Reports() {
         setShowDownloadDropdown(false);
     };
 
+    const { timeTrend, activityTrend, sessionTrend } = useMemo(() => {
+        if (!dailyActivity || dailyActivity.length === 0) {
+            return { timeTrend: undefined, activityTrend: undefined, sessionTrend: undefined };
+        }
+
+        // Multi-day range: compare second half vs first half of selected period
+        if (dailyActivity.length >= 2) {
+            const mid = Math.floor(dailyActivity.length / 2);
+            const firstHalf = dailyActivity.slice(0, mid);
+            const secondHalf = dailyActivity.slice(mid);
+
+            const firstMins = firstHalf.reduce((s, d) => s + (d.minutes || 0), 0);
+            const secondMins = secondHalf.reduce((s, d) => s + (d.minutes || 0), 0);
+            const tTrend = firstMins > 0 
+                ? Math.round(((secondMins - firstMins) / firstMins) * 100) 
+                : (secondMins > 0 ? 100 : 0);
+
+            const firstActs = firstHalf.filter(d => (d.activity || 0) > 0);
+            const secondActs = secondHalf.filter(d => (d.activity || 0) > 0);
+            const avg1 = firstActs.length > 0 ? firstActs.reduce((s, d) => s + d.activity, 0) / firstActs.length : 0;
+            const avg2 = secondActs.length > 0 ? secondActs.reduce((s, d) => s + d.activity, 0) / secondActs.length : 0;
+            const aTrend = avg1 > 0 ? Math.round(avg2 - avg1) : (avg2 > 0 ? Math.round(avg2) : 0);
+
+            return { timeTrend: tTrend, activityTrend: aTrend, sessionTrend: tTrend };
+        }
+
+        // Single-day range (e.g. Today, Yesterday, or single date):
+        // Calculate pace against standard daily benchmarks (8h target per active member, 50% activity target)
+        const activeMembersCount = Math.max(1, (tableData?.rows || []).filter(r => !r.isDeleted && r.totalMins > 0).length);
+        const avgHours = (totalMins / 60) / activeMembersCount;
+        const targetHours = 8;
+        const tTrend = totalMins > 0 ? Math.round(((avgHours - targetHours) / targetHours) * 100) : 0;
+        const aTrend = avgActivity > 0 ? (avgActivity - 50) : 0;
+        const sTrend = totalSessions > 0 ? Math.round(((totalSessions / activeMembersCount - 2) / 2) * 100) : 0;
+
+        return { timeTrend: tTrend, activityTrend: aTrend, sessionTrend: sTrend };
+    }, [dailyActivity, tableData.rows, totalMins, avgActivity, totalSessions]);
+
     return (
         <PageLayout
             maxWidth="full"
@@ -752,15 +790,15 @@ export function Reports() {
                     "grid grid-cols-1 sm:grid-cols-2 gap-8 lg:gap-10",
                     isRep ? "lg:grid-cols-4" : isClient ? "lg:grid-cols-5" : "lg:grid-cols-3 xl:grid-cols-6"
                 )}>
-                    <StatMetric icon={<Clock className="w-4 h-4" />} label="Time" value={formatDuration(totalMins)} sub="Worked" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
-                    <StatMetric icon={<ActivityIcon className="w-4 h-4" />} label="Activity" value={`${avgActivity}%`} sub="Score" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
-                    <StatMetric icon={<Monitor className="w-4 h-4" />} label="Sessions" value={totalSessions.toString()} sub="Total" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                    <StatMetric icon={<Clock className="w-4 h-4" />} label="Time" value={formatDuration(totalMins)} sub="Worked" trend={timeTrend} accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                    <StatMetric icon={<ActivityIcon className="w-4 h-4" />} label="Activity" value={`${avgActivity}%`} sub="Score" trend={activityTrend} accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                    <StatMetric icon={<Monitor className="w-4 h-4" />} label="Sessions" value={totalSessions.toString()} sub="Total" trend={sessionTrend} accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     <StatMetric icon={<Camera className="w-4 h-4" />} label="Captures" value={screenshotCount.toString()} sub="Proofs" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     {!isRep && (
-                        <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub={isClient ? "Billed" : "Revenue"} accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                        <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Billable" value={`$${Math.round(totalBilled).toLocaleString()}`} sub={isClient ? "Billed" : "Revenue"} trend={timeTrend} accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     )}
                     {!isRep && !isClient && (
-                        <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Expenses" accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
+                        <StatMetric icon={<DollarSign className="w-4 h-4" />} label="Cost" value={`$${Math.round(totalCosts).toLocaleString()}`} sub="Expenses" trend={timeTrend} accent="brand-gradient" className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]" />
                     )}
                 </div>
 

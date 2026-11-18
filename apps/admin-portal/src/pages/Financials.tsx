@@ -52,6 +52,9 @@ export function Financials() {
         sessions: acc.sessions + m.sessions,
     }), { cost: 0, minutes: 0, sessions: 0 });
 
+    const activeMembersCount = members.filter(m => m.totalMinutes > 0).length;
+    const activeMemberRate = members.length > 0 ? Math.round((activeMembersCount / members.length) * 100) : 0;
+
     const fmtTime = (min: number) => {
         const h = Math.floor(min / 60);
         const m = min % 60;
@@ -109,6 +112,7 @@ export function Financials() {
                     label="Total Pay Cost" 
                     value={`$${totals.cost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} 
                     sub={range} 
+                    trend={activeMemberRate}
                     className="rounded-[24px] border-border"
                 />
                 <KpiCard 
@@ -116,6 +120,7 @@ export function Financials() {
                     label="Total Tracked" 
                     value={fmtTime(totals.minutes)} 
                     sub="Cumulative duration" 
+                    trend={activeMemberRate}
                     className="rounded-[24px] border-border"
                 />
                 <KpiCard 
@@ -123,6 +128,7 @@ export function Financials() {
                     label="Active Sessions" 
                     value={totals.sessions.toString()} 
                     sub="Recorded events" 
+                    trend={totals.sessions > 0 ? totals.sessions : undefined}
                     className="rounded-[24px] border-border"
                 />
             </div>

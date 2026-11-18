@@ -117,7 +117,10 @@ export function Dashboard() {
         return str.toLowerCase();
     };
 
-    const [viewDateStr, setViewDateStr] = useState(() => {
+    const [startDateStr, setStartDateStr] = useState(() => {
+        return new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+    });
+    const [endDateStr, setEndDateStr] = useState(() => {
         return new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
     });
 
@@ -133,7 +136,7 @@ export function Dashboard() {
     // that UTC date is already tomorrow while the org is still on today, so the
     // dashboard would query the wrong day. Re-derive it once the real timezone
     // is known. The ref keeps this to initialization only — after that the date
-    // picker, arrows and goToToday own viewDateStr, so a later timezone switch
+    // picker, arrows and goToToday own startDateStr/endDateStr, so a later timezone switch
     // never pulls the user off a date they deliberately selected.
     const didInitDateRef = useRef(false);
     const [dateInitialized, setDateInitialized] = useState(false);
@@ -141,7 +144,8 @@ export function Dashboard() {
         if (didInitDateRef.current || !timezoneReady) return;
         didInitDateRef.current = true;
         const todayInTz = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
-        setViewDateStr(prev => (prev === todayInTz ? prev : todayInTz));
+        setStartDateStr(prev => (prev === todayInTz ? prev : todayInTz));
+        setEndDateStr(prev => (prev === todayInTz ? prev : todayInTz));
         // Batched with the date above, so the first fetch always sees the
         // corrected date — exactly one query per page load.
         setDateInitialized(true);
@@ -163,40 +167,62 @@ export function Dashboard() {
     const [appUsage, setAppUsage] = useState<AppUsage[]>([]);
     const [chartData, setChartData] = useState<any[]>([]);
 
-
-
     const todayOrgStr = useMemo(() => {
         return new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
     }, [displayTimezone]);
 
     const navigateDate = (direction: 'prev' | 'next') => {
-        const [y, m, d] = viewDateStr.split('-').map(Number);
-        const next = new Date(y, m - 1, d);
-        next.setDate(next.getDate() + (direction === 'prev' ? -1 : 1));
-        const nextStr = next.toLocaleDateString('en-CA');
-        if (direction === 'next' && todayOrgStr && nextStr > todayOrgStr) {
-            setViewDateStr(todayOrgStr);
-            return;
+        if (startDateStr === endDateStr) {
+            const [y, m, d] = startDateStr.split('-').map(Number);
+            const next = new Date(y, m - 1, d);
+            next.setDate(next.getDate() + (direction === 'prev' ? -1 : 1));
+            const nextStr = next.toLocaleDateString('en-CA');
+            if (direction === 'next' && todayOrgStr && nextStr > todayOrgStr) {
+                setStartDateStr(todayOrgStr);
+                setEndDateStr(todayOrgStr);
+                return;
+            }
+            setStartDateStr(nextStr);
+            setEndDateStr(nextStr);
+        } else {
+            const s = new Date(startDateStr + 'T12:00:00Z');
+            const e = new Date(endDateStr + 'T12:00:00Z');
+            const diffDays = Math.max(1, Math.round((e.getTime() - s.getTime()) / (24 * 3600 * 1000)));
+            const shiftDays = direction === 'prev' ? -diffDays : diffDays;
+            const newS = new Date(s.getTime() + shiftDays * 24 * 3600 * 1000);
+            const newE = new Date(e.getTime() + shiftDays * 24 * 3600 * 1000);
+            const newSStr = newS.toLocaleDateString('en-CA', { timeZone: 'UTC' });
+            let newEStr = newE.toLocaleDateString('en-CA', { timeZone: 'UTC' });
+            if (direction === 'next' && todayOrgStr && newEStr > todayOrgStr) {
+                newEStr = todayOrgStr;
+            }
+            setStartDateStr(newSStr);
+            setEndDateStr(newEStr);
         }
-        setViewDateStr(nextStr);
     };
 
-    const handleDateChange = (dateStr: string) => {
+    const handleSingleDateChange = (dateStr: string) => {
         if (!dateStr) return;
-        if (todayOrgStr && dateStr > todayOrgStr) {
-            setViewDateStr(todayOrgStr);
-            return;
-        }
-        setViewDateStr(dateStr);
+        const target = (todayOrgStr && dateStr > todayOrgStr) ? todayOrgStr : dateStr;
+        setStartDateStr(target);
+        setEndDateStr(target);
+    };
+
+    const handleRangeChange = (start: string, end: string) => {
+        if (!start || !end) return;
+        const cappedEnd = (todayOrgStr && end > todayOrgStr) ? todayOrgStr : end;
+        setStartDateStr(start);
+        setEndDateStr(cappedEnd);
     };
 
     const goToToday = () => {
-        setViewDateStr(todayOrgStr);
+        setStartDateStr(todayOrgStr);
+        setEndDateStr(todayOrgStr);
     };
 
     const isTodayView = useMemo(() => {
-        return viewDateStr === todayOrgStr;
-    }, [viewDateStr, todayOrgStr]);
+        return startDateStr === todayOrgStr && endDateStr === todayOrgStr;
+    }, [startDateStr, endDateStr, todayOrgStr]);
 
     const fetchDashboardData = useCallback(async (forceRefresh = false, isSilent = false) => {
         // Wait for the real timezone. Firing before it resolves issued a second,
@@ -208,14 +234,14 @@ export function Dashboard() {
         // Supersede any in-flight request: only the newest may write state.
         const mySeq = ++requestSeqRef.current;
 
-        // Compute exact UTC bounds for the viewDate in displayTimezone
-        const startUtc = orgLocalToUtc(viewDateStr, 'start', displayTimezone || 'UTC');
-        const endUtc = orgLocalToUtc(viewDateStr, 'end', displayTimezone || 'UTC');
+        // Compute exact UTC bounds for the selected range in displayTimezone
+        const startUtc = orgLocalToUtc(startDateStr, 'start', displayTimezone || 'UTC');
+        const endUtc = orgLocalToUtc(endDateStr, 'end', displayTimezone || 'UTC');
 
         const startIso = startUtc.toISOString();
         const endIso = endUtc.toISOString();
 
-        const cacheKey = `${profile?.id || 'anon'}_${startIso}`;
+        const cacheKey = `${profile?.id || 'anon'}_${startIso}_${endIso}`;
         const cached = !forceRefresh ? dashboardDataCache.get(cacheKey) : null;
 
         if (cached) {
@@ -249,9 +275,10 @@ export function Dashboard() {
             // Auto-terminate any ghost sessions in database based on Termination Grace Period
             await supabase.rpc('rpc_auto_terminate_inactive_sessions', { p_org_id: organizationId });
 
-            // Compute previous week's bounds in orgTimezone
-            const prevWeekStartUtc = new Date(startUtc.getTime() - 1 * 24 * 60 * 60 * 1000);
-            const prevWeekEndUtc = new Date(endUtc.getTime() - 1 * 24 * 60 * 60 * 1000);
+            // Compute previous period bounds in orgTimezone
+            const durationMs = Math.max(24 * 60 * 60 * 1000, endUtc.getTime() - startUtc.getTime());
+            const prevWeekStartUtc = new Date(startUtc.getTime() - durationMs);
+            const prevWeekEndUtc = new Date(endUtc.getTime() - durationMs);
             const prevWeekStartIso = prevWeekStartUtc.toISOString();
             const prevWeekEndIso = prevWeekEndUtc.toISOString();
 
@@ -487,18 +514,32 @@ export function Dashboard() {
             setAppUsage(finalAppUsage);
 
             // Chart Data Transformation
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            const [vy, vm, vd] = viewDateStr.split('-').map(Number);
-            const vDate = new Date(vy, vm - 1, vd);
-            const currentDayStr = days[vDate.getDay()];
-            const cData = days.map(d => {
-                let hours = 0;
-                if (d === currentDayStr) {
-                    const mins = totalMins;
-                    hours = +(mins / 60).toFixed(1);
+            let cData: { name: string; hours: number }[] = [];
+            if (startDateStr === endDateStr) {
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                const [vy, vm, vd] = startDateStr.split('-').map(Number);
+                const vDate = new Date(vy, vm - 1, vd);
+                const currentDayStr = days[vDate.getDay()];
+                cData = days.map(d => {
+                    let hours = 0;
+                    if (d === currentDayStr) {
+                        const mins = totalMins;
+                        hours = +(mins / 60).toFixed(1);
+                    }
+                    return { name: d, hours };
+                });
+            } else {
+                const s = new Date(startDateStr + 'T12:00:00Z');
+                const e = new Date(endDateStr + 'T12:00:00Z');
+                const dayCount = Math.max(1, Math.round((e.getTime() - s.getTime()) / (24 * 3600 * 1000)) + 1);
+                const avgDailyHours = +((totalMins / 60) / dayCount).toFixed(1);
+                const step = dayCount > 14 ? Math.ceil(dayCount / 14) : 1;
+                for (let i = 0; i < dayCount; i += step) {
+                    const cur = new Date(s.getTime() + i * 24 * 3600 * 1000);
+                    const name = cur.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+                    cData.push({ name, hours: avgDailyHours });
                 }
-                return { name: d, hours };
-            });
+            }
             setChartData(cData);
 
             // Update Cache
@@ -522,7 +563,7 @@ export function Dashboard() {
                 setRefreshing(false);
             }
         }
-    }, [viewDateStr, displayTimezone, timezoneReady, dateInitialized, isTodayView, organizationId, profile?.id, profile?.role, managedMemberIds, managedProjectIds, isRep, selfUserIds]);
+    }, [startDateStr, endDateStr, displayTimezone, timezoneReady, dateInitialized, isTodayView, organizationId, profile?.id, profile?.role, managedMemberIds, managedProjectIds, isRep, selfUserIds]);
 
     useEffect(() => { fetchDashboardData(); }, [fetchDashboardData]);
 
@@ -572,16 +613,19 @@ export function Dashboard() {
                             <ChevronLeft className="w-5 h-5" />
                         </button>
                         <DatePicker
-                            value={viewDateStr}
+                            value={startDateStr}
+                            endDate={endDateStr}
+                            enableRange={true}
                             displayTimezone={displayTimezone}
                             maxDate={todayOrgStr}
-                            onChange={(val) => handleDateChange(val)}
+                            onChange={(val) => handleSingleDateChange(val)}
+                            onRangeChange={(start, end) => handleRangeChange(start, end)}
                             className="flex-1 min-w-0"
                         />
                         <button
                             onClick={() => navigateDate('next')}
                             className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-lg disabled:opacity-30 disabled:hover:bg-transparent"
-                            disabled={isTodayView || viewDateStr >= todayOrgStr}
+                            disabled={isTodayView || (endDateStr >= todayOrgStr && startDateStr >= todayOrgStr)}
                         >
                             <ChevronRight className="w-5 h-5" />
                         </button>
@@ -620,7 +664,7 @@ export function Dashboard() {
                         icon={<TrendingUp className="w-5 h-5" />}
                         label={isRep ? "Focus Score" : "Team Focus"}
                         value={`${stats.avgActivityScore}%`}
-                        sub="Avg activity score for this date"
+                        sub={startDateStr === endDateStr ? "Avg activity score for this date" : "Avg activity score for date range"}
                         trend={stats.trendFocus}
                         accent="brand-gradient"
                         className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]"
@@ -629,7 +673,7 @@ export function Dashboard() {
                         icon={<Clock className="w-5 h-5" />}
                         label="Productivity"
                         value={formatDuration(stats.totalProductiveMinutes)}
-                        sub="Total hours tracked for this date"
+                        sub={startDateStr === endDateStr ? "Total hours tracked for this date" : "Total hours tracked for date range"}
                         trend={stats.trendProductivity}
                         accent="brand-gradient"
                         className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]"
@@ -639,6 +683,7 @@ export function Dashboard() {
                         label="Utilization"
                         value={stats.projectsWorked}
                         sub="Projects with active progress"
+                        trend={projectActivity.length > 0 ? Math.round((stats.projectsWorked / projectActivity.length) * 100) : (stats.projectsWorked > 0 ? 100 : 0)}
                         accent="brand-gradient"
                         className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]"
                     />
@@ -646,7 +691,8 @@ export function Dashboard() {
                         icon={<Users className="w-5 h-5" />}
                         label={isRep ? "Live Status" : (isTodayView ? "Live Presence" : "Members Active")}
                         value={isRep ? (onlineMembers[0]?.status ? (onlineMembers[0].status.charAt(0).toUpperCase() + onlineMembers[0].status.slice(1)) : 'Offline') : onlineMembers.filter(m => m.status !== 'offline').length}
-                        sub={isRep ? "Current tracking status" : (isTodayView ? "Members currently active" : "Tracked time on this date")}
+                        sub={isRep ? "Current tracking status" : (isTodayView ? "Members currently active" : (startDateStr === endDateStr ? "Tracked time on this date" : "Tracked time in date range"))}
+                        trend={onlineMembers.length > 0 ? Math.round((onlineMembers.filter(m => m.status !== 'offline').length / onlineMembers.length) * 100) : undefined}
                         accent="brand-gradient"
                         className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]"
                     />
@@ -659,7 +705,7 @@ export function Dashboard() {
                         <div className="px-6 py-5 md:px-8 md:py-6 border-b border-border flex items-center justify-between min-h-20 md:min-h-21">
                             <div>
                                 <h3 className="text-[14px] md:text-[16px] font-bold text-text-main mb-1 tracking-[0.05em]">Time Tracked</h3>
-                                <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">Daily productivity for selected date</p>
+                                <p className="text-[11px] md:text-[12px] font-medium text-text-muted tracking-[0.1em]">{startDateStr === endDateStr ? "Daily productivity for selected date" : "Productivity for selected date range"}</p>
                             </div>
                         </div>
                         <div className="flex-1 p-6 md:p-8 relative">

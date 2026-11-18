@@ -184,12 +184,40 @@ export function ActivityBlocks() {
             return `${h}h ${m}m`;
         };
 
+        let clicksTrend: number | undefined;
+        let keysTrend: number | undefined;
+        let activityTrend: number | undefined;
+        let timeTrend: number | undefined;
+
+        if (totalBlocks >= 2) {
+            const mid = Math.floor(totalBlocks / 2);
+            const h1 = blocks.slice(0, mid);
+            const h2 = blocks.slice(mid);
+
+            const c1 = h1.reduce((acc, b) => acc + (b.mouse_clicks || 0), 0);
+            const c2 = h2.reduce((acc, b) => acc + (b.mouse_clicks || 0), 0);
+            clicksTrend = c1 > 0 ? Math.round(((c2 - c1) / c1) * 100) : (c2 > 0 ? 100 : 0);
+
+            const k1 = h1.reduce((acc, b) => acc + (b.key_presses || 0), 0);
+            const k2 = h2.reduce((acc, b) => acc + (b.key_presses || 0), 0);
+            keysTrend = k1 > 0 ? Math.round(((k2 - k1) / k1) * 100) : (k2 > 0 ? 100 : 0);
+
+            const a1 = h1.length > 0 ? h1.reduce((acc, b) => acc + (b.activity_percent || 0), 0) / h1.length : 0;
+            const a2 = h2.length > 0 ? h2.reduce((acc, b) => acc + (b.activity_percent || 0), 0) / h2.length : 0;
+            activityTrend = a1 > 0 ? Math.round(a2 - a1) : (a2 > 0 ? Math.round(a2) : 0);
+            timeTrend = Math.round(((h2.length - h1.length) / h1.length) * 100);
+        }
+
         return {
             totalBlocks,
             totalTrackedTime: formatHoursMins(totalTrackedSeconds),
             totalClicks,
             totalKeys,
-            avgActivity
+            avgActivity,
+            clicksTrend,
+            keysTrend,
+            activityTrend,
+            timeTrend
         };
     }, [blocks]);
 
@@ -306,6 +334,7 @@ export function ActivityBlocks() {
                             label="Tracked Time"
                             value={stats.totalTrackedTime}
                             sub={`${stats.totalBlocks} ten-minute blocks`}
+                            trend={stats.timeTrend}
                             accent="brand-gradient"
                         />
                         <StatMetric
@@ -313,6 +342,7 @@ export function ActivityBlocks() {
                             label="Avg Activity"
                             value={`${stats.avgActivity}%`}
                             sub="Active movement score"
+                            trend={stats.activityTrend}
                             accent="brand-gradient"
                         />
                         <StatMetric
@@ -320,6 +350,7 @@ export function ActivityBlocks() {
                             label="Mouse Clicks"
                             value={stats.totalClicks.toLocaleString()}
                             sub={`across ${stats.totalBlocks} blocks`}
+                            trend={stats.clicksTrend}
                             accent="brand-gradient"
                         />
                         <StatMetric
@@ -327,6 +358,7 @@ export function ActivityBlocks() {
                             label="Keystrokes"
                             value={stats.totalKeys.toLocaleString()}
                             sub={`across ${stats.totalBlocks} blocks`}
+                            trend={stats.keysTrend}
                             accent="brand-gradient"
                         />
                     </div>

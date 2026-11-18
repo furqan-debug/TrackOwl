@@ -344,6 +344,32 @@ export function Activity() {
     const avgActivity = calculateActivityScore(productiveSamples);
     const displayMinutes = Math.max(0, Math.round(sessionMinutes));
 
+    const { clicksTrend, keysTrend, durationTrend, activityTrend } = useMemo(() => {
+        if (!uniqueSamples || uniqueSamples.length < 4) {
+            return { clicksTrend: undefined, keysTrend: undefined, durationTrend: undefined, activityTrend: undefined };
+        }
+        const sorted = [...uniqueSamples].sort((a, b) => new Date(a.recorded_at).getTime() - new Date(b.recorded_at).getTime());
+        const mid = Math.floor(sorted.length / 2);
+        const h1 = sorted.slice(0, mid);
+        const h2 = sorted.slice(mid);
+
+        const c1 = h1.reduce((acc, s) => acc + (s.mouse_clicks || 0), 0);
+        const c2 = h2.reduce((acc, s) => acc + (s.mouse_clicks || 0), 0);
+        const cTrend = c1 > 0 ? Math.round(((c2 - c1) / c1) * 100) : (c2 > 0 ? 100 : 0);
+
+        const k1 = h1.reduce((acc, s) => acc + (s.key_presses || 0), 0);
+        const k2 = h2.reduce((acc, s) => acc + (s.key_presses || 0), 0);
+        const kTrend = k1 > 0 ? Math.round(((k2 - k1) / k1) * 100) : (k2 > 0 ? 100 : 0);
+
+        const dTrend = h1.length > 0 ? Math.round(((h2.length - h1.length) / h1.length) * 100) : 0;
+
+        const a1 = h1.length > 0 ? h1.reduce((acc, s) => acc + (s.activity_percent || 0), 0) / h1.length : 0;
+        const a2 = h2.length > 0 ? h2.reduce((acc, s) => acc + (s.activity_percent || 0), 0) / h2.length : 0;
+        const aTrend = a1 > 0 ? Math.round(a2 - a1) : (a2 > 0 ? Math.round(a2) : 0);
+
+        return { clicksTrend: cTrend, keysTrend: kTrend, durationTrend: dTrend, activityTrend: aTrend };
+    }, [uniqueSamples]);
+
     const formatDuration = (mins: number) => {
         if (mins < 60) return `${mins}m`;
         const h = Math.floor(mins / 60);
@@ -604,6 +630,7 @@ export function Activity() {
                         label="Clicks"
                         value={totalClicks.toLocaleString()}
                         sub="Mouse interactions"
+                        trend={clicksTrend}
                         accent="brand-gradient"
                     />
                     <StatMetric
@@ -611,6 +638,7 @@ export function Activity() {
                         label="Keys"
                         value={totalKeys.toLocaleString()}
                         sub="Keyboard events"
+                        trend={keysTrend}
                         accent="brand-gradient"
                     />
                     <StatMetric
@@ -618,6 +646,7 @@ export function Activity() {
                         label="Duration"
                         value={formatDuration(displayMinutes)}
                         sub="Total tracked time"
+                        trend={durationTrend}
                         accent="brand-gradient"
                     />
                     <StatMetric
@@ -625,6 +654,7 @@ export function Activity() {
                         label="Activity"
                         value={`${avgActivity}%`}
                         sub="Average score"
+                        trend={activityTrend}
                         accent="brand-gradient"
                     />
                 </div>

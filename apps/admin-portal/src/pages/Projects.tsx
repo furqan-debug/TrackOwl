@@ -186,7 +186,24 @@ export function Projects() {
         const total = projects.length;
         const overBudget = projects.filter(p => ((p.tracked_seconds || 0) / 3600) > (p.budget_limit || Infinity)).length;
         const uniqueClients = new Set(projects.map(p => p.client_id).filter(Boolean)).size;
-        return { total, overBudget, uniqueClients };
+
+        const now = Date.now();
+        const thirtyDaysAgo = now - 30 * 86400000;
+        const sixtyDaysAgo = now - 60 * 86400000;
+        const newProjectsLast30 = projects.filter(p => new Date(p.created_at).getTime() > thirtyDaysAgo).length;
+        const newProjectsPrior30 = projects.filter(p => {
+            const t = new Date(p.created_at).getTime();
+            return t <= thirtyDaysAgo && t > sixtyDaysAgo;
+        }).length;
+        const projectGrowthTrend = newProjectsPrior30 > 0 
+            ? Math.round(((newProjectsLast30 - newProjectsPrior30) / newProjectsPrior30) * 100)
+            : (newProjectsLast30 > 0 ? 100 : 0);
+
+        const inBudgetCount = total - overBudget;
+        const budgetHealthTrend = total > 0 ? Math.round((inBudgetCount / total) * 100) : 100;
+        const clientRatio = total > 0 ? Math.round((uniqueClients / total) * 100) : 0;
+
+        return { total, overBudget, uniqueClients, projectGrowthTrend, budgetHealthTrend, clientRatio };
     }, [projects]);
 
     return (
@@ -241,6 +258,7 @@ export function Projects() {
                             label="Total Projects"
                             value={stats.total}
                             sub={`${activeTab} status`}
+                            trend={stats.projectGrowthTrend}
                             accent="brand-gradient"
                         />
                         <StatMetric
@@ -248,6 +266,7 @@ export function Projects() {
                             label="Active Clients"
                             value={stats.uniqueClients}
                             sub="Managed entities"
+                            trend={stats.clientRatio}
                             accent="brand-gradient"
                         />
                         <StatMetric
@@ -255,6 +274,7 @@ export function Projects() {
                             label="In Budget"
                             value={`${projects.length - stats.overBudget}`}
                             sub="Operational health"
+                            trend={stats.budgetHealthTrend}
                             accent="brand-gradient"
                         />
                         <StatMetric
