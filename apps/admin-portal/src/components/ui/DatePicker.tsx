@@ -153,11 +153,6 @@ export function DatePicker({
         );
     }, [value, isOpen]);
 
-    const selectedDate = useMemo(() => {
-        if (!value) return null;
-        const [year, month, day] = value.split('-').map(Number);
-        return new Date(year, month - 1, day);
-    }, [value]);
 
     const daysInMonth = useMemo(() => {
         const year = viewDate.getFullYear();
