@@ -224,17 +224,25 @@ export function AppUsage() {
             title="App Usage"
             description={isRep ? "See apps and websites you use while tracking time." : "See which apps and websites your team is using while tracking time."}
             actions={
-                <div className="flex items-center gap-4">
+                // One rigid row of fixed widths — a 240px member filter, a 270px
+                // date control and the refresh button — came to well over a
+                // phone's width, so the page sat shifted with a band of empty
+                // space down the right. It wraps now, and falls the way the
+                // sibling Activity Blocks page does: on a phone the member
+                // filter takes the first line and the date control and refresh
+                // button share the second, at their own widths rather than
+                // stretched. From md up the original one-line row is unchanged.
+                <div className="flex flex-wrap items-center gap-3 md:gap-4">
                     {!isRep && (
                         <FilterSelect
-                            icon={<Users className="w-3.5 h-3.5 text-text-muted" />}
+                            icon={<Users className="w-4 h-4 md:w-3.5 md:h-3.5 text-text-muted" />}
                             value={selectedMemberId}
                             onChange={setSelectedMemberId}
                             options={[{ id: 'all', name: 'All Members' }, ...members.map(m => ({ id: m.id, name: m.full_name }))]}
                             // Wider than its content needs. The dropdown is w-full, so the
                             // trigger's width is also the list's, and at content width the
                             // longer member names were truncating.
-                            className="h-10 min-w-[240px]"
+                            className="h-10 w-48 md:w-auto md:min-w-[240px]"
                         />
                     )}
 
@@ -248,14 +256,14 @@ export function AppUsage() {
                                 dateObj.setDate(dateObj.getDate() - 1);
                                 setSelectedDate(dateObj.toLocaleDateString('en-CA'));
                             }}
-                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
+                            className="p-2 md:p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
                         >
                             <ChevronLeft className="w-4 h-4" />
                         </button>
                         <DatePicker
                             value={selectedDate}
                             onChange={(val) => setSelectedDate(val)}
-                            className="min-w-[180px]"
+                            className="min-w-[170px] md:min-w-[180px]"
                         />
                         <button
                             onClick={() => {
@@ -264,7 +272,7 @@ export function AppUsage() {
                                 dateObj.setDate(dateObj.getDate() + 1);
                                 setSelectedDate(dateObj.toLocaleDateString('en-CA'));
                             }}
-                            className="p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg disabled:opacity-20"
+                            className="p-2 md:p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg disabled:opacity-20"
                             disabled={isToday}
                         >
                             <ChevronRight className="w-4 h-4" />
@@ -275,6 +283,7 @@ export function AppUsage() {
                         onClick={() => fetchData(false, true)}
                         refreshing={refreshing}
                         label="Refresh app usage"
+                        className="shrink-0"
                     />
                 </div>
             }
