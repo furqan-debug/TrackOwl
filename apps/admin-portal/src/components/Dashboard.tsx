@@ -202,19 +202,6 @@ export function Dashboard() {
         }
     };
 
-    const handleSingleDateChange = (dateStr: string) => {
-        if (!dateStr) return;
-        const target = (todayOrgStr && dateStr > todayOrgStr) ? todayOrgStr : dateStr;
-        setStartDateStr(target);
-        setEndDateStr(target);
-    };
-
-    const handleRangeChange = (start: string, end: string) => {
-        if (!start || !end) return;
-        const cappedEnd = (todayOrgStr && end > todayOrgStr) ? todayOrgStr : end;
-        setStartDateStr(start);
-        setEndDateStr(cappedEnd);
-    };
 
     const goToToday = () => {
         setStartDateStr(todayOrgStr);
@@ -750,12 +737,13 @@ export function Dashboard() {
                         </button>
                         <DatePicker
                             value={startDateStr}
-                            endDate={endDateStr}
-                            enableRange={true}
                             displayTimezone={displayTimezone}
                             maxDate={todayOrgStr}
-                            onChange={(val) => handleSingleDateChange(val)}
-                            onRangeChange={(start, end) => handleRangeChange(start, end)}
+                            onChange={(val) => {
+                                const capped = (todayOrgStr && val > todayOrgStr) ? todayOrgStr : val;
+                                setStartDateStr(capped);
+                                setEndDateStr(capped);
+                            }}
                             className="flex-1 min-w-0"
                         />
                         <button
