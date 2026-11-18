@@ -4,7 +4,7 @@ import {
     ShieldCheck, Mail, HardDrive, Loader2, ChevronDown, Check
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { PageLayout, LoadingState, RefreshButton } from '../components/ui';
+import { PageLayout, LoadingState, RefreshButton, Card } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import clsx from 'clsx';
 
@@ -214,9 +214,9 @@ export function SettingsPage() {
                     <LoadingState />
                 </div>
             ) : (
-            <div className="flex flex-col lg:flex-row gap-16 pb-32">
+            <div className="flex flex-col lg:flex-row gap-6 pb-32 items-start">
                 {/* 🧭 Sidebar Nav */}
-                <div className="w-full lg:w-64 flex flex-col gap-1">
+                <Card noPadding className="w-full lg:w-64 shrink-0 p-3 flex flex-col gap-1">
                     {categories.map((cat) => (
                         <button
                             key={cat.id}
@@ -224,16 +224,16 @@ export function SettingsPage() {
                             className={clsx(
                                 "flex items-center gap-3 px-4 py-2.5 rounded-lg text-[14px] font-medium transition-all",
                                 activeCategory === cat.id
-                                    ? "bg-white/10 text-text-main"
-                                    : "text-text-muted hover:bg-white/5 hover:text-text-main"
+                                    ? "bg-surface-hover text-text-main shadow-shell-sm"
+                                    : "text-text-muted hover:bg-surface-hover hover:text-text-main"
                             )}
                         >
                             <cat.icon className="w-4 h-4" />
                             {cat.label}
                         </button>
                     ))}
-                    <div className="mt-8 pt-8 border-t border-white/5">
-                        <div className="px-4 py-3 rounded-lg bg-white/5 border border-white/5">
+                    <div className="mt-6">
+                        <div className="px-4 py-3 rounded-lg bg-surface-hover border border-border">
                             <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-1">Status</p>
                             <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
@@ -241,10 +241,10 @@ export function SettingsPage() {
                             </div>
                         </div>
                     </div>
-                </div>
+                </Card>
 
                 {/* ⚙️ Content Area */}
-                <div className="flex-1 max-w-3xl space-y-12">
+                <Card className="flex-1 min-w-0 w-full space-y-12">
                     {error && (
                         <div className="p-4 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 text-sm font-medium">
                             {error}
@@ -291,14 +291,12 @@ export function SettingsPage() {
                                     value={settings.trackApps}
                                     onChange={v => update('trackApps', v)}
                                 />
-                                <div className="h-px bg-white/5" />
                                 <ToggleControl
                                     label="URL Tracking"
                                     description="Collect and categorize browser domain activity."
                                     value={settings.trackUrls}
                                     onChange={v => update('trackUrls', v)}
                                 />
-                                <div className="h-px bg-white/5" />
                                 <RangeControl
                                     label="Idle Detection"
                                     description="Seconds of inactivity before flagging as 'Idle'."
@@ -306,7 +304,6 @@ export function SettingsPage() {
                                     unit="sec" min={30} max={1800} step={30}
                                     onChange={v => update('idleThresholdSeconds', v)}
                                 />
-                                <div className="h-px bg-white/5" />
                                 <ToggleControl
                                     label="Auto-Terminate Session"
                                     description="End the active session if the member remains idle too long."
@@ -314,7 +311,7 @@ export function SettingsPage() {
                                     onChange={v => update('autoStopOnIdle', v)}
                                 />
                                 {settings.autoStopOnIdle && (
-                                    <div className="pl-6 border-l border-white/10 animate-in slide-in-from-left-2 duration-300">
+                                    <div className="pl-6 animate-in slide-in-from-left-2 duration-300">
                                         <RangeControl
                                             label="Termination Grace Period"
                                             description="Minutes of idle time before forced session stop."
@@ -339,7 +336,6 @@ export function SettingsPage() {
                                     value={settings.notifyIdle}
                                     onChange={v => update('notifyIdle', v)}
                                 />
-                                <div className="h-px bg-white/5" />
                                 <ToggleControl
                                     label="Cap Threshold Alerts"
                                     description="Notify admins when members reach daily/weekly hour limits."
@@ -371,7 +367,7 @@ export function SettingsPage() {
                             </div>
                         </div>
                     )}
-                </div>
+                </Card>
             </div>
             )}
         </PageLayout>
@@ -432,7 +428,7 @@ function RangeControl({ label, description, value, unit, min, max, step = 1, onC
                     <p className="text-[14px] font-bold text-text-main">{label}</p>
                     <p className="text-[13px] text-text-muted opacity-60">{description}</p>
                 </div>
-                <div className="bg-white/5 px-3 py-1 rounded border border-white/5">
+                <div className="bg-surface-hover px-3 py-1 rounded border border-border">
                     <span className="text-[13px] font-bold text-primary">{value}</span>
                     <span className="text-[10px] font-medium text-text-muted ml-1">{unit}</span>
                 </div>
