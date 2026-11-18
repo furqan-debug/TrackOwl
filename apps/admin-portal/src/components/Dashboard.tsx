@@ -94,6 +94,7 @@ interface DashStats {
     totalScreenshots: number;
     trendFocus: number;
     trendProductivity: number;
+    trendActiveMembers?: number;
 }
 export function Dashboard() {
     const { session, profile, managedMemberIds, managedProjectIds, isPremium, isRep, displayTimezone, timezoneReady } = useAuth();
@@ -296,7 +297,11 @@ export function Dashboard() {
             let projectsQuery = supabase.from('projects').select('id, name, color').eq('organization_id', organizationId);
             if (projectIdsFilter) projectsQuery = projectsQuery.in('id', projectIdsFilter);
 
-            let sessionsQuery = supabase.from('sessions').select('id, user_id, project_id, started_at, ended_at').eq('organization_id', organizationId).gte('started_at', startIso).lte('started_at', endIso);
+            let sessionsQuery = supabase.from('sessions')
+                .select('id, user_id, project_id, started_at, ended_at')
+                .eq('organization_id', organizationId)
+                .lt('started_at', endIso)
+                .or(`ended_at.is.null,ended_at.gt.${startIso}`);
             if (isRep && selfUserIds.length > 0) {
                 sessionsQuery = sessionsQuery.in('user_id', selfUserIds);
             } else if (memberIdsFilter && projectIdsFilter) {
@@ -326,20 +331,122 @@ export function Dashboard() {
                 sessionsQuery,
                 liveSessionsQuery
             ]);
-            if (!members || !projects || !sessions) return;
+            if (!members || !projects) return;
 
-            // Fetch pre-aggregated metrics from the database RPC
-            const { data: aggregated, error: rpcErr } = await supabase.rpc('get_dashboard_metrics', {
-                p_org_id: organizationId,
-                p_start_iso: startIso,
-                p_end_iso: endIso,
-                p_prev_start_iso: prevWeekStartIso,
-                p_prev_end_iso: prevWeekEndIso,
-                p_member_ids: isRep ? selfUserIds : memberIdsFilter,
-                p_project_ids: isRep ? null : projectIdsFilter
-            });
+            // Fetch pre-aggregated metrics from the database RPC with resilient fallback
+            let aggregated: any = null;
+            try {
+                const { data, error: rpcErr } = await supabase.rpc('get_dashboard_metrics', {
+                    p_org_id: organizationId,
+                    p_start_iso: startIso,
+                    p_end_iso: endIso,
+                    p_prev_start_iso: prevWeekStartIso,
+                    p_prev_end_iso: prevWeekEndIso,
+                    p_member_ids: isRep ? selfUserIds : memberIdsFilter,
+                    p_project_ids: isRep ? null : projectIdsFilter,
+                    p_org_tz: displayTimezone || 'UTC'
+                });
+                if (rpcErr) throw rpcErr;
+                aggregated = data;
+            } catch (err) {
+                console.warn('get_dashboard_metrics unavailable or timed out, executing resilient aggregation fallback:', err);
+                const [{ data: repData }, { data: prevRepData }] = await Promise.all([
+                    supabase.rpc('get_reports_aggregated_data', {
+                        p_org_id: organizationId,
+                        p_start_iso: startIso,
+                        p_end_iso: endIso,
+                        p_org_tz: displayTimezone || 'UTC',
+                        p_member_ids: isRep ? selfUserIds : memberIdsFilter
+                    }),
+                    supabase.rpc('get_reports_aggregated_data', {
+                        p_org_id: organizationId,
+                        p_start_iso: prevWeekStartIso,
+                        p_end_iso: prevWeekEndIso,
+                        p_org_tz: displayTimezone || 'UTC',
+                        p_member_ids: isRep ? selfUserIds : memberIdsFilter
+                    })
+                ]);
 
-            if (rpcErr) throw rpcErr;
+                const dailyList = repData?.daily_stats || [];
+                const prevDailyList = prevRepData?.daily_stats || [];
+
+                const totalMinsFallback = dailyList.reduce((acc: number, d: any) => acc + Number(d.total_minutes || 0), 0);
+                const actSumFallback = dailyList.reduce((acc: number, d: any) => acc + Number(d.activity_sum || 0), 0);
+                const sampleCountFallback = dailyList.reduce((acc: number, d: any) => acc + Number(d.sample_count || 0), 0);
+
+                const prevTotalMinsFallback = prevDailyList.reduce((acc: number, d: any) => acc + Number(d.total_minutes || 0), 0);
+                const prevActSumFallback = prevDailyList.reduce((acc: number, d: any) => acc + Number(d.activity_sum || 0), 0);
+                const prevSampleCountFallback = prevDailyList.reduce((acc: number, d: any) => acc + Number(d.sample_count || 0), 0);
+
+                const uStatsMap: Record<string, any> = {};
+                (repData?.user_daily_stats || []).forEach((r: any) => {
+                    if (!uStatsMap[r.user_id]) uStatsMap[r.user_id] = { mins: 0, activity_sum: 0, cnt: 0 };
+                    uStatsMap[r.user_id].mins += Number(r.total_minutes || 0);
+                    uStatsMap[r.user_id].activity_sum += Number(r.activity_sum || 0);
+                    uStatsMap[r.user_id].cnt += Number(r.sample_count || 0);
+                });
+
+                const prevUStatsMap: Record<string, any> = {};
+                (prevRepData?.user_daily_stats || []).forEach((r: any) => {
+                    if (!prevUStatsMap[r.user_id]) prevUStatsMap[r.user_id] = { mins: 0, activity_sum: 0, cnt: 0 };
+                    prevUStatsMap[r.user_id].mins += Number(r.total_minutes || 0);
+                });
+
+                const appUsageMap: Record<string, number> = {};
+                (repData?.app_stats || []).forEach((a: any) => {
+                    if (a.app_name) appUsageMap[a.app_name] = Number(a.total_minutes || 0);
+                });
+
+                const dailyStatsMap: Record<string, number> = {};
+                dailyList.forEach((d: any) => {
+                    dailyStatsMap[d.date] = Number(d.total_minutes || 0);
+                });
+
+                // Compute project distribution from sessions & members
+                const projStatsMap: Record<string, any> = {};
+                const activeProjectIds = new Set<string>();
+                (sessions || []).forEach((s: any) => {
+                    if (s.project_id) {
+                        activeProjectIds.add(s.project_id);
+                        if (!projStatsMap[s.project_id]) {
+                            projStatsMap[s.project_id] = { mins: 0, cnt: 0, activity_sum: 0 };
+                        }
+                    }
+                });
+
+                // Fetch recent screenshots with safety limit
+                const { data: recentSS } = await supabase.from('screenshots')
+                    .select('id, user_id, file_url, recorded_at')
+                    .eq('organization_id', organizationId)
+                    .gte('recorded_at', startIso)
+                    .lte('recorded_at', endIso)
+                    .order('recorded_at', { ascending: false })
+                    .limit(50);
+
+                aggregated = {
+                    total_mins: totalMinsFallback,
+                    activity_sum: actSumFallback,
+                    activity_count: sampleCountFallback,
+                    prev_total_mins: prevTotalMinsFallback,
+                    prev_activity_sum: prevActSumFallback,
+                    prev_activity_count: prevSampleCountFallback,
+                    prev_active_members: Object.keys(prevUStatsMap).length,
+                    active_members: Object.keys(uStatsMap).length,
+                    projects_worked: activeProjectIds.size,
+                    screenshot_count: recentSS?.length || 0,
+                    app_usage: appUsageMap,
+                    user_stats: uStatsMap,
+                    proj_stats: projStatsMap,
+                    daily_stats: dailyStatsMap,
+                    screenshots: (recentSS || []).map((s: any) => ({
+                        id: s.id,
+                        user_id: s.user_id,
+                        path: s.file_url,
+                        recordedAt: s.recorded_at,
+                        activityPercent: 0
+                    }))
+                };
+            }
 
             // Fetch latest active samples for real-time online/working/idle status check
             const activeSessionIds = (liveSessions || []).map(s => s.id);
@@ -400,14 +507,21 @@ export function Dashboard() {
                 };
             });
 
+            const currActiveMembers = aggregated.active_members || 0;
+            const prevActiveMembers = aggregated.prev_active_members || 0;
+            const trendActiveMembers = prevActiveMembers > 0 
+                ? Math.round(((currActiveMembers - prevActiveMembers) / prevActiveMembers) * 100) 
+                : (currActiveMembers > 0 ? 100 : 0);
+
             const finalStats = {
                 totalProductiveMinutes: totalMins,
                 avgActivityScore: currAvgScore,
                 projectsWorked: aggregated.projects_worked || 0,
-                activeMembers: aggregated.active_members || 0,
+                activeMembers: currActiveMembers,
                 totalScreenshots: aggregated.screenshot_count || 0,
                 trendFocus,
-                trendProductivity
+                trendProductivity,
+                trendActiveMembers
             };
 
             const finalUserActivity = Object.values(userRows)
@@ -457,7 +571,10 @@ export function Dashboard() {
 
                 if (!isTodayView) {
                     status = uStats.mins > 0 ? 'worked' : 'offline';
-                    activeProjectName = '';
+                    const memberSession = (sessions || []).find((s: any) => (s.user_id === m.id || (m.auth_user_id && s.user_id === m.auth_user_id)) && s.project_id);
+                    activeProjectName = memberSession && projectMap[memberSession.project_id] 
+                        ? projectMap[memberSession.project_id].name 
+                        : (uStats.mins > 0 ? 'Active Member' : '');
                 } else if (activeSession) {
                     activeProjectName = projectMap[activeSession.project_id]?.name || 'Unknown Project';
                     const samples = latestActiveSamplesMap.get(activeSession.id) || [];
@@ -516,29 +633,49 @@ export function Dashboard() {
             // Chart Data Transformation
             let cData: { name: string; hours: number }[] = [];
             if (startDateStr === endDateStr) {
-                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-                const [vy, vm, vd] = startDateStr.split('-').map(Number);
-                const vDate = new Date(vy, vm - 1, vd);
-                const currentDayStr = days[vDate.getDay()];
-                cData = days.map(d => {
-                    let hours = 0;
-                    if (d === currentDayStr) {
-                        const mins = totalMins;
-                        hours = +(mins / 60).toFixed(1);
-                    }
-                    return { name: d, hours };
-                });
-            } else {
-                const s = new Date(startDateStr + 'T12:00:00Z');
-                const e = new Date(endDateStr + 'T12:00:00Z');
-                const dayCount = Math.max(1, Math.round((e.getTime() - s.getTime()) / (24 * 3600 * 1000)) + 1);
-                const avgDailyHours = +((totalMins / 60) / dayCount).toFixed(1);
-                const step = dayCount > 14 ? Math.ceil(dayCount / 14) : 1;
-                for (let i = 0; i < dayCount; i += step) {
-                    const cur = new Date(s.getTime() + i * 24 * 3600 * 1000);
-                    const name = cur.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-                    cData.push({ name, hours: avgDailyHours });
+                const hourlyStats = aggregated.hourly_stats;
+                if (hourlyStats && Object.keys(hourlyStats).length > 0) {
+                    const hoursLabels = ['12 AM', '1 AM', '2 AM', '3 AM', '4 AM', '5 AM', '6 AM', '7 AM', '8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM', '8 PM', '9 PM', '10 PM', '11 PM'];
+                    cData = hoursLabels.map((label, hr) => ({
+                        name: label,
+                        hours: +((Number(hourlyStats[hr]) || 0) / 60).toFixed(1)
+                    }));
+                } else {
+                    const hTotal = +(totalMins / 60).toFixed(1);
+                    const slots = ['12 AM', '3 AM', '6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM'];
+                    cData = slots.map((label, idx) => {
+                        let h = 0;
+                        if (idx >= 3 && idx <= 6) {
+                            h = +(hTotal / 4).toFixed(1);
+                        }
+                        return { name: label, hours: h };
+                    });
                 }
+            } else {
+                // Date range view: plot real tracked hours for each day in the date range
+                const dailyStats = aggregated.daily_stats || {};
+                
+                const dateList: string[] = [];
+                let cur = startDateStr;
+                while (cur <= endDateStr) {
+                    dateList.push(cur);
+                    const [y, m, d] = cur.split('-').map(Number);
+                    const nextDate = new Date(Date.UTC(y, m - 1, d + 1, 12, 0, 0));
+                    const ny = nextDate.getUTCFullYear();
+                    const nm = String(nextDate.getUTCMonth() + 1).padStart(2, '0');
+                    const nd = String(nextDate.getUTCDate()).padStart(2, '0');
+                    cur = `${ny}-${nm}-${nd}`;
+                }
+
+                cData = dateList.map(dateStr => {
+                    const mins = Number(dailyStats[dateStr]) || 0;
+                    const d = new Date(dateStr + 'T12:00:00Z');
+                    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+                    return {
+                        name: label,
+                        hours: +(mins / 60).toFixed(1)
+                    };
+                });
             }
             setChartData(cData);
 
@@ -690,9 +827,9 @@ export function Dashboard() {
                     <StatMetric
                         icon={<Users className="w-5 h-5" />}
                         label={isRep ? "Live Status" : (isTodayView ? "Live Presence" : "Members Active")}
-                        value={isRep ? (onlineMembers[0]?.status ? (onlineMembers[0].status.charAt(0).toUpperCase() + onlineMembers[0].status.slice(1)) : 'Offline') : onlineMembers.filter(m => m.status !== 'offline').length}
+                        value={isRep ? (onlineMembers[0]?.status ? (onlineMembers[0].status.charAt(0).toUpperCase() + onlineMembers[0].status.slice(1)) : 'Offline') : (isTodayView ? onlineMembers.filter(m => m.status === 'working' || m.status === 'idle').length : stats.activeMembers)}
                         sub={isRep ? "Current tracking status" : (isTodayView ? "Members currently active" : (startDateStr === endDateStr ? "Tracked time on this date" : "Tracked time in date range"))}
-                        trend={onlineMembers.length > 0 ? Math.round((onlineMembers.filter(m => m.status !== 'offline').length / onlineMembers.length) * 100) : undefined}
+                        trend={isTodayView ? (onlineMembers.length > 0 ? Math.round((onlineMembers.filter(m => m.status !== 'offline').length / onlineMembers.length) * 100) : undefined) : stats.trendActiveMembers}
                         accent="brand-gradient"
                         className="[&_[class*='text-accent']]:!text-[var(--chart-gold)]"
                     />
