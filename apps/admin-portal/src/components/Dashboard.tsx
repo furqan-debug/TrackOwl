@@ -641,15 +641,14 @@ export function Dashboard() {
                         hours: +((Number(hourlyStats[hr]) || 0) / 60).toFixed(1)
                     }));
                 } else {
-                    const hTotal = +(totalMins / 60).toFixed(1);
-                    const slots = ['12 AM', '3 AM', '6 AM', '9 AM', '12 PM', '3 PM', '6 PM', '9 PM'];
-                    cData = slots.map((label, idx) => {
-                        let h = 0;
-                        if (idx >= 3 && idx <= 6) {
-                            h = +(hTotal / 4).toFixed(1);
-                        }
-                        return { name: label, hours: h };
-                    });
+                    // No hourly_stats: spread total evenly across business hours (8 AM–6 PM) for all 24 slots
+                    const hoursLabels = ['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM','7 AM','8 AM','9 AM','10 AM','11 AM','12 PM','1 PM','2 PM','3 PM','4 PM','5 PM','6 PM','7 PM','8 PM','9 PM','10 PM','11 PM'];
+                    const businessHours = [8, 9, 10, 11, 12, 13, 14, 15, 16, 17]; // 10 slots
+                    const hPerSlot = +(totalMins / 60 / businessHours.length).toFixed(1);
+                    cData = hoursLabels.map((label, hr) => ({
+                        name: label,
+                        hours: businessHours.includes(hr) ? hPerSlot : 0
+                    }));
                 }
             } else {
                 // Date range view: plot real tracked hours for each day in the date range
@@ -858,9 +857,9 @@ export function Dashboard() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                                         <defs>
-                                            <linearGradient id="chartGold" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="var(--chart-gold)" stopOpacity={0.1} />
-                                                <stop offset="95%" stopColor="var(--chart-gold)" stopOpacity={0} />
+                                            <linearGradient id="chartBrandBlue" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="0%" stopColor="#1e3a5f" stopOpacity={0.18} />
+                                                <stop offset="100%" stopColor="#1e3a5f" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" opacity={0.5} />
@@ -868,8 +867,12 @@ export function Dashboard() {
                                             dataKey="name"
                                             axisLine={false}
                                             tickLine={false}
-                                            tick={{ fill: 'var(--text-muted)', fontSize: 12, fontWeight: 600 }}
+                                            tick={{ fill: 'var(--text-muted)', fontSize: 11, fontWeight: 600 }}
                                             dy={10}
+                                            /* Show every 2nd hour (even indices: 12AM, 2AM, 4AM … 10PM) so labels
+                                               never crowd on laptop screens. All 24 data points are still present
+                                               so tooltips fire for every individual hour. */
+                                            interval={startDateStr === endDateStr ? 1 : 'preserveStartEnd'}
                                         />
                                         <YAxis
                                             axisLine={false}
@@ -879,15 +882,17 @@ export function Dashboard() {
                                         />
                                         <Tooltip
                                             contentStyle={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '12px', boxShadow: 'var(--shadow-premium)', fontSize: '12px' }}
-                                            itemStyle={{ color: 'var(--chart-gold)', fontWeight: 'bold' }}
+                                            itemStyle={{ color: '#1e3a5f', fontWeight: 'bold' }}
                                         />
                                         <Area
-                                            type="monotone"
+                                            type="linear"
                                             dataKey="hours"
-                                            stroke="var(--chart-gold)"
-                                            strokeWidth={3}
+                                            stroke="#1e3a5f"
+                                            strokeWidth={2.5}
                                             fillOpacity={1}
-                                            fill="url(#chartGold)"
+                                            fill="url(#chartBrandBlue)"
+                                            dot={false}
+                                            activeDot={{ r: 4, fill: '#1e3a5f', strokeWidth: 0 }}
                                             animationDuration={1500}
                                         />
                                     </AreaChart>
