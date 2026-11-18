@@ -559,31 +559,6 @@ export function ProjectFormPage() {
                     </div>
                 </div>
 
-                {/* Bottom Action Footer Bar */}
-                <div className="mt-8 pt-6 border-t border-border flex items-center justify-end gap-3">
-                    <button
-                        type="button"
-                        onClick={() => navigate('/dashboard/projects')}
-                        className="h-10 px-5 rounded-xl border border-border bg-surface text-text-muted hover:text-text-main hover:bg-surface-hover text-xs font-semibold transition-all cursor-pointer"
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        onClick={handleSave} 
-                        disabled={saving}
-                        className={clsx(
-                            "h-10 px-6 bg-primary text-white rounded-xl font-semibold text-xs shadow-glow-primary hover:brightness-110 active:scale-98 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none",
-                            saving && "animate-pulse"
-                        )}
-                    >
-                        {saving ? (
-                            <RefreshCw className="w-4 h-4 animate-spin" />
-                        ) : (
-                            <Check className="w-4 h-4" />
-                        )}
-                        {isEdit ? 'Save Changes' : 'Create Project'}
-                    </button>
-                </div>
             </div>
         </PageLayout>
     );
