@@ -659,37 +659,7 @@ export function MemberFormPage() {
                             </div>
                         </div>
 
-                        {/* Save button */}
-                        <button
-                            onClick={handleSave}
-                            disabled={saving || isRestrictedTarget || !fullName.trim()}
-                            className={clsx(
-                                "w-full lg:w-auto lg:min-w-[150px] shrink-0 flex items-center justify-center gap-2 px-5 h-10 rounded-xl text-[12px] font-bold transition-all shadow-lg text-white whitespace-nowrap",
-                                (saving || isRestrictedTarget || !fullName.trim())
-                                    ? "bg-slate-500/40 text-slate-400 cursor-not-allowed shadow-none"
-                                    : saveSuccess
-                                        ? "bg-emerald-500 shadow-emerald-500/30"
-                                        : "bg-primary shadow-primary/25 hover:brightness-110 active:scale-95"
-                            )}
-                        >
-                            {saving ? (
-                                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
-                            ) : saveSuccess ? (
-                                <Check className="w-4 h-4 shrink-0" />
-                            ) : (
-                                <Save className="w-4 h-4 shrink-0" />
-                            )}
 
-                            <span>
-                                {saving
-                                    ? 'Saving...'
-                                    : saveSuccess
-                                        ? 'Saved!'
-                                        : isRestrictedTarget
-                                            ? 'Restricted'
-                                            : 'Save Changes'}
-                            </span>
-                        </button>
                     </div>
                 </div>
             </div>
@@ -708,7 +678,7 @@ export function MemberFormPage() {
                         px-4 sm:px-6 lg:px-8
                         py-4 sm:py-6 lg:py-8
                         flex flex-col
-                        lg:flex-row
+                        lg:flex-row lg:items-start
                         gap-5 lg:gap-8
                         relative z-10
                         min-w-0
@@ -806,7 +776,7 @@ export function MemberFormPage() {
                         </div>
 
                         {/* Tab nav */}
-                        <nav className="w-full flex flex-col gap-1.5 bg-surface/60 backdrop-blur-md border border-border/60 rounded-3xl p-3 shadow-shell-sm">
+                        <nav className="w-full flex flex-col gap-2.5 bg-surface/60 backdrop-blur-md border border-border/60 rounded-3xl p-3 shadow-shell-sm">
                             <p className="text-[10px] font-black text-text-muted uppercase tracking-[0.15em] px-4 py-2">
                                 Settings Configuration
                             </p>
@@ -822,7 +792,7 @@ export function MemberFormPage() {
                                             setActiveTab(tab.id)
                                         }
                                         className={clsx(
-                                            'w-full flex items-center gap-4 px-4 py-3 rounded-2xl text-[13px] font-bold transition-all relative group overflow-hidden',
+                                            'w-full flex items-center gap-4 px-4 py-3.5 rounded-2xl text-[13px] font-bold transition-all relative group overflow-hidden',
                                             isActive
                                                 ? 'text-primary'
                                                 : 'text-text-primary/70 hover:text-text-primary hover:bg-surface-hover'
@@ -1880,6 +1850,39 @@ export function MemberFormPage() {
                                     </div>
                                 </motion.div>
                             </AnimatePresence>
+
+                            {/* Bottom Save Button */}
+                            <div className="flex justify-end mt-8 pt-6 border-t border-border/60">
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saving || isRestrictedTarget || !fullName.trim()}
+                                    className={clsx(
+                                        "flex items-center justify-center gap-2 px-6 h-11 rounded-xl text-[13px] font-bold transition-all shadow-lg text-white",
+                                        (saving || isRestrictedTarget || !fullName.trim())
+                                            ? "bg-slate-500/40 text-slate-400 cursor-not-allowed shadow-none"
+                                            : saveSuccess
+                                                ? "bg-emerald-500 shadow-emerald-500/30"
+                                                : "bg-primary shadow-primary/25 hover:brightness-110 active:scale-95"
+                                    )}
+                                >
+                                    {saving ? (
+                                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+                                    ) : saveSuccess ? (
+                                        <Check className="w-4 h-4 shrink-0" />
+                                    ) : (
+                                        <Save className="w-4 h-4 shrink-0" />
+                                    )}
+                                    <span>
+                                        {saving
+                                            ? 'Saving...'
+                                            : saveSuccess
+                                                ? 'Saved!'
+                                                : isRestrictedTarget
+                                                    ? 'Restricted'
+                                                    : 'Save Changes'}
+                                    </span>
+                                </button>
+                            </div>
                         </div>
                     </main>
                 </div>
@@ -1913,7 +1916,7 @@ function FormField({
 
     return (
         <div className="space-y-2 group flex flex-col relative min-w-0">
-            <label className="text-[11px] font-bold text-text-muted transition-colors group-focus-within:text-primary tracking-[0.05em] ml-1">
+            <label className="text-[11px] font-bold text-text-secondary transition-colors group-focus-within:text-primary tracking-[0.05em] ml-1">
                 {label}
             </label>
 

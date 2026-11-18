@@ -213,7 +213,7 @@ export function FormSelect({
             ref={ref}
             className="space-y-2 group flex flex-col relative min-w-0"
         >
-            <label className="text-[11px] font-bold text-text-muted tracking-[0.05em] ml-1">
+            <label className="text-[11px] font-bold text-text-secondary tracking-[0.05em] ml-1">
                 {label}
             </label>
 
