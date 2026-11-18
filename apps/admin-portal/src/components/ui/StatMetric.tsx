@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import clsx from 'clsx';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 interface StatMetricProps {
     icon: ReactNode;
@@ -35,18 +36,21 @@ export function StatMetric({ icon, label, value, sub, trend, accent, className }
                 </div>
                 {trend !== undefined && (
                     <div className={clsx(
-                        "text-[12px] font-bold px-2.5 py-1 rounded-xl flex items-center gap-1.5 shadow-shell-sm border border-transparent",
-                                                trend > 0
-                            ? "bg-success/10 text-success border-success/20"
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold shadow-shell-sm transition-colors",
+                        trend > 0
+                            ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40"
                             : trend < 0
-                            ? "bg-error/10 text-error border-error/20"
-                            : "bg-surface-hover text-text-muted border-border"
+                            ? "bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border border-rose-200/60 dark:border-rose-800/40"
+                            : "bg-surface-hover text-text-muted border border-border"
                     )}>
-                        <div className={clsx(
-                            "w-1 h-1 rounded-full",
-                          trend > 0 ? "bg-success animate-pulse" : trend < 0 ? "bg-error" : "bg-text-muted"
-                        )} />
-                        {trend > 0 ? "+" : ""}{trend}%
+                        {trend > 0 ? (
+                            <TrendingUp className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                        ) : trend < 0 ? (
+                            <TrendingDown className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                        ) : (
+                            <Minus className="w-3.5 h-3.5 shrink-0 stroke-[2.5]" />
+                        )}
+                        <span>{trend > 0 ? "+" : ""}{trend}%</span>
                     </div>
                 )}
             </div>
