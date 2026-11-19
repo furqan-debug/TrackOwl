@@ -27,6 +27,7 @@ export interface OwlLensHighlight {
     id: string;
     member_id: string;
     member_name: string;
+    member_email: string | null;
     member_avatar: string | null;
     business_date: string;
     kind: HighlightKind;
@@ -53,8 +54,8 @@ export interface OwlLensRunState {
 }
 
 /** One row as PostgREST returns it, with the two member joins. */
-interface HighlightRow extends Omit<OwlLensHighlight, 'member_name' | 'member_avatar' | 'status_by_name'> {
-    member: { full_name: string | null; avatar_url: string | null } | null;
+interface HighlightRow extends Omit<OwlLensHighlight, 'member_name' | 'member_email' | 'member_avatar' | 'status_by_name'> {
+    member: { full_name: string | null; email: string | null; avatar_url: string | null } | null;
     reviewer: { full_name: string | null } | null;
 }
 
@@ -66,7 +67,7 @@ export const owlLensService = {
             .select(`
                 id, member_id, business_date, kind, severity, detail, evidence, baseline_source,
                 window_start, window_end, status, status_reason, status_at, detected_at, updated_at,
-                member:members!owl_lens_highlights_member_id_fkey(full_name, avatar_url),
+                member:members!owl_lens_highlights_member_id_fkey(full_name, email, avatar_url),
                 reviewer:members!owl_lens_highlights_status_by_fkey(full_name)
             `)
             .eq('organization_id', organizationId)
@@ -79,6 +80,7 @@ export const owlLensService = {
             id: h.id,
             member_id: h.member_id,
             member_name: h.member?.full_name || 'Unknown member',
+            member_email: h.member?.email || null,
             member_avatar: h.member?.avatar_url || null,
             business_date: h.business_date,
             kind: h.kind,

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import {
-    AlertOctagon,
     AlertTriangle,
     ArrowUpRight,
     Check,
@@ -10,7 +9,6 @@ import {
     ChevronRight,
     Filter,
     Globe,
-    Info,
     RotateCcw,
     ShieldCheck,
     Sparkles,
@@ -18,7 +16,7 @@ import {
     X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { PageLayout, DatePicker, FilterSelect, RefreshButton, EmptyState, LoadingState, Modal } from '../components/ui';
+import { PageLayout, DatePicker, FilterSelect, RefreshButton, EmptyState, LoadingState, Modal, RowMenu } from '../components/ui';
 import {
     owlLensService,
     type HighlightKind,
@@ -61,36 +59,6 @@ const SEVERITY_LABEL: Record<HighlightSeverity, string> = {
     info: 'Info',
     positive: 'Positive',
 };
-
-const SEVERITY_STYLE: Record<HighlightSeverity, { bar: string; tile: string; pill: string }> = {
-    critical: {
-        bar: 'border-l-rose-500',
-        tile: 'bg-rose-500/10 text-rose-600 dark:text-rose-400',
-        pill: 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20',
-    },
-    warning: {
-        bar: 'border-l-amber-500',
-        tile: 'bg-amber-500/10 text-amber-600 dark:text-amber-300',
-        pill: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
-    },
-    info: {
-        bar: 'border-l-sky-500',
-        tile: 'bg-sky-500/10 text-sky-600 dark:text-sky-300',
-        pill: 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20',
-    },
-    positive: {
-        bar: 'border-l-emerald-500',
-        tile: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-        pill: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
-    },
-};
-
-function SeverityIcon({ severity, className }: { severity: HighlightSeverity; className?: string }) {
-    if (severity === 'critical') return <AlertOctagon className={className} aria-hidden />;
-    if (severity === 'warning') return <AlertTriangle className={className} aria-hidden />;
-    if (severity === 'positive') return <Sparkles className={className} aria-hidden />;
-    return <Info className={className} aria-hidden />;
-}
 
 const STATUS_LABEL: Record<Exclude<HighlightStatus, 'active'>, string> = {
     acknowledged: 'Acknowledged',
@@ -312,6 +280,9 @@ export function OwlLens() {
     const trialEndLabel = trialUntil
         ? trialUntil.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: tz })
         : '';
+    const trialEndShort = trialUntil
+        ? trialUntil.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: tz })
+        : '';
     const [endingTrial, setEndingTrial] = useState(false);
     const endTrial = async () => {
         if (!organizationId) return;
@@ -476,48 +447,21 @@ export function OwlLens() {
             ) : (
                 <div className="flex flex-col gap-4 pb-16">
                     {inTrial && isAdmin && (
-                        <div className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border border-sky-500/20 bg-sky-500/10">
-                            <Info className="w-4 h-4 shrink-0 text-sky-600 dark:text-sky-300" aria-hidden />
-                            <p className="flex-1 min-w-[220px] text-[13px] text-text-main">
-                                <span className="font-semibold">Trial until {trialEndLabel}.</span>{' '}
-                                Only Owners and Admins can see Owl Lens for now. Check the cards look right before managers rely on them.
+                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2 px-3.5 rounded-lg border border-border bg-surface-hover text-xs text-text-muted">
+                            <p>
+                                <span className="font-semibold text-text-main">Admin preview until {trialEndShort}</span>
+                                {' '}— visible only to Owners &amp; Admins.
                             </p>
-                            <ActionButton disabled={endingTrial} onClick={endTrial}>
-                                End trial now
-                            </ActionButton>
+                            <button
+                                type="button"
+                                onClick={endTrial}
+                                disabled={endingTrial}
+                                className="font-semibold text-text-main underline-offset-2 hover:underline disabled:opacity-50"
+                            >
+                                {endingTrial ? 'Ending trial…' : 'End trial now'}
+                            </button>
                         </div>
                     )}
-
-                    {/* Summary line and the open / reviewed switch */}
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="inline-flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm">
-                            {(['open', 'reviewed'] as View[]).map(v => (
-                                <button
-                                    key={v}
-                                    onClick={() => setView(v)}
-                                    className={clsx(
-                                        'px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors',
-                                        view === v
-                                            ? 'bg-surface-hover text-text-main shadow-shell-sm'
-                                            : 'text-text-muted hover:text-text-main'
-                                    )}
-                                >
-                                    {v === 'open' ? `Needs attention (${open.length})` : `Reviewed (${reviewed.length})`}
-                                </button>
-                            ))}
-                        </div>
-                        <p className="text-xs text-text-muted">
-                            {view === 'open' && open.length > 0 && (
-                                <>
-                                    {criticalCount > 0 && <span className="font-semibold text-rose-600 dark:text-rose-400">{criticalCount} critical</span>}
-                                    {criticalCount > 0 && warningCount > 0 && ' · '}
-                                    {warningCount > 0 && <span className="font-semibold text-amber-700 dark:text-amber-300">{warningCount} {warningCount === 1 ? 'warning' : 'warnings'}</span>}
-                                    {(criticalCount > 0 || warningCount > 0) && checkedAgo && ' · '}
-                                </>
-                            )}
-                            {checkedAgo}
-                        </p>
-                    </div>
 
                     {actionError && (
                         <div className="flex items-start gap-2 px-4 py-3 rounded-xl border border-rose-500/20 bg-rose-500/10 text-sm text-rose-700 dark:text-rose-400">
@@ -529,29 +473,68 @@ export function OwlLens() {
                         </div>
                     )}
 
-                    {shown.length === 0 ? (
-                        <CalmState
-                            view={view}
-                            isToday={isToday}
-                            filtersActive={filtersActive}
-                            neverChecked={!runState?.last_run_at && highlights.length === 0}
-                        />
-                    ) : (
-                        <div className="flex flex-col gap-3">
-                            {shown.map(h => (
-                                <HighlightCard
-                                    key={h.id}
-                                    h={h}
-                                    canReview={canReview}
-                                    busy={busyId === h.id}
-                                    choosingReason={choosingReasonFor === h.id}
-                                    fmtTime={fmtTime}
-                                    onReview={(status, reason) => review(h, status, reason)}
-                                    onChooseReason={show => setChoosingReasonFor(show ? h.id : null)}
-                                />
-                            ))}
+                    <section className="bg-surface border border-border rounded-xl shadow-xs overflow-hidden">
+                        {/* Tabs and the day's summary, as the list's own header */}
+                        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 md:px-5 border-b border-border">
+                            <div className="flex items-center gap-5" role="tablist">
+                                {(['open', 'reviewed'] as View[]).map(v => (
+                                    <button
+                                        key={v}
+                                        role="tab"
+                                        aria-selected={view === v}
+                                        onClick={() => setView(v)}
+                                        className={clsx(
+                                            'relative py-3 text-[13px] font-semibold transition-colors',
+                                            view === v
+                                                ? 'text-text-main after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:rounded-full after:bg-primary'
+                                                : 'text-text-muted hover:text-text-main'
+                                        )}
+                                    >
+                                        {v === 'open' ? 'Needs attention' : 'Reviewed'}
+                                        <span className="ml-1.5 tabular-nums text-text-muted font-medium">
+                                            ({v === 'open' ? open.length : reviewed.length})
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                            <p className="py-2 text-xs text-text-muted tabular-nums">
+                                {view === 'open' && open.length > 0 && (
+                                    <>
+                                        {criticalCount > 0 && <span className="font-semibold text-rose-600 dark:text-rose-400">{criticalCount} critical</span>}
+                                        {criticalCount > 0 && warningCount > 0 && ' · '}
+                                        {warningCount > 0 && <span className="font-semibold text-amber-700 dark:text-amber-300">{warningCount} {warningCount === 1 ? 'warning' : 'warnings'}</span>}
+                                        {(criticalCount > 0 || warningCount > 0) && checkedAgo && ' · '}
+                                    </>
+                                )}
+                                {checkedAgo}
+                            </p>
                         </div>
-                    )}
+
+                        {shown.length === 0 ? (
+                            <CalmState
+                                view={view}
+                                isToday={isToday}
+                                filtersActive={filtersActive}
+                                neverChecked={!runState?.last_run_at && highlights.length === 0}
+                            />
+                        ) : (
+                            <ul className="divide-y divide-border-soft">
+                                {shown.map(h => (
+                                    <HighlightRow
+                                        key={h.id}
+                                        h={h}
+                                        canReview={canReview}
+                                        busy={busyId === h.id}
+                                        choosingReason={choosingReasonFor === h.id}
+                                        isToday={isToday}
+                                        fmtTime={fmtTime}
+                                        onReview={(status, reason) => review(h, status, reason)}
+                                        onChooseReason={show => setChoosingReasonFor(show ? h.id : null)}
+                                    />
+                                ))}
+                            </ul>
+                        )}
+                    </section>
                 </div>
             )}
 
@@ -604,66 +587,199 @@ export function OwlLens() {
     );
 }
 
-// ---------------------------------------------------------------- card
+// ---------------------------------------------------------------- row
 
-interface HighlightCardProps {
+/** "2 h 10 min" from a number that may be missing. */
+function mins(v: unknown): string {
+    return fmtMins(num(v));
+}
+
+function count(v: unknown): string {
+    return num(v).toLocaleString('en-US');
+}
+
+/** 0.42 -> "42%" */
+function pct(v: unknown): string {
+    return `${Math.round(num(v) * 100)}%`;
+}
+
+/** Minutes after midnight -> "9:10 am" */
+function clock(v: unknown): string {
+    const m = Math.round(num(v));
+    const h = Math.floor(m / 60) % 24;
+    const r = m % 60;
+    return `${h % 12 === 0 ? 12 : h % 12}:${String(r).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`;
+}
+
+/** "2026-11-12" -> "Nov 12" */
+function shortDate(v: unknown): string {
+    if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(v)) return '';
+    return new Date(`${v.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
+/**
+ * The numbers behind a highlight as short chips, and a one-line takeaway.
+ * Both come from the evidence the background check saved with the card, so
+ * nothing is recalculated here. The full sentence stays on hover.
+ */
+function summarize(h: OwlLensHighlight, range: string, isToday: boolean): { chips: string[]; diagnosis: string } {
+    const e = h.evidence || {};
+    const chips: string[] = [];
+    const add = (cond: unknown, text: string) => { if (cond) chips.push(text); };
+    const app = typeof e.app === 'string' && e.app ? e.app : '';
+
+    switch (h.kind) {
+        case 'not_started': {
+            const missed = num(e.missed_working_days);
+            const last = shortDate(e.last_worked);
+            add(missed >= 2, `${missed} days untracked`);
+            add(e.usual_start_min != null, `Usually starts ${clock(e.usual_start_min)}`);
+            add(last, `Last tracked ${last}`);
+            return {
+                chips,
+                diagnosis: missed >= 2
+                    ? `No time logged for ${missed} consecutive workdays${last ? ` (last tracked ${last})` : ''}.`
+                    : `No time logged ${isToday ? 'yet today' : 'that day'}, well past their usual start.`,
+            };
+        }
+        case 'long_day': {
+            const hasBreak = e.longest_break_mins != null;
+            add(e.tracked_mins != null, `${mins(e.tracked_mins)} tracked`);
+            add(e.usual_mins != null, `Usual ${mins(e.usual_mins)}`);
+            add(hasBreak, `Longest break ${mins(e.longest_break_mins)}`);
+            add(range, range);
+            return {
+                chips,
+                diagnosis: `Far longer than their usual day${hasBreak && num(e.longest_break_mins) < 30 ? ', with no break of 30 min or more' : ''}.`,
+            };
+        }
+        case 'idle': {
+            if (e.pattern === 'share') {
+                add(e.idle_share != null, `${pct(e.idle_share)} idle`);
+                add(e.usual_idle_share != null, `Usual ${pct(e.usual_idle_share)}`);
+                add(e.tracked_mins != null, `${mins(e.tracked_mins)} tracked`);
+                return { chips, diagnosis: 'Much more of the day was idle than is normal for them.' };
+            }
+            const stop = num(e.idle_stop_mins);
+            add(e.minutes != null, `${mins(e.minutes)} idle`);
+            add(range, range);
+            add(stop > 0, `Auto-stop ${stop} min`);
+            return {
+                chips,
+                diagnosis: stop > 0 && num(e.minutes) > stop
+                    ? `No keyboard or mouse activity, and the timer outlasted the ${stop}-minute auto-stop.`
+                    : 'No keyboard or mouse activity while the timer kept running.',
+            };
+        }
+        case 'low_input':
+            add(e.minutes != null, mins(e.minutes));
+            add(app, app);
+            add(range, range);
+            return { chips, diagnosis: 'Timer running in one app with only a trickle of keyboard and mouse input.' };
+        case 'input_pattern': {
+            const m = num(e.minutes);
+            const keys = num(e.keystrokes);
+            add(e.keystrokes != null, `${count(keys)} keys`);
+            add(e.pattern === 'held_key' && m > 0, `${count(Math.round(keys / Math.max(m, 1)))}/min`);
+            add(e.clicks != null, `${count(e.clicks)} clicks`);
+            add(app, app);
+            add(range, range);
+            return {
+                chips,
+                diagnosis: e.pattern === 'held_key'
+                    ? 'Sustained keystroke rate exceeds human typing speed (likely a held-down key).'
+                    : e.pattern === 'move_only'
+                        ? 'Activity with no keystrokes or clicks, all in one window.'
+                        : 'Activity in almost every second, with none of the usual pauses.',
+            };
+        }
+        case 'app_mix':
+            add(e.unfamiliar_share != null, `${pct(e.unfamiliar_share)} in unfamiliar apps`);
+            add(e.tracked_mins != null, `${mins(e.tracked_mins)} tracked`);
+            return { chips, diagnosis: 'Most of the day was spent in apps they rarely use.' };
+        case 'focus':
+            add(e.minutes != null, `${mins(e.minutes)} unbroken`);
+            add(e.usual_run_mins != null, `Usual best ${mins(e.usual_run_mins)}`);
+            add(range, range);
+            return { chips, diagnosis: 'A longer stretch of steady, active work than their usual best.' };
+        case 'non_productive': {
+            const sites = Object.entries((e.domains as Record<string, unknown>) || {})
+                .sort(([, a], [, b]) => num(b) - num(a))
+                .slice(0, 2)
+                .map(([d]) => d);
+            add(e.share_pct != null, `${num(e.share_pct)}%`);
+            add(e.nonproductive_mins != null, `${mins(e.nonproductive_mins)} of ${mins(e.tracked_mins)}`);
+            sites.forEach(s => chips.push(s));
+            return { chips, diagnosis: 'A quarter or more of tracked time was on non-productive sites.' };
+        }
+        default:
+            return { chips, diagnosis: h.detail };
+    }
+}
+
+const SEVERITY_BADGE: Record<HighlightSeverity, string> = {
+    critical: 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20',
+    warning: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
+    info: 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20',
+    positive: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+};
+
+interface HighlightRowProps {
     h: OwlLensHighlight;
     canReview: boolean;
     busy: boolean;
     choosingReason: boolean;
+    isToday: boolean;
     fmtTime: (iso: string | null) => string;
     onReview: (status: HighlightStatus, reason?: string) => void;
     onChooseReason: (open: boolean) => void;
 }
 
-function HighlightCard({ h, canReview, busy, choosingReason, fmtTime, onReview, onChooseReason }: HighlightCardProps) {
-    const style = SEVERITY_STYLE[h.severity];
+function HighlightRow({ h, canReview, busy, choosingReason, isToday, fmtTime, onReview, onChooseReason }: HighlightRowProps) {
     const link = sourceLink(h);
     const spotted = fmtTime(h.detected_at);
-    const updated = fmtTime(h.updated_at);
+    const range = h.window_start && h.window_end ? `${fmtTime(h.window_start)}–${fmtTime(h.window_end)}` : '';
+    const { chips, diagnosis } = summarize(h, range, isToday);
+    const baseline = h.baseline_source === 'team'
+        ? 'vs team normal'
+        : h.baseline_source === 'organization' ? 'vs organisation normal' : null;
 
     return (
-        <article
-            className={clsx(
-                'bg-surface border border-border border-l-4 rounded-shell-lg shadow-soft p-4 md:p-5 flex gap-3 md:gap-4',
-                style.bar,
-                h.status !== 'active' && 'opacity-80'
-            )}
-        >
-            <div className={clsx('w-9 h-9 md:w-10 md:h-10 rounded-xl flex items-center justify-center shrink-0', style.tile)}>
-                <SeverityIcon severity={h.severity} className="w-4 h-4 md:w-5 md:h-5" />
-            </div>
-
-            <div className="flex-1 min-w-0">
-                <h3 className="text-sm md:text-[15px] font-semibold text-text-main leading-snug">
-                    {KIND_LABEL[h.kind]} <span className="text-text-muted font-normal">—</span> {h.member_name}
-                </h3>
-                <p className="mt-1 text-[13px] text-text-muted leading-relaxed">{h.detail}</p>
-
-                <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                    <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-md border text-[10px] font-bold', style.pill)}>
+        <li className={clsx(
+            'flex flex-col md:flex-row md:items-center gap-3 md:gap-6 px-4 md:px-5 py-3.5 hover:bg-surface-hover/70 transition-colors',
+            h.status !== 'active' && 'opacity-80',
+        )}>
+            <div className="flex-1 min-w-0 max-w-2xl">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
+                    <span className={clsx('inline-flex items-center px-1.5 py-px rounded border text-[10px] font-bold', SEVERITY_BADGE[h.severity])}>
                         {SEVERITY_LABEL[h.severity]}
                     </span>
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-border bg-surface-hover text-[10px] font-bold text-text-muted">
+                    <span className="inline-flex items-center px-1.5 py-px rounded border border-border text-[10px] font-semibold text-text-muted">
                         {KIND_CATEGORY[h.kind]}
                     </span>
-                    {h.baseline_source === 'team' && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-border text-[10px] font-semibold text-text-muted">
-                            Based on team baseline
-                        </span>
-                    )}
-                    {h.baseline_source === 'organization' && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md border border-border text-[10px] font-semibold text-text-muted">
-                            Based on organisation baseline
-                        </span>
-                    )}
-                    <span className="text-[11px] text-text-muted">
-                        Spotted {spotted}{updated && updated !== spotted ? ` · updated ${updated}` : ''}
+                    <h3 className="text-sm font-semibold text-text-main">{KIND_LABEL[h.kind]}</h3>
+                    <span className="text-sm font-medium text-text-muted truncate max-w-full">
+                        {h.member_name}
+                        {h.member_email && <span className="hidden lg:inline font-normal opacity-70"> · {h.member_email}</span>}
                     </span>
+                    {spotted && <span className="text-xs text-text-muted/70">Spotted {spotted}</span>}
                 </div>
 
+                {(chips.length > 0 || baseline) && (
+                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        {chips.map(c => (
+                            <span key={c} className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-hover border border-border-soft text-xs font-medium text-text-main tabular-nums">
+                                {c}
+                            </span>
+                        ))}
+                        {baseline && <span className="text-xs text-text-muted">{baseline}</span>}
+                    </div>
+                )}
+
+                <p className="mt-1.5 text-sm text-text-muted truncate" title={h.detail}>{diagnosis}</p>
+
                 {h.status !== 'active' && (
-                    <p className="mt-2 text-[12px] text-text-muted">
+                    <p className="mt-1 text-xs text-text-muted">
                         {STATUS_LABEL[h.status]}
                         {h.status === 'expected' && h.status_reason ? ` (${h.status_reason})` : ''}
                         {h.status_by_name ? ` by ${h.status_by_name}` : ''}
@@ -671,39 +787,9 @@ function HighlightCard({ h, canReview, busy, choosingReason, fmtTime, onReview, 
                     </p>
                 )}
 
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
-                    <Link
-                        to={link.to}
-                        className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent hover:underline"
-                    >
-                        {link.label}
-                        <ArrowUpRight className="w-3.5 h-3.5" aria-hidden />
-                    </Link>
-
-                    {canReview && h.status === 'active' && !choosingReason && (
-                        <div className="flex flex-wrap items-center gap-2">
-                            <ActionButton disabled={busy} onClick={() => onReview('acknowledged')} icon={<Check className="w-3.5 h-3.5" />}>
-                                Acknowledge
-                            </ActionButton>
-                            <ActionButton disabled={busy} onClick={() => onReview('dismissed')} icon={<X className="w-3.5 h-3.5" />}>
-                                Dismiss
-                            </ActionButton>
-                            <ActionButton disabled={busy} onClick={() => onChooseReason(true)} icon={<ShieldCheck className="w-3.5 h-3.5" />}>
-                                Mark as expected
-                            </ActionButton>
-                        </div>
-                    )}
-
-                    {canReview && h.status !== 'active' && (
-                        <ActionButton disabled={busy} onClick={() => onReview('active')} icon={<RotateCcw className="w-3.5 h-3.5" />}>
-                            Put back
-                        </ActionButton>
-                    )}
-                </div>
-
                 {canReview && h.status === 'active' && choosingReason && (
-                    <div className="mt-3 flex flex-wrap items-center gap-2">
-                        <span className="text-[12px] text-text-muted">Why is it expected?</span>
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                        <span className="text-xs text-text-muted">Why is it expected?</span>
                         {EXPECTED_REASONS.map(r => (
                             <ActionButton key={r} disabled={busy} onClick={() => onReview('expected', r)}>
                                 {r}
@@ -712,7 +798,7 @@ function HighlightCard({ h, canReview, busy, choosingReason, fmtTime, onReview, 
                         <button
                             disabled={busy}
                             onClick={() => onChooseReason(false)}
-                            className="text-[12px] font-semibold text-text-muted hover:text-text-main px-1"
+                            className="text-xs font-semibold text-text-muted hover:text-text-main px-1"
                         >
                             Cancel
                         </button>
@@ -722,7 +808,45 @@ function HighlightCard({ h, canReview, busy, choosingReason, fmtTime, onReview, 
                     </div>
                 )}
             </div>
-        </article>
+
+            <div className="shrink-0 flex items-center gap-2 md:ml-auto">
+                <Link
+                    to={link.to}
+                    className="inline-flex items-center gap-1 h-9 px-3 rounded-lg border border-border bg-surface hover:bg-surface-hover text-xs font-medium text-text-main transition-colors"
+                >
+                    {link.label}
+                    <ArrowUpRight className="w-3.5 h-3.5" aria-hidden />
+                </Link>
+
+                {canReview && h.status === 'active' && (
+                    <>
+                        <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => onReview('acknowledged')}
+                            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 text-xs font-semibold text-primary transition-colors disabled:opacity-50"
+                        >
+                            <Check className="w-3.5 h-3.5" aria-hidden />
+                            Acknowledge
+                        </button>
+                        <RowMenu
+                            label={`More actions for ${KIND_LABEL[h.kind]}, ${h.member_name}`}
+                            items={[
+                                // No icons: the shared menu is 144px wide and "Mark as expected" would wrap.
+                                { label: 'Dismiss', icon: null, onClick: () => onReview('dismissed'), disabled: busy },
+                                { label: 'Mark as expected', icon: null, onClick: () => onChooseReason(true), disabled: busy },
+                            ]}
+                        />
+                    </>
+                )}
+
+                {canReview && h.status !== 'active' && (
+                    <ActionButton disabled={busy} onClick={() => onReview('active')} icon={<RotateCcw className="w-3.5 h-3.5" />}>
+                        Put back
+                    </ActionButton>
+                )}
+            </div>
+        </li>
     );
 }
 
