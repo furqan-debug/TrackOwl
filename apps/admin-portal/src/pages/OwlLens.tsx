@@ -160,6 +160,8 @@ export function OwlLens() {
     const [actionError, setActionError] = useState<string | null>(null);
 
     const requestSeqRef = useRef(0);
+    // The day navigator (arrows and date); the calendar opens lined up with it.
+    const dayNavRef = useRef<HTMLDivElement>(null);
 
     const load = useCallback(async (quiet = false) => {
         if (!organizationId || !timezoneReady) return;
@@ -346,7 +348,12 @@ export function OwlLens() {
                         />
                     </div>
 
-                    <div className="flex items-center h-10 bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
+                    {/* At least as wide as the calendar (288px), so the open panel
+                        fits exactly under this box, edge to edge. */}
+                    <div
+                        ref={dayNavRef}
+                        className="flex items-center h-10 min-w-[288px] bg-surface border border-border p-1 rounded-xl shadow-shell-sm"
+                    >
                         <button
                             onClick={() => shiftDay(-1)}
                             className="p-2 md:p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
@@ -358,10 +365,8 @@ export function OwlLens() {
                             value={date}
                             onChange={val => setPickedDate(val >= today ? null : val)}
                             maxDate={today}
-                            // The picker sits at the right of the header; opening it to the
-                            // left keeps it under the date instead of over the arrow and refresh.
-                            panelAlign="right"
-                            className="min-w-[170px] md:min-w-[180px]"
+                            anchorRef={dayNavRef}
+                            className="flex-1 min-w-[170px] md:min-w-[180px]"
                         />
                         <button
                             onClick={() => shiftDay(1)}
