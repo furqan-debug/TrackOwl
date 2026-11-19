@@ -48,6 +48,7 @@ const Clients = lazyPage(() => import('./pages/Clients'), 'Clients');
 const Approvals = lazyPage(() => import('./pages/Approvals'), 'Approvals');
 const AppUsage = lazyPage(() => import('./pages/AppUsage'), 'AppUsage');
 const ActivityBlocks = lazyPage(() => import('./pages/ActivityBlocks'), 'ActivityBlocks');
+const OwlLens = lazyPage(() => import('./pages/OwlLens'), 'OwlLens');
 const SettingsPage = lazyPage(() => import('./pages/Settings'), 'SettingsPage');
 const SecurityPage = lazyPage(() => import('./pages/Security'), 'SecurityPage');
 const ProfilePage = lazyPage(() => import('./pages/Profile'), 'ProfilePage');
@@ -192,6 +193,8 @@ function App() {
                           <Route path="/activity" element={<PremiumRoute><Activity /></PremiumRoute>} />
                           <Route path="/activity/apps" element={<PremiumRoute><AppUsage /></PremiumRoute>} />
                           <Route path="/activity/blocks" element={<PremiumRoute><ActivityBlocks /></PremiumRoute>} />
+                          {/* Owl Lens is for people who manage others: not for the User or Client roles */}
+                          <Route path="/owl-lens" element={<RepRoute><PremiumRoute><OwlLens /></PremiumRoute></RepRoute>} />
                           <Route path="/calendar" element={<Calendar />} />
                           <Route path="/profile" element={<ProfilePage />} />
                           <Route path="/settings/security" element={<SecurityPage />} />
