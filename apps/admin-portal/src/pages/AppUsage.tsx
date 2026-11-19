@@ -55,6 +55,8 @@ export function AppUsage() {
     // requests can overlap; without this whichever response landed last would
     // paint, not necessarily the one last asked for.
     const requestSeqRef = useRef(0);
+    // The day navigator (arrows and date); the calendar opens lined up with it.
+    const dayNavRef = useRef<HTMLDivElement>(null);
     const [apps, setApps] = useState<AppEntry[]>([]);
     const [members, setMembers] = useState<MemberInfo[]>([]);
     // Reps are locked to their own member id; admins start on 'all'
@@ -257,7 +259,9 @@ export function AppUsage() {
 
                     {/* Same date control as Screenshots: the picker alone had no way
                         to step a day at a time. */}
-                    <div className="flex items-center h-10 bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
+                    {/* At least as wide as the calendar (288px), so the open panel
+                        fits exactly under this box, edge to edge. */}
+                    <div ref={dayNavRef} className="flex items-center h-10 min-w-[288px] bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
                         <button
                             onClick={() => {
                                 const [y, m, d] = selectedDate.split('-').map(Number);
@@ -272,7 +276,8 @@ export function AppUsage() {
                         <DatePicker
                             value={selectedDate}
                             onChange={(val) => setSelectedDate(val)}
-                            className="min-w-[170px] md:min-w-[180px]"
+                            anchorRef={dayNavRef}
+                            className="flex-1 min-w-[170px] md:min-w-[180px]"
                         />
                         <button
                             onClick={() => {

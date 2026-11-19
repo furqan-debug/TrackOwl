@@ -177,6 +177,9 @@ export function Timesheets() {
     // Monotonic id for timesheet fetches — only the newest may write entries or
     // the cache, so a slow earlier response cannot overwrite newer data.
     const fetchSeqRef = useRef(0);
+    // The date navigators (arrows and date): the calendar opens lined up with them.
+    const dayNavRef = useRef<HTMLDivElement>(null);
+    const filterDayNavRef = useRef<HTMLDivElement>(null);
     const [showFilters, setShowFilters] = useState(false);
     const [showAddTime, setShowAddTime] = useState(false);
 
@@ -839,7 +842,7 @@ export function Timesheets() {
 
                     {/* Bottom row: Date navigation */}
                     <div className="flex items-center justify-end w-full sm:w-auto">
-                        <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-12 w-full min-w-[260px]">
+                        <div ref={dayNavRef} className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-12 w-full min-w-[288px]">
                             <button
                                 onClick={() => navigateDate(-1)}
                                 className="p-3 shrink-0 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary"
@@ -856,6 +859,7 @@ export function Timesheets() {
                                             setSelectedDate(new Date(val + 'T12:00:00'));
                                         }
                                     }}
+                                    anchorRef={dayNavRef}
                                     className="w-full min-w-0"
                                 />
                             </div>
@@ -1034,7 +1038,7 @@ export function Timesheets() {
                     <div className="space-y-1.5">
                         <label className="text-[12px] font-bold text-text-muted">Calendar</label>
                         <div className="flex items-center gap-2">
-                            <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-11 flex-1 min-w-0">
+                            <div ref={filterDayNavRef} className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-11 flex-1 min-w-0">
                                 <button
                                     type="button"
                                     onClick={() => navigateDate(-1)}
@@ -1052,6 +1056,7 @@ export function Timesheets() {
                                             }
                                         }}
                                         direction="auto"
+                                        anchorRef={filterDayNavRef}
                                         className="w-full min-w-0"
                                     />
                                 </div>
