@@ -43,12 +43,14 @@ export function Modal({
         }
     }, [isOpen]);
 
-    const modalRef = useRef<HTMLDivElement>(null);
+    const backdropRef = useRef<HTMLDivElement>(null);
+    const contentRef = useRef<HTMLDivElement>(null);
 
-    // Scroll to top when modal opens
+    // Scroll to top when modal opens – ensure focus starts at top of scrollable area
     useEffect(() => {
         if (isOpen) {
-            modalRef.current?.scrollTo(0, 0);
+            backdropRef.current?.scrollTo(0, 0);
+            contentRef.current?.scrollTo(0, 0);
         }
     }, [isOpen]);
 
@@ -56,6 +58,7 @@ export function Modal({
 
     return createPortal(
         <div
+            ref={backdropRef}
             className="
                 fixed inset-0 z-[100]
                 flex items-center justify-center
@@ -158,6 +161,7 @@ export function Modal({
 
                 {/* Modal Content */}
                 <div
+                    ref={contentRef}
                     className={clsx(
                         `
                         flex-1
