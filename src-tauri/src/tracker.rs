@@ -696,7 +696,14 @@ pub fn start_sample_loop_inner(
                 }
             }
 
-            let _ = accumulator.push(final_sample);
+            // The final sample can be the one that fills the block. push() then
+            // closes and returns it, and flush_partial_at() below finds nothing
+            // left — so dropping this return value lost the whole ten minutes.
+            if let Some(block) = accumulator.push(final_sample) {
+                println!("[tracker] 📦 Block closed on stop: {} active_secs={} activity={}% credited={}",
+                    block.business_date, block.active_seconds, block.activity_percent, block.credited);
+                flush_block_record(&block, &db, &cfg, &auth_token);
+            }
         }
 
         // ── Flush any partial block (< 10 samples) ───────────────────────────
