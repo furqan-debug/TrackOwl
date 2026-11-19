@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import {
@@ -139,6 +139,9 @@ type View = 'open' | 'reviewed';
 
 const AUTO_REFRESH_MS = 5 * 60_000;
 
+/** Past this many alerts the queue scrolls instead of growing. */
+const QUEUE_VISIBLE = 8;
+
 // ---------------------------------------------------------------- page
 
 export function OwlLens() {
@@ -175,6 +178,8 @@ export function OwlLens() {
     // falls back to the first in the queue, so the panel is never empty.
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const inspectorRef = useRef<HTMLElement>(null);
+    const queueRef = useRef<HTMLUListElement>(null);
+    const [queueMaxHeight, setQueueMaxHeight] = useState<number | null>(null);
 
     const requestSeqRef = useRef(0);
     // The day navigator (arrows and date); the calendar opens lined up with it.
@@ -334,6 +339,39 @@ export function OwlLens() {
         () => new Map(shown.map(h => [h.id, evidenceFor(h, isToday, fmtTime)])),
         [shown, isToday, fmtTime],
     );
+
+    // More than QUEUE_VISIBLE alerts: show exactly that many and scroll the
+    // rest. Measured from the rows themselves, so it stays right whatever the
+    // font size or row height turns out to be.
+    const queueScrolls = shown.length > QUEUE_VISIBLE;
+    useLayoutEffect(() => {
+        const ul = queueRef.current;
+        if (!ul || !queueScrolls) {
+            setQueueMaxHeight(null);
+            return;
+        }
+        const measure = () => {
+            const last = ul.children[QUEUE_VISIBLE - 1] as HTMLElement | undefined;
+            setQueueMaxHeight(last ? last.offsetTop + last.offsetHeight : null);
+        };
+        measure();
+        window.addEventListener('resize', measure);
+        return () => window.removeEventListener('resize', measure);
+    }, [queueScrolls, shown.length]);
+
+    // Keep the selected alert in view inside the queue (for example when the
+    // next one opens after a review), without scrolling the page itself.
+    useEffect(() => {
+        const ul = queueRef.current;
+        if (!ul || !queueScrolls || !selected) return;
+        const item = ul.querySelector<HTMLElement>(`[data-id="${selected.id}"]`);
+        if (!item) return;
+        if (item.offsetTop < ul.scrollTop) {
+            ul.scrollTop = item.offsetTop;
+        } else if (item.offsetTop + item.offsetHeight > ul.scrollTop + ul.clientHeight) {
+            ul.scrollTop = item.offsetTop + item.offsetHeight - ul.clientHeight;
+        }
+    }, [selected, queueScrolls, queueMaxHeight]);
 
     const select = (id: string) => {
         setSelectedId(id);
@@ -542,7 +580,14 @@ export function OwlLens() {
                                     neverChecked={!runState?.last_run_at && highlights.length === 0}
                                 />
                             ) : (
-                                <ul className="flex flex-col gap-0.5 px-2 pb-2">
+                                <ul
+                                    ref={queueRef}
+                                    className={clsx(
+                                        'relative flex flex-col gap-0.5 px-2',
+                                        queueScrolls ? 'mb-2 overflow-y-auto overscroll-contain' : 'pb-2',
+                                    )}
+                                    style={queueMaxHeight ? { maxHeight: queueMaxHeight } : undefined}
+                                >
                                     {shown.map(h => (
                                         <QueueItem
                                             key={h.id}
@@ -834,7 +879,7 @@ function QueueItem({ h, selected, stat, fmtTime, onSelect }: {
     onSelect: () => void;
 }) {
     return (
-        <li>
+        <li data-id={h.id}>
             <button
                 type="button"
                 onClick={onSelect}
