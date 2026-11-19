@@ -950,7 +950,7 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
             )}
 
             {/* Actions */}
-            <footer className="flex flex-col gap-3 pt-5 border-t border-border">
+            <footer className="flex flex-col gap-3 pt-1">
                 {canReview && h.status === 'active' && choosingReason ? (
                     <div className="flex flex-col gap-2.5">
                         <p className="text-[13px] font-semibold text-text-main">Why is it expected?</p>
