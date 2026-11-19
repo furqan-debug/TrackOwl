@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useLayoutEffect, type RefObject } from 'react';
 import { 
     ChevronLeft, ChevronRight, Calendar as CalendarIcon, 
     ChevronDown 
@@ -23,6 +23,12 @@ interface DatePickerProps {
     maxDate?: string; // YYYY-MM-DD
     direction?: 'auto' | 'up' | 'down';
     panelClassName?: string;
+    /**
+     * Line the panel up with this element instead of the date button, for
+     * pickers that sit inside a larger control (arrows either side). The
+     * panel takes its left edge and, when wider than the minimum, its width.
+     */
+    anchorRef?: RefObject<HTMLElement | null>;
 }
 
 const MIN_PANEL_WIDTH = 288;
@@ -45,6 +51,7 @@ export function DatePicker({
     maxDate,
     direction = 'auto',
     panelClassName,
+    anchorRef,
 }: DatePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
 
@@ -77,7 +84,7 @@ export function DatePicker({
         if (!isOpen) return;
 
         const place = () => {
-            const rect = triggerRef.current?.getBoundingClientRect();
+            const rect = (anchorRef?.current ?? triggerRef.current)?.getBoundingClientRect();
             if (!rect) return;
 
             const inDialog = Boolean(triggerRef.current?.closest('[role="dialog"]'));
@@ -113,7 +120,7 @@ export function DatePicker({
             window.removeEventListener('resize', place);
             window.removeEventListener('scroll', place, true);
         };
-    }, [isOpen, panelAlign, direction, minWidth]);
+    }, [isOpen, panelAlign, direction, minWidth, anchorRef]);
 
     useEffect(() => {
         if (!isOpen) return;
