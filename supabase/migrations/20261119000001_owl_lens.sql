@@ -14,6 +14,11 @@
 --   owl_lens_detect()        works out the highlights for one org and day
 --   owl_lens_evaluate()      saves them (one card per person/kind/day)
 --   owl_lens_run()           the job: every premium org, today in its time zone
+--   owl_lens_end_trial()     ends the quiet trial early (Owners and Admins)
+--
+-- Quiet trial: for 14 days after Owl Lens first runs for an organisation,
+-- only Owners and Admins see it, so the cards can be checked and the limits
+-- adjusted before managers rely on them.
 --
 -- Days are the organisation's days (settings.orgTimezone), the same boundary
 -- block_records.business_date already uses.
@@ -58,7 +63,9 @@ CREATE TABLE IF NOT EXISTS public.owl_lens_org_state (
   organization_id  uuid PRIMARY KEY REFERENCES public.organizations(id) ON DELETE CASCADE,
   last_run_at      timestamptz,
   last_error       text,
-  last_error_at    timestamptz
+  last_error_at    timestamptz,
+  -- Until this moment only Owners and Admins see Owl Lens. Set on the first run.
+  trial_until      timestamptz
 );
 
 ALTER TABLE public.owl_lens_highlights ENABLE ROW LEVEL SECURITY;
@@ -106,6 +113,11 @@ BEGIN
   SELECT me.member_id, me.role INTO v_me, v_role FROM public.owl_lens_me(p_org) me;
   IF v_me IS NULL THEN RETURN false; END IF;
   IF v_role IN ('Owner', 'Admin') THEN RETURN true; END IF;
+  -- During the quiet trial nobody else sees anything yet.
+  IF EXISTS (SELECT 1 FROM public.owl_lens_org_state st
+              WHERE st.organization_id = p_org AND st.trial_until > now()) THEN
+    RETURN false;
+  END IF;
   IF p_kind = 'input_pattern' THEN RETURN false; END IF;
   IF v_role = 'Viewer' THEN RETURN true; END IF;
   IF v_role = 'Manager' THEN
@@ -828,17 +840,36 @@ BEGIN
         PERFORM public.owl_lens_evaluate(o.id, v_local::date - 1);
       END IF;
 
-      INSERT INTO public.owl_lens_org_state (organization_id, last_run_at, last_error, last_error_at)
-      VALUES (o.id, now(), NULL, NULL)
+      -- The first row for an organisation starts its 14-day quiet trial; later runs keep it.
+      INSERT INTO public.owl_lens_org_state (organization_id, last_run_at, last_error, last_error_at, trial_until)
+      VALUES (o.id, now(), NULL, NULL, now() + interval '14 days')
       ON CONFLICT (organization_id) DO UPDATE
         SET last_run_at = excluded.last_run_at, last_error = NULL, last_error_at = NULL;
     EXCEPTION WHEN others THEN
-      INSERT INTO public.owl_lens_org_state (organization_id, last_error, last_error_at)
-      VALUES (o.id, SQLERRM, now())
+      INSERT INTO public.owl_lens_org_state (organization_id, last_error, last_error_at, trial_until)
+      VALUES (o.id, SQLERRM, now(), now() + interval '14 days')
       ON CONFLICT (organization_id) DO UPDATE
         SET last_error = excluded.last_error, last_error_at = excluded.last_error_at;
     END;
   END LOOP;
+END;
+$$;
+
+-- Ends the quiet trial now, so Managers and Viewers start seeing Owl Lens.
+CREATE OR REPLACE FUNCTION public.owl_lens_end_trial(p_org uuid)
+RETURNS void
+LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = public
+AS $$
+DECLARE
+  v_role text;
+BEGIN
+  SELECT me.role INTO v_role FROM public.owl_lens_me(p_org) me;
+  IF v_role IS NULL OR v_role NOT IN ('Owner', 'Admin') THEN
+    RAISE EXCEPTION 'Only owners and admins can end the Owl Lens trial';
+  END IF;
+  UPDATE public.owl_lens_org_state
+     SET trial_until = now()
+   WHERE organization_id = p_org AND trial_until > now();
 END;
 $$;
 
@@ -860,6 +891,9 @@ GRANT EXECUTE ON FUNCTION public.owl_lens_can_view(uuid, uuid, text) TO authenti
 
 REVOKE ALL ON FUNCTION public.owl_lens_set_status(uuid, text, text) FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION public.owl_lens_set_status(uuid, text, text) TO authenticated;
+
+REVOKE ALL ON FUNCTION public.owl_lens_end_trial(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.owl_lens_end_trial(uuid) TO authenticated;
 
 -- ---------------------------------------------------------------- schedule
 

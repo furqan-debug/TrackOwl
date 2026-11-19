@@ -45,6 +45,8 @@ export interface OwlLensHighlight {
 export interface OwlLensRunState {
     last_run_at: string | null;
     last_error_at: string | null;
+    /** During the quiet trial only Owners and Admins see Owl Lens. */
+    trial_until: string | null;
 }
 
 /** One row as PostgREST returns it, with the two member joins. */
@@ -105,10 +107,16 @@ export const owlLensService = {
     async fetchRunState(organizationId: string): Promise<OwlLensRunState | null> {
         const { data, error } = await supabase
             .from('owl_lens_org_state')
-            .select('last_run_at, last_error_at')
+            .select('last_run_at, last_error_at, trial_until')
             .eq('organization_id', organizationId)
             .maybeSingle();
         if (error) throw error;
         return data;
+    },
+
+    /** Owners and Admins: end the quiet trial now, so Managers and Viewers see Owl Lens. */
+    async endTrial(organizationId: string): Promise<void> {
+        const { error } = await supabase.rpc('owl_lens_end_trial', { p_org: organizationId });
+        if (error) throw error;
     },
 };
