@@ -9,6 +9,7 @@ import {
     ChevronRight,
     Filter,
     Globe,
+    Info,
     RotateCcw,
     ShieldCheck,
     Sparkles,
@@ -16,7 +17,7 @@ import {
     X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { PageLayout, DatePicker, FilterSelect, RefreshButton, EmptyState, LoadingState, Modal, RowMenu } from '../components/ui';
+import { PageLayout, DatePicker, FilterSelect, RefreshButton, EmptyState, LoadingState, Modal } from '../components/ui';
 import {
     owlLensService,
     type HighlightKind,
@@ -170,6 +171,10 @@ export function OwlLens() {
     const [busyId, setBusyId] = useState<string | null>(null);
     const [choosingReasonFor, setChoosingReasonFor] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
+    // The alert open in the inspector. null, or one no longer in the queue,
+    // falls back to the first in the queue, so the panel is never empty.
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const inspectorRef = useRef<HTMLElement>(null);
 
     const requestSeqRef = useRef(0);
     // The day navigator (arrows and date); the calendar opens lined up with it.
@@ -324,7 +329,27 @@ export function OwlLens() {
         return `Last checked at ${fmtTime(runState.last_run_at)}`;
     })();
 
+    const selected = shown.find(h => h.id === selectedId) ?? shown[0] ?? null;
+    const evidence = useMemo(
+        () => new Map(shown.map(h => [h.id, evidenceFor(h, isToday, fmtTime)])),
+        [shown, isToday, fmtTime],
+    );
+
+    const select = (id: string) => {
+        setSelectedId(id);
+        setChoosingReasonFor(null);
+        // Stacked layout: bring the inspector into view under the queue.
+        if (!window.matchMedia('(min-width: 1024px)').matches) {
+            inspectorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
     const review = async (h: OwlLensHighlight, status: HighlightStatus, reason?: string) => {
+        // If this takes the alert out of the current tab, the next one in the
+        // queue (or the one before, at the end) takes its place in the inspector.
+        const leavesView = view === 'open' ? status !== 'active' : status === 'active';
+        const at = shown.findIndex(x => x.id === h.id);
+        const nextId = leavesView ? (shown[at + 1] ?? shown[at - 1])?.id ?? null : h.id;
         setBusyId(h.id);
         setActionError(null);
         try {
@@ -338,6 +363,7 @@ export function OwlLens() {
                 status_at: status === 'active' ? null : now,
             }));
             setChoosingReasonFor(null);
+            setSelectedId(nextId);
         } catch (err) {
             console.error('[OwlLens] review failed:', err);
             setActionError(errorText(err, 'That did not save. Please try again.'));
@@ -447,16 +473,17 @@ export function OwlLens() {
             ) : (
                 <div className="flex flex-col gap-4 pb-16">
                     {inTrial && isAdmin && (
-                        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2 px-3.5 rounded-lg border border-border bg-surface-hover text-xs text-text-muted">
-                            <p>
-                                <span className="font-semibold text-text-main">Admin preview until {trialEndShort}</span>
-                                {' '}— visible only to Owners &amp; Admins.
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 px-4 rounded-xl bg-sky-500/10 text-[13px]">
+                            <Info className="w-4 h-4 shrink-0 text-sky-600 dark:text-sky-300" aria-hidden />
+                            <p className="flex-1 min-w-[200px] text-text-main">
+                                <span className="font-semibold">Admin preview until {trialEndShort}.</span>
+                                <span className="text-text-muted"> Only Owners and Admins can see Owl Lens for now.</span>
                             </p>
                             <button
                                 type="button"
                                 onClick={endTrial}
                                 disabled={endingTrial}
-                                className="font-semibold text-text-main underline-offset-2 hover:underline disabled:opacity-50"
+                                className="font-semibold text-sky-700 dark:text-sky-300 hover:underline underline-offset-2 disabled:opacity-50"
                             >
                                 {endingTrial ? 'Ending trial…' : 'End trial now'}
                             </button>
@@ -473,68 +500,83 @@ export function OwlLens() {
                         </div>
                     )}
 
-                    <section className="bg-surface border border-border rounded-xl shadow-xs overflow-hidden">
-                        {/* Tabs and the day's summary, as the list's own header */}
-                        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 md:px-5 border-b border-border">
-                            <div className="flex items-center gap-5" role="tablist">
-                                {(['open', 'reviewed'] as View[]).map(v => (
-                                    <button
-                                        key={v}
-                                        role="tab"
-                                        aria-selected={view === v}
-                                        onClick={() => setView(v)}
-                                        className={clsx(
-                                            'relative py-3 text-[13px] font-semibold transition-colors',
-                                            view === v
-                                                ? 'text-text-main after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:rounded-full after:bg-primary'
-                                                : 'text-text-muted hover:text-text-main'
-                                        )}
-                                    >
-                                        {v === 'open' ? 'Needs attention' : 'Reviewed'}
-                                        <span className="ml-1.5 tabular-nums text-text-muted font-medium">
-                                            ({v === 'open' ? open.length : reviewed.length})
-                                        </span>
-                                    </button>
-                                ))}
+                    {/* Signal queue on the left, inspector on the right; stacked below lg. */}
+                    <div className={clsx(
+                        'grid gap-4 md:gap-5 items-start',
+                        shown.length > 0 && 'lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]',
+                    )}>
+                        <section className="bg-surface rounded-2xl border border-border-soft shadow-sm" aria-label="Signal queue">
+                            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 md:p-4">
+                                <div className="inline-flex items-center bg-surface-hover rounded-lg p-1" role="tablist">
+                                    {(['open', 'reviewed'] as View[]).map(v => (
+                                        <button
+                                            key={v}
+                                            role="tab"
+                                            aria-selected={view === v}
+                                            onClick={() => setView(v)}
+                                            className={clsx(
+                                                'px-3 py-1.5 rounded-md text-xs font-semibold transition-colors tabular-nums',
+                                                view === v
+                                                    ? 'bg-surface text-text-main shadow-xs'
+                                                    : 'text-text-muted hover:text-text-main'
+                                            )}
+                                        >
+                                            {v === 'open' ? `Needs attention (${open.length})` : `Reviewed (${reviewed.length})`}
+                                        </button>
+                                    ))}
+                                </div>
+                                <p className="text-[11px] text-text-muted tabular-nums">
+                                    {view === 'open' && criticalCount > 0 && <span className="text-rose-600 dark:text-rose-400 font-semibold">{criticalCount} critical</span>}
+                                    {view === 'open' && criticalCount > 0 && warningCount > 0 && ' · '}
+                                    {view === 'open' && warningCount > 0 && <span className="text-amber-700 dark:text-amber-300 font-semibold">{warningCount} {warningCount === 1 ? 'warning' : 'warnings'}</span>}
+                                    {view === 'open' && (criticalCount > 0 || warningCount > 0) && checkedAgo && ' · '}
+                                    {checkedAgo}
+                                </p>
                             </div>
-                            <p className="py-2 text-xs text-text-muted tabular-nums">
-                                {view === 'open' && open.length > 0 && (
-                                    <>
-                                        {criticalCount > 0 && <span className="font-semibold text-rose-600 dark:text-rose-400">{criticalCount} critical</span>}
-                                        {criticalCount > 0 && warningCount > 0 && ' · '}
-                                        {warningCount > 0 && <span className="font-semibold text-amber-700 dark:text-amber-300">{warningCount} {warningCount === 1 ? 'warning' : 'warnings'}</span>}
-                                        {(criticalCount > 0 || warningCount > 0) && checkedAgo && ' · '}
-                                    </>
-                                )}
-                                {checkedAgo}
-                            </p>
-                        </div>
 
-                        {shown.length === 0 ? (
-                            <CalmState
-                                view={view}
-                                isToday={isToday}
-                                filtersActive={filtersActive}
-                                neverChecked={!runState?.last_run_at && highlights.length === 0}
-                            />
-                        ) : (
-                            <ul className="divide-y divide-border-soft">
-                                {shown.map(h => (
-                                    <HighlightRow
-                                        key={h.id}
-                                        h={h}
-                                        canReview={canReview}
-                                        busy={busyId === h.id}
-                                        choosingReason={choosingReasonFor === h.id}
-                                        isToday={isToday}
-                                        fmtTime={fmtTime}
-                                        onReview={(status, reason) => review(h, status, reason)}
-                                        onChooseReason={show => setChoosingReasonFor(show ? h.id : null)}
-                                    />
-                                ))}
-                            </ul>
+                            {shown.length === 0 ? (
+                                <CalmState
+                                    view={view}
+                                    isToday={isToday}
+                                    filtersActive={filtersActive}
+                                    neverChecked={!runState?.last_run_at && highlights.length === 0}
+                                />
+                            ) : (
+                                <ul className="flex flex-col gap-0.5 px-2 pb-2">
+                                    {shown.map(h => (
+                                        <QueueItem
+                                            key={h.id}
+                                            h={h}
+                                            selected={selected?.id === h.id}
+                                            stat={evidence.get(h.id)?.stat ?? ''}
+                                            fmtTime={fmtTime}
+                                            onSelect={() => select(h.id)}
+                                        />
+                                    ))}
+                                </ul>
+                            )}
+                        </section>
+
+                        {selected && (
+                            <section
+                                ref={inspectorRef}
+                                aria-label="Signal inspector"
+                                className="bg-surface rounded-2xl border border-border-soft shadow-sm scroll-mt-4 lg:sticky lg:top-4"
+                            >
+                                <Inspector
+                                    key={selected.id}
+                                    h={selected}
+                                    evidence={evidence.get(selected.id) ?? evidenceFor(selected, isToday, fmtTime)}
+                                    canReview={canReview}
+                                    busy={busyId === selected.id}
+                                    choosingReason={choosingReasonFor === selected.id}
+                                    fmtTime={fmtTime}
+                                    onReview={(status, reason) => review(selected, status, reason)}
+                                    onChooseReason={show => setChoosingReasonFor(show ? selected.id : null)}
+                                />
+                            </section>
                         )}
-                    </section>
+                    </div>
                 </div>
             )}
 
@@ -587,7 +629,7 @@ export function OwlLens() {
     );
 }
 
-// ---------------------------------------------------------------- row
+// ---------------------------------------------------------------- evidence
 
 /** "2 h 10 min" from a number that may be missing. */
 function mins(v: unknown): string {
@@ -617,236 +659,369 @@ function shortDate(v: unknown): string {
     return new Date(`${v.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
+const BASELINE_LABEL: Record<OwlLensHighlight['baseline_source'], string> = {
+    personal: 'Their own normal',
+    team: "Their team's normal",
+    organization: "The organisation's normal",
+    rule: 'A fixed rule',
+};
+
+interface Evidence {
+    /** One number for the queue row. */
+    stat: string;
+    /** Up to three tiles for the inspector. */
+    tiles: { label: string; value: string }[];
+    /** Session context under the tiles. */
+    context: { label: string; value: string }[];
+    /** Why it was flagged, in plain words, without repeating the numbers. */
+    why: string;
+}
+
 /**
- * The numbers behind a highlight as short chips, and a one-line takeaway.
- * Both come from the evidence the background check saved with the card, so
- * nothing is recalculated here. The full sentence stays on hover.
+ * Everything shown about a highlight, taken from the evidence the background
+ * check saved with it. Nothing is recalculated here, and nothing is made up:
+ * a tile only appears when its number is there.
  */
-function summarize(h: OwlLensHighlight, range: string, isToday: boolean): { chips: string[]; diagnosis: string } {
+function evidenceFor(h: OwlLensHighlight, isToday: boolean, fmtTime: (iso: string | null) => string): Evidence {
     const e = h.evidence || {};
-    const chips: string[] = [];
-    const add = (cond: unknown, text: string) => { if (cond) chips.push(text); };
+    const tiles: Evidence['tiles'] = [];
+    const context: Evidence['context'] = [];
+    const tile = (cond: unknown, label: string, value: string) => { if (cond) tiles.push({ label, value }); };
+    const ctx = (cond: unknown, label: string, value: string) => { if (cond) context.push({ label, value }); };
+    const has = (k: string) => e[k] !== undefined && e[k] !== null;
     const app = typeof e.app === 'string' && e.app ? e.app : '';
+    const range = h.window_start && h.window_end ? `${fmtTime(h.window_start)} – ${fmtTime(h.window_end)}` : '';
+    let stat = '';
+    let why = h.detail;
 
     switch (h.kind) {
         case 'not_started': {
-            const missed = num(e.missed_working_days);
+            const missed = Math.max(1, num(e.missed_working_days));
             const last = shortDate(e.last_worked);
-            add(missed >= 2, `${missed} days untracked`);
-            add(e.usual_start_min != null, `Usually starts ${clock(e.usual_start_min)}`);
-            add(last, `Last tracked ${last}`);
-            return {
-                chips,
-                diagnosis: missed >= 2
-                    ? `No time logged for ${missed} consecutive workdays${last ? ` (last tracked ${last})` : ''}.`
-                    : `No time logged ${isToday ? 'yet today' : 'that day'}, well past their usual start.`,
-            };
+            tile(true, 'Untracked workdays', String(missed));
+            tile(has('usual_start_min'), 'Typical start', clock(e.usual_start_min));
+            tile(last, 'Last tracked', last);
+            stat = missed >= 2 ? `${missed} days untracked` : has('usual_start_min') ? `Usually starts ${clock(e.usual_start_min)}` : 'Not started';
+            why = missed >= 2
+                ? 'This is not a one-off. They have not tracked any time on several of their workdays in a row, and this is one of the weekdays they normally work.'
+                : `They normally start well before this on this weekday, and ${isToday ? 'no time has been tracked yet' : 'no time was tracked that day'}. Owl Lens waits an hour past their usual start before raising this.`;
+            break;
         }
-        case 'long_day': {
-            const hasBreak = e.longest_break_mins != null;
-            add(e.tracked_mins != null, `${mins(e.tracked_mins)} tracked`);
-            add(e.usual_mins != null, `Usual ${mins(e.usual_mins)}`);
-            add(hasBreak, `Longest break ${mins(e.longest_break_mins)}`);
-            add(range, range);
-            return {
-                chips,
-                diagnosis: `Far longer than their usual day${hasBreak && num(e.longest_break_mins) < 30 ? ', with no break of 30 min or more' : ''}.`,
-            };
-        }
-        case 'idle': {
+        case 'long_day':
+            tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins));
+            tile(has('usual_mins'), 'Usual day', mins(e.usual_mins));
+            tile(has('longest_break_mins'), 'Longest break', mins(e.longest_break_mins));
+            ctx(range, 'Session', range);
+            stat = `${mins(e.tracked_mins)} tracked`;
+            why = 'This day is far longer than what they normally work. Very long days with few breaks can point to overwork, or to a timer that was left running.';
+            break;
+        case 'idle':
             if (e.pattern === 'share') {
-                add(e.idle_share != null, `${pct(e.idle_share)} idle`);
-                add(e.usual_idle_share != null, `Usual ${pct(e.usual_idle_share)}`);
-                add(e.tracked_mins != null, `${mins(e.tracked_mins)} tracked`);
-                return { chips, diagnosis: 'Much more of the day was idle than is normal for them.' };
+                tile(has('idle_share'), 'Idle share', pct(e.idle_share));
+                tile(has('usual_idle_share'), 'Usual idle share', pct(e.usual_idle_share));
+                tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins));
+                stat = `${pct(e.idle_share)} idle`;
+                why = 'A much bigger part of their tracked day had no keyboard or mouse activity than is normal for them.';
+            } else {
+                const stop = num(e.idle_stop_mins);
+                tile(has('minutes'), 'Idle stretch', mins(e.minutes));
+                tile(h.window_start, 'Started', fmtTime(h.window_start));
+                tile(true, 'Idle auto-stop', stop > 0 ? `${stop} min` : 'Off');
+                ctx(range, 'Session', range);
+                stat = `${mins(e.minutes)} idle`;
+                why = 'The timer kept running with no keyboard or mouse activity for a long stretch, which usually means someone stepped away without stopping it.'
+                    + (stop > 0 && num(e.minutes) > stop ? " It also ran past the organisation's idle auto-stop, which should have ended the session." : '');
             }
-            const stop = num(e.idle_stop_mins);
-            add(e.minutes != null, `${mins(e.minutes)} idle`);
-            add(range, range);
-            add(stop > 0, `Auto-stop ${stop} min`);
-            return {
-                chips,
-                diagnosis: stop > 0 && num(e.minutes) > stop
-                    ? `No keyboard or mouse activity, and the timer outlasted the ${stop}-minute auto-stop.`
-                    : 'No keyboard or mouse activity while the timer kept running.',
-            };
-        }
+            break;
         case 'low_input':
-            add(e.minutes != null, mins(e.minutes));
-            add(app, app);
-            add(range, range);
-            return { chips, diagnosis: 'Timer running in one app with only a trickle of keyboard and mouse input.' };
+            tile(has('minutes'), 'Duration', mins(e.minutes));
+            tile(h.window_start, 'Started', fmtTime(h.window_start));
+            tile(h.window_end, 'Ended', fmtTime(h.window_end));
+            ctx(app, 'Application', app);
+            stat = `${mins(e.minutes)} of low input`;
+            why = 'The timer was running in one app with only a trickle of keyboard and mouse activity, far too little for normal work over that long.';
+            break;
         case 'input_pattern': {
             const m = num(e.minutes);
-            const keys = num(e.keystrokes);
-            add(e.keystrokes != null, `${count(keys)} keys`);
-            add(e.pattern === 'held_key' && m > 0, `${count(Math.round(keys / Math.max(m, 1)))}/min`);
-            add(e.clicks != null, `${count(e.clicks)} clicks`);
-            add(app, app);
-            add(range, range);
-            return {
-                chips,
-                diagnosis: e.pattern === 'held_key'
-                    ? 'Sustained keystroke rate exceeds human typing speed (likely a held-down key).'
-                    : e.pattern === 'move_only'
-                        ? 'Activity with no keystrokes or clicks, all in one window.'
-                        : 'Activity in almost every second, with none of the usual pauses.',
-            };
+            if (e.pattern === 'held_key') {
+                const rate = m > 0 ? count(Math.round(num(e.keystrokes) / m)) : '';
+                tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes));
+                tile(rate, 'Key rate', `${rate}/min`);
+                tile(has('clicks'), 'Mouse clicks', count(e.clicks));
+                stat = rate ? `${rate} keys/min` : `${mins(m)} held key`;
+                why = 'Nobody types that fast for that long. A key held down, or something resting on the keyboard, produces this pattern and makes the time look active when it may not be.';
+            } else {
+                tile(has('minutes'), 'Duration', mins(m));
+                tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes));
+                tile(has('clicks'), 'Mouse clicks', count(e.clicks));
+                stat = e.pattern === 'move_only' ? `${mins(m)} with no keys or clicks` : `${mins(m)} without pauses`;
+                why = e.pattern === 'move_only'
+                    ? 'There was activity, but not a single keystroke or click, all in the same window. A mouse jiggler or auto-mover looks like this.'
+                    : 'Activity registered in almost every second, without the short natural pauses people make. Automated input can produce this pattern.';
+            }
+            ctx(app, 'Application', app);
+            ctx(range, 'Session', range);
+            break;
         }
         case 'app_mix':
-            add(e.unfamiliar_share != null, `${pct(e.unfamiliar_share)} in unfamiliar apps`);
-            add(e.tracked_mins != null, `${mins(e.tracked_mins)} tracked`);
-            return { chips, diagnosis: 'Most of the day was spent in apps they rarely use.' };
+            tile(has('unfamiliar_share'), 'Unfamiliar apps', pct(e.unfamiliar_share));
+            tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins));
+            ctx(range, 'Session', range);
+            stat = `${pct(e.unfamiliar_share)} in unfamiliar apps`;
+            why = 'Most of the day went to apps this person rarely uses. It may be a new tool or project, or time spent outside their normal work.';
+            break;
         case 'focus':
-            add(e.minutes != null, `${mins(e.minutes)} unbroken`);
-            add(e.usual_run_mins != null, `Usual best ${mins(e.usual_run_mins)}`);
-            add(range, range);
-            return { chips, diagnosis: 'A longer stretch of steady, active work than their usual best.' };
+            tile(has('minutes'), 'Unbroken run', mins(e.minutes));
+            tile(has('usual_run_mins'), 'Usual best', mins(e.usual_run_mins));
+            tile(h.window_start, 'Started', fmtTime(h.window_start));
+            ctx(range, 'Session', range);
+            stat = `${mins(e.minutes)} unbroken`;
+            why = 'A longer stretch of steady, active work than they usually manage. Worth recognising.';
+            break;
         case 'non_productive': {
             const sites = Object.entries((e.domains as Record<string, unknown>) || {})
                 .sort(([, a], [, b]) => num(b) - num(a))
-                .slice(0, 2)
+                .slice(0, 3)
                 .map(([d]) => d);
-            add(e.share_pct != null, `${num(e.share_pct)}%`);
-            add(e.nonproductive_mins != null, `${mins(e.nonproductive_mins)} of ${mins(e.tracked_mins)}`);
-            sites.forEach(s => chips.push(s));
-            return { chips, diagnosis: 'A quarter or more of tracked time was on non-productive sites.' };
+            tile(has('share_pct'), 'Non-productive', `${num(e.share_pct)}%`);
+            tile(has('nonproductive_mins'), 'Time on those sites', mins(e.nonproductive_mins));
+            tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins));
+            ctx(sites.length > 0, 'Top sites', sites.join(', '));
+            stat = `${num(e.share_pct)}% non-productive`;
+            why = 'A quarter or more of their tracked time was on sites the organisation counts as non-productive, such as social media or streaming.';
+            break;
         }
-        default:
-            return { chips, diagnosis: h.detail };
     }
+
+    ctx(true, 'Compared with', BASELINE_LABEL[h.baseline_source]);
+    return { stat, tiles: tiles.slice(0, 3), context, why };
 }
 
-const SEVERITY_BADGE: Record<HighlightSeverity, string> = {
-    critical: 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20',
-    warning: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
-    info: 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20',
-    positive: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
+function initials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return '?';
+    return ((parts[0]![0] ?? '') + (parts.length > 1 ? parts[parts.length - 1]![0] ?? '' : '')).toUpperCase();
+}
+
+/** The email, only when it adds something the name does not already say. */
+function distinctEmail(h: OwlLensHighlight): string | null {
+    const email = h.member_email?.trim();
+    if (!email) return null;
+    return email.toLowerCase() === h.member_name.trim().toLowerCase() ? null : email;
+}
+
+const SEVERITY_DOT: Record<HighlightSeverity, string> = {
+    critical: 'bg-rose-500',
+    warning: 'bg-amber-500',
+    info: 'bg-sky-500',
+    positive: 'bg-emerald-500',
 };
 
-interface HighlightRowProps {
+const SEVERITY_SOFT: Record<HighlightSeverity, string> = {
+    critical: 'bg-rose-500/10 text-rose-700 dark:text-rose-400',
+    warning: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
+    info: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
+    positive: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+};
+
+// ---------------------------------------------------------------- queue
+
+function QueueItem({ h, selected, stat, fmtTime, onSelect }: {
     h: OwlLensHighlight;
+    selected: boolean;
+    stat: string;
+    fmtTime: (iso: string | null) => string;
+    onSelect: () => void;
+}) {
+    return (
+        <li>
+            <button
+                type="button"
+                onClick={onSelect}
+                aria-current={selected ? 'true' : undefined}
+                className={clsx(
+                    'relative w-full text-left flex items-start gap-3 pl-4 pr-3 py-2.5 rounded-lg transition-colors',
+                    selected ? 'bg-primary/5' : 'hover:bg-surface-hover',
+                )}
+            >
+                {selected && <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-primary" aria-hidden />}
+                <span className={clsx('mt-1.5 w-2 h-2 rounded-full shrink-0', SEVERITY_DOT[h.severity])} aria-label={SEVERITY_LABEL[h.severity]} />
+                <span className="flex-1 min-w-0">
+                    <span className="flex items-baseline justify-between gap-3">
+                        <span className={clsx('text-[13px] truncate', selected ? 'font-semibold text-text-main' : 'font-medium text-text-main')}>
+                            {KIND_LABEL[h.kind]}
+                        </span>
+                        <span className="text-[11px] text-text-muted tabular-nums shrink-0">{fmtTime(h.detected_at)}</span>
+                    </span>
+                    <span className="block text-[12px] text-text-muted truncate">
+                        {h.member_name}
+                        {stat && <span className="tabular-nums"> · {stat}</span>}
+                    </span>
+                </span>
+            </button>
+        </li>
+    );
+}
+
+// ---------------------------------------------------------------- inspector
+
+interface InspectorProps {
+    h: OwlLensHighlight;
+    evidence: Evidence;
     canReview: boolean;
     busy: boolean;
     choosingReason: boolean;
-    isToday: boolean;
     fmtTime: (iso: string | null) => string;
     onReview: (status: HighlightStatus, reason?: string) => void;
     onChooseReason: (open: boolean) => void;
 }
 
-function HighlightRow({ h, canReview, busy, choosingReason, isToday, fmtTime, onReview, onChooseReason }: HighlightRowProps) {
+function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onReview, onChooseReason }: InspectorProps) {
     const link = sourceLink(h);
+    const email = distinctEmail(h);
     const spotted = fmtTime(h.detected_at);
-    const range = h.window_start && h.window_end ? `${fmtTime(h.window_start)}–${fmtTime(h.window_end)}` : '';
-    const { chips, diagnosis } = summarize(h, range, isToday);
-    const baseline = h.baseline_source === 'team'
-        ? 'vs team normal'
-        : h.baseline_source === 'organization' ? 'vs organisation normal' : null;
+    const updated = fmtTime(h.updated_at);
 
     return (
-        <li className={clsx(
-            'flex flex-col md:flex-row md:items-center gap-3 md:gap-6 px-4 md:px-5 py-3.5 hover:bg-surface-hover/70 transition-colors',
-            h.status !== 'active' && 'opacity-80',
-        )}>
-            <div className="flex-1 min-w-0 max-w-2xl">
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 min-w-0">
-                    <span className={clsx('inline-flex items-center px-1.5 py-px rounded border text-[10px] font-bold', SEVERITY_BADGE[h.severity])}>
+        <article className="flex flex-col gap-6 p-5 md:p-7" aria-live="polite">
+            {/* Header */}
+            <header className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
+                    <span className={clsx('inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold', SEVERITY_SOFT[h.severity])}>
+                        <span className={clsx('w-1.5 h-1.5 rounded-full', SEVERITY_DOT[h.severity])} aria-hidden />
                         {SEVERITY_LABEL[h.severity]}
                     </span>
-                    <span className="inline-flex items-center px-1.5 py-px rounded border border-border text-[10px] font-semibold text-text-muted">
-                        {KIND_CATEGORY[h.kind]}
+                    <span className="font-medium text-text-muted">{KIND_CATEGORY[h.kind]}</span>
+                    <span className="text-text-muted/70" aria-hidden>·</span>
+                    <span className="text-text-muted tabular-nums">
+                        Spotted {spotted}{updated && updated !== spotted ? `, updated ${updated}` : ''}
                     </span>
-                    <h3 className="text-sm font-semibold text-text-main">{KIND_LABEL[h.kind]}</h3>
-                    <span className="text-sm font-medium text-text-muted truncate max-w-full">
-                        {h.member_name}
-                        {h.member_email && <span className="hidden lg:inline font-normal opacity-70"> · {h.member_email}</span>}
-                    </span>
-                    {spotted && <span className="text-xs text-text-muted/70">Spotted {spotted}</span>}
                 </div>
+                <h2 className="text-xl md:text-2xl font-bold text-text-main tracking-tight leading-tight">{KIND_LABEL[h.kind]}</h2>
+                <div className="flex items-center gap-3 min-w-0">
+                    <span className="w-10 h-10 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+                        {initials(h.member_name)}
+                    </span>
+                    <div className="min-w-0">
+                        <p className="text-sm font-semibold text-text-main truncate">{h.member_name}</p>
+                        {email && <p className="text-xs text-text-muted truncate">{email}</p>}
+                    </div>
+                </div>
+            </header>
 
-                {(chips.length > 0 || baseline) && (
-                    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                        {chips.map(c => (
-                            <span key={c} className="inline-flex items-center px-2 py-0.5 rounded-md bg-surface-hover border border-border-soft text-xs font-medium text-text-main tabular-nums">
-                                {c}
-                            </span>
+            {/* Key evidence */}
+            {evidence.tiles.length > 0 && (
+                <section className="flex flex-col gap-3">
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Key evidence</h3>
+                    <div className={clsx('grid gap-3', evidence.tiles.length >= 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2')}>
+                        {evidence.tiles.map(t => (
+                            <div key={t.label} className="rounded-xl bg-surface-hover px-4 py-3.5 min-w-0">
+                                <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{t.label}</p>
+                                <p className="mt-1 text-xl font-bold text-text-main tabular-nums truncate" title={t.value}>{t.value}</p>
+                            </div>
                         ))}
-                        {baseline && <span className="text-xs text-text-muted">{baseline}</span>}
+                    </div>
+                    {evidence.context.length > 0 && (
+                        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-[13px] mt-1">
+                            {evidence.context.map(c => (
+                                <div key={c.label} className="contents">
+                                    <dt className="text-text-muted">{c.label}</dt>
+                                    <dd className="text-text-main font-medium tabular-nums min-w-0 truncate" title={c.value}>{c.value}</dd>
+                                </div>
+                            ))}
+                        </dl>
+                    )}
+                </section>
+            )}
+
+            {/* Why */}
+            <section className="flex flex-col gap-2">
+                <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Why Owl Lens flagged this</h3>
+                <p className="text-sm text-text-main leading-relaxed">{evidence.why}</p>
+            </section>
+
+            {h.status !== 'active' && (
+                <p className="text-[13px] text-text-muted">
+                    {STATUS_LABEL[h.status]}
+                    {h.status === 'expected' && h.status_reason ? ` (${h.status_reason})` : ''}
+                    {h.status_by_name ? ` by ${h.status_by_name}` : ''}
+                    {h.status_at ? ` at ${fmtTime(h.status_at)}` : ''}.
+                </p>
+            )}
+
+            {/* Actions */}
+            <footer className="flex flex-col gap-3 pt-5 border-t border-border-soft">
+                {canReview && h.status === 'active' && choosingReason ? (
+                    <div className="flex flex-col gap-2.5">
+                        <p className="text-[13px] font-semibold text-text-main">Why is it expected?</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                            {EXPECTED_REASONS.map(r => (
+                                <SecondaryButton key={r} disabled={busy} onClick={() => onReview('expected', r)}>{r}</SecondaryButton>
+                            ))}
+                            <button
+                                type="button"
+                                disabled={busy}
+                                onClick={() => onChooseReason(false)}
+                                className="text-[13px] font-semibold text-text-muted hover:text-text-main px-2"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                        <p className="text-xs text-text-muted">Owl Lens will stay quiet about {h.member_name} for the rest of this day.</p>
+                    </div>
+                ) : (
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                            to={link.to}
+                            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-primary/25 text-primary hover:bg-primary/5 text-[13px] font-semibold transition-colors"
+                        >
+                            {link.label}
+                            <ArrowUpRight className="w-4 h-4" aria-hidden />
+                        </Link>
+                        {canReview && h.status === 'active' && (
+                            <>
+                                <button
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() => onReview('acknowledged')}
+                                    className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-white dark:text-slate-900 hover:bg-primary-hover text-[13px] font-semibold shadow-xs transition-colors disabled:opacity-50"
+                                >
+                                    <Check className="w-4 h-4" aria-hidden />
+                                    Acknowledge
+                                </button>
+                                <span className="hidden sm:block flex-1" aria-hidden />
+                                <SecondaryButton disabled={busy} onClick={() => onChooseReason(true)}>Mark as expected</SecondaryButton>
+                                <SecondaryButton disabled={busy} onClick={() => onReview('dismissed')}>Dismiss</SecondaryButton>
+                            </>
+                        )}
+                        {canReview && h.status !== 'active' && (
+                            <SecondaryButton disabled={busy} onClick={() => onReview('active')} icon={<RotateCcw className="w-3.5 h-3.5" />}>
+                                Put back
+                            </SecondaryButton>
+                        )}
                     </div>
                 )}
+            </footer>
+        </article>
+    );
+}
 
-                <p className="mt-1.5 text-sm text-text-muted truncate" title={h.detail}>{diagnosis}</p>
-
-                {h.status !== 'active' && (
-                    <p className="mt-1 text-xs text-text-muted">
-                        {STATUS_LABEL[h.status]}
-                        {h.status === 'expected' && h.status_reason ? ` (${h.status_reason})` : ''}
-                        {h.status_by_name ? ` by ${h.status_by_name}` : ''}
-                        {h.status_at ? ` at ${fmtTime(h.status_at)}` : ''}
-                    </p>
-                )}
-
-                {canReview && h.status === 'active' && choosingReason && (
-                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-text-muted">Why is it expected?</span>
-                        {EXPECTED_REASONS.map(r => (
-                            <ActionButton key={r} disabled={busy} onClick={() => onReview('expected', r)}>
-                                {r}
-                            </ActionButton>
-                        ))}
-                        <button
-                            disabled={busy}
-                            onClick={() => onChooseReason(false)}
-                            className="text-xs font-semibold text-text-muted hover:text-text-main px-1"
-                        >
-                            Cancel
-                        </button>
-                        <p className="basis-full text-[11px] text-text-muted">
-                            Owl Lens will stay quiet about {h.member_name} for the rest of this day.
-                        </p>
-                    </div>
-                )}
-            </div>
-
-            <div className="shrink-0 flex items-center gap-2 md:ml-auto">
-                <Link
-                    to={link.to}
-                    className="inline-flex items-center gap-1 h-9 px-3 rounded-lg border border-border bg-surface hover:bg-surface-hover text-xs font-medium text-text-main transition-colors"
-                >
-                    {link.label}
-                    <ArrowUpRight className="w-3.5 h-3.5" aria-hidden />
-                </Link>
-
-                {canReview && h.status === 'active' && (
-                    <>
-                        <button
-                            type="button"
-                            disabled={busy}
-                            onClick={() => onReview('acknowledged')}
-                            className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 text-xs font-semibold text-primary transition-colors disabled:opacity-50"
-                        >
-                            <Check className="w-3.5 h-3.5" aria-hidden />
-                            Acknowledge
-                        </button>
-                        <RowMenu
-                            label={`More actions for ${KIND_LABEL[h.kind]}, ${h.member_name}`}
-                            items={[
-                                // No icons: the shared menu is 144px wide and "Mark as expected" would wrap.
-                                { label: 'Dismiss', icon: null, onClick: () => onReview('dismissed'), disabled: busy },
-                                { label: 'Mark as expected', icon: null, onClick: () => onChooseReason(true), disabled: busy },
-                            ]}
-                        />
-                    </>
-                )}
-
-                {canReview && h.status !== 'active' && (
-                    <ActionButton disabled={busy} onClick={() => onReview('active')} icon={<RotateCcw className="w-3.5 h-3.5" />}>
-                        Put back
-                    </ActionButton>
-                )}
-            </div>
-        </li>
+function SecondaryButton({ children, icon, onClick, disabled }: {
+    children: ReactNode;
+    icon?: ReactNode;
+    onClick: () => void;
+    disabled?: boolean;
+}) {
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            disabled={disabled}
+            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-surface-hover hover:bg-border-soft text-[13px] font-semibold text-text-main transition-colors disabled:opacity-50"
+        >
+            {icon}
+            {children}
+        </button>
     );
 }
 
