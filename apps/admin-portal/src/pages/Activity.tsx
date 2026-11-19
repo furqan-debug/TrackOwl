@@ -22,6 +22,7 @@ import { ScreenshotGallery } from '../components/activity/ScreenshotGallery';
 import { TimelineGrid } from '../components/activity/TimelineGrid';
 import { calculateActivityScore, orgLocalToUtc } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
+import { useLinkedFilters } from '../lib/linkedFilters';
 
 interface ActivitySample {
     id: number;
@@ -79,7 +80,9 @@ export function Activity() {
     const requestSeqRef = useRef(0);
     
     // Default to the current day in the displayTimezone
-    const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' }));
+    // An Owl Lens card can open this page on one person and one day.
+    const { date: linkedDate, takeMember: takeLinkedMember } = useLinkedFilters();
+    const [selectedDate, setSelectedDate] = useState(() => linkedDate ?? new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' }));
     
     const [enlargedIndex, setEnlargedIndex] = useState<number | null>(null);
     const [members, setMembers] = useState<MemberInfo[]>([]);
@@ -170,10 +173,14 @@ export function Activity() {
         }
         
         query.then(({ data }) => {
-            if (data) setMembers(data);
+            if (data) {
+                setMembers(data);
+                const linkedMember = isRep ? null : takeLinkedMember(data);
+                if (linkedMember) setSelectedMemberId(linkedMember);
+            }
             setMembersLoaded(true);
         });
-    }, [organizationId, isRep, managedMemberIds, profile?.role]);
+    }, [organizationId, isRep, managedMemberIds, profile?.role, takeLinkedMember]);
 
     const fetchData = useCallback(async (isSilent = false, forceRefresh = false, overrideLimit?: number, quiet = false) => {
         const mySeq = ++requestSeqRef.current;

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo, useRef, type CSSProperties }
 import { activityService } from '../services/activity.service';
 import type { AppEntry } from '../services/activity.service';
 import { useAuth } from '../context/AuthContext';
+import { useLinkedFilters } from '../lib/linkedFilters';
 import {
     AppWindow, Monitor, Users, Search,
     Clock, Filter,
@@ -65,13 +66,17 @@ export function AppUsage() {
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 15;
 
-    const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' }));
+    // An Owl Lens card can open this page on one person and one day.
+    const { date: linkedDate, takeMember: takeLinkedMember } = useLinkedFilters();
+
+    const [selectedDate, setSelectedDate] = useState(() => linkedDate ?? new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' }));
 
     useEffect(() => {
-        if (displayTimezone) {
+        // A linked day is a specific day, not "today", so the time zone settling must not move it.
+        if (displayTimezone && !linkedDate) {
             setSelectedDate(new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone }));
         }
-    }, [displayTimezone]);
+    }, [displayTimezone, linkedDate]);
 
     useEffect(() => {
         const isScoped = profile?.role === 'Manager' || profile?.role === 'Client' || isRep;
@@ -92,10 +97,14 @@ export function AppUsage() {
             }
 
             query.then(({ data }) => {
-                if (data) setMembers(data);
+                if (data) {
+                    setMembers(data);
+                    const linkedMember = isRep ? null : takeLinkedMember(data);
+                    if (linkedMember) setSelectedMemberId(linkedMember);
+                }
             });
         });
-    }, [organizationId, profile?.role, managedMemberIds, isRep]);
+    }, [organizationId, profile?.role, managedMemberIds, isRep, takeLinkedMember]);
 
     const fetchData = useCallback(async (isSilent = false, forceRefresh = false) => {
         const mySeq = ++requestSeqRef.current;

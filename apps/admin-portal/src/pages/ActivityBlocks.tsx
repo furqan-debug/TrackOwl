@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { activityService, type BlockRecordEntry } from '../services/activity.service';
 import { useAuth } from '../context/AuthContext';
+import { useLinkedFilters } from '../lib/linkedFilters';
 import {
     PageLayout, StatMetric, LoadingState, EmptyState,
     FilterSelect, DatePicker, RefreshButton, AppIcon
@@ -42,8 +43,11 @@ export function ActivityBlocks() {
         isRep ? (profile?.id ?? 'all') : 'all'
     );
 
+    // An Owl Lens card can open this page on one person and one day.
+    const { date: linkedDate, takeMember: takeLinkedMember } = useLinkedFilters();
+
     const [selectedDate, setSelectedDate] = useState(() =>
-        new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' })
+        linkedDate ?? new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' })
     );
 
     const [blocks, setBlocks] = useState<BlockRecordEntry[]>([]);
@@ -84,11 +88,15 @@ export function ActivityBlocks() {
             }
 
             query.then(({ data }) => {
-                if (data) setMembers(data);
+                if (data) {
+                    setMembers(data);
+                    const linkedMember = isRep ? null : takeLinkedMember(data);
+                    if (linkedMember) setSelectedMemberId(linkedMember);
+                }
                 setMembersLoaded(true);
             });
         });
-    }, [organizationId, profile?.role, managedMemberIds, isScoped]);
+    }, [organizationId, profile?.role, managedMemberIds, isScoped, isRep, takeLinkedMember]);
 
     // Fetch block records
     const fetchBlocks = useCallback(async (isSilent = false, forceRefresh = false) => {
