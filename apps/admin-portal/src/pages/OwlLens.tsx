@@ -133,6 +133,7 @@ export function OwlLens() {
     const organizationId = profile?.organization_id;
     const role = profile?.role;
     const canReview = role === 'Owner' || role === 'Admin' || role === 'Manager';
+    const isAdmin = role === 'Owner' || role === 'Admin';
 
     const tz = displayTimezone || 'UTC';
     const today = useMemo(() => new Date().toLocaleDateString('en-CA', { timeZone: tz }), [tz]);
@@ -241,6 +242,28 @@ export function OwlLens() {
         .sort((a, b) => (b.status_at || '').localeCompare(a.status_at || '')), [filtered]);
 
     const shown = view === 'open' ? open : reviewed;
+
+    // Quiet trial: the first 14 days only Owners and Admins see Owl Lens.
+    const trialUntil = runState?.trial_until ? new Date(runState.trial_until) : null;
+    const inTrial = !!trialUntil && trialUntil.getTime() > Date.now();
+    const trialEndLabel = trialUntil
+        ? trialUntil.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: tz })
+        : '';
+    const [endingTrial, setEndingTrial] = useState(false);
+    const endTrial = async () => {
+        if (!organizationId) return;
+        setEndingTrial(true);
+        setActionError(null);
+        try {
+            await owlLensService.endTrial(organizationId);
+            await load(true);
+        } catch (err) {
+            console.error('[OwlLens] end trial failed:', err);
+            setActionError(errorText(err, 'The trial could not be ended. Please try again.'));
+        } finally {
+            setEndingTrial(false);
+        }
+    };
     const criticalCount = open.filter(h => h.severity === 'critical').length;
     const warningCount = open.filter(h => h.severity === 'warning').length;
     const filtersActive = severityFilter !== 'all' || teamFilter !== 'all';
@@ -369,8 +392,27 @@ export function OwlLens() {
                         </button>
                     }
                 />
+            ) : inTrial && !isAdmin ? (
+                <EmptyState
+                    icon={<ShieldCheck className="w-8 h-8 opacity-60" aria-hidden />}
+                    title="Owl Lens is in its trial period"
+                    description={`Your admins are checking the highlights before everyone relies on them. Owl Lens opens for you on ${trialEndLabel}.`}
+                />
             ) : (
                 <div className="flex flex-col gap-4 pb-16">
+                    {inTrial && isAdmin && (
+                        <div className="flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border border-sky-500/20 bg-sky-500/10">
+                            <Info className="w-4 h-4 shrink-0 text-sky-600 dark:text-sky-300" aria-hidden />
+                            <p className="flex-1 min-w-[220px] text-[13px] text-text-main">
+                                <span className="font-semibold">Trial until {trialEndLabel}.</span>{' '}
+                                Only Owners and Admins can see Owl Lens for now. Check the cards look right before managers rely on them.
+                            </p>
+                            <ActionButton disabled={endingTrial} onClick={endTrial}>
+                                End trial now
+                            </ActionButton>
+                        </div>
+                    )}
+
                     {/* Summary line and the open / reviewed switch */}
                     <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="inline-flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm">
