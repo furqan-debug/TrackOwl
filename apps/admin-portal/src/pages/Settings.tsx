@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext';
 import { PageLayout, LoadingState, RefreshButton, Card } from '../components/ui';
 import { supabase } from '../lib/supabase';
 import clsx from 'clsx';
+import { NonProductiveSites } from '../components/settings/NonProductiveSites';
 
 // Reading one row of settings returns in well under a second, so without a
 // floor the loader appears for a frame or two and the page looks like it never
@@ -322,6 +323,9 @@ export function SettingsPage() {
                                     </div>
                                 )}
                             </div>
+                            {profile?.organization_id && (
+                                <NonProductiveSites organizationId={profile.organization_id} />
+                            )}
                         </div>
                     )}
 
