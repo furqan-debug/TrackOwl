@@ -52,20 +52,25 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
         return () => { active = false; };
     }, [block]);
 
-    // Above the early return: a hook that runs only while the viewer is open
-    // would change the hook count between renders. It bails on its own instead.
+    // Keyboard listener for Escape (closes lightbox or modal) and arrow navigation
     useEffect(() => {
-        if (lightboxIndex === null) return;
-
         const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setLightboxIndex(null);
-            if (e.key === 'ArrowRight') setLightboxIndex(i => (i === null ? i : (i + 1) % screenshots.length));
-            if (e.key === 'ArrowLeft') setLightboxIndex(i => (i === null ? i : (i - 1 + screenshots.length) % screenshots.length));
+            if (e.key === 'Escape') {
+                if (lightboxIndex !== null) {
+                    setLightboxIndex(null);
+                } else {
+                    onClose();
+                }
+            }
+            if (lightboxIndex !== null) {
+                if (e.key === 'ArrowRight') setLightboxIndex(i => (i === null ? i : (i + 1) % screenshots.length));
+                if (e.key === 'ArrowLeft') setLightboxIndex(i => (i === null ? i : (i - 1 + screenshots.length) % screenshots.length));
+            }
         };
 
         window.addEventListener('keydown', onKey);
         return () => window.removeEventListener('keydown', onKey);
-    }, [lightboxIndex, screenshots.length]);
+    }, [lightboxIndex, screenshots.length, onClose]);
 
     if (!block) return null;
 
@@ -99,7 +104,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
     };
 
     const formatBlockWindow = (startIso: string, endIso: string) =>
-        `${formatTimeShort(startIso)} – ${formatTimeShort(endIso)}`;
+        `${formatTimeShort(startIso)} — ${formatTimeShort(endIso)}`;
 
     const pct = block.activity_percent;
     const activeMins = Math.floor(block.active_seconds / 60);
@@ -149,7 +154,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
 
                 {/* ── Header ── */}
                 <div className="px-6 py-4 border-b border-border flex items-center justify-between shrink-0 bg-surface">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                         <div className="w-10 h-10 rounded-full bg-accent/20 border border-accent/30 text-accent font-bold flex items-center justify-center text-sm shrink-0 overflow-hidden">
                             {block.member?.avatar_url ? (
                                 <SecureImage
@@ -161,33 +166,18 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                                 initialOf(block.member?.full_name || 'U')
                             )}
                         </div>
-                        <div>
-                            <div className="flex items-center gap-2 min-w-0">
-                                <h3 className="text-base font-bold text-text-main truncate max-w-[260px]">
-                                    {(() => {
-                                        const name = block.member?.full_name || 'Team Member';
-                                        // If stored as email, show the local part before @
-                                        if (name.includes('@')) {
-                                            return name.split('@')[0]?.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || name;
-                                        }
-                                        return name;
-                                    })()}
-                                </h3>
-                                <span className={clsx(
-                                    'text-[11px] font-bold px-2 py-0.5 rounded-full border',
-                                    block.credited
-                                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
-                                        : 'bg-amber-500/10 border-amber-500/20 text-amber-500'
-                                )}>
-                                    {block.credited ? 'Credited' : 'Idle Adjusted'}
-                                </span>
-                                {block.is_offline && (
-                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-zinc-500/10 text-zinc-400 border border-zinc-500/20">
-                                        Offline
-                                    </span>
-                                )}
-                            </div>
-                            <p className="text-xs text-text-muted mt-0.5 font-mono">
+                        <div className="min-w-0">
+                            <h3 className="text-base font-bold text-text-main truncate max-w-[320px]">
+                                {(() => {
+                                    const name = block.member?.full_name || 'Team Member';
+                                    // If stored as email, show the local part before @
+                                    if (name.includes('@')) {
+                                        return name.split('@')[0]?.replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase()) || name;
+                                    }
+                                    return name;
+                                })()}
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-0.5 font-mono">
                                 {formatBlockWindow(block.block_start, block.block_end)}
                             </p>
                         </div>
@@ -195,7 +185,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
 
                     <button
                         onClick={onClose}
-                        className="p-2 text-text-muted hover:text-text-main hover:bg-white/5 rounded-xl transition-colors"
+                        className="p-2 text-text-muted hover:text-text-main hover:bg-white/5 rounded-xl transition-colors shrink-0"
                         aria-label="Close modal"
                     >
                         <X className="w-5 h-5" />
@@ -204,8 +194,8 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
 
                 {/* ── Summary Strip ── */}
                 <div className="px-6 py-3.5 border-b border-border bg-surface-hover shrink-0 overflow-x-auto">
-                    <div className="flex items-center gap-5 min-w-max">
-                        {/* App */}
+                    <div className="flex items-center justify-between gap-4 min-w-max">
+                        {/* App / Domain */}
                         <div className="flex items-center gap-2.5">
                             <AppIcon name={block.app_name || ''} className="w-8 h-8 rounded-lg shadow-shell-sm shrink-0" />
                             <div className="flex flex-col">
@@ -218,42 +208,43 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                             </div>
                         </div>
 
-                        <div className="w-px h-7 bg-border shrink-0" />
-
-                        {/* Activity bar */}
-                        <div className="flex items-center gap-2.5 shrink-0">
-                            <span className={clsx(
-                                'text-sm font-black font-mono',
-                                pct >= 60 ? 'text-emerald-400' :
-                                pct >= 30 ? 'text-accent' : 'text-rose-400'
-                            )}>
-                                {pct}%
-                            </span>
-                            <div className="w-28 bg-border/40 h-2 rounded-full overflow-hidden">
-                                <div
-                                    className={clsx('h-full rounded-full transition-all duration-500', activityBarColor)}
-                                    style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
-                                />
+                        {/* Activity bar, active time, clicks, and keys */}
+                        <div className="flex items-center gap-4 shrink-0 tabular-nums">
+                            {/* Activity bar */}
+                            <div className="flex items-center gap-2.5 shrink-0">
+                                <span className={clsx(
+                                    'text-sm font-black font-mono',
+                                    pct >= 60 ? 'text-emerald-400' :
+                                    pct >= 30 ? 'text-accent' : 'text-rose-400'
+                                )}>
+                                    {pct}%
+                                </span>
+                                <div className="w-24 sm:w-28 bg-border/40 h-2 rounded-full overflow-hidden">
+                                    <div
+                                        className={clsx('h-full rounded-full transition-all duration-500', activityBarColor)}
+                                        style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
+                                    />
+                                </div>
+                                <span className="text-[11px] text-text-muted font-medium">
+                                    {activeTimeLabel} active
+                                </span>
                             </div>
-                            <span className="text-[11px] text-text-muted font-medium">
-                                {activeTimeLabel} active
-                            </span>
-                        </div>
 
-                        <div className="w-px h-7 bg-border shrink-0" />
+                            <div className="w-px h-6 bg-border shrink-0" />
 
-                        {/* Input counts */}
-                        <div className="flex items-center gap-4 shrink-0">
-                            <span className="flex items-center gap-1.5 text-sm font-bold text-text-main">
-                                <Mouse className="w-3.5 h-3.5 text-blue-400" />
-                                {block.mouse_clicks.toLocaleString()}
-                                <span className="text-[11px] font-normal text-text-muted">clicks</span>
-                            </span>
-                            <span className="flex items-center gap-1.5 text-sm font-bold text-text-main">
-                                <Keyboard className="w-3.5 h-3.5 text-purple-400" />
-                                {block.key_presses.toLocaleString()}
-                                <span className="text-[11px] font-normal text-text-muted">keys</span>
-                            </span>
+                            {/* Input counts */}
+                            <div className="flex items-center gap-3.5 shrink-0">
+                                <span className="flex items-center gap-1.5 text-sm font-bold text-text-main">
+                                    <Mouse className="w-3.5 h-3.5 text-blue-400" />
+                                    {block.mouse_clicks.toLocaleString()}
+                                    <span className="text-[11px] font-normal text-text-muted">clicks</span>
+                                </span>
+                                <span className="flex items-center gap-1.5 text-sm font-bold text-text-main">
+                                    <Keyboard className="w-3.5 h-3.5 text-purple-400" />
+                                    {block.key_presses.toLocaleString()}
+                                    <span className="text-[11px] font-normal text-text-muted">keys</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -261,19 +252,19 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                 {/* ── Body ── */}
                 <div ref={modalBodyRef} className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto">
 
-                    {/* Screenshots Filmstrip */}
+                    {/* Screenshots Grid */}
                     {screenshots.length > 0 && (
                         <div className="space-y-2.5">
                             <h4 className="text-[11px] font-black text-text-muted uppercase tracking-wider flex items-center gap-2">
                                 <ImageIcon className="w-3.5 h-3.5 text-accent" />
                                 Screenshots ({screenshots.length})
                             </h4>
-                            <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1">
+                            <div className="grid grid-cols-3 gap-3">
                                 {screenshots.map((ss, idx) => (
                                     <div
                                         key={ss.id || idx}
                                         onClick={() => setLightboxIndex(idx)}
-                                        className="relative group w-40 h-24 shrink-0 rounded-xl overflow-hidden border border-border bg-black/40 cursor-pointer hover:border-accent transition-all shadow-shell-sm hover:shadow-elevated"
+                                        className="relative group aspect-video rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 bg-black/40 cursor-pointer hover:border-accent transition-all shadow-sm hover:shadow-md"
                                     >
                                         <SecureImage
                                             path={ss.file_url}
@@ -290,12 +281,12 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                         </div>
                     )}
 
-                    {/* Minute-by-Minute Visual Rows */}
+                    {/* Activity Breakdown */}
                     <div className="space-y-2.5">
                         <div className="flex items-center justify-between">
                             <h4 className="text-[11px] font-black text-text-muted uppercase tracking-wider flex items-center gap-2">
                                 <Activity className="w-3.5 h-3.5 text-accent" />
-                                Minute-by-Minute Breakdown
+                                Activity Breakdown
                             </h4>
                             {!loading && (
                                 <span className="text-[11px] text-text-muted font-mono">
@@ -305,14 +296,14 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                         </div>
 
                         {loading ? (
-                            <div className="py-12 flex flex-col items-center justify-center text-text-muted gap-2">
+                            <div className="py-10 flex flex-col items-center justify-center text-text-muted gap-2">
                                 <Loader2 className="w-6 h-6 animate-spin text-accent" />
                                 <span className="text-xs font-medium">Loading minute breakdown...</span>
                             </div>
                         ) : samples.length === 0 ? (
-                            <div className="py-8 text-center text-text-muted border border-dashed border-border rounded-xl">
-                                <Clock className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                                <p className="text-xs italic">No granular minute samples found for this block window.</p>
+                            <div className="py-6 px-4 text-center text-text-muted border border-dashed border-slate-200 dark:border-border/60 bg-slate-50/60 dark:bg-surface-subtle/40 rounded-xl">
+                                <Clock className="w-6 h-6 mx-auto mb-1.5 opacity-30" />
+                                <p className="text-xs italic">No minute-level activity recorded.</p>
                             </div>
                         ) : (
                             <div className="space-y-1.5">
@@ -392,16 +383,6 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                             </div>
                         )}
                     </div>
-                </div>
-
-                {/* ── Footer ── */}
-                <div className="px-6 py-3.5 border-t border-border bg-surface flex justify-end shrink-0">
-                    <button
-                        onClick={onClose}
-                        className="px-4 py-2 bg-white/5 hover:bg-white/10 text-text-main font-semibold text-xs rounded-xl transition-colors"
-                    >
-                        Close
-                    </button>
                 </div>
             </div>
             </div>
