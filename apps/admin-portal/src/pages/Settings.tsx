@@ -352,7 +352,7 @@ export function SettingsPage() {
                             <SectionHeading title="System Operations" subtitle="Low-level environment and policy controls." />
                             <div className="p-6 rounded-lg bg-rose-500/5 border border-rose-500/10 space-y-4">
                                 <div className="space-y-1">
-                                    <h4 className="text-sm font-bold text-text-main">Reset Governance Shard</h4>
+                                    <h4 className="text-sm font-bold text-text-main">Reset Organization Settings</h4>
                                     <p className="text-[13px] text-text-muted leading-relaxed">
                                         Immediately restore all organizational policies to factory defaults. This action is irreversible.
                                     </p>
