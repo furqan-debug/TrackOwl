@@ -358,6 +358,9 @@ export function OwlLens() {
                             value={date}
                             onChange={val => setPickedDate(val >= today ? null : val)}
                             maxDate={today}
+                            // The picker sits at the right of the header; opening it to the
+                            // left keeps it under the date instead of over the arrow and refresh.
+                            panelAlign="right"
                             className="min-w-[170px] md:min-w-[180px]"
                         />
                         <button
