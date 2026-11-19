@@ -7,7 +7,8 @@ import {
     FileText,
     Users,
     Settings,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon,
+    ScanEye
 } from 'lucide-react';
 
 export type BadgeType = 'new' | 'bolt' | null;
@@ -33,6 +34,14 @@ export interface NavGroup {
 
 export const navStructure: NavGroup[] = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+    {
+        // Highlights of anything out of the ordinary. For people who manage others.
+        name: 'Owl Lens',
+        icon: ScanEye,
+        path: '/dashboard/owl-lens',
+        allowedRoles: ['Owner', 'Admin', 'Manager', 'Viewer'],
+        requiresPremium: true,
+    },
     { 
         name: 'Timesheets', 
         icon: Clock, 
