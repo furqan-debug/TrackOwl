@@ -13,7 +13,8 @@ export type HighlightKind =
     | 'low_input'
     | 'input_pattern'
     | 'app_mix'
-    | 'focus';
+    | 'focus'
+    | 'non_productive';
 
 export type HighlightSeverity = 'critical' | 'warning' | 'info' | 'positive';
 
@@ -31,6 +32,8 @@ export interface OwlLensHighlight {
     kind: HighlightKind;
     severity: HighlightSeverity;
     detail: string;
+    /** The numbers behind the card. For non_productive: share_pct, nonproductive_mins, tracked_mins, domains. */
+    evidence: Record<string, unknown>;
     baseline_source: BaselineSource;
     window_start: string | null;
     window_end: string | null;
@@ -61,7 +64,7 @@ export const owlLensService = {
         const { data, error } = await supabase
             .from('owl_lens_highlights')
             .select(`
-                id, member_id, business_date, kind, severity, detail, baseline_source,
+                id, member_id, business_date, kind, severity, detail, evidence, baseline_source,
                 window_start, window_end, status, status_reason, status_at, detected_at, updated_at,
                 member:members!owl_lens_highlights_member_id_fkey(full_name, avatar_url),
                 reviewer:members!owl_lens_highlights_status_by_fkey(full_name)
@@ -81,6 +84,7 @@ export const owlLensService = {
             kind: h.kind,
             severity: h.severity,
             detail: h.detail,
+            evidence: h.evidence || {},
             baseline_source: h.baseline_source,
             window_start: h.window_start,
             window_end: h.window_end,

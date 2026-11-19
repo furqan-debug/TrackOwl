@@ -9,6 +9,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Filter,
+    Globe,
     Info,
     RotateCcw,
     ShieldCheck,
@@ -17,7 +18,7 @@ import {
     X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { PageLayout, DatePicker, FilterSelect, RefreshButton, EmptyState, LoadingState } from '../components/ui';
+import { PageLayout, DatePicker, FilterSelect, RefreshButton, EmptyState, LoadingState, Modal } from '../components/ui';
 import {
     owlLensService,
     type HighlightKind,
@@ -38,6 +39,7 @@ const KIND_LABEL: Record<HighlightKind, string> = {
     input_pattern: 'Unusual input pattern',
     app_mix: 'Unusual app mix',
     focus: 'Strong focus',
+    non_productive: 'Non-productive sites',
 };
 
 const KIND_CATEGORY: Record<HighlightKind, string> = {
@@ -48,6 +50,7 @@ const KIND_CATEGORY: Record<HighlightKind, string> = {
     input_pattern: 'Presence',
     app_mix: 'Apps',
     focus: 'Focus',
+    non_productive: 'Apps',
 };
 
 const SEVERITY_RANK: Record<HighlightSeverity, number> = { critical: 0, warning: 1, info: 2, positive: 3 };
@@ -105,6 +108,7 @@ function sourceLink(h: OwlLensHighlight): { label: string; to: string } {
         case 'long_day':
             return { label: 'Open Timesheets', to: `/dashboard/timesheets${q}` };
         case 'app_mix':
+        case 'non_productive':
             return { label: 'Open Apps & URLs', to: `/dashboard/activity/apps${q}` };
         case 'low_input':
         case 'input_pattern':
@@ -119,6 +123,46 @@ function sourceLink(h: OwlLensHighlight): { label: string; to: string } {
 function errorText(err: unknown, fallback: string): string {
     const message = (err as { message?: unknown } | null)?.message;
     return typeof message === 'string' && message ? message : fallback;
+}
+
+// ---------------------------------------------------------------- non-productive pop-up
+
+/** "2 h 10 min" */
+function fmtMins(mins: number): string {
+    const m = Math.max(0, Math.round(mins));
+    const h = Math.floor(m / 60);
+    const r = m % 60;
+    if (h === 0) return `${r} min`;
+    return r === 0 ? `${h} h` : `${h} h ${r} min`;
+}
+
+function num(v: unknown): number {
+    return typeof v === 'number' && Number.isFinite(v) ? v : 0;
+}
+
+// Which non-productive pop-ups this browser has closed: "org:day" -> the cards
+// it showed. It opens again when someone new crosses the line that day.
+// Only a convenience: if storage is blocked the pop-up simply shows again.
+const NP_SEEN_KEY = 'owl-lens:non-productive-seen';
+
+function readNpSeen(): Record<string, string> {
+    try {
+        const raw = window.localStorage.getItem(NP_SEEN_KEY);
+        const parsed = raw ? JSON.parse(raw) : null;
+        return parsed && typeof parsed === 'object' ? parsed as Record<string, string> : {};
+    } catch {
+        return {};
+    }
+}
+
+function writeNpSeen(seen: Record<string, string>) {
+    try {
+        // Keep the most recent fortnight of days.
+        const kept = Object.fromEntries(Object.entries(seen).sort(([a], [b]) => b.localeCompare(a)).slice(0, 14));
+        window.localStorage.setItem(NP_SEEN_KEY, JSON.stringify(kept));
+    } catch {
+        // storage unavailable; nothing to do
+    }
 }
 
 type SeverityFilter = 'all' | 'critical' | 'warning' | 'info';
@@ -245,6 +289,23 @@ export function OwlLens() {
 
     const shown = view === 'open' ? open : reviewed;
 
+    // Everyone at or over 25% non-productive that day, listed together. Not
+    // narrowed by the team or severity filters; the database already limits
+    // it to the people this viewer may see.
+    const nonProductive = useMemo(() => highlights
+        .filter(h => h.kind === 'non_productive' && h.status === 'active')
+        .sort((a, b) =>
+            num(b.evidence.share_pct) - num(a.evidence.share_pct)
+            || a.member_name.localeCompare(b.member_name)), [highlights]);
+    const npKey = nonProductive.map(h => h.id).sort().join(',');
+    const npDay = `${organizationId}:${date}`;
+    const [npSeen, setNpSeen] = useState<Record<string, string>>(readNpSeen);
+    const closeNonProductive = () => {
+        const next = { ...npSeen, [npDay]: npKey };
+        setNpSeen(next);
+        writeNpSeen(next);
+    };
+
     // Quiet trial: the first 14 days only Owners and Admins see Owl Lens.
     const trialUntil = runState?.trial_until ? new Date(runState.trial_until) : null;
     const inTrial = !!trialUntil && trialUntil.getTime() > Date.now();
@@ -266,6 +327,12 @@ export function OwlLens() {
             setEndingTrial(false);
         }
     };
+    const npOpen = !loading && !loadError && !(inTrial && !isAdmin)
+        && nonProductive.length > 0 && npSeen[npDay] !== npKey;
+    const dayLabel = isToday
+        ? 'Today'
+        : new Date(`${date}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
+
     const criticalCount = open.filter(h => h.severity === 'critical').length;
     const warningCount = open.filter(h => h.severity === 'warning').length;
     const filtersActive = severityFilter !== 'all' || teamFilter !== 'all';
@@ -487,6 +554,52 @@ export function OwlLens() {
                     )}
                 </div>
             )}
+
+            <Modal
+                isOpen={npOpen}
+                onClose={closeNonProductive}
+                title="Non-productive time over 25%"
+                subtitle={`${dayLabel}: ${nonProductive.length} ${nonProductive.length === 1 ? 'person' : 'people'} spent a quarter or more of their tracked time on non-productive sites.`}
+                height="h-auto"
+                maxWidth="max-w-xl"
+                footer={
+                    <>
+                        {isAdmin && (
+                            <p className="sm:mr-auto text-[12px] text-text-muted">
+                                Change the list in Settings → Telemetry.
+                            </p>
+                        )}
+                        <ActionButton onClick={closeNonProductive}>Close</ActionButton>
+                    </>
+                }
+            >
+                <ul className="flex flex-col divide-y divide-border">
+                    {nonProductive.map(h => {
+                        // jsonb does not keep key order, so sort by minutes here.
+                        const sites = Object.entries((h.evidence.domains as Record<string, unknown>) || {})
+                            .sort(([, a], [, b]) => num(b) - num(a))
+                            .slice(0, 3)
+                            .map(([domain]) => domain);
+                        return (
+                            <li key={h.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 min-w-0">
+                                <span className="w-8 h-8 shrink-0 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-300 flex items-center justify-center">
+                                    <Globe className="w-4 h-4" aria-hidden />
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold text-text-main truncate">{h.member_name}</p>
+                                    <p className="text-[12px] text-text-muted truncate">
+                                        {fmtMins(num(h.evidence.nonproductive_mins))} of {fmtMins(num(h.evidence.tracked_mins))} tracked
+                                        {sites.length > 0 && <> · {sites.join(', ')}</>}
+                                    </p>
+                                </div>
+                                <span className="shrink-0 px-2 py-0.5 rounded-md border text-[12px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20">
+                                    {num(h.evidence.share_pct)}%
+                                </span>
+                            </li>
+                        );
+                    })}
+                </ul>
+            </Modal>
         </PageLayout>
     );
 }
