@@ -505,7 +505,7 @@ export function OwlLens() {
                         'grid gap-4 md:gap-5 items-start',
                         shown.length > 0 && 'lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]',
                     )}>
-                        <section className="bg-surface rounded-2xl border border-border-soft shadow-sm" aria-label="Signal queue">
+                        <section className="bg-surface rounded-2xl border border-border shadow-sm" aria-label="Signal queue">
                             <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 md:p-4">
                                 <div className="inline-flex items-center bg-surface-hover rounded-lg p-1" role="tablist">
                                     {(['open', 'reviewed'] as View[]).map(v => (
@@ -561,7 +561,7 @@ export function OwlLens() {
                             <section
                                 ref={inspectorRef}
                                 aria-label="Signal inspector"
-                                className="bg-surface rounded-2xl border border-border-soft shadow-sm scroll-mt-4 lg:sticky lg:top-4"
+                                className="bg-surface rounded-2xl border border-border shadow-sm scroll-mt-4 lg:sticky lg:top-4"
                             >
                                 <Inspector
                                     key={selected.id}
@@ -950,7 +950,7 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
             )}
 
             {/* Actions */}
-            <footer className="flex flex-col gap-3 pt-5 border-t border-border-soft">
+            <footer className="flex flex-col gap-3 pt-5 border-t border-border">
                 {canReview && h.status === 'active' && choosingReason ? (
                     <div className="flex flex-col gap-2.5">
                         <p className="text-[13px] font-semibold text-text-main">Why is it expected?</p>
@@ -1017,7 +1017,7 @@ function SecondaryButton({ children, icon, onClick, disabled }: {
             type="button"
             onClick={onClick}
             disabled={disabled}
-            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-surface-hover hover:bg-border-soft text-[13px] font-semibold text-text-main transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-surface-hover hover:bg-border text-[13px] font-semibold text-text-main transition-colors disabled:opacity-50"
         >
             {icon}
             {children}
