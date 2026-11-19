@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
     X, Mouse, Keyboard, Clock, Activity,
@@ -24,6 +24,13 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
     // The index, not the path. Holding the path alone meant the viewer had no
     // idea where that image sat in the block, so there was nothing to step to.
     const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+    const modalBodyRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (block) {
+            modalBodyRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+        }
+    }, [block]);
 
     useEffect(() => {
         if (!block) return;
@@ -252,7 +259,7 @@ export function BlockDetailModal({ block, onClose, targetTz }: BlockDetailModalP
                 </div>
 
                 {/* ── Body ── */}
-                <div className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto">
+                <div ref={modalBodyRef} className="p-6 space-y-6 flex-1 min-h-0 overflow-y-auto">
 
                     {/* Screenshots Filmstrip */}
                     {screenshots.length > 0 && (

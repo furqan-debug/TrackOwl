@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Menu, Sun, Moon } from 'lucide-react';
 import { Sidebar } from './Sidebar';
@@ -22,9 +22,13 @@ export function AppShell({ children }: AppShellProps) {
     const isLockedPath = location.pathname === '/dashboard/pricing' || location.pathname === '/dashboard/settings/billing';
     const isLocked = organization?.subscription_status === 'Locked' && !isLockedPath;
 
+    const mainRef = useRef<HTMLElement>(null);
+
     useEffect(() => {
         setMobileMenuOpen(false);
-    }, [location.pathname]);
+        // Ensure that navigating between pages, forms, or detail views always starts at the top
+        mainRef.current?.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+    }, [location.pathname, location.search]);
 
     useEffect(() => {
         function handleEscape(e: KeyboardEvent) {
@@ -78,7 +82,7 @@ export function AppShell({ children }: AppShellProps) {
                         <MobileNav onClose={() => setMobileMenuOpen(false)} />
                     )}
 
-                    <main className="flex-1 overflow-y-auto no-scrollbar">
+                    <main ref={mainRef} className="flex-1 overflow-y-auto no-scrollbar">
                         <div className="max-w-[1600px] mx-auto w-full min-h-full py-4 px-3 md:py-6 md:px-4 lg:px-6">
                             {children}
                         </div>

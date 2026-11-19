@@ -130,7 +130,7 @@ function AuthRedirect() {
  * the top on every path change, while still honouring in-page #anchors.
  */
 function ScrollToTop() {
-  const { pathname, hash } = useLocation();
+  const { pathname, search, hash } = useLocation();
 
   useEffect(() => {
     if (hash) {
@@ -140,8 +140,13 @@ function ScrollToTop() {
         return;
       }
     }
-    window.scrollTo(0, 0);
-  }, [pathname, hash]);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+    // In AppShell, <main> is the primary scroll container rather than window
+    const mainEl = document.querySelector('main');
+    if (mainEl) {
+      mainEl.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
+    }
+  }, [pathname, search, hash]);
 
   return null;
 }
