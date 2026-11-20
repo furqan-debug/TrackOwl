@@ -17,7 +17,7 @@ import {
     X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { DatePicker, FilterSelect, RefreshButton, EmptyState, LoadingState, Modal } from '../components/ui';
+import { PageLayout, DatePicker, FilterSelect, RefreshButton, EmptyState, LoadingState, Modal } from '../components/ui';
 import {
     owlLensService,
     type HighlightKind,
@@ -165,6 +165,7 @@ export function OwlLens() {
     const [choosingReasonFor, setChoosingReasonFor] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
     const [selectedId, setSelectedId] = useState<string | null>(null);
+    const inspectorRef = useRef<HTMLElement>(null);
 
     const requestSeqRef = useRef(0);
     const dayNavRef = useRef<HTMLDivElement>(null);
@@ -279,14 +280,6 @@ export function OwlLens() {
             .toLowerCase();
     }, [tz]);
 
-    const checkedAgo = (() => {
-        if (!runState?.last_run_at) return null;
-        const mins = Math.max(0, Math.round((Date.now() - new Date(runState.last_run_at).getTime()) / 60_000));
-        if (mins < 1) return 'Checked just now';
-        if (mins < 60) return `Checked ${mins} min ago`;
-        return `Last checked at ${fmtTime(runState.last_run_at)}`;
-    })();
-
     // Auto-select first available item if none selected or selection not in shown
     const selected = shown.find(h => h.id === selectedId) ?? shown[0] ?? null;
 
@@ -298,6 +291,9 @@ export function OwlLens() {
     const select = (id: string) => {
         setSelectedId(id);
         setChoosingReasonFor(null);
+        if (typeof window !== 'undefined' && !window.matchMedia('(min-width: 1024px)').matches) {
+            inspectorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     };
 
     const review = async (h: OwlLensHighlight, status: HighlightStatus, reason?: string) => {
@@ -333,42 +329,16 @@ export function OwlLens() {
     };
 
     return (
-        <div className="w-full h-full flex flex-col overflow-hidden bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100">
-            {/* Top Workspace Header */}
-            <header className="h-14 px-4 md:px-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between gap-4 shrink-0 z-20">
-                {/* Left: Title + Vertical Divider + Live Alert Summary */}
-                <div className="flex items-center min-w-0">
-                    <h1 className="text-base font-bold text-slate-900 dark:text-white tracking-tight shrink-0">Owl Lens</h1>
-                    <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-3 shrink-0" aria-hidden />
-                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 truncate">
-                        {open.length > 0 ? (
-                            <>
-                                {criticalCount > 0 && (
-                                    <span className="font-semibold text-rose-600 dark:text-rose-400 shrink-0">
-                                        {criticalCount} critical
-                                    </span>
-                                )}
-                                {criticalCount > 0 && warningCount > 0 && <span className="text-slate-300 dark:text-slate-700">·</span>}
-                                {warningCount > 0 && (
-                                    <span className="font-semibold text-amber-600 dark:text-amber-400 shrink-0">
-                                        {warningCount} {warningCount === 1 ? 'warning' : 'warnings'}
-                                    </span>
-                                )}
-                                {(criticalCount > 0 || warningCount > 0) && checkedAgo && <span className="text-slate-300 dark:text-slate-700">·</span>}
-                                <span className="truncate">{checkedAgo || `${open.length} active alerts`}</span>
-                            </>
-                        ) : (
-                            <span className="truncate">All clear · {checkedAgo || 'Checked just now'}</span>
-                        )}
-                    </div>
-                </div>
-
-                {/* Right: Controls */}
-                <div className="flex items-center gap-2 md:gap-3 shrink-0">
+        <PageLayout
+            maxWidth="wide"
+            title="Owl Lens"
+            description="Only what is out of the ordinary, compared with each person's own normal."
+            actions={
+                <div className="flex flex-wrap items-center gap-3">
                     {teams.length > 0 && (
-                        <div className="hidden sm:block w-36 md:w-44 h-10">
+                        <div className="w-36 md:w-44 h-10">
                             <FilterSelect
-                                icon={<Users className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />}
+                                icon={<Users className="w-3.5 h-3.5 text-text-muted" />}
                                 value={teamFilter}
                                 onChange={setTeamFilter}
                                 className="h-10"
@@ -381,7 +351,7 @@ export function OwlLens() {
                     )}
                     <div className="w-36 md:w-40 h-10">
                         <FilterSelect
-                            icon={<Filter className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />}
+                            icon={<Filter className="w-3.5 h-3.5 text-text-muted" />}
                             value={severityFilter}
                             onChange={v => setSeverityFilter(v as SeverityFilter)}
                             className="h-10"
@@ -397,12 +367,12 @@ export function OwlLens() {
 
                     <div
                         ref={dayNavRef}
-                        className="flex items-center h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden"
+                        className="flex items-center h-10 bg-surface border border-border rounded-xl shadow-xs overflow-hidden"
                     >
                         <button
                             type="button"
                             onClick={() => shiftDay(-1)}
-                            className="h-full px-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors border-r border-slate-200 dark:border-slate-800 shrink-0"
+                            className="h-full px-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors border-r border-border shrink-0"
                             title="Previous day"
                         >
                             <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2} />
@@ -413,12 +383,12 @@ export function OwlLens() {
                             maxDate={today}
                             anchorRef={dayNavRef}
                             className="h-full min-w-[150px] md:min-w-[170px]"
-                            triggerClassName="h-full px-3 py-0 border-0 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60 shadow-none rounded-none w-full"
+                            triggerClassName="h-full px-3 py-0 border-0 bg-transparent hover:bg-surface-hover shadow-none rounded-none w-full"
                         />
                         <button
                             type="button"
                             onClick={() => shiftDay(1)}
-                            className="h-full px-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-20 border-l border-slate-200 dark:border-slate-800 shrink-0"
+                            className="h-full px-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors disabled:opacity-20 border-l border-border shrink-0"
                             title="Next day"
                             disabled={isToday}
                         >
@@ -428,136 +398,148 @@ export function OwlLens() {
 
                     <RefreshButton onClick={() => load(true)} refreshing={refreshing} label="Refresh" className="h-10 w-10 rounded-xl" />
                 </div>
-            </header>
-
-            {/* Error Notification Bar */}
-            {actionError && (
-                <div className="flex items-center justify-between px-4 py-2 bg-rose-500/10 border-b border-rose-500/20 text-xs text-rose-700 dark:text-rose-400 shrink-0">
-                    <div className="flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
-                        <span>{actionError}</span>
-                    </div>
-                    <button onClick={() => setActionError(null)} aria-label="Close" className="opacity-70 hover:opacity-100">
-                        <X className="w-3.5 h-3.5" />
-                    </button>
-                </div>
-            )}
-
-            {/* Main Content Workspace: Split Pane */}
+            }
+        >
             {loading ? (
-                <div className="flex-1 flex items-center justify-center bg-white dark:bg-slate-950">
+                <div className="min-h-[50vh] flex items-center justify-center">
                     <LoadingState message="Looking for anything out of the ordinary..." />
                 </div>
             ) : loadError ? (
-                <div className="flex-1 flex items-center justify-center p-6 bg-white dark:bg-slate-950">
-                    <EmptyState
-                        icon={<AlertTriangle className="w-8 h-8 opacity-60" aria-hidden />}
-                        title="Owl Lens could not load"
-                        description={loadError}
-                        action={
-                            <button
-                                onClick={() => load()}
-                                className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors"
-                            >
-                                Try again
-                            </button>
-                        }
-                    />
-                </div>
+                <EmptyState
+                    icon={<AlertTriangle className="w-8 h-8 opacity-60" aria-hidden />}
+                    title="Owl Lens could not load"
+                    description={loadError}
+                    action={
+                        <button
+                            onClick={() => load()}
+                            className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-surface-hover text-sm font-semibold text-text-main"
+                        >
+                            Try again
+                        </button>
+                    }
+                />
             ) : (
-                <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
-                    {/* Left Pane: Signal Queue (380px) */}
-                    <aside className="w-full md:w-[380px] lg:w-[400px] shrink-0 bg-slate-50 dark:bg-slate-900/60 border-r border-slate-200 dark:border-slate-800 flex flex-col h-full overflow-hidden">
-                        {/* Underline Tabs */}
-                        <div className="flex items-center border-b border-slate-200 dark:border-slate-800 px-4 gap-6 bg-slate-50 dark:bg-slate-900/60 shrink-0">
-                            <button
-                                type="button"
-                                onClick={() => setView('open')}
-                                className={clsx(
-                                    'relative py-3 text-xs font-semibold transition-colors flex items-center gap-2 border-b-2 -mb-px',
-                                    view === 'open'
-                                        ? 'text-slate-900 dark:text-white border-[#0B2559] dark:border-accent'
-                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-transparent'
-                                )}
-                            >
-                                <span>Needs Attention</span>
-                                <span className={clsx(
-                                    'px-1.5 py-0.5 rounded-full text-[10px] tabular-nums font-semibold',
-                                    view === 'open'
-                                        ? 'bg-[#0B2559]/10 text-[#0B2559] dark:bg-accent/15 dark:text-accent'
-                                        : 'bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                                )}>
-                                    {open.length}
-                                </span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setView('reviewed')}
-                                className={clsx(
-                                    'relative py-3 text-xs font-semibold transition-colors flex items-center gap-2 border-b-2 -mb-px',
-                                    view === 'reviewed'
-                                        ? 'text-slate-900 dark:text-white border-[#0B2559] dark:border-accent'
-                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border-transparent'
-                                )}
-                            >
-                                <span>Reviewed</span>
-                                <span className={clsx(
-                                    'px-1.5 py-0.5 rounded-full text-[10px] tabular-nums font-semibold',
-                                    view === 'reviewed'
-                                        ? 'bg-[#0B2559]/10 text-[#0B2559] dark:bg-accent/15 dark:text-accent'
-                                        : 'bg-slate-200/70 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-                                )}>
-                                    {reviewed.length}
-                                </span>
+                <div className="flex flex-col gap-4 pb-16">
+                    {actionError && (
+                        <div className="flex items-start gap-2 px-4 py-3 rounded-xl border border-rose-500/20 bg-rose-500/10 text-sm text-rose-700 dark:text-rose-400">
+                            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden />
+                            <span className="flex-1">{actionError}</span>
+                            <button onClick={() => setActionError(null)} aria-label="Close" className="shrink-0 opacity-70 hover:opacity-100">
+                                <X className="w-4 h-4" />
                             </button>
                         </div>
+                    )}
 
-                        {/* Alert Rows List */}
-                        {shown.length === 0 ? (
-                            <div className="flex-1 flex items-center justify-center p-6 text-center">
-                                <CalmState
-                                    view={view}
-                                    isToday={isToday}
-                                    filtersActive={filtersActive}
-                                    neverChecked={!runState?.last_run_at && highlights.length === 0}
-                                />
+                    {/* Split Pane: Signal Queue on Left, Case Inspector on Right */}
+                    <div className={clsx(
+                        'grid gap-4 md:gap-5 items-start',
+                        shown.length > 0 && 'lg:grid-cols-[380px_minmax(0,1fr)]'
+                    )}>
+                        {/* Left Rail: Signal Queue */}
+                        <section className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col" aria-label="Signal queue">
+                            <div className="flex items-center justify-between border-b border-border px-4 h-11 bg-surface/50 shrink-0">
+                                <div className="flex items-center gap-4 h-full">
+                                    <button
+                                        type="button"
+                                        onClick={() => setView('open')}
+                                        className={clsx(
+                                            'h-full flex items-center gap-1.5 text-xs font-semibold transition-colors border-b-2 -mb-px',
+                                            view === 'open'
+                                                ? 'text-text-main border-[#0B2559] dark:border-accent'
+                                                : 'text-text-muted hover:text-text-main border-transparent'
+                                        )}
+                                    >
+                                        <span>Needs Attention</span>
+                                        <span className={clsx(
+                                            'px-1.5 py-0.5 rounded-full text-[10px] tabular-nums font-semibold',
+                                            view === 'open'
+                                                ? 'bg-[#0B2559]/10 text-[#0B2559] dark:bg-accent/15 dark:text-accent'
+                                                : 'bg-surface-hover text-text-muted'
+                                        )}>
+                                            {open.length}
+                                        </span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setView('reviewed')}
+                                        className={clsx(
+                                            'h-full flex items-center gap-1.5 text-xs font-semibold transition-colors border-b-2 -mb-px',
+                                            view === 'reviewed'
+                                                ? 'text-text-main border-[#0B2559] dark:border-accent'
+                                                : 'text-text-muted hover:text-text-main border-transparent'
+                                        )}
+                                    >
+                                        <span>Reviewed</span>
+                                        <span className={clsx(
+                                            'px-1.5 py-0.5 rounded-full text-[10px] tabular-nums font-semibold',
+                                            view === 'reviewed'
+                                                ? 'bg-[#0B2559]/10 text-[#0B2559] dark:bg-accent/15 dark:text-accent'
+                                                : 'bg-surface-hover text-text-muted'
+                                        )}>
+                                            {reviewed.length}
+                                        </span>
+                                    </button>
+                                </div>
+
+                                {view === 'open' && (criticalCount > 0 || warningCount > 0) && (
+                                    <div className="text-[11px] text-text-muted tabular-nums shrink-0 pl-2">
+                                        {criticalCount > 0 && (
+                                            <span className="font-semibold text-rose-600 dark:text-rose-400">{criticalCount} critical</span>
+                                        )}
+                                        {criticalCount > 0 && warningCount > 0 && <span className="mx-1">·</span>}
+                                        {warningCount > 0 && (
+                                            <span className="font-semibold text-amber-600 dark:text-amber-400">{warningCount} {warningCount === 1 ? 'warning' : 'warnings'}</span>
+                                        )}
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <ul className="flex-1 overflow-y-auto divide-y divide-slate-200/80 dark:divide-slate-800/80 no-scrollbar">
-                                {shown.map(h => (
-                                    <QueueItem
-                                        key={h.id}
-                                        h={h}
-                                        selected={selected?.id === h.id}
-                                        stat={evidence.get(h.id)?.stat ?? ''}
-                                        fmtTime={fmtTime}
-                                        onSelect={() => select(h.id)}
+
+                            {shown.length === 0 ? (
+                                <div className="p-8 text-center">
+                                    <CalmState
+                                        view={view}
+                                        isToday={isToday}
+                                        filtersActive={filtersActive}
+                                        neverChecked={!runState?.last_run_at && highlights.length === 0}
                                     />
-                                ))}
-                            </ul>
-                        )}
-                    </aside>
+                                </div>
+                            ) : (
+                                <ul className="divide-y divide-border/60 max-h-[640px] overflow-y-auto no-scrollbar">
+                                    {shown.map(h => (
+                                        <QueueItem
+                                            key={h.id}
+                                            h={h}
+                                            selected={selected?.id === h.id}
+                                            stat={evidence.get(h.id)?.stat ?? ''}
+                                            fmtTime={fmtTime}
+                                            onSelect={() => select(h.id)}
+                                        />
+                                    ))}
+                                </ul>
+                            )}
+                        </section>
 
-                    {/* Right Pane: Case Inspector */}
-                    <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-white dark:bg-slate-950">
-                        {selected ? (
-                            <Inspector
-                                key={selected.id}
-                                h={selected}
-                                evidence={evidence.get(selected.id) ?? evidenceFor(selected, isToday, fmtTime)}
-                                canReview={canReview}
-                                busy={busyId === selected.id}
-                                choosingReason={choosingReasonFor === selected.id}
-                                fmtTime={fmtTime}
-                                onReview={(status, reason) => review(selected, status, reason)}
-                                onChooseReason={show => setChoosingReasonFor(show ? selected.id : null)}
-                            />
-                        ) : (
-                            <div className="flex-1 flex items-center justify-center p-8 text-center text-slate-400 dark:text-slate-600">
-                                <p className="text-sm">Select an alert from the queue to inspect details</p>
-                            </div>
+                        {/* Right Rail: Case Inspector */}
+                        {selected && (
+                            <section
+                                ref={inspectorRef}
+                                aria-label="Signal inspector"
+                                className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden scroll-mt-4 lg:sticky lg:top-4"
+                            >
+                                <Inspector
+                                    key={selected.id}
+                                    h={selected}
+                                    evidence={evidence.get(selected.id) ?? evidenceFor(selected, isToday, fmtTime)}
+                                    canReview={canReview}
+                                    busy={busyId === selected.id}
+                                    choosingReason={choosingReasonFor === selected.id}
+                                    fmtTime={fmtTime}
+                                    onReview={(status, reason) => review(selected, status, reason)}
+                                    onChooseReason={show => setChoosingReasonFor(show ? selected.id : null)}
+                                />
+                            </section>
                         )}
-                    </main>
+                    </div>
                 </div>
             )}
 
@@ -572,21 +554,21 @@ export function OwlLens() {
                 footer={
                     <>
                         {isAdmin && (
-                            <p className="sm:mr-auto text-[12px] text-slate-500 dark:text-slate-400">
+                            <p className="sm:mr-auto text-[12px] text-text-muted">
                                 Change the list in Settings → Telemetry.
                             </p>
                         )}
                         <button
                             type="button"
                             onClick={closeNonProductive}
-                            className="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors"
+                            className="px-3.5 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface-hover text-xs font-semibold text-text-main transition-colors"
                         >
                             Close
                         </button>
                     </>
                 }
             >
-                <ul className="flex flex-col divide-y divide-slate-200 dark:divide-slate-800">
+                <ul className="flex flex-col divide-y divide-border">
                     {nonProductive.map(h => {
                         const sites = Object.entries((h.evidence.domains as Record<string, unknown>) || {})
                             .sort(([, a], [, b]) => num(b) - num(a))
@@ -594,17 +576,17 @@ export function OwlLens() {
                             .map(([domain]) => domain);
                         return (
                             <li key={h.id} className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0 min-w-0">
-                                <span className="w-8 h-8 shrink-0 rounded-lg bg-amber-500/10 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                                <span className="w-8 h-8 shrink-0 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
                                     <Globe className="w-4 h-4" aria-hidden />
                                 </span>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{h.member_name}</p>
-                                    <p className="text-[12px] text-slate-500 dark:text-slate-400 truncate">
+                                    <p className="text-sm font-semibold text-text-main truncate">{h.member_name}</p>
+                                    <p className="text-[12px] text-text-muted truncate">
                                         {fmtMins(num(h.evidence.nonproductive_mins))} of {fmtMins(num(h.evidence.tracked_mins))} tracked
                                         {sites.length > 0 && <> · {sites.join(', ')}</>}
                                     </p>
                                 </div>
-                                <span className="shrink-0 px-2 py-0.5 rounded-md border text-[12px] font-bold bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/20">
+                                <span className="shrink-0 px-2 py-0.5 rounded-md border text-[12px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20">
                                     {num(h.evidence.share_pct)}%
                                 </span>
                             </li>
@@ -612,7 +594,7 @@ export function OwlLens() {
                     })}
                 </ul>
             </Modal>
-        </div>
+        </PageLayout>
     );
 }
 
@@ -906,8 +888,8 @@ function QueueItem({ h, selected, stat, fmtTime, onSelect }: {
                 className={clsx(
                     'w-full text-left p-3.5 transition-colors block border-l-[3px]',
                     selected
-                        ? 'bg-white dark:bg-slate-800/90 border-[#0B2559] dark:border-accent shadow-xs'
-                        : 'bg-transparent hover:bg-white/70 dark:hover:bg-slate-800/40 border-transparent'
+                        ? 'bg-surface dark:bg-surface-hover border-[#0B2559] dark:border-accent shadow-xs'
+                        : 'bg-transparent hover:bg-surface-hover/60 border-transparent'
                 )}
             >
                 {/* Row 1: Severity dot, Alert Title, Timestamp */}
@@ -915,25 +897,25 @@ function QueueItem({ h, selected, stat, fmtTime, onSelect }: {
                     <div className="flex items-center gap-2 min-w-0">
                         <span className={clsx('w-2 h-2 rounded-full shrink-0', SEVERITY_DOT[h.severity])} aria-hidden />
                         <span className={clsx(
-                            'text-xs truncate tracking-tight text-slate-900 dark:text-slate-100',
+                            'text-xs truncate tracking-tight text-text-main',
                             selected ? 'font-bold' : 'font-semibold'
                         )}>
                             {KIND_LABEL[h.kind]}
                         </span>
                     </div>
-                    <span className="text-[11px] text-slate-500 dark:text-slate-400 tabular-nums shrink-0">
+                    <span className="text-[11px] text-text-muted tabular-nums shrink-0">
                         {fmtTime(h.detected_at)}
                     </span>
                 </div>
 
                 {/* Row 2: Member Name */}
-                <div className="mt-1 pl-4 text-xs text-slate-700 dark:text-slate-300 font-medium truncate">
+                <div className="mt-1 pl-4 text-xs text-text-muted font-medium truncate">
                     {h.member_name}
                 </div>
 
                 {/* Row 3: Relevant Metric & Category */}
-                <div className="mt-0.5 pl-4 text-[11px] text-slate-500 dark:text-slate-400 truncate flex items-center gap-1.5">
-                    {stat && <span className="font-medium text-slate-700 dark:text-slate-200 tabular-nums">{stat}</span>}
+                <div className="mt-0.5 pl-4 text-[11px] text-text-muted/80 truncate flex items-center gap-1.5">
+                    {stat && <span className="font-medium text-text-main/90 tabular-nums">{stat}</span>}
                     {stat && <span>·</span>}
                     <span>{KIND_CATEGORY[h.kind]}</span>
                 </div>
@@ -981,56 +963,63 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
         ? 'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/60'
         : h.severity === 'warning'
             ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60'
-            : 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700';
+            : 'bg-surface-hover text-text-muted border-border';
 
     const devBarStyle = h.severity === 'critical'
         ? 'bg-rose-600'
         : h.severity === 'warning'
             ? 'bg-amber-500'
-            : 'bg-slate-700 dark:bg-slate-400';
+            : 'bg-[#0B2559] dark:bg-accent';
 
     const devTextStyle = h.severity === 'critical'
         ? 'text-rose-600 dark:text-rose-400 font-bold'
         : h.severity === 'warning'
             ? 'text-amber-600 dark:text-amber-400 font-bold'
-            : 'text-slate-800 dark:text-slate-200 font-bold';
+            : 'text-text-main font-bold';
 
     return (
-        <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-slate-950">
+        <div className="flex flex-col bg-surface">
             {/* Sticky Case Header */}
-            <header className="sticky top-0 z-10 bg-white dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 shrink-0">
-                {/* Left Meta & Identity */}
-                <div className="min-w-0">
-                    <div className="flex items-center gap-2 text-xs mb-1">
-                        <span className={clsx('inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-[11px] border', SEVERITY_PILL[h.severity])}>
+            <header className="sticky top-0 z-10 bg-surface border-b border-border px-6 py-4 flex items-start justify-between gap-4 shrink-0">
+                {/* Left: Title, Severity & Context */}
+                <div className="min-w-0 space-y-1.5">
+                    {/* Row 1: Severity pill + Alert title */}
+                    <div className="flex items-center gap-2.5 flex-wrap min-w-0">
+                        <span className={clsx('inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-[11px] border shrink-0', SEVERITY_PILL[h.severity])}>
                             <span className={clsx('w-1.5 h-1.5 rounded-full', SEVERITY_DOT[h.severity])} aria-hidden />
                             {SEVERITY_LABEL[h.severity]}
                         </span>
-                        <span className="text-slate-500 dark:text-slate-400 font-medium">{KIND_CATEGORY[h.kind]}</span>
-                        <span className="text-slate-300 dark:text-slate-700">·</span>
-                        <span className="text-slate-500 dark:text-slate-400 tabular-nums">
-                            Spotted {spotted}{updated && updated !== spotted ? `, updated ${updated}` : ''}
-                        </span>
+                        <h2 className="text-base md:text-lg font-bold text-text-main tracking-tight">
+                            {KIND_LABEL[h.kind]}
+                        </h2>
                     </div>
 
-                    <h2 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white tracking-tight leading-tight">
-                        {KIND_LABEL[h.kind]}
-                    </h2>
-
-                    <div className="flex items-center gap-2 mt-1.5">
-                        <span className="w-5 h-5 rounded-full bg-[#0B2559]/10 dark:bg-accent/15 text-[#0B2559] dark:text-accent flex items-center justify-center text-[10px] font-bold">
-                            {initials(h.member_name)}
-                        </span>
-                        <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">{h.member_name}</span>
-                        {email && <span className="text-xs text-slate-500 dark:text-slate-400">({email})</span>}
+                    {/* Row 2: Member avatar & name · Category · Timestamp */}
+                    <div className="flex items-center gap-2 text-xs text-text-muted flex-wrap">
+                        <div className="flex items-center gap-1.5 text-text-main font-medium" title={email ?? undefined}>
+                            <span className="w-4 h-4 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[9px] font-bold shrink-0">
+                                {initials(h.member_name)}
+                            </span>
+                            <span className="truncate">{h.member_name}</span>
+                        </div>
+                        <span className="text-border">·</span>
+                        <span className="font-medium">{KIND_CATEGORY[h.kind]}</span>
+                        <span className="text-border">·</span>
+                        <span className="tabular-nums">Spotted {spotted}</span>
+                        {updated && updated !== spotted && (
+                            <>
+                                <span className="text-border">·</span>
+                                <span className="tabular-nums">Updated {updated}</span>
+                            </>
+                        )}
                     </div>
                 </div>
 
                 {/* Right Actions */}
-                <div className="flex items-center gap-2.5 shrink-0">
+                <div className="flex items-center gap-2 shrink-0 pt-0.5">
                     <Link
                         to={link.to}
-                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors shadow-xs"
+                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-surface hover:bg-surface-hover text-xs font-semibold text-text-main transition-colors shadow-xs"
                     >
                         {link.label}
                         <ArrowUpRight className="w-3.5 h-3.5" aria-hidden />
@@ -1054,7 +1043,7 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
                                     type="button"
                                     disabled={busy}
                                     onClick={() => setOverflowOpen(prev => !prev)}
-                                    className="w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                                    className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-text-main hover:bg-surface-hover transition-colors"
                                     title="More actions"
                                     aria-expanded={overflowOpen}
                                 >
@@ -1062,18 +1051,18 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
                                 </button>
 
                                 {overflowOpen && (
-                                    <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
+                                    <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-border bg-surface shadow-xl py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
                                         <button
                                             type="button"
                                             onClick={() => { setOverflowOpen(false); onChooseReason(true); }}
-                                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+                                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-text-main hover:bg-surface-hover transition-colors"
                                         >
                                             Mark as expected...
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => { setOverflowOpen(false); onReview('dismissed'); }}
-                                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
                                         >
                                             Dismiss alert
                                         </button>
@@ -1088,7 +1077,7 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
                             type="button"
                             disabled={busy}
                             onClick={() => onReview('active')}
-                            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-800 dark:text-slate-200 transition-colors disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-surface hover:bg-surface-hover text-xs font-semibold text-text-main transition-colors disabled:opacity-50"
                         >
                             <RotateCcw className="w-3.5 h-3.5" />
                             Put back
@@ -1099,9 +1088,9 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
 
             {/* Reason selection overlay / prompt */}
             {choosingReason && canReview && h.status === 'active' && (
-                <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 px-6 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div className="border-b border-border bg-surface-hover px-6 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">Mark as expected:</span>
+                        <span className="text-xs font-semibold text-text-main">Mark as expected:</span>
                         <div className="flex items-center gap-1.5">
                             {EXPECTED_REASONS.map(r => (
                                 <button
@@ -1109,7 +1098,7 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
                                     type="button"
                                     disabled={busy}
                                     onClick={() => onReview('expected', r)}
-                                    className="px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-medium text-slate-800 dark:text-slate-200 transition-colors shadow-xs"
+                                    className="px-2.5 py-1 rounded-md bg-surface border border-border hover:bg-surface-hover text-xs font-medium text-text-main transition-colors shadow-xs"
                                 >
                                     {r}
                                 </button>
@@ -1119,7 +1108,7 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
                     <button
                         type="button"
                         onClick={() => onChooseReason(false)}
-                        className="text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white"
+                        className="text-xs text-text-muted hover:text-text-main"
                     >
                         Cancel
                     </button>
@@ -1127,24 +1116,24 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
             )}
 
             {/* Inspector Body */}
-            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 max-w-4xl no-scrollbar">
+            <div className="p-6 md:p-8 space-y-6">
                 {/* 1. KPI Strip */}
                 {evidence.tiles.length > 0 && (
                     <section className="space-y-2">
-                        <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Key Metrics</h3>
+                        <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Key Metrics</h3>
                         <div className={clsx(
-                            'rounded-xl border border-slate-200 dark:border-slate-800 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900/60 shadow-xs',
+                            'rounded-xl border border-border divide-y sm:divide-y-0 sm:divide-x divide-border bg-surface shadow-xs',
                             evidence.tiles.length === 3 && 'grid grid-cols-1 sm:grid-cols-3',
                             evidence.tiles.length === 2 && 'grid grid-cols-1 sm:grid-cols-2',
                             evidence.tiles.length === 1 && 'grid grid-cols-1',
                         )}>
                             {evidence.tiles.map(t => (
                                 <div key={t.label} className="p-4 flex flex-col justify-between">
-                                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{t.label}</p>
-                                    <p className="text-2xl font-bold text-slate-900 dark:text-white tabular-nums mt-1 truncate" title={t.value}>
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{t.label}</p>
+                                    <p className="text-2xl font-bold text-text-main tabular-nums mt-1 truncate" title={t.value}>
                                         {t.value}
                                     </p>
-                                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 truncate">{t.caption}</p>
+                                    <p className="text-[11px] text-text-muted mt-1 truncate">{t.caption}</p>
                                 </div>
                             ))}
                         </div>
@@ -1153,11 +1142,11 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
 
                 {/* 2. Baseline Deviation */}
                 <section className="space-y-2">
-                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Baseline Deviation</h3>
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Baseline Deviation</h3>
                     {evidence.deviation ? (
-                        <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 shadow-xs space-y-3">
+                        <div className="p-4 rounded-xl border border-border bg-surface shadow-xs space-y-3">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold text-slate-900 dark:text-white">{evidence.deviation.label}</span>
+                                <span className="text-xs font-semibold text-text-main">{evidence.deviation.label}</span>
                                 <span className={clsx('inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold tabular-nums', devBadgeStyle)}>
                                     {evidence.deviation.varianceText}
                                 </span>
@@ -1167,14 +1156,14 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
                             <div className="space-y-2.5 pt-1">
                                 <div>
                                     <div className="flex justify-between text-[11px] mb-1">
-                                        <span className="text-slate-600 dark:text-slate-400 font-medium">{evidence.deviation.baselineLabel}</span>
-                                        <span className="font-semibold text-slate-700 dark:text-slate-300 tabular-nums">
+                                        <span className="text-text-muted font-medium">{evidence.deviation.baselineLabel}</span>
+                                        <span className="font-semibold text-text-main tabular-nums">
                                             {evidence.deviation.baselineValue} {evidence.deviation.unit}
                                         </span>
                                     </div>
-                                    <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                    <div className="h-2 w-full rounded-full bg-surface-hover overflow-hidden">
                                         <div
-                                            className="h-full bg-slate-300 dark:bg-slate-600 rounded-full"
+                                            className="h-full bg-border rounded-full"
                                             style={{
                                                 width: `${Math.min(100, Math.round((evidence.deviation.baselineValue / Math.max(evidence.deviation.baselineValue, evidence.deviation.observedValue)) * 100))}%`
                                             }}
@@ -1184,12 +1173,12 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
 
                                 <div>
                                     <div className="flex justify-between text-[11px] mb-1">
-                                        <span className="text-slate-700 dark:text-slate-200 font-medium">{evidence.deviation.observedLabel}</span>
+                                        <span className="text-text-muted font-medium">{evidence.deviation.observedLabel}</span>
                                         <span className={clsx('tabular-nums', devTextStyle)}>
                                             {evidence.deviation.observedValue} {evidence.deviation.unit}
                                         </span>
                                     </div>
-                                    <div className="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                    <div className="h-2.5 w-full rounded-full bg-surface-hover overflow-hidden">
                                         <div
                                             className={clsx('h-full rounded-full transition-all duration-500', devBarStyle)}
                                             style={{
@@ -1201,7 +1190,7 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
                             </div>
                         </div>
                     ) : (
-                        <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 p-4 text-xs text-slate-500 dark:text-slate-400">
+                        <div className="rounded-xl border border-border bg-surface/50 p-4 text-xs text-text-muted">
                             Baseline comparison unavailable for this rule-based signal.
                         </div>
                     )}
@@ -1209,9 +1198,9 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
 
                 {/* 3. Signal Analysis */}
                 <section className="space-y-2">
-                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Signal Analysis</h3>
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Signal Analysis</h3>
                     <div className="border-l-2 border-[#0B2559] dark:border-accent pl-4 py-1">
-                        <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                        <p className="text-sm text-text-main leading-relaxed">
                             {evidence.why}
                         </p>
                     </div>
@@ -1219,29 +1208,29 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
 
                 {/* 4. Session Context */}
                 <section className="space-y-2">
-                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Session Context</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs">
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Session Context</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 pt-3 border-t border-border text-xs">
                         <div>
-                            <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Application</span>
-                            <span className="text-slate-800 dark:text-slate-200 font-semibold mt-0.5 block truncate">
+                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Application</span>
+                            <span className="text-text-main font-semibold mt-0.5 block truncate">
                                 {evidence.app || 'System / All Applications'}
                             </span>
                         </div>
                         <div>
-                            <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Session Window</span>
-                            <span className="text-slate-800 dark:text-slate-200 font-semibold mt-0.5 block truncate">
+                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Session Window</span>
+                            <span className="text-text-main font-semibold mt-0.5 block truncate">
                                 {evidence.range || 'Full business day'}
                             </span>
                         </div>
                         <div>
-                            <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Detection Basis</span>
-                            <span className="text-slate-800 dark:text-slate-200 font-semibold mt-0.5 block truncate">
+                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Detection Basis</span>
+                            <span className="text-text-main font-semibold mt-0.5 block truncate">
                                 {KIND_CATEGORY[h.kind]} · {KIND_LABEL[h.kind]}
                             </span>
                         </div>
                         <div>
-                            <span className="text-slate-500 dark:text-slate-400 block text-[10px] font-bold uppercase tracking-wider">Member Baseline</span>
-                            <span className="text-slate-800 dark:text-slate-200 font-semibold mt-0.5 block truncate">
+                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Member Baseline</span>
+                            <span className="text-text-main font-semibold mt-0.5 block truncate">
                                 {BASELINE_LABEL[h.baseline_source]}
                             </span>
                         </div>
@@ -1250,8 +1239,8 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
 
                 {/* Status info if reviewed */}
                 {h.status !== 'active' && (
-                    <div className="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400">
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">{STATUS_LABEL[h.status]}</span>
+                    <div className="p-3 rounded-lg bg-surface-hover border border-border text-xs text-text-muted">
+                        <span className="font-semibold text-text-main">{STATUS_LABEL[h.status]}</span>
                         {h.status === 'expected' && h.status_reason ? ` (${h.status_reason})` : ''}
                         {h.status_by_name ? ` by ${h.status_by_name}` : ''}
                         {h.status_at ? ` at ${fmtTime(h.status_at)}` : ''}.
@@ -1273,7 +1262,7 @@ function CalmState({ view, isToday, filtersActive, neverChecked }: {
     if (neverChecked) {
         return (
             <EmptyState
-                icon={<Sparkles className="w-8 h-8 opacity-60 text-slate-400 dark:text-slate-500" aria-hidden />}
+                icon={<Sparkles className="w-8 h-8 opacity-60 text-text-muted" aria-hidden />}
                 title="Owl Lens has not checked yet"
                 description="The first check runs within 10 minutes of Owl Lens being switched on. Highlights will appear here after that."
             />
@@ -1282,7 +1271,7 @@ function CalmState({ view, isToday, filtersActive, neverChecked }: {
     if (view === 'reviewed') {
         return (
             <EmptyState
-                icon={<Check className="w-8 h-8 opacity-60 text-slate-400 dark:text-slate-500" aria-hidden />}
+                icon={<Check className="w-8 h-8 opacity-60 text-text-muted" aria-hidden />}
                 title="Nothing reviewed yet"
                 description="Highlights you acknowledge, dismiss or mark as expected will be listed here."
             />
@@ -1291,7 +1280,7 @@ function CalmState({ view, isToday, filtersActive, neverChecked }: {
     if (filtersActive) {
         return (
             <EmptyState
-                icon={<Filter className="w-8 h-8 opacity-60 text-slate-400 dark:text-slate-500" aria-hidden />}
+                icon={<Filter className="w-8 h-8 opacity-60 text-text-muted" aria-hidden />}
                 title="Nothing matches these filters"
                 description="Try a different team or severity to see the rest of the day."
             />
