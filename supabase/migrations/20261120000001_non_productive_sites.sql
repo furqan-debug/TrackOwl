@@ -197,16 +197,68 @@ blk AS (
 ),
 -- The recorded site for each minute of each block, cut down to a bare host:
 -- "WWW.YouTube.com:443/watch" -> "www.youtube.com"
+-- Falls back to inferring the site from window_title when domain was not captured
 smp AS (
   SELECT k.id AS block_id, k.user_id,
          date_trunc('minute', a.recorded_at) AS minute,
-         split_part(split_part(rtrim(lower(trim(a.domain)), '.'), '/', 1), ':', 1) AS host
+         CASE
+           WHEN coalesce(trim(a.domain), '') <> ''
+             THEN split_part(split_part(rtrim(lower(trim(a.domain)), '.'), '/', 1), ':', 1)
+           WHEN a.window_title ILIKE '%music.youtube.com%' OR a.window_title ILIKE '%youtube music%'
+             THEN 'music.youtube.com'
+           WHEN a.window_title ILIKE '%youtube%'
+             THEN 'youtube.com'
+           WHEN a.window_title ILIKE '%netflix%'
+             THEN 'netflix.com'
+           WHEN a.window_title ILIKE '%facebook%'
+             THEN 'facebook.com'
+           WHEN a.window_title ILIKE '%instagram%'
+             THEN 'instagram.com'
+           WHEN a.window_title ILIKE '%tiktok%'
+             THEN 'tiktok.com'
+           WHEN a.window_title ILIKE '%reddit%'
+             THEN 'reddit.com'
+           WHEN a.window_title ILIKE '%twitter%' OR a.window_title ILIKE '% / x%' OR a.window_title ILIKE '% - x'
+             THEN 'x.com'
+           WHEN a.window_title ILIKE '%twitch%'
+             THEN 'twitch.tv'
+           WHEN a.window_title ILIKE '%spotify%'
+             THEN 'spotify.com'
+           WHEN a.window_title ILIKE '%soundcloud%'
+             THEN 'soundcloud.com'
+           WHEN a.window_title ILIKE '%discord%'
+             THEN 'discord.com'
+           WHEN a.window_title ILIKE '%pinterest%'
+             THEN 'pinterest.com'
+           WHEN a.window_title ILIKE '%disney+%' OR a.window_title ILIKE '%disney plus%'
+             THEN 'disneyplus.com'
+           WHEN a.window_title ILIKE '%hulu%'
+             THEN 'hulu.com'
+           WHEN a.window_title ILIKE '%prime video%' OR a.window_title ILIKE '%primevideo%'
+             THEN 'primevideo.com'
+           WHEN a.window_title ILIKE '%steam%'
+             THEN 'steampowered.com'
+           WHEN a.window_title ILIKE '%roblox%'
+             THEN 'roblox.com'
+           WHEN a.window_title ILIKE '%crunchyroll%'
+             THEN 'crunchyroll.com'
+           WHEN a.window_title ILIKE '%kick.com%'
+             THEN 'kick.com'
+           WHEN a.window_title ILIKE '%9gag%'
+             THEN '9gag.com'
+           WHEN a.window_title ILIKE '%dailymotion%'
+             THEN 'dailymotion.com'
+           WHEN a.window_title ILIKE '%peacock%'
+             THEN 'peacocktv.com'
+           WHEN a.window_title ILIKE '%chess.com%' OR a.window_title ILIKE '%chess%'
+             THEN 'chess.com'
+           ELSE ''
+         END AS host
   FROM blk k
   JOIN public.activity_samples a
     ON a.session_id = k.session_id
    AND a.recorded_at >= k.block_start
    AND a.recorded_at <  k.block_end
-  WHERE coalesce(trim(a.domain), '') <> ''
 ),
 src AS (
   SELECT NULL::uuid AS mid, d.domain, true AS np, 3 AS prio

@@ -438,6 +438,82 @@ fn extract_domain_from_title(title: &str) -> String {
             break;
         }
     }
+
+    let lower = t.to_lowercase();
+    // Known video, streaming, music, social, gaming and entertainment sites
+    if lower.contains("youtube") {
+        if lower.contains("music.youtube") || lower.contains("youtube music") {
+            return "music.youtube.com".to_string();
+        }
+        return "youtube.com".to_string();
+    }
+    if lower.contains("netflix") {
+        return "netflix.com".to_string();
+    }
+    if lower.contains("facebook") {
+        return "facebook.com".to_string();
+    }
+    if lower.contains("instagram") {
+        return "instagram.com".to_string();
+    }
+    if lower.contains("tiktok") {
+        return "tiktok.com".to_string();
+    }
+    if lower.contains("reddit") {
+        return "reddit.com".to_string();
+    }
+    if lower.contains("twitter") || lower.ends_with(" / x") || lower.contains(" - x") {
+        return "x.com".to_string();
+    }
+    if lower.contains("twitch") {
+        return "twitch.tv".to_string();
+    }
+    if lower.contains("spotify") {
+        return "spotify.com".to_string();
+    }
+    if lower.contains("soundcloud") {
+        return "soundcloud.com".to_string();
+    }
+    if lower.contains("discord") {
+        return "discord.com".to_string();
+    }
+    if lower.contains("pinterest") {
+        return "pinterest.com".to_string();
+    }
+    if lower.contains("disney+") || lower.contains("disney plus") {
+        return "disneyplus.com".to_string();
+    }
+    if lower.contains("hulu") {
+        return "hulu.com".to_string();
+    }
+    if lower.contains("prime video") || lower.contains("primevideo") {
+        return "primevideo.com".to_string();
+    }
+    if lower.contains("steampowered") || lower.contains("steam community") || lower.contains("steam") {
+        return "steampowered.com".to_string();
+    }
+    if lower.contains("roblox") {
+        return "roblox.com".to_string();
+    }
+    if lower.contains("crunchyroll") {
+        return "crunchyroll.com".to_string();
+    }
+    if lower.contains("kick.com") {
+        return "kick.com".to_string();
+    }
+    if lower.contains("9gag") {
+        return "9gag.com".to_string();
+    }
+    if lower.contains("dailymotion") {
+        return "dailymotion.com".to_string();
+    }
+    if lower.contains("peacock") {
+        return "peacocktv.com".to_string();
+    }
+    if lower.contains("chess.com") || lower.contains("chess") {
+        return "chess.com".to_string();
+    }
+
     regex_domain(&t).unwrap_or_default()
 }
 
