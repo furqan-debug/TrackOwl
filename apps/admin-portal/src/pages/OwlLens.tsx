@@ -723,11 +723,14 @@ function evidenceFor(h: OwlLensHighlight, isToday: boolean, fmtTime: (iso: strin
             } else {
                 const stop = num(e.idle_stop_mins);
                 const stretch = num(e.minutes);
-                tile(has('minutes'), 'Idle Stretch', mins(stretch), 'Uninterrupted span');
+                const stretches = num(e.stretches);
+                tile(has('minutes'), 'Idle Stretch', mins(stretch), stretches > 1 ? `Across ${stretches} stretches` : 'Uninterrupted span');
                 tile(h.window_start, 'Started', fmtTime(h.window_start), 'Timestamp spotted');
                 tile(true, 'Auto-Stop Limit', stop > 0 ? `${stop} min` : 'Off', 'Org threshold');
-                stat = `${mins(stretch)} idle`;
-                why = 'The timer kept running with no keyboard or mouse activity for a long stretch, which usually means someone stepped away without stopping it.'
+                stat = stretches > 1 ? `${mins(stretch)} idle (${stretches} stretches)` : `${mins(stretch)} idle`;
+                why = stretches > 1
+                    ? `The timer kept running with no keyboard or mouse activity across ${stretches} stretches throughout the day (${mins(stretch)} total), which usually means someone was away from their desk without stopping the timer.`
+                    : 'The timer kept running with no keyboard or mouse activity for a long stretch, which usually means someone stepped away without stopping it.'
                     + (stop > 0 && stretch > stop ? " It also ran past the organisation's idle auto-stop, which should have ended the session." : '');
                 if (stop > 0 && stretch > stop) {
                     deviation = {
@@ -745,22 +748,28 @@ function evidenceFor(h: OwlLensHighlight, isToday: boolean, fmtTime: (iso: strin
         }
         case 'low_input': {
             const m = num(e.minutes);
-            tile(has('minutes'), 'Duration', mins(m), 'Window length');
+            const stretches = num(e.stretches);
+            tile(has('minutes'), 'Duration', mins(m), stretches > 1 ? `Across ${stretches} stretches` : 'Window length');
             tile(h.window_start, 'Started', fmtTime(h.window_start), 'Start time');
             tile(h.window_end, 'Ended', fmtTime(h.window_end), 'End time');
-            stat = `${mins(m)} low input`;
-            why = 'The timer was running in one app with only a trickle of keyboard and mouse activity, far too little for normal work over that long.';
+            stat = stretches > 1 ? `${mins(m)} low input (${stretches} stretches)` : `${mins(m)} low input`;
+            why = stretches > 1
+                ? `The timer was running in ${app || 'one app'} across ${stretches} stretches with only a trickle of keyboard and mouse activity each minute.`
+                : 'The timer was running in one app with only a trickle of keyboard and mouse activity, far too little for normal work over that long.';
             break;
         }
         case 'input_pattern': {
             const m = num(e.minutes);
+            const stretches = num(e.stretches);
             if (e.pattern === 'held_key') {
                 const rate = m > 0 ? Math.round(num(e.keystrokes) / m) : 0;
-                tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes), m > 0 ? `In ${mins(m)} session window` : 'Session keystrokes');
+                tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes), stretches > 1 ? `Across ${stretches} stretches (${mins(m)})` : m > 0 ? `In ${mins(m)} session window` : 'Session keystrokes');
                 tile(rate > 0, 'Key Rate', `${count(rate)}/min`, 'Keystroke velocity');
                 tile(has('clicks'), 'Mouse Clicks', count(e.clicks), 'Pointer activity');
                 stat = rate > 0 ? `${count(rate)} keys/min` : `${mins(m)} held key`;
-                why = 'Nobody types that fast for that long. A key held down, or something resting on the keyboard, produces this pattern and makes the time look active when it may not be.';
+                why = stretches > 1
+                    ? `Nobody types that fast for that long. ${count(e.keystrokes)} keystrokes were recorded across ${stretches} stretches throughout the day (${mins(m)} total in ${app || 'this app'}), averaging ${count(rate)} keys/minute with almost no mouse interactions.`
+                    : 'Nobody types that fast for that long. A key held down, or something resting on the keyboard, produces this pattern and makes the time look active when it may not be.';
                 if (rate > 0) {
                     const humanPace = 350; // standard benchmark for sustained human typing
                     deviation = {
@@ -774,13 +783,19 @@ function evidenceFor(h: OwlLensHighlight, isToday: boolean, fmtTime: (iso: strin
                     };
                 }
             } else {
-                tile(has('minutes'), 'Duration', mins(m), 'Session duration');
+                tile(has('minutes'), 'Duration', mins(m), stretches > 1 ? `Across ${stretches} stretches` : 'Session duration');
                 tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes), 'Session keystrokes');
                 tile(has('clicks'), 'Mouse Clicks', count(e.clicks), 'Pointer activity');
-                stat = e.pattern === 'move_only' ? `${mins(m)} without keys/clicks` : `${mins(m)} continuous`;
+                stat = e.pattern === 'move_only'
+                    ? (stretches > 1 ? `${mins(m)} move-only (${stretches} stretches)` : `${mins(m)} without keys/clicks`)
+                    : (stretches > 1 ? `${mins(m)} continuous (${stretches} stretches)` : `${mins(m)} continuous`);
                 why = e.pattern === 'move_only'
-                    ? 'There was activity, but not a single keystroke or click, all in the same window. A mouse jiggler or auto-mover looks like this.'
-                    : 'Activity registered in almost every second, without the short natural pauses people make. Automated input can produce this pattern.';
+                    ? (stretches > 1
+                        ? `Across ${stretches} stretches (${mins(m)} total in ${app || 'one app'}), movement was detected every minute with zero keystrokes or clicks. A mouse jiggler produces this pattern.`
+                        : 'There was activity, but not a single keystroke or click, all in the same window. A mouse jiggler or auto-mover looks like this.')
+                    : (stretches > 1
+                        ? `Activity registered across ${stretches} stretches without the natural pauses people take. Automated input can produce this pattern.`
+                        : 'Activity registered in almost every second, without the short natural pauses people make. Automated input can produce this pattern.');
             }
             break;
         }
