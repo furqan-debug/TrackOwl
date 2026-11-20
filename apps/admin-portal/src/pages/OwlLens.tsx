@@ -366,11 +366,12 @@ export function OwlLens() {
                 {/* Right: Controls */}
                 <div className="flex items-center gap-2 md:gap-3 shrink-0">
                     {teams.length > 0 && (
-                        <div className="hidden sm:block w-36 md:w-44">
+                        <div className="hidden sm:block w-36 md:w-44 h-10">
                             <FilterSelect
                                 icon={<Users className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />}
                                 value={teamFilter}
                                 onChange={setTeamFilter}
+                                className="h-10"
                                 options={[
                                     { id: 'all', name: role === 'Manager' ? 'All my teams' : 'All teams' },
                                     ...teams.map(t => ({ id: t.id, name: t.name })),
@@ -378,11 +379,12 @@ export function OwlLens() {
                             />
                         </div>
                     )}
-                    <div className="w-36 md:w-40">
+                    <div className="w-36 md:w-40 h-10">
                         <FilterSelect
                             icon={<Filter className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />}
                             value={severityFilter}
                             onChange={v => setSeverityFilter(v as SeverityFilter)}
+                            className="h-10"
                             sortOptions={false}
                             options={[
                                 { id: 'all', name: 'All severities' },
@@ -395,33 +397,36 @@ export function OwlLens() {
 
                     <div
                         ref={dayNavRef}
-                        className="flex items-center h-9 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-1 rounded-lg"
+                        className="flex items-center h-10 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden"
                     >
                         <button
+                            type="button"
                             onClick={() => shiftDay(-1)}
-                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded-md"
+                            className="h-full px-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors border-r border-slate-200 dark:border-slate-800 shrink-0"
                             title="Previous day"
                         >
-                            <ChevronLeft className="w-3.5 h-3.5" />
+                            <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2} />
                         </button>
                         <DatePicker
                             value={date}
                             onChange={val => setPickedDate(val >= today ? null : val)}
                             maxDate={today}
                             anchorRef={dayNavRef}
-                            className="min-w-[140px] md:min-w-[160px]"
+                            className="h-full min-w-[150px] md:min-w-[170px]"
+                            triggerClassName="h-full px-3 py-0 border-0 bg-transparent hover:bg-slate-50 dark:hover:bg-slate-800/60 shadow-none rounded-none w-full"
                         />
                         <button
+                            type="button"
                             onClick={() => shiftDay(1)}
-                            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors rounded-md disabled:opacity-20"
+                            className="h-full px-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors disabled:opacity-20 border-l border-slate-200 dark:border-slate-800 shrink-0"
                             title="Next day"
                             disabled={isToday}
                         >
-                            <ChevronRight className="w-3.5 h-3.5" />
+                            <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
                         </button>
                     </div>
 
-                    <RefreshButton onClick={() => load(true)} refreshing={refreshing} label="Refresh" />
+                    <RefreshButton onClick={() => load(true)} refreshing={refreshing} label="Refresh" className="h-10 w-10 rounded-xl" />
                 </div>
             </header>
 
