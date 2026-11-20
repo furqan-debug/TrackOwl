@@ -657,7 +657,7 @@ function evidenceFor(h: OwlLensHighlight, isToday: boolean, fmtTime: (iso: strin
         if (cond) tiles.push({ label, value, caption });
     };
     const has = (k: string) => e[k] !== undefined && e[k] !== null;
-    const app = typeof e.app === 'string' && e.app ? e.app : '';
+    let app = typeof e.app === 'string' && e.app ? e.app : '';
     const range = h.window_start && h.window_end ? `${fmtTime(h.window_start)} – ${fmtTime(h.window_end)}` : '';
     let stat = '';
     let why = h.detail;
@@ -814,11 +814,26 @@ function evidenceFor(h: OwlLensHighlight, isToday: boolean, fmtTime: (iso: strin
         case 'non_productive': {
             const share = num(e.share_pct);
             const threshold = 25;
+            const topDomains = Object.entries((e.domains as Record<string, unknown>) || {})
+                .sort(([, a], [, b]) => num(b) - num(a));
+
+            const topSiteBreakdown = topDomains.map(([domain, minutes]) => `${domain} (${mins(minutes)})`);
+            if (topDomains.length > 0) {
+                app = topSiteBreakdown.slice(0, 3).join(', ');
+            }
+
             tile(has('share_pct'), 'Non-Productive', `${share}%`, 'Of tracked time');
             tile(has('nonproductive_mins'), 'Total Duration', mins(e.nonproductive_mins), 'On restricted sites');
             tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins), 'Day total');
-            stat = `${share}% non-productive`;
-            why = 'A quarter or more of their tracked time was on sites the organisation counts as non-productive, such as social media or streaming.';
+
+            stat = topDomains.length > 0
+                ? `${share}% non-prod (${topDomains[0]![0]})`
+                : `${share}% non-productive`;
+
+            why = topSiteBreakdown.length > 0
+                ? `Most non-productive time was spent on ${topSiteBreakdown.slice(0, 3).join(', ')}. Owl Lens flags this when non-work browsing exceeds a quarter of the total tracked shift.`
+                : (h.detail || 'A quarter or more of their tracked time was on sites the organisation counts as non-productive, such as social media or streaming.');
+
             if (share >= threshold) {
                 deviation = {
                     label: 'Non-Productive Time Ratio',
@@ -1211,9 +1226,11 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
                     <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Session Context</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 pt-3 border-t border-border text-xs">
                         <div>
-                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Application</span>
-                            <span className="text-text-main font-semibold mt-0.5 block truncate">
-                                {evidence.app || 'System / All Applications'}
+                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">
+                                {h.kind === 'non_productive' ? 'Identified Sites / Apps' : 'Application'}
+                            </span>
+                            <span className="text-text-main font-semibold mt-0.5 block truncate" title={evidence.app || undefined}>
+                                {evidence.app || (h.kind === 'non_productive' ? 'Web Browsers' : 'System / All Applications')}
                             </span>
                         </div>
                         <div>
