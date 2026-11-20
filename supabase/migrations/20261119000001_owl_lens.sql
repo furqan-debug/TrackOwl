@@ -113,11 +113,6 @@ BEGIN
   SELECT me.member_id, me.role INTO v_me, v_role FROM public.owl_lens_me(p_org) me;
   IF v_me IS NULL THEN RETURN false; END IF;
   IF v_role IN ('Owner', 'Admin') THEN RETURN true; END IF;
-  -- During the quiet trial nobody else sees anything yet.
-  IF EXISTS (SELECT 1 FROM public.owl_lens_org_state st
-              WHERE st.organization_id = p_org AND st.trial_until > now()) THEN
-    RETURN false;
-  END IF;
   IF p_kind = 'input_pattern' THEN RETURN false; END IF;
   IF v_role = 'Viewer' THEN RETURN true; END IF;
   IF v_role = 'Manager' THEN
@@ -842,12 +837,12 @@ BEGIN
 
       -- The first row for an organisation starts its 14-day quiet trial; later runs keep it.
       INSERT INTO public.owl_lens_org_state (organization_id, last_run_at, last_error, last_error_at, trial_until)
-      VALUES (o.id, now(), NULL, NULL, now() + interval '14 days')
+      VALUES (o.id, now(), NULL, NULL, NULL)
       ON CONFLICT (organization_id) DO UPDATE
         SET last_run_at = excluded.last_run_at, last_error = NULL, last_error_at = NULL;
     EXCEPTION WHEN others THEN
       INSERT INTO public.owl_lens_org_state (organization_id, last_error, last_error_at, trial_until)
-      VALUES (o.id, SQLERRM, now(), now() + interval '14 days')
+      VALUES (o.id, SQLERRM, now(), NULL)
       ON CONFLICT (organization_id) DO UPDATE
         SET last_error = excluded.last_error, last_error_at = excluded.last_error_at;
     END;
