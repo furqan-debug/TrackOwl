@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { useLinkedFilters } from '../lib/linkedFilters';
 import {
     ChevronLeft, ChevronRight,
     Users,
@@ -146,8 +147,11 @@ export function Timesheets() {
 
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    // An Owl Lens card can open this page on a given day (?date=YYYY-MM-DD).
+    // The member already comes from ?member= above.
+    const { date: linkedDate } = useLinkedFilters();
     const [selectedDate, setSelectedDate] = useState(() => {
-        const tzDateStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+        const tzDateStr = linkedDate ?? new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
         return new Date(tzDateStr + 'T12:00:00');
     });
 
@@ -161,15 +165,21 @@ export function Timesheets() {
     useEffect(() => {
         if (didInitDateRef.current || !timezoneReady) return;
         didInitDateRef.current = true;
-        const tzDateStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
-        const corrected = new Date(tzDateStr + 'T12:00:00');
-        setSelectedDate(prev => (prev.getTime() === corrected.getTime() ? prev : corrected));
+        // A linked day is already the right day; only "today" depends on the time zone.
+        if (!linkedDate) {
+            const tzDateStr = new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' });
+            const corrected = new Date(tzDateStr + 'T12:00:00');
+            setSelectedDate(prev => (prev.getTime() === corrected.getTime() ? prev : corrected));
+        }
         setDateInitialized(true);
-    }, [timezoneReady, displayTimezone]);
+    }, [timezoneReady, displayTimezone, linkedDate]);
 
     // Monotonic id for timesheet fetches — only the newest may write entries or
     // the cache, so a slow earlier response cannot overwrite newer data.
     const fetchSeqRef = useRef(0);
+    // The date navigators (arrows and date): the calendar opens lined up with them.
+    const dayNavRef = useRef<HTMLDivElement>(null);
+    const filterDayNavRef = useRef<HTMLDivElement>(null);
     const [showFilters, setShowFilters] = useState(false);
     const [showAddTime, setShowAddTime] = useState(false);
 
@@ -832,7 +842,7 @@ export function Timesheets() {
 
                     {/* Bottom row: Date navigation */}
                     <div className="flex items-center justify-end w-full sm:w-auto">
-                        <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-12 w-full min-w-[260px]">
+                        <div ref={dayNavRef} className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-12 w-full min-w-[288px]">
                             <button
                                 onClick={() => navigateDate(-1)}
                                 className="p-3 shrink-0 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary"
@@ -849,6 +859,7 @@ export function Timesheets() {
                                             setSelectedDate(new Date(val + 'T12:00:00'));
                                         }
                                     }}
+                                    anchorRef={dayNavRef}
                                     className="w-full min-w-0"
                                 />
                             </div>
@@ -1027,7 +1038,7 @@ export function Timesheets() {
                     <div className="space-y-1.5">
                         <label className="text-[12px] font-bold text-text-muted">Calendar</label>
                         <div className="flex items-center gap-2">
-                            <div className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-11 flex-1 min-w-0">
+                            <div ref={filterDayNavRef} className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-11 flex-1 min-w-0">
                                 <button
                                     type="button"
                                     onClick={() => navigateDate(-1)}
@@ -1045,6 +1056,7 @@ export function Timesheets() {
                                             }
                                         }}
                                         direction="auto"
+                                        anchorRef={filterDayNavRef}
                                         className="w-full min-w-0"
                                     />
                                 </div>

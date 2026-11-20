@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { X, LogOut, Star, ChevronRight } from 'lucide-react';
-import { navStructure, type Role } from '../nav/navModel';
+import { X, LogOut, Star, ChevronRight, ScanEye } from 'lucide-react';
+import { navStructure, owlLensNav, type Role } from '../nav/navModel';
 import { useAuth } from '../context/AuthContext';
 import { useFavorites } from '../context/FavoritesContext';
 import clsx from 'clsx';
@@ -13,7 +13,7 @@ interface MobileNavProps {
 
 export function MobileNav({ onClose }: MobileNavProps) {
     const location = useLocation();
-    const { profile, signOut } = useAuth();
+    const { profile, signOut, isPremium } = useAuth();
     const { favorites } = useFavorites();
     const userRole = (profile?.role || 'User') as Role;
 
@@ -31,6 +31,8 @@ export function MobileNav({ onClose }: MobileNavProps) {
         }
         return true;
     });
+
+    const showOwlLens = (!owlLensNav.allowedRoles || owlLensNav.allowedRoles.includes(userRole)) && (!owlLensNav.requiresPremium || isPremium);
 
     return (
         <div className="fixed inset-0 z-[100] md:hidden">
@@ -58,6 +60,35 @@ export function MobileNav({ onClose }: MobileNavProps) {
 
                 {/* Nav */}
                 <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+                    {/* Intelligence */}
+                    {showOwlLens && (
+                        <div className="mb-3">
+                            <p className="px-3 text-[10px] font-bold text-white/30 mb-1.5 text-left uppercase tracking-[0.18em]">
+                                Intelligence
+                            </p>
+                            <Link
+                                to={owlLensNav.path!}
+                                onClick={onClose}
+                                className={clsx(
+                                    "flex items-center justify-between px-3 py-2.5 rounded-xl text-[13px] font-semibold transition-all border",
+                                    location.pathname === owlLensNav.path
+                                        ? "bg-white/10 text-white border-white/10 shadow-sm"
+                                        : "text-[var(--sidebar-text)] hover:text-[var(--sidebar-text-active)] hover:bg-white/[0.05] border-transparent"
+                                )}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <ScanEye className={clsx(
+                                        "w-4 h-4 shrink-0",
+                                        location.pathname === owlLensNav.path ? "text-[var(--sidebar-text-active)]" : "text-[var(--sidebar-text)]"
+                                    )} strokeWidth={2.5} />
+                                    <span>{owlLensNav.name}</span>
+                                </div>
+                            </Link>
+                        </div>
+                    )}
+                    <p className="px-3 text-[10px] font-bold text-white/30 uppercase tracking-[0.18em] mb-1.5">
+                        Navigation
+                    </p>
                     {filteredNav.map((group) => (
                         <div key={group.name}>
                             {group.path && !group.children ? (

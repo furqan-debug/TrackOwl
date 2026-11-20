@@ -130,8 +130,8 @@ export function FilterSelect({
                     <span className="text-[12px] font-bold text-text-main min-w-[80px] truncate">{activeLabel}</span>
                 </div>
                 <ChevronDown 
-                    className={clsx("w-3.5 h-3.5 transition-transform duration-300 text-text-muted", isOpen && "rotate-180")} 
-                    strokeWidth={2.5} 
+                    className={clsx("w-3.5 h-3.5 transition-transform duration-300 text-text-muted shrink-0", isOpen && "rotate-180")} 
+                    strokeWidth={2} 
                 />
             </div>
             
