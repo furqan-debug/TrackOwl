@@ -9,7 +9,6 @@ import {
     ChevronRight,
     Filter,
     Globe,
-    Info,
     RotateCcw,
     ShieldCheck,
     Sparkles,
@@ -284,31 +283,7 @@ export function OwlLens() {
         writeNpSeen(next);
     };
 
-    // Quiet trial: the first 14 days only Owners and Admins see Owl Lens.
-    const trialUntil = runState?.trial_until ? new Date(runState.trial_until) : null;
-    const inTrial = !!trialUntil && trialUntil.getTime() > Date.now();
-    const trialEndLabel = trialUntil
-        ? trialUntil.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: tz })
-        : '';
-    const trialEndShort = trialUntil
-        ? trialUntil.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: tz })
-        : '';
-    const [endingTrial, setEndingTrial] = useState(false);
-    const endTrial = async () => {
-        if (!organizationId) return;
-        setEndingTrial(true);
-        setActionError(null);
-        try {
-            await owlLensService.endTrial(organizationId);
-            await load(true);
-        } catch (err) {
-            console.error('[OwlLens] end trial failed:', err);
-            setActionError(errorText(err, 'The trial could not be ended. Please try again.'));
-        } finally {
-            setEndingTrial(false);
-        }
-    };
-    const npOpen = !loading && !loadError && !(inTrial && !isAdmin)
+    const npOpen = !loading && !loadError
         && nonProductive.length > 0 && npSeen[npDay] !== npKey;
     const dayLabel = isToday
         ? 'Today'
@@ -502,32 +477,8 @@ export function OwlLens() {
                         </button>
                     }
                 />
-            ) : inTrial && !isAdmin ? (
-                <EmptyState
-                    icon={<ShieldCheck className="w-8 h-8 opacity-60" aria-hidden />}
-                    title="Owl Lens is in its trial period"
-                    description={`Your admins are checking the highlights before everyone relies on them. Owl Lens opens for you on ${trialEndLabel}.`}
-                />
             ) : (
                 <div className="flex flex-col gap-4 pb-16">
-                    {inTrial && isAdmin && (
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2.5 px-4 rounded-xl bg-sky-500/10 text-[13px]">
-                            <Info className="w-4 h-4 shrink-0 text-sky-600 dark:text-sky-300" aria-hidden />
-                            <p className="flex-1 min-w-[200px] text-text-main">
-                                <span className="font-semibold">Admin preview until {trialEndShort}.</span>
-                                <span className="text-text-muted"> Only Owners and Admins can see Owl Lens for now.</span>
-                            </p>
-                            <button
-                                type="button"
-                                onClick={endTrial}
-                                disabled={endingTrial}
-                                className="font-semibold text-sky-700 dark:text-sky-300 hover:underline underline-offset-2 disabled:opacity-50"
-                            >
-                                {endingTrial ? 'Ending trial…' : 'End trial now'}
-                            </button>
-                        </div>
-                    )}
-
                     {actionError && (
                         <div className="flex items-start gap-2 px-4 py-3 rounded-xl border border-rose-500/20 bg-rose-500/10 text-sm text-rose-700 dark:text-rose-400">
                             <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden />
