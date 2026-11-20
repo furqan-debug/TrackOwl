@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 import {
@@ -9,6 +9,7 @@ import {
     ChevronRight,
     Filter,
     Globe,
+    MoreHorizontal,
     RotateCcw,
     ShieldCheck,
     Sparkles,
@@ -16,7 +17,7 @@ import {
     X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { PageLayout, DatePicker, FilterSelect, RefreshButton, EmptyState, LoadingState, Modal } from '../components/ui';
+import { DatePicker, FilterSelect, RefreshButton, EmptyState, LoadingState, Modal } from '../components/ui';
 import {
     owlLensService,
     type HighlightKind,
@@ -95,7 +96,6 @@ function errorText(err: unknown, fallback: string): string {
 
 // ---------------------------------------------------------------- non-productive pop-up
 
-/** "2 h 10 min" */
 function fmtMins(mins: number): string {
     const m = Math.max(0, Math.round(mins));
     const h = Math.floor(m / 60);
@@ -108,9 +108,6 @@ function num(v: unknown): number {
     return typeof v === 'number' && Number.isFinite(v) ? v : 0;
 }
 
-// Which non-productive pop-ups this browser has closed: "org:day" -> the cards
-// it showed. It opens again when someone new crosses the line that day.
-// Only a convenience: if storage is blocked the pop-up simply shows again.
 const NP_SEEN_KEY = 'owl-lens:non-productive-seen';
 
 function readNpSeen(): Record<string, string> {
@@ -125,11 +122,10 @@ function readNpSeen(): Record<string, string> {
 
 function writeNpSeen(seen: Record<string, string>) {
     try {
-        // Keep the most recent fortnight of days.
         const kept = Object.fromEntries(Object.entries(seen).sort(([a], [b]) => b.localeCompare(a)).slice(0, 14));
         window.localStorage.setItem(NP_SEEN_KEY, JSON.stringify(kept));
     } catch {
-        // storage unavailable; nothing to do
+        // storage unavailable
     }
 }
 
@@ -137,9 +133,6 @@ type SeverityFilter = 'all' | 'critical' | 'warning' | 'info';
 type View = 'open' | 'reviewed';
 
 const AUTO_REFRESH_MS = 5 * 60_000;
-
-/** Past this many alerts the queue scrolls instead of growing. */
-const QUEUE_VISIBLE = 8;
 
 // ---------------------------------------------------------------- page
 
@@ -153,8 +146,6 @@ export function OwlLens() {
     const tz = displayTimezone || 'UTC';
     const today = useMemo(() => new Date().toLocaleDateString('en-CA', { timeZone: tz }), [tz]);
 
-    // null follows "today", so the page never sits on a stale day after the
-    // time zone settles or the clock passes midnight.
     const [pickedDate, setPickedDate] = useState<string | null>(null);
     const date = pickedDate ?? today;
     const isToday = date === today;
@@ -173,15 +164,9 @@ export function OwlLens() {
     const [busyId, setBusyId] = useState<string | null>(null);
     const [choosingReasonFor, setChoosingReasonFor] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
-    // The alert open in the inspector. null, or one no longer in the queue,
-    // falls back to the first in the queue, so the panel is never empty.
     const [selectedId, setSelectedId] = useState<string | null>(null);
-    const inspectorRef = useRef<HTMLElement>(null);
-    const queueRef = useRef<HTMLUListElement>(null);
-    const [queueMaxHeight, setQueueMaxHeight] = useState<number | null>(null);
 
     const requestSeqRef = useRef(0);
-    // The day navigator (arrows and date); the calendar opens lined up with it.
     const dayNavRef = useRef<HTMLDivElement>(null);
 
     const load = useCallback(async (quiet = false) => {
@@ -212,14 +197,12 @@ export function OwlLens() {
 
     useEffect(() => { load(); }, [load]);
 
-    // The background check runs every 10 minutes; keep today's feed current.
     useEffect(() => {
         if (!isToday) return;
         const t = setInterval(() => load(true), AUTO_REFRESH_MS);
         return () => clearInterval(t);
     }, [isToday, load]);
 
-    // Teams for the filter. A manager is offered only the teams they manage or lead.
     useEffect(() => {
         if (!organizationId) return;
         let cancelled = false;
@@ -235,7 +218,6 @@ export function OwlLens() {
         return () => { cancelled = true; };
     }, [organizationId, role, profile?.id]);
 
-    // Reset the reason picker and any error when the day changes.
     useEffect(() => {
         setChoosingReasonFor(null);
         setActionError(null);
@@ -266,9 +248,6 @@ export function OwlLens() {
 
     const shown = view === 'open' ? open : reviewed;
 
-    // Everyone at or over 25% non-productive that day, listed together. Not
-    // narrowed by the team or severity filters; the database already limits
-    // it to the people this viewer may see.
     const nonProductive = useMemo(() => highlights
         .filter(h => h.kind === 'non_productive' && h.status === 'active')
         .sort((a, b) =>
@@ -300,7 +279,6 @@ export function OwlLens() {
             .toLowerCase();
     }, [tz]);
 
-    // Worked out on each render, so it moves on whenever the feed reloads.
     const checkedAgo = (() => {
         if (!runState?.last_run_at) return null;
         const mins = Math.max(0, Math.round((Date.now() - new Date(runState.last_run_at).getTime()) / 60_000));
@@ -309,57 +287,20 @@ export function OwlLens() {
         return `Last checked at ${fmtTime(runState.last_run_at)}`;
     })();
 
+    // Auto-select first available item if none selected or selection not in shown
     const selected = shown.find(h => h.id === selectedId) ?? shown[0] ?? null;
+
     const evidence = useMemo(
         () => new Map(shown.map(h => [h.id, evidenceFor(h, isToday, fmtTime)])),
         [shown, isToday, fmtTime],
     );
 
-    // More than QUEUE_VISIBLE alerts: show exactly that many and scroll the
-    // rest. Measured from the rows themselves, so it stays right whatever the
-    // font size or row height turns out to be.
-    const queueScrolls = shown.length > QUEUE_VISIBLE;
-    useLayoutEffect(() => {
-        const ul = queueRef.current;
-        if (!ul || !queueScrolls) {
-            setQueueMaxHeight(null);
-            return;
-        }
-        const measure = () => {
-            const last = ul.children[QUEUE_VISIBLE - 1] as HTMLElement | undefined;
-            setQueueMaxHeight(last ? last.offsetTop + last.offsetHeight : null);
-        };
-        measure();
-        window.addEventListener('resize', measure);
-        return () => window.removeEventListener('resize', measure);
-    }, [queueScrolls, shown.length]);
-
-    // Keep the selected alert in view inside the queue (for example when the
-    // next one opens after a review), without scrolling the page itself.
-    useEffect(() => {
-        const ul = queueRef.current;
-        if (!ul || !queueScrolls || !selected) return;
-        const item = ul.querySelector<HTMLElement>(`[data-id="${selected.id}"]`);
-        if (!item) return;
-        if (item.offsetTop < ul.scrollTop) {
-            ul.scrollTop = item.offsetTop;
-        } else if (item.offsetTop + item.offsetHeight > ul.scrollTop + ul.clientHeight) {
-            ul.scrollTop = item.offsetTop + item.offsetHeight - ul.clientHeight;
-        }
-    }, [selected, queueScrolls, queueMaxHeight]);
-
     const select = (id: string) => {
         setSelectedId(id);
         setChoosingReasonFor(null);
-        // Stacked layout: bring the inspector into view under the queue.
-        if (!window.matchMedia('(min-width: 1024px)').matches) {
-            inspectorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
     };
 
     const review = async (h: OwlLensHighlight, status: HighlightStatus, reason?: string) => {
-        // If this takes the alert out of the current tab, the next one in the
-        // queue (or the one before, at the end) takes its place in the inspector.
         const leavesView = view === 'open' ? status !== 'active' : status === 'active';
         const at = shown.findIndex(x => x.id === h.id);
         const nextId = leavesView ? (shown[at + 1] ?? shown[at - 1])?.id ?? null : h.id;
@@ -392,15 +333,42 @@ export function OwlLens() {
     };
 
     return (
-        <PageLayout
-            title="Owl Lens"
-            description="Only what is out of the ordinary, compared with each person's own normal."
-            actions={
-                <div className="flex flex-wrap items-center gap-3 md:gap-4">
+        <div className="-my-4 -mx-3 md:-my-6 md:-mx-4 lg:-mx-6 h-[calc(100vh-3.5rem)] md:h-screen flex flex-col overflow-hidden bg-[var(--bg-main)]">
+            {/* Top Workspace Header */}
+            <header className="h-14 px-4 md:px-6 border-b border-border bg-surface flex items-center justify-between gap-4 shrink-0 z-20">
+                {/* Left: Title + Live Summary */}
+                <div className="flex items-center min-w-0">
+                    <h1 className="text-base font-bold text-text-main tracking-tight shrink-0">Owl Lens</h1>
+                    <div className="h-4 w-px bg-border mx-3 shrink-0" aria-hidden />
+                    <div className="flex items-center gap-2 text-xs text-text-muted truncate">
+                        {open.length > 0 ? (
+                            <>
+                                {criticalCount > 0 && (
+                                    <span className="font-semibold text-rose-600 dark:text-rose-400 shrink-0">
+                                        {criticalCount} critical
+                                    </span>
+                                )}
+                                {criticalCount > 0 && warningCount > 0 && <span className="opacity-40">·</span>}
+                                {warningCount > 0 && (
+                                    <span className="font-semibold text-amber-600 dark:text-amber-400 shrink-0">
+                                        {warningCount} {warningCount === 1 ? 'warning' : 'warnings'}
+                                    </span>
+                                )}
+                                {(criticalCount > 0 || warningCount > 0) && checkedAgo && <span className="opacity-40">·</span>}
+                                <span className="truncate">{checkedAgo || `${open.length} active alerts`}</span>
+                            </>
+                        ) : (
+                            <span className="truncate">All clear · {checkedAgo || 'Checked just now'}</span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Right: Controls */}
+                <div className="flex items-center gap-2 md:gap-3 shrink-0">
                     {teams.length > 0 && (
-                        <div className="w-44 md:w-48">
+                        <div className="hidden sm:block w-36 md:w-44">
                             <FilterSelect
-                                icon={<Users className="w-4 h-4 text-text-muted" />}
+                                icon={<Users className="w-3.5 h-3.5 text-text-muted" />}
                                 value={teamFilter}
                                 onChange={setTeamFilter}
                                 options={[
@@ -410,9 +378,9 @@ export function OwlLens() {
                             />
                         </div>
                     )}
-                    <div className="w-40 md:w-44">
+                    <div className="w-36 md:w-40">
                         <FilterSelect
-                            icon={<Filter className="w-4 h-4 text-text-muted" />}
+                            icon={<Filter className="w-3.5 h-3.5 text-text-muted" />}
                             value={severityFilter}
                             onChange={v => setSeverityFilter(v as SeverityFilter)}
                             sortOptions={false}
@@ -425,157 +393,166 @@ export function OwlLens() {
                         />
                     </div>
 
-                    {/* At least as wide as the calendar (288px), so the open panel
-                        fits exactly under this box, edge to edge. */}
                     <div
                         ref={dayNavRef}
-                        className="flex items-center h-10 min-w-[288px] bg-surface border border-border p-1 rounded-xl shadow-shell-sm"
+                        className="flex items-center h-9 bg-surface border border-border px-1 rounded-lg"
                     >
                         <button
                             onClick={() => shiftDay(-1)}
-                            className="p-2 md:p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
+                            className="p-1.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors rounded-md"
                             title="Previous day"
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="w-3.5 h-3.5" />
                         </button>
                         <DatePicker
                             value={date}
                             onChange={val => setPickedDate(val >= today ? null : val)}
                             maxDate={today}
                             anchorRef={dayNavRef}
-                            className="flex-1 min-w-[170px] md:min-w-[180px]"
+                            className="min-w-[140px] md:min-w-[160px]"
                         />
                         <button
                             onClick={() => shiftDay(1)}
-                            className="p-2 md:p-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg disabled:opacity-20"
+                            className="p-1.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors rounded-md disabled:opacity-20"
                             title="Next day"
                             disabled={isToday}
                         >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-3.5 h-3.5" />
                         </button>
                     </div>
 
-                    <RefreshButton onClick={() => load(true)} refreshing={refreshing} label="Refresh highlights" />
+                    <RefreshButton onClick={() => load(true)} refreshing={refreshing} label="Refresh" />
                 </div>
-            }
-        >
+            </header>
+
+            {/* Error Notification Bar */}
+            {actionError && (
+                <div className="flex items-center justify-between px-4 py-2 bg-rose-500/10 border-b border-rose-500/20 text-xs text-rose-700 dark:text-rose-400 shrink-0">
+                    <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 shrink-0" aria-hidden />
+                        <span>{actionError}</span>
+                    </div>
+                    <button onClick={() => setActionError(null)} aria-label="Close" className="opacity-70 hover:opacity-100">
+                        <X className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            )}
+
+            {/* Main Content Workspace: Split Pane */}
             {loading ? (
-                <div className="min-h-[50vh] flex items-center justify-center">
+                <div className="flex-1 flex items-center justify-center bg-surface">
                     <LoadingState message="Looking for anything out of the ordinary..." />
                 </div>
             ) : loadError ? (
-                <EmptyState
-                    icon={<AlertTriangle className="w-8 h-8 opacity-60" aria-hidden />}
-                    title="Owl Lens could not load"
-                    description={loadError}
-                    action={
-                        <button
-                            onClick={() => load()}
-                            className="px-4 py-2 rounded-xl border border-border bg-surface hover:bg-surface-hover text-sm font-semibold text-text-main"
-                        >
-                            Try again
-                        </button>
-                    }
-                />
+                <div className="flex-1 flex items-center justify-center p-6 bg-surface">
+                    <EmptyState
+                        icon={<AlertTriangle className="w-8 h-8 opacity-60" aria-hidden />}
+                        title="Owl Lens could not load"
+                        description={loadError}
+                        action={
+                            <button
+                                onClick={() => load()}
+                                className="px-4 py-2 rounded-lg border border-border bg-surface hover:bg-surface-hover text-xs font-semibold text-text-main transition-colors"
+                            >
+                                Try again
+                            </button>
+                        }
+                    />
+                </div>
             ) : (
-                <div className="flex flex-col gap-4 pb-16">
-                    {actionError && (
-                        <div className="flex items-start gap-2 px-4 py-3 rounded-xl border border-rose-500/20 bg-rose-500/10 text-sm text-rose-700 dark:text-rose-400">
-                            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden />
-                            <span className="flex-1">{actionError}</span>
-                            <button onClick={() => setActionError(null)} aria-label="Close" className="shrink-0 opacity-70 hover:opacity-100">
-                                <X className="w-4 h-4" />
+                <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+                    {/* Left Pane: Signal Queue (380px) */}
+                    <aside className="w-full md:w-[380px] lg:w-[400px] shrink-0 border-r border-border bg-surface/50 flex flex-col h-full overflow-hidden">
+                        {/* Underline Tabs */}
+                        <div className="flex items-center border-b border-border px-4 gap-6 bg-surface shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setView('open')}
+                                className={clsx(
+                                    'relative py-3 text-xs font-semibold transition-colors flex items-center gap-2 border-b-2 -mb-px',
+                                    view === 'open'
+                                        ? 'text-text-main border-[#0B2559] dark:border-white'
+                                        : 'text-text-muted hover:text-text-main border-transparent'
+                                )}
+                            >
+                                <span>Needs Attention</span>
+                                <span className={clsx(
+                                    'px-1.5 py-0.5 rounded-full text-[10px] tabular-nums font-semibold',
+                                    view === 'open' ? 'bg-[#0B2559]/10 text-[#0B2559] dark:bg-white/10 dark:text-white' : 'bg-surface-hover text-text-muted'
+                                )}>
+                                    {open.length}
+                                </span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setView('reviewed')}
+                                className={clsx(
+                                    'relative py-3 text-xs font-semibold transition-colors flex items-center gap-2 border-b-2 -mb-px',
+                                    view === 'reviewed'
+                                        ? 'text-text-main border-[#0B2559] dark:border-white'
+                                        : 'text-text-muted hover:text-text-main border-transparent'
+                                )}
+                            >
+                                <span>Reviewed</span>
+                                <span className={clsx(
+                                    'px-1.5 py-0.5 rounded-full text-[10px] tabular-nums font-semibold',
+                                    view === 'reviewed' ? 'bg-[#0B2559]/10 text-[#0B2559] dark:bg-white/10 dark:text-white' : 'bg-surface-hover text-text-muted'
+                                )}>
+                                    {reviewed.length}
+                                </span>
                             </button>
                         </div>
-                    )}
 
-                    {/* Signal queue on the left, inspector on the right; stacked below lg. */}
-                    <div className={clsx(
-                        'grid gap-4 md:gap-5 items-start',
-                        shown.length > 0 && 'lg:grid-cols-[minmax(300px,380px)_minmax(0,1fr)]',
-                    )}>
-                        <section className="bg-surface rounded-2xl border border-border shadow-sm" aria-label="Signal queue">
-                            <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 p-3 md:p-4">
-                                <div className="inline-flex items-center bg-surface-hover rounded-lg p-1" role="tablist">
-                                    {(['open', 'reviewed'] as View[]).map(v => (
-                                        <button
-                                            key={v}
-                                            role="tab"
-                                            aria-selected={view === v}
-                                            onClick={() => setView(v)}
-                                            className={clsx(
-                                                'px-3 py-1.5 rounded-md text-xs font-semibold transition-colors tabular-nums',
-                                                view === v
-                                                    ? 'bg-surface text-text-main shadow-xs'
-                                                    : 'text-text-muted hover:text-text-main'
-                                            )}
-                                        >
-                                            {v === 'open' ? `Needs attention (${open.length})` : `Reviewed (${reviewed.length})`}
-                                        </button>
-                                    ))}
-                                </div>
-                                <p className="text-[11px] text-text-muted tabular-nums">
-                                    {view === 'open' && criticalCount > 0 && <span className="text-rose-600 dark:text-rose-400 font-semibold">{criticalCount} critical</span>}
-                                    {view === 'open' && criticalCount > 0 && warningCount > 0 && ' · '}
-                                    {view === 'open' && warningCount > 0 && <span className="text-amber-700 dark:text-amber-300 font-semibold">{warningCount} {warningCount === 1 ? 'warning' : 'warnings'}</span>}
-                                    {view === 'open' && (criticalCount > 0 || warningCount > 0) && checkedAgo && ' · '}
-                                    {checkedAgo}
-                                </p>
-                            </div>
-
-                            {shown.length === 0 ? (
+                        {/* Alert Rows List */}
+                        {shown.length === 0 ? (
+                            <div className="flex-1 flex items-center justify-center p-6 text-center">
                                 <CalmState
                                     view={view}
                                     isToday={isToday}
                                     filtersActive={filtersActive}
                                     neverChecked={!runState?.last_run_at && highlights.length === 0}
                                 />
-                            ) : (
-                                <ul
-                                    ref={queueRef}
-                                    className={clsx(
-                                        'relative flex flex-col gap-0.5 px-2',
-                                        queueScrolls ? 'mb-2 overflow-y-auto overscroll-contain' : 'pb-2',
-                                    )}
-                                    style={queueMaxHeight ? { maxHeight: queueMaxHeight } : undefined}
-                                >
-                                    {shown.map(h => (
-                                        <QueueItem
-                                            key={h.id}
-                                            h={h}
-                                            selected={selected?.id === h.id}
-                                            stat={evidence.get(h.id)?.stat ?? ''}
-                                            fmtTime={fmtTime}
-                                            onSelect={() => select(h.id)}
-                                        />
-                                    ))}
-                                </ul>
-                            )}
-                        </section>
-
-                        {selected && (
-                            <section
-                                ref={inspectorRef}
-                                aria-label="Signal inspector"
-                                className="bg-surface rounded-2xl border border-border shadow-sm scroll-mt-4 lg:sticky lg:top-4"
-                            >
-                                <Inspector
-                                    key={selected.id}
-                                    h={selected}
-                                    evidence={evidence.get(selected.id) ?? evidenceFor(selected, isToday, fmtTime)}
-                                    canReview={canReview}
-                                    busy={busyId === selected.id}
-                                    choosingReason={choosingReasonFor === selected.id}
-                                    fmtTime={fmtTime}
-                                    onReview={(status, reason) => review(selected, status, reason)}
-                                    onChooseReason={show => setChoosingReasonFor(show ? selected.id : null)}
-                                />
-                            </section>
+                            </div>
+                        ) : (
+                            <ul className="flex-1 overflow-y-auto divide-y divide-border/60 no-scrollbar">
+                                {shown.map(h => (
+                                    <QueueItem
+                                        key={h.id}
+                                        h={h}
+                                        selected={selected?.id === h.id}
+                                        stat={evidence.get(h.id)?.stat ?? ''}
+                                        fmtTime={fmtTime}
+                                        onSelect={() => select(h.id)}
+                                    />
+                                ))}
+                            </ul>
                         )}
-                    </div>
+                    </aside>
+
+                    {/* Right Pane: Case Inspector */}
+                    <main className="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-surface">
+                        {selected ? (
+                            <Inspector
+                                key={selected.id}
+                                h={selected}
+                                evidence={evidence.get(selected.id) ?? evidenceFor(selected, isToday, fmtTime)}
+                                canReview={canReview}
+                                busy={busyId === selected.id}
+                                choosingReason={choosingReasonFor === selected.id}
+                                fmtTime={fmtTime}
+                                onReview={(status, reason) => review(selected, status, reason)}
+                                onChooseReason={show => setChoosingReasonFor(show ? selected.id : null)}
+                            />
+                        ) : (
+                            <div className="flex-1 flex items-center justify-center p-8 text-center text-text-muted">
+                                <p className="text-sm">Select an alert from the queue to inspect details</p>
+                            </div>
+                        )}
+                    </main>
                 </div>
             )}
 
+            {/* Non-Productive Alert Modal */}
             <Modal
                 isOpen={npOpen}
                 onClose={closeNonProductive}
@@ -590,13 +567,18 @@ export function OwlLens() {
                                 Change the list in Settings → Telemetry.
                             </p>
                         )}
-                        <ActionButton onClick={closeNonProductive}>Close</ActionButton>
+                        <button
+                            type="button"
+                            onClick={closeNonProductive}
+                            className="px-3.5 py-1.5 rounded-lg border border-border bg-surface hover:bg-surface-hover text-xs font-semibold text-text-main transition-colors"
+                        >
+                            Close
+                        </button>
                     </>
                 }
             >
                 <ul className="flex flex-col divide-y divide-border">
                     {nonProductive.map(h => {
-                        // jsonb does not keep key order, so sort by minutes here.
                         const sites = Object.entries((h.evidence.domains as Record<string, unknown>) || {})
                             .sort(([, a], [, b]) => num(b) - num(a))
                             .slice(0, 3)
@@ -621,13 +603,12 @@ export function OwlLens() {
                     })}
                 </ul>
             </Modal>
-        </PageLayout>
+        </div>
     );
 }
 
-// ---------------------------------------------------------------- evidence
+// ---------------------------------------------------------------- evidence calculation
 
-/** "2 h 10 min" from a number that may be missing. */
 function mins(v: unknown): string {
     return fmtMins(num(v));
 }
@@ -636,12 +617,10 @@ function count(v: unknown): string {
     return num(v).toLocaleString('en-US');
 }
 
-/** 0.42 -> "42%" */
 function pct(v: unknown): string {
     return `${Math.round(num(v) * 100)}%`;
 }
 
-/** Minutes after midnight -> "9:10 am" */
 function clock(v: unknown): string {
     const m = Math.round(num(v));
     const h = Math.floor(m / 60) % 24;
@@ -649,7 +628,6 @@ function clock(v: unknown): string {
     return `${h % 12 === 0 ? 12 : h % 12}:${String(r).padStart(2, '0')} ${h < 12 ? 'am' : 'pm'}`;
 }
 
-/** "2026-11-12" -> "Nov 12" */
 function shortDate(v: unknown): string {
     if (typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}/.test(v)) return '';
     return new Date(`${v.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
@@ -662,135 +640,217 @@ const BASELINE_LABEL: Record<OwlLensHighlight['baseline_source'], string> = {
     rule: 'A fixed rule',
 };
 
+interface DeviationData {
+    label: string;
+    observedLabel: string;
+    observedValue: number;
+    baselineLabel: string;
+    baselineValue: number;
+    unit: string;
+    varianceText: string;
+}
+
 interface Evidence {
-    /** One number for the queue row. */
     stat: string;
-    /** Up to three tiles for the inspector. */
-    tiles: { label: string; value: string }[];
-    /** Session context under the tiles. */
-    context: { label: string; value: string }[];
-    /** Why it was flagged, in plain words, without repeating the numbers. */
+    tiles: { label: string; value: string; caption: string }[];
+    deviation: DeviationData | null;
+    app: string;
+    range: string;
     why: string;
 }
 
-/**
- * Everything shown about a highlight, taken from the evidence the background
- * check saved with it. Nothing is recalculated here, and nothing is made up:
- * a tile only appears when its number is there.
- */
 function evidenceFor(h: OwlLensHighlight, isToday: boolean, fmtTime: (iso: string | null) => string): Evidence {
     const e = h.evidence || {};
     const tiles: Evidence['tiles'] = [];
-    const context: Evidence['context'] = [];
-    const tile = (cond: unknown, label: string, value: string) => { if (cond) tiles.push({ label, value }); };
-    const ctx = (cond: unknown, label: string, value: string) => { if (cond) context.push({ label, value }); };
+    const tile = (cond: unknown, label: string, value: string, caption = '') => {
+        if (cond) tiles.push({ label, value, caption });
+    };
     const has = (k: string) => e[k] !== undefined && e[k] !== null;
     const app = typeof e.app === 'string' && e.app ? e.app : '';
     const range = h.window_start && h.window_end ? `${fmtTime(h.window_start)} – ${fmtTime(h.window_end)}` : '';
     let stat = '';
     let why = h.detail;
+    let deviation: DeviationData | null = null;
 
     switch (h.kind) {
         case 'not_started': {
             const missed = Math.max(1, num(e.missed_working_days));
             const last = shortDate(e.last_worked);
-            tile(true, 'Untracked workdays', String(missed));
-            tile(has('usual_start_min'), 'Typical start', clock(e.usual_start_min));
-            tile(last, 'Last tracked', last);
+            tile(true, 'Untracked Days', String(missed), 'Consecutive workdays');
+            tile(has('usual_start_min'), 'Typical Start', clock(e.usual_start_min), 'Expected begin time');
+            tile(last, 'Last Tracked', last, 'Previous active day');
             stat = missed >= 2 ? `${missed} days untracked` : has('usual_start_min') ? `Usually starts ${clock(e.usual_start_min)}` : 'Not started';
             why = missed >= 2
                 ? 'This is not a one-off. They have not tracked any time on several of their workdays in a row, and this is one of the weekdays they normally work.'
                 : `They normally start well before this on this weekday, and ${isToday ? 'no time has been tracked yet' : 'no time was tracked that day'}. Owl Lens waits an hour past their usual start before raising this.`;
             break;
         }
-        case 'long_day':
-            tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins));
-            tile(has('usual_mins'), 'Usual day', mins(e.usual_mins));
-            tile(has('longest_break_mins'), 'Longest break', mins(e.longest_break_mins));
-            ctx(range, 'Session', range);
-            stat = `${mins(e.tracked_mins)} tracked`;
+        case 'long_day': {
+            const tracked = num(e.tracked_mins);
+            const usual = num(e.usual_mins);
+            tile(has('tracked_mins'), 'Tracked', mins(tracked), 'Total duration');
+            tile(has('usual_mins'), 'Usual Day', mins(usual), 'Historical average');
+            tile(has('longest_break_mins'), 'Longest Break', mins(e.longest_break_mins), 'Max rest interval');
+            stat = `${mins(tracked)} tracked`;
             why = 'This day is far longer than what they normally work. Very long days with few breaks can point to overwork, or to a timer that was left running.';
-            break;
-        case 'idle':
-            if (e.pattern === 'share') {
-                tile(has('idle_share'), 'Idle share', pct(e.idle_share));
-                tile(has('usual_idle_share'), 'Usual idle share', pct(e.usual_idle_share));
-                tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins));
-                stat = `${pct(e.idle_share)} idle`;
-                why = 'A much bigger part of their tracked day had no keyboard or mouse activity than is normal for them.';
-            } else {
-                const stop = num(e.idle_stop_mins);
-                tile(has('minutes'), 'Idle stretch', mins(e.minutes));
-                tile(h.window_start, 'Started', fmtTime(h.window_start));
-                tile(true, 'Idle auto-stop', stop > 0 ? `${stop} min` : 'Off');
-                ctx(range, 'Session', range);
-                stat = `${mins(e.minutes)} idle`;
-                why = 'The timer kept running with no keyboard or mouse activity for a long stretch, which usually means someone stepped away without stopping it.'
-                    + (stop > 0 && num(e.minutes) > stop ? " It also ran past the organisation's idle auto-stop, which should have ended the session." : '');
+            if (usual > 0 && tracked > usual) {
+                const diff = tracked - usual;
+                const multiplier = (tracked / usual).toFixed(1);
+                deviation = {
+                    label: 'Daily Work Duration',
+                    observedLabel: 'Observed',
+                    observedValue: tracked,
+                    baselineLabel: 'Usual Baseline',
+                    baselineValue: usual,
+                    unit: 'min',
+                    varianceText: `+${fmtMins(diff)} (${multiplier}x usual)`,
+                };
             }
             break;
-        case 'low_input':
-            tile(has('minutes'), 'Duration', mins(e.minutes));
-            tile(h.window_start, 'Started', fmtTime(h.window_start));
-            tile(h.window_end, 'Ended', fmtTime(h.window_end));
-            ctx(app, 'Application', app);
-            stat = `${mins(e.minutes)} of low input`;
+        }
+        case 'idle': {
+            if (e.pattern === 'share') {
+                const idleShare = num(e.idle_share);
+                const usualShare = num(e.usual_idle_share);
+                tile(has('idle_share'), 'Idle Share', pct(idleShare), 'Observed ratio');
+                tile(has('usual_idle_share'), 'Usual Idle', pct(usualShare), 'Historical baseline');
+                tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins), 'Session total');
+                stat = `${pct(idleShare)} idle`;
+                why = 'A much bigger part of their tracked day had no keyboard or mouse activity than is normal for them.';
+                if (usualShare > 0) {
+                    const diffPct = Math.round((idleShare - usualShare) * 100);
+                    deviation = {
+                        label: 'Idle Proportion',
+                        observedLabel: 'Observed Idle',
+                        observedValue: Math.round(idleShare * 100),
+                        baselineLabel: 'Normal Idle',
+                        baselineValue: Math.round(usualShare * 100),
+                        unit: '%',
+                        varianceText: `+${diffPct}% above baseline`,
+                    };
+                }
+            } else {
+                const stop = num(e.idle_stop_mins);
+                const stretch = num(e.minutes);
+                tile(has('minutes'), 'Idle Stretch', mins(stretch), 'Uninterrupted span');
+                tile(h.window_start, 'Started', fmtTime(h.window_start), 'Timestamp spotted');
+                tile(true, 'Auto-Stop Limit', stop > 0 ? `${stop} min` : 'Off', 'Org threshold');
+                stat = `${mins(stretch)} idle`;
+                why = 'The timer kept running with no keyboard or mouse activity for a long stretch, which usually means someone stepped away without stopping it.'
+                    + (stop > 0 && stretch > stop ? " It also ran past the organisation's idle auto-stop, which should have ended the session." : '');
+                if (stop > 0 && stretch > stop) {
+                    deviation = {
+                        label: 'Idle Stretch Duration',
+                        observedLabel: 'Recorded Stretch',
+                        observedValue: stretch,
+                        baselineLabel: 'Auto-Stop Threshold',
+                        baselineValue: stop,
+                        unit: 'min',
+                        varianceText: `+${stretch - stop} min beyond limit`,
+                    };
+                }
+            }
+            break;
+        }
+        case 'low_input': {
+            const m = num(e.minutes);
+            tile(has('minutes'), 'Duration', mins(m), 'Window length');
+            tile(h.window_start, 'Started', fmtTime(h.window_start), 'Start time');
+            tile(h.window_end, 'Ended', fmtTime(h.window_end), 'End time');
+            stat = `${mins(m)} low input`;
             why = 'The timer was running in one app with only a trickle of keyboard and mouse activity, far too little for normal work over that long.';
             break;
+        }
         case 'input_pattern': {
             const m = num(e.minutes);
             if (e.pattern === 'held_key') {
-                const rate = m > 0 ? count(Math.round(num(e.keystrokes) / m)) : '';
-                tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes));
-                tile(rate, 'Key rate', `${rate}/min`);
-                tile(has('clicks'), 'Mouse clicks', count(e.clicks));
-                stat = rate ? `${rate} keys/min` : `${mins(m)} held key`;
+                const rate = m > 0 ? Math.round(num(e.keystrokes) / m) : 0;
+                tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes), 'Total recorded');
+                tile(rate > 0, 'Key Rate', `${count(rate)}/min`, 'Keystroke velocity');
+                tile(has('clicks'), 'Mouse Clicks', count(e.clicks), 'Total recorded');
+                stat = rate > 0 ? `${count(rate)} keys/min` : `${mins(m)} held key`;
                 why = 'Nobody types that fast for that long. A key held down, or something resting on the keyboard, produces this pattern and makes the time look active when it may not be.';
+                if (rate > 0) {
+                    const humanPace = 350; // standard benchmark for sustained human typing
+                    deviation = {
+                        label: 'Keystroke Rate',
+                        observedLabel: 'Observed Rate',
+                        observedValue: rate,
+                        baselineLabel: 'Human Max Pace',
+                        baselineValue: humanPace,
+                        unit: 'keys/min',
+                        varianceText: `${(rate / humanPace).toFixed(1)}x sustained human maximum`,
+                    };
+                }
             } else {
-                tile(has('minutes'), 'Duration', mins(m));
-                tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes));
-                tile(has('clicks'), 'Mouse clicks', count(e.clicks));
-                stat = e.pattern === 'move_only' ? `${mins(m)} with no keys or clicks` : `${mins(m)} without pauses`;
+                tile(has('minutes'), 'Duration', mins(m), 'Interval length');
+                tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes), 'Total recorded');
+                tile(has('clicks'), 'Mouse Clicks', count(e.clicks), 'Total recorded');
+                stat = e.pattern === 'move_only' ? `${mins(m)} without keys/clicks` : `${mins(m)} continuous`;
                 why = e.pattern === 'move_only'
                     ? 'There was activity, but not a single keystroke or click, all in the same window. A mouse jiggler or auto-mover looks like this.'
                     : 'Activity registered in almost every second, without the short natural pauses people make. Automated input can produce this pattern.';
             }
-            ctx(app, 'Application', app);
-            ctx(range, 'Session', range);
             break;
         }
         case 'app_mix':
-            tile(has('unfamiliar_share'), 'Unfamiliar apps', pct(e.unfamiliar_share));
-            tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins));
-            ctx(range, 'Session', range);
-            stat = `${pct(e.unfamiliar_share)} in unfamiliar apps`;
+            tile(has('unfamiliar_share'), 'Unfamiliar Mix', pct(e.unfamiliar_share), 'Time in new apps');
+            tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins), 'Day total');
+            stat = `${pct(e.unfamiliar_share)} unfamiliar apps`;
             why = 'Most of the day went to apps this person rarely uses. It may be a new tool or project, or time spent outside their normal work.';
             break;
-        case 'focus':
-            tile(has('minutes'), 'Unbroken run', mins(e.minutes));
-            tile(has('usual_run_mins'), 'Usual best', mins(e.usual_run_mins));
-            tile(h.window_start, 'Started', fmtTime(h.window_start));
-            ctx(range, 'Session', range);
-            stat = `${mins(e.minutes)} unbroken`;
+        case 'focus': {
+            const run = num(e.minutes);
+            const usualRun = num(e.usual_run_mins);
+            tile(has('minutes'), 'Unbroken Run', mins(run), 'Active duration');
+            tile(has('usual_run_mins'), 'Usual Best', mins(usualRun), 'Typical best');
+            tile(h.window_start, 'Started', fmtTime(h.window_start), 'Window start');
+            stat = `${mins(run)} unbroken`;
             why = 'A longer stretch of steady, active work than they usually manage. Worth recognising.';
+            if (usualRun > 0 && run > usualRun) {
+                deviation = {
+                    label: 'Focus Stretch',
+                    observedLabel: 'Observed Run',
+                    observedValue: run,
+                    baselineLabel: 'Typical Run',
+                    baselineValue: usualRun,
+                    unit: 'min',
+                    varianceText: `+${run - usualRun} min longer than normal`,
+                };
+            }
             break;
+        }
         case 'non_productive': {
-            const sites = Object.entries((e.domains as Record<string, unknown>) || {})
-                .sort(([, a], [, b]) => num(b) - num(a))
-                .slice(0, 3)
-                .map(([d]) => d);
-            tile(has('share_pct'), 'Non-productive', `${num(e.share_pct)}%`);
-            tile(has('nonproductive_mins'), 'Time on those sites', mins(e.nonproductive_mins));
-            tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins));
-            ctx(sites.length > 0, 'Top sites', sites.join(', '));
-            stat = `${num(e.share_pct)}% non-productive`;
+            const share = num(e.share_pct);
+            const threshold = 25;
+            tile(has('share_pct'), 'Non-Productive', `${share}%`, 'Of tracked time');
+            tile(has('nonproductive_mins'), 'Total Duration', mins(e.nonproductive_mins), 'On restricted sites');
+            tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins), 'Day total');
+            stat = `${share}% non-productive`;
             why = 'A quarter or more of their tracked time was on sites the organisation counts as non-productive, such as social media or streaming.';
+            if (share >= threshold) {
+                deviation = {
+                    label: 'Non-Productive Time Ratio',
+                    observedLabel: 'Observed Share',
+                    observedValue: share,
+                    baselineLabel: 'Warning Threshold',
+                    baselineValue: threshold,
+                    unit: '%',
+                    varianceText: `+${share - threshold}% above 25% threshold`,
+                };
+            }
             break;
         }
     }
 
-    ctx(true, 'Compared with', BASELINE_LABEL[h.baseline_source]);
-    return { stat, tiles: tiles.slice(0, 3), context, why };
+    return {
+        stat,
+        tiles: tiles.slice(0, 3),
+        deviation,
+        app,
+        range,
+        why,
+    };
 }
 
 function initials(name: string): string {
@@ -799,7 +859,6 @@ function initials(name: string): string {
     return ((parts[0]![0] ?? '') + (parts.length > 1 ? parts[parts.length - 1]![0] ?? '' : '')).toUpperCase();
 }
 
-/** The email, only when it adds something the name does not already say. */
 function distinctEmail(h: OwlLensHighlight): string | null {
     const email = h.member_email?.trim();
     if (!email) return null;
@@ -813,14 +872,14 @@ const SEVERITY_DOT: Record<HighlightSeverity, string> = {
     positive: 'bg-emerald-500',
 };
 
-const SEVERITY_SOFT: Record<HighlightSeverity, string> = {
-    critical: 'bg-rose-500/10 text-rose-700 dark:text-rose-400',
-    warning: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
-    info: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
-    positive: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
+const SEVERITY_PILL: Record<HighlightSeverity, string> = {
+    critical: 'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/20',
+    warning: 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20',
+    info: 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border-sky-500/20',
+    positive: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20',
 };
 
-// ---------------------------------------------------------------- queue
+// ---------------------------------------------------------------- queue row
 
 function QueueItem({ h, selected, stat, fmtTime, onSelect }: {
     h: OwlLensHighlight;
@@ -830,30 +889,50 @@ function QueueItem({ h, selected, stat, fmtTime, onSelect }: {
     onSelect: () => void;
 }) {
     return (
-        <li data-id={h.id}>
+        <li>
             <button
                 type="button"
                 onClick={onSelect}
                 aria-current={selected ? 'true' : undefined}
                 className={clsx(
-                    'relative w-full text-left flex items-start gap-3 pl-4 pr-3 py-2.5 rounded-lg transition-colors',
-                    selected ? 'bg-primary/5' : 'hover:bg-surface-hover',
+                    'relative w-full text-left p-3.5 transition-colors block',
+                    selected
+                        ? 'bg-white dark:bg-surface-hover shadow-xs'
+                        : 'hover:bg-surface-hover/60 bg-transparent'
                 )}
             >
-                {selected && <span className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-primary" aria-hidden />}
-                <span className={clsx('mt-1.5 w-2 h-2 rounded-full shrink-0', SEVERITY_DOT[h.severity])} aria-label={SEVERITY_LABEL[h.severity]} />
-                <span className="flex-1 min-w-0">
-                    <span className="flex items-baseline justify-between gap-3">
-                        <span className={clsx('text-[13px] truncate', selected ? 'font-semibold text-text-main' : 'font-medium text-text-main')}>
+                {/* Selected left indicator: TrackOwl navy #0B2559 */}
+                {selected && (
+                    <span className="absolute left-0 top-0 bottom-0 w-[3px] bg-[#0B2559] dark:bg-white" aria-hidden />
+                )}
+
+                {/* Row 1: Severity dot, Alert Title, Timestamp */}
+                <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                        <span className={clsx('w-2 h-2 rounded-full shrink-0', SEVERITY_DOT[h.severity])} aria-hidden />
+                        <span className={clsx(
+                            'text-xs truncate tracking-tight',
+                            selected ? 'font-bold text-text-main' : 'font-semibold text-text-main'
+                        )}>
                             {KIND_LABEL[h.kind]}
                         </span>
-                        <span className="text-[11px] text-text-muted tabular-nums shrink-0">{fmtTime(h.detected_at)}</span>
+                    </div>
+                    <span className="text-[11px] text-text-muted tabular-nums shrink-0">
+                        {fmtTime(h.detected_at)}
                     </span>
-                    <span className="block text-[12px] text-text-muted truncate">
-                        {h.member_name}
-                        {stat && <span className="tabular-nums"> · {stat}</span>}
-                    </span>
-                </span>
+                </div>
+
+                {/* Row 2: Member Name */}
+                <div className="mt-1 pl-4 text-xs text-text-muted truncate">
+                    {h.member_name}
+                </div>
+
+                {/* Row 3: Relevant Metric & Category */}
+                <div className="mt-0.5 pl-4 text-[11px] text-text-muted/80 truncate flex items-center gap-1.5">
+                    {stat && <span className="font-medium text-text-main/80 tabular-nums">{stat}</span>}
+                    {stat && <span>·</span>}
+                    <span>{KIND_CATEGORY[h.kind]}</span>
+                </div>
             </button>
         </li>
     );
@@ -877,166 +956,286 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
     const email = distinctEmail(h);
     const spotted = fmtTime(h.detected_at);
     const updated = fmtTime(h.updated_at);
+    const [overflowOpen, setOverflowOpen] = useState(false);
+    const overflowRef = useRef<HTMLDivElement>(null);
+
+    // Close overflow menu on outside click
+    useEffect(() => {
+        function handleOutside(e: MouseEvent) {
+            if (overflowRef.current && !overflowRef.current.contains(e.target as Node)) {
+                setOverflowOpen(false);
+            }
+        }
+        if (overflowOpen) {
+            document.addEventListener('mousedown', handleOutside);
+            return () => document.removeEventListener('mousedown', handleOutside);
+        }
+    }, [overflowOpen]);
 
     return (
-        <article className="flex flex-col gap-6 p-5 md:p-7" aria-live="polite">
-            {/* Header */}
-            <header className="flex flex-col gap-4">
-                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs">
-                    <span className={clsx('inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold', SEVERITY_SOFT[h.severity])}>
-                        <span className={clsx('w-1.5 h-1.5 rounded-full', SEVERITY_DOT[h.severity])} aria-hidden />
-                        {SEVERITY_LABEL[h.severity]}
-                    </span>
-                    <span className="font-medium text-text-muted">{KIND_CATEGORY[h.kind]}</span>
-                    <span className="text-text-muted/70" aria-hidden>·</span>
-                    <span className="text-text-muted tabular-nums">
-                        Spotted {spotted}{updated && updated !== spotted ? `, updated ${updated}` : ''}
-                    </span>
-                </div>
-                <h2 className="text-xl md:text-2xl font-bold text-text-main tracking-tight leading-tight">{KIND_LABEL[h.kind]}</h2>
-                <div className="flex items-center gap-3 min-w-0">
-                    <span className="w-10 h-10 shrink-0 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
-                        {initials(h.member_name)}
-                    </span>
-                    <div className="min-w-0">
-                        <p className="text-sm font-semibold text-text-main truncate">{h.member_name}</p>
-                        {email && <p className="text-xs text-text-muted truncate">{email}</p>}
+        <div className="flex flex-col h-full overflow-hidden bg-surface">
+            {/* Sticky Case Header */}
+            <header className="sticky top-0 z-10 bg-surface border-b border-border px-6 py-4 flex flex-wrap items-center justify-between gap-4 shrink-0">
+                {/* Left Meta & Identity */}
+                <div className="min-w-0">
+                    <div className="flex items-center gap-2 text-xs mb-1">
+                        <span className={clsx('inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md font-semibold text-[11px] border', SEVERITY_PILL[h.severity])}>
+                            <span className={clsx('w-1.5 h-1.5 rounded-full', SEVERITY_DOT[h.severity])} aria-hidden />
+                            {SEVERITY_LABEL[h.severity]}
+                        </span>
+                        <span className="text-text-muted font-medium">{KIND_CATEGORY[h.kind]}</span>
+                        <span className="text-text-muted/40">·</span>
+                        <span className="text-text-muted tabular-nums">
+                            Spotted {spotted}{updated && updated !== spotted ? `, updated ${updated}` : ''}
+                        </span>
+                    </div>
+
+                    <h2 className="text-lg md:text-xl font-bold text-text-main tracking-tight leading-tight">
+                        {KIND_LABEL[h.kind]}
+                    </h2>
+
+                    <div className="flex items-center gap-2 mt-1.5">
+                        <span className="w-5 h-5 rounded-full bg-[#0B2559]/10 dark:bg-white/10 text-[#0B2559] dark:text-white flex items-center justify-center text-[10px] font-bold">
+                            {initials(h.member_name)}
+                        </span>
+                        <span className="text-xs font-semibold text-text-main">{h.member_name}</span>
+                        {email && <span className="text-xs text-text-muted">({email})</span>}
                     </div>
                 </div>
-            </header>
 
-            {/* Key evidence */}
-            {evidence.tiles.length > 0 && (
-                <section className="flex flex-col gap-3">
-                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Key evidence</h3>
-                    <div className={clsx('grid gap-3', evidence.tiles.length >= 3 ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-1 sm:grid-cols-2')}>
-                        {evidence.tiles.map(t => (
-                            <div key={t.label} className="rounded-xl bg-surface-hover px-4 py-3.5 min-w-0">
-                                <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{t.label}</p>
-                                <p className="mt-1 text-xl font-bold text-text-main tabular-nums truncate" title={t.value}>{t.value}</p>
-                            </div>
-                        ))}
-                    </div>
-                    {evidence.context.length > 0 && (
-                        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-[13px] mt-1">
-                            {evidence.context.map(c => (
-                                <div key={c.label} className="contents">
-                                    <dt className="text-text-muted">{c.label}</dt>
-                                    <dd className="text-text-main font-medium tabular-nums min-w-0 truncate" title={c.value}>{c.value}</dd>
-                                </div>
-                            ))}
-                        </dl>
-                    )}
-                </section>
-            )}
+                {/* Right Actions */}
+                <div className="flex items-center gap-2.5 shrink-0">
+                    <Link
+                        to={link.to}
+                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-surface hover:bg-surface-hover text-xs font-semibold text-text-main transition-colors shadow-xs"
+                    >
+                        {link.label}
+                        <ArrowUpRight className="w-3.5 h-3.5" aria-hidden />
+                    </Link>
 
-            {/* Why */}
-            <section className="flex flex-col gap-2">
-                <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Why Owl Lens flagged this</h3>
-                <p className="text-sm text-text-main leading-relaxed">{evidence.why}</p>
-            </section>
-
-            {h.status !== 'active' && (
-                <p className="text-[13px] text-text-muted">
-                    {STATUS_LABEL[h.status]}
-                    {h.status === 'expected' && h.status_reason ? ` (${h.status_reason})` : ''}
-                    {h.status_by_name ? ` by ${h.status_by_name}` : ''}
-                    {h.status_at ? ` at ${fmtTime(h.status_at)}` : ''}.
-                </p>
-            )}
-
-            {/* Actions */}
-            <footer className="flex flex-col gap-3 pt-1">
-                {canReview && h.status === 'active' && choosingReason ? (
-                    <div className="flex flex-col gap-2.5">
-                        <p className="text-[13px] font-semibold text-text-main">Why is it expected?</p>
-                        <div className="flex flex-wrap items-center gap-2">
-                            {EXPECTED_REASONS.map(r => (
-                                <SecondaryButton key={r} disabled={busy} onClick={() => onReview('expected', r)}>{r}</SecondaryButton>
-                            ))}
+                    {canReview && h.status === 'active' && (
+                        <>
                             <button
                                 type="button"
                                 disabled={busy}
-                                onClick={() => onChooseReason(false)}
-                                className="text-[13px] font-semibold text-text-muted hover:text-text-main px-2"
+                                onClick={() => onReview('acknowledged')}
+                                className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg bg-[#0B2559] hover:bg-[#0B2559]/90 text-white text-xs font-semibold shadow-xs transition-colors disabled:opacity-50"
                             >
-                                Cancel
+                                <Check className="w-3.5 h-3.5" aria-hidden />
+                                Acknowledge
                             </button>
-                        </div>
-                        <p className="text-xs text-text-muted">Owl Lens will stay quiet about {h.member_name} for the rest of this day.</p>
-                    </div>
-                ) : (
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Link
-                            to={link.to}
-                            className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg border border-primary/25 text-primary hover:bg-primary/5 text-[13px] font-semibold transition-colors"
-                        >
-                            {link.label}
-                            <ArrowUpRight className="w-4 h-4" aria-hidden />
-                        </Link>
-                        {canReview && h.status === 'active' && (
-                            <>
+
+                            {/* Overflow Actions Menu */}
+                            <div className="relative" ref={overflowRef}>
                                 <button
                                     type="button"
                                     disabled={busy}
-                                    onClick={() => onReview('acknowledged')}
-                                    className="inline-flex items-center gap-1.5 h-9 px-4 rounded-lg bg-primary text-white dark:text-slate-900 hover:bg-primary-hover text-[13px] font-semibold shadow-xs transition-colors disabled:opacity-50"
+                                    onClick={() => setOverflowOpen(prev => !prev)}
+                                    className="w-8 h-8 rounded-lg border border-border flex items-center justify-center text-text-muted hover:text-text-main hover:bg-surface-hover transition-colors"
+                                    title="More actions"
+                                    aria-expanded={overflowOpen}
                                 >
-                                    <Check className="w-4 h-4" aria-hidden />
-                                    Acknowledge
+                                    <MoreHorizontal className="w-4 h-4" />
                                 </button>
-                                <span className="hidden sm:block flex-1" aria-hidden />
-                                <SecondaryButton disabled={busy} onClick={() => onChooseReason(true)}>Mark as expected</SecondaryButton>
-                                <SecondaryButton disabled={busy} onClick={() => onReview('dismissed')}>Dismiss</SecondaryButton>
-                            </>
-                        )}
-                        {canReview && h.status !== 'active' && (
-                            <SecondaryButton disabled={busy} onClick={() => onReview('active')} icon={<RotateCcw className="w-3.5 h-3.5" />}>
-                                Put back
-                            </SecondaryButton>
-                        )}
+
+                                {overflowOpen && (
+                                    <div className="absolute right-0 top-full mt-1 w-44 rounded-xl border border-border bg-surface shadow-lg py-1 z-30 animate-in fade-in zoom-in-95 duration-100">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setOverflowOpen(false); onChooseReason(true); }}
+                                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-text-main hover:bg-surface-hover transition-colors"
+                                        >
+                                            Mark as expected...
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setOverflowOpen(false); onReview('dismissed'); }}
+                                            className="w-full text-left px-3.5 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                                        >
+                                            Dismiss alert
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
+
+                    {canReview && h.status !== 'active' && (
+                        <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => onReview('active')}
+                            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-surface hover:bg-surface-hover text-xs font-semibold text-text-main transition-colors disabled:opacity-50"
+                        >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            Put back
+                        </button>
+                    )}
+                </div>
+            </header>
+
+            {/* Reason selection overlay / prompt */}
+            {choosingReason && canReview && h.status === 'active' && (
+                <div className="border-b border-border bg-surface-hover/60 px-6 py-3 flex flex-wrap items-center justify-between gap-3 shrink-0">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-text-main">Mark as expected:</span>
+                        <div className="flex items-center gap-1.5">
+                            {EXPECTED_REASONS.map(r => (
+                                <button
+                                    key={r}
+                                    type="button"
+                                    disabled={busy}
+                                    onClick={() => onReview('expected', r)}
+                                    className="px-2.5 py-1 rounded-md bg-surface border border-border hover:bg-surface-hover text-xs font-medium text-text-main transition-colors shadow-xs"
+                                >
+                                    {r}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => onChooseReason(false)}
+                        className="text-xs text-text-muted hover:text-text-main"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            )}
+
+            {/* Inspector Body */}
+            <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 max-w-4xl no-scrollbar">
+                {/* 1. KPI Strip */}
+                {evidence.tiles.length > 0 && (
+                    <section className="space-y-2">
+                        <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Key Metrics</h3>
+                        <div className={clsx(
+                            'rounded-xl border border-border divide-y sm:divide-y-0 sm:divide-x divide-border bg-surface shadow-xs',
+                            evidence.tiles.length === 3 && 'grid grid-cols-1 sm:grid-cols-3',
+                            evidence.tiles.length === 2 && 'grid grid-cols-1 sm:grid-cols-2',
+                            evidence.tiles.length === 1 && 'grid grid-cols-1',
+                        )}>
+                            {evidence.tiles.map(t => (
+                                <div key={t.label} className="p-4 flex flex-col justify-between">
+                                    <p className="text-[10px] font-bold uppercase tracking-wider text-text-muted">{t.label}</p>
+                                    <p className="text-2xl font-bold text-text-main tabular-nums mt-1 truncate" title={t.value}>
+                                        {t.value}
+                                    </p>
+                                    <p className="text-[11px] text-text-muted mt-1 truncate">{t.caption}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                )}
+
+                {/* 2. Baseline Deviation */}
+                <section className="space-y-2">
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Baseline Deviation</h3>
+                    {evidence.deviation ? (
+                        <div className="p-4 rounded-xl border border-border bg-surface shadow-xs space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-semibold text-text-main">{evidence.deviation.label}</span>
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#0B2559]/10 text-[#0B2559] dark:bg-white/10 dark:text-white tabular-nums">
+                                    {evidence.deviation.varianceText}
+                                </span>
+                            </div>
+
+                            {/* Comparison visualization */}
+                            <div className="space-y-2 pt-1">
+                                <div>
+                                    <div className="flex justify-between text-[11px] text-text-muted mb-1">
+                                        <span>{evidence.deviation.baselineLabel}</span>
+                                        <span className="font-semibold text-text-main tabular-nums">
+                                            {evidence.deviation.baselineValue} {evidence.deviation.unit}
+                                        </span>
+                                    </div>
+                                    <div className="h-2 w-full rounded-full bg-border/60 overflow-hidden">
+                                        <div
+                                            className="h-full bg-text-muted/40 rounded-full"
+                                            style={{
+                                                width: `${Math.min(100, Math.round((evidence.deviation.baselineValue / Math.max(evidence.deviation.baselineValue, evidence.deviation.observedValue)) * 100))}%`
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div className="flex justify-between text-[11px] text-text-muted mb-1">
+                                        <span>{evidence.deviation.observedLabel}</span>
+                                        <span className="font-bold text-[#0B2559] dark:text-accent tabular-nums">
+                                            {evidence.deviation.observedValue} {evidence.deviation.unit}
+                                        </span>
+                                    </div>
+                                    <div className="h-2.5 w-full rounded-full bg-border/60 overflow-hidden">
+                                        <div
+                                            className="h-full bg-[#0B2559] dark:bg-accent rounded-full transition-all duration-500"
+                                            style={{
+                                                width: `${Math.min(100, Math.round((evidence.deviation.observedValue / Math.max(evidence.deviation.baselineValue, evidence.deviation.observedValue)) * 100))}%`
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="rounded-xl border border-border/80 bg-surface/30 p-4 text-xs text-text-muted">
+                            Baseline comparison unavailable for this rule-based signal.
+                        </div>
+                    )}
+                </section>
+
+                {/* 3. Signal Analysis */}
+                <section className="space-y-2">
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Signal Analysis</h3>
+                    <div className="border-l-2 border-[#0B2559] dark:border-accent pl-4 py-1">
+                        <p className="text-sm text-text-main leading-relaxed">
+                            {evidence.why}
+                        </p>
+                    </div>
+                </section>
+
+                {/* 4. Session Context */}
+                <section className="space-y-2">
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Session Context</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-4 rounded-xl border border-border bg-surface/40 text-xs">
+                        <div>
+                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Application</span>
+                            <span className="text-text-main font-semibold mt-0.5 block truncate">
+                                {evidence.app || 'System / All Applications'}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Session Window</span>
+                            <span className="text-text-main font-semibold mt-0.5 block truncate">
+                                {evidence.range || 'Full business day'}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Detection Basis</span>
+                            <span className="text-text-main font-semibold mt-0.5 block truncate">
+                                {KIND_CATEGORY[h.kind]} · {KIND_LABEL[h.kind]}
+                            </span>
+                        </div>
+                        <div>
+                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Member Baseline</span>
+                            <span className="text-text-main font-semibold mt-0.5 block truncate">
+                                {BASELINE_LABEL[h.baseline_source]}
+                            </span>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Status info if reviewed */}
+                {h.status !== 'active' && (
+                    <div className="p-3 rounded-lg bg-surface-hover/60 border border-border text-xs text-text-muted">
+                        <span className="font-semibold text-text-main">{STATUS_LABEL[h.status]}</span>
+                        {h.status === 'expected' && h.status_reason ? ` (${h.status_reason})` : ''}
+                        {h.status_by_name ? ` by ${h.status_by_name}` : ''}
+                        {h.status_at ? ` at ${fmtTime(h.status_at)}` : ''}.
                     </div>
                 )}
-            </footer>
-        </article>
-    );
-}
-
-function SecondaryButton({ children, icon, onClick, disabled }: {
-    children: ReactNode;
-    icon?: ReactNode;
-    onClick: () => void;
-    disabled?: boolean;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            disabled={disabled}
-            className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-surface-hover hover:bg-border text-[13px] font-semibold text-text-main transition-colors disabled:opacity-50"
-        >
-            {icon}
-            {children}
-        </button>
-    );
-}
-
-function ActionButton({ children, icon, onClick, disabled }: {
-    children: ReactNode;
-    icon?: ReactNode;
-    onClick: () => void;
-    disabled?: boolean;
-}) {
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            disabled={disabled}
-            className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-surface hover:bg-surface-hover text-[12px] font-semibold text-text-main transition-colors disabled:opacity-50"
-        >
-            {icon}
-            {children}
-        </button>
+            </div>
+        </div>
     );
 }
 
