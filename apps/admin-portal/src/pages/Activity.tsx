@@ -22,6 +22,7 @@ import { ScreenshotGallery } from '../components/activity/ScreenshotGallery';
 import { TimelineGrid } from '../components/activity/TimelineGrid';
 import { calculateActivityScore, orgLocalToUtc } from '../lib/dataUtils';
 import { useAuth } from '../context/AuthContext';
+import { useLinkedFilters } from '../lib/linkedFilters';
 
 interface ActivitySample {
     id: number;
@@ -77,9 +78,13 @@ export function Activity() {
     const [membersLoaded, setMembersLoaded] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const requestSeqRef = useRef(0);
+    // The day navigator (arrows and date); the calendar opens lined up with it.
+    const dayNavRef = useRef<HTMLDivElement>(null);
     
     // Default to the current day in the displayTimezone
-    const [selectedDate, setSelectedDate] = useState(() => new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' }));
+    // An Owl Lens card can open this page on one person and one day.
+    const { date: linkedDate, takeMember: takeLinkedMember } = useLinkedFilters();
+    const [selectedDate, setSelectedDate] = useState(() => linkedDate ?? new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' }));
     
     const [enlargedIndex, setEnlargedIndex] = useState<number | null>(null);
     const [members, setMembers] = useState<MemberInfo[]>([]);
@@ -170,10 +175,14 @@ export function Activity() {
         }
         
         query.then(({ data }) => {
-            if (data) setMembers(data);
+            if (data) {
+                setMembers(data);
+                const linkedMember = isRep ? null : takeLinkedMember(data);
+                if (linkedMember) setSelectedMemberId(linkedMember);
+            }
             setMembersLoaded(true);
         });
-    }, [organizationId, isRep, managedMemberIds, profile?.role]);
+    }, [organizationId, isRep, managedMemberIds, profile?.role, takeLinkedMember]);
 
     const fetchData = useCallback(async (isSilent = false, forceRefresh = false, overrideLimit?: number, quiet = false) => {
         const mySeq = ++requestSeqRef.current;
@@ -568,7 +577,9 @@ export function Activity() {
                     />
                     )}
 
-                    <div className="flex items-center h-10 bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
+                    {/* At least as wide as the calendar (288px), so the open panel
+                        fits exactly under this box, edge to edge. */}
+                    <div ref={dayNavRef} className="flex items-center h-10 min-w-[288px] bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
                         <button
                             onClick={() => {
                                 const [y, m, d] = selectedDate.split('-').map(Number);
@@ -588,7 +599,8 @@ export function Activity() {
                         <DatePicker 
                             value={selectedDate}
                             onChange={(val) => setSelectedDate(val)}
-                            className="min-w-[170px] md:min-w-[180px]"
+                            anchorRef={dayNavRef}
+                            className="flex-1 min-w-[170px] md:min-w-[180px]"
                         />
                         <button
                             onClick={() => {

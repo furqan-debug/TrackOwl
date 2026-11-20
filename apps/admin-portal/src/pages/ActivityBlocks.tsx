@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { activityService, type BlockRecordEntry } from '../services/activity.service';
 import { useAuth } from '../context/AuthContext';
+import { useLinkedFilters } from '../lib/linkedFilters';
 import {
     PageLayout, StatMetric, LoadingState, EmptyState,
     FilterSelect, DatePicker, RefreshButton, AppIcon
@@ -42,8 +43,11 @@ export function ActivityBlocks() {
         isRep ? (profile?.id ?? 'all') : 'all'
     );
 
+    // An Owl Lens card can open this page on one person and one day.
+    const { date: linkedDate, takeMember: takeLinkedMember } = useLinkedFilters();
+
     const [selectedDate, setSelectedDate] = useState(() =>
-        new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' })
+        linkedDate ?? new Date().toLocaleDateString('en-CA', { timeZone: displayTimezone || 'UTC' })
     );
 
     const [blocks, setBlocks] = useState<BlockRecordEntry[]>([]);
@@ -54,6 +58,8 @@ export function ActivityBlocks() {
     const ITEMS_PER_PAGE = 20;
 
     const requestSeqRef = useRef(0);
+    // The day navigator (arrows and date); the calendar opens lined up with it.
+    const dayNavRef = useRef<HTMLDivElement>(null);
 
     // Check if selectedDate is today
     const todayStr = useMemo(() =>
@@ -84,11 +90,15 @@ export function ActivityBlocks() {
             }
 
             query.then(({ data }) => {
-                if (data) setMembers(data);
+                if (data) {
+                    setMembers(data);
+                    const linkedMember = isRep ? null : takeLinkedMember(data);
+                    if (linkedMember) setSelectedMemberId(linkedMember);
+                }
                 setMembersLoaded(true);
             });
         });
-    }, [organizationId, profile?.role, managedMemberIds, isScoped]);
+    }, [organizationId, profile?.role, managedMemberIds, isScoped, isRep, takeLinkedMember]);
 
     // Fetch block records
     const fetchBlocks = useCallback(async (isSilent = false, forceRefresh = false) => {
@@ -286,8 +296,9 @@ export function ActivityBlocks() {
                     </div>
                     )}
 
-                    {/* Day Navigator */}
-                    <div className="flex items-center h-10 bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
+                    {/* Day Navigator — at least as wide as the calendar (288px), so the
+                        open panel fits exactly under it, edge to edge. */}
+                    <div ref={dayNavRef} className="flex items-center h-10 min-w-[288px] bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
                         <button
                             onClick={() => handleShiftDay(-1)}
                             className="p-2 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
@@ -298,7 +309,8 @@ export function ActivityBlocks() {
                         <DatePicker
                             value={selectedDate}
                             onChange={(val) => setSelectedDate(val)}
-                            className="min-w-[170px]"
+                            anchorRef={dayNavRef}
+                            className="flex-1 min-w-[170px]"
                         />
                         <button
                             onClick={() => handleShiftDay(1)}

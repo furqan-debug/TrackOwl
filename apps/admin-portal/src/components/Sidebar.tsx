@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
-import { ChevronDown, ChevronLeft, Star, Zap, LogOut, Lock, Sun, Moon, Crown } from 'lucide-react';
-import { navStructure, matchActive, activeSibling, type BadgeType, type Role } from '../nav/navModel';
+import { ChevronDown, ChevronLeft, Star, Zap, LogOut, Lock, Sun, Moon, Crown, ScanEye } from 'lucide-react';
+import { navStructure, owlLensNav, matchActive, activeSibling, type BadgeType, type Role } from '../nav/navModel';
 import { useFavorites } from '../context/FavoritesContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../hooks/useTheme';
@@ -10,6 +10,7 @@ import { SecureImage } from '../components/ui/SecureImage';
 import logoDark from '../assets/branding/4.svg';
 import sidebarIcon from '../assets/branding/icon.png';
 import { initialOf } from '../lib/initials';
+import { owlLensService } from '../services/owlLens.service';
 
 const SIDEBAR_WIDTH_EXPANDED = 240;
 const SIDEBAR_WIDTH_COLLAPSED = 68;
@@ -34,6 +35,34 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
     const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
     const [favoritesExpanded, setFavoritesExpanded] = useState(true);
     const [avatarError, setAvatarError] = useState(false);
+
+    /* ── Owl Lens alert count ─────────────────── */
+    const [owlAlertCount, setOwlAlertCount] = useState(0);
+    const showOwlLens = useMemo(() => {
+        if (owlLensNav.allowedRoles && !owlLensNav.allowedRoles.includes(userRole)) return false;
+        if (owlLensNav.requiresPremium && !isPremium) return false;
+        return true;
+    }, [userRole, isPremium]);
+
+    useEffect(() => {
+        if (!showOwlLens || !organization?.id) return;
+        let cancelled = false;
+        const today = new Date().toLocaleDateString('en-CA');
+        owlLensService.fetchHighlights(organization.id, today)
+            .then(rows => {
+                if (!cancelled) setOwlAlertCount(rows.filter(h => h.status === 'active').length);
+            })
+            .catch(() => { /* silent */ });
+        // Refresh every 5 minutes
+        const interval = setInterval(() => {
+            owlLensService.fetchHighlights(organization.id, new Date().toLocaleDateString('en-CA'))
+                .then(rows => {
+                    if (!cancelled) setOwlAlertCount(rows.filter(h => h.status === 'active').length);
+                })
+                .catch(() => { /* silent */ });
+        }, 5 * 60_000);
+        return () => { cancelled = true; clearInterval(interval); };
+    }, [showOwlLens, organization?.id]);
 
     // Reset error state if avatar changes
     useEffect(() => {
@@ -199,6 +228,59 @@ export function Sidebar({ overlay = false, onOverlayClose, isCollapsed = false, 
 
                 {/* Main Navigation */}
                 <nav className="space-y-1" aria-label="Primary">
+                    {/* ── Intelligence Section (Owl Lens) ─────── */}
+                    {showOwlLens && (() => {
+                        const isActive = location.pathname === owlLensNav.path;
+                        return (
+                            <div className="mb-4">
+                                {!effectiveCollapsed && (
+                                    <p className="px-4 text-[11px] font-bold text-white/40 mb-2 text-left uppercase tracking-[0.2em]">
+                                        Intelligence
+                                    </p>
+                                )}
+                                <Link
+                                    to={owlLensNav.path!}
+                                    onClick={() => onOverlayClose?.()}
+                                    className={clsx(
+                                        'group relative flex items-center justify-between rounded-xl text-[14px] font-bold transition-all duration-200 overflow-hidden',
+                                        effectiveCollapsed ? 'p-2.5 justify-center' : 'px-3.5 py-2.5 gap-3',
+                                        isActive
+                                            ? 'bg-white/10 text-white shadow-sm ring-1 ring-white/10'
+                                            : 'text-[var(--sidebar-text)] hover:text-white hover:bg-white/5'
+                                    )}
+                                >
+                                    <div className={clsx("flex items-center gap-3", effectiveCollapsed && "justify-center w-full relative")}>
+                                        <ScanEye className={clsx(
+                                            "w-[20px] h-[20px] shrink-0 transition-colors",
+                                            isActive ? "text-white" : "text-[var(--sidebar-text)] group-hover:text-white"
+                                        )} strokeWidth={2.5} aria-hidden />
+                                        {!effectiveCollapsed && (
+                                            <span className="tracking-tight text-[14px]">{owlLensNav.name}</span>
+                                        )}
+                                        {effectiveCollapsed && owlAlertCount > 0 && (
+                                            <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white ring-2 ring-[#0B2559]" />
+                                        )}
+                                    </div>
+                                    {!effectiveCollapsed && (
+                                        <div className="flex items-center gap-2">
+                                            {owlAlertCount > 0 && (
+                                                <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-white/15 text-white text-[11px] font-semibold tabular-nums">
+                                                    {owlAlertCount}
+                                                </span>
+                                            )}
+                                            <button
+                                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleFavorite(owlLensNav.name, owlLensNav.path!); }}
+                                                className={clsx("p-1 rounded-md transition-opacity shrink-0", isFavorite(owlLensNav.path!) ? "text-accent opacity-100" : "text-[var(--sidebar-text)] opacity-0 group-hover:opacity-100 hover:text-accent hover:bg-white/10")}
+                                            >
+                                                <Star className={clsx("w-4 h-4", isFavorite(owlLensNav.path!) && "fill-accent")} />
+                                            </button>
+                                        </div>
+                                    )}
+                                </Link>
+                            </div>
+                        );
+                    })()}
+
                     {!effectiveCollapsed && (
                         <p className="px-4 text-[11px] font-bold text-white/40 mb-2 text-left uppercase tracking-[0.2em]">Navigation</p>
                     )}

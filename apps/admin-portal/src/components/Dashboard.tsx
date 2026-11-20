@@ -105,6 +105,8 @@ export function Dashboard() {
     }, [profile, session?.user?.id]);
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
+    // The date navigator (arrows and date); the calendar opens lined up with it.
+    const dayNavRef = useRef<HTMLDivElement>(null);
     const [refreshing, setRefreshing] = useState(false);
     const [enlargedScreenshot, setEnlargedScreenshot] = useState<any | null>(null);
 
@@ -728,7 +730,7 @@ export function Dashboard() {
                         rounded-md, p-1, with p-3 chevrons around a label-less
                         picker. The "Viewing Date" label was what made this one
                         taller - a two-line pill next to a one-line one. */}
-                    <div className="flex items-center h-12 bg-surface p-1 rounded-xl shadow-shell-sm border border-border flex-1 md:flex-none">
+                    <div ref={dayNavRef} className="flex items-center h-12 min-w-[288px] bg-surface p-1 rounded-xl shadow-shell-sm border border-border flex-1 md:flex-none">
                         <button
                             onClick={() => navigateDate('prev')}
                             className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-lg"
@@ -744,6 +746,7 @@ export function Dashboard() {
                                 setStartDateStr(capped);
                                 setEndDateStr(capped);
                             }}
+                            anchorRef={dayNavRef}
                             className="flex-1 min-w-0"
                         />
                         <button
