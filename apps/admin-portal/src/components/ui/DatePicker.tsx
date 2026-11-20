@@ -350,21 +350,30 @@ export function DatePicker({
                 ref={triggerRef}
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
-                    "flex items-center gap-3 px-4 py-2.5 cursor-pointer transition-all rounded-xl select-none border min-w-0",
-                    triggerClassName,
-                    isOpen 
-                        ? "bg-surface-hover border-primary/30 shadow-inner" 
-                        : "bg-surface hover:bg-surface-hover hover:border-primary/20 border-border shadow-shell-sm"
+                    "flex items-center gap-2.5 cursor-pointer transition-all select-none min-w-0",
+                    triggerClassName ? (
+                        clsx(
+                            triggerClassName,
+                            isOpen && "shadow-inner"
+                        )
+                    ) : (
+                        clsx(
+                            "px-4 py-2.5 rounded-xl border",
+                            isOpen 
+                                ? "bg-surface-hover border-primary/30 shadow-inner" 
+                                : "bg-surface hover:bg-surface-hover hover:border-primary/20 border-border shadow-shell-sm"
+                        )
+                    )
                 )}
             >
-                <CalendarIcon className={clsx("w-4 h-4 shrink-0 transition-colors", isOpen ? "text-primary" : "text-text-muted")} />
-                <div className="flex flex-col min-w-[110px] truncate">
+                <CalendarIcon className={clsx("w-3.5 h-3.5 shrink-0 transition-colors", isOpen ? "text-primary" : "text-text-muted")} />
+                <div className="flex flex-col min-w-[100px] truncate">
                     {label && <span className="text-[9px] font-black text-text-muted uppercase tracking-widest leading-none mb-1">{label}</span>}
                     <span className={clsx("text-[12px] font-bold leading-none truncate", (!value && !displayValue) ? "text-text-muted" : "text-text-main")}>
                         {formatDisplay()}
                     </span>
                 </div>
-                <ChevronDown className={clsx("w-3.5 h-3.5 shrink-0 transition-transform duration-300 ml-auto", isOpen ? "text-primary rotate-180" : "text-text-muted")} />
+                <ChevronDown className={clsx("w-3.5 h-3.5 shrink-0 transition-transform duration-300 ml-auto", isOpen ? "text-primary rotate-180" : "text-text-muted")} strokeWidth={2} />
             </div>
 
             {/* Calendar Dropdown */}
