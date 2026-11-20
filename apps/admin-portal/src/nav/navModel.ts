@@ -32,16 +32,20 @@ export interface NavGroup {
     requiresPremium?: boolean;
 }
 
+/**
+ * Owl Lens lives in its own "Intelligence" section in the sidebar,
+ * separate from the main navigation list.
+ */
+export const owlLensNav: NavGroup = {
+    name: 'Owl Lens',
+    icon: ScanEye,
+    path: '/dashboard/owl-lens',
+    allowedRoles: ['Owner', 'Admin', 'Manager', 'Viewer'],
+    requiresPremium: true,
+};
+
 export const navStructure: NavGroup[] = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
-    {
-        // Highlights of anything out of the ordinary. For people who manage others.
-        name: 'Owl Lens',
-        icon: ScanEye,
-        path: '/dashboard/owl-lens',
-        allowedRoles: ['Owner', 'Admin', 'Manager', 'Viewer'],
-        requiresPremium: true,
-    },
     { 
         name: 'Timesheets', 
         icon: Clock, 
@@ -138,6 +142,7 @@ export function activeSibling(pathname: string, paths: string[]): string | null 
  */
 export function getLabelForPath(pathname: string): string {
     const normalized = pathname.replace(/\/$/, '') || '/';
+    if (owlLensNav.path === normalized) return owlLensNav.name;
     for (const group of navStructure) {
         if (group.path === normalized) return group.name;
         for (const child of group.children ?? []) {
