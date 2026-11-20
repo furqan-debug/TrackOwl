@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import clsx from 'clsx';
 import { Menu, Sun, Moon } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { MobileNav } from './MobileNav.tsx';
@@ -21,6 +22,7 @@ export function AppShell({ children }: AppShellProps) {
     const { theme, toggleTheme } = useTheme();
     const isLockedPath = location.pathname === '/dashboard/pricing' || location.pathname === '/dashboard/settings/billing';
     const isLocked = organization?.subscription_status === 'Locked' && !isLockedPath;
+    const isOwlLens = location.pathname.startsWith('/dashboard/owl-lens');
 
     useEffect(() => {
         setMobileMenuOpen(false);
@@ -78,8 +80,13 @@ export function AppShell({ children }: AppShellProps) {
                         <MobileNav onClose={() => setMobileMenuOpen(false)} />
                     )}
 
-                    <main className="flex-1 overflow-y-auto no-scrollbar">
-                        <div className="max-w-[1600px] mx-auto w-full min-h-full py-4 px-3 md:py-6 md:px-4 lg:px-6">
+                    <main className={clsx("flex-1 no-scrollbar", isOwlLens ? "overflow-hidden flex flex-col" : "overflow-y-auto")}>
+                        <div className={clsx(
+                            "w-full",
+                            isOwlLens
+                                ? "h-full flex-1 flex flex-col min-h-0"
+                                : "max-w-[1600px] mx-auto min-h-full py-4 px-3 md:py-6 md:px-4 lg:px-6"
+                        )}>
                             {children}
                         </div>
                     </main>
