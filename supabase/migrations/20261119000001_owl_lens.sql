@@ -464,8 +464,28 @@ sruns AS (
   WHERE g.hit
   GROUP BY g.user_id, g.pat, g.grp
 ),
+-- Filter to qualifying runs, then aggregate across all stretches throughout the day
+-- so continuous multi-hour infractions (or repeated patterns) don't freeze at the single longest run.
+srun_qual AS (
+  SELECT * FROM sruns
+  WHERE (pat = 'held_key'  AND mins >= 15)
+     OR (pat = 'move_only' AND mins >= 30)
+     OR (pat = 'no_pause'  AND mins >= 60)
+     OR (pat = 'low_input' AND mins >= 30)
+     OR (pat = 'idle'      AND mins >= 30)
+),
 srun_best AS (
-  SELECT DISTINCT ON (user_id, pat) * FROM sruns ORDER BY user_id, pat, mins DESC
+  SELECT user_id, pat,
+         min(st) AS st,
+         max(en) AS en,
+         sum(mins)::int AS mins,
+         sum(keys)::bigint AS keys,
+         sum(clicks)::bigint AS clicks,
+         count(*)::int AS stretches,
+         max(mins)::int AS longest_run_mins,
+         mode() WITHIN GROUP (ORDER BY app) AS app
+  FROM srun_qual
+  GROUP BY user_id, pat
 ),
 
 -- ------------------------------------------------ calendar facts
@@ -592,14 +612,20 @@ r_idle AS (
   FROM (
     SELECT r.user_id AS member_id, 'idle'::text AS kind,
            CASE WHEN r.mins >= 90 THEN 'critical' ELSE 'warning' END AS severity,
-           'Their timer ran for ' || public.owl_lens_fmt_mins(r.mins)
-           || ' (' || public.owl_lens_fmt_time(r.st, c.tz) || ' to ' || public.owl_lens_fmt_time(r.en, c.tz)
-           || ') with no keyboard or mouse activity.'
+           CASE WHEN coalesce(r.stretches, 1) > 1 THEN
+             'Their timer ran for ' || public.owl_lens_fmt_mins(r.mins)
+             || ' across ' || r.stretches || ' stretches (' || public.owl_lens_fmt_time(r.st, c.tz) || ' to ' || public.owl_lens_fmt_time(r.en, c.tz)
+             || ') with no keyboard or mouse activity.'
+           ELSE
+             'Their timer ran for ' || public.owl_lens_fmt_mins(r.mins)
+             || ' (' || public.owl_lens_fmt_time(r.st, c.tz) || ' to ' || public.owl_lens_fmt_time(r.en, c.tz)
+             || ') with no keyboard or mouse activity.'
+           END
            || CASE WHEN c.idle_stop_mins IS NOT NULL AND r.mins > c.idle_stop_mins
                    THEN ' Your idle setting normally stops the timer after ' || c.idle_stop_mins
                         || ' min, so this is worth checking.'
                    ELSE '' END AS detail,
-           jsonb_build_object('pattern', 'stretch', 'minutes', r.mins, 'idle_stop_mins', c.idle_stop_mins) AS evidence,
+           jsonb_build_object('pattern', 'stretch', 'minutes', r.mins, 'idle_stop_mins', c.idle_stop_mins, 'stretches', coalesce(r.stretches, 1)) AS evidence,
            'rule'::text AS baseline_source, r.st AS window_start, r.en AS window_end, 1 AS pri
     FROM srun_best r CROSS JOIN cfg c
     WHERE r.pat = 'idle' AND r.mins >= 45
@@ -623,10 +649,16 @@ r_idle AS (
 -- ------------------------------------------------ C2. timer running, almost no input
 r_low_input AS (
   SELECT r.user_id AS member_id, 'low_input'::text AS kind, 'warning'::text AS severity,
-         'For ' || public.owl_lens_fmt_mins(r.mins)
-         || ' (' || public.owl_lens_fmt_time(r.st, c.tz) || ' to ' || public.owl_lens_fmt_time(r.en, c.tz) || ') '
-         || r.app || ' stayed in front with only a few seconds of keyboard or mouse activity each minute.' AS detail,
-         jsonb_build_object('minutes', r.mins, 'app', r.app) AS evidence,
+         CASE WHEN coalesce(r.stretches, 1) > 1 THEN
+           'For ' || public.owl_lens_fmt_mins(r.mins)
+           || ' across ' || r.stretches || ' stretches (' || public.owl_lens_fmt_time(r.st, c.tz) || ' to ' || public.owl_lens_fmt_time(r.en, c.tz) || ') '
+           || r.app || ' stayed in front with only a few seconds of keyboard or mouse activity each minute.'
+         ELSE
+           'For ' || public.owl_lens_fmt_mins(r.mins)
+           || ' (' || public.owl_lens_fmt_time(r.st, c.tz) || ' to ' || public.owl_lens_fmt_time(r.en, c.tz) || ') '
+           || r.app || ' stayed in front with only a few seconds of keyboard or mouse activity each minute.'
+         END AS detail,
+         jsonb_build_object('minutes', r.mins, 'app', r.app, 'stretches', coalesce(r.stretches, 1)) AS evidence,
          'rule'::text AS baseline_source, r.st AS window_start, r.en AS window_end
   FROM srun_best r CROSS JOIN cfg c
   WHERE r.pat = 'low_input' AND r.mins >= 45
@@ -637,28 +669,35 @@ r_input AS (
   SELECT DISTINCT ON (x.user_id)
          x.user_id AS member_id, 'input_pattern'::text AS kind, x.severity, x.detail,
          jsonb_build_object('pattern', x.pat, 'minutes', x.mins, 'keystrokes', x.keys,
-                            'clicks', x.clicks, 'app', x.app) AS evidence,
+                            'clicks', x.clicks, 'app', x.app, 'stretches', coalesce(x.stretches, 1)) AS evidence,
          'rule'::text AS baseline_source, x.st AS window_start, x.en AS window_end
   FROM (
     SELECT r.*, c.tz,
            CASE WHEN r.pat = 'held_key' AND r.mins >= 60 THEN 'critical' ELSE 'warning' END AS severity,
            CASE r.pat
              WHEN 'held_key' THEN
-               to_char(r.keys, 'FM999,999,999') || ' keystrokes were recorded in '
-               || public.owl_lens_fmt_mins(r.mins)
-               || ' (' || public.owl_lens_fmt_time(r.st, c.tz) || ' to ' || public.owl_lens_fmt_time(r.en, c.tz)
-               || ') in ' || r.app || ', about ' || to_char(round(r.keys::numeric / r.mins), 'FM999,999')
+               to_char(r.keys, 'FM999,999,999') || ' keystrokes were recorded '
+               || CASE WHEN coalesce(r.stretches, 1) > 1 THEN
+                    'across ' || r.stretches || ' stretches (' || public.owl_lens_fmt_mins(r.mins) || ' total, '
+                    || public.owl_lens_fmt_time(r.st, c.tz) || ' to ' || public.owl_lens_fmt_time(r.en, c.tz) || ')'
+                  ELSE
+                    'in ' || public.owl_lens_fmt_mins(r.mins)
+                    || ' (' || public.owl_lens_fmt_time(r.st, c.tz) || ' to ' || public.owl_lens_fmt_time(r.en, c.tz) || ')'
+                  END
+               || ' in ' || r.app || ', about ' || to_char(round(r.keys::numeric / nullif(r.mins, 0)), 'FM999,999')
                || ' a minute, with '
                || CASE WHEN r.clicks = 0 THEN 'no mouse clicks'
                        ELSE to_char(r.clicks, 'FM999,999') || ' mouse clicks' END
                || '. That is faster than anyone can type, which usually means a key is being held down.'
              WHEN 'move_only' THEN
                'For ' || public.owl_lens_fmt_mins(r.mins)
+               || CASE WHEN coalesce(r.stretches, 1) > 1 THEN ' across ' || r.stretches || ' stretches' ELSE '' END
                || ' (' || public.owl_lens_fmt_time(r.st, c.tz) || ' to ' || public.owl_lens_fmt_time(r.en, c.tz)
                || ') there was activity every minute in ' || r.app
                || ' but no keystrokes, no clicks and no change of window. Movement with nothing else for this long is unusual.'
              ELSE
                'Activity was recorded in almost every second for ' || public.owl_lens_fmt_mins(r.mins)
+               || CASE WHEN coalesce(r.stretches, 1) > 1 THEN ' across ' || r.stretches || ' stretches' ELSE '' END
                || ' (' || public.owl_lens_fmt_time(r.st, c.tz) || ' to ' || public.owl_lens_fmt_time(r.en, c.tz)
                || '), without the short pauses people normally take.'
            END AS detail,
