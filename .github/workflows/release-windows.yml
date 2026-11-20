@@ -87,3 +87,114 @@ jobs:
           prerelease: false
           includeUpdaterJson: true
           args: ""
+
+      # Extract version number from src-tauri/tauri.conf.json
+      - name: Extract Version Number
+        id: version
+        run: |
+          node -e "const v = require('./src-tauri/tauri.conf.json').version; console.log('NUM=' + v); require('fs').appendFileSync(process.env.GITHUB_OUTPUT, 'NUM=' + v + '\n')"
+
+      - name: Sign Windows Installers with SSL.com eSigner
+        shell: pwsh
+        env:
+          ES_USERNAME: ${{ secrets.ES_USERNAME }}
+          ES_PASSWORD: ${{ secrets.ES_PASSWORD }}
+          CREDENTIAL_ID: ${{ secrets.CREDENTIAL_ID }}
+          ES_TOTP_SECRET: ${{ secrets.ES_TOTP_SECRET }}
+        run: |
+          $VERSION = "${{ steps.version.outputs.NUM }}"
+          $NSIS_EXE = "${{ github.workspace }}\src-tauri\target\release\bundle\nsis\TrackOwl_${VERSION}_x64-setup.exe"
+          $MSI_FILE = "${{ github.workspace }}\src-tauri\target\release\bundle\msi\TrackOwl_${VERSION}_x64_en-US.msi"
+
+          # Locate CodeSignTool (already set up in Setup step, or fallback)
+          $CST_BAT = $null
+          if (Test-Path "C:\CodeSignTool") {
+            $CST_BAT = Get-ChildItem -Path "C:\CodeSignTool" -Recurse -Filter "CodeSignTool.bat" | Select-Object -First 1
+          }
+          if (-not $CST_BAT) {
+            $CST_URL = "https://github.com/SSLcom/CodeSignTool/releases/download/v1.3.0/CodeSignTool-v1.3.0-windows.zip"
+            $CST_ZIP = "${{ runner.temp }}\CodeSignTool.zip"
+            $CST_DIR = "${{ runner.temp }}\CodeSignTool"
+            Invoke-WebRequest -Uri $CST_URL -OutFile $CST_ZIP
+            Expand-Archive -Path $CST_ZIP -DestinationPath $CST_DIR -Force
+            $CST_BAT = Get-ChildItem -Path $CST_DIR -Recurse -Filter "CodeSignTool.bat" | Select-Object -First 1
+          }
+
+          if (-not $CST_BAT) {
+            Write-Error "CodeSignTool.bat not found after extraction"
+            exit 1
+          }
+
+          Write-Host "CodeSignTool found at: $($CST_BAT.FullName)"
+
+          # Set CODE_SIGN_TOOL_PATH so the bat file can find its bundled JDK and jar
+          $env:CODE_SIGN_TOOL_PATH = $CST_BAT.DirectoryName
+          Write-Host "CODE_SIGN_TOOL_PATH set to: $env:CODE_SIGN_TOOL_PATH"
+
+          # List contents to verify JDK and jar are present
+          Write-Host "CodeSignTool directory contents:"
+          Get-ChildItem -Path $env:CODE_SIGN_TOOL_PATH | ForEach-Object { Write-Host "  $_" }
+
+          # Sign each file
+          foreach ($file in @($NSIS_EXE, $MSI_FILE)) {
+            if (Test-Path $file) {
+              Write-Host "Signing: $file"
+              & $CST_BAT.FullName sign `
+                -username="$env:ES_USERNAME" `
+                -password="$env:ES_PASSWORD" `
+                -credential_id="$env:CREDENTIAL_ID" `
+                -totp_secret="$env:ES_TOTP_SECRET" `
+                -input_file_path="$file" `
+                -override
+              if ($LASTEXITCODE -ne 0) {
+                Write-Error "Signing failed for $file with exit code $LASTEXITCODE"
+                exit 1
+              }
+              Write-Host "Successfully signed: $file"
+            } else {
+              Write-Warning "File not found, skipping: $file"
+            }
+          }
+
+      # Regenerate Tauri updater .sig files after code signing
+      # Code signing modifies the .exe binary, invalidating the original .sig
+      - name: Regenerate Updater Signatures After Code Signing
+        shell: pwsh
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          $VERSION = "${{ steps.version.outputs.NUM }}"
+          $NSIS_EXE = "${{ github.workspace }}\src-tauri\target\release\bundle\nsis\TrackOwl_${VERSION}_x64-setup.exe"
+          $SIG_FILE = "${NSIS_EXE}.sig"
+
+          if (Test-Path $NSIS_EXE) {
+            Write-Host "Regenerating .sig for signed .exe..."
+            # Delete old .sig
+            if (Test-Path $SIG_FILE) { Remove-Item $SIG_FILE }
+            # Generate new .sig using Tauri signer
+            npx tauri signer sign "$NSIS_EXE" --private-key "$env:TAURI_SIGNING_PRIVATE_KEY" --password "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
+            if (Test-Path $SIG_FILE) {
+              Write-Host "New .sig generated successfully: $SIG_FILE"
+            } else {
+              Write-Error ".sig file was not generated!"
+              exit 1
+            }
+          } else {
+            Write-Warning "NSIS exe not found: $NSIS_EXE"
+          }
+
+      # Re-upload the signed Windows installers + new .sig to the GitHub release
+      - name: Upload Signed Windows Installers to Release
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $VERSION = "${{ steps.version.outputs.NUM }}"
+          $TAG = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}" } else { "v$VERSION" }
+          Write-Host "Overwriting release assets for tag $TAG with signed binaries..."
+          gh release upload $TAG `
+            "src-tauri/target/release/bundle/nsis/TrackOwl_${VERSION}_x64-setup.exe" `
+            "src-tauri/target/release/bundle/nsis/TrackOwl_${VERSION}_x64-setup.exe.sig" `
+            "src-tauri/target/release/bundle/msi/TrackOwl_${VERSION}_x64_en-US.msi" `
+            --clobber
