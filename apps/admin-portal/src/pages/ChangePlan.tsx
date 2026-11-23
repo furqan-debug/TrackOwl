@@ -187,7 +187,7 @@ export function ChangePlan() {
                                                 ? 'bg-slate-900 !text-slate-50 dark:bg-slate-900 dark:!text-slate-50'
                                                 : 'bg-amber-500/15 text-amber-500 dark:text-amber-400'
                                         )}>
-                                            −25%
+                                            -25%
                                         </span>
                                     )}
                                 </button>
