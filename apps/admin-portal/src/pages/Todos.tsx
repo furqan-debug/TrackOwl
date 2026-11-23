@@ -488,23 +488,6 @@ export function Todos() {
         statusFilter
     ]);
 
-    const { inFlightTrend, resolvedTrend, assignedTrend } = useMemo(() => {
-        const total = baseTodos.length;
-        const resolved = baseTodos.filter(t => t.status === 'Done').length;
-        const inFlight = total - resolved;
-        const assigned = isRep ? total : baseTodos.filter(t => getTodoAssigneeIds(t).length > 0).length;
-
-        const resRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
-        const inFlightRate = total > 0 ? Math.round((inFlight / total) * 100) : 0;
-        const assignRate = total > 0 ? Math.round((assigned / total) * 100) : 0;
-
-        return {
-            inFlightTrend: inFlightRate,
-            resolvedTrend: resRate,
-            assignedTrend: assignRate
-        };
-    }, [baseTodos, isRep]);
-
     return (
         <PageLayout
             maxWidth="full"
@@ -588,7 +571,6 @@ export function Todos() {
                                 ).length
                             }
                             sub="Pending objectives"
-                            trend={inFlightTrend}
                             accent="brand-gradient"
                         />
 
@@ -603,7 +585,6 @@ export function Todos() {
                                 ).length
                             }
                             sub="Successfully closed"
-                            trend={resolvedTrend}
                             accent="brand-gradient"
                         />
 
@@ -622,7 +603,6 @@ export function Todos() {
                                     ).length
                             }
                             sub={isRep ? "Your assigned tasks" : "Tasks with owners"}
-                            trend={assignedTrend}
                             accent="brand-gradient"
                         />
                     </div>

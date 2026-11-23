@@ -240,30 +240,16 @@ export function Clients() {
         return matchesSearch && matchesStatus;
     });
 
-    const { activeCount, recentCount, clientGrowthTrend, activeRate, recentGrowthTrend } = useMemo(() => {
+    const { activeCount, recentCount } = useMemo(() => {
         const now = Date.now();
         const thirtyDaysAgo = now - 30 * 86400000;
-        const sixtyDaysAgo = now - 60 * 86400000;
 
         const active = clients.filter(c => c.status === 'Active').length;
         const recent = clients.filter(c => new Date(c.created_at).getTime() > thirtyDaysAgo).length;
-        const priorRecent = clients.filter(c => {
-            const t = new Date(c.created_at).getTime();
-            return t <= thirtyDaysAgo && t > sixtyDaysAgo;
-        }).length;
-
-        const growth = priorRecent > 0 
-            ? Math.round(((recent - priorRecent) / priorRecent) * 100)
-            : (recent > 0 ? 100 : 0);
-
-        const rate = clients.length > 0 ? Math.round((active / clients.length) * 100) : 0;
 
         return {
             activeCount: active,
-            recentCount: recent,
-            clientGrowthTrend: growth,
-            activeRate: rate,
-            recentGrowthTrend: growth
+            recentCount: recent
         };
     }, [clients]);
 
@@ -319,7 +305,6 @@ export function Clients() {
                         label="Total Clients"
                         value={clients.length}
                         sub="Registered clients"
-                        trend={clientGrowthTrend}
                         accent="brand-gradient"
                     />
 
@@ -328,7 +313,6 @@ export function Clients() {
                         label="Active"
                         value={activeCount}
                         sub="Currently active"
-                        trend={activeRate}
                         accent="brand-gradient"
                     />
 
@@ -337,7 +321,6 @@ export function Clients() {
                         label="Recent"
                         value={recentCount}
                         sub="Last 30 days"
-                        trend={recentGrowthTrend}
                         accent="brand-gradient"
                     />
                 </div>
