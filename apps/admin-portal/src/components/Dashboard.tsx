@@ -730,12 +730,17 @@ export function Dashboard() {
                         rounded-md, p-1, with p-3 chevrons around a label-less
                         picker. The "Viewing Date" label was what made this one
                         taller - a two-line pill next to a one-line one. */}
-                    <div ref={dayNavRef} className="flex items-center h-12 min-w-[288px] bg-surface p-1 rounded-xl shadow-shell-sm border border-border flex-1 md:flex-none">
+                    <div
+                        ref={dayNavRef}
+                        className="flex items-center h-10 bg-surface border border-border rounded-xl shadow-xs overflow-hidden flex-1 md:flex-none"
+                    >
                         <button
+                            type="button"
                             onClick={() => navigateDate('prev')}
-                            className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-lg"
+                            className="h-full px-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors border-r border-border shrink-0"
+                            title="Previous day"
                         >
-                            <ChevronLeft className="w-5 h-5" />
+                            <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2} />
                         </button>
                         <DatePicker
                             value={startDateStr}
@@ -747,20 +752,23 @@ export function Dashboard() {
                                 setEndDateStr(capped);
                             }}
                             anchorRef={dayNavRef}
-                            className="flex-1 min-w-0"
+                            className="h-full min-w-[150px] md:min-w-[170px]"
+                            triggerClassName="h-full px-3 py-0 border-0 bg-transparent hover:bg-surface-hover shadow-none rounded-none w-full"
                         />
                         <button
+                            type="button"
                             onClick={() => navigateDate('next')}
-                            className="p-3 shrink-0 hover:bg-surface-hover text-text-muted hover:text-primary transition-all rounded-lg disabled:opacity-30 disabled:hover:bg-transparent"
+                            className="h-full px-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors disabled:opacity-20 border-l border-border shrink-0"
+                            title="Next day"
                             disabled={isTodayView || (endDateStr >= todayOrgStr && startDateStr >= todayOrgStr)}
                         >
-                            <ChevronRight className="w-5 h-5" />
+                            <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
                         </button>
                     </div>
                     {!isTodayView && (
                         <button
                             onClick={goToToday}
-                            className="hidden md:flex items-center gap-1.5 px-3 py-2 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-widest hover:bg-primary hover:text-[var(--bg-surface)] hover:border-primary hover:shadow-shell-sm active:scale-95 transition-all duration-200 shrink-0 animate-in fade-in slide-in-from-top-2 duration-300"
+                            className="hidden md:flex items-center h-10 gap-1.5 px-3 rounded-xl bg-primary/10 border border-primary/20 text-primary text-[11px] font-black uppercase tracking-widest hover:bg-primary hover:text-[var(--bg-surface)] hover:border-primary hover:shadow-shell-sm active:scale-95 transition-all duration-200 shrink-0 animate-in fade-in slide-in-from-top-2 duration-300"
                         >
                             <span>Today</span>
                         </button>
@@ -769,7 +777,7 @@ export function Dashboard() {
                         onClick={() => fetchDashboardData(true, true)}
                         refreshing={refreshing}
                         label="Refresh dashboard"
-                        className="refresh-btn--lg shadow-shell-sm !cursor-pointer hover:text-text-main hover:bg-surface-hover transition-all"
+                        className="h-10 w-10 rounded-xl shrink-0 shadow-shell-sm !cursor-pointer hover:text-text-main hover:bg-surface-hover transition-all"
                     />
                 </div>
             }
