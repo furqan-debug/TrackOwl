@@ -849,8 +849,8 @@ export function Dashboard() {
                                     <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
                                         <defs>
                                             <linearGradient id="chartBrandBlue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="0%" stopColor="#1e3a5f" stopOpacity={0.18} />
-                                                <stop offset="100%" stopColor="#1e3a5f" stopOpacity={0} />
+                                                <stop offset="0%" stopColor="var(--chart-gold)" stopOpacity={0.18} />
+                                                <stop offset="100%" stopColor="var(--chart-gold)" stopOpacity={0} />
                                             </linearGradient>
                                         </defs>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border-color)" opacity={0.5} />
@@ -873,17 +873,17 @@ export function Dashboard() {
                                         />
                                         <Tooltip
                                             contentStyle={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border-color)', borderRadius: '12px', boxShadow: 'var(--shadow-premium)', fontSize: '12px' }}
-                                            itemStyle={{ color: '#1e3a5f', fontWeight: 'bold' }}
+                                            itemStyle={{ color: 'var(--chart-gold)', fontWeight: 'bold' }}
                                         />
                                         <Area
                                             type="linear"
                                             dataKey="hours"
-                                            stroke="#1e3a5f"
+                                            stroke="var(--chart-gold)"
                                             strokeWidth={2.5}
                                             fillOpacity={1}
                                             fill="url(#chartBrandBlue)"
                                             dot={false}
-                                            activeDot={{ r: 4, fill: '#1e3a5f', strokeWidth: 0 }}
+                                            activeDot={{ r: 4, fill: 'var(--chart-gold)', strokeWidth: 0 }}
                                             animationDuration={1500}
                                         />
                                     </AreaChart>
