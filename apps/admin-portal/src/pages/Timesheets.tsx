@@ -1350,6 +1350,63 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
             }));
     }, [day, selectedMember]);
 
+    // Paging, the same as the People page: 20 rows to start, 10 / 20 / 50 to choose from.
+    const [requestedPage, setCurrentPage] = useState<number>(1);
+    const [pageSize, setPageSize] = useState<number>(20);
+    const totalPages = Math.max(1, Math.ceil(displayRows.length / pageSize));
+
+    // A new day or a different member starts again on page 1. Keyed on the
+    // date, not the rows, so the background refresh does not jump pages.
+    const pagingKey = `${day?.date ?? ''}|${selectedMember}`;
+    const [pagedFor, setPagedFor] = useState(pagingKey);
+    if (pagedFor !== pagingKey) {
+        setPagedFor(pagingKey);
+        setCurrentPage(1);
+    }
+
+    // Fewer rows after a refresh: stay on the last page that still exists.
+    const currentPage = Math.min(requestedPage, totalPages);
+
+    const pagedRows = useMemo(() => {
+        const start = (currentPage - 1) * pageSize;
+        return displayRows.slice(start, start + pageSize);
+    }, [displayRows, currentPage, pageSize]);
+
+    const pageNumbers = useMemo(() => {
+        if (totalPages <= 5) {
+            return Array.from({ length: totalPages }, (_, i) => i + 1);
+        }
+        const pages: (number | string)[] = [1];
+        if (currentPage > 3) pages.push('...');
+        const start = Math.max(2, currentPage - 1);
+        const end = Math.min(totalPages - 1, currentPage + 1);
+        for (let i = start; i <= end; i++) pages.push(i);
+        if (currentPage < totalPages - 2) pages.push('...');
+        pages.push(totalPages);
+        return pages;
+    }, [totalPages, currentPage]);
+
+    const scrollToPageTop = () => {
+        const mainEl = document.querySelector('main');
+        if (mainEl) {
+            mainEl.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    const handlePageChange = (newPage: number) => {
+        if (newPage === currentPage) return;
+        setCurrentPage(newPage);
+        scrollToPageTop();
+    };
+
+    const handlePageSizeChange = (newSize: number) => {
+        if (newSize === pageSize) return;
+        setPageSize(newSize);
+        setCurrentPage(1);
+        scrollToPageTop();
+    };
+
     if (!day) return <div className="flex flex-col items-center justify-center h-64"><EmptyState title="No entries found" /></div>;
 
     const renderTimeDisplay = (s: any) => {
@@ -1472,12 +1529,12 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                        {displayRows.map((s, idx) => (
+                        {pagedRows.map((s, idx) => (
                             // Only the aggregated rows drill in. Once a member is
                             // selected these are their individual sessions, and
                             // clicking one has nowhere to go.
                             <tr
-                                key={idx}
+                                key={(currentPage - 1) * pageSize + idx}
                                 onClick={isAggregatedView ? () => onRowClick(s.user_id) : undefined}
                                 className={clsx(
                                     "group hover:bg-surface-hover/50 transition-all",
@@ -1554,6 +1611,95 @@ function DailyView({ entries, selectedMember, toProperCase, onEditSession, onDel
                     </tbody>
                 </table>
             </div>
+
+            {displayRows.length > 0 && (
+                <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+                    {/* Left: Summary & Segmented Page Size Control */}
+                    <div className="flex flex-wrap items-center gap-4 text-[12px] text-text-muted">
+                        <span>
+                            Showing{' '}
+                            <strong className="text-text-main font-semibold tabular-nums">
+                                {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, displayRows.length)}
+                            </strong>{' '}
+                            of{' '}
+                            <strong className="text-text-main font-semibold tabular-nums">{displayRows.length}</strong>{' '}
+                            {isAggregatedView ? 'members' : 'sessions'}
+                        </span>
+
+                        {displayRows.length > 10 && (
+                            <div className="flex items-center gap-2 pl-3 border-l border-border/80">
+                                <span className="text-[11px] font-medium text-text-muted">Rows:</span>
+                                <div className="inline-flex items-center bg-surface border border-border rounded-xl p-0.5 shadow-shell-sm">
+                                    {[10, 20, 50].map(sz => (
+                                        <button
+                                            key={sz}
+                                            type="button"
+                                            onClick={() => handlePageSizeChange(sz)}
+                                            className={clsx(
+                                                "px-2.5 py-1 rounded-lg text-[11px] font-bold tabular-nums transition-all cursor-pointer",
+                                                pageSize === sz
+                                                    ? "bg-primary text-white shadow-shell-sm"
+                                                    : "text-text-muted hover:text-text-main hover:bg-surface-hover"
+                                            )}
+                                        >
+                                            {sz}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right: Prev, Page Numbers, Next */}
+                    <div className="flex items-center gap-1.5">
+                        <button
+                            type="button"
+                            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                            disabled={currentPage === 1}
+                            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl border border-border bg-surface text-[12px] font-bold text-text-muted hover:bg-surface-hover hover:text-text-main hover:border-border/80 disabled:opacity-30 disabled:pointer-events-none transition-all shadow-shell-sm cursor-pointer"
+                        >
+                            <ChevronLeft className="w-3.5 h-3.5" />
+                            <span>Prev</span>
+                        </button>
+
+                        {totalPages > 1 && (
+                            <div className="flex items-center gap-1">
+                                {pageNumbers.map((pg, idx) =>
+                                    pg === '...' ? (
+                                        <span key={`ellipsis-${idx}`} className="w-7 text-center text-xs font-bold text-text-muted select-none">
+                                            …
+                                        </span>
+                                    ) : (
+                                        <button
+                                            key={pg}
+                                            type="button"
+                                            onClick={() => handlePageChange(pg as number)}
+                                            className={clsx(
+                                                "w-9 h-9 rounded-xl text-[12px] font-bold tabular-nums transition-all flex items-center justify-center cursor-pointer shadow-shell-sm",
+                                                currentPage === pg
+                                                    ? "bg-primary text-white font-black shadow-md"
+                                                    : "bg-surface border border-border text-text-muted hover:bg-surface-hover hover:text-text-main hover:border-border/80"
+                                            )}
+                                        >
+                                            {pg}
+                                        </button>
+                                    )
+                                )}
+                            </div>
+                        )}
+
+                        <button
+                            type="button"
+                            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                            disabled={currentPage === totalPages}
+                            className="inline-flex items-center gap-1.5 px-3 h-9 rounded-xl border border-border bg-surface text-[12px] font-bold text-text-muted hover:bg-surface-hover hover:text-text-main hover:border-border/80 disabled:opacity-30 disabled:pointer-events-none transition-all shadow-shell-sm cursor-pointer"
+                        >
+                            <span>Next</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
