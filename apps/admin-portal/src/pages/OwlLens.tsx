@@ -32,25 +32,40 @@ import { teamService, type Team } from '../services/team.service';
 
 const KIND_LABEL: Record<HighlightKind, string> = {
     not_started: 'Workday not started',
-    long_day: 'Very long day',
-    idle: 'Long idle stretch',
-    low_input: 'Timer running, almost no input',
-    input_pattern: 'Unusual input pattern',
-    app_mix: 'Unusual app mix',
-    focus: 'Strong focus',
+    long_day: 'Very long workday',
+    idle: 'Timer running while away',
+    low_input: 'Very low activity on timer',
+    input_pattern: 'Unusual activity pattern',
+    app_mix: 'Unfamiliar apps used',
+    focus: 'Strong focus stretch',
     non_productive: 'Non-productive sites',
 };
 
 const KIND_CATEGORY: Record<HighlightKind, string> = {
     not_started: 'Attendance',
     long_day: 'Attendance',
-    idle: 'Presence',
-    low_input: 'Presence',
-    input_pattern: 'Presence',
-    app_mix: 'Apps',
+    idle: 'Activity',
+    low_input: 'Activity',
+    input_pattern: 'Activity',
+    app_mix: 'Apps & Websites',
     focus: 'Focus',
-    non_productive: 'Apps',
+    non_productive: 'Apps & Websites',
 };
+
+function highlightTitle(h: OwlLensHighlight): string {
+    if (h.kind === 'input_pattern') {
+        const pat = h.evidence?.pattern;
+        if (pat === 'held_key') return 'Held key detected';
+        if (pat === 'move_only') return 'Mouse jiggler detected';
+        if (pat === 'no_pause') return 'Automated activity detected';
+        return 'Unusual activity pattern';
+    }
+    if (h.kind === 'idle') return 'Timer running while away';
+    if (h.kind === 'low_input') return 'Very low activity on timer';
+    if (h.kind === 'app_mix') return 'Unfamiliar apps used';
+    if (h.kind === 'long_day') return 'Very long workday';
+    return KIND_LABEL[h.kind];
+}
 
 const SEVERITY_RANK: Record<HighlightSeverity, number> = { critical: 0, warning: 1, info: 2, positive: 3 };
 
@@ -624,12 +639,20 @@ function shortDate(v: unknown): string {
     return new Date(`${v.slice(0, 10)}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
-const BASELINE_LABEL: Record<OwlLensHighlight['baseline_source'], string> = {
-    personal: 'Their own normal',
-    team: "Their team's normal",
-    organization: "The organisation's normal",
-    rule: 'Fixed human-speed threshold',
-};
+function baselineSourceLabel(h: OwlLensHighlight): string {
+    if (h.baseline_source === 'personal') return 'Their usual work pattern';
+    if (h.baseline_source === 'team') return "Their team's normal average";
+    if (h.baseline_source === 'organization') return "Company average";
+    if (h.kind === 'input_pattern') {
+        const pat = h.evidence?.pattern;
+        if (pat === 'held_key') return 'Normal human typing limit';
+        if (pat === 'move_only') return 'Normal mouse activity rule';
+        return 'Standard human activity benchmark';
+    }
+    if (h.kind === 'idle') return 'Company idle auto-stop rule';
+    if (h.kind === 'non_productive') return 'Company restricted sites policy';
+    return 'Standard workplace rule';
+}
 
 interface DeviationData {
     label: string;
@@ -668,30 +691,30 @@ function evidenceFor(h: OwlLensHighlight, isToday: boolean, fmtTime: (iso: strin
             const missed = Math.max(1, num(e.missed_working_days));
             const last = shortDate(e.last_worked);
             tile(true, 'Untracked Days', String(missed), 'Consecutive workdays');
-            tile(has('usual_start_min'), 'Typical Start', clock(e.usual_start_min), 'Expected begin time');
-            tile(last, 'Last Tracked', last, 'Previous active day');
+            tile(has('usual_start_min'), 'Normal Start', clock(e.usual_start_min), 'Usual start time');
+            tile(last, 'Last Worked', last, 'Previous active day');
             stat = missed >= 2 ? `${missed} days untracked` : has('usual_start_min') ? `Usually starts ${clock(e.usual_start_min)}` : 'Not started';
             why = missed >= 2
-                ? 'This is not a one-off. They have not tracked any time on several of their workdays in a row, and this is one of the weekdays they normally work.'
-                : `They normally start well before this on this weekday, and ${isToday ? 'no time has been tracked yet' : 'no time was tracked that day'}. Owl Lens waits an hour past their usual start before raising this.`;
+                ? `They have not tracked any time for ${missed} scheduled workdays in a row. This is unusual based on their normal schedule.`
+                : `${isToday ? 'No time has been tracked today' : 'No time was tracked that day'}. They normally start working around ${clock(e.usual_start_min)} on this weekday. This alert appears after waiting an hour past their normal start time.`;
             break;
         }
         case 'long_day': {
             const tracked = num(e.tracked_mins);
             const usual = num(e.usual_mins);
-            tile(has('tracked_mins'), 'Tracked', mins(tracked), 'Total duration');
-            tile(has('usual_mins'), 'Usual Day', mins(usual), 'Historical average');
-            tile(has('longest_break_mins'), 'Longest Break', mins(e.longest_break_mins), 'Max rest interval');
+            tile(has('tracked_mins'), 'Tracked Today', mins(tracked), 'Total hours tracked');
+            tile(has('usual_mins'), 'Usual Day', mins(usual), 'Their normal workday');
+            tile(has('longest_break_mins'), 'Longest Break', mins(e.longest_break_mins), 'Longest rest taken');
             stat = `${mins(tracked)} tracked`;
-            why = 'This day is far longer than what they normally work. Very long days with few breaks can point to overwork, or to a timer that was left running.';
+            why = `Today's shift is significantly longer than their usual day (${mins(tracked)} tracked vs ${mins(usual)} normal), with very few breaks taken. This could mean overtime, or that a timer was accidentally left running after work.`;
             if (usual > 0 && tracked > usual) {
                 const diff = tracked - usual;
                 const multiplier = (tracked / usual).toFixed(1);
                 deviation = {
-                    label: 'Daily Work Duration',
-                    observedLabel: 'Observed',
+                    label: 'Workday Length',
+                    observedLabel: 'Hours worked today',
                     observedValue: tracked,
-                    baselineLabel: 'Usual Baseline',
+                    baselineLabel: 'Normal workday',
                     baselineValue: usual,
                     unit: 'min',
                     varianceText: `+${fmtMins(diff)} (${multiplier}x usual)`,
@@ -703,44 +726,42 @@ function evidenceFor(h: OwlLensHighlight, isToday: boolean, fmtTime: (iso: strin
             if (e.pattern === 'share') {
                 const idleShare = num(e.idle_share);
                 const usualShare = num(e.usual_idle_share);
-                tile(has('idle_share'), 'Idle Share', pct(idleShare), 'Observed ratio');
-                tile(has('usual_idle_share'), 'Usual Idle', pct(usualShare), 'Historical baseline');
-                tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins), 'Session total');
+                tile(has('idle_share'), 'Idle Time', pct(idleShare), 'Of tracked shift');
+                tile(has('usual_idle_share'), 'Usual Idle', pct(usualShare), 'Their normal average');
+                tile(has('tracked_mins'), 'Shift Total', mins(e.tracked_mins), 'Total hours tracked');
                 stat = `${pct(idleShare)} idle`;
-                why = 'A much bigger part of their tracked day had no keyboard or mouse activity than is normal for them.';
+                why = `A much larger portion of today's shift had zero keyboard or mouse activity compared to their normal average (${pct(idleShare)} idle today vs ${pct(usualShare)} normally).`;
                 if (usualShare > 0) {
                     const diffPct = Math.round((idleShare - usualShare) * 100);
                     deviation = {
-                        label: 'Idle Proportion',
-                        observedLabel: 'Observed Idle',
+                        label: 'Idle Time Share',
+                        observedLabel: "Today's idle time",
                         observedValue: Math.round(idleShare * 100),
-                        baselineLabel: 'Normal Idle',
+                        baselineLabel: 'Their usual idle time',
                         baselineValue: Math.round(usualShare * 100),
                         unit: '%',
-                        varianceText: `+${diffPct}% above baseline`,
+                        varianceText: `+${diffPct}% more idle than usual`,
                     };
                 }
             } else {
                 const stop = num(e.idle_stop_mins);
                 const stretch = num(e.minutes);
                 const stretches = num(e.stretches);
-                tile(has('minutes'), 'Idle Stretch', mins(stretch), stretches > 1 ? `Across ${stretches} stretches` : 'Uninterrupted span');
-                tile(h.window_start, 'Started', fmtTime(h.window_start), 'Timestamp spotted');
-                tile(true, 'Auto-Stop Limit', stop > 0 ? `${stop} min` : 'Off', 'Org threshold');
+                tile(has('minutes'), 'Idle Time', mins(stretch), stretches > 1 ? `Across ${stretches} stretches` : 'Continuous without input');
+                tile(h.window_start, 'Started', fmtTime(h.window_start), 'Time spotted');
+                tile(true, 'Auto-Stop Rule', stop > 0 ? `${stop} min` : 'Off', 'Company setting');
                 stat = stretches > 1 ? `${mins(stretch)} idle (${stretches} stretches)` : `${mins(stretch)} idle`;
-                why = stretches > 1
-                    ? `The timer kept running with no keyboard or mouse activity across ${stretches} stretches throughout the day (${mins(stretch)} total), which usually means someone was away from their desk without stopping the timer.`
-                    : 'The timer kept running with no keyboard or mouse activity for a long stretch, which usually means someone stepped away without stopping it.'
-                    + (stop > 0 && stretch > stop ? " It also ran past the organisation's idle auto-stop, which should have ended the session." : '');
+                why = `The timer was running for ${mins(stretch)}${stretches > 1 ? ` across ${stretches} stretches` : ''} with zero keyboard or mouse activity. It appears the member stepped away from their computer without pausing their timer.`
+                    + (stop > 0 && stretch > stop ? " It also exceeded the company idle auto-stop threshold." : '');
                 if (stop > 0 && stretch > stop) {
                     deviation = {
-                        label: 'Idle Stretch Duration',
-                        observedLabel: 'Recorded Stretch',
+                        label: 'Unattended Idle Time',
+                        observedLabel: 'Recorded idle time',
                         observedValue: stretch,
-                        baselineLabel: 'Auto-Stop Threshold',
+                        baselineLabel: 'Auto-stop limit',
                         baselineValue: stop,
                         unit: 'min',
-                        varianceText: `+${stretch - stop} min beyond limit`,
+                        varianceText: `+${stretch - stop} min past auto-stop`,
                     };
                 }
             }
@@ -749,13 +770,11 @@ function evidenceFor(h: OwlLensHighlight, isToday: boolean, fmtTime: (iso: strin
         case 'low_input': {
             const m = num(e.minutes);
             const stretches = num(e.stretches);
-            tile(has('minutes'), 'Duration', mins(m), stretches > 1 ? `Across ${stretches} stretches` : 'Window length');
+            tile(has('minutes'), 'Duration', mins(m), stretches > 1 ? `Across ${stretches} stretches` : 'Time running');
             tile(h.window_start, 'Started', fmtTime(h.window_start), 'Start time');
             tile(h.window_end, 'Ended', fmtTime(h.window_end), 'End time');
-            stat = stretches > 1 ? `${mins(m)} low input (${stretches} stretches)` : `${mins(m)} low input`;
-            why = stretches > 1
-                ? `The timer was running in ${app || 'one app'} across ${stretches} stretches with only a trickle of keyboard and mouse activity each minute.`
-                : 'The timer was running in one app with only a trickle of keyboard and mouse activity, far too little for normal work over that long.';
+            stat = stretches > 1 ? `${mins(m)} low activity (${stretches} stretches)` : `${mins(m)} low activity`;
+            why = `The timer ran for ${mins(m)}${stretches > 1 ? ` across ${stretches} stretches` : ''} in ${app || 'an open window'} with only a few seconds of typing or clicking each minute. The computer was likely left unattended with an app open in the foreground.`;
             break;
         }
         case 'input_pattern': {
@@ -763,62 +782,56 @@ function evidenceFor(h: OwlLensHighlight, isToday: boolean, fmtTime: (iso: strin
             const stretches = num(e.stretches);
             if (e.pattern === 'held_key') {
                 const rate = m > 0 ? Math.round(num(e.keystrokes) / m) : 0;
-                tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes), stretches > 1 ? `Across ${stretches} stretches (${mins(m)})` : m > 0 ? `In ${mins(m)} session window` : 'Session keystrokes');
-                tile(rate > 0, 'Key Rate', `${count(rate)}/min`, 'Keystroke velocity');
-                tile(has('clicks'), 'Mouse Clicks', count(e.clicks), 'Pointer activity');
+                tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes), stretches > 1 ? `Across ${stretches} stretches (${mins(m)} total)` : `Over ${mins(m)} total`);
+                tile(rate > 0, 'Typing Speed', `${count(rate)}/min`, 'Keys per minute');
+                tile(has('clicks'), 'Mouse Clicks', count(e.clicks), 'Total clicks');
                 stat = rate > 0 ? `${count(rate)} keys/min` : `${mins(m)} held key`;
-                why = stretches > 1
-                    ? `Nobody types that fast for that long. ${count(e.keystrokes)} keystrokes were recorded across ${stretches} stretches throughout the day (${mins(m)} total in ${app || 'this app'}), averaging ${count(rate)} keys/minute with almost no mouse interactions.`
-                    : 'Nobody types that fast for that long. A key held down, or something resting on the keyboard, produces this pattern and makes the time look active when it may not be.';
+                why = `A key appears to have been held or weighed down. Over ${count(e.keystrokes)} keystrokes were recorded in ${app || 'an open window'} at an impossible speed of ${count(rate)} keys per minute${stretches > 1 ? ` across ${stretches} separate stretches (${mins(m)} total)` : ` (${mins(m)} duration)`}, with almost zero mouse clicks. This usually happens when an object is placed on the keyboard to make the user look active while away.`;
                 if (rate > 0) {
                     const humanPace = 350; // standard benchmark for sustained human typing
                     deviation = {
-                        label: 'Keystroke Rate',
-                        observedLabel: 'Observed Rate',
+                        label: 'Typing Speed',
+                        observedLabel: 'Recorded typing speed',
                         observedValue: rate,
-                        baselineLabel: 'Human Max Pace',
+                        baselineLabel: 'Max human typing limit',
                         baselineValue: humanPace,
                         unit: 'keys/min',
-                        varianceText: `${(rate / humanPace).toFixed(1)}x sustained human maximum`,
+                        varianceText: `${(rate / humanPace).toFixed(1)}x faster than human limit`,
                     };
                 }
             } else {
-                tile(has('minutes'), 'Duration', mins(m), stretches > 1 ? `Across ${stretches} stretches` : 'Session duration');
-                tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes), 'Session keystrokes');
-                tile(has('clicks'), 'Mouse Clicks', count(e.clicks), 'Pointer activity');
+                tile(has('minutes'), 'Duration', mins(m), stretches > 1 ? `Across ${stretches} stretches` : 'Continuous movement');
+                tile(has('keystrokes'), 'Keystrokes', count(e.keystrokes), 'Keys typed');
+                tile(has('clicks'), 'Mouse Clicks', count(e.clicks), 'Clicks recorded');
                 stat = e.pattern === 'move_only'
                     ? (stretches > 1 ? `${mins(m)} move-only (${stretches} stretches)` : `${mins(m)} without keys/clicks`)
                     : (stretches > 1 ? `${mins(m)} continuous (${stretches} stretches)` : `${mins(m)} continuous`);
                 why = e.pattern === 'move_only'
-                    ? (stretches > 1
-                        ? `Across ${stretches} stretches (${mins(m)} total in ${app || 'one app'}), movement was detected every minute with zero keystrokes or clicks. A mouse jiggler produces this pattern.`
-                        : 'There was activity, but not a single keystroke or click, all in the same window. A mouse jiggler or auto-mover looks like this.')
-                    : (stretches > 1
-                        ? `Activity registered across ${stretches} stretches without the natural pauses people take. Automated input can produce this pattern.`
-                        : 'Activity registered in almost every second, without the short natural pauses people make. Automated input can produce this pattern.');
+                    ? `Continuous mouse movement was recorded for ${mins(m)}${stretches > 1 ? ` across ${stretches} stretches` : ''} with zero typing and zero clicks in ${app || 'an open window'}. This is the classic signature of an automated mouse jiggler used to keep the computer awake while away.`
+                    : `Non-stop activity was recorded for ${mins(m)}${stretches > 1 ? ` across ${stretches} stretches` : ''} without any of the natural short pauses people take while working. This pattern usually points to an automated macro or script.`;
             }
             break;
         }
         case 'app_mix':
-            tile(has('unfamiliar_share'), 'Unfamiliar Mix', pct(e.unfamiliar_share), 'Time in new apps');
-            tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins), 'Day total');
+            tile(has('unfamiliar_share'), 'New Apps', pct(e.unfamiliar_share), 'Time in new software');
+            tile(has('tracked_mins'), 'Tracked Today', mins(e.tracked_mins), 'Total hours tracked');
             stat = `${pct(e.unfamiliar_share)} unfamiliar apps`;
-            why = 'Most of the day went to apps this person rarely uses. It may be a new tool or project, or time spent outside their normal work.';
+            why = "Most of today's time was spent in applications they rarely or never use. This could be a new tool or project, or time spent outside normal work tasks.";
             break;
         case 'focus': {
             const run = num(e.minutes);
             const usualRun = num(e.usual_run_mins);
-            tile(has('minutes'), 'Unbroken Run', mins(run), 'Active duration');
-            tile(has('usual_run_mins'), 'Usual Best', mins(usualRun), 'Typical best');
-            tile(h.window_start, 'Started', fmtTime(h.window_start), 'Window start');
+            tile(has('minutes'), 'Unbroken Focus', mins(run), 'Steady active work');
+            tile(has('usual_run_mins'), 'Typical Best', mins(usualRun), 'Their usual best run');
+            tile(h.window_start, 'Started', fmtTime(h.window_start), 'Focus start time');
             stat = `${mins(run)} unbroken`;
-            why = 'A longer stretch of steady, active work than they usually manage. Worth recognising.';
+            why = `A significantly longer stretch of steady, active work than they usually manage (${mins(run)} continuous). A great sign of deep focus.`;
             if (usualRun > 0 && run > usualRun) {
                 deviation = {
-                    label: 'Focus Stretch',
-                    observedLabel: 'Observed Run',
+                    label: 'Unbroken Work Run',
+                    observedLabel: "Today's steady run",
                     observedValue: run,
-                    baselineLabel: 'Typical Run',
+                    baselineLabel: 'Typical best run',
                     baselineValue: usualRun,
                     unit: 'min',
                     varianceText: `+${run - usualRun} min longer than normal`,
@@ -837,24 +850,24 @@ function evidenceFor(h: OwlLensHighlight, isToday: boolean, fmtTime: (iso: strin
                 app = topSiteBreakdown.slice(0, 3).join(', ');
             }
 
-            tile(has('share_pct'), 'Non-Productive', `${share}%`, 'Of tracked time');
-            tile(has('nonproductive_mins'), 'Total Duration', mins(e.nonproductive_mins), 'On restricted sites');
-            tile(has('tracked_mins'), 'Tracked', mins(e.tracked_mins), 'Day total');
+            tile(has('share_pct'), 'Restricted Time', `${share}%`, 'Of tracked shift');
+            tile(has('nonproductive_mins'), 'Time on Sites', mins(e.nonproductive_mins), 'Non-work browsing');
+            tile(has('tracked_mins'), 'Shift Total', mins(e.tracked_mins), 'Total hours tracked');
 
             stat = topDomains.length > 0
                 ? `${share}% non-prod (${topDomains[0]![0]})`
                 : `${share}% non-productive`;
 
             why = topSiteBreakdown.length > 0
-                ? `Most non-productive time was spent on ${topSiteBreakdown.slice(0, 3).join(', ')}. Owl Lens flags this when non-work browsing exceeds a quarter of the total tracked shift.`
-                : (h.detail || 'A quarter or more of their tracked time was on sites the organisation counts as non-productive, such as social media or streaming.');
+                ? `Over a quarter of today's tracked shift was spent on non-work websites, primarily ${topSiteBreakdown.slice(0, 3).join(', ')}. TrackOwl flags this when non-work browsing exceeds 25% of working hours.`
+                : (h.detail || 'A quarter or more of today\'s tracked shift was on sites the company counts as non-productive, such as social media or streaming video.');
 
             if (share >= threshold) {
                 deviation = {
-                    label: 'Non-Productive Time Ratio',
-                    observedLabel: 'Observed Share',
+                    label: 'Time on Restricted Websites',
+                    observedLabel: 'Actual time on sites',
                     observedValue: share,
-                    baselineLabel: 'Warning Threshold',
+                    baselineLabel: 'Allowed company limit',
                     baselineValue: threshold,
                     unit: '%',
                     varianceText: `+${share - threshold}% above 25% threshold`,
@@ -930,7 +943,7 @@ function QueueItem({ h, selected, stat, fmtTime, onSelect }: {
                             'text-xs truncate tracking-tight text-text-main',
                             selected ? 'font-bold' : 'font-semibold'
                         )}>
-                            {KIND_LABEL[h.kind]}
+                            {highlightTitle(h)}
                         </span>
                     </div>
                     <span className="text-[11px] text-text-muted tabular-nums shrink-0">
@@ -1020,7 +1033,7 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
                             {SEVERITY_LABEL[h.severity]}
                         </span>
                         <h2 className="text-base md:text-lg font-bold text-text-main tracking-tight">
-                            {KIND_LABEL[h.kind]}
+                            {highlightTitle(h)}
                         </h2>
                     </div>
 
@@ -1150,7 +1163,7 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
                 {/* 1. KPI Strip */}
                 {evidence.tiles.length > 0 && (
                     <section className="space-y-2">
-                        <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Key Metrics</h3>
+                        <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Activity Summary</h3>
                         <div className={clsx(
                             'rounded-xl border border-border divide-y sm:divide-y-0 sm:divide-x divide-border bg-surface shadow-xs',
                             evidence.tiles.length === 3 && 'grid grid-cols-1 sm:grid-cols-3',
@@ -1172,7 +1185,7 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
 
                 {/* 2. Baseline Deviation */}
                 <section className="space-y-2">
-                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Baseline Deviation</h3>
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Comparison With Normal</h3>
                     {evidence.deviation ? (
                         <div className="p-4 rounded-xl border border-border bg-surface shadow-xs space-y-3">
                             <div className="flex items-center justify-between">
@@ -1221,14 +1234,14 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
                         </div>
                     ) : (
                         <div className="rounded-xl border border-border bg-surface/50 p-4 text-xs text-text-muted">
-                            Baseline comparison unavailable for this rule-based signal.
+                            This flag is based on a standard company rule rather than a comparison to previous days.
                         </div>
                     )}
                 </section>
 
                 {/* 3. Signal Analysis */}
                 <section className="space-y-2">
-                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Signal Analysis</h3>
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">What This Means</h3>
                     <div className="border-l-2 border-[#0B2559] dark:border-accent pl-4 py-1">
                         <p className="text-sm text-text-main leading-relaxed">
                             {evidence.why}
@@ -1238,7 +1251,7 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
 
                 {/* 4. Session Context */}
                 <section className="space-y-2">
-                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Session Context</h3>
+                    <h3 className="text-[11px] font-bold uppercase tracking-wider text-text-muted">Activity Details</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4 pt-3 border-t border-border text-xs">
                         <div>
                             <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">
@@ -1249,21 +1262,21 @@ function Inspector({ h, evidence, canReview, busy, choosingReason, fmtTime, onRe
                             </span>
                         </div>
                         <div>
-                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Session Window</span>
+                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Time Window</span>
                             <span className="text-text-main font-semibold mt-0.5 block truncate">
                                 {evidence.range || 'Full business day'}
                             </span>
                         </div>
                         <div>
-                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Detection Basis</span>
+                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Category</span>
                             <span className="text-text-main font-semibold mt-0.5 block truncate">
-                                {KIND_CATEGORY[h.kind]} · {KIND_LABEL[h.kind]}
+                                {KIND_CATEGORY[h.kind]} · {highlightTitle(h)}
                             </span>
                         </div>
                         <div>
-                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Member Baseline</span>
+                            <span className="text-text-muted block text-[10px] font-bold uppercase tracking-wider">Compared Against</span>
                             <span className="text-text-main font-semibold mt-0.5 block truncate">
-                                {BASELINE_LABEL[h.baseline_source]}
+                                {baselineSourceLabel(h)}
                             </span>
                         </div>
                     </div>
