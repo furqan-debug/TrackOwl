@@ -296,29 +296,35 @@ export function ActivityBlocks() {
                     </div>
                     )}
 
-                    {/* Day Navigator — at least as wide as the calendar (288px), so the
-                        open panel fits exactly under it, edge to edge. */}
-                    <div ref={dayNavRef} className="flex items-center h-10 min-w-[288px] bg-surface border border-border p-1 rounded-xl shadow-shell-sm">
+                    {/* Day Navigator */}
+                    <div
+                        ref={dayNavRef}
+                        className="flex items-center h-10 bg-surface border border-border rounded-xl shadow-xs overflow-hidden"
+                    >
                         <button
+                            type="button"
                             onClick={() => handleShiftDay(-1)}
-                            className="p-2 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg"
+                            className="h-full px-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors border-r border-border shrink-0"
                             title="Previous day"
                         >
-                            <ChevronLeft className="w-4 h-4" />
+                            <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2} />
                         </button>
                         <DatePicker
                             value={selectedDate}
                             onChange={(val) => setSelectedDate(val)}
+                            maxDate={todayStr}
                             anchorRef={dayNavRef}
-                            className="flex-1 min-w-[170px]"
+                            className="h-full min-w-[150px] md:min-w-[170px]"
+                            triggerClassName="h-full px-3 py-0 border-0 bg-transparent hover:bg-surface-hover shadow-none rounded-none w-full"
                         />
                         <button
+                            type="button"
                             onClick={() => handleShiftDay(1)}
-                            className="p-2 hover:bg-surface-hover text-text-muted hover:text-text-main transition-all rounded-lg disabled:opacity-20"
+                            className="h-full px-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors disabled:opacity-20 border-l border-border shrink-0"
                             title="Next day"
                             disabled={isToday}
                         >
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
                         </button>
                     </div>
 

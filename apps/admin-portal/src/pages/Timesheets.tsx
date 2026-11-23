@@ -842,34 +842,38 @@ export function Timesheets() {
 
                     {/* Bottom row: Date navigation */}
                     <div className="flex items-center justify-end w-full sm:w-auto">
-                        <div ref={dayNavRef} className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-12 w-full min-w-[288px]">
+                        <div
+                            ref={dayNavRef}
+                            className="flex items-center h-10 bg-surface border border-border rounded-xl shadow-xs overflow-hidden w-full sm:w-auto min-w-[288px]"
+                        >
                             <button
+                                type="button"
                                 onClick={() => navigateDate(-1)}
-                                className="p-3 shrink-0 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary"
+                                className="h-full px-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors border-r border-border shrink-0"
                                 title="Previous period"
                             >
-                                <ChevronLeft className="w-5 h-5" />
+                                <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2} />
                             </button>
 
-                            <div className="flex-1 min-w-0">
-                                <DatePicker
-                                    value={getGroupingDateInTz(selectedDate, undefined)}
-                                    onChange={(val) => {
-                                        if (val) {
-                                            setSelectedDate(new Date(val + 'T12:00:00'));
-                                        }
-                                    }}
-                                    anchorRef={dayNavRef}
-                                    className="w-full min-w-0"
-                                />
-                            </div>
+                            <DatePicker
+                                value={getGroupingDateInTz(selectedDate, undefined)}
+                                onChange={(val) => {
+                                    if (val) {
+                                        setSelectedDate(new Date(val + 'T12:00:00'));
+                                    }
+                                }}
+                                anchorRef={dayNavRef}
+                                className="h-full min-w-[150px] md:min-w-[170px] flex-1"
+                                triggerClassName="h-full px-3 py-0 border-0 bg-transparent hover:bg-surface-hover shadow-none rounded-none w-full"
+                            />
 
                             <button
+                                type="button"
                                 onClick={() => navigateDate(1)}
-                                className="p-3 shrink-0 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary"
+                                className="h-full px-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors border-l border-border shrink-0"
                                 title="Next period"
                             >
-                                <ChevronRight className="w-5 h-5" />
+                                <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
                             </button>
                         </div>
                     </div>
@@ -1038,41 +1042,43 @@ export function Timesheets() {
                     <div className="space-y-1.5">
                         <label className="text-[12px] font-bold text-text-muted">Calendar</label>
                         <div className="flex items-center gap-2">
-                            <div ref={filterDayNavRef} className="flex items-center bg-surface border border-border rounded-xl p-1 shadow-shell-sm h-11 flex-1 min-w-0">
+                            <div
+                                ref={filterDayNavRef}
+                                className="flex items-center bg-surface border border-border rounded-xl shadow-xs overflow-hidden h-10 flex-1 min-w-0"
+                            >
                                 <button
                                     type="button"
                                     onClick={() => navigateDate(-1)}
-                                    className="p-2 shrink-0 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary"
+                                    className="h-full px-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors border-r border-border shrink-0"
                                     title="Previous period"
                                 >
-                                    <ChevronLeft className="w-4 h-4" />
+                                    <ChevronLeft className="w-3.5 h-3.5" strokeWidth={2} />
                                 </button>
-                                <div className="flex-1 min-w-0">
-                                    <DatePicker
-                                        value={getGroupingDateInTz(selectedDate, undefined)}
-                                        onChange={(val) => {
-                                            if (val) {
-                                                setSelectedDate(new Date(val + 'T12:00:00'));
-                                            }
-                                        }}
-                                        direction="auto"
-                                        anchorRef={filterDayNavRef}
-                                        className="w-full min-w-0"
-                                    />
-                                </div>
+                                <DatePicker
+                                    value={getGroupingDateInTz(selectedDate, undefined)}
+                                    onChange={(val) => {
+                                        if (val) {
+                                            setSelectedDate(new Date(val + 'T12:00:00'));
+                                        }
+                                    }}
+                                    direction="auto"
+                                    anchorRef={filterDayNavRef}
+                                    className="h-full min-w-0 flex-1"
+                                    triggerClassName="h-full px-3 py-0 border-0 bg-transparent hover:bg-surface-hover shadow-none rounded-none w-full"
+                                />
                                 <button
                                     type="button"
                                     onClick={() => navigateDate(1)}
-                                    className="p-2 shrink-0 hover:bg-surface-hover rounded-lg transition-all text-text-muted hover:text-primary"
+                                    className="h-full px-2.5 hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors border-l border-border shrink-0"
                                     title="Next period"
                                 >
-                                    <ChevronRight className="w-4 h-4" />
+                                    <ChevronRight className="w-3.5 h-3.5" strokeWidth={2} />
                                 </button>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => setSelectedDate(new Date())}
-                                className="px-3.5 h-11 rounded-xl text-xs font-semibold bg-surface border border-border hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors shrink-0 shadow-shell-sm"
+                                className="px-3.5 h-10 rounded-xl text-xs font-semibold bg-surface border border-border hover:bg-surface-hover text-text-muted hover:text-text-main transition-colors shrink-0 shadow-xs"
                             >
                                 Today
                             </button>

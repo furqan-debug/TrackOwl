@@ -129,11 +129,6 @@ export function ScreenshotGallery({
                                     </div>
                                 </div>
                             )}
-
-                            {/* Status HUD */}
-                            <div className="absolute left-4 top-4 px-3 py-1.5 bg-black/40 backdrop-blur-md border border-white/10 rounded-lg text-[9px] font-bold text-white opacity-0 group-hover:opacity-100 translate-y-[-10px] group-hover:translate-y-0 transition-all duration-500">
-                                Verified Source
-                            </div>
                         </div>
 
                         {/* Meta Info: Proper Alignment */}
