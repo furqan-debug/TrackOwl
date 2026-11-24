@@ -755,20 +755,23 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
             </div>
 
             {/* Deleting an account is irreversible, so it sits on its own line
-                rather than a click away from Save. */}
-            <button
-              onClick={() => { setShowDeleteConfirm(true); setDeleteError(null); }}
-              className="btn-delete-account"
-            >
-              <Trash2 size={15} />
-              <span>Delete My Account</span>
-            </button>
+                rather than a click away from Save. Owners are blocked from
+                self-deleting in the app to prevent accidental org lockout. */}
+            {user.role?.toLowerCase() !== 'owner' && (
+              <button
+                onClick={() => { setShowDeleteConfirm(true); setDeleteError(null); }}
+                className="btn-delete-account"
+              >
+                <Trash2 size={15} />
+                <span>Delete My Account</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Delete Account Confirmation Modal */}
-      {showDeleteConfirm && (
+      {showDeleteConfirm && user.role?.toLowerCase() !== 'owner' && (
         <div style={{ position: 'fixed', inset: 0, zIndex: 9999, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
           <div style={{ background: '#ffffff', borderRadius: 18, padding: '2rem 1.75rem 1.75rem', maxWidth: 360, width: '100%', boxShadow: '0 24px 64px rgba(15,23,42,0.28)', border: '1px solid #e2e8f0' }}>
             <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
@@ -3322,6 +3325,9 @@ ${note}` : heading
   }
 
   async function handleDeleteAccount() {
+    if (user?.role?.toLowerCase() === 'owner') {
+      throw new Error('Organization owners cannot delete their account from the app.');
+    }
     const sb = await getSupabase();
     const { data: { session } } = await sb.auth.getSession();
     if (!session) throw new Error('No active session. Please log in again.');

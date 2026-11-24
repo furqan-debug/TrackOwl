@@ -98,29 +98,12 @@ Deno.serve(async (req: Request) => {
 
   // No member row: nothing to cascade, but the login still has to go.
   if (member) {
-    // An organization with no Owner cannot be administered by anyone — no
-    // billing, no member management, no way back in. Refuse rather than
-    // stranding the rest of the team.
-    if (member.role === 'Owner') {
-      const { count: otherOwners } = await admin
-        .from('members')
-        .select('id', { count: 'exact', head: true })
-        .eq('organization_id', member.organization_id)
-        .eq('role', 'Owner')
-        .neq('id', member.id);
-
-      const { count: otherMembers } = await admin
-        .from('members')
-        .select('id', { count: 'exact', head: true })
-        .eq('organization_id', member.organization_id)
-        .neq('id', member.id);
-
-      if ((otherOwners ?? 0) === 0 && (otherMembers ?? 0) > 0) {
-        return json({
-          error: 'You are the only Owner of this organization. Make someone else an Owner first, '
-               + 'otherwise nobody would be able to manage it after you leave.'
-        }, 409);
-      }
+    // Owners cannot delete their account from the app to prevent accidental
+    // organization lockout or data loss.
+    if (member.role?.toLowerCase() === 'owner') {
+      return json({
+        error: 'Organization owners cannot delete their account from the app.'
+      }, 403);
     }
 
     // Storage is not reached by any foreign key, so clear it before the row
