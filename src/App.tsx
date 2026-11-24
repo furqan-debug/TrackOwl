@@ -5,7 +5,7 @@ import {
   ChevronRight, LogOut, CheckCircle2,
   ShieldAlert, Eye, EyeOff, MapPin, MonitorPlay, MousePointerClick,
   ClipboardList, Calendar, Circle, ChevronDown, ChevronUp, Clock,
-  User as UserIcon, Save, RefreshCcw,
+  User as UserIcon, RefreshCcw,
    LifeBuoy, MessageSquare, Send, ArrowLeft,
    Bell, ShieldCheck, Smartphone, Trash2
 } from 'lucide-react';
@@ -746,11 +746,9 @@ function SettingsScreen({ user, onSave, onBack, onLogout, onDeleteAccount }: {
                 neither needs the full width of the panel. */}
             <div className="settings-footer-row">
               <button onClick={save} disabled={isSaving || uploading} className="btn btn-primary btn-save">
-                <Save size={16} />
                 <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
               </button>
               <button onClick={() => { onBack(); onLogout(); }} className="btn-logout-settings">
-                <LogOut size={15} />
                 <span>Log Out</span>
               </button>
             </div>
