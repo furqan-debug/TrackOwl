@@ -3348,7 +3348,9 @@ ${note}` : heading
     if (data?.error) throw new Error(data.error);
 
     // Clear all local state and log out
-    await handleStop();
+    if (isTracking) {
+      await handleStop();
+    }
     clearSession();
     setUser(null);
     setProjects([]);
@@ -3358,8 +3360,10 @@ ${note}` : heading
       realtimeRef.current = null;
       sb.removeChannel(ch);
     }
-    await sb.auth.signOut();
     setScreen('login');
+    // User is already deleted on the server, so global signOut returns 403;
+    // use local scope to clear the cached session cleanly.
+    await sb.auth.signOut({ scope: 'local' }).catch(() => {});
   }
 
   const handleTodoDone = useCallback(async (todoId: string) => {
@@ -3782,10 +3786,10 @@ ${note}` : heading
             <LoginScreen onLogin={handleLogin} rememberMe={rememberMe} setRememberMe={setRememberMe} />
           </motion.div>
         )}
-        {screen === 'projects' && (
+        {screen === 'projects' && user && (
           <motion.div key="projects" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
             <ProjectsScreen
-              user={user!}
+              user={user}
               projects={projects}
               onSelect={handleSelectProject}
               onLogout={handleLogout}
@@ -3808,16 +3812,16 @@ ${note}` : heading
             />
           </motion.div>
         )}
-        {screen === 'consent' && (
+        {screen === 'consent' && user && activeProject && (
           <motion.div key="consent" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column' }}>
-            <ConsentScreen user={user!} project={activeProject!} onAccept={handleConsentAccepted} onDecline={handleConsentDeclined} />
+            <ConsentScreen user={user} project={activeProject} onAccept={handleConsentAccepted} onDecline={handleConsentDeclined} />
           </motion.div>
         )}
-        {screen === 'tracker' && (
+        {screen === 'tracker' && user && activeProject && (
           <motion.div key="tracker" initial="initial" animate="in" exit="out" variants={pageVariants} transition={pageTransition} style={{ display: 'flex', flex: 1, flexDirection: 'column', minHeight: 0 }}>
             <TrackerScreen
-              user={user!}
-              project={activeProject!}
+              user={user}
+              project={activeProject}
               sessionId={sessionId}
               idlePaused={idlePaused}
               onResumeFromIdle={resumeFromIdle}

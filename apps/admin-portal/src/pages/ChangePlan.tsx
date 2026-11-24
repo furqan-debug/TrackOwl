@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { PageLayout } from '../components/ui';
-import { CheckCircle, Loader2, Zap, Calendar, RefreshCcw } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export function ChangePlan() {
@@ -59,7 +59,7 @@ export function ChangePlan() {
 
         const t = setTimeout(fetchPreview, 400);
         return () => clearTimeout(t);
-    }, [selectedPlan, selectedCycle, organization?.id, organization?.stripe_subscription_id]);
+    }, [selectedPlan, selectedCycle, organization?.id, organization?.stripe_subscription_id, seats]);
 
     const handleConfirm = async () => {
         setSaving(true);
@@ -95,8 +95,6 @@ export function ChangePlan() {
         ?? (billableSeats * newPricePerSeat * (selectedCycle === 'Yearly' ? 12 : 1));
     const amountDueToday = previewData?.amountDueToday ?? 0;
 
-    // Is there a meaningful difference between today's charge and the normal renewal amount?
-    // e.g. switching to yearly or upgrading mid-cycle creates a gap the user might question
     const hasProratedDifference = !isScheduled && Math.abs(amountDueToday - renewalAmount) > 0.5;
 
     const renewalDate = previewData?.nextRenewalDate
@@ -106,9 +104,9 @@ export function ChangePlan() {
         : '—';
 
     const immediateEffect = isUpgrade
-        ? 'Premium features unlock immediately after confirmation.'
+        ? 'Keep Premium access with immediate feature unlock.'
         : isDowngrade
-        ? 'You keep Premium access until your current billing period ends.'
+        ? 'Keep Premium access until current billing period ends.'
         : null;
 
     return (
@@ -117,210 +115,210 @@ export function ChangePlan() {
             description="A few clicks to update your subscription."
             showFavorite={false}
         >
-            <div className="max-w-3xl mx-auto space-y-5">
+            <div className="max-w-5xl mx-auto py-8 px-6 lg:px-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                    {/* Left Column: Plan Selection & Billing Options */}
+                    <div className="lg:col-span-7 space-y-6">
+                        {/* Plan Cards Grid */}
+                        <div className="space-y-3">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                                Select Plan
+                            </label>
+                            <div className="grid grid-cols-2 gap-4">
+                                {(['Basic', 'Premium'] as const).map((plan) => {
+                                    const price = plan === 'Premium'
+                                        ? (selectedCycle === 'Monthly' ? '$6.99' : '$4.99')
+                                        : (selectedCycle === 'Monthly' ? '$3.99' : '$2.99');
+                                    const isSelected = selectedPlan === plan;
+                                    const isCurrent = organization.plan_type === plan;
 
-                {/* ── STEP 1: Plan + Cycle ── */}
-                <div className="bg-surface border border-border/30 rounded-2xl p-7 space-y-6">
-
-                    {/* Plan Tier */}
-                    <div className="space-y-3">
-                        <label className="text-xs font-black text-text-muted uppercase tracking-widest block">Plan</label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {(['Basic', 'Premium'] as const).map((plan) => {
-                                const price = plan === 'Premium'
-                                    ? (selectedCycle === 'Monthly' ? '$6.99' : '$4.99')
-                                    : (selectedCycle === 'Monthly' ? '$3.99' : '$2.99');
-                                const isSelected = selectedPlan === plan;
-                                const isCurrent = organization.plan_type === plan;
-                                return (
-                                    <button
-                                        key={plan}
-                                        type="button"
-                                        onClick={() => setSelectedPlan(plan)}
-                                        className={clsx(
-                                            'relative p-5 rounded-xl border-2 text-left transition-all duration-200 cursor-pointer',
-                                            isSelected
-                                                ? 'border-primary bg-primary/5 shadow-sm'
-                                                : 'border-border/30 bg-main hover:border-border/60 hover:bg-surface'
-                                        )}
-                                    >
-                                        {isCurrent && (
-                                            <span className="absolute top-3 right-3 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-border/40 text-text-muted">
-                                                Current
-                                            </span>
-                                        )}
-                                        <div className="text-2xl mb-2">{plan === 'Basic' ? '🌱' : '💎'}</div>
-                                        <h3 className="text-base font-black text-text-main">{plan}</h3>
-                                        <p className="text-sm font-semibold text-text-muted mt-1">{price} / seat / mo</p>
-                                    </button>
-                                );
-                            })}
+                                    return (
+                                        <button
+                                            key={plan}
+                                            type="button"
+                                            onClick={() => setSelectedPlan(plan)}
+                                            className={clsx(
+                                                'text-left transition-all p-4 rounded-xl relative flex flex-col justify-between cursor-pointer',
+                                                isSelected
+                                                    ? 'border-2 border-[#0B2559] dark:border-blue-500 bg-blue-50/20 dark:bg-blue-950/30 shadow-xs'
+                                                    : 'border border-slate-200 dark:border-border/30 bg-white dark:bg-surface hover:border-slate-300 dark:hover:border-border/60'
+                                            )}
+                                        >
+                                            <div className="flex items-center justify-between gap-2">
+                                                <div className="text-2xl">{plan === 'Basic' ? '🌱' : '💎'}</div>
+                                                <div className="flex items-center gap-1.5">
+                                                    {isCurrent && (
+                                                        <span className="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:border dark:border-slate-700/60 text-[11px] font-medium px-2 py-0.5 rounded-md">
+                                                            Current Plan
+                                                        </span>
+                                                    )}
+                                                    {isSelected && (
+                                                        <div className="w-5 h-5 rounded-full bg-[#0B2559] dark:bg-blue-500 text-white flex items-center justify-center shrink-0">
+                                                            <Check className="w-3 h-3 stroke-[3]" />
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <div className="mt-4">
+                                                <h3 className="text-base font-bold text-slate-900 dark:text-text-main">{plan}</h3>
+                                                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 font-medium">{price} / seat / mo</p>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
-                    </div>
 
-                    <div className="border-t border-border/20" />
-
-                    {/* Billing Cycle */}
-                    <div className="flex items-center justify-between gap-4">
-                        <div>
-                            <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1">Billing Cycle</label>
-                            <p className="text-sm text-text-muted">Yearly billing saves you 25%</p>
-                        </div>
-                        <div className="flex bg-main border border-border/30 p-1 rounded-lg gap-1">
-                            {(['Monthly', 'Yearly'] as const).map((cycle) => (
+                        {/* Billing Cycle Selector */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                                Billing Cycle
+                            </label>
+                            <div className="bg-slate-100 dark:bg-surface border border-transparent dark:border-border/30 p-1 rounded-xl flex items-center justify-between gap-1">
                                 <button
-                                    key={cycle}
                                     type="button"
-                                    onClick={() => setSelectedCycle(cycle)}
+                                    onClick={() => setSelectedCycle('Monthly')}
                                     className={clsx(
-                                        'px-4 py-2 text-sm font-black rounded-md transition-all cursor-pointer flex items-center gap-1.5',
-                                        selectedCycle === cycle
-                                            ? 'bg-primary text-white shadow-sm'
-                                            : 'text-text-muted hover:text-text-main'
+                                        'flex-1 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center cursor-pointer',
+                                        selectedCycle === 'Monthly'
+                                            ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-text-main shadow-xs'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-text-main'
                                     )}
                                 >
-                                    {cycle}
-                                    {cycle === 'Yearly' && (
-                                        <span className={clsx(
-                                            'text-[10px] font-extrabold px-1.5 py-0.5 rounded transition-all',
-                                            selectedCycle === 'Yearly'
-                                                ? 'bg-slate-900 !text-slate-50 dark:bg-slate-900 dark:!text-slate-50'
-                                                : 'bg-amber-500/15 text-amber-500 dark:text-amber-400'
-                                        )}>
-                                            -25%
-                                        </span>
-                                    )}
+                                    Monthly
                                 </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Active seats info-only row (no controls) */}
-                    <div className="border-t border-border/20" />
-                    <div className="flex items-center justify-between gap-4">
-                        <div>
-                            <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1">Active Seats</label>
-                            <p className="text-sm text-text-muted">Manage seats separately from the Billing page.</p>
-                        </div>
-                        <span className="text-base font-black text-text-main tabular-nums">{seats}</span>
-                    </div>
-                </div>
-
-                {/* ── STEP 2: Summary Card ── */}
-                {hasChanges && (
-                    <div className="bg-surface border border-border/30 rounded-2xl p-7 space-y-5">
-                        <h2 className="text-xs font-black text-text-muted uppercase tracking-widest">Summary</h2>
-
-                        {previewLoading ? (
-                            <div className="flex items-center gap-3 py-6 text-text-muted">
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                                <span className="text-base font-semibold">Calculating…</span>
+                                <button
+                                    type="button"
+                                    onClick={() => setSelectedCycle('Yearly')}
+                                    className={clsx(
+                                        'flex-1 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer',
+                                        selectedCycle === 'Yearly'
+                                            ? 'bg-white dark:bg-slate-800 text-slate-900 dark:text-text-main shadow-xs'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-text-main'
+                                    )}
+                                >
+                                    <span>Yearly</span>
+                                    <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-400 dark:border dark:border-emerald-800/50 text-xs font-semibold px-2 py-0.5 rounded-md">
+                                        -25%
+                                    </span>
+                                </button>
                             </div>
-                        ) : (
-                            <>
-                                {/* Charge today */}
-                                <div className="flex items-start justify-between gap-6">
-                                    <div className="flex-1">
-                                        <p className="text-base font-bold text-text-main">
-                                            {isScheduled ? 'No charge today' : 'Charge Today'}
-                                        </p>
-                                        <p className="text-sm text-text-muted mt-1.5 leading-relaxed">
-                                            {isScheduled
-                                                ? 'Changes take effect at your next renewal.'
-                                                : hasProratedDifference
-                                                ? 'Includes any unused-time credit from your current plan and a prorated charge for the remainder of this billing period.'
-                                                : 'Charged immediately after confirmation.'}
-                                        </p>
-                                    </div>
-                                    <p className={clsx(
-                                        'text-3xl font-black tracking-tight shrink-0',
-                                        isScheduled ? 'text-text-muted' : 'text-primary'
-                                    )}>
-                                        {isScheduled ? '$0.00' : `$${amountDueToday.toFixed(2)}`}
-                                    </p>
+                        </div>
+
+                        {/* Active Seats Row */}
+                        <div className="border border-slate-200 dark:border-border/30 bg-white dark:bg-surface rounded-xl p-4 flex items-center justify-between">
+                            <div>
+                                <p className="text-sm font-semibold text-slate-900 dark:text-text-main">Active Seats</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Managed from Billing page</p>
+                            </div>
+                            <span className="font-semibold text-slate-900 dark:text-text-main tabular-nums text-sm">
+                                {seats} {seats === 1 ? 'seat' : 'seats'}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Right Column: Order Summary & Confirmation Box (sticky) */}
+                    <div className="lg:col-span-5">
+                        <div className="bg-white dark:bg-surface border border-slate-200 dark:border-border/30 rounded-2xl p-6 shadow-sm sticky top-6">
+                            <h2 className="text-base font-semibold text-slate-900 dark:text-text-main mb-4">Summary</h2>
+
+                            {previewLoading ? (
+                                <div className="flex items-center gap-2 py-6 text-slate-500 dark:text-slate-400 text-xs">
+                                    <Loader2 className="w-4 h-4 animate-spin text-[#0B2559] dark:text-blue-400" />
+                                    <span>Calculating changes…</span>
                                 </div>
-
-                                <div className="border-t border-border/20" />
-
-                                {/* Next renewal */}
-                                <div className="flex items-start justify-between gap-6">
+                            ) : (
+                                <>
+                                    {/* Line-Item Breakdown */}
                                     <div>
-                                        <p className="text-base font-bold text-text-main">Next Renewal</p>
-                                        <p className="text-sm text-text-muted mt-1">{renewalDate}</p>
-                                    </div>
-                                    <div className="text-right shrink-0">
-                                        <p className="text-base font-black text-text-main">
-                                            ${renewalAmount.toFixed(2)}
-                                            <span className="text-sm text-text-muted font-semibold ml-1">
-                                                / {selectedCycle === 'Monthly' ? 'mo' : 'yr'}
+                                        <div className="flex items-baseline justify-between">
+                                            <span className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                                                {isScheduled || !hasChanges ? 'No charge today' : 'Charge today'}
                                             </span>
-                                        </p>
-                                        <p className="text-sm text-text-muted mt-1">
-                                            {selectedPlan} · {seats} seats · {selectedCycle}
+                                            <span className="text-2xl font-bold text-slate-900 dark:text-text-main tabular-nums">
+                                                {isScheduled || !hasChanges ? '$0.00' : `$${amountDueToday.toFixed(2)}`}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                            {isScheduled || !hasChanges
+                                                ? 'Changes take effect at your next renewal'
+                                                : hasProratedDifference
+                                                ? 'Includes unused-time credit and prorated charge for the remaining period'
+                                                : 'Charged immediately after confirmation'}
                                         </p>
                                     </div>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                )}
 
-                {/* ── STEP 3: What happens next ── */}
-                {hasChanges && (
-                    <div className="bg-surface border border-border/30 rounded-2xl p-7 space-y-5">
-                        <h2 className="text-xs font-black text-text-muted uppercase tracking-widest">What happens next</h2>
-                        <div className="space-y-4">
-                            {immediateEffect && (
-                                <div className="flex items-start gap-3.5">
-                                    <Zap className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                                    <p className="text-base font-semibold text-text-main leading-snug">{immediateEffect}</p>
-                                </div>
+                                    <div className="border-t border-slate-100 dark:border-border/20 my-4" />
+
+                                    {/* Next Renewal Row */}
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                            <p className="text-xs text-slate-500 dark:text-slate-400">Next Renewal</p>
+                                            <p className="text-xs font-semibold text-slate-900 dark:text-text-main mt-0.5">{renewalDate}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-xs font-semibold text-slate-900 dark:text-text-main tabular-nums">
+                                                ${renewalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / {selectedCycle === 'Monthly' ? 'mo' : 'yr'}
+                                            </p>
+                                            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                                {selectedPlan} · {seats} {seats === 1 ? 'seat' : 'seats'} · {selectedCycle}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* What Happens Next List */}
+                                    <div className="space-y-3.5 my-5 bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-border/20 rounded-xl p-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                        {immediateEffect && (
+                                            <div className="flex items-start gap-2">
+                                                <span className="shrink-0 text-sm leading-none mt-0.5">⚡</span>
+                                                <span>{immediateEffect}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex items-start gap-2">
+                                            <span className="shrink-0 text-sm leading-none mt-0.5">📅</span>
+                                            <span>
+                                                Next renewal is on <strong className="font-semibold text-slate-800 dark:text-slate-100">{renewalDate}</strong>.
+                                            </span>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <span className="shrink-0 text-sm leading-none mt-0.5">💳</span>
+                                            <span>
+                                                Future renewals will be{' '}
+                                                <strong className="font-semibold text-slate-800 dark:text-slate-100">
+                                                    ${renewalAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/{selectedCycle === 'Monthly' ? 'month' : 'year'}
+                                                </strong>{' '}
+                                                for {seats} {seats === 1 ? 'seat' : 'seats'}.
+                                            </span>
+                                        </div>
+                                        <div className="flex items-start gap-2">
+                                            <span className="shrink-0 text-sm leading-none mt-0.5">🛡️</span>
+                                            <span>No disruption to your service or data.</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Action Buttons */}
+                                    <div className="space-y-2 pt-1">
+                                        <button
+                                            type="button"
+                                            onClick={handleConfirm}
+                                            disabled={saving || !hasChanges || previewLoading}
+                                            className="w-full bg-[#0B2559] hover:bg-[#091d47] dark:bg-blue-600 dark:hover:bg-blue-500 text-white font-medium py-2.5 rounded-xl text-sm shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                                        >
+                                            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+                                            {saving ? 'Processing…' : hasChanges ? 'Confirm Changes' : 'No Changes'}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate('/dashboard/settings/billing')}
+                                            className="w-full text-center text-xs text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 py-2 block cursor-pointer transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </>
                             )}
-                            <div className="flex items-start gap-3.5">
-                                <Calendar className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                                <p className="text-base font-semibold text-text-main leading-snug">
-                                    Your next renewal is on <span className="font-black">{renewalDate}</span>.
-                                </p>
-                            </div>
-                            <div className="flex items-start gap-3.5">
-                                <RefreshCcw className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                                <p className="text-base font-semibold text-text-main leading-snug">
-                                    Future renewals will be{' '}
-                                    <span className="font-black">
-                                        ${renewalAmount.toFixed(2)}/{selectedCycle === 'Monthly' ? 'month' : 'year'}
-                                    </span>{' '}
-                                    for {seats} seats.
-                                </p>
-                            </div>
-                            <div className="flex items-start gap-3.5">
-                                <CheckCircle className="w-5 h-5 text-emerald-500 mt-0.5 shrink-0" />
-                                <p className="text-base font-semibold text-text-main leading-snug">No disruption to your service or data.</p>
-                            </div>
                         </div>
                     </div>
-                )}
-
-                {/* ── Actions ── */}
-                <div className="flex gap-3 pb-10">
-                    <button
-                        type="button"
-                        onClick={() => navigate('/dashboard/settings/billing')}
-                        className="h-13 px-7 bg-surface border border-border/30 text-text-main font-bold text-sm rounded-xl hover:bg-main transition-all cursor-pointer"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleConfirm}
-                        disabled={saving || !hasChanges || previewLoading}
-                        className={clsx(
-                            'flex-1 h-13 bg-primary text-white font-black text-sm uppercase tracking-widest rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer',
-                            (saving || !hasChanges || previewLoading) && 'opacity-40 cursor-not-allowed'
-                        )}
-                    >
-                        {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-                        {saving ? 'Processing…' : hasChanges ? 'Confirm Changes' : 'No Changes'}
-                    </button>
                 </div>
             </div>
         </PageLayout>
