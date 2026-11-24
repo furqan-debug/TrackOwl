@@ -450,12 +450,12 @@ export function People() {
                 </div>
             }
         >
-            <div className="flex bg-main/50 p-1 pb-[2px] rounded-xl border border-border/50 w-fit mb-8 h-11">
+            <div className="flex bg-main/50 dark:bg-surface p-1 pb-[2px] rounded-xl border border-border/50 dark:border-border w-fit mb-8 h-11">
                 <button
                     onClick={() => setActiveTab('Members')}
                     className={clsx(
                         "px-6 rounded-lg text-[12px] font-bold transition-all h-full",
-                        activeTab === 'Members' ? "bg-surface text-text-main shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-text-main"
+                        activeTab === 'Members' ? "bg-surface dark:bg-surface-hover text-text-main shadow-shell-sm ring-1 ring-slate-200/50 dark:ring-white/10" : "text-text-muted hover:text-text-main"
                     )}
                 >
                     Members ({membersCount})
@@ -464,7 +464,7 @@ export function People() {
                     onClick={() => setActiveTab('Invites')}
                     className={clsx(
                         "px-6 rounded-lg text-[12px] font-bold transition-all h-full",
-                        activeTab === 'Invites' ? "bg-surface text-text-main shadow-shell-sm ring-1 ring-slate-200/50" : "text-text-muted hover:text-text-main"
+                        activeTab === 'Invites' ? "bg-surface dark:bg-surface-hover text-text-main shadow-shell-sm ring-1 ring-slate-200/50 dark:ring-white/10" : "text-text-muted hover:text-text-main"
                     )}
                 >
                     Pending Invites ({invitesCount})
