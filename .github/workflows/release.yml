@@ -1,8 +1,9 @@
 name: Release TrackOwl
 
 on:
-  # Tag pushes are now handled by release-windows.yml (Windows-only, signed).
-  # This workflow is kept for manual multi-platform builds only.
+  push:
+    tags:
+      - 'v*' # Triggers full multi-platform release on version tag push
   workflow_dispatch:
     inputs:
       platform:
@@ -19,9 +20,14 @@ on:
 jobs:
   setup-matrix:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
       - id: set-matrix
         run: |
           if [ "${{ github.event_name }}" == "push" ] || [ "${{ github.event.inputs.platform }}" == "all" ]; then
@@ -33,6 +39,44 @@ jobs:
           elif [ "${{ github.event.inputs.platform }}" == "linux" ]; then
             echo 'matrix=[{"platform":"ubuntu-22.04","args":""}]' >> $GITHUB_OUTPUT
           fi
+
+      - name: Ensure Single Draft Release Exists
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -e "console.log(require('./src-tauri/tauri.conf.json').version)")
+          TAG="${{ github.ref_type == 'tag' && github.ref_name || '' }}"
+          if [ -z "$TAG" ]; then TAG="v${VERSION}"; fi
+          # Pre-create a single draft release so parallel matrix jobs do not race
+          node -e "
+            (async () => {
+              const repo = process.env.GITHUB_REPOSITORY;
+              const token = process.env.GITHUB_TOKEN;
+              const tag = '$TAG';
+              const res = await fetch('https://api.github.com/repos/' + repo + '/releases?per_page=20', {
+                headers: { 'Authorization': 'Bearer ' + token }
+              });
+              const releases = await res.json();
+              const existing = Array.isArray(releases) && releases.find(r => r.tag_name === tag);
+              if (existing) {
+                console.log('Release already exists:', existing.id, 'draft:', existing.draft);
+                return;
+              }
+              const createRes = await fetch('https://api.github.com/repos/' + repo + '/releases', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  tag_name: tag,
+                  name: 'TrackOwl ' + tag,
+                  draft: true,
+                  prerelease: false
+                })
+              });
+              if (!createRes.ok) throw new Error(await createRes.text());
+              const created = await createRes.json();
+              console.log('Created draft release:', created.id);
+            })();
+          "
 
   publish:
     needs: setup-matrix
@@ -222,7 +266,7 @@ jobs:
           }
 
       # Regenerate Tauri updater .sig files after code signing
-      # Code signing modifies the .exe binary, invalidating the original .sig
+      # Code signing modifies the .exe/.msi binaries, invalidating the original .sig files
       - name: Regenerate Updater Signatures After Code Signing
         if: matrix.platform == 'windows-latest'
         shell: pwsh
@@ -232,25 +276,26 @@ jobs:
         run: |
           $VERSION = "${{ steps.version.outputs.NUM }}"
           $NSIS_EXE = "${{ github.workspace }}\src-tauri\target\release\bundle\nsis\TrackOwl_${VERSION}_x64-setup.exe"
-          $SIG_FILE = "${NSIS_EXE}.sig"
+          $MSI_FILE = "${{ github.workspace }}\src-tauri\target\release\bundle\msi\TrackOwl_${VERSION}_x64_en-US.msi"
 
-          if (Test-Path $NSIS_EXE) {
-            Write-Host "Regenerating .sig for signed .exe..."
-            # Delete old .sig
-            if (Test-Path $SIG_FILE) { Remove-Item $SIG_FILE }
-            # Generate new .sig using Tauri signer
-            npx tauri signer sign "$NSIS_EXE" --private-key "$env:TAURI_SIGNING_PRIVATE_KEY" --password "$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD"
-            if (Test-Path $SIG_FILE) {
-              Write-Host "New .sig generated successfully: $SIG_FILE"
+          foreach ($file in @($NSIS_EXE, $MSI_FILE)) {
+            if (Test-Path $file) {
+              $SIG_FILE = "${file}.sig"
+              Write-Host "Regenerating .sig for signed installer: $file"
+              if (Test-Path $SIG_FILE) { Remove-Item $SIG_FILE }
+              npx tauri signer sign "$file" --app-version "$VERSION"
+              if (Test-Path $SIG_FILE) {
+                Write-Host "New .sig generated successfully: $SIG_FILE"
+              } else {
+                Write-Error ".sig file was not generated for $file!"
+                exit 1
+              }
             } else {
-              Write-Error ".sig file was not generated!"
-              exit 1
+              Write-Warning "Installer not found, skipping .sig regeneration: $file"
             }
-          } else {
-            Write-Warning "NSIS exe not found: $NSIS_EXE"
           }
 
-      # Re-upload the signed Windows installers + new .sig to the GitHub release
+      # Re-upload the signed Windows installers + new .sig files to the GitHub release
       - name: Upload Signed Windows Installers to Release
         if: matrix.platform == 'windows-latest'
         shell: pwsh
@@ -258,45 +303,31 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           $VERSION = "${{ steps.version.outputs.NUM }}"
-          $TAG = if ("${{ github.ref_type }}" -eq "tag") { "${{ github.ref_name }}" } else { "v$VERSION" }
-          Write-Host "Overwriting release assets for tag $TAG with signed binaries..."
-          gh release upload $TAG `
+          Write-Host "Overwriting release assets for v$VERSION with signed binaries..."
+          node .github/workflows/upload_release_assets.js `
             "src-tauri/target/release/bundle/nsis/TrackOwl_${VERSION}_x64-setup.exe" `
             "src-tauri/target/release/bundle/nsis/TrackOwl_${VERSION}_x64-setup.exe.sig" `
             "src-tauri/target/release/bundle/msi/TrackOwl_${VERSION}_x64_en-US.msi" `
-            --clobber
+            "src-tauri/target/release/bundle/msi/TrackOwl_${VERSION}_x64_en-US.msi.sig"
 
-      # Upload macOS Installers (.dmg and updater bundles)
-      - name: Upload macOS Installers to Release
-        if: matrix.platform == 'macos-latest'
-        shell: bash
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.version.outputs.NUM) }}"
-
-          gh release upload "$TAG" \
-            src-tauri/target/*/release/bundle/dmg/*.dmg \
-            src-tauri/target/release/bundle/dmg/*.dmg \
-            src-tauri/target/*/release/bundle/macos/*.tar.gz* \
-            src-tauri/target/release/bundle/macos/*.tar.gz* \
-            --clobber || true
-
-      # Upload Linux AppImage and .deb bundles
+      # Upload Linux AppImage and .deb bundles (ensures draft release gets all Linux assets)
       - name: Upload Linux Bundles to Release
         if: matrix.platform == 'ubuntu-22.04'
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          TAG="${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.version.outputs.NUM) }}"
-
-          gh release upload "$TAG" \
-            src-tauri/target/release/bundle/appimage/*.AppImage \
-            src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz \
-            src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig \
-            src-tauri/target/release/bundle/deb/*.deb \
-            --clobber || true
+          shopt -s nullglob
+          FILES=(
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/appimage/*.AppImage.sig
+            src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz
+            src-tauri/target/release/bundle/appimage/*.AppImage.tar.gz.sig
+            src-tauri/target/release/bundle/deb/*.deb
+          )
+          if [ ${#FILES[@]} -gt 0 ]; then
+            node .github/workflows/upload_release_assets.js "${FILES[@]}"
+          fi
 
   publish-latest-json:
     needs: publish

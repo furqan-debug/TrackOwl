@@ -40,7 +40,13 @@ async function run() {
   };
 
   for (const asset of release.assets) {
-    if (asset.name.endsWith('.tar.gz') || asset.name.endsWith('.zip') || asset.name.endsWith('.exe') || asset.name.endsWith('.msi')) {
+    if (
+      asset.name.endsWith('.tar.gz') ||
+      asset.name.endsWith('.zip') ||
+      asset.name.endsWith('.exe') ||
+      asset.name.endsWith('.msi') ||
+      asset.name.endsWith('.AppImage')
+    ) {
       const sigAsset = release.assets.find(a => a.name === `${asset.name}.sig`);
       if (sigAsset) {
         const sig = await getSig(sigAsset.url);
@@ -61,7 +67,7 @@ async function run() {
           platforms['windows-x86_64-nsis'] = { signature: sigClean, url: finalUrl };
         } else if (asset.name.endsWith('x64_en-US.msi')) {
           platforms['windows-x86_64-msi'] = { signature: sigClean, url: finalUrl };
-        } else if (asset.name.endsWith('.AppImage.tar.gz')) {
+        } else if (asset.name.endsWith('.AppImage.tar.gz') || asset.name.endsWith('.AppImage')) {
           // Linux AppImage bundle — used by the Tauri auto-updater on linux-x86_64
           platforms['linux-x86_64'] = { signature: sigClean, url: finalUrl };
         }

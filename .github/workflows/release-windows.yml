@@ -1,14 +1,12 @@
 # Release Windows Only Workflow
-# Triggered on tag pushes (v*) and manual dispatch for Windows builds.
+# Triggered via manual dispatch for Windows-only builds.
+# Tag pushes (v*) are handled by release.yml for all platforms (Windows, macOS, Linux, App Store).
 # This workflow builds the Tauri Windows binaries, signs them with SSL.com eSigner via CodeSignTool,
-# and publishes a draft release containing the signed installers.
+# and publishes a release containing the signed installers.
 
 name: Release Windows TrackOwl
 
 on:
-  push:
-    tags:
-      - 'v*'   # any version tag
   workflow_dispatch:
     inputs:
       platform:

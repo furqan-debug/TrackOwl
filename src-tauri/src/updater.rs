@@ -118,5 +118,5 @@ pub async fn install_update(app: AppHandle) -> Result<(), String> {
     
     install_res.map_err(|e| e.to_string())?;
 
-    Ok(())
+    app.restart();
 }
