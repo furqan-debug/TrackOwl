@@ -335,23 +335,24 @@ function LocalClock({ orgTimezone }: { orgTimezone?: string }) {
   const tzMismatch = orgTimezone && deviceTz && deviceTz !== orgTimezone;
 
   return (
-    <div className="local-context" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', borderLeft: '1px solid rgba(255,255,255,0.2)', paddingLeft: '0.625rem', margin: '0 0.5rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#fff', fontWeight: 700, fontSize: '0.875rem' }}>
+    <div className="local-context" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', borderLeft: '1px solid rgba(255,255,255,0.18)', paddingLeft: '0.625rem', margin: '0 0.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fff', fontWeight: 700, fontSize: '0.875rem', fontVariantNumeric: 'tabular-nums' }}>
         <span>{timeStr}</span>
-        <span style={{ fontSize: '0.6875rem', opacity: 0.6, fontWeight: 400 }}>{dateStr}</span>
+        <span style={{ fontSize: '0.6875rem', opacity: 0.65, fontWeight: 400 }}>{dateStr}</span>
         {tzMismatch && (
           <span
             title={`Your device timezone (${deviceTz}) differs from your org timezone (${orgTimezone}). Tracked time is attributed to ${orgTimezone} days.`}
             style={{
-              background: '#f59e0b', color: '#000', fontSize: '0.55rem', fontWeight: 700,
-              borderRadius: '3px', padding: '1px 4px', cursor: 'help', letterSpacing: '0.02em'
+              background: 'rgba(245, 158, 11, 0.16)', color: '#FBBF24', border: '1px solid rgba(245, 158, 11, 0.35)',
+              fontSize: '0.5625rem', fontWeight: 600, borderRadius: '4px', padding: '1px 5px',
+              cursor: 'help', letterSpacing: '0.03em', lineHeight: 1.2
             }}
           >
             TZ ⚠
           </span>
         )}
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.625rem', color: 'rgba(255,255,255,0.7)', marginTop: '0.125rem', whiteSpace: 'nowrap' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.625rem', color: 'rgba(255,255,255,0.72)', marginTop: '0.15rem', whiteSpace: 'nowrap' }}>
         <Clock size={10} style={{ opacity: 0.8 }} />
         <span>Company Time{cityStr ? ` — ${cityStr}` : ''}</span>
       </div>
@@ -4348,10 +4349,11 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
           </div>
         ) : (
           <motion.div className="project-list" variants={{ hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.06 } } }} initial="hidden" animate="show">
-            {projects.map(p => {
+            {projects.map((p, idx) => {
               const projectToday = getProjectToday(p);
               const projectWeekly = getProjectWeekly(p);
-              const projColor = p.color || '#D4AF37';
+              const brandAccents = ['#0B2559', '#D4AF37', '#1E3A8A', '#D97706'];
+              const projColor = brandAccents[idx % brandAccents.length];
 
               return (
                 <motion.div key={p.id} variants={itemVariants}>
@@ -4448,6 +4450,8 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                   const projectShare = displayTotalWeek > 0 ? sec / displayTotalWeek : 0;
                   const pct = projectShare * visualWeeklyPct;
                   const isLast = idx === activeProjects.length - 1;
+                  const brandAccents = ['#0B2559', '#D4AF37', '#1E3A8A', '#D97706'];
+                  const segColor = brandAccents[idx % brandAccents.length];
 
                   return (
                     <div
@@ -4455,7 +4459,7 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
                       className="breakdown-progress-segment"
                       style={{
                         width: `${pct}%`,
-                        backgroundColor: p.color || '#D4AF37',
+                        backgroundColor: segColor,
                         borderRadius: isLast && visualWeeklyPct < 100 ? '0 9999px 9999px 0' : undefined,
                       }}
                       title={`${p.name}: ${formatTime(sec)}`}
@@ -4465,18 +4469,22 @@ function ProjectsScreen({ user, projects, onSelect, onLogout, onSettings, tracki
               </div>
 
               <div className="breakdown-legend">
-                {activeProjects.map(p => (
-                  <div key={p.id} className="breakdown-legend-item">
-                    <span
-                      className="breakdown-legend-dot"
-                      style={{ backgroundColor: p.color || '#D4AF37' }}
-                    />
-                    <span>{p.name}</span>
-                    <strong style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
-                      ({formatTime(getProjectWeekly(p))})
-                    </strong>
-                  </div>
-                ))}
+                {activeProjects.map((p, idx) => {
+                  const brandAccents = ['#0B2559', '#D4AF37', '#1E3A8A', '#D97706'];
+                  const dotColor = brandAccents[idx % brandAccents.length];
+                  return (
+                    <div key={p.id} className="breakdown-legend-item">
+                      <span
+                        className="breakdown-legend-dot"
+                        style={{ backgroundColor: dotColor }}
+                      />
+                      <span>{p.name}</span>
+                      <strong style={{ color: 'var(--text-primary)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                        ({formatTime(getProjectWeekly(p))})
+                      </strong>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           );
