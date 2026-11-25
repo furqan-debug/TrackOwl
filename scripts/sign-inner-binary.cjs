@@ -203,13 +203,13 @@ function main() {
   );
 
   try {
-    const status = execFileSync(
+    const rawOutput = execFileSync(
       'powershell.exe',
       [
         '-NoProfile',
         '-NonInteractive',
         '-Command',
-        '$sig = Get-AuthenticodeSignature -FilePath $env:TARGET_EXE; $sig | Format-List Status, StatusMessage, SignerCertificate | Out-Host; Write-Output $sig.Status',
+        '$sig = Get-AuthenticodeSignature -FilePath $env:TARGET_EXE; [PSCustomObject]@{ Status = $sig.Status.ToString(); StatusMessage = $sig.StatusMessage; Subject = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject } else { $null } } | ConvertTo-Json -Compress',
       ],
       {
         env,
@@ -217,9 +217,12 @@ function main() {
       }
     ).trim();
 
-    if (status !== 'Valid') {
+    const sigInfo = JSON.parse(rawOutput);
+    console.log('[sign-inner-binary] Signature info:', sigInfo);
+
+    if (sigInfo.Status !== 'Valid') {
       console.error(
-        `[sign-inner-binary] ERROR: Signature verification failed. Status="${status}" (expected "Valid").`
+        `[sign-inner-binary] ERROR: Signature verification failed. Status="${sigInfo.Status}", Message="${sigInfo.StatusMessage}" (expected "Valid").`
       );
       process.exit(1);
     }
