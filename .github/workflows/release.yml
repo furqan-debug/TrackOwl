@@ -205,6 +205,24 @@ jobs:
         run: |
           node -e "const v = require('./src-tauri/tauri.conf.json').version; console.log('NUM=' + v); require('fs').appendFileSync(process.env.GITHUB_OUTPUT, 'NUM=' + v + '\n')"
 
+      # Verify inner binary was signed by beforeBundleCommand before installers were packed
+      - name: Verify Inner Binary Signature (Windows)
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          $INNER_EXE = "${{ github.workspace }}\src-tauri\target\release\digireps-tracker.exe"
+          if (-not (Test-Path $INNER_EXE)) {
+            Write-Error "Inner binary not found at $INNER_EXE"
+            exit 1
+          }
+          $sig = Get-AuthenticodeSignature -FilePath $INNER_EXE
+          $sig | Format-List Status, StatusMessage, SignerCertificate
+          if ($sig.Status -ne 'Valid') {
+            Write-Error "Inner binary signature is NOT Valid (Status: $($sig.Status)). Aborting release so unsigned binary is not shipped."
+            exit 1
+          }
+          Write-Host "Verified: inner binary has a Valid Authenticode signature."
+
       - name: Sign Windows Installers with SSL.com eSigner
         if: matrix.platform == 'windows-latest'
         shell: pwsh
@@ -262,7 +280,13 @@ jobs:
                 Write-Error "Signing failed for $file with exit code $LASTEXITCODE"
                 exit 1
               }
-              Write-Host "Successfully signed: $file"
+              $sig = Get-AuthenticodeSignature -FilePath $file
+              $sig | Format-List Status, StatusMessage, SignerCertificate
+              if ($sig.Status -ne 'Valid') {
+                Write-Error "Installer signature verification failed for $file (Status: $($sig.Status))"
+                exit 1
+              }
+              Write-Host "Successfully signed and verified: $file"
             } else {
               Write-Warning "File not found, skipping: $file"
             }

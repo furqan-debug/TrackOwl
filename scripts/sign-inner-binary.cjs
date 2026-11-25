@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 
 function main() {
   if (process.platform !== 'win32') {
@@ -20,6 +20,12 @@ function main() {
   } = process.env;
 
   if (!ES_USERNAME || !ES_PASSWORD || !CREDENTIAL_ID || !ES_TOTP_SECRET) {
+    if (process.env.CI === 'true') {
+      console.error(
+        '[sign-inner-binary] ERROR: CodeSignTool credentials are missing in CI.'
+      );
+      process.exit(1);
+    }
     console.log(
       '[sign-inner-binary] CodeSignTool credentials not set. ' +
       'Skipping inner binary signing (local/dev build).'
@@ -152,26 +158,38 @@ function main() {
   const env = {
     ...process.env,
     CODE_SIGN_TOOL_PATH: cstDir,
+    CST_BAT: cstBat,
+    TARGET_EXE: targetExe,
   };
 
-  const cmd =
-    `"${cstBat}" sign ` +
-    `-username="${ES_USERNAME}" ` +
-    `-password="${ES_PASSWORD}" ` +
-    `-credential_id="${CREDENTIAL_ID}" ` +
-    `-totp_secret="${ES_TOTP_SECRET}" ` +
-    `-input_file_path="${targetExe}" ` +
-    `-override`;
-
   console.log(
-    '[sign-inner-binary] Executing SSL.com CodeSignTool...'
+    '[sign-inner-binary] Executing SSL.com CodeSignTool via PowerShell...'
   );
 
+  // Invoke via PowerShell env vars so cmd.exe never mangles special chars in secrets
+  const psSignScript = `
+    & $env:CST_BAT sign \`
+      -username="$env:ES_USERNAME" \`
+      -password="$env:ES_PASSWORD" \`
+      -credential_id="$env:CREDENTIAL_ID" \`
+      -totp_secret="$env:ES_TOTP_SECRET" \`
+      -input_file_path="$env:TARGET_EXE" \`
+      -override
+    if ($LASTEXITCODE -ne 0) {
+      Write-Error "CodeSignTool failed with exit code $LASTEXITCODE"
+      exit $LASTEXITCODE
+    }
+  `;
+
   try {
-    execSync(cmd, {
-      env,
-      stdio: 'inherit',
-    });
+    execFileSync(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-Command', psSignScript],
+      {
+        env,
+        stdio: 'inherit',
+      }
+    );
   } catch (error) {
     console.error(
       '[sign-inner-binary] CodeSignTool execution failed:',
@@ -185,21 +203,36 @@ function main() {
   );
 
   try {
-    const verifyOutput = execSync(
-      `powershell -Command "Get-AuthenticodeSignature '${targetExe}' | Format-List Status, SignerCertificate"`,
-      { encoding: 'utf8' }
-    );
+    const status = execFileSync(
+      'powershell.exe',
+      [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        '$sig = Get-AuthenticodeSignature -FilePath $env:TARGET_EXE; $sig | Format-List Status, StatusMessage, SignerCertificate | Out-Host; Write-Output $sig.Status',
+      ],
+      {
+        env,
+        encoding: 'utf8',
+      }
+    ).trim();
 
-    console.log(verifyOutput);
+    if (status !== 'Valid') {
+      console.error(
+        `[sign-inner-binary] ERROR: Signature verification failed. Status="${status}" (expected "Valid").`
+      );
+      process.exit(1);
+    }
   } catch (error) {
-    console.warn(
-      '[sign-inner-binary] Could not verify signature:',
+    console.error(
+      '[sign-inner-binary] ERROR: Could not verify Authenticode signature:',
       error.message
     );
+    process.exit(1);
   }
 
   console.log(
-    '[sign-inner-binary] Inner binary successfully signed before bundling!'
+    '[sign-inner-binary] Inner binary successfully signed and verified before bundling!'
   );
 }
 
