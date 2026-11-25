@@ -1402,7 +1402,7 @@ export function Landing() {
                                 <div className="w-full flex flex-col gap-3 mt-auto">
                                     <div className="relative w-full">
                                         <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.71/TrackOwl_2.0.71_aarch64.dmg"
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.74/TrackOwl_2.0.74_aarch64.dmg"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-slate-800 text-white text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
                                             <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#020617' }}><i /></span>
                                             <span className="relative z-10 flex items-center justify-center gap-2">
@@ -1413,7 +1413,7 @@ export function Landing() {
                                     </div>
                                     <div className="relative w-full">
                                         <a
-                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.71/TrackOwl_2.0.71_x64.dmg"
+                                            href="https://github.com/furqan-debug/TrackOwl/releases/download/v2.0.74/TrackOwl_2.0.74_x64.dmg"
                                             className="group relative overflow-hidden w-full py-3 px-4 bg-slate-50 text-slate-800 border border-slate-200 text-base font-bold rounded-lg transition-transform active:scale-[0.98] flex items-center justify-center cursor-pointer shadow-sm">
                                             <span aria-hidden className="goo-fill" style={{ ['--goo' as string]: '#e2e8f0' }}><i /></span>
                                             <span className="relative z-10 flex items-center justify-center gap-2">
